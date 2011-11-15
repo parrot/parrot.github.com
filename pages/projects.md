@@ -40,3 +40,8 @@ Developed by [Whiteknight](http://whiteknight.github.com)
 Zero-MQ library bindings for Parrot. Developed by
 [plobsing](http://github.com/plobsing)
 
+## [parrot-libgit2](https://github.com/letolabs/parrot-libgit2)
+
+libgit2 bindings for Parrot. Developed by [dukeleto](http://leto.github.com) of
+[Leto Labs](http://labs.leto.net)
+
