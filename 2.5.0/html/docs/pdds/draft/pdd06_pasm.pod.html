@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - [DRAFT] PDD 6: Parrot Assembly Language (PASM)</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; <a href="../../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; [DRAFT] PDD 6: Parrot Assembly Language (PASM)
+                </div>
+
+<h1><a name="[DRAFT]_PDD_6:_Parrot_Assembly_Language_(PASM)"
+>[DRAFT] PDD 6: Parrot Assembly Language (PASM)</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>The format of Parrot&#39;s bytecode assembly language.</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<p>Parrot&#39;s bytecode can be thought of as a form of machine language for a virtual super CISC machine.
+It makes sense,
+then,
+to define an assembly language for it for those people who may need to generate bytecode directly,
+rather than indirectly through a high&#45;level language.</p>
+
+<p>{{ NOTE: out&#45;of&#45;date and incomplete.
+}}</p>
+
+<h2><a name="Questions"
+>Questions</a></h2>
+
+<ul>
+<li>&#60;barney&#62; Can we get rid of PASM ?
+&#60;spinclad&#62; conversely,
+does PASM need to be kept up to date?
+&#60;allison&#62; PASM is just a text form of PBC,
+so it should be kept &#60;allison&#62; are there specific PBC features that can&#39;t currently be represented in PASM?
+&#60;particle&#62; besides hll and :outer?
+&#60;chromatic&#62; :init &#60;mdiep&#62; lexicals?
+&#60;chromatic&#62; :vtable &#60;mdiep&#62; I&#39;m a bit rusty,
+but anything that starts with a &#39;.&#39; or &#39;:&#39; is suspect &#60;allison&#62; things that start with &#39;.&#39; are just directives to IMCC,
+equally applicable to PASM and PIR &#60;mdiep&#62; isn&#39;t PASM separate from IMCC?
+&#60;allison&#62; mdiep: it used to be separate &#60;mdiep&#62; so to say that PASM can have directives is a major architectural change &#60;allison&#62; perhaps the biggest thing we need is a definition of what PASM actually is &#60;allison&#62; the line has grown quite fuzzy over the years &#60;barney&#62; PASM could be defined as stringified PBC &#60;particle&#62; compilable stringified pbc &#60;mdiep&#62; it should be defined that way if we&#39;re going to call it assembly.
+&#60;allison&#62; barney: that&#39;s the most likely direction,
+and if so,
+it has some implications for how PASM behaves &#60;particle&#62; allison: which is what we want,
+anyway,
+right?
+&#60;allison&#62; particle: yup &#60;barney&#62; yes &#60;particle&#62; good,
+looks like we&#39;re in agreement and headed in the proper direction on that topic.</li>
+</ul>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<p>Parrot opcodes take the format of:</p>
+
+<pre>  code destination[dest_key], source1[source1_key], source2[source2_key]</pre>
+
+<p>The brackets do not denote optional arguments as such&#45;&#45;they are real brackets. They may be left out entirely, however. If any argument has a key the assembler will substitute the null key for arguments missing keys.</p>
+
+<p>Conditional branches take the format:</p>
+
+<pre>  code boolean[bool_key], true_dest</pre>
+
+<p>The key parameters are optional, and may be either an integer or a string. If either is passed they are associated with the parameter to their left, and are assumed to be either an array/list entry number, or a hash key. Any time a source or destination can be a PMC register, there may be a key.</p>
+
+<p>Destinations for conditional branches are an integer offset from the current PC.</p>
+
+<p>All registers have a type prefix of P, S, I, or N, for PMC, string, integer, and number respectively. While parrot bytecode does not have a fixed limit on the number of registers, PASM has an implementation limit on the number of addressable registers of each type, currently set at 100 (0&#45;99).</p>
+
+<h2><a name="Assembly_Syntax"
+>Assembly Syntax</a></h2>
+
+<p>All assembly opcodes contain only ASCII lowercase letters, digits, and the underscore.</p>
+
+<p>Assembler directives are prefixed with a dot. These directives are instructions for the assembler and may or may not translate to a PASM instruction.</p>
+
+<p>Labels all end with a colon. They may have ASCII letters, numbers, and underscores in them.</p>
+
+<p>Namespaces are noted with the <code>.namespace</code> directive. It takes a single parameter, the name of the namespace, in the form of a multi&#45;dimensional key.</p>
+
+<p>Constants can be declared with the <code>.macro_const</code> directive. It takes two parameters: the name of the constant and the value.</p>
+
+<p>Subroutine names are noted with the <code>.pcc_sub</code> directive. It takes a single parameter, the name of the subroutine, which is added to the namespace&#39;s symbol table. Sub names may be any valid Unicode alphanumeric character and the underscore. The <code>.pcc_sub</code> directive may take flags to indicate when the sub should be invoked. The following flags are available: <code>:main</code> to indicate that execution should start at the specified subroutine; <code>:immediate</code> or <code>:postcomp</code> to indicate that the sub should be run immediately after compilation; <code>:load</code> to indicate that the sub should be executed when its bytecode segment is loaded; <code>:init</code> to indicate the sub should be run when the file is run directly.</p>
+
+<p>Constants don&#39;t need to be named and put in a separate section of the assembly source. The assembler will take care of putting them in the appropriate part of the generated bytecode.</p>
+
+<p>Below is an overview of the grammar of a PASM file.</p>
+
+<p>{{ See compilers/pirc/src for a bison&#45;based implementation of PASM }}</p>
+
+<pre> pasm_file:
+   [ pasm_line &#39;\n&#39; ]*
+
+ pasm_line:
+     pasm_instruction
+   | constant_directive
+   | namespace_directive
+
+ pasm_instruction:
+   [ [ sub_directive ]? label ]? instruction
+
+ sub_directive:
+   &#34;.pcc_sub&#34; [ sub_flag ]?
+
+ sub_flag:
+   &#34;:init&#34; | &#34;:main&#34; | &#34;:load&#34; | &#34;:postcomp&#34; | &#34;:immediate&#34; | &#34;:anon&#34;
+
+ label:
+   identifier &#34;:&#34;
+
+ constant_directive:
+   &#34;.macro_const&#34; identifier literal
+
+ namespace_directive:
+   &#34;.namespace&#34; &#34;[&#34; multi_dimensional_key &#34;]&#34;
+
+ multi_dimensional_key:
+   quoted_string [ &#34;;&#34; quoted_string ]*</pre>
+
+<h2><a name="Opcode_List"
+>Opcode List</a></h2>
+
+<p>There may be multiple (but unlisted) versions of an opcode. If an opcode takes a register that might be keyed, the keyed version of the opcode has a _k suffix. If an opcode might take multiple types of registers for a single parameter, the opcode function really has a _x suffix, where x is either P, S, I, or N, depending on whether a PMC, string, integer, or numeric register is involved. The suffix isn&#39;t necessary (though not an error) as the assembler can intuit the information from the code.</p>
+
+<p>In those cases where an opcode can take several types of registers, and more than one of the sources or destinations are of variable type, then the register is passed in extended format. An extended format register number is of the form:</p>
+
+<pre>     register_number | register_type</pre>
+
+<p>where register_type is 0x100, 0x200, 0x400, or 0x800 for PMC, string, integer, or number respectively. So N19 would be 0x413.</p>
+
+<p><b>Note</b>: Instructions tagged with a * will call a vtable function to handle the instruction if used on PMC registers.</p>
+
+<p>In all cases, the letters x, y, and z refer to register numbers. The letter t refers to a generic register (P, S, I, or N). A lowercase p, s, i, or n means either a register or constant of the appropriate type (PMC, string, integer, or number)</p>
+
+<p><a href='TODO#ops'>&#34;ops&#34; in docs</a> for a list of current parrot opcodes,</p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p>None.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

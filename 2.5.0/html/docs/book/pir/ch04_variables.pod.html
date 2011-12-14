@@ -1,0 +1,1338 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Variables</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; Variables
+                </div>
+
+<h1><a name="Variables"
+>Variables</a></h1>
+
+<p>Parrot is a register&#45;based virtual machine.
+It has four typed register sets &#45;&#45; integers,
+floating&#45;point numbers,
+strings,
+and objects.
+All variables in PIR are one of these four types.
+When you work with register variables or named variables,
+you&#39;re actually working directly with register storage locations in the virtual machine.</p>
+
+<p>If you&#39;ve ever worked with an assembly language before,
+you may immediately jump to the conclusion that <code>$I0</code> is the zeroth integer register in the register set,
+but Parrot is a bit smarter than that.
+The number of a register variable does not necessarily correspond to the register used internally; Parrot&#39;s compiler maps registers as appropriate for speed and memory considerations.
+The only guarantee Parrot gives you is that you&#39;ll always get the same storage location when you use <code>$I0</code> in the same subroutine.</p>
+
+<h2><a name="Assignment"
+>Assignment</a></h2>
+
+<p><!--
+	INDEX: assignment
+--> <!--
+	INDEX: = operator
+--> The most basic operation on a variable is assignment using the <code>=</code> operator:</p>
+<pre>  $I0 = 42        # set integer variable to the value 42
+  $N3 = 3.14159   # set number variable to approximation of pi
+  $I1 = $I0       # set $I1 to the value of $I0
+</pre>
+<p><!--
+	INDEX: null opcode
+--> The <code>null</code> opcode sets an integer or number variable to a zero value,
+and undefines a string or object.</p>
+<pre>  null $I0  # 0
+  null $N0  # 0.0
+  null $S0  # NULL
+  null $P0  # PMCNULL
+</pre>
+<h2><a name="Working_with_Numbers"
+>Working with Numbers</a></h2>
+
+<p><!--
+	INDEX: integers
+--><!--
+	INDEX: numbers (floating&#45;point)
+--> PIR has an extensive set of instructions that work with integers,
+floating&#45;point numbers,
+and numeric PMCs.
+Many of these instructions have a variant that modifies the result in place:</p>
+<pre>  $I0 = $I1 + $I2
+  $I0 += $I1
+</pre>
+<p><!--
+	INDEX: + operator
+--> The first form of <code>+</code> stores the sum of the two arguments in the result variable,
+<code>$I0</code>.
+The second variant,
+<code>+=</code>,
+adds the single argument to <code>$I0</code> and stores the sum back in <code>$I0</code>.</p>
+
+<p>The arguments can be Parrot literals,
+variables,
+or constants.
+If the result is an integer type,
+like <code>$I0</code>,
+the arguments must also be integers.
+A number result,
+like <code>$N0</code>,
+usually requires number arguments,
+but many numeric instructions also allow the final argument to be an integer.
+Instructions with a PMC result may accept an integer,
+floating&#45;point,
+or PMC final argument:</p>
+<pre>  $P0 = $P1 * $P2
+  $P0 = $P1 * $I2
+  $P0 = $P1 * $N2
+  $P0 *= $P1
+  $P0 *= $I1
+  $P0 *= $N1
+</pre>
+<h3><a name="Unary_numeric_opcodes"
+>Unary numeric opcodes</a></h3>
+
+<p><!--
+	INDEX: unary numeric opcodes
+--> Unary opcodes have a single argument.
+They either return a result or modify the argument in place.
+Some of the most common unary numeric opcodes are <code>inc</code> (increment)<!--
+	INDEX: inc opcode
+-->,
+<code>dec</code> (decrement)<!--
+	INDEX: dec opcode
+-->,
+<code>abs</code> (absolute value)<!--
+	INDEX: abs opcode
+-->,
+<code>neg</code> (negate)<!--
+	INDEX: neg opcode
+-->:</p>
+<pre>  $N0 = abs -5.0  # the absolute value of -5.0 is 5.0
+  $I0 = 120
+  inc $I1         # 120 incremented by 1 is 121
+</pre>
+<h3><a name="Binary_numeric_opcodes"
+>Binary numeric opcodes</a></h3>
+
+<p><!--
+	INDEX: binary numeric opcodes
+--></p>
+
+<p>Binary opcodes have two arguments and a result.
+Parrot provides addition (<code>+</code><!--
+	INDEX: + operator
+--> or <code>add</code><!--
+	INDEX: add opcode
+-->),
+subtraction (<code>&#45;</code><!--
+	INDEX: &#45; operator
+--> or <code>sub</code><!--
+	INDEX: sub opcode
+-->),
+multiplication (<code>*</code><!--
+	INDEX: * operator
+--> or <code>mul</code><!--
+	INDEX: mul opcode
+-->),
+division (<code>/</code><!--
+	INDEX: / operator
+--> or <code>div</code><!--
+	INDEX: div opcode
+-->),
+modulus (<code>%</code><!--
+	INDEX: % operator
+--> or <code>mod</code><!--
+	INDEX: mod opcode
+-->),
+and exponent (<code>pow</code><!--
+	INDEX: pow opcode
+-->) opcodes,
+as well as <code>gcd</code><!--
+	INDEX: gcd opcode
+--> (greatest common divisor) and <code>lcm</code><!--
+	INDEX: lcm opcode
+--> (least common multiple).</p>
+<pre>  $I0 = 12 / 5
+  $I0 = 12 % 5
+</pre>
+<h3><a name="Floating&#45;point_operations"
+>Floating&#45;point operations</a></h3>
+
+<p>The most common floating&#45;point operations are <code>ln</code><!--
+	INDEX: ln opcode
+--> (natural log),
+<code>log2</code><!--
+	INDEX: log2 opcode
+--> (log base 2),
+<code>log10</code><!--
+	INDEX: log10 opcode
+--> (log base 10),
+and <code>exp</code><!--
+	INDEX: exp opcode
+--> (<i>e</i>x),
+as well as a full set of trigonometric opcodes such as <code>sin</code><!--
+	INDEX: sin opcode
+--> (sine),
+<code>cos</code><!--
+	INDEX: cos opcode
+--> (cosine),
+<code>tan</code><!--
+	INDEX: tan opcode
+--> (tangent),
+<code>sec</code><!--
+	INDEX: sec opcode
+--> (secant),
+<code>sinh</code><!--
+	INDEX: sinh opcode
+--> (hyperbolic sine),
+<code>cosh</code><!--
+	INDEX: cosh opcode
+--> (hyperbolic cosine),
+<code>tanh</code><!--
+	INDEX: tanh opcode
+--> (hyperbolic tangent),
+<code>sech</code><!--
+	INDEX: sech opcode
+--> (hyperbolic secant),
+<code>asin</code><!--
+	INDEX: asin opcode
+--> (arc sine),
+<code>acos</code><!--
+	INDEX: acos opcode
+--> (arc cosine),
+<code>atan</code><!--
+	INDEX: atan opcode
+--> (arc tangent),
+<code>asec</code><!--
+	INDEX: asec opcode
+--> (arc secant),
+<code>exsec</code><!--
+	INDEX: exsec opcode
+--> (exsecant),
+<code>hav</code><!--
+	INDEX: hav opcode
+--> (haversine),
+and <code>vers</code><!--
+	INDEX: vers opcode
+--> (versine).
+All angle arguments for the <!--
+	INDEX: trigonometric opcodes
+--> trigonometric opcodes are in radians:</p>
+<pre>  .loadlib 'trans_ops'
+
+  # ...
+
+  $N0 = sin $N1
+  $N0 = exp 2
+</pre>
+<p>The majority of the floating&#45;point operations have a single argument and a single result.
+The arguments can generally be either an integer or number,
+but many of these opcodes require the result to be a number.</p>
+
+<h3><a name="Logical_and_Bitwise_Operations"
+>Logical and Bitwise Operations</a></h3>
+
+<p><!--
+	INDEX: logical opcodes
+--> The logical opcodes evaluate the truth of their arguments.
+They are most useful to make decisions for control flow.
+Integers and numeric PMCs are false if they&#39;re 0 and true otherwise.
+Strings are false if they&#39;re the empty string or a single character &#34;0&#34;,
+and true otherwise.
+PMCs are true when their <code>get_bool</code><!--
+	INDEX: get_bool vtable function
+--> vtable function returns a nonzero value.</p>
+
+<p>The <code>and</code><!--
+	INDEX: and opcode
+--> opcode returns the first argument if it&#39;s false and the second argument otherwise:</p>
+<pre>  $I0 = and 0, 1  # returns 0
+  $I0 = and 1, 2  # returns 2
+</pre>
+<p>The <code>or</code><!--
+	INDEX: or opcode
+--> opcode returns the first argument if it&#39;s true and the second argument otherwise:</p>
+<pre>  .loadlib 'bit_ops'
+
+  # ...
+
+  $I0 = or 1, 0  # returns 1
+  $I0 = or 0, 2  # returns 2
+
+  $P0 = or $P1, $P2
+Both C<and> and C<or> are short-circuiting ops. If they can determine what
+value to return from the first argument, they'll never evaluate the second.
+This is significant only for PMCs, as they might have side effects on
+evaluation.The C<xor>X<xor opcode> opcode returns the first argument if it is the only
+true value, returns the second argument if it is the only true value, and
+returns false if both values are true or both are false:<pre>  $I0 = xor 1, 0  # returns 1
+  $I0 = xor 0, 1  # returns 1
+  $I0 = xor 1, 1  # returns 0
+  $I0 = xor 0, 0  # returns 0
+</pre>
+The C<not>X<not opcode> opcode returns a true value when the argument is false
+and a false value if the argument is true:
+<pre>  $I0 = not $I1
+  $P0 = not $P1
+</pre>
+X<bitwise opcodes>
+The bitwise opcodes operate on their values a single bit at a time.
+C<band>X<band opcode>, C<bor>X<bor opcode>, and C<bxor>X<bxor opcode> return a
+value that is the logical AND, OR, or XOR of each bit in the source arguments.
+They each take two arguments.
+<pre>  .loadlib 'bit_ops'
+
+  # ...
+
+  $I0 = bor $I1, $I2
+  $P0 = bxor $P1, $I2
+</pre>
+C<band>, C<bor>, and C<bxor> also have variants that modify the result
+in place.
+<pre>  .loadlib 'bit_ops'
+
+  # ...
+
+  $I0 = band $I1
+  $P0 = bor $P1
+</pre>
+C<bnot>X<bnot opcode> is the logical NOT of each bit in the source argument.
+<pre>  .loadlib 'bit_ops'
+
+  # ...
+
+  $I0 = bnot $I1
+</pre>
+X<shl opcode>
+X<shr opcode>
+X<lsr opcode>
+The logical and arithmetic shift operations shift their values by a specified
+number of bits:
+<pre>  .loadlib 'bit_ops'
+
+  # ...
+
+  $I0 = shl $I1, $I2        # shift $I1 left by count $I2
+  $I0 = shr $I1, $I2        # arithmetic shift right
+  $P0 = lsr $P1, $P2        # logical shift right
+</pre>
+<h2><a name="Working_with_Strings"
+>Working with Strings</a></h2>
+
+X<strings>
+Parrot strings are buffers of variable-sized data. The most common use of
+strings is to store text data. Strings can also hold binary or other
+non-textual data, though this is rare.N<In general, a custom PMC is more
+useful.> Parrot strings are flexible and powerful, to handle the complexity of
+human-readable (and computer-representable) text data.  String operations work
+with string literals, variables, and constants, and with string-like PMCs.
+
+<h3><a name="Escape_Sequences"
+>Escape Sequences</a></h3>
+
+X<string escapes>
+X<escape sequences>
+
+Strings in double-quotes allow escape sequences using backslashes. Strings in
+single-quotes only allow escapes for nested quotes:
+
+  $S0 = "This string is \n on two lines"
+  $S0 = 'This is a \n one-line string with a slash in it'
+
+
+Table 4.1 shows the escape sequences Parrot supports in double-quoted
+strings.
+
+<h3><a name="Heredocs"
+>Heredocs</a></h3>
+
+X<heredocs>
+If you need more flexibility in defining a string, use a heredoc string
+literal. The C<E<lt>E<lt>> operator starts a heredoc.  The string terminator
+immediately follows. All text until the terminator is part of the string. The
+terminator must appear on its own line, must appear at the beginning of the
+line, and may not have any trailing whitespace.
+
+  $S2 = <<"End_Token"
+  This is a multi-line string literal. Notice that
+  it doesn't use quotation marks.
+  End_Token
+
+
+<h3><a name="Concatenating_strings"
+>Concatenating strings</a></h3>
+
+X<. operator>
+X<strings;concatenation>
+
+Use the C<.> operator to concatenate strings. The following example
+concatenates the string "cd" onto the string "ab" and stores the result in
+C<$S1>.
+<pre>  $S0 = "ab"
+  $S1 = $S0 . "cd"  # concatenates $S0 with "cd"
+  say $S1           # prints "abcd"
+</pre>
+X<.= operator>
+Concatenation has a C<.=> variant to modify the result in place. In the
+next example, the C<.=> operation appends "xy" onto the string "abcd" in
+C<$S1>.
+<pre>  $S1 .= "xy"       # appends "xy" to $S1
+  say $S1           # prints "abcdxy"
+</pre>
+<h3><a name="Repeating_strings"
+>Repeating strings</a></h3>
+
+X<repeat opcode>
+The C<repeat> opcode repeats a string a specified number of times:
+<pre>  $S0 = "a"
+  $S1 = repeat $S0, 5
+  say $S1              # prints "aaaaa"
+</pre>
+In this example, C<repeat> generates a new string with "a" repeated five
+times and stores it in C<$S1>.
+
+<h3><a name="Length_of_a_string"
+>Length of a string</a></h3>
+
+X<length opcode>
+The C<length> opcode returns the length of a string in characters. This won't
+be the same as the length in I<bytes> for multibyte encoded strings:
+<pre>  $S0 = "abcd"
+  $I0 = length $S0                # the length is 4
+  say $I0
+</pre>
+C<length> has no equivalent for PMC strings.
+
+<h3><a name="Substrings"
+>Substrings</a></h3>
+
+The simplest version of the C<substr>X<substr opcode> opcode takes three
+arguments: a source string, an offset position, and a length. It returns a
+substring of the original string, starting from the offset position (0 is the
+first character) and spanning the length:
+<pre>  $S0 = substr "abcde", 1, 2        # $S0 is "bc"
+</pre>
+This example extracts a two-character string from "abcde" at a one-character
+offset from the beginning of the string (starting with the second character).
+It generates a new string, "bc", in the destination register C<$S0>.
+
+When the offset position is negative, it counts backward from the end of the
+string. Thus an offset of -1 starts at the last character of the string.
+
+C<substr> no longer has a four-argument form, as in-place string operations
+have been removed.  There is a C<replace> operator which will perform the
+replacement and return a new_string without modifying the old_string.
+The arguments are new_string, old_string, offset, count and
+replacement_string.  The old_string is copied to the new_string with the
+replacement_string inserted from offset replacing the content for count
+characters.
+
+This example replaces the substring "bc" in C<$S1> with the string "XYZ",
+and returns "aXYZde" in C<$S0>, C<$S1> is not changed:
+<pre>  $S1 = "abcde"
+  $S0 = replace $S1, 1, 2, "XYZ"
+  say $S0                        # prints "aXYZde"
+  say $S1                        # prints "abcde"
+</pre>
+When the offset position in a C<replace> is one character beyond the original
+string length, C<replace> appends the replacement string just like the
+concatenation operator. If the replacement string is an empty string, the
+opcode removes the characters from the original string in the new string.
+<pre>  $S1 = "abcde"
+  $S1 = replace $S1, 1, 2, "XYZ"
+  say $S1                        # prints "aXYZde"
+</pre>
+<h3><a name="Converting_characters"
+>Converting characters</a></h3>
+
+The C<chr>X<chr opcode> opcode takes an integer value and returns the
+corresponding character in the ASCII character set as a one-character string.
+The C<ord>X<ord opcode> opcode takes a single character string and returns the
+integer value of the character at the first position in the string. The integer
+value of the character will differ depending on the current encoding of the
+string:
+<pre>  $S0 = chr 65              # $S0 is "A"
+  $I0 = ord $S0             # $I0 is 65, if $S0 is ASCII/UTF-8
+</pre>
+C<ord> has a two-argument variant that takes a character offset to select
+a single character from a multicharacter string. The offset must be within
+the length of the string:
+<pre>  $I0 = ord "ABC", 2        # $I0 is 67
+</pre>
+A negative offset counts backward from the end of the string, so -1 is
+the last character.
+<pre>  $I0 = ord "ABC", -1       # $I0 is 67
+</pre>
+<h3><a name="Formatting_strings"
+>Formatting strings</a></h3>
+
+X<strings;formatting>
+
+The C<sprintf>X<sprintf opcode> opcode generates a formatted string from a
+series of values. It takes two arguments: a string specifying the format, and
+an array PMC containing the values to be formatted. The format string and the
+result can be either strings or PMCs:
+<pre>  $S0 = sprintf $S1, $P2
+  $P0 = sprintf $P1, $P2
+</pre>
+The format string is similar to C's C<sprintf> function with extensions for
+Parrot data types. Each format field in the string starts with a C<%> and ends
+with a character specifying the output format. Table 4.2 lists the available
+output format characters.
+
+Each format field supports several specifier options: R<flags>, R<width>,
+R<precision>, and R<size>.  Table 4.3 lists the format flags.
+
+The R<width> is a number defining the minimum width of the output from
+a field. The R<precision> is the maximum width for strings or
+integers, and the number of decimal places for floating-point fields.
+If either R<width> or R<precision> is an asterisk (C<*>), it takes its
+value from the next argument in the PMC.
+
+The R<size> modifier defines the type of the argument the field takes.
+Table 4.4 lists the size flags. The values in the aggregate PMC must
+have a type compatible with the specified R<size>.
+<pre>  $S0 = sprintf "int %#Px num %+2.3Pf\n", $P2
+  say $S0       # prints "int 0x2a num +10.000"
+</pre>
+The format string of this C<sprintf> example has two format fields. The first,
+C<%#Px>, extracts a PMC argument (C<P>) from the aggregate C<$P2> and formats
+it as a hexadecimal integer (C<x>) with a leading 0x (C<#>). The second format
+field, C<%+2.3Pf>, takes a PMC argument (C<P>) and formats it as a
+floating-point number (C<f>) with a minimum of two whole digits and a maximum
+of three decimal places (C<2.3>) and a leading sign (C<+>).
+
+The test files F<t/op/string.t> and F<t/op/sprintf.t> have many more
+examples of format strings.
+
+<h3><a name="Joining_strings"
+>Joining strings</a></h3>
+
+The C<join>X<join opcode> opcode joins the elements of an array PMC into
+a single string. The first argument separates the individual elements of
+the PMC in the final string result.
+<pre>  $P0 = new "ResizablePMCArray"
+  push $P0, "hi"
+  push $P0, 0
+  push $P0, 1
+  push $P0, 0
+  push $P0, "parrot"
+  $S0 = join "__", $P0
+  say $S0                # prints "hi__0__1__0__parrot"
+</pre>
+This example builds a C<Array> in C<$P0> with the values C<"hi">, C<0>, C<1>,
+C<0>, and C<"parrot">. It then joins those values (separated by the string
+C<"__">) into a single string stored in C<$S0>.
+
+<h3><a name="Splitting_strings"
+>Splitting strings</a></h3>
+
+Splitting a string yields a new array containing the resulting substrings of
+the original string.
+
+This example splits the string "abc" into individual characters and stores them
+in an array in C<$P0>. It then prints out the first and third elements of the
+array.
+<pre>  $P0 = split "", "abc"
+  $P1 = $P0[0]
+  say $P1                # 'a'
+  $P1 = $P0[2]
+  say $P1                # 'c'
+</pre>
+<h3><a name="Testing_for_substrings"
+>Testing for substrings</a></h3>
+
+The C<index>X<index opcode> opcode searches for a substring
+within a string. If it finds the substring, it returns the position
+where the substring was found as a character offset from the beginning
+of the string. If it fails to find the substring, it returns -1:
+<pre>  $I0 = index "Beeblebrox", "eb"
+  say $I0                           # prints 2
+  $I0 = index "Beeblebrox", "Ford"
+  say $I0                           # prints -1
+</pre>
+C<index> also has a three-argument version, where the final argument
+defines an offset position for starting the search.
+<pre>  $I0 = index "Beeblebrox", "eb", 3
+  say $I0                           # prints 5
+</pre>
+This example finds the second "eb" in "Beeblebrox" instead of the first,
+because the search skips the first three characters in the string.
+
+<h3><a name="Bitwise_Operations"
+>Bitwise Operations</a></h3>
+
+The numeric bitwise opcodes also have string variants for AND, OR, and XOR:
+C<bors>X<bors opcode>, C<bands>X<bands opcode>, and C<bxors>X<bxors opcode>.
+These take string or string-like PMC arguments and perform the logical
+operation on each byte of the strings to produce the result string.
+Remember that in-place string operations are no longer available.
+<pre>  .loadlib 'bit_ops'
+
+  # ...
+
+  $P0 = bors $P1
+  $P0 = bands $P1
+  $S0 = bors $S1, $S2
+  $P0 = bxors $P1, $S2
+</pre>
+The bitwise string opcodes produce meaningful results only when used with
+simple ASCII strings, because Parrot performs bitwise operations per byte.
+
+<h3><a name="Copy&#45;On&#45;Write"
+>Copy&#45;On&#45;Write</a></h3>
+
+Strings use copy-on-write (COW)X<copy-on-write>X<COW (copy-on-write)>
+optimizations. A call to C<$S1 = $S0> doesn't immediately make a copy of
+C<$S0>, it only makes both variables point to the same string. Parrot
+doesn't make a copy of the string until one of two strings is modified.
+<pre>  $S0 = "Ford"
+  $S1 = $S0
+  $S1 = "Zaphod"
+  say $S0                # prints "Ford"
+  say $S1                # prints "Zaphod"
+</pre>
+Modifying one of the two variables causes Parrot to create a new string.  This
+example preserves the existing value in C<$S0> and assigns the new value to the
+new string in C<$S1>. The benefit of copy-on-write is avoiding the cost of
+copying strings until the copies are necessary.
+
+<h3><a name="Encodings_and_Charsets"
+>Encodings and Charsets</a></h3>
+
+X<charset>
+X<ASCII character set>
+X<encoding>
+Years ago, strings only needed to support the ASCII character set (or
+charset), a mapping of 128 bit patterns to symbols and English-language
+characters. This worked as long as everyone using a computer read and
+wrote English and only used a small handful of punctuation symbols. In
+other words, it was woefully insufficient. A modern string system must
+manage charsets in order to make sense out of all the string data in the
+world. A modern string system must also handle different encodings --
+ways to represent various charsets in memory and on disk.
+
+Every string in Parrot has an associated encoding and character set. The default
+charset is 8-bit ASCII, which is almost universally supported.  Double-quoted
+string constants can have an optional prefix specifying the string's encoding
+and charset.N<As you might suspect, single-quoted strings do not support this.>
+Parrot tracks information about encoding and charset internally, and
+automatically converts strings when necessary to preserve these
+characteristics. Strings constants may have prefixes of the form C<encoding:charset:>.
+<pre>  $S0 = utf8:unicode:"Hello UTF-8 Unicode World!"
+  $S1 = utf16:unicode:"Hello UTF-16 Unicode World!"
+  $S2 = ascii:"This is 8-bit ASCII"
+  $S3 = binary:"This is raw, unformatted binary data"
+</pre>
+X<ISO 8859-1 character set>
+X<Latin 1 character set>
+X<UCS-2 encoding>
+X<UTF-8 encoding>
+X<UTF-16 encoding>
+Parrot supports the character sets C<ascii>, C<binary>, C<iso-8859-1>
+(Latin 1), and C<unicode> and the encodings C<fixed_8>, C<ucs2>,
+C<utf8>, and C<utf16>.
+
+The C<binary> charset treats the string as a buffer of raw unformatted
+binary data. It isn't really a string per se, because binary data
+contains no readable characters. This exists to support libraries which
+manipulate binary data that doesn't easily fit into any other primitive
+data type.
+
+When Parrot operates on two strings (as in concatenation or comparison), they
+must both use the same character set and encoding. Parrot will automatically
+upgrade one or both of the strings to the next highest compatible format as
+necessary. ASCII strings will automatically upgrade to UTF-8 strings if needed,
+and UTF-8 will upgrade to UTF-16.  All of these conversions happen inside
+Parrot, so the programmer doesn't need to worry about the details.
+
+<h2><a name="Working_with_PMCs"
+>Working with PMCs</a></h2>
+
+X<Polymorphic Containers (PMCs)>
+X<PMCs (Polymorphic Containers)>
+Polymorphic Containers (PMCs) are the basis for complex data types and
+object-oriented behavior in Parrot. In PIR, any variable that isn't a
+low-level integer, number, or string is a PMC. PMC variables act much
+like the low-level variables, but you have to instantiate a new PMC
+object before you use it. The C<new> opcode creates a new PMC object of
+the specified type.
+<pre>  $P0 = new 'String'
+  $P0 = "That's a bollard and not a parrot"
+  say $P0
+</pre>
+This example creates a C<String> object, stores it in the PMC register
+variable C<$P0>, assigns it the value "That's a bollard and not a
+parrot", and prints it.
+
+Every PMC has a type that indicates what data it can store and what
+behavior it supports. The C<typeof>X<typeof opcode> opcode reports the
+type of a PMC.  When the result is a string variable, C<typeof> returns
+the name of the type:
+<pre>  $P0 = new "String"
+  $S0 = typeof $P0               # $S0 is "String"
+  say $S0                        # prints "String"
+</pre>
+When the result is a PMC variable, C<typeof> returns the C<Class> PMC
+for that object type.
+
+<h3><a name="Scalars"
+>Scalars</a></h3>
+
+X<scalar PMCs>
+X<PMCs (Polymorphic Containers);scalar>
+In most of the examples shown so far, PMCs duplicate the behavior of integers,
+numbers, and strings. Parrot provides a set of PMCs for this exact purpose.
+C<Integer>, C<Float>, and C<String> are thin overlays on Parrot's low-level
+integers, numbers, and strings.
+
+A previous example showed a string literal assigned to a PMC variable of type
+C<String>. Direct assignment of a literal to a PMC works for all the low-level
+types and their PMC equivalents:
+<pre>  $P0 = new 'Integer'
+  $P0 = 5
+
+  $P1 = new 'String'
+  $P1 = "5 birds"
+
+  $P2 = new 'Float'
+  $P2 = 3.14
+</pre>
+X<boxing>
+
+You may also assign non-constant low-level integer, number, or string registers
+directly to a PMC. The PMC handles the conversion from the low-level type to
+its own internal storage.N<This conversion of a simpler type to a more complex
+type is "boxing".>
+<pre>  $I0 = 5
+  $P0 = new 'Integer'
+  $P0 = $I0
+
+  $S1 = "5 birds"
+  $P1 = new 'String'
+  $P1 = $S1
+
+  $N2 = 3.14
+  $P2 = new 'Float'
+  $P2 = $N2
+</pre>
+The C<box> opcode is a handy shortcut to create the appropriate PMC
+object from an integer, number, or string literal or variable.
+<pre>  $P0 = box 3    # $P0 is an "Integer"
+
+  $P1 = box $S1  # $P1 is a "String"
+
+  $P2 = box 3.14 # $P2 is a "Float"
+</pre>
+X<unboxing>
+In the reverse situation, when assigning a PMC to an integer, number, or
+string variable, the PMC also has the ability to convert its value to
+the low-level type.N<The reverse of "boxing" is "unboxing".>
+<pre>  $P0 = box 5
+  $S0 = $P0           # the string "5"
+  $N0 = $P0           # the number 5.0
+  $I0 = $P0           # the integer 5
+
+  $P1 = box "5 birds"
+  $S1 = $P1           # the string "5 birds"
+  $I1 = $P1           # the integer 5
+  $N1 = $P1           # the number 5.0
+
+  $P2 = box 3.14
+  $S2 = $P2           # the string "3.14"
+  $I2 = $P2           # the integer 3
+  $N2 = $P2           # the number 3.14
+</pre>
+This example creates C<Integer>X<Integer PMC>, C<Float>X<Float PMC>,
+and C<String>X<String PMC> PMCs, and shows the effect of assigning each
+one back to a low-level type.
+
+Converting a string to an integer or number only makes sense when the contents
+of the string are a number. The C<String> PMC will attempt to extract a number
+from the beginning of the string, but otherwise will return a false value.
+
+<h3><a name="Aggregates"
+>Aggregates</a></h3>
+
+X<aggregate PMCs>
+X<PMCs (Polymorphic Containers);aggregate>
+PMCs can define complex types that hold multiple values, commonly called
+aggregates. Two basic aggregate types are ordered arrays and associative
+arrays. The primary difference between these is that ordered arrays use integer
+keys for indexes and associative arrays use string keys.
+
+Aggregate PMCs support the use of numeric or string keys.  PIR also offers a
+extensive set of operations for manipulating aggregate data types.
+
+<h4><a name="Ordered_Arrays"
+>Ordered Arrays</a></h4>
+
+X<arrays>
+X<ordered arrays>
+Parrot provides several ordered array PMCs, differentiated by whether
+the array should store booleans, integers, numbers, strings, or other
+PMCs, and whether the array should maintain a fixed size or dynamically
+resize for the number of elements it stores.
+
+The core array types are C<FixedPMCArray>, C<ResizablePMCArray>,
+C<FixedIntegerArray>, C<ResizableIntegerArray>, C<FixedFloatArray>,
+C<ResizableFloatArray>, C<FixedStringArray>, C<ResizableStringArray>,
+C<FixedBooleanArray>, and C<ResizableBooleanArray>. The array
+types that start with "Fixed" have a fixed size and do not allow
+elements to be added outside their allocated size. The "Resizable"
+variants automatically extend themselves as more elements are
+added.N<With some additional overhead for checking array bounds and
+reallocating array memory.> The array types that include "String",
+"Integer", or "Boolean" in the name use alternate packing methods for
+greater memory efficiency.
+
+Parrot's core ordered array PMCs all have zero-based integer keys. Extracting
+or inserting an element into the array uses PIR's standard key syntax, with the
+key in square brackets after the variable name. An lvalue key sets the value
+for that key.  An rvalue key extracts the value for that key in the aggregate
+to use as the argument value:
+<pre>  $P0    = new "ResizablePMCArray" # create a new array object
+  $P0[0] = 10                      # set first element to 10
+  $P0[1] = $I31                    # set second element to $I31
+  $I0    = $P0[0]                  # get the first element
+</pre>
+Setting the array to an integer value directly (without a key) sets the number
+of elements of the array.  Assigning an array directly to an integer retrieves
+the number of elements of the array.
+<pre>  $P0 = 2    # set array size
+  $I1 = $P0  # get array size
+</pre>
+This is equivalent to using the C<elements> opcode to retrieve the number of
+items currently in an array:
+<pre>  elements $I0, $P0 # get element count
+</pre>
+Some other useful instructions for working with ordered arrays are
+C<push>, C<pop>, C<shift>, and C<unshift>, to add or remove elements.
+C<push> and C<pop> work on the end of the array, the highest numbered
+index. C<shift> and C<unshift> work on the start of the array, adding or
+removing the zeroth element, and renumbering all the following elements.
+<pre>  push $P0, 'banana' # add to end
+  $S0 = pop $P0      # fetch from end
+
+  unshift $P0, 74    # add to start
+  $I0 = shift $P0    # fetch from start
+</pre>
+<h4><a name="Associative_Arrays"
+>Associative Arrays</a></h4>
+
+X<associative arrays>
+X<hashes>
+X<dictionaries>
+An associative array is an unordered aggregate that uses string keys to
+identify elements.  You may know them as "hash tables", "hashes", "maps", or
+"dictionaries". Parrot provides one core associative array PMC, called C<Hash>.
+String keys work very much like integer keys.  An lvalue key sets the value of
+an element, and an rvalue key extracts the value of an element. The string in
+the key must always be in single or double quotes.
+<pre>  new $P1, "Hash"          # create a new associative array
+  $P1["key"] = 10          # set key and value
+  $I0        = $P1["key"]  # get value for key
+</pre>
+Assigning a C<Hash>X<Hash PMC> PMC (without a key) to an integer result
+fetches the number of elements in the hash.N<You may not set a C<Hash>
+PMC directly to an integer value.>
+<pre>  $I1 = $P1         # number of entries
+</pre>
+The C<exists>X<exists opcode> opcode tests whether a keyed value exists in an
+aggregate. It returns 1 if it finds the key in the aggregate and 0 otherwise.
+It doesn't care if the value itself is true or false, only that an entry exists
+for that key:
+<pre>  new $P0, "Hash"
+  $P0["key"] = 0
+  exists $I0, $P0["key"] # does a value exist at "key"?
+  say $I0                # prints 1
+</pre>
+The C<delete>X<delete opcode> opcode removes an element from an associative
+array:
+<pre>  delete $P0["key"]
+</pre>
+<h4><a name="Iterators"
+>Iterators</a></h4>
+
+X<iterators>
+X<PMCs (Polymorphic Containers); iterators>
+An iterator extracts values from an aggregate PMC one at a time.  Iterators are
+most useful in loops which perform an action on every element in an aggregate.
+The C<iter> opcode creates a new iterator from an aggregate PMC. It takes one
+argument, the PMC over which to iterate:
+<pre>  $P1 = iter $P2
+</pre>
+The C<shift>X<shift opcode> opcode extracts the next value from the iterator.
+<pre>      $P5 = shift $P1
+</pre>
+Evaluating the iterator PMC as a boolean returns whether the iterator has
+reached the end of the aggregate:
+<pre>      if $P1 goto iter_repeat
+</pre>
+Parrot provides predefined constants for working with iterators.
+C<.ITERATE_FROM_START> and C<.ITERATE_FROM_END> constants select whether an
+ordered array iterator starts from the beginning or end of the array.  These
+two constants have no effect on associative array iterators, as their elements
+are unordered.
+
+Load the iterator constants with the C<.include>X<.include directive>
+directive to include the file F<iterator.pasm>. To use them, set the
+iterator PMC to the value of the constant:
+<pre>      .include "iterator.pasm"
+
+      # ...
+
+      $P1 = .ITERATE_FROM_START
+</pre>
+With all of those separate pieces in one place, this example loads the iterator
+constants, creates an ordered array of "a", "b", "c", creates an iterator from
+that array, and then loops over the iterator using a conditional C<goto> to
+checks the boolean value of the iterator and another unconditional C<goto>:
+<pre>      .include "iterator.pasm"
+      $P2 = new "ResizablePMCArray"
+      push $P2, "a"
+      push $P2, "b"
+      push $P2, "c"
+
+      $P1 = iter $P2
+      $P1 = .ITERATE_FROM_START
+
+  iter_loop:
+      unless $P1 goto iter_end
+      $P5 = shift $P1
+      say $P5                        # prints "a", "b", "c"
+      goto iter_loop
+  iter_end:
+</pre>
+Associative array iterators work similarly to ordered array iterators.  When
+iterating over associative arrays, the C<shift> opcode extracts keys instead of
+values. The key looks up the value in the original hash PMC.
+<pre>      $P2      = new "Hash"
+      $P2["a"] = 10
+      $P2["b"] = 20
+      $P2["c"] = 30
+
+      $P1      = iter $P2
+
+  iter_loop:
+      unless $P1 goto iter_end
+      $S5 = shift $P1          # the key "a", "b", or "c"
+      $I9 = $P2[$S5]           # the value 10, 20, or 30
+      say $I9
+      goto iter_loop
+  iter_end:
+</pre>
+This example creates an associative array C<$P2> that contains three
+keys "a", "b", and "c", assigning them the values 10, 20, and 30. It
+creates an iterator (C<$P1>) from the associative array using the
+C<iter> opcode, and then starts a loop over the iterator. At the start
+of each loop, the C<unless> instruction checks whether the iterator has
+any more elements. If there are no more elements, C<goto> jumps to the
+end of the loop, marked by the label C<iter_end>. If there are more
+elements, the C<shift> opcode extracts the next key. Keyed assignment
+stores the integer value of the element indexed by the key in C<$I9>.
+After printing the integer value, C<goto> jumps back to the start of the
+loop, marked by C<iter_loop>.
+
+<h4><a name="Multi&#45;level_Keys"
+>Multi&#45;level Keys</a></h4>
+
+X<keys>
+X<multi-level keys>
+Aggregates can hold any data type, including other aggregates.
+Accessing elements deep within nested data structures is a common
+operation, so PIR provides a way to do it in a single instruction.
+Complex keys specify a series of nested data structures, with each
+individual key separated by a semicolon.
+<pre>  $P0           = new "Hash"
+  $P1           = new "ResizablePMCArray"
+  $P1[2]        = 42
+  $P0["answer"] = $P1
+
+  $I1 = 2
+  $I0 = $P0["answer";$I1]
+  say $I0
+</pre>
+This example builds up a data structure of an associative array
+containing an ordered array. The complex key C<["answer"; $I1]>
+retrieves an element of the array within the hash. You can also set a
+value using a complex key:
+<pre>  $P0["answer";0] = 5
+</pre>
+The individual keys are integer or string literals, or variables with
+integer or string values.
+
+<h3><a name="Copying_and_Cloning"
+>Copying and Cloning</a></h3>
+
+X<PMCs (Polymorphic Containers); copying vs. cloning>
+PMC registers don't directly store the data for a PMC, they only store a
+pointer to the structure that stores the data. As a result, the C<=>
+operator doesn't copy the entire PMC, it only copies the pointer to the
+PMC data. If you later modify the copy of the variable, it will also
+modify the original.
+<pre>  $P0 = new "String"
+  $P0 = "Ford"
+  $P1 = $P0
+  $P1 = "Zaphod"
+  say $P0                # prints "Zaphod"
+  say $P1                # prints "Zaphod"
+</pre>
+In this example, C<$P0> and C<$P1> are both pointers to the same
+internal data structure.  Setting C<$P1> to the string literal
+"Zaphod", it overwrites the previous value "Ford". Both C<$P0> and
+C<$P1> refer to the C<String> PMC "Zaphod".
+
+The C<clone> X<clone opcode> opcode makes a deep copy of a PMC, instead
+of copying the pointer like C<=>X<= operator> does.
+<pre>  $P0 = new "String"
+  $P0 = "Ford"
+  $P1 = clone $P0
+  $P0 = "Zaphod"
+  say $P0        # prints "Zaphod"
+  say $P1        # prints "Ford"
+</pre>
+This example creates an identical, independent clone of the PMC in
+C<$P0> and puts it in C<$P1>. Later changes to C<$P0> have no effect on
+the PMC in C<$P1>.N<With low-level strings, the copies created by
+C<clone> are copy-on-writeX<copy-on-write> exactly the same as the copy
+created by C<=>.>
+
+To assign the I<value> of one PMC to another PMC that already exists, use the
+C<assign>X<assign opcode> opcode:
+<pre>  $P0 = new "Integer"
+  $P1 = new "Integer"
+  $P0 = 42
+  assign $P1, $P0    # note: $P1 must exist already
+  inc $P0
+  say $P0            # prints 43
+  say $P1            # prints 42
+</pre>
+This example creates two C<Integer> PMCs, C<$P1> and C<$P2>, and gives the
+first one the value 42. It then uses C<assign> to pass the same integer value
+on to C<$P1>. Though C<$P0> increments, C<$P1> doesn't change. The result for
+C<assign> must have an existing object of the right type in it, because
+C<assign> neither creates a new duplicate object (as does C<clone>) or reuses
+the source object (as does C<=>).
+
+<h3><a name="Properties"
+>Properties</a></h3>
+
+X<properties>
+X<PMCs (Polymorphic Containers); properties>
+
+PMCs can have additional values attached to them as "properties" of the
+PMC. Most properties hold extra metadata about the PMC.
+
+The C<setprop>X<setprop opcode> opcode sets the value of a named property on a
+PMC. It takes three arguments: the PMC on which to set a property, the name of
+the property, and a PMC containing the value of the property.
+<pre>  setprop $P0, "name", $P1
+</pre>
+The C<getprop>X<getprop opcode> opcode returns the value of a property.  It
+takes two arguments: the name of the property and the PMC from which to
+retrieve the property value.
+<pre>  $P2 = getprop "name", $P0
+</pre>
+This example creates a C<String> object in C<$P0> and an C<Integer> object with
+the value 1 in C<$P1>. C<setprop> sets a property named "eric" on the object in
+C<$P0> and gives the property the value of C<$P1>. C<getprop> retrieves the
+value of the property "eric" on C<$P0> and stores it in C<$P2>.
+<pre>  $P0 = new "String"
+  $P0 = "Half-a-Bee"
+  $P1 = new "Integer"
+  $P1 = 1
+
+  setprop $P0, "eric", $P1  # set a property on $P0
+  $P2 = getprop "eric", $P0 # retrieve a property from $P0
+
+  say $P2                   # prints 1
+</pre>
+Parrot stores PMC properties in an associative array where the name of the
+property is the key.
+
+C<delprop>X<delprop opcode> deletes a property from a PMC.
+<pre>  delprop $P1, "constant" # delete property
+</pre>
+You can fetch a complete hash of all properties on a PMC with
+C<prophash>X<prophash opcode>:
+<pre>  $P0 = prophash $P1 # set $P0 to the property hash of $P1
+</pre>
+Fetching the value of a non-existent property returns an C<Undef> PMC.
+
+<h3><a name="Vtable_Functions"
+>Vtable Functions</a></h3>
+
+X<vtable functions>
+You may have noticed that a simple operation sometimes has a different effect
+on different PMCs. Assigning a low-level integer value to a C<Integer> PMC sets
+its integer value of the PMC, but assigning that same integer to an ordered
+array sets the size of the array.
+
+Every PMC defines a standard set of low-level operations called vtable
+functions. When you perform an assignment like:
+
+   $P0 = 5
+
+
+... Parrot calls the C<set_integer_native> vtable function on the PMC referred
+to by register C<$P0>.
+
+X<polymorphic substitution>
+Parrot has a fixed set of vtable functions, so that any PMC can stand in for
+any other PMC; they're polymorphic.N<Hence the name "Polymorphic Container".>
+Every PMC defines some behavior for every vtable function. The default behavior
+is to throw an exception reporting that the PMC doesn't implement that vtable
+function. The full set of vtable functions for a PMC defines the PMC's basic
+interface, but PMCs may also define methods to extend their behavior beyond the
+vtable set.
+
+<h2><a name="Namespaces"
+>Namespaces</a></h2>
+
+X<namespaces>
+X<global variables>
+Parrot performs operations on variables stored in small register sets local to
+each subroutine. For more complex tasks,N<...and for most high-level languages
+that Parrot supports.> it's also useful to have variables that live beyond the
+scope of a single subroutine. These variables may be global to the entire
+program or restricted to a particular library. Parrot stores long-lived
+variables in a hierarchy of namespaces.
+
+The opcodes C<set_global>X<set_global opcode> and
+C<get_global>X<get_global opcode> store and fetch a variable in a
+namespace:
+<pre>  $P0 = new "String"
+  $P0 = "buzz, buzz"
+  set_global "bee", $P0
+  # ...
+  $P1 = get_global "bee"
+  say $P1                        # prints "buzz, buzz"
+</pre>
+The first two statements in this example create a C<String> PMC in
+C<$P0> and assign it a value. In the third statement, C<set_global>
+stores that PMC as the named global variable C<bee>.  At some later
+point in the program, C<get_global> retrieves the global variable by
+name, and stores it in C<$P1> to print.
+
+Namespaces can only store PMC variables.  Parrot boxes all primitive integer,
+number, or string values into the corresponding PMCs before storing them in a
+namespace.
+
+The name of every variable stored in a particular namespace must be
+unique. You can't have store both an C<Integer> PMC and an array PMC
+both named "bee", stored in the same namespace.N<You may wonder why
+anyone would want to do this. We wonder the same thing, but Perl 5 does
+it all the time. The Perl 6 implementation on Parrot includes type
+sigils in the names of the variables it stores in namespaces so each
+name is unique, e.g. C<$bee>, C<@bee>....>
+
+<h3><a name="Namespace_Hierarchy"
+>Namespace Hierarchy</a></h3>
+
+X<hierarchical namespaces>
+X<namespaces; hierarchy>
+
+A single global namespace would be far too limiting for most languages or
+applications. The risk of accidental collisions -- where two libraries try to
+use the same name for some variable -- would be quite high for larger code
+bases. Parrot maintains a collection of namespaces arranged as a tree, with the
+C<parrot> namespace as the root.  Every namespace you declare is a child of the
+C<parrot> namespace (or a child of a child....).
+
+The C<set_global> and C<get_global> opcodes both have alternate forms that take
+a key name to access a variable in a particular namespace within the tree. This
+code example stores a variable as C<bill> in the Duck namespace and retrieves
+it again:
+<pre>  set_global ["Duck"], "bill", $P0
+  $P1 = get_global ["Duck"], "bill"
+</pre>
+The key name for the namespace can have multiple levels, which correspond to
+levels in the namespace hierarchy. This example stores a variable as C<bill> in
+the Electric namespace under the General namespace in the hierarchy.
+<pre>  set_global ["General";"Electric"], "bill", $P0
+  $P1 = get_global ["General";"Electric"], "bill"
+</pre>
+X<root namespace>
+X<namespaces; root>
+
+The C<set_global> and C<get_global> opcode operate on the currently selected
+namespace. The default top-level namespace is the "root" namespace. The
+C<.namespace>X<.namespace directive> directive allows you to declare any
+namespace for subsequent code.  If you select the General Electric
+namespace, then store or retrieve the C<bill> variable without
+specifying a namespace, you will work with the General Electric bill,
+not the Duck bill.
+
+  .namespace ["General";"Electric"]
+  #...
+  set_global "bill", $P0
+  $P1 = get_global "bill"
+
+
+Passing an empty key to the C<.namespace> directive resets the selected
+namespace to the root namespace. The brackets are required even when the
+key is empty.
+
+  .namespace [ ]
+
+
+When you need to be absolutely sure you're working with the root namespace
+regardless of what namespace is currently active, use the
+C<set_root_global>X<set_root_global opcode> and
+C<get_root_global>X<get_root_global opcode> opcodes instead of
+C<set_global> and C<get_global>. This example sets and retrieves the
+variable C<bill> in the Dollar namespace, which is directly under the
+root namespace:
+<pre>  set_root_global ["Dollar"], "bill", $P0
+  $P1 = get_root_global ["Dollar"], "bill"
+</pre>
+X<HLL namespaces>
+X<namespaces; hll>
+To prevent further collisions, each high-level language running on
+Parrot operates within its own virtual namespace root. The default
+virtual root is C<parrot>, and the C<.HLL>X<.HLL directive> directive
+(for I<H>igh-I<L>evel I<L>anguage) selects an alternate virtual root for
+a particular high-level language:
+
+  .HLL 'ruby'
+
+
+The C<set_hll_global>X<set_hll_global opcode> and
+C<get_hll_global>X<get_hll_global opcode> opcodes are like
+C<set_root_global> and C<get_root_global>, except they always operate on
+the virtual root for the currently selected HLL. This example stores and
+retrieves a C<bill> variable in the Euro namespace, under the Dutch HLL
+namespace root:
+
+  .HLL 'Dutch'
+  #...
+  set_hll_global ["Euro"], "bill", $P0
+  $P1 = get_hll_global ["Euro"], "bill"
+
+
+<h3><a name="NameSpace_PMC"
+>NameSpace PMC</a></h3>
+
+X<NameSpace PMC>
+Namespaces are just PMCs. They implement the standard vtable functions
+and a few extra methods. The C<get_namespace>X<get_namespace opcode>
+opcode retrieves the currently selected namespace as a PMC object:
+
+  $P0 = get_namespace
+
+
+The C<get_root_namespace>X<get_root_namespace opcode> opcode retrieves
+the namespace object for the root namespace.  The
+C<get_hll_namespace>X<get_hll_namespace opcode> opcode retrieves the
+virtual root for the currently selected HLL.
+
+  $P0 = get_root_namespace
+  $P0 = get_hll_namespace
+
+
+Each of these three opcodes can take a key argument to retrieve a namespace
+under the currenly selected namespace, root namespace, or HLL root namespace:
+
+  $P0 = get_namespace ["Duck"]
+  $P0 = get_root_namespace ["General";"Electric"]
+  $P0 = get_hll_namespace ["Euro"]
+
+
+Once you have a namespace object you can use it to retrieve variables from the
+namespace instead of using a keyed lookup. This example first looks up the Euro
+namespace in the currently selected HLL, then retrieves the C<bill> variable
+from that namespace:
+
+  $P0 = get_hll_namespace ["Euro"]
+  $P1 = get_global $P0, "bill"
+
+
+Namespaces also provide a set of methods to provide more complex
+behavior than the standard vtable functions allow. The
+C<get_name>X<get_name method> method returns the name of the namespace
+as a C<ResizableStringArray>:
+
+  $P3 = $P0.'get_name'()
+
+
+The C<get_parent>X<get_parent method> method retrieves a namespace
+object for the parent namespace that contains this one:
+
+  $P5 = $P0.'get_parent'()
+
+
+The C<get_class>X<get_class method> method retrieves any Class PMC
+associated with the namespace:
+
+  $P6 = $P0.'get_class'()
+
+
+The C<add_var>X<add_var method> and C<find_var>X<find_var method>
+methods store and retrieve variables in a namespace in a
+language-neutral way:
+
+  $P0.'add_var'("bee", $P3)
+  $P1 = $P0.'find_var'("bee")
+
+
+The C<find_namespace>X<find_namespace method> method looks up a
+namespace, just like the C<get_namespace> opcode:
+
+  $P1 = $P0.'find_namespace'("Duck")
+
+
+The C<add_namespace>X<add_namespace method> method adds a new namespace
+as a child of the namespace object:
+
+  $P0.'add_namespace'($P1)
+
+
+The C<make_namespace>X<make_namespace method> method looks up a
+namespace as a child of the namespace object and returns it. If the
+requested namespace doesn't exist, C<make_namespace> creates a new one
+and adds it under that name:
+
+  $P1 = $P0.'make_namespace'("Duck")
+
+
+<h3><a name="Aliasing"
+>Aliasing</a></h3>
+
+X<aliasing>
+Just like regular assignment, the various operations to store a variable in a
+namespace only store a pointer to the PMC. If you modify the local PMC after
+storing in a namespace, those changes will also appear in the stored global. To
+store a true copy of the PMC, C<clone> it before you store it.
+
+Leaving the global variable as an alias for a local variable has its advantages.
+If you retrieve a stored global into a register and modify it:
+<pre>  $P1 = get_global "feather"
+  inc $P1
+</pre>
+... you modify the value of the stored global, so you don't need to call
+C<set_global> again.
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

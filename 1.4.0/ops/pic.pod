@@ -1,0 +1,75 @@
+=head1 NAME
+
+pic.ops - PIC (Polymorphic Inline Cache) Opcodes [deprecated]
+
+
+=cut
+
+=head1 DESCRIPTION
+
+During predereferencing opcodes that allow caching are rewritten so that
+equivalent opcodes in this file are used. User code MUST never emit these
+opcodes directly.
+
+=head2 General infix operations
+
+These operations take an infix operation number and PMC arguments.
+
+
+=cut
+
+=over 4
+
+=item B<pic_infix__>(inconst INT, invar PMC, invar PMC)
+
+One for fun and MOPS.
+
+
+=cut
+
+=item B<pic_inline_sub__>(inconst INT, invar PMC, invar PMC)
+
+And for more fun an inlined variant too.
+
+
+=cut
+
+=item B<pic_get_params__>(inconst PMC /* , ... */)
+
+Fetch function parameters for this subroutine.
+
+=item B<pic_set_returns__>(inconst PMC /* , ... */)
+
+Return values to caller.
+
+
+=cut
+
+=item B<pic_callr__>(inconst PMC)
+
+Call the function $1 as C<pc = func(interp, 0, **args)>. args[0] holds the
+address of the function result, args[1..] are function arguments, both
+according to the C<get_results> and C<set_args> opcodes. The function is
+a C interface function (or NCI) or a JITed PIR function. args[n+1] holds the
+C<pc> of the next opcode and is usually just returned.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head1 COPYRIGHT
+
+Copyright (C) 2005-2008, Parrot Foundation.
+
+=head1 LICENSE
+
+This program is free software. It is subject to the same license
+as the Parrot interpreter itself.
+
+
+=cut
+

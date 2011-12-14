@@ -1,0 +1,102 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>TCPStream</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Contents</a> &raquo; <a href="../../../../html/libs.html">Libraries</a> &raquo; TCPStream
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>TCPStream</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>  .sub main :main
+      load_bytecode &#39;library/tcpstream.pir&#39;
+
+      .local pmc stream
+      stream = new &#39;TCPStream&#39;
+      stream.&#39;connect&#39;(&#34;www.google.com&#34;, 80)
+
+      stream.&#39;say&#39;(&#34;GET / HTTP/1.0&#34;)
+      stream.&#39;say&#39;(&#34;User&#45;agent: Parrot&#34;)
+      stream.&#39;say&#39;(&#34;&#34;)
+
+      $S0 = stream.&#39;slurp&#39;()
+      print $S0
+
+      stream.&#39;close&#39;()
+  .end</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This is a high&#45;level sockets library designed to mimic Tcl&#39;s socket builtins. As such, it uses <code>print</code> and <code>say</code> instaed of <code>send</code> and <code>readline</code> and <code>slurp</code> instead of <code>recv</code>.</p>
+
+<h1><a name="VTABLE_FUNCTIONS"
+>VTABLE FUNCTIONS</a></h1>
+
+<dl>
+<dt><a name="init"
+><b><code>init</b></code></a></dt>
+Iniitialize a TCPStream object (create a socket and a buffer).
+<dt><a name="init_pmc"
+><b><code>init_pmc</b></code></a></dt>
+Initialize a TCPStream object from an already pre&#45;existing socket. This can be use to create servers, among other things.
+<dt><a name="get_bool"
+><b><code>get_bool</b></code></a></dt>
+Returns whether or not this socket has data waiting to be read.</dl>
+
+<h1><a name="METHODS"
+>METHODS</a></h1>
+
+<dl>
+<dt><a name="void_close()"
+><b><code>void close()</b></code></a></dt>
+Closes the socket.
+<dt><a name="void_connect(string_host,_int_port)"
+><b><code>void connect(string host, int port)</b></code></a></dt>
+Connects to a host/port.Throws an exception if unable to connect.
+<dt><a name="void_flush()"
+><b><code>void flush()</b></code></a></dt>
+
+<dt><a name="string_readline()"
+><b><code>string readline()</b></code></a></dt>
+Reads and returns up to (and excluding) an end&#45;of&#45;line character and discards the end&#45;of&#45;line character.
+<dt><a name="void_say(string_msg)"
+><b><code>void say(string msg)</b></code></a></dt>
+Print <code>msg</code> and an end&#45;of&#45;line character to the socket.
+<dt><a name="string_slurp()"
+><b><code>string slurp()</b></code></a></dt>
+Return all the data in the socket.</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Matt Diephouse &#60;matt@diephouse.com&#62;.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../../html/index.html">Contents</a> | <a href="../../../../../../html/libs.html">Libraries</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h2><a name="Description"
+>Description <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>    .param pmc args :slurpy
+    .local pmc dir
+    .local pmc file
+
+    $I0= args
+    unless $I0, return
+
+    $P1= pop args
+    file= new &#39;String&#39;
+    file= $P1
+
+    file= self.&#39;canonpath&#39;( file )
+
+    $I0= args
+    unless $I0, return_file
+
+    dir= self.&#39;catdir&#39;( args :flat )
+
+    .local pmc p6rule
+    .local pmc rulesub
+    .local pmc match
+
+    p6rule= compreg &#39;PGE::Perl6Regex&#39;
+
+    ## dir =~ m{\\$}is
+    rulesub= p6rule( &#39;\\ $&#39; )
+    match= rulesub( dir )
+
+    if match, return_dir_file
+    dir .= &#34;\\&#34;</pre>
+
+<p>return_dir_file: dir .= file .return( dir ) return_file: .return( file ) return:</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

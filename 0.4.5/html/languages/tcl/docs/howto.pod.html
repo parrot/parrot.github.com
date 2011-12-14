@@ -1,0 +1,219 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/tcl.html">TCL</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="contributing_to_tcl/parrot"
+>contributing to tcl/parrot <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>a brief overview on how to help out,
+if you&#39;re interested.
+In general,
+it&#39;s ok to send patches for tcl to the RT system for anything that isn&#39;t &#34;BIG STUFF&#34; &#45; those,
+please bounce off the MAINTAINERS first.
+We&#39;d prefer <code lang='und' xml:lang='und'>diff &#45;u</code> patches,
+but are happy to take complete files as well.</p>
+
+<p>Since partcl is bundled with the parrot source,
+svn access is handled via the same mechanism as for parrot itself.</p>
+
+<h1><a name="BIG_STUFF"
+>BIG STUFF <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Writing_Builtins"
+>Writing Builtins</a></dt><p class="pad"></p>
+
+<dd>partcl is a compiler.
+Given a section of tcl code,
+it translates that code into an AST (in the form of a Tcl* object from lib/*).
+Once a section of code has been translated,
+the object&#39;s <code lang='und' xml:lang='und'>compile</code> method is invoked,
+which then generates PIR which can be compiled by parrot.</dd><p class="pad"></p>
+
+<dd>The commands themselves have (well,
+some of them do) inlineable (compiled) versions: These are in lib/builtins,
+and all new development should go here.
+There are many old,
+runtime&#45;only versions that exist in lib/commands.
+All *new* development should occur in lib/builtins.
+Minor patches to things in lib/commands are ok,
+though.</dd><p class="pad"></p>
+
+<dd>When you define an inline&#45;able builtin,
+<code lang='und' xml:lang='und'>tcl.pl</code> will automatically generate a version similar in those in lib/commands/ that invokes the inline&#39;able version,
+compiles it,
+invokes it,
+and returns the result immediately.
+The compiler will fall back to this version as necessary,
+you don&#39;t have to worry about it.</dd><p class="pad"></p>
+
+<dd>When writing inlined builtins,
+there are two variants: those generated automatically by running <code lang='und' xml:lang='und'>tools/gen_inline.pl</code>,
+and those that are handrolled.</dd><p class="pad"></p>
+
+<dd>Templates for inlined builtins look a lot like a perl hash that defines the various arguments,
+options,
+and code for the builtin.
+By switching to this declarative scheme,
+we hope to elminate a lot of the bookkeeping code,
+as well as simplify generations.
+While we&#39;re using perl to generate the code,
+this is a one time cost at build time: at run time,
+we are using PIR.
+(Which in turn generates PIR itself).</dd><p class="pad"></p>
+
+<dd>Handrolled inlined builtins take two args: a TclCompiler,
+and a single container PMC with the various args.
+The container PMC has objects generated from parser that need to be compiled themselves before you can rely on their values.
+Your return value is simply the compiler object.
+You should only use this method for generating builtins if a builtin cannot be defined using a template,
+and even then,
+extending the template parser is probably the right answer.</dd><p class="pad"></p>
+
+<dd>(This is as opposed to the interpreted style in lib/commands,
+which takes a variable number of already compiled args at runtime.
+Our fallback method bundles these up,
+passing in a starting register of 0,
+and uses the resulting PIR to generate a .sub immediately and then invoke it.
+The runtime fallback is always going to be necessary for HLL interoperability.)</dd><p class="pad"></p>
+
+<dd>Remember,
+every arg to your builtin is potentially variable and may change at runtime.
+You can check the type of the object at compile time.
+However,
+if it&#39;s constant,
+then you can optimize: for example,
+we could optimize [puts &#45;nonewline &#34;whee\n&#34;] down to,
+basically,
+{print &#34;whee\n&#34;}...
+however,
+we still have to be able to deal with [set a &#45;nonewline; puts $a &#34;whee\n&#34;].
+So,
+your first pass should probably do no optimizations.
+If you see a potential for optimization,
+however,
+at least add an XXX comment so we can get back to it later.
+At this point,
+I&#39;d rather spend time working on new features than making existing features faster.</dd><p class="pad"></p>
+
+<dd>The results of calling the inlined code will be used by <code lang='und' xml:lang='und'>lib/tclcommand.pir</code>.
+The inlined code is further wrapped in a protective conditional which will skip the inlined version if it can no longer be trusted (that is,
+if [proc] or [rename] has been invoked),
+and will fall back to the interpreted version as necessary.
+(And throw an exception if the command is not found at runtime.).</dd><p class="pad"></p>
+
+<dt><a name="speed"
+>speed</a></dt><p class="pad"></p>
+
+<dd>We&#39;re currently slow,
+compared to tclsh.
+It&#39;s not worth worrying about this in terms of specific numbers until we can run <code lang='und' xml:lang='und'>tcltest</code> natively.
+That said,
+any patches that improve speed without harming maintainability will of course be applied.</dd><p class="pad"></p>
+
+<dt><a name="features"
+>features</a></dt><p class="pad"></p>
+
+<dd>We&#39;re currently missing some things that require support from parrot.
+See <a href='TODO'>hacks.pod</a> for a list.
+In general,
+though,
+a lot of what we need to do is possible with parrot.</dd><p class="pad"></p>
+
+<dd>If you&#39;re looking for something to todo,
+see <a href='TODO'>TODO</a> one level up.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="DOCUMENTATION"
+>DOCUMENTATION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="pod"
+>pod</a></dt><p class="pad"></p>
+
+<dd>Every PIR .sub that&#39;s defined should probably have some POD to go along with it to document the arguments and return values.
+Only exceptions to this should be subs which correspond directly to Tcl builtins &#45;&#45; those are already documented elsewhere.</dd><p class="pad"></p>
+
+<dt><a name="big_picture_docs."
+>big picture docs.</a></dt><p class="pad"></p>
+
+<dd>Are the docs in <code lang='und' xml:lang='und'>docs/</code> useful?
+Could use someone to proof them,
+and verify that there are no missing chunks (if missing,
+write them,
+or get them added to the <code lang='und' xml:lang='und'>TODO</code>),
+and that they are coherent.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="PIR"
+>PIR <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Missing_Commands"
+>Missing Commands</a></dt><p class="pad"></p>
+
+<dd>Every builtin command corresponds to an appropriately named file in <code lang='und' xml:lang='und'>src/builtins</code> or <code lang='und' xml:lang='und'>runtime/builtins</code> &#45; Each of these subs takes some number of PMCs as arguments.
+For those commands that take a fixed number of parameters,
+we declare them with <code lang='und' xml:lang='und'>.param</code>.
+For those that take a variable number,
+we use the <code lang='und' xml:lang='und'>foldup</code> opcode.</dd><p class="pad"></p>
+
+<dd>If the return value would be TCL_OK,
+then simply <code lang='und' xml:lang='und'>.return</code> the value from the sub.
+For any other return type,
+use one of the macros in <code lang='und' xml:lang='und'>src/returncodes.pir</code>: <code lang='und' xml:lang='und'>.throw</code>,
+etc.
+the value can be any simple register or a PMC,
+the calling conventions will autobox as necessary.</dd><p class="pad"></p>
+
+<dd>Before adding new functionality,
+add a test (or a test in an existing) file in <code lang='und' xml:lang='und'>t/</code> &#45; tests for <code lang='und' xml:lang='und'>puts</code>,
+for example,
+go in <code lang='und' xml:lang='und'>t/cmd_puts.t</code> &#45; we use the <code lang='und' xml:lang='und'>Test::Harness</code> framework,
+via <code lang='und' xml:lang='und'><a href='../../../lib/Parrot/Test.pm.html'>Parrot::Test</a></code>.</dd><p class="pad"></p>
+
+<dd>Our final goal will be to pass (most of) the tcl test suite: run <code lang='und' xml:lang='und'>make tcl&#45;test</code> to checkout the latest version of of the tcl test suite and run it.
+Warning: slow...</dd><p class="pad"></p>
+
+<dd>Long term goal is remove any tests in <code lang='und' xml:lang='und'>t/</code> that are testing things that are already tested in the official tcl suite.
+Partcl&#39;s checked in test suite should just be checking partcl&#45;specific functionaliity.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

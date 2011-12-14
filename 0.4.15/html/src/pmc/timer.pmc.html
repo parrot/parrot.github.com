@@ -1,0 +1,153 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Timer</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Timer</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/pmc.html">PMCs</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/pmc/timer.pmc &#45; Timer</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>    new P0, .Timer
+    set P0[.PARROT_TIMER_SEC], I_seconds        # whole seconds
+    set P0[.PARROT_TIMER_USEC], I_micro seconds # and/or micro seconds
+    set P0[.PARROT_TIMER_NSEC], N_seconds_frac  # or fraction in seconds
+    set P0[.PARROT_TIMER_REPEAT], I_repeat      # 0 = one shot ...
+    set P0[.PARROT_TIMER_HANDLER], P_sub        # set handler sub PMC
+    invoke P0                                   # start timer
+    set P0[.PARROT_TIMER_RUNNING], 1            # same
+
+    new P0, .Timer, P1                          # set everything
+
+    set I0, P0[.PARROT_TIMER_SEC]               # query current timer status
+    set N0, P0[.PARROT_TIMER_NSEC]
+    ...
+    set P0[.PARROT_TIMER_RUNNING], 0            # turn timer off</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This is the Timer base class</p>
+
+<p>Running timers are kept in a linked list. Each timer has a tick count, which gets decremented if the system timer expires. If the tick count reaches zero, the timer handler gets invoked via Parrot&#39;s event handling code.</p>
+
+<p>The Timer resolution is operating system dependent. It&#39;s only guaranteed that the Timer will fire some time after the programmed interval.</p>
+
+<p>The Timer stops after invoking the handler (repeat+1) times. To create a Timer that will run forever, set &#34;repeat&#34; to &#45;1. Turning the Timer off preserves set values; the Timer is not destroyed.</p>
+
+<p>When setting both <code lang='und' xml:lang='und'>PARROT_TIMER_SEC</code> and <code lang='und' xml:lang='und'>PARROT_TIMER_USEC</code> it must be done in that sequence, whole seconds first. If a timer is constructed with an initializer and it should be run immediately, the <code lang='und' xml:lang='und'>PARROT_TIMER_RUNNING</code> value has to be in the last key of the initializer.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_void_add_timer(PARROT_INTERP,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>static void add_timer(PARROT_INTERP, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Adds a new timer event to the event queue.</dd><p class="pad"></p>
+
+<dt><a name="static_void_del_timer(PARROT_INTERP,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>static void del_timer(PARROT_INTERP, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Deletes the timer event.</dd><p class="pad"></p>
+
+<dt><a name="void_init()"
+><b><code lang='und' xml:lang='und'>void init()</b></code></a></dt><p class="pad"></p>
+
+<dd>Initializes the timer.</dd><p class="pad"></p>
+
+<dt><a name="void_init_pmc(PMC_*init)"
+><b><code lang='und' xml:lang='und'>void init_pmc(PMC *init)</b></code></a></dt><p class="pad"></p>
+
+<dd>See <em lang='und' xml:lang='und'>docs/pdds/pdd02_vtables.pod</em> for initializers.</dd><p class="pad"></p>
+
+<dt><a name="void_destroy()"
+><b><code lang='und' xml:lang='und'>void destroy()</b></code></a></dt><p class="pad"></p>
+
+<dd>Destroys the timer.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_integer_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>INTVAL get_integer_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the timer info for <code lang='und' xml:lang='und'>key</code>.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_pmc_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>PMC *get_pmc_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the PMC associated with <code lang='und' xml:lang='und'>key</code>.</dd><p class="pad"></p>
+
+<dt><a name="FLOATVAL_get_number_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>FLOATVAL get_number_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the number associated with <code lang='und' xml:lang='und'>key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_integer_keyed_int(INTVAL_key,_INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_integer_keyed_int(INTVAL key, INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the value associated with <code lang='und' xml:lang='und'>key</code> to <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_pmc_keyed_int(INTVAL_key,_PMC_*value)"
+><b><code lang='und' xml:lang='und'>void set_pmc_keyed_int(INTVAL key, PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the PMC associated with <code lang='und' xml:lang='und'>key</code> to <code lang='und' xml:lang='und'>*value</code>.</dd><p class="pad"></p>
+
+<dt><a name="opcode_t_*invoke(void_*next)"
+><b><code lang='und' xml:lang='und'>opcode_t *invoke(void *next)</b></code></a></dt><p class="pad"></p>
+
+<dd>Adds the timer to the event queue.</dd><p class="pad"></p>
+
+<dt><a name="void_set_number_keyed_int(INTVAL_key,_FLOATVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_number_keyed_int(INTVAL key, FLOATVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the floating&#45;point value associated with <code lang='und' xml:lang='und'>key</code> to <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Initial proposal by leo 2003.07.15</p>
+
+<p>Initial revision 2003.07.17</p>
+
+<p>Switch to events 2004.01.07</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

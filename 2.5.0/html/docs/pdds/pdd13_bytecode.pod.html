@@ -1,0 +1,994 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PDD 13: Bytecode</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; PDD 13: Bytecode
+                </div>
+
+<h1><a name="PDD_13:_Bytecode"
+>PDD 13: Bytecode</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>This PDD describes the file format for Parrot Bytecode (PBC) files and the interface through which they may be manipulated programmatically.</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Synopsis"
+>Synopsis</a></h2>
+
+<p>Parrot bytecode is a binary representation of instructions and data for execution on the virtual machine.</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<p>PBC,
+Parrot bytecode,
+is the binary format used internally by the Parrot VM to store the data necessary to execute a compiled PIR program.
+The sequence of instructions making up a Parrot program,
+a constants table,
+an annotations table and any ancillary data are stored in a PBC.
+These files usually have the extension <code>.pbc</code>.</p>
+
+<p>The PBC format is designed so that any valid PBC file can be read and executed by Parrot on any platform,
+but may be encoded more optimally for a particular platform.</p>
+
+<p>It is possible to add arbitrary annotations to the instruction sequence,
+for example line numbers in high level languages and other debug data.</p>
+
+<p>PMCs are be used to represent packfiles and packfile segments to provide a programmatic interface,
+both to Parrot programs and Parrot internals.</p>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<h3><a name="Packfiles"
+>Packfiles</a></h3>
+
+<p>This section of the documentation describes the format of Parrot packfiles.
+These contain the bytecode (sequence of instructions),
+constants table,
+fixup table,
+debug data,
+annotations and possibly more.</p>
+
+<p>Note that,
+unless otherwise stated,
+all offsets and lengths are given in terms of Parrot opcodes,
+not bytes.
+An opcode corresponds to the word size,
+defined as long.
+The ptrsize is silently assumed to be the same as the opcode size.</p>
+
+<h4><a name="Packfile_Header"
+>Packfile Header</a></h4>
+
+<p>PBC files start with a variable length header.
+All data in this header is stored as strings or in a single byte so endianness and word size need not be considered when reading it.</p>
+
+<p>Note that in this section only,
+offsets and lengths are in bytes.</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0      | 8      | 0xFE 0x50 0x42 0x43 0x0D 0x0A 0x1A 0x0A                |
+  |        |        | Parrot &#34;Magic String&#34; to identify a PBC file. In C,    |
+  |        |        | this is the string C&#60;\376PBC\r\n\032\n&#62; or             |
+  |        |        | C&#60;\xfe\x50\x42\x43\x0d\x0a\x1a\x0a&#62;.                   |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 8      | 1      | Word size in bytes of words making up the segments of  |
+  |        |        | the PBC file. Must be one of:                          |
+  |        |        |    0x04 &#45; 4 byte (32&#45;bit) words                        |
+  |        |        |    0x08 &#45; 8 byte (64&#45;bit) words                        |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 9      | 1      | Byte order within the words making up the segments of  |
+  |        |        | the PBC file. Must be one of:                          |
+  |        |        |    0x00 &#45; Little Endian                                |
+  |        |        |    0x01 &#45; Big Endian                                   |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 10     | 1      | The encoding of floating point numbers in the file.    |
+  |        |        | Must be one of:                                        |
+  |        |        |    0x00 &#45; IEEE 754 8 byte double                       |
+  |        |        |    0x01 &#45; i386 little endian 12 byte long double       |
+  |        |        |    0x02 &#45; IEEE 754 16 byte long double                 |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 11     | 1      | Major version number of the version of Parrot that     |
+  |        |        | wrote this bytecode file. For example, if Parrot 0.9.5 |
+  |        |        | wrote it, this byte would have the value 0.            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 12     | 1      | Minor version number of the version of Parrot that     |
+  |        |        | wrote this bytecode file. For example, if Parrot 0.9.5 |
+  |        |        | wrote it, this byte would have the value 9.            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 13     | 1      | Patch version number of the version of Parrot that     |
+  |        |        | wrote this bytecode file. For example, if Parrot 0.9.5 |
+  |        |        | wrote it, this byte would have the value 5.            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 14     | 1      | Major version number of the bytecode file format. See  |
+  |        |        | the section below on bytecode file format version      |
+  |        |        | numbers.                                               |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 15     | 1      | Minor version number of the bytecode file format. See  |
+  |        |        | the section below on bytecode file format version      |
+  |        |        | numbers.                                               |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 16     | 1      | The type of the UUID associated with this packfile.    |
+  |        |        | Must be one of:                                        |
+  |        |        |    0x00 &#45; No UUID                                      |
+  |        |        |    0x01 &#45; MD5                                          |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 17     | 1      | Length of the UUID associated with this packfile. May  |
+  |        |        | be zero if the type of the UUID is 0x00. Maximum       |
+  |        |        | value is 255.                                          |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 18     | u      | A UUID of u bytes in length, where u was specified as  |
+  |        |        | the length of the UUID in the previous field. Be sure  |
+  |        |        | that UUIDs are stored and read as strings. The UUID is |
+  |        |        | computed by applying the hash function specified in    |
+  |        |        | the UUID type field over the entire packfile not       |
+  |        |        | including this header and its trailing zero padding.   |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 18 + u | n      | Zero&#45;padding to make the total header length a         |
+  |        |        | multiple of 16 bytes in length.                        |
+  |        |        |    n = u % 16 ? 16 &#45; (u % 16) : 0                      |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>Everything beyond the header is an opcode, with word length and byte ordering as defined in the header. If the word length and byte ordering of the machine that is reading the PBC file do not match these, it needs to transform the words making up the rest of the packfile.</p>
+
+<ul>
+<li>Bytecode File Version Numbers</li>
+
+<p>The bytecode file version number exists to decouple the format of the bytecode file from the version of the Parrot implementation that is reading/writing it. It has a major and a minor part.</p>
+
+<p>The major version number should be incremented whenever there is a change to the layout of bytecode files. This includes new segments, changes to segment headers or changes to the format of the data held within a segment.</p>
+
+<p>The minor version number should be incremented in all other cases when a change is made that means a previous version of Parrot would not be able to run the program encoded in the packfile. This includes:</p>
+
+<dl>
+<dt><a name="Opcode_renumbering"
+>Opcode renumbering</a></dt>
+
+<dt><a name="Addition_of_new_opcodes_and_removal_of_existing_ones"
+>Addition of new opcodes and removal of existing ones</a></dt>
+
+<dt><a name="Addition_of_new_core_PMCs_and_removal_of_existing_ones"
+>Addition of new core PMCs and removal of existing ones</a></dt>
+
+<dt><a name="Changes_to_the_interface_(externally_visible_behaviour)_of_an_opcode_or_PMC"
+>Changes to the interface (externally visible behaviour) of an opcode or PMC</a></dt>
+</dl>
+
+<p>Parrot currently exits when reading an incompatible bytecode file version number. It is possible for a single version of Parrot to support reading and writing more than one bytecode file format, but this is not currently implemented. Future versions of Parrot may also provide a bytecode migration tool, to convert a bytecode file to a more recent format.</p>
+
+<p>The bytecode format versions are listed in the PBC_COMPAT file, sorted with the latest version first in the file:</p>
+
+<pre>  MAJOR.MINOR DATE NAME DESCRIPTION</pre>
+</ul>
+
+<p>We should be aware that some systems such as a Sparc/PPC 64&#45;bit use strict 8&#45;byte ptr_alignment per default, and all <code>(opcode_t*)cursor++</code> or <code>(opcode_t*)cursor +=</code> advances must ensure that the cursor ptr is 8&#45;byte aligned. We enforce 16&#45;byte alignment at the start and end of all segments and ptrsize alignment for all items (strings, integers, and opcode_t ops), but not in&#45;between, esp. with 4&#45;byte integers and 4&#45;byte opcode_t pointers.</p>
+
+<p>So we relax pointer alignment strictness on Sparc64, but may add a <code>&#45;&#45;64compat</code> option to parrot in the future to produce 8&#45;byte aligned data. Operations on aligned pointers are much faster than on un&#45;aligned pointers.</p>
+
+<h4><a name="Directory_Format_Header"
+>Directory Format Header</a></h4>
+
+<p>Packfiles contain a directory describing the segments that it contains. This header specifies the format of the directory.</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0      | 1      | The format of the directory. Must be:                  |
+  |        |        |    0x01 &#45; Directory Format 1                           |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1      | 3      | Must be:                                               |
+  |        |        |    0x00 0x00 0x00 &#45; Reserved                           |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>Currently only <code>Format 1</code> exists. In the future, the format of the directory may change. A single version of Parrot may then become capable of generating and reading files of more than one directory format. This header enables Parrot to detect whether it is able to read the directory segment in the packfile.</p>
+
+<p>This header must be followed immediately by a directory segment.</p>
+
+<h4><a name="Packfile_Segment_Header"
+>Packfile Segment Header</a></h4>
+
+<p>All segments, regardless of type, start with a 1 opcode segment header. All other segments below are prefixed with this.</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0      | 1      | The total size of the segment in opcodes, including    |
+  |        |        | this header.                                           |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1      | 1      | Internal type of the segment                           |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 2      | 1      | Internal id                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 3      | 1      | Size of the following op array, 0 if none              |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<h4><a name="Segment_Padding"
+>Segment Padding</a></h4>
+
+<p>All segments must have trailing zero (NULL) values appended so they are a multiple of 16 bytes in length. (This allows wordsize support of up to 128 bits.)</p>
+
+<h4><a name="Directory_Segment"
+>Directory Segment</a></h4>
+
+<p>This segment lists the other segments that make up the packfile and where in the file they are located. It must occur immediately after the directory format header. Only one of these segments may occur in a packfile. In the future, a hierarchy of directories may be allowed.</p>
+
+<p>The directory segment adds one additional header after the standard packfile header data, which specifies the number of entries in the directory.</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1      | 1      | The number of entries in the directory.                |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>Following this are <code>n</code> variable length entries formatted as described in the following table. Offsets are in words, but are given relative to the start of an individual entry.</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0      | 1      | The type of the segment. Must be one of the following: |
+  |        |        |    0x00 &#45; Reserved (Directory Segment)                 |
+  |        |        |    0x01 &#45; Default Segment                              |
+  |        |        |    0x02 &#45; Fixup Segment                                |
+  |        |        |    0x03 &#45; Constant Table Segment                       |
+  |        |        |    0x04 &#45; Bytecode Segment                             |
+  |        |        |    0x05 &#45; PIR Debug Segment                            |
+  |        |        |    0x06 &#45; Annotations Segment                          |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1      | n      | The name of the segment, as a (NULL terminated) ASCII  |
+  |        |        | C string. This must be padded with trailing NULL       |
+  |        |        | (zero) values to be a full word in size.               |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | n + 1  | 1      | The offset to the segment, relative to the start of    |
+  |        |        | the packfile. Specified as a number of words, where    |
+  |        |        | the word size is that specified in the header. (Parrot |
+  |        |        | may need to do some computation to transform this to   |
+  |        |        | an offset in terms of its own word size.) As segments  |
+  |        |        | must always be aligned on 16&#45;byte boundaries, this     |
+  |        |        | scheme scales up to 128&#45;bit platforms.                 |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | n + 2  | 1      | The length of the segment, including its header, in    |
+  |        |        | words. This must match the length stored at the start  |
+  |        |        | of the header of the segment the entry is describing.  |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<h4><a name="Default_Segment"
+>Default Segment</a></h4>
+
+<p>The default segment has no additional headers. It will, if possible, be memory mapped. More than one may exist in the packfile, and they are identified by name. They may be used for storing any data that does not fit into any other segment, for example the source code from a high level language (HLL).</p>
+
+<h4><a name="Bytecode_Segment"
+>Bytecode Segment</a></h4>
+
+<p>This segment has no additional headers. It stores a stream of instructions in bytecode format, with the length given in the last field of the segment header.</p>
+
+<p>Instructions have variable length. Each instruction starts with an operation code (opcode).</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0      | 1      | A valid Parrot opcode, as specified in the opcode      |
+  |        |        | list include/parrot/oplib/ops.h.                       |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>Zero or more operands follow the opcode. All opcodes take a fixed number of operands. An individual operand is always one word in length and may be of one of the following forms.</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Operand Type     | Description                                           |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Register         | An integer specifying a register number.              |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Integer Constant | An integer that is the constant itself. That is, the  |
+  |                  | constant is stored directly in the instruction        |
+  |                  | stream. Storing integer constants of length greater   |
+  |                  | than 32 bits has undefined behaviour and should be    |
+  |                  | considered unportable.                                |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Number Constant  | An index into the constants table.                    |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | String Constant  | An index into the constants table.                    |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | PMC Constant     | An index into the constants table.                    |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<h4><a name="Constants_Segment"
+>Constants Segment</a></h4>
+
+<p>This segment stores number, string and PMC constants.</p>
+
+<p>The first element is the number of constants contained.</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 2      | 1      | The number of constants in the table.                  |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>Following this are <code>n</code> constants, each with a single word header specifying the type of constant that follows.</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0      | 1      | The type of the constant. Must be one of:              |
+  |        |        |    0x00 &#45; No constant                                  |
+  |        |        |    0x6E &#45; Number constant (ASCII &#39;n&#39;)                  |
+  |        |        |    0x73 &#45; String constant (ASCII &#39;s&#39;)                  |
+  |        |        |    0x70 &#45; PMC constant (ASCII &#39;p&#39;)                     |
+  |        |        |    0x6B &#45; Key constant (ASCII &#39;k&#39;)                     |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>All constants that are not a multiple of the word size in length must be padded with trailing zero bytes up to a word size boundary.</p>
+
+<ul>
+<li>Number Constants</li>
+
+<p>The number is stored in the format defined in the Packfile header. Any padding that is needed will follow.</p>
+
+<li>String Constants</li>
+
+<p>String constants are stored in the following format, with offsets relative to the start of the constant including its type.</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1      | 1      | Flags, copied from the string structure.               |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 2      | 1      | Character set; either the index of a built&#45;in one or a |
+  |        |        | dynamically loaded one whose index is in a range given |
+  |        |        | in the dependencies table. Note that dynamically       |
+  |        |        | loaded character sets are not currently supported.     |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 3      | 1      | Encoding, either the index of a built&#45;in one or a      |
+  |        |        | dynamically loaded one whose index is in a range given |
+  |        |        | in the dependencies table. Note that dynamically       |
+  |        |        | loaded encodings are not currently supported.          |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 4      | 1      | Length of the string data in bytes.                    |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 5      | n      | String data with trailing zero padding as required.    |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>Note: The encoding and charset are currently packed together with the Flags, using an unique field of Length 1.</p>
+
+<li>PMC Constants</li>
+
+<p>PMCs that can be saved in packfiles as constants implement the freeze and thaw vtable functions. Their frozen data is placed in a string, stored in the same format as a string constant.</p>
+
+<li>Key Constants</li>
+
+<p>Key constants are made up a number of components, where one component is a &#34;dimension&#34; in the key. The number of components in the key is stored at the start of the constant.</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1      | 1      | Number of key components that follow.                  |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>Following this are <code>n</code> entries of two words each that specify the key&#39;s type and value. The key value may be a register or another constant, but not another key constant. All constants other than integer constants are indexes into the constants table.</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0      | 1      | Type of the key. Must be one of:                       |
+  |        |        |    0x00 &#45; Integer register                             |
+  |        |        |    0x01 &#45; String register                              |
+  |        |        |    0x02 &#45; PMC register                                 |
+  |        |        |    0x03 &#45; Number register                              |
+  |        |        |    0x10 &#45; Integer constant                             |
+  |        |        |    0x11 &#45; String constant (constant table index)       |
+  |        |        |    0x12 &#45; PMC constant (constant table index)          |
+  |        |        |    0x13 &#45; Number constant (constant table index)       |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1      | 1      | Value of the key.                                      |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+</ul>
+
+<h4><a name="Fixup_Segment"
+>Fixup Segment</a></h4>
+
+<p>The fixup segment maps names of subs to offsets in the bytecode stream.</p>
+
+<p>The number of fixup table entries, n, is given by the last field of the segment header.</p>
+
+<p>This is followed by n fixup table entries, of variable length, that take the following form.</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0      | 1      | Type of the fixup. Must be:                            |
+  |        |        |    0x01 &#45; Subroutine fixup constant string             |
+  |        |        |    0x02 &#45; Subroutine fixup ascii string                |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1      | &#45;      | The label that is being fixed up. A string constant,   |
+  |        |        | stored as an index into the constants table in the 01  |
+  |        |        | case, a NULL terminated ASCII string padded to word    |
+  |        |        | length with zeroes in the 02.                          |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | &#45;      | 1      | This is an index into the constants table for the sub  |
+  |        |        | PMC corresponding to the label.                        |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<h4><a name="PIR_Debug_Segment"
+>PIR Debug Segment</a></h4>
+
+<p>This segment stores the filenames and line numbers of PIR code that was compiled to bytecode. The segment comes in two parts.</p>
+
+<dl>
+<dt><a name="A_list_of_mappings_between_instructions_in_the_bytecode_and_line_numbers,_with_one_entry_per_instruction"
+>A list of mappings between instructions in the bytecode and line numbers, with one entry per instruction</a></dt>
+
+<dt><a
+>A list of mappings between offsets in the bytecode and filenames, indicating that the bytecode from that point on until the next entry was generated from the PIR found in the given filename</a></dt>
+</dl>
+
+<p>The length of the table of line number mappings is given by the last field of the segment header.</p>
+
+<p>Then comes the table:</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0      | 1      | Line number for the offset in the bytecode.            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>Then comes an opcode with n, the number of file mappings.</p>
+
+<p>Then come n mappings.</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0      | 1      | Offset in the bytecode.                                |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1      | 1      | A string constant holding the filename, stored as an   |
+  |        |        | index into the constants table.                        |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<h4><a name="Annotations_Segment"
+>Annotations Segment</a></h4>
+
+<p>Annotations allow any instruction in the bytecode stream to have zero or more key/value pairs associated with it. These can be retrieved at runtime. High level languages can use annotations to store file names, line numbers, column numbers and any other data, for debug purposes or otherwise, that they need.</p>
+
+<p>The segment comes in three parts:</p>
+
+<dl>
+<dt><a name="A_list_of_annotation_keys_(for_example,_&#34;line&#34;_and_&#34;file&#34;)."
+>A list of annotation keys (for example, &#34;line&#34; and &#34;file&#34;).</a></dt>
+
+<dt><a
+>An annotation groups table, used to group together annotations for a particular HLL source file (an annotation group starting clears all active annotations, so they will not spill over between source files; it also allows for faster lookup of annotations).</a></dt>
+{{ TODO: Does it clear all annotations, or all annotation groups? }}
+<dt><a
+>A list of indexes into the bytecode stream and key/value pairings (for example, starting at instruction 235, the annotation &#34;line&#34; has value &#34;42&#34;).</a></dt>
+</dl>
+
+<p>The last field of the segment header is not used.</p>
+
+<p>The first word in the segment supplies the number of keys.</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1      | 1      | Number of annotation key entries that follow.          |
+  |        |        |    n                                                   |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>Following this are <code>n</code> annotation key entries. There is one entry per key (such as &#34;line&#34; or &#34;file&#34;), but the bytecode may be annotated many times with that key. Key entries take the following format.</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0      | 1      | Index into the constants table of a string containing  |
+  |        |        | the name of the key.                                   |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1      | 1      | The type of value that is stored with the key.         |
+  |        |        |    0x00 &#45; Integer                                      |
+  |        |        |    0x01 &#45; String Constant                              |
+  |        |        |    0x02 &#45; Number Constant                              |
+  |        |        |    0x03 &#45; PMC Constant                                 |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>The annotation groups table comes next. This starts with a single integer to specify the number of entries in the table.</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1      | 1      | Number of annotation group entries that follow.        |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>A group entry maps an offset in the bytecode segment to an offset in the list of annotations (that is, offset 0 refers to the first word following this table). The list of offsets into the bytecode segment (and by the definition of this segment, the offsets into the annotations list) must be in ascending order.</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0      | 1      | Offset into the bytecode segment where the             |
+  |        |        | instructions for a particular high level source file   |
+  |        |        | start.                                                 |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1      | 1      | Offset into the annotations list specifying where the  |
+  |        |        | annotations for the given instruction start.           |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>The rest of the segment is made up of a sequence of bytecode offset to key and value mappings. First comes the number of them that follow:</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1      | 1      | Number of bytecode to keypair mappings that follow.    |
+  |        |        |    n                                                   |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>Then there are n entries of the following format:</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Offset | Length | Description                                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0      | 1      | Offset into the bytecode segment, in words, of the     |
+  |        |        | instruction being annotated. At runtime, this will     |
+  |        |        | correspond to the program counter.                     |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1      | 1      | The key of the annotation, specified as an index into  |
+  |        |        | the zero&#45;based list of keys specified in the first     |
+  |        |        | part of the segment. That is, if key &#34;line&#34; was the    |
+  |        |        | first entry and &#34;file&#34; the second, they would have     |
+  |        |        | indices 0 and 1 respectively.                          |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 2      | 2      | The value of the annotation. If the annotation type    |
+  |        |        | (specified with the key) is an integer, the value is   |
+  |        |        | placed directly into this word. Otherwise, an index    |
+  |        |        | into the constants table is used.                      |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>Note that the value of an annotation with a particular key is taken to apply to all following instructions up to the point of a new value being specified for that key with another annotation. This means that if 20 instructions make up the compiled form of a single line of code, only one line annotation is required. Note that this also implies that annotations must be placed in the same order as the instructions.</p>
+
+<h3><a name="Packfile_PMCs"
+>Packfile PMCs</a></h3>
+
+<p>A packfile can be represented in memory by Parrot as a tree of PMCs. These provide a programmatic way to construct and walk packfiles, both for the Parrot internals and from programs running on the Parrot VM.</p>
+
+<p>{{ TODO... ManagedStruct and UnmanagedStruct may be helpful for these; consider switching these PMCs over to use them at some point. }}</p>
+
+<h4><a name="Packfile.pmc"
+>Packfile.pmc</a></h4>
+
+<p>This PMC represents the packfile overall. It will be constructed by the VM when reading a packfile. It implements the following methods and vtable functions.</p>
+
+<ul>
+<li><code>get_string</code> (vtable)</li>
+
+<p>Serializes this packfile data structure into a bytestream ready to be written to disk (that is, maps from PMCs to on&#45;disk representation).</p>
+
+<li><code>set_string_native</code> (vtable)</li>
+
+<p>Takes a string containing an entire packfile in the on&#45;disk format, attempts to unpack it into a tree of Packfile PMCs and sets this Packfile PMC to represent the top of that tree (that is, maps from on&#45;disk representation to a tree of PMCs).</p>
+
+<li><code>get_integer_keyed_str</code> (vtable)</li>
+
+<p>Used to get data about fields in the header that have an integer value. Valid keys are:</p>
+
+<dl>
+<dt><a name="wordsize"
+>wordsize</a></dt>
+
+<dt><a name="byteorder"
+>byteorder</a></dt>
+
+<dt><a name="fptype"
+>fptype</a></dt>
+
+<dt><a name="version_major"
+>version_major</a></dt>
+
+<dt><a name="version_minor"
+>version_minor</a></dt>
+
+<dt><a name="version_patch"
+>version_patch</a></dt>
+
+<dt><a name="bytecode_major"
+>bytecode_major</a></dt>
+
+<dt><a name="bytecode_minor"
+>bytecode_minor</a></dt>
+
+<dt><a name="uuid_type"
+>uuid_type</a></dt>
+</dl>
+
+<li><code>get_string_keyed_str</code> (vtable)</li>
+
+<p>Used to get data about fields in the header that have a string value. Valid keys are:</p>
+
+<dl>
+<dt><a name="uuid"
+>uuid</a></dt>
+</dl>
+
+<li><code>set_integer_keyed_str</code> (vtable)</li>
+
+<p>Used to set fields in the packfile header. Some fields are not allowed to be written since they are determined by the VM when serializing the packfile for storage on disk. The fields that may be set are:</p>
+
+<dl>
+<dt><a name="version_major"
+>version_major</a></dt>
+
+<dt><a name="version_minor"
+>version_minor</a></dt>
+
+<dt><a name="version_patch"
+>version_patch</a></dt>
+
+<dt><a name="uuid_type"
+>uuid_type</a></dt>
+</dl>
+
+<p>Be very careful when setting a version number; you should usually trust the VM to do the right thing with this.</p>
+
+<p>Setting the uuid_type will not result in immediate re&#45;computation of the UUID, but rather will only cause it to be computed using the selected algorithm when the packfile is serialized (by calling the <code>get_string</code> vtable function). Setting an invalid uuid_type value will cause an exception to be thrown immediately.</p>
+
+<li><code>get_directory()</code></li>
+
+<p>Returns the PackfileDirectory PMC that represents the directory segment at the start of the packfile.</p>
+</ul>
+
+<h4><a name="PackfileSegment.pmc"
+>PackfileSegment.pmc</a></h4>
+
+<p>An abstract PMC that is the base class for all other segments. It has two abstract methods, which are to be implemented by all subclasses. They will not be listed under the method list for other segment PMCs to save space.</p>
+
+<ul>
+<li><code>STRING* pack()</code></li>
+
+<p>Packs the segment into the on&#45;disk format and returns a string holding it.</p>
+
+<li><code>unpack(STRING*)</code></li>
+
+<p>Takes the packed representation for a segment of the given type and then unpacks it, setting this PMC to represent that segment as a result of the unpacking. If an error occurs during the unpacking process, an exception will be thrown.</p>
+</ul>
+
+<h4><a name="PackfileDirectory.pmc_(isa_PackfileSegment)"
+>PackfileDirectory.pmc (isa PackfileSegment)</a></h4>
+
+<p>This PMC represents a directory segment. Essentially it is an hash of PackfileSegment PMCs. It implements the following methods:</p>
+
+<ul>
+<li><code>elements</code> (vtable)</li>
+
+<p>Gets the number of segments listed in the directory.</p>
+
+<li><code>get_pmc_keyed_str</code> (vtable)</li>
+
+<p>Searches the directory for a segment with the given name and, if one exists, returns a PackfileSegment PMC (or one of its subclasses) representing it.</p>
+
+<li><code>set_pmc_keyed_str</code> (vtable)</li>
+
+<p>Adds a PackfileSegment PMC (or a subclass of it) to the directory with the name specified by the key. This is the only way to add another segment to the directory. If a segment of the given name already exists in the directory, it will be replaced with the supplied PMC.</p>
+
+<li><code>delete_keyed_str</code> (vtable)</li>
+
+<p>Removes the PackfileSegment PMC from the directory which has the name specified by the key. This is the only way to remove a segment from the directory.</p>
+
+<li><code>get_iter</code> (vtable)</li>
+
+<p>Returns iterator for existing keys.</p>
+</ul>
+
+<h4><a name="PackfileRawSegment.pmc_(isa_PackfileSegment)"
+>PackfileRawSegment.pmc (isa PackfileSegment)</a></h4>
+
+<p>This PMC presents a segment of a packfile as an array of integers. This is the lowest possible level of access to a segment, and covers both the default and bytecode segment types. It implements the following methods:</p>
+
+<ul>
+<li><code>get_type</code></li>
+
+<p>Get type of PackfileRawSegment.</p>
+
+<li><code>set_type</code></li>
+
+<p>Set type of PackfileRawSegment.</p>
+
+<li><code>get_iter</code></li>
+
+<p>Returns iterator for Segment.</p>
+
+<li><code>get_integer_keyed_int</code> (vtable)</li>
+
+<p>Reads the integer at the specified offset into the segment, excluding the data in the common segment header but including the data making up additional fields in the header for a specific type of segment.</p>
+
+<li><code>set_integer_keyed_int</code> (vtable)</li>
+
+<p>Stores an integer at the specified offset into the segment. Will throw an exception if the segment is memory mapped.</p>
+
+<li><code>elements</code> (vtable)</li>
+
+<p>Gets the length of the segment in words, excluding the length of the common segment but including the data making up additional fields in the header for a specific type of segment.</p>
+</ul>
+
+<h4><a name="PackfileConstantTable.pmc_(isa_PackfileSegment)"
+>PackfileConstantTable.pmc (isa PackfileSegment)</a></h4>
+
+<p>This PMC represents a constants table. It provides access to constants through the keyed integer interface (the interpreter may choose to access underlying structures directly to improve performance, however).</p>
+
+<p>The table of constants can be added to using the keyed set methods; it will grow automatically.</p>
+
+<p>The PMC implements the following methods:</p>
+
+<ul>
+<li><code>get_iter</code></li>
+
+<p>Returns iterator for stored Constants.</p>
+
+<li><code>elements</code> (vtable)</li>
+
+<p>Gets the number of constants contained in the table.</p>
+
+<li><code>get_number_keyed_int</code> (vtable)</li>
+
+<p>Gets the value of the number constant at the specified index in the constants table. If the constant at that position in the table is not a number, an exception will be thrown.</p>
+
+<li><code>get_string_keyed_int</code> (vtable)</li>
+
+<p>Gets the value of the string constant at the specified index in the constants table. If the constant at that position in the table is not a string, an exception will be thrown.</p>
+
+<li><code>get_pmc_keyed_int</code> (vtable)</li>
+
+<p>Gets the value of the PMC or key constant at the specified index in the constants table. If the constant at that position in the table is not a PMC or key, an exception will be thrown.</p>
+
+<li><code>set_number_keyed_int</code> (vtable)</li>
+
+<p>Sets the value of the number constant at the specified index in the constants table. If the constant at that position in the table is not already a number constant, an exception will be thrown. If it does not exist, the table will be extended.</p>
+
+<li><code>set_string_keyed_int</code> (vtable)</li>
+
+<p>Sets the value of the string constant at the specified index in the constants table. If the constant at that position in the table is not already a string constant, an exception will be thrown. If it does not exist, the table will be extended.</p>
+
+<li><code>set_pmc_keyed_int</code> (vtable)</li>
+
+<p>Sets the value of the PMC or key constant at the specified index in the constants table. If the constant at that position in the table is not already a PMC or key constant, an exception will be thrown. If it does not exist, the table will be extended.</p>
+
+<li><code>int get_type(int)</code></li>
+
+<p>Returns an integer value denoting the type of the constant at the specified index. Possible values are:</p>
+
+<pre>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Value  | Constant Type                                                   |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0x00   | No Constant                                                     |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0x6E   | Number Constant                                                 |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0x73   | String Constant                                                 |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0x70   | PMC Constant                                                    |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 0x6B   | Key Constant                                                    |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+</ul>
+
+<h4><a name="PackfileFixupTable.pmc_(isa_PackfileSegment)"
+>PackfileFixupTable.pmc (isa PackfileSegment)</a></h4>
+
+<p>This PMC provides a keyed integer interface to the fixup table. Each entry in the table is represented by a PackfileFixupEntry PMC. It implements the following methods:</p>
+
+<ul>
+<li><code>get_iter</code> (vtable)</li>
+
+<p>Returns iterator for stored fixup entries.</p>
+
+<li><code>elements</code> (vtable)</li>
+
+<p>Gets the number of entries in the fixup table.</p>
+
+<li><code>get_pmc_keyed_int</code> (vtable)</li>
+
+<p>Gets a PackfileFixupEntry PMC for the fixup entry at the position given in the key. If the index is out of range, an exception will be thrown.</p>
+
+<li><code>set_pmc_keyed_int</code> (vtable)</li>
+
+<p>Used to add a PackfileFixupEntry PMC to the fixups table or to replace an existing one. If the PMC that is supplied is not of type PackfileFixupEntry, an exception will thrown.</p>
+</ul>
+
+<h4><a name="PackfileFixupEntry.pmc"
+>PackfileFixupEntry.pmc</a></h4>
+
+<p>This PMC represents an entry in the fixup table. It implements the following methods.</p>
+
+<ul>
+<li><code>get_string</code> (vtable)</li>
+
+<p>Gets the label field of the fixup entry.</p>
+
+<li><code>set_string_native</code> (vtable)</li>
+
+<p>Sets the label field of the fixup entry.</p>
+
+<li><code>get_integer</code> (vtable)</li>
+
+<p>Gets the offset field of the fixup entry.</p>
+
+<li><code>set_integer_native</code> (vtable)</li>
+
+<p>Sets the offset field of the fixup entry.</p>
+
+<li><code>int get_type()</code></li>
+
+<p>Gets the type of the fixup entry. See the entries table for possible fixup types.</p>
+
+<li><code>set_type(int)</code></li>
+
+<p>Sets the type of the fixup entry. See the entries table for possible fixup types. Specifying an invalid type will result in an exception.</p>
+</ul>
+
+<h4><a name="PackfileAnnotations.pmc_(isa_PackfileSegment)"
+>PackfileAnnotations.pmc (isa PackfileSegment)</a></h4>
+
+<p>This PMC represents the bytecode annotations table. The following methods are implemented:</p>
+
+<ul>
+<li><code>elements</code> (vtable)</li>
+
+<p>Gets the number of annotations in the table.</p>
+
+<li><code>get_iter</code> (vtable)</li>
+
+<p>Get iterator for stored annotations.</p>
+
+<li><code>get_pmc_keyed_int</code> (vtable)</li>
+
+<p>Gets the annotation at the specified index. If there is no annotation at that index, an exception will be thrown. The PMC that is returned will always be a PackfileAnnotation PMC.</p>
+
+<li><code>set_pmc_keyed_int</code> (vtable)</li>
+
+<p>Sets the annotation at the specified index. If there is no annotation at that index, it is added to the list of annotations. An exception will be thrown unless all of the following conditions are met:</p>
+
+<dl>
+<dt><a name="&#45;_The_type_of_the_PMC_passed_is_PackfileAnnotation"
+>&#45; The type of the PMC passed is PackfileAnnotation</a></dt>
+
+<dt><a name="&#45;_The_entry_at_the_previous_index_is_defined"
+>&#45; The entry at the previous index is defined</a></dt>
+
+<dt><a name="&#45;_The_offset_of_the_previous_entry_is_less_than_this_entry"
+>&#45; The offset of the previous entry is less than this entry</a></dt>
+
+<dt><a name="&#45;_The_offset_of_the_next_entry,_if_it_exists,_is_greater_than_this_entry"
+>&#45; The offset of the next entry, if it exists, is greater than this entry</a></dt>
+</dl>
+</ul>
+
+<h4><a name="PackfileAnnotation.pmc"
+>PackfileAnnotation.pmc</a></h4>
+
+<p>This PMC represents an individual bytecode annotation entry in the annotations segment. It implements the following methods:</p>
+
+<ul>
+<li><code>int get_offset()</code></li>
+
+<p>Gets the offset into the bytecode of the instruction that is being annotated.</p>
+
+<li><code>set_offset(int)</code></li>
+
+<p>Sets the offset into the bytecode of the instruction that is being annotated.</p>
+
+<li><code>int get_name()</code></li>
+
+<p>Gets the name of the annotation.</p>
+
+<li><code>int set_name()</code></li>
+
+<p>Sets the name of the annotation.</p>
+
+<li><code>get_integer</code> (vtable)</li>
+
+<p>Gets the integer value of the annotation.</p>
+
+<li><code>set_integer</code> (vtable)</li>
+
+<p>Sets the integer value of the annotation.</p>
+
+<li><code>get_string</code> (vtable)</li>
+
+<p>Gets the string value of the annotation.</p>
+
+<li><code>set_string</code> (vtable)</li>
+
+<p>Sets the string value of the annotation.</p>
+
+<li><code>get_number</code> (vtable)</li>
+
+<p>Gets the number value of the annotation.</p>
+
+<li><code>set_number</code> (vtable)</li>
+
+<p>Sets the number value of the annotation.</p>
+</ul>
+
+<h2><a name="Language_Notes"
+>Language Notes</a></h2>
+
+<p>None.</p>
+
+<h2><a name="Attachments"
+>Attachments</a></h2>
+
+<p>None.</p>
+
+<h2><a name="Footnotes"
+>Footnotes</a></h2>
+
+<h3><a name="Changes_From_Previous_Versions"
+>Changes From Previous Versions</a></h3>
+
+<p>A number of things in this PDD differ from the older implementation, and few items with the more convenient PMC access are not yet implemented. This section details these changes from the old implementation and some of the reasoning behind them.</p>
+
+<h4><a name="Packfile_Header"
+>Packfile Header</a></h4>
+
+<p>The format of the packfile header changed completely, based upon a proposal at <a href='http://groups.google.com/group/perl.perl6.internals/browse_thread/thread/1f1af615edec7449/ebfdbb5180a9d813?lnk=gst'><a href="http://groups.google.com/group/perl.perl6.internals/browse_thread/thread/1f1af615edec7449/ebfdbb5180a9d813?lnk=gst">http://groups.google.com/group/perl.perl6.internals/browse_thread/thread/1f1af615edec7449/ebfdbb5180a9d813?lnk=gst</a></a> and the requirement to have a UUID. The old INT field in the previous header format is used nowhere in Parrot and was removed, the parrot patch version number along with the major and minor was added. The opcode type is also gone due to non&#45;use. The opcode type is always long.</p>
+
+<p>The version number now reflects the earliest version of Parrot that is capable of running the bytecode file, to enable cross&#45;version compatibility that will be needed in the future.</p>
+
+<h4><a name="Segment_Header"
+>Segment Header</a></h4>
+
+<p>Having the type associated with the segment inside the VM is fine, but since it is in the directory segment anyway it seems odd to duplicate it here. Also removed the id (did not seem to be used anywhere) and the second size (always computable by knowing the size of this header, so it appears redundant).</p>
+
+<h4><a name="Fixup_Segment"
+>Fixup Segment</a></h4>
+
+<p>We need to support unicode sub names, so fixup labels should be an index into the constants table to the relevant string instead of just a C string as they are now.</p>
+
+<h4><a name="Annotations_Segment"
+>Annotations Segment</a></h4>
+
+<p>This is new and replaces and builds upon the debug segment. See here for some on&#45;list discussion:</p>
+
+<p><a href='http://groups.google.com/group/perl.perl6.internals/browse_thread/thread/b0d36dafb42d96c4/4d6ad2ad2243e677?lnk=gst&#38;rnum=2#4d6ad2ad2243e677'><a href="http://groups.google.com/group/perl.perl6.internals/browse_thread/thread/b0d36dafb42d96c4/4d6ad2ad2243e677?lnk=gst&#38;rnum=2#4d6ad2ad2243e677">http://groups.google.com/group/perl.perl6.internals/browse_thread/thread/b0d36dafb42d96c4/4d6ad2ad2243e677?lnk=gst&#38;rnum=2#4d6ad2ad2243e677</a></a></p>
+
+<h4><a name="Packfile_PMCs"
+>Packfile PMCs</a></h4>
+
+<p>This idea will see packfiles and segments within them being represented by PMCs, easing memory management and providing an interface to packfiles for Parrot programs.</p>
+
+<p>Here are mailing list comments that provide one of the motivations or hints of the original proposal.</p>
+
+<p><a href='http://groups.google.com/group/perl.perl6.internals/browse_thread/thread/778ea0ac4c8676f7/b249306b543b040a?lnk=gst&#38;q=packfile+PMCs&#38;rnum=2#b249306b543b040a'><a href="http://groups.google.com/group/perl.perl6.internals/browse_thread/thread/778ea0ac4c8676f7/b249306b543b040a?lnk=gst&#38;q=packfile+PMCs&#38;rnum=2#b249306b543b040a">http://groups.google.com/group/perl.perl6.internals/browse_thread/thread/778ea0ac4c8676f7/b249306b543b040a?lnk=gst&#38;q=packfile+PMCs&#38;rnum=2#b249306b543b040a</a></a></p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p>None.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

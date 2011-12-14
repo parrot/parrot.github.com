@@ -1,0 +1,215 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Interpreter</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Interpreter</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/interpreter.c &#45; Parrot Interpreter</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>The interpreter API handles running the operations.</p>
+
+<p>The predereferenced code chunk is pre&#45;initialized with the opcode function pointers,
+addresses,
+or opnumbers of the <code lang='und' xml:lang='und'>prederef__</code> opcode.
+This opcode then calls the <code lang='und' xml:lang='und'>do_prederef()</code> function,
+which then fills in the real function,
+address or op number.</p>
+
+<p>Because the <code lang='und' xml:lang='und'>prederef__</code> opcode returns the same <code lang='und' xml:lang='und'>pc_prederef</code> it was passed,
+the runops loop will re&#45;execute the same location,
+which will then have the pointer to the real <code lang='und' xml:lang='und'>prederef</code> opfunc and <code lang='und' xml:lang='und'>prederef</code> args.</p>
+
+<p>Pointer arithmetic is used to determine the index into the bytecode corresponding to the currect opcode.
+The bytecode and prederef arrays have the same number of elements because there is a one&#45;to&#45;one mapping.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a
+><b><code lang='und' xml:lang='und'>static void prederef_args(void **pc_prederef, Interp *interp, opcode_t *pc, op_info_t *opinfo)</b></code></a></dt><p class="pad"></p>
+
+<dd>Called from <code lang='und' xml:lang='und'>do_prederef()</code> to deal with any arguments.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>pc_prederef</code> is the current opcode.</dd><p class="pad"></p>
+
+<dt><a name="void_do_prederef(void_**pc_prederef,_Parrot_Interp_interp,_int_type)"
+><b><code lang='und' xml:lang='und'>void do_prederef(void **pc_prederef, Parrot_Interp interp, int type)</b></code></a></dt><p class="pad"></p>
+
+<dd>This is called from within the run cores to predereference the current opcode.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>pc_prederef</code> is the current opcode,
+and <code lang='und' xml:lang='und'>type</code> is the run core type.</dd><p class="pad"></p>
+
+<dt><a name="static_void_turn_ev_check(Parrot_Interp_interp,_int_on)"
+><b><code lang='und' xml:lang='und'>static void turn_ev_check(Parrot_Interp interp, int on)</b></code></a></dt><p class="pad"></p>
+
+<dd>Turn on or off event checking for prederefed cores.</dd><p class="pad"></p>
+
+<dd>Fills in the <code lang='und' xml:lang='und'>event_checker</code> opcode,
+or restores original ops in all branch locations of the opcode stream.</dd><p class="pad"></p>
+
+<dd>Note that when <code lang='und' xml:lang='und'>on</code> is true,
+this is being called from the event handler thread.</dd><p class="pad"></p>
+
+<dt><a name="static_oplib_init_f_get_op_lib_init(int_core_op,_int_which,_PMC_*lib)"
+><b><code lang='und' xml:lang='und'>static oplib_init_f get_op_lib_init(int core_op, int which, PMC *lib)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns an opcode&#39;s library <code lang='und' xml:lang='und'>op_lib</code> init function.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>core_op</code> indicates whether the opcode represents a core Parrot operation.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>which</code> is the run core type.</dd><p class="pad"></p>
+
+<dd>For dynamic oplibs <code lang='und' xml:lang='und'>core_op</code> will be 0 and <code lang='und' xml:lang='und'>lib</code> will be a <code lang='und' xml:lang='und'>ParrotLibrary</code> PMC.</dd><p class="pad"></p>
+
+<dt><a name="static_void_load_prederef(Interp_*interp,_int_which)"
+><b><code lang='und' xml:lang='und'>static void load_prederef(Interp *interp, int which)</b></code></a></dt><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>interp&#45;&#62;op_lib</code> = prederefed oplib.</dd><p class="pad"></p>
+
+<dt><a name="static_void_init_prederef(Interp_*interp,_int_which)"
+><b><code lang='und' xml:lang='und'>static void init_prederef(Interp *interp, int which)</b></code></a></dt><p class="pad"></p>
+
+<dd>Initialize: load prederef <code lang='und' xml:lang='und'>func_table</code>,
+file prederef.code.</dd><p class="pad"></p>
+
+<dt><a name="static_void_stop_prederef(Interp_*interp)"
+><b><code lang='und' xml:lang='und'>static void stop_prederef(Interp *interp)</b></code></a></dt><p class="pad"></p>
+
+<dd>Restore the interpreter&#39;s op function tables to their initial state.
+Also recreate the event function pointers.
+This is only necessary for run&#45;core changes,
+but we don&#39;t know the old run core.</dd><p class="pad"></p>
+
+<dt><a name="void_exec_init_prederef(Interp_*interp,_void_*prederef_arena)"
+><b><code lang='und' xml:lang='und'>void exec_init_prederef(Interp *interp, void *prederef_arena)</b></code></a></dt><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>interp&#45;&#62;op_lib</code> = prederefed oplib</dd><p class="pad"></p>
+
+<dd>The &#34;normal&#34; <code lang='und' xml:lang='und'>op_lib</code> has a copy in the interpreter structure &#45; but get the <code lang='und' xml:lang='und'>op_code</code> lookup function from standard core prederef has no <code lang='und' xml:lang='und'>op_info_table</code></dd><p class="pad"></p>
+
+<dt><a name="void_*_init_jit(Interp_*interp,_opcode_t_*pc)"
+><b><code lang='und' xml:lang='und'>void *init_jit(Interp *interp, opcode_t *pc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Initializes JIT function for the specified opcode and returns it.</dd><p class="pad"></p>
+
+<dt><a name="void_prepare_for_run(Parrot_Interp_interp)"
+><b><code lang='und' xml:lang='und'>void prepare_for_run(Parrot_Interp interp)</b></code></a></dt><p class="pad"></p>
+
+<dd>Prepares to run the interpreter&#39;s run core.</dd><p class="pad"></p>
+
+<dt><a name="static_opcode_t_*_runops_jit(Interp_*interp,_opcode_t_*pc)"
+><b><code lang='und' xml:lang='und'>static opcode_t *runops_jit(Interp *interp, opcode_t *pc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the JIT code for the specified opcode.</dd><p class="pad"></p>
+
+<dt><a name="static_opcode_t_*_runops_exec(Interp_*interp,_opcode_t_*pc)"
+><b><code lang='und' xml:lang='und'>static opcode_t *runops_exec(Interp *interp, opcode_t *pc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the native executable version of the specified opcode.</dd><p class="pad"></p>
+
+<dt><a name="static_opcode_t_*_runops_cgp(Interp_*interp,_opcode_t_*pc)"
+><b><code lang='und' xml:lang='und'>static opcode_t *runops_cgp(Interp *interp, opcode_t *pc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the C <code lang='und' xml:lang='und'>goto</code>,
+predereferenced core.</dd><p class="pad"></p>
+
+<dt><a name="static_opcode_t_*_runops_switch(Interp_*interp,_opcode_t_*pc)"
+><b><code lang='und' xml:lang='und'>static opcode_t *runops_switch(Interp *interp, opcode_t *pc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the <code lang='und' xml:lang='und'>switch</code> core.</dd><p class="pad"></p>
+
+<dt><a name="void_runops_int(Interp_*interp,_size_t_offset)"
+><b><code lang='und' xml:lang='und'>void runops_int(Interp *interp, size_t offset)</b></code></a></dt><p class="pad"></p>
+
+<dd>Run Parrot operations of loaded code segment until an end opcode is reached.
+Run core is selected depending on the <code lang='und' xml:lang='und'>Interp_flags</code>.
+When a <code lang='und' xml:lang='und'>restart</code> opcode is encountered,
+a different core may be selected and evaluation of opcode continues.</dd><p class="pad"></p>
+
+<dt><a name="static_void_Parrot_setup_event_func_ptrs(Parrot_Interp_interp)"
+><b><code lang='und' xml:lang='und'>static void Parrot_setup_event_func_ptrs(Parrot_Interp interp)</b></code></a></dt><p class="pad"></p>
+
+<dd>Setup a <code lang='und' xml:lang='und'>func_table</code> containing pointers (or addresses) of the <code lang='und' xml:lang='und'>check_event__</code> opcode.</dd><p class="pad"></p>
+
+<dd>TODO: Free it at destroy.
+Handle run&#45;core changes.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Dynamic_Loading_Functions"
+>Dynamic Loading Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_dynop_register(Parrot_Interp_interp,_PMC*_lib_pmc)"
+><b><code lang='und' xml:lang='und'>void dynop_register(Parrot_Interp interp, PMC *lib_pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Register a dynamic oplib.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void dynop_register_xx(Parrot_Interp interp, PMC *lib_pmc, size_t n_old, size_t n_new, oplib_init_f init_func)</b></code></a></dt><p class="pad"></p>
+
+<dd>Register <code lang='und' xml:lang='und'>op_lib</code> with other cores.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void dynop_register_switch(Parrot_Interp interp, PMC *lib_pmc, size_t n_old, size_t n_new)</b></code></a></dt><p class="pad"></p>
+
+<dd>Description.</dd><p class="pad"></p>
+
+<dt><a name="static_void_notify_func_table(Parrot_Interp_interp,_op_func_t*_table,_int_on)"
+><b><code lang='und' xml:lang='und'>static void notify_func_table(Parrot_Interp interp, op_func_t *table, int on)</b></code></a></dt><p class="pad"></p>
+
+<dd>Tell the interpreter&#39;s running core about the new function table.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/interpreter.h</em>,
+<em lang='und' xml:lang='und'><a href="inter_cb.c.html">src/inter_cb.c</a></em>,
+<em lang='und' xml:lang='und'><a href="inter_create.c.html">src/inter_create.c</a></em>,
+<em lang='und' xml:lang='und'><a href="inter_misc.c.html">src/inter_misc.c</a></em>,
+<em lang='und' xml:lang='und'><a href="inter_run.c.html">src/inter_run.c</a></em>.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

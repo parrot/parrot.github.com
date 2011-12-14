@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>IO Layer Handling</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">IO Layer Handling</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/io/io_layers.c &#45; IO Layer Handling</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The Parrot IO subsystem uses a per&#45;interpreter stack to provide a layer&#45;based approach to IO.
+Each layer implements a subset of the <code lang='und' xml:lang='und'>ParrotIOLayerAPI</code> vtable.
+To find an IO function the layer stack is searched downwards until a non&#45;<code lang='und' xml:lang='und'>NULL</code> function pointer is found for that particular slot.</p>
+
+<p>*/</p>
+
+<p>/*</p>
+
+<h2><a name="Layer_and_Stack_Functions"
+>Layer and Stack Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="ParrotIOLayer_*_PIO_base_new_layer(ParrotIOLayer_*proto)"
+><b><code lang='und' xml:lang='und'>ParrotIOLayer *PIO_base_new_layer(ParrotIOLayer *proto)</b></code></a></dt><p class="pad"></p>
+
+<dd>The default IO layer constructor.
+Creates and returns a new <code lang='und' xml:lang='und'>ParrotIOLayer</code>.
+If a prototype <code lang='und' xml:lang='und'>*proto</code> is supplied then its values will be copied to the new instance.</dd><p class="pad"></p>
+
+<dt><a name="void_PIO_base_delete_layer(ParrotIOLayer_*layer)"
+><b><code lang='und' xml:lang='und'>void PIO_base_delete_layer(ParrotIOLayer *layer)</b></code></a></dt><p class="pad"></p>
+
+<dd>The default IO layer destructor.
+Frees the memory associated with <code lang='und' xml:lang='und'>*layer</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_push_layer(Interp_*interp,_PMC_*pmc,_ParrotIOLayer_*layer)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_push_layer(Interp *interp, PMC *pmc, ParrotIOLayer *layer)</b></code></a></dt><p class="pad"></p>
+
+<dd>Push a layer onto an IO object (<code lang='und' xml:lang='und'>*pmc</code>) or the default stack.</dd><p class="pad"></p>
+
+<dt><a name="void_PIO_push_layer_str(Interp_*interp,_PMC_*pmc,_STRING_*layer_name)"
+><b><code lang='und' xml:lang='und'>void PIO_push_layer_str(Interp *interp, PMC *pmc, STRING *layer_name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Push a layer onto an IO object (<code lang='und' xml:lang='und'>*pmc</code>).</dd><p class="pad"></p>
+
+<dt><a name="ParrotIOLayer_*_PIO_pop_layer(Interp_*interp,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>ParrotIOLayer *PIO_pop_layer(Interp *interp, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Pop a layer from an IO object (<code lang='und' xml:lang='und'>*pmc</code>) or the default stack.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*_PIO_pop_layer_str(Interp_*interp,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>STRING *PIO_pop_layer_str(Interp *interp, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Pop a layer from an IO object (<code lang='und' xml:lang='und'>*pmc</code>) and return the name of the popped layer.
+The layer gets freed.</dd><p class="pad"></p>
+
+<dt><a name="ParrotIOLayer_*_PIO_copy_stack(ParrotIOLayer_*stack)"
+><b><code lang='und' xml:lang='und'>ParrotIOLayer *PIO_copy_stack(ParrotIOLayer *stack)</b></code></a></dt><p class="pad"></p>
+
+<dd>Primarily used to copy the default IO stack for a new IO object.
+Later we will do some funky copy&#45;on&#45;write stuff.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

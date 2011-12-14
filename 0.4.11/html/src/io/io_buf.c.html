@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>IO buffer layer</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">IO buffer layer</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/io/io_buf.c &#45; IO buffer layer</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The &#34;buf&#34; layer of Parrot IO.
+Buffering and all the fun stuff.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_INTVAL_PIO_buf_init(Interp_*interp,_ParrotIOLayer_*layer)"
+><b><code lang='und' xml:lang='und'>static INTVAL PIO_buf_init(Interp *interp, ParrotIOLayer *layer)</b></code></a></dt><p class="pad"></p>
+
+<dd>The buffer layer&#39;s <code lang='und' xml:lang='und'>Init</code> function.
+Initializes buffering.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static ParrotIO *PIO_buf_open(Interp *interp, ParrotIOLayer *layer, const char *path, INTVAL flags)</b></code></a></dt><p class="pad"></p>
+
+<dd>The buffer layer&#39;s <code lang='und' xml:lang='und'>Open</code> function.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static INTVAL PIO_buf_setbuf(Interp *interp, ParrotIOLayer *layer, ParrotIO *io, size_t bufsize)</b></code></a></dt><p class="pad"></p>
+
+<dd>The buffer layer&#39;s <code lang='und' xml:lang='und'>SetBuf</code> function.</dd><p class="pad"></p>
+
+<dd>Don&#39;t pass <code lang='und' xml:lang='und'>SetBuf</code> calls down the stack,
+top layer wins.
+This doesn&#39;t mean other layers can&#39;t buffer,
+I just need to think about the mechanism for buffer control or if it even makes sense this way.
+Most layers will not implement <code lang='und' xml:lang='und'>SetBuf</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_PIO_buf_setlinebuf(Interp_*interp,_ParrotIOLayer_*layer,_ParrotIO_*io)"
+><b><code lang='und' xml:lang='und'>static INTVAL PIO_buf_setlinebuf(Interp *interp, ParrotIOLayer *layer, ParrotIO *io)</b></code></a></dt><p class="pad"></p>
+
+<dd>The buffer layer&#39;s <code lang='und' xml:lang='und'>SetLineBuf</code> function.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static ParrotIO *PIO_buf_fdopen(Interp *interp, ParrotIOLayer *layer, PIOHANDLE fd, INTVAL flags)</b></code></a></dt><p class="pad"></p>
+
+<dd>The buffer layer&#39;s <code lang='und' xml:lang='und'>FDOpen</code> function.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_PIO_buf_close(Interp_*interp,_ParrotIOLayer_*layer,_ParrotIO_*io)"
+><b><code lang='und' xml:lang='und'>static INTVAL PIO_buf_close(Interp *interp, ParrotIOLayer *layer, ParrotIO *io)</b></code></a></dt><p class="pad"></p>
+
+<dd>The buffer layer&#39;s <code lang='und' xml:lang='und'>Close</code> function.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_PIO_buf_flush(Interp_*interp,_ParrotIOLayer_*layer,_ParrotIO_*io)"
+><b><code lang='und' xml:lang='und'>static INTVAL PIO_buf_flush(Interp *interp, ParrotIOLayer *layer, ParrotIO *io)</b></code></a></dt><p class="pad"></p>
+
+<dd>The buffer layer&#39;s <code lang='und' xml:lang='und'>Flush</code> function.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static size_t PIO_buf_fill_readbuf(Interp *interp, ParrotIOLayer *layer, ParrotIO *io, ParrotIOBuf *b)</b></code></a></dt><p class="pad"></p>
+
+<dd>The buffer layer&#39;s <code lang='und' xml:lang='und'>Fill</code> function.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static size_t PIO_buf_read(Interp *interp, ParrotIOLayer *layer, ParrotIO *io, STRING **buf)</b></code></a></dt><p class="pad"></p>
+
+<dd>The buffer layer&#39;s <code lang='und' xml:lang='und'>Read</code> function.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static size_t PIO_buf_readline(Interp *interp, ParrotIOLayer *layer, ParrotIO *io, void *buffer, size_t len)</b></code></a></dt><p class="pad"></p>
+
+<dd>This is called from <code lang='und' xml:lang='und'>PIO_buf_read()</code> to do line buffered reading if that is what is required.</dd><p class="pad"></p>
+
+<dt><a name="static_size_t_PIO_buf_write(Interp_*interp,_ParrotIOLayer_*layer,_ParrotIO_*io,_STRING_*s)"
+><b><code lang='und' xml:lang='und'>static size_t PIO_buf_write(Interp *interp, ParrotIOLayer *layer, ParrotIO *io, STRING *s)</b></code></a></dt><p class="pad"></p>
+
+<dd>The buffer layer&#39;s <code lang='und' xml:lang='und'>Write</code> function.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static PIOOFF_T PIO_buf_seek(Interp *interp, ParrotIOLayer *l, ParrotIO *io, PIOOFF_T offset, INTVAL whence)</b></code></a></dt><p class="pad"></p>
+
+<dd>The buffer layer&#39;s <code lang='und' xml:lang='und'>Seek</code> function.</dd><p class="pad"></p>
+
+<dt><a name="static_PIOOFF_T_PIO_buf_tell(Interp_*interp,_ParrotIOLayer_*layer,_ParrotIO_*io)"
+><b><code lang='und' xml:lang='und'>static PIOOFF_T PIO_buf_tell(Interp *interp, ParrotIOLayer *layer, ParrotIO *io)</b></code></a></dt><p class="pad"></p>
+
+<dd>The buffer layer&#39;s <code lang='und' xml:lang='und'>Tell</code> function.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'><a href="io_passdown.c.html">src/io/io_passdown.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io_stdio.c.html">src/io/io_stdio.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io_unix.c.html">src/io/io_unix.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io_win32.c.html">src/io/io_win32.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io.c.html">src/io/io.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io_private.h.html">src/io/io_private.h</a></em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Initially written by Melvin Smith.</p>
+
+<p>Some ideas from AT&#38;T SFIO.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,195 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Lua Package Library</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Lua Package Library</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/lua.html">Lua</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>lib/luapackage.pir &#45; Lua Package Library</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>The package library provides basic facilities for loading and building modules in Lua.
+It exports two of its functions directly in the global environment: <code lang='und' xml:lang='und'>require</code> and <code lang='und' xml:lang='und'>module</code>.
+Everything else is exported in a table <code lang='und' xml:lang='und'>package</code>.</p>
+
+<p>See &#34;Lua 5.1 Reference Manual&#34;,
+section 5.3 &#34;Modules&#34;.</p>
+
+<h2><a name="Functions_&#38;_Variables"
+>Functions &#38; Variables <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="module_(name_[,_...])"
+><b><code lang='und' xml:lang='und'>module (name [, ...])</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates a module.
+If there is a table in <code lang='und' xml:lang='und'>package.loaded[name]</code>,
+this table is the module.
+Otherwise,
+if there is a global table <code lang='und' xml:lang='und'>t</code> with the given name,
+this table is the module.
+Otherwise creates a new table <code lang='und' xml:lang='und'>t</code> and sets it as the value of the global <code lang='und' xml:lang='und'>name</code> and the value of <code lang='und' xml:lang='und'>package.loaded[name]</code>.
+This function also initializes <code lang='und' xml:lang='und'>t._NAME</code> with the given name,
+<code lang='und' xml:lang='und'>t._M</code> with the module (<code lang='und' xml:lang='und'>t</code> itself),
+and <code lang='und' xml:lang='und'>t._PACKAGE</code> with the package name (the full module name minus last component; see below).
+Finally,
+<code lang='und' xml:lang='und'>module</code> sets <code lang='und' xml:lang='und'>t</code> as the new environment of the current function and the new value of <code lang='und' xml:lang='und'>package.loaded[name]</code>,
+so that <code lang='und' xml:lang='und'>require</code> returns <code lang='und' xml:lang='und'>t</code>.</dd><p class="pad"></p>
+
+<dd>If <code lang='und' xml:lang='und'>name</code> is a compound name (that is,
+one with components separated by dots),
+<code lang='und' xml:lang='und'>module</code> creates (or reuses,
+if they already exist) tables for each component.
+For instance,
+if <code lang='und' xml:lang='und'>name</code> is <code lang='und' xml:lang='und'>a.b.c</code>,
+then <code lang='und' xml:lang='und'>module</code> stores the module table in field <code lang='und' xml:lang='und'>c</code> of field <code lang='und' xml:lang='und'>b</code> of global <code lang='und' xml:lang='und'>a</code>.</dd><p class="pad"></p>
+
+<dd>This function may receive optional <i>options</i> after the module name,
+where each option is a function to be applied over the module.</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+
+<dt><a name="require_(modname)"
+><b><code lang='und' xml:lang='und'>require (modname)</b></code></a></dt><p class="pad"></p>
+
+<dd>Loads the given module.
+The function starts by looking into the table <code lang='und' xml:lang='und'>package.loaded</code> to determine whether <code lang='und' xml:lang='und'>modname</code> is already loaded.
+If it is,
+then <code lang='und' xml:lang='und'>require</code> returns the value stored at <code lang='und' xml:lang='und'>package.loaded[modname]</code>.
+Otherwise,
+it tries to find a <i>loader</i> for the module.</dd><p class="pad"></p>
+
+<dd>To find a loader,
+first <code lang='und' xml:lang='und'>require</code> queries <code lang='und' xml:lang='und'>package.preload[modname]</code>.
+If it has a value,
+this value (which should be a function) is the loader.
+Otherwise <code lang='und' xml:lang='und'>require</code> searches for a Lua loader using the path stored in <code lang='und' xml:lang='und'>package.path</code>.
+If that also fails,
+it searches for a C loader using the path stored in <code lang='und' xml:lang='und'>package.cpath</code>.
+If that also fails,
+it tries an all&#45;in&#45;one loader (see below).</dd><p class="pad"></p>
+
+<dd>If there is any error loading or running the module,
+or if it cannot find any loader for the module,
+then <code lang='und' xml:lang='und'>require</code> signals an error.</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+
+<dt><a name="package.cpath"
+><b><code lang='und' xml:lang='und'>package.cpath</b></code></a></dt><p class="pad"></p>
+
+<dd>The path used by <code lang='und' xml:lang='und'>require</code> to search for a C loader.</dd><p class="pad"></p>
+
+<dd>Lua initializes the C path <code lang='und' xml:lang='und'>package.cpath</code> in the same way it initializes the Lua path <code lang='und' xml:lang='und'>package.path</code>,
+using the environment variable <code lang='und' xml:lang='und'>LUA_CPATH</code> (plus another default path).</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+
+<dt><a name="package.loaded"
+><b><code lang='und' xml:lang='und'>package.loaded</b></code></a></dt><p class="pad"></p>
+
+<dd>A table used by <code lang='und' xml:lang='und'>require</code> to control which modules are already loaded.
+When you require a module <code lang='und' xml:lang='und'>modname</code> and <code lang='und' xml:lang='und'>package.loaded[modname]</code> is not false,
+<code lang='und' xml:lang='und'>require</code> simply returns the value stored there.</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+
+<dt><a name="package.loadlib_(libname,_funcname)"
+><b><code lang='und' xml:lang='und'>package.loadlib (libname, funcname)</b></code></a></dt><p class="pad"></p>
+
+<dd>Dynamically links the host program with the C library <code lang='und' xml:lang='und'>libname</code>.
+Inside this library,
+looks for a function <code lang='und' xml:lang='und'>funcname</code> and returns this function as a C function.</dd><p class="pad"></p>
+
+<dd>This is a low&#45;level function.
+It completely bypasses the package and module system.
+Unlike <code lang='und' xml:lang='und'>require</code>,
+it does not perform any path searching and does not automatically adds extensions.
+<code lang='und' xml:lang='und'>libname</code> must be the complete file name of the C library,
+including if necessary a path and extension.
+<code lang='und' xml:lang='und'>funcname</code> must be the exact name exported by the C library .</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+
+<dt><a name="package.path"
+><b><code lang='und' xml:lang='und'>package.path</b></code></a></dt><p class="pad"></p>
+
+<dd>The path used by <code lang='und' xml:lang='und'>require</code> to search for a Lua loader.</dd><p class="pad"></p>
+
+<dd>At start&#45;up,
+Lua initializes this variable with the value of the environment variable <code lang='und' xml:lang='und'>LUA_PATH</code> or with a default path,
+if the environment variable is not defined.
+Any <code lang='und' xml:lang='und'>&#34;;;&#34;</code> in the value of the environment variable is replaced by the default path.</dd><p class="pad"></p>
+
+<dd>A path is a sequence of <i>templates</i> separated by semicolons.
+For each template,
+<code lang='und' xml:lang='und'>require</code> will change each interrogation mark in the template by <code lang='und' xml:lang='und'>filename</code>,
+which is <code lang='und' xml:lang='und'>modname</code> with each dot replaced by a <code lang='und' xml:lang='und'>&#34;directory separator&#34;</code> (such as <code lang='und' xml:lang='und'>&#34;/&#34;</code> in Unix); then it will try to load the resulting file name.
+So,
+for instance,
+if the Lua path is</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  &#34;./?.lua;./?.lc;/usr/local/?/init.lua&#34;</pre>
+
+<dd>the search for a Lua loader for module <code lang='und' xml:lang='und'>foo</code> will try to load the files <code lang='und' xml:lang='und'>./foo.lua</code>, <code lang='und' xml:lang='und'>./foo.lc</code>, and <code lang='und' xml:lang='und'>/usr/local/foo/init.lua</code>, in that order.</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+
+<dt><a name="package.preload"
+><b><code lang='und' xml:lang='und'>package.preload</b></code></a></dt><p class="pad"></p>
+
+<dd>A table to store loaders for specific modules (see <code lang='und' xml:lang='und'>require</code>).</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+
+<dt><a name="package.seeall_(module)"
+><b><code lang='und' xml:lang='und'>package.seeall (module)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets a metatable for <code lang='und' xml:lang='und'>module</code> with its <code lang='und' xml:lang='und'>__index</code> field referring to the global environment, so that this module inherits values from the global environment. To be used as an option to function <code lang='und' xml:lang='und'>module</code>.</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="AUTHORS"
+>AUTHORS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

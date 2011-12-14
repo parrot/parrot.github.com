@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Getting Started</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; Getting Started
+                </div>
+
+<h1><a name="Getting_Started"
+>Getting Started</a></h1>
+
+<p>Before you can use Parrot,
+you have to get it running on your machine.</p>
+
+<h2><a name="Installing_Parrot"
+>Installing Parrot</a></h2>
+
+<p>The simplest way to install Parrot is to use a pre&#45;compiled binary for your operating system or distribution.
+Packages are available for many packaging systems,
+including Debian,
+Ubuntu,
+Fedora,
+Mandriva,
+FreeBSD,
+Cygwin,
+and MacPorts.
+The Parrot website lists all known packages at <a href="http://www.parrot.org/download">http://www.parrot.org/download</a>.
+A binary installer for Windows is also available at <a href="http://parrotwin32.sourceforge.net/">http://parrotwin32.sourceforge.net/</a>.</p>
+
+<p>If packages aren&#39;t available on your system,
+download the latest supported release from <a href="http://www.parrot.org/release/supported">http://www.parrot.org/release/supported</a>.</p>
+
+<p>You need a C compiler and a make utility to build Parrot from source code &#45;&#45; usually <code>gcc</code> and <code>make</code>,
+but Parrot can build with standard compiler toolchains on different operating systems.
+Perl 5.8 is also a prerequiste for configuring and building Parrot.</p>
+
+<p>If you have these dependencies installed,
+build the core virtual machine and compiler toolkit and run the standard test suite with the commands:</p>
+
+<pre>  $ B&#60;perl Configure.pl&#62;
+  $ B&#60;make&#62;
+  $ B&#60;make test&#62;</pre>
+
+<p>By default, Parrot installs to directories <em>bin/</em>, <code>lib/</code>, et cetera under the prefix <em>/usr/local</em>. If you have privileges to write to these directories, install Parrot with:</p>
+
+<pre>  $ B&#60;make install&#62;</pre>
+
+<p>To install Parrot beneath a different prefix, use the <code>&#45;&#45;prefix</code> option to <code>Configure.pl</code>:</p>
+
+<pre>    $ B&#60;perl Configure.pl &#45;&#45;prefix=/home/me/parrot&#62;</pre>
+
+<p>If you intend to <i>develop</i> &#45;&#45; not just <i>use</i> &#45;&#45; a language on Parrot, install the Parrot developer tools as well:</p>
+
+<pre>  $ B&#60;make install&#45;dev&#62;</pre>
+
+<h2><a name="Running_Parrot"
+>Running Parrot</a></h2>
+
+<p>Once you&#39;ve installed Parrot, run it. Create a test file called <em>news.pasm</em>. <code>.pasm</code> files contain Parrot Assembly Language (PASM) instructions; this is a low&#45;level language native to the Parrot virtual machine.</p>
+<pre>  say "Here is the news for Parrots."
+  end
+</pre>
+<p>Now run this file with:</p>
+
+<pre>  $ B&#60;parrot news.pasm&#62;</pre>
+
+<p>which will print:</p>
+
+<pre>  Here is the news for Parrots.</pre>
+
+<h2><a name="Running_a_Language_on_Parrot"
+>Running a Language on Parrot</a></h2>
+
+<p>Next, try out one of Parrot&#39;s high&#45;level languages. Create a test file called <em>more_news.nqp</em>:</p>
+
+<pre>  say &#34;No parrots were involved in an accident on the M1 today...&#34;</pre>
+
+<p>Then run it as:</p>
+
+<pre>  $ nqp more_news.nqp</pre>
+
+<p>which will print:</p>
+
+<pre>  No parrots were involved in an accident on the M1 today...</pre>
+
+<h2><a name="What_Next?"
+>What Next?</a></h2>
+
+<p>This book describes Parrot in terms of tasks it supports. You may pick and choose chapters based on your area of interest:</p>
+
+<dl>
+<dt><a name="Chapter_3,_Parrot_Intermediate_Representation"
+>Chapter 3, <i>Parrot Intermediate Representation</i></a></dt>
+Parrot Intermediate Representation (PIR) is a mid&#45;level language native to the Parrot virtual machine s commonly used for writing extensions and tools for Parrot.
+<dt><a name="Chapter_4,_Compiler_Tools"
+>Chapter 4, <i>Compiler Tools</i></a></dt>
+The Parrot Compiler Toolkit (PCT) provides a common infrastructure and utilities for implementing languages on Parrot.
+<dt><a name="Chapter_5,_Grammar_Engine"
+>Chapter 5, <i>Grammar Engine</i></a></dt>
+The Parrot Grammar Engine (PGE) is a powerful regular expression engine and recursive descent parser. PGE is part of the compiler tools; understanding PGE is essential to implementing a language on Parrot.
+<dt><a name="Chapter_6,_Grammar_Actions"
+>Chapter 6, <i>Grammar Actions</i></a></dt>
+NQP (Not Quite Perl) is a lightweight language loosely inspired by Perl 6. NQP is part of the compiler tools used for transforming a Parrot&#45;hosted language into instructions for Parrot to execute.
+<dt><a name="Chapter_7,_Dynamic_PMCs"
+>Chapter 7, <i>Dynamic PMCs</i></a></dt>
+This chapter suggests the need for a chapter on core PMCs. Alternately, this chapter could cover PMCs in general and dynpmcs as a special case of PMCs.Parrot allows language developers to extend Parrot&#39;s core data types to suit the needs of advanced languages.
+<dt><a name="Chapter_8,_Dynamic_Opcodes"
+>Chapter 8, <i>Dynamic Opcodes</i></a></dt>
+The same point applies for ops and dynops.Parrot allows language developers to extend Parrot&#39;s core instruction set &#45;&#45; again to suit the needs of advanced languages.
+<dt><a name="Chapter_10,_Instruction_Reference"
+>Chapter 10, <i>Instruction Reference</i></a></dt>
+Parrot&#39;s standard instruction set provides powerful behavior for primitive operations, control flow, object orientation, exception handling, and more.
+<dt><a name="Chapter_11,_Directive_Reference"
+>Chapter 11, <i>Directive Reference</i></a></dt>
+Parrot supports directives used within PIR and PASM code to change the behavior of code and to control what happens in bytecode.
+<dt><a name="Chapter_13,_Operator_Reference"
+>Chapter 13, <i>Operator Reference</i></a></dt>
+PIR provides several higher&#45;level operators as a convenience to programmers and code generators.
+<dt><a name="Appendix_A,_Glossary"
+>Appendix A, <i>Glossary</i></a></dt>
+Parrot and its environment have common jargon.
+<dt><a name="Appendix_B,_Command&#45;Line_Options"
+>Appendix B, <i>Command&#45;Line Options</i></a></dt>
+Parrot supports several flags to control execution modes, debugging, library loading, and more.
+<dt><a name="Appendix_C,_Build_Options"
+>Appendix C, <i>Build Options</i></a></dt>
+Parrot&#39;s configuration process gives administrators and developers tremendous control over the build system.
+<dt><a name="Appendix_D,_Source_Code"
+>Appendix D, <i>Source Code</i></a></dt>
+Parrot&#39;s source code is organized along logical lines &#45;&#45; logical, once you know the layout.
+<dt><a name="Appendix_E,_Patch_Submission"
+>Appendix E, <i>Patch Submission</i></a></dt>
+Parrot depends on the combined efforts of numerous volunteers. Your contributions are very welcome.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

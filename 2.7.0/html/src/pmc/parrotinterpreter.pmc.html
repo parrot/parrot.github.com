@@ -1,0 +1,146 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot Interpreter</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Parrot Interpreter
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/parrotinterpreter.pmc &#45; Parrot Interpreter</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>These are the vtable functions for the ParrotInterpreter base class</p>
+
+<pre>   getinterp P0
+   set P1, P0[.IGLOBALS_*]  # access interpreter globals
+   set I0, P0[x]            # interpinfo I0, x
+   set I0, P0[&#45;1]           # get interpreter flags
+   set P0[&#45;1], x            # set flags on interpreter
+                            # NOTE: this doesn&#39;t restart</pre>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="void_clone_interpreter(Parrot_Interp_d,_Parrot_Interp_s,_INTVAL_flags)"
+><b><code>void clone_interpreter(Parrot_Interp d, Parrot_Interp s, INTVAL flags)</b></code></a></dt>
+Clones the interpreter as specified by the flags.
+<dt><a name="static_void_create_interp(PMC_*self,_Parrot_Interp_parent)"
+><b><code>static void create_interp(PMC *self, Parrot_Interp parent)</b></code></a></dt>
+Creates a new child interpreter of <code>parent</code>.</dl>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="yield"
+><b><code>yield</b></code></a></dt>
+Yield the current thread
+<dt><a name="recursion_limit(INTVAL_l_:optional,_INTVAL_has_l_:opt_flag_)"
+><b><code>recursion_limit(INTVAL l :optional, INTVAL has_l :opt_flag )</b></code></a></dt>
+Gets the recursion limit of the interpreter, optionally setting it to something new.
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes the interpreter.
+<dt><a name="void_init_pmc(PMC_*parent)"
+><b><code>void init_pmc(PMC *parent)</b></code></a></dt>
+Initializes a child interpreter with <code>*parent</code> if <code>parent</code> is a ParrotInterpreter instance. Otherwise takes the thread ID from <code>parent</code> and uses that thread.
+<dt><a name="void_destroy()"
+><b><code>void destroy()</b></code></a></dt>
+Destroys the PMC.
+<dt><a name="void_set_pointer(void_*value)"
+><b><code>void set_pointer(void *value)</b></code></a></dt>
+Sets <code>struct_val</code> to <code>*value</code>.
+<dt><a name="void_*get_pointer()"
+><b><code>void *get_pointer()</b></code></a></dt>
+Returns <code>struct_val</code>.
+<dt><a name="INTVAL_get_integer()"
+><b><code>INTVAL get_integer()</b></code></a></dt>
+Returns the thread id of the interpreter.
+<dt><a name="opcode_t_*invoke(void_*next)"
+><b><code>opcode_t *invoke(void *next)</b></code></a></dt>
+Runs the interpreter&#39;s byte code.
+<dt><a name="PMC_*get_pmc()"
+><b><code>PMC *get_pmc()</b></code></a></dt>
+Return this Thread&#39;s args.
+<dt><a name="void_set_pmc(PMC_*args)"
+><b><code>void set_pmc(PMC *args)</b></code></a></dt>
+Set this Thread&#39;s args.
+<dt><a name="PMC_*get_pmc_keyed_int(INTVAL_key)"
+><b><code>PMC *get_pmc_keyed_int(INTVAL key)</b></code></a></dt>
+Returns the PMC global value for <code>key</code>.
+<dt><a name="PMC_*get_pmc_keyed(PMC_*key)"
+><b><code>PMC *get_pmc_keyed(PMC *key)</b></code></a></dt>
+Introspection interface. <code>key</code> can be:
+<pre>  &#34;context&#34;                 ... return Context PMC
+  &#34;sub&#34;                     ... return Sub object of this subroutine
+  &#34;continuation&#34;            ... return Continuation PMC
+  &#34;lexpad&#34;                  ... return lexpad PMC for this sub
+  &#34;namespace&#34;               ... return namespace PMC for this sub
+  &#34;outer&#34;                   ... return outer sub of this closure
+  &#34;&#60;item&#62;&#34;; level           ... same for caller &#60;level&#62;
+  &#34;annotations&#34;; level &#62; 0  ... annotations at point of call &#60;level&#62;s down
+  &#34;outer&#34;; &#34;&#60;item&#62;&#34;         ... same for outer level 1
+  &#34;outer&#34;; &#34;&#60;item&#62;&#34;; level  ... same for outer &#60;level&#62;
+  &#34;globals&#34;                 ... return global stash</pre>
+
+<dt><a name="INTVAL_get_integer_keyed_int(INTVAL_key)"
+><b><code>INTVAL get_integer_keyed_int(INTVAL key)</b></code></a></dt>
+Returns the interpreter info for <code>key</code>.
+<dt><a name="void_set_integer_keyed_int(INTVAL_key,_INTVAL_val)"
+><b><code>void set_integer_keyed_int(INTVAL key, INTVAL val)</b></code></a></dt>
+Sets the interpreter info for <code>key</code> to <code>val</code>.
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+First attempt to make things running, and to see, where problems may arise. Only minimal items are done yet.XXX this should of course call <code>Parrot_clone()</code> and use freeze/thaw.
+<dt><a name="INTVAL_is_equal(PMC_*val)"
+><b><code>INTVAL is_equal(PMC *val)</b></code></a></dt>
+Returns whether the interpreter is equal to <code>*val</code>.Two interpreters (threads) are equal if both are non&#45;threaded or they have the same thread id.
+<dt><a name="void_visit(PMC_*info)"
+><b><code>void visit(PMC *info)</b></code></a></dt>
+This is used by freeze/thaw to visit the contents of the interpreter.<code>*info</code> is the visit info, (see <em>include/parrot/pmc_freeze.h</em>).
+<dt><a name="void_freeze(PMC_*info)"
+><b><code>void freeze(PMC *info)</b></code></a></dt>
+Used to archive the interpreter. Actually not the whole interpreter is frozen but the state of the interpreter, which includes everything that has changes since creating an empty interpreter.
+<dt><a name="void_thaw(PMC_*info)"
+><b><code>void thaw(PMC *info)</b></code></a></dt>
+Used to unarchive the interpreter. This merges the changes into this interpreter instance.
+<dt><a name="void_thawfinish(PMC_*info)"
+><b><code>void thawfinish(PMC *info)</b></code></a></dt>
+Finish thawing.
+<dt><a name="METHOD_hll_map(PMC_core_type,PMC_hll_type)"
+>METHOD hll_map(PMC core_type,PMC hll_type)</a></dt>
+Map core_type to hll_type.
+<dt><a name="METHOD_stdhandle(INTVAL_fileno,_PMC_*newhandle_:optional)"
+>METHOD stdhandle(INTVAL fileno, PMC *newhandle :optional)</a></dt>
+Returns the standard parrot handler associated with the interpreter. The valid values for fileno are listed in include/stdio.pasmOptionally sets the parrot handler passed as second argument as the specified standard handler.This method is experimental. See TT #264.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

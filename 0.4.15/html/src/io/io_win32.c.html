@@ -1,0 +1,698 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Win32 IO layer</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Win32 IO layer</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/io/name.c &#45; Win32 IO layer</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This is the Parrot OS&#45;specific IO layer for Win32 platforms.</p>
+
+<h2><a name="References"
+>References <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Win32 System Programming,
+2nd Edition.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>*/</p>
+
+<p>#ifdef WIN32 # include &#60;windows.h&#62; #endif</p>
+
+<p>#include &#34;parrot/parrot.h&#34; #include &#34;io_private.h&#34;</p>
+
+<p>#ifdef PIO_OS_WIN32</p>
+
+<p>/* HEADERIZER HFILE: none */ /* HEADERIZER BEGIN: static */</p>
+
+<p>static INTVAL flags_to_win32( INTVAL flags,
+NOTNULL(DWORD * fdwAccess),
+NOTNULL(DWORD * fdwShareMode),
+NOTNULL(DWORD * fdwCreate) ) __attribute__nonnull__(2) __attribute__nonnull__(3) __attribute__nonnull__(4);</p>
+
+<p>PARROT_CAN_RETURN_NULL static ParrotIO * PIO_win32_accept( PARROT_INTERP,
+SHIM(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io) ) __attribute__nonnull__(1) __attribute__nonnull__(3);</p>
+
+<p>static INTVAL PIO_win32_bind( PARROT_INTERP,
+SHIM(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io),
+NULLOK(STRING *l) ) __attribute__nonnull__(1) __attribute__nonnull__(3);</p>
+
+<p>static INTVAL PIO_win32_close( SHIM_INTERP,
+SHIM(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io) ) __attribute__nonnull__(3);</p>
+
+<p>static INTVAL PIO_win32_connect( PARROT_INTERP,
+SHIM(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io),
+NOTNULL(STRING *r) ) __attribute__nonnull__(1) __attribute__nonnull__(3) __attribute__nonnull__(4);</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL static ParrotIO * PIO_win32_fdopen( PARROT_INTERP,
+SHIM(ParrotIOLayer *layer),
+PIOHANDLE fd,
+INTVAL flags ) __attribute__nonnull__(1);</p>
+
+<p>static INTVAL PIO_win32_flush( SHIM_INTERP,
+SHIM(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io) ) __attribute__nonnull__(3);</p>
+
+<p>static INTVAL PIO_win32_init( PARROT_INTERP,
+NOTNULL(ParrotIOLayer *layer) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>PARROT_WARN_UNUSED_RESULT static INTVAL PIO_win32_isatty( PIOHANDLE fd );</p>
+
+<p>static INTVAL PIO_win32_listen( SHIM_INTERP,
+SHIM(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io),
+INTVAL backlog ) __attribute__nonnull__(3);</p>
+
+<p>PARROT_CAN_RETURN_NULL static ParrotIO * PIO_win32_open( PARROT_INTERP,
+SHIM(ParrotIOLayer *layer),
+NOTNULL(const char *spath),
+INTVAL flags ) __attribute__nonnull__(1) __attribute__nonnull__(3);</p>
+
+<p>static size_t PIO_win32_read( PARROT_INTERP,
+SHIM(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io),
+NOTNULL(STRING **buf) ) __attribute__nonnull__(1) __attribute__nonnull__(3) __attribute__nonnull__(4);</p>
+
+<p>static INTVAL PIO_win32_recv( PARROT_INTERP,
+SHIM(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io),
+NOTNULL(STRING **s) ) __attribute__nonnull__(1) __attribute__nonnull__(3) __attribute__nonnull__(4);</p>
+
+<p>static PIOOFF_T PIO_win32_seek( SHIM_INTERP,
+SHIM(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io),
+PIOOFF_T off,
+INTVAL whence ) __attribute__nonnull__(3);</p>
+
+<p>static INTVAL PIO_win32_send( SHIM_INTERP,
+SHIM(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io),
+NOTNULL(STRING *s) ) __attribute__nonnull__(3) __attribute__nonnull__(4);</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL static ParrotIO * PIO_win32_socket( PARROT_INTERP,
+SHIM(ParrotIOLayer *layer),
+int fam,
+int type,
+int proto ) __attribute__nonnull__(1);</p>
+
+<p>static PIOOFF_T PIO_win32_tell( SHIM_INTERP,
+SHIM(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io) ) __attribute__nonnull__(3);</p>
+
+<p>static size_t PIO_win32_write( SHIM_INTERP,
+SHIM(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io),
+NOTNULL(STRING *s) ) __attribute__nonnull__(3) __attribute__nonnull__(4);</p>
+
+<p>/* HEADERIZER END: static */</p>
+
+<p># include &#60;tchar.h&#62;</p>
+
+<p>/* Defined at bottom */ extern const ParrotIOLayerAPI pio_win32_layer_api;</p>
+
+<p>ParrotIOLayer pio_win32_layer = { NULL,
+&#34;win32&#34;,
+PIO_L_TERMINAL,
+&#38;pio_win32_layer_api,
+0,
+0 };</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: flags_to_win32</p>
+
+<p>Convert to platform&#45;specific bit open flags.</p>
+
+<p>*/</p>
+
+<p>static INTVAL flags_to_win32(INTVAL flags,
+NOTNULL(DWORD * fdwAccess),
+NOTNULL(DWORD * fdwShareMode),
+NOTNULL(DWORD * fdwCreate)) { static DWORD dwDefaultShareMode; if (!dwDefaultShareMode) { OSVERSIONINFO osvi; osvi.dwOSVersionInfoSize = sizeof (osvi); GetVersionEx(&#38;osvi); if (osvi.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) { dwDefaultShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE; } else { dwDefaultShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE; } }</p>
+
+<pre lang='und' xml:lang='und'>    if ((flags &#38; (PIO_F_WRITE | PIO_F_READ)) == (PIO_F_WRITE | PIO_F_READ)) {
+        *fdwAccess = GENERIC_WRITE | GENERIC_READ;
+        if (flags &#38; PIO_F_TRUNC)
+            *fdwCreate = CREATE_ALWAYS;
+        else
+            *fdwCreate = OPEN_ALWAYS;
+    }
+    else if (flags &#38; PIO_F_WRITE) {
+        *fdwAccess = GENERIC_WRITE;
+        if (flags &#38; PIO_F_TRUNC)
+            *fdwCreate = CREATE_ALWAYS;
+        else
+            *fdwCreate = OPEN_ALWAYS;
+    }
+    else if (flags &#38; PIO_F_READ) {
+        *fdwAccess = GENERIC_READ;
+        *fdwCreate = OPEN_EXISTING;
+    }
+
+    *fdwShareMode = dwDefaultShareMode;
+    if (flags &#38; PIO_F_APPEND) {
+        /* dealt with specially in _write and _puts */
+    }
+    return 1;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_init</p>
+
+<p>Sets up the standard <code lang='und' xml:lang='und'>std*</code> IO handles.</p>
+
+<p>*/</p>
+
+<p>static INTVAL PIO_win32_init(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer)) { HANDLE h; # if PARROT_NET_DEVEL struct WSAData sockinfo; int ret; # endif</p>
+
+<pre lang='und' xml:lang='und'>    if ((h = GetStdHandle(STD_INPUT_HANDLE)) != INVALID_HANDLE_VALUE) {
+        _PIO_STDIN(interp) = new_io_pmc(interp,
+            PIO_win32_fdopen(interp, layer, h, PIO_F_READ));
+    }
+    else {
+        return &#45;1;
+    }
+    if ((h = GetStdHandle(STD_OUTPUT_HANDLE)) != INVALID_HANDLE_VALUE) {
+        _PIO_STDOUT(interp) = new_io_pmc(interp,
+            PIO_win32_fdopen(interp, layer, h, PIO_F_WRITE));
+    }
+    else {
+        return &#45;2;
+    }
+    if ((h = GetStdHandle(STD_ERROR_HANDLE)) != INVALID_HANDLE_VALUE) {
+        _PIO_STDERR(interp) = new_io_pmc(interp,
+            PIO_win32_fdopen(interp, layer, h, PIO_F_WRITE));
+    }
+    else {
+        return &#45;3;
+    }
+#  if PARROT_NET_DEVEL
+    /* Start Winsock
+     * no idea where or whether destroy it
+     */
+    ret = WSAStartup(2, &#38;sockinfo);
+    if (ret != 0) {
+        fprintf(stderr, &#34;WSAStartup failed!!\n ErrorCode=%i\n\n&#34;,
+                  WSAGetLastError());
+        return &#45;4;
+    }
+#  endif
+    return 0;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_getblksize</p>
+
+<p>Returns <code lang='und' xml:lang='und'>PIO_BLKSIZE</code>.</p>
+
+<p>*/</p>
+
+<p>INTVAL PIO_win32_getblksize(SHIM(PIOHANDLE fd)) { /* Hard coded for now */ return PIO_BLKSIZE; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_open</p>
+
+<p>Calls <code lang='und' xml:lang='und'>CreateFile()</code> to open <code lang='und' xml:lang='und'>*spath</code> with the Win32 translation of <code lang='und' xml:lang='und'>flags</code>.</p>
+
+<p>*/</p>
+
+<p>PARROT_CAN_RETURN_NULL static ParrotIO * PIO_win32_open(PARROT_INTERP, SHIM(ParrotIOLayer *layer), NOTNULL(const char *spath), INTVAL flags) { ParrotIO *io; DWORD fAcc, fShare, fCreat; PIOHANDLE fd;</p>
+
+<pre lang='und' xml:lang='und'>    const int type = PIO_TYPE_FILE;
+#  if 0
+    if ((Interp_flags_TEST(interp, PARROT_DEBUG_FLAG)) != 0) {
+        fprintf(stderr, &#34;PIO_win32_open: %s\n&#34;, spath);
+    }
+#  endif
+    if ((flags &#38; (PIO_F_WRITE | PIO_F_READ)) == 0)
+        return NULL;
+
+    /* Set open flags &#45; &#60;, &#62;, &#62;&#62;, +&#60;, +&#62; */
+    /* add ? and ! for block/non&#45;block */
+    if (flags_to_win32(flags, &#38;fAcc, &#38;fShare, &#38;fCreat) &#60; 0)
+        return NULL;
+
+    /* Only files for now */
+    flags |= PIO_F_FILE;
+
+    fd = CreateFile(spath, fAcc, fShare, NULL, fCreat,
+                    FILE_ATTRIBUTE_NORMAL, NULL);
+    if (fd != INVALID_HANDLE_VALUE) {
+        io = PIO_new(interp, type, flags, 0);
+        io&#45;&#62;fd = fd;
+        return io;
+    }
+    else {
+        int err = GetLastError();
+        if (err) {
+            errno = err;
+        }
+    }
+
+    return NULL;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_fdopen</p>
+
+<p>Returns a new <code lang='und' xml:lang='und'>ParrotIO</code> with <code lang='und' xml:lang='und'>fd</code> as its file descriptor.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL static ParrotIO * PIO_win32_fdopen(PARROT_INTERP, SHIM(ParrotIOLayer *layer), PIOHANDLE fd, INTVAL flags) { ParrotIO *io; INTVAL mode; mode = 0;</p>
+
+<pre lang='und' xml:lang='und'>    if (PIO_win32_isatty(fd))
+        flags |= PIO_F_CONSOLE;
+
+    /* fdopened files are always shared */
+    flags |= PIO_F_SHARED;
+
+    io = PIO_new(interp, PIO_F_FILE, flags, mode);
+    io&#45;&#62;fd = fd;
+    return io;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_close</p>
+
+<p>Calls <code lang='und' xml:lang='und'>CloseHandle()</code> to close <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor.</p>
+
+<p>*/</p>
+
+<p>static INTVAL PIO_win32_close(SHIM_INTERP, SHIM(ParrotIOLayer *layer), NOTNULL(ParrotIO *io)) { if (io &#38;&#38; io&#45;&#62;fd != INVALID_HANDLE_VALUE) { CloseHandle(io&#45;&#62;fd); io&#45;&#62;fd = INVALID_HANDLE_VALUE; } return 0; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_isatty</p>
+
+<p>Returns whether <code lang='und' xml:lang='und'>fd</code> is a console/tty.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT static INTVAL PIO_win32_isatty(PIOHANDLE fd) { const DWORD ftype = GetFileType(fd); return (ftype == FILE_TYPE_CHAR); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_flush</p>
+
+<p>Calls <code lang='und' xml:lang='und'>FlushFileBuffers()</code> to flush <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor.</p>
+
+<p>*/</p>
+
+<p>static INTVAL PIO_win32_flush(SHIM_INTERP, SHIM(ParrotIOLayer *layer), NOTNULL(ParrotIO *io)) { /* * FlushFileBuffers won&#39;t work for console handles. From the MS help file: * * Windows NT: The function fails if hFile is a handle to console * output. That is because console output is not buffered. The * function returns FALSE, and GetLastError returns * ERROR_INVALID_HANDLE. * * Windows 9x: The function does nothing if hFile is a handle to * console output. That is because console output is not buffered. * The function returns TRUE, but it does nothing. */ return FlushFileBuffers(io&#45;&#62;fd); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_read</p>
+
+<p>Calls <code lang='und' xml:lang='und'>ReadFile()</code> to read up to <code lang='und' xml:lang='und'>len</code> bytes from <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor to the memory starting at <code lang='und' xml:lang='und'>buffer</code>.</p>
+
+<p>*/</p>
+
+<p>static size_t PIO_win32_read(PARROT_INTERP, SHIM(ParrotIOLayer *layer), NOTNULL(ParrotIO *io), NOTNULL(STRING **buf)) { DWORD countread; void *buffer; size_t len; STRING *s;</p>
+
+<pre lang='und' xml:lang='und'>    s = PIO_make_io_string(interp, buf, 2048);
+    len = s&#45;&#62;bufused;
+    buffer = s&#45;&#62;strstart;
+
+    if (ReadFile(io&#45;&#62;fd, (LPVOID) buffer, (DWORD) len, &#38;countread, NULL)) {
+        if (countread &#62; 0) {
+            s&#45;&#62;bufused = s&#45;&#62;strlen = countread;
+            return (size_t)countread;
+        }
+        else if (len &#62; 0)
+            /* EOF if read 0 and bytes were requested */
+            io&#45;&#62;flags |= PIO_F_EOF;
+    }
+    else {
+        /* FIXME : An error occured */
+    }
+
+    s&#45;&#62;bufused = s&#45;&#62;strlen = 0;
+    return 0;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_write</p>
+
+<p>Calls <code lang='und' xml:lang='und'>WriteFile()</code> to write <code lang='und' xml:lang='und'>len</code> bytes from the memory starting at <code lang='und' xml:lang='und'>buffer</code> to <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor.</p>
+
+<p>*/</p>
+
+<p>static size_t PIO_win32_write(SHIM_INTERP, SHIM(ParrotIOLayer *layer), NOTNULL(ParrotIO *io), NOTNULL(STRING *s)) { DWORD countwrote = 0; void * const buffer = s&#45;&#62;strstart; size_t len = s&#45;&#62;bufused;</p>
+
+<pre lang='und' xml:lang='und'>    /* do it by hand, Win32 hasn&#39;t any specific flag */
+    if (io&#45;&#62;flags &#38; PIO_F_APPEND) {
+        LARGE_INTEGER p;
+        p.LowPart = 0;
+        p.HighPart = 0;
+
+        p.LowPart = SetFilePointer(io&#45;&#62;fd, p.LowPart,
+                                   &#38;p.HighPart, FILE_END);
+        if (p.LowPart == 0xFFFFFFFF &#38;&#38; (GetLastError() != NO_ERROR)) {
+            /* Error &#45; exception */
+            return &#45;1;
+        }
+    }
+
+    if (io
+        &#38;&#38; WriteFile(io&#45;&#62;fd, (LPCSTR) buffer, (DWORD) len, &#38;countwrote, NULL))
+        return countwrote;
+    /* FIXME: Set error flag */
+    return (size_t)&#45;1;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_seek</p>
+
+<p>Hard seek.</p>
+
+<p>Calls <code lang='und' xml:lang='und'>SetFilePointer()</code> to move the read/write position of <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor to <code lang='und' xml:lang='und'>off</code> bytes relative to the location specified by <code lang='und' xml:lang='und'>whence</code>.</p>
+
+<p>*/</p>
+
+<p>static PIOOFF_T PIO_win32_seek(SHIM_INTERP, SHIM(ParrotIOLayer *layer), NOTNULL(ParrotIO *io), PIOOFF_T off, INTVAL whence) { LARGE_INTEGER offset;</p>
+
+<pre lang='und' xml:lang='und'>    offset.QuadPart = off;
+    /* offset.HighPart gets overwritten */
+    offset.LowPart = SetFilePointer(io&#45;&#62;fd, offset.LowPart,
+                               &#38;offset.HighPart, whence);
+    if (offset.LowPart == 0xFFFFFFFF &#38;&#38; (GetLastError() != NO_ERROR)) {
+        /* Error &#45; exception */
+        return &#45;1;
+    }
+    io&#45;&#62;fpos = offset.QuadPart;
+    return io&#45;&#62;fpos;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_tell</p>
+
+<p>Returns the current read/write position of <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor.</p>
+
+<p>*/</p>
+
+<p>static PIOOFF_T PIO_win32_tell(SHIM_INTERP, SHIM(ParrotIOLayer *layer), NOTNULL(ParrotIO *io)) { LARGE_INTEGER p;</p>
+
+<pre lang='und' xml:lang='und'>    p.QuadPart = piooffsetzero;
+    p.LowPart = SetFilePointer(io&#45;&#62;fd, 0, &#38;p.HighPart, FILE_CURRENT);
+    if (p.LowPart == 0xFFFFFFFF &#38;&#38; GetLastError() != NO_ERROR) {
+        /* FIXME: Error &#45; exception */
+    }
+    return p.QuadPart;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_sockaddr_in</p>
+
+<p><code lang='und' xml:lang='und'>PIO_sockaddr_in()</code> is not part of the layer and so must be <code lang='und' xml:lang='und'>extern</code>.</p>
+
+<p>XXX: We can probably just write our own routines (<code lang='und' xml:lang='und'>htons()</code>, <code lang='und' xml:lang='und'>inet_aton()</code>, etc.) and take this out of platform specific compilation</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL STRING * PIO_sockaddr_in(PARROT_INTERP, unsigned short port, NOTNULL(STRING *addr)) { struct sockaddr_in sa; struct hostent *he; char * const s = string_to_cstring(interp, addr); /* Hard coded to IPv4 for now */</p>
+
+<pre lang='und' xml:lang='und'>    sa.sin_addr.s_addr = inet_addr(s);
+    /* Maybe it is a hostname, try to lookup */
+    /* XXX Check PIO option before doing a name lookup,
+     * it may have been toggled off.
+     */
+    he = gethostbyname(s);
+    /* XXX FIXME &#45; Handle error condition better */
+    if (!he) {
+        string_cstring_free(s);
+        fprintf(stderr, &#34;gethostbyname failure [%s]\n&#34;, s);
+        return NULL;
+    }
+    memcpy((char*)&#38;sa.sin_addr, he&#45;&#62;h_addr, sizeof (sa.sin_addr));
+
+    string_cstring_free(s);
+
+    sa.sin_port = htons(port);
+
+    return string_make(interp, (char *)&#38;sa, sizeof (struct sockaddr), &#34;binary&#34;, 0);
+}</pre>
+
+<p>/****************************************************************************/</p>
+
+<p># if PARROT_NET_DEVEL</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_socket</p>
+
+<p>Uses <code lang='und' xml:lang='und'>socket()</code> to create a socket with the specified address family, socket type and protocol number.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL static ParrotIO * PIO_win32_socket(PARROT_INTERP, SHIM(ParrotIOLayer *layer), int fam, int type, int proto) { const int sock = socket(fam, type, proto);</p>
+
+<pre lang='und' xml:lang='und'>    if (sock &#62;= 0) {
+        ParrotIO * const io = PIO_new(interp, PIO_F_SOCKET, 0, PIO_F_READ|PIO_F_WRITE);
+        io&#45;&#62;fd = (PIOHANDLE) sock;
+        io&#45;&#62;remote.sin_family = fam;
+        return io;
+    }
+    perror(&#34;socket:&#34;);
+    return NULL;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_connect</p>
+
+<p>Connects <code lang='und' xml:lang='und'>*io</code>&#39;s socket to address <code lang='und' xml:lang='und'>*r</code>.</p>
+
+<p>*/</p>
+
+<p>static INTVAL PIO_win32_connect(PARROT_INTERP, SHIM(ParrotIOLayer *layer), NOTNULL(ParrotIO *io), NOTNULL(STRING *r)) { if (r) { struct sockaddr_in sa; memcpy(&#38;sa, PObj_bufstart(r), sizeof (struct sockaddr)); io&#45;&#62;remote.sin_addr.s_addr = sa.sin_addr.s_addr; io&#45;&#62;remote.sin_port = sa.sin_port; }</p>
+
+<pre lang='und' xml:lang='und'>    /*    PIO_eprintf(interp, &#34;connect: fd = %d port = %d\n&#34;,
+     *    io&#45;&#62;fd, ntohs(io&#45;&#62;remote.sin_port));*/
+    if ((connect((SOCKET)io&#45;&#62;fd, (struct sockaddr*)&#38;io&#45;&#62;remote,
+                   sizeof (struct sockaddr))) != 0) {
+        PIO_eprintf(interp, &#34;PIO_win32_connect: errno = %d\n&#34;,
+                    WSAGetLastError());
+        return &#45;1;
+    }
+
+    return 0;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_send</p>
+
+<p>Send the message <code lang='und' xml:lang='und'>*s</code> to <code lang='und' xml:lang='und'>*io</code>&#39;s connected socket.</p>
+
+<p>*/</p>
+
+<p>static INTVAL PIO_win32_send(SHIM_INTERP, SHIM(ParrotIOLayer *layer), NOTNULL(ParrotIO *io), NOTNULL(STRING *s)) { int error, bytes, byteswrote, maxwrite;</p>
+
+<pre lang='und' xml:lang='und'>    bytes = sizeof(s); /* XXX This can&#39;t be correct, to send the size of a pointer */
+    byteswrote = 0;
+    maxwrite = 2048;
+AGAIN:
+    /*
+     * Ignore encoding issues for now.
+     */
+    if ((error = send((SOCKET)io&#45;&#62;fd, (char *)PObj_bufstart(s) + byteswrote,
+                            PObj_buflen(s), 0)) &#62;= 0) {
+        byteswrote += error;
+        if (byteswrote &#62;= bytes) {
+            return byteswrote;
+        }
+        else if (bytes &#45; byteswrote &#60; maxwrite) {
+            maxwrite = bytes &#45; byteswrote;
+        }
+        goto AGAIN;
+    }
+    else {
+        switch (errno) {
+            case EINTR:
+                goto AGAIN;
+#    ifdef EWOULDBLOCK
+            case EWOULDBLOCK:
+                goto AGAIN;
+#    else
+            case EAGAIN:
+                goto AGAIN;
+#    endif
+            case EPIPE:
+                _close((SOCKET)io&#45;&#62;fd);
+                return &#45;1;
+            default:
+                return &#45;1;
+        }
+    }
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_recv</p>
+
+<p>Receives a message in <code lang='und' xml:lang='und'>**s</code> from <code lang='und' xml:lang='und'>*io</code>&#39;s connected socket.</p>
+
+<p>*/</p>
+
+<p>static INTVAL PIO_win32_recv(PARROT_INTERP, SHIM(ParrotIOLayer *layer), NOTNULL(ParrotIO *io), NOTNULL(STRING **s)) { int error; int err; unsigned int bytesread = 0; char buf[2048+1];</p>
+
+<p>AGAIN: error = recv((SOCKET)io&#45;&#62;fd, buf, 2048, 0); err = WSAGetLastError(); if (error &#62; 0) { if (error &#62; 0) bytesread += error; else { _close((SOCKET)io&#45;&#62;fd); } /* The charset should probably be &#39;binary&#39;, but right now httpd.imc * only works with &#39;ascii&#39; */ *s = string_make(interp, buf, bytesread, &#34;ascii&#34;, 0); if (!*s) { PANIC(interp, &#34;PIO_recv: Failed to allocate string&#34;); } # if PIO_TRACE PIO_eprintf(interp, &#34;PIO_win32_recv: %d bytes\n&#34;, bytesread); # endif return bytesread; } else { switch (err) { case WSAEINTR: goto AGAIN; case WSAEWOULDBLOCK: goto AGAIN; case WSAECONNRESET: _close((SOCKET)io&#45;&#62;fd); # if PIO_TRACE PIO_eprintf(interp, &#34;recv: Connection reset by peer\n&#34;); # endif return &#45;1; default: _close((SOCKET)io&#45;&#62;fd); # if PIO_TRACE PIO_eprintf(interp, &#34;recv: errno = %d\n&#34;, err); # endif return &#45;1; } } }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_bind</p>
+
+<p>Binds <code lang='und' xml:lang='und'>*io</code>&#39;s socket to the local address and port specified by <code lang='und' xml:lang='und'>*l</code>.</p>
+
+<p>*/</p>
+
+<p>static INTVAL PIO_win32_bind(PARROT_INTERP, SHIM(ParrotIOLayer *layer), NOTNULL(ParrotIO *io), NULLOK(STRING *l)) { struct sockaddr_in sa;</p>
+
+<pre lang='und' xml:lang='und'>    if (!l)
+        return &#45;1;
+
+    memcpy(&#38;sa, PObj_bufstart(l), sizeof (struct sockaddr));
+    io&#45;&#62;local.sin_addr.s_addr = sa.sin_addr.s_addr;
+    io&#45;&#62;local.sin_port = sa.sin_port;
+    io&#45;&#62;local.sin_family = AF_INET;
+
+    if ((bind((SOCKET)io&#45;&#62;fd, (struct sockaddr *)&#38;io&#45;&#62;local,
+              sizeof (struct sockaddr))) == &#45;1) {
+        PIO_eprintf(interp, &#34;PIO_win32_bind: errno = %d\n&#34;,
+                    WSAGetLastError());
+        return &#45;1;
+    }
+
+    return 0;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_listen</p>
+
+<p>Listen for new connections. This is only applicable to <code lang='und' xml:lang='und'>STREAM</code> or <code lang='und' xml:lang='und'>SEQ</code> sockets.</p>
+
+<p>*/</p>
+
+<p>static INTVAL PIO_win32_listen(SHIM_INTERP, SHIM(ParrotIOLayer *layer), NOTNULL(ParrotIO *io), INTVAL backlog) { if ((listen((SOCKET)io&#45;&#62;fd, backlog)) == &#45;1) { fprintf(stderr, &#34;listen: errno= ret=%d fd = %d port = %d\n&#34;, errno, (int)io&#45;&#62;fd, ntohs(io&#45;&#62;local.sin_port)); return &#45;1; } return 0; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_win32_accept</p>
+
+<p>Accept a new connection and return a newly created <code lang='und' xml:lang='und'>ParrotIO</code> socket.</p>
+
+<p>*/</p>
+
+<p>PARROT_CAN_RETURN_NULL static ParrotIO * PIO_win32_accept(PARROT_INTERP, SHIM(ParrotIOLayer *layer), NOTNULL(ParrotIO *io)) { int newsock; int err_code;</p>
+
+<pre lang='und' xml:lang='und'>    ParrotIO * const newio = PIO_new(interp, PIO_F_SOCKET, 0, PIO_F_READ|PIO_F_WRITE);
+    Parrot_Socklen_t newsize = sizeof (struct sockaddr);
+
+    newsock = accept((SOCKET)io&#45;&#62;fd, (struct sockaddr *)&#38;(newio&#45;&#62;remote),
+                     &#38;newsize);
+    err_code = WSAGetLastError();
+
+    if (err_code != 0) {
+        fprintf(stderr, &#34;accept: errno=%d&#34;, err_code);
+        /* Didn&#39;t get far enough, free the io */
+        mem_sys_free(newio);
+        return NULL;
+    }
+
+    newio&#45;&#62;fd = (PIOHANDLE) newsock;
+
+    /* XXX FIXME: Need to do a getsockname and getpeername here to
+     * fill in the sockaddr_in structs for local and peer
+     */
+
+    /* Optionally do a gethostyaddr() to resolve remote IP address.
+     * This should be based on an option set in the master socket
+     */
+
+    return newio;
+}</pre>
+
+<p># endif</p>
+
+<p>/******************************************************************************/</p>
+
+<p>const ParrotIOLayerAPI pio_win32_layer_api = { PIO_win32_init, PIO_base_new_layer, PIO_base_delete_layer, PIO_null_push_layer, PIO_null_pop_layer, PIO_win32_open, PIO_null_open2, PIO_null_open3, PIO_null_open_async, PIO_win32_fdopen, PIO_win32_close, PIO_win32_write, PIO_null_write_async, PIO_win32_read, PIO_null_read_async, PIO_win32_flush, NULL, /* no peek */ PIO_win32_seek, PIO_win32_tell, PIO_null_setbuf, PIO_null_setlinebuf, PIO_null_getcount, PIO_null_fill, PIO_null_eof, # if PARROT_NET_DEVEL NULL, PIO_win32_socket, PIO_win32_connect, PIO_win32_send, PIO_win32_recv, PIO_win32_bind, PIO_win32_listen, PIO_win32_accept # else NULL, /* no poll */ NULL, /* no socket */ NULL, /* no connect */ NULL, /* no send */ NULL, /* no recv */ NULL, /* no bind */ NULL, /* no listen */ NULL, /* no accept */ # endif };</p>
+
+<p>#endif /* PIO_OS_WIN32 */</p>
+
+<p>/*</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'><a href="io_buf.c.html">src/io/io_buf.c</a></em>, <em lang='und' xml:lang='und'><a href="io_passdown.c.html">src/io/io_passdown.c</a></em>, <em lang='und' xml:lang='und'><a href="io_stdio.c.html">src/io/io_stdio.c</a></em>, <em lang='und' xml:lang='und'><a href="io_unix.c.html">src/io/io_unix.c</a></em>, <em lang='und' xml:lang='und'><a href="io.c.html">src/io/io.c</a></em>, <em lang='und' xml:lang='und'><a href="io_private.h.html">src/io/io_private.h</a></em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Initially written by Melvin Smith.</p>
+
+<p>*/</p>
+
+<p>/* * Local variables: * c&#45;file&#45;style: &#34;parrot&#34; * End: * vim: expandtab shiftwidth=4: */</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

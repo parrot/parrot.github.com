@@ -1,0 +1,255 @@
+=head1 NAME
+
+set.ops - Assignment Opcodes
+
+=head1 DESCRIPTION
+
+These operations all set registers to various values.
+
+When making changes to any ops file, run C<make bootstrap-ops> to regenerate
+all generated ops files.
+
+=over 4
+
+
+=cut
+
+=item B<clone>(out STR, in STR)
+
+Effectively the same as set $1, $2, except that if $2 is a null STRING, $1 gets
+a new empty string instead.
+
+
+=cut
+
+=item B<set>(out INT, in INT)
+
+=item B<set>(out INT, in NUM)
+
+=item B<set>(out INT, invar PMC)
+
+=item B<set>(out INT, invar PMC)
+
+=item B<set>(out INT, in STR)
+
+=item B<set>(out NUM, in INT)
+
+=item B<set>(out NUM, in NUM)
+
+=item B<set>(out NUM, invar PMC)
+
+=item B<set>(out NUM, in STR)
+
+=item B<set>(invar PMC, in INT)
+
+=item B<set>(invar PMC, in NUM)
+
+=item B<set>(out PMC, invar PMC)
+
+=item B<set>(invar PMC, invar STR)
+
+=item B<set>(out STR, in INT)
+
+=item B<set>(out STR, in NUM)
+
+=item B<set>(out STR, invar PMC)
+
+=item B<set>(out STR, inconst STR)
+
+=item B<set>(out STR, invar STR)
+
+=item B<set>(out PMC, inconst PMC)
+
+=item B<set>(invar PMC, inconst STR)
+
+Set $1 to $2.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 PMC assignment operations: Px = x
+
+=over 4
+
+=item B<assign>(invar PMC, in INT)
+
+=item B<assign>(invar PMC, in NUM)
+
+Assign a new value $2, to PMC $1. Same as the equivalent B<set> opcodes.
+
+=item B<assign>(invar PMC, in STR)
+
+=item B<assign>(invar PMC, invar PMC)
+
+Assign a new value $2, to PMC $1 by copying the value.
+
+=item B<assign>(out STR, in STR)
+
+Assign a new value to a string by reusing the string header.
+
+=item B<setref>(invar PMC, invar PMC)
+
+Make $1 refer to $2 by calling C<set_pmc>.
+
+=item B<deref>(out PMC, invar PMC)
+
+Not strictly an assignment operation: Put into $1 the PMC that the
+reference PMC $2 refers to.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Keyed set operations: Px[ INTKEY ] = Bx
+
+=over 4
+
+=item B<set>(invar PMC, in INTKEY, in INT)
+
+=item B<set>(invar PMC, in INTKEY, in NUM)
+
+=item B<set>(invar PMC, in INTKEY, in STR)
+
+=item B<set>(invar PMC, in INTKEY, invar PMC)
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Keyed get operations: Ax = Px[ INTKEY ]
+
+=over 4
+
+=item B<set>(out INT, invar PMC, in INTKEY)
+
+=item B<set>(out NUM, invar PMC, in INTKEY)
+
+=item B<set>(out STR, invar PMC, in INTKEY)
+
+=item B<set>(out PMC, invar PMC, in INTKEY)
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Keyed set operations: Px[ KEY ] = Bx
+
+=over 4
+
+=item B<set>(invar PMC, in KEY, in INT)
+
+=item B<set>(invar PMC, in KEY, in NUM)
+
+=item B<set>(invar PMC, in KEY, in STR)
+
+=item B<set>(invar PMC, in KEY, invar PMC)
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Keyed get operations: Ax = Px[ KEY ]
+
+=over 4
+
+=item B<set>(out INT, invar PMC, in KEY)
+
+=item B<set>(out NUM, invar PMC, in KEY)
+
+=item B<set>(out STR, invar PMC, in KEY)
+
+=item B<set>(out PMC, invar PMC, in KEY)
+
+
+=cut
+
+=item B<clone>(out PMC, invar PMC)
+
+Makes a copy of the PMC in $2 and puts it in $1.
+
+
+=cut
+
+=item B<clone>(out PMC, invar PMC, in PMC)
+
+Makes a copy of the PMC in $2 and puts it in $1, using the arguments in $3.
+
+
+=cut
+
+=item B<copy>(inout PMC, invar PMC)
+
+Morphs the PMC in $1 to the type of the PMC in $2, then assigns $2 to $1.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Register operations
+
+These operations effect entire sets of registers.
+
+=over 4
+
+
+=cut
+
+=item B<null>(out INT)
+
+=item B<null>(out NUM)
+
+Set register $1 to zero.
+
+=item B<null>(out STR)
+
+Set register $1 to a NULL string value.
+
+=item B<null>(out PMC)
+
+Set register $1 to PMCNULL.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head1 COPYRIGHT
+
+Copyright (C) 2001-2010, Parrot Foundation.
+
+=head1 LICENSE
+
+This program is free software. It is subject to the same license
+as the Parrot interpreter itself.
+
+
+=cut
+

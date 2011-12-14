@@ -1,0 +1,1911 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Strings</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Strings</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/string.c &#45; Parrot Strings</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>This file implements the non&#45;ICU parts of the Parrot string subsystem.</p>
+
+<p>Note that <code lang='und' xml:lang='und'>bufstart</code> and <code lang='und' xml:lang='und'>buflen</code> are used by the memory subsystem.
+The string functions may only use <code lang='und' xml:lang='und'>buflen</code> to determine,
+if there is some space left beyond <code lang='und' xml:lang='und'>bufused</code>.
+This is the <i>only</i> valid usage of these two data members,
+beside setting <code lang='und' xml:lang='und'>bufstart</code>/<code lang='und' xml:lang='und'>buflen</code> for external strings.</p>
+
+<h2><a name="Basic_String_Functions"
+>Basic String Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Creation,
+enlargement,
+etc.</p>
+
+<p>FUNCDOC: string_init</p>
+
+<p>Initializes the Parrot string subsystem.</p>
+
+<p>*/</p>
+
+<p>void string_init(Parrot_Interp interp) { size_t i;</p>
+
+<pre lang='und' xml:lang='und'>    /*
+     * when string_init is called, the config hash isn&#39;t created
+     * so we can&#39;t get at the runtime path
+     * XXX do we still need this &#45;&#45;leo
+     */
+
+    if (!interp&#45;&#62;parent_interpreter) {
+        /* Load in the basic encodings and charsets
+         */
+        Parrot_charsets_encodings_init(interp);
+    }
+
+    /*
+     * initialize the constant string table
+     */
+    if (interp&#45;&#62;parent_interpreter) {
+        interp&#45;&#62;const_cstring_table =
+            interp&#45;&#62;parent_interpreter&#45;&#62;const_cstring_table;
+        return;
+    }
+    interp&#45;&#62;const_cstring_table = mem_sys_allocate(sizeof(STRING*) *
+        sizeof(parrot_cstrings)/sizeof(parrot_cstrings[0]));
+    for (i = 0; i &#60; sizeof(parrot_cstrings)/sizeof(parrot_cstrings[0]); ++i) {
+        interp&#45;&#62;const_cstring_table[i] =
+            const_string(interp, parrot_cstrings[i].string);
+        /* TODO construct string here and valid hashval */
+    }</pre>
+
+<p>}</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: De&#45;Initializes the Parrot string subsystem.</p>
+
+<p>*/</p>
+
+<p>void string_deinit(Parrot_Interp interp) { /* all are shared between interpreters */ if (!interp&#45;&#62;parent_interpreter) { mem_sys_free(interp&#45;&#62;const_cstring_table); interp&#45;&#62;const_cstring_table = NULL; Parrot_charsets_encodings_deinit(interp); } }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Returns the capacity of the specified Parrot string in bytes, that is how many bytes can be appended onto strstart.</p>
+
+<p>*/</p>
+
+<p>UINTVAL string_capacity(Interp *interp, const STRING *s /*NN*/) { return ((ptrcast_t)PObj_bufstart(s) + PObj_buflen(s) &#45; (ptrcast_t)s&#45;&#62;strstart); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Creates and returns an empty Parrot string.</p>
+
+<p>*/</p>
+
+<p>STRING * string_make_empty(Interp *interp, parrot_string_representation_t representation, UINTVAL capacity) { STRING * const s = new_string_header(interp, 0);</p>
+
+<pre lang='und' xml:lang='und'>    /*
+     * TODO adapt string creation functions
+     */
+    if (representation == enum_stringrep_one) {
+        s&#45;&#62;charset = PARROT_DEFAULT_CHARSET;
+        s&#45;&#62;encoding = CHARSET_GET_PREFERRED_ENCODING(interp, s);;
+    }
+    else {
+        internal_exception(INVALID_CHARTYPE, &#34;Unsupported representation&#34;);
+    }
+
+    Parrot_allocate_string(interp,
+        s, string_max_bytes(interp, s, capacity));
+
+    return s;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Find the &#34;lowest&#34; possible charset and encoding for the given string. E.g.</p>
+
+<pre lang='und' xml:lang='und'>  ascii &#60;op&#62; utf8 =&#62; utf8
+                  =&#62; ascii, B&#60;if&#62; C&#60;STRING *b&#62; has ascii chars only.</pre>
+
+<p>Returs NULL, if no compatible string representation can be found.</p>
+
+<p>*/</p>
+
+<p>CHARSET * string_rep_compatible (Interp *interp, STRING *a /*NN*/, const STRING *b /*NN*/, ENCODING **e /*NN*/) { if (a&#45;&#62;encoding == b&#45;&#62;encoding &#38;&#38; a&#45;&#62;charset == b&#45;&#62;charset) { *e = a&#45;&#62;encoding; return a&#45;&#62;charset; }</p>
+
+<pre lang='und' xml:lang='und'>    /*
+     * a table could possibly simplify the logic
+     */
+    if (a&#45;&#62;encoding == Parrot_utf8_encoding_ptr &#38;&#38;
+            b&#45;&#62;charset == Parrot_ascii_charset_ptr) {
+        if (a&#45;&#62;strlen == a&#45;&#62;bufused) {
+            *e = Parrot_fixed_8_encoding_ptr;
+            return Parrot_ascii_charset_ptr;
+        }
+        *e = a&#45;&#62;encoding;
+        return a&#45;&#62;charset;
+    }
+    if (b&#45;&#62;encoding == Parrot_utf8_encoding_ptr &#38;&#38;
+            a&#45;&#62;charset == Parrot_ascii_charset_ptr) {
+        if (b&#45;&#62;strlen == b&#45;&#62;bufused) {
+            *e = Parrot_fixed_8_encoding_ptr;
+            return a&#45;&#62;charset;
+        }
+        *e = Parrot_utf8_encoding_ptr;
+        return b&#45;&#62;charset;
+    }
+    if (a&#45;&#62;encoding != b&#45;&#62;encoding)
+        return NULL;
+    if (a&#45;&#62;encoding != Parrot_fixed_8_encoding_ptr)
+        return NULL;
+    *e = Parrot_fixed_8_encoding_ptr;
+    if (a&#45;&#62;charset == b&#45;&#62;charset)
+        return a&#45;&#62;charset;
+    if (b&#45;&#62;charset == Parrot_ascii_charset_ptr)
+        return a&#45;&#62;charset;
+    if (a&#45;&#62;charset == Parrot_ascii_charset_ptr)
+        return b&#45;&#62;charset;
+    if (a&#45;&#62;charset == Parrot_binary_charset_ptr)
+        return a&#45;&#62;charset;
+    if (b&#45;&#62;charset == Parrot_binary_charset_ptr)
+        return b&#45;&#62;charset;
+    return NULL;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Take in two Parrot strings and append the second to the first. NOTE THAT RETURN VALUE MAY NOT BE THE FIRST STRING, if the first string is COW&#39;d or read&#45;only. So make sure to _use_ the return value.</p>
+
+<p>*/</p>
+
+<p>STRING * string_append(Interp *interp, STRING *a, STRING *b) { UINTVAL a_capacity, b_len; UINTVAL total_length; CHARSET *cs; ENCODING *enc;</p>
+
+<pre lang='und' xml:lang='und'>    /* XXX should this be a CHARSET method? */
+
+    /* If B isn&#39;t real, we just bail */
+    b_len = string_length(interp, b);
+    if (!b_len) {
+        return a;
+    }
+
+    /* Is A real? */
+    if (a == NULL)
+        return string_copy(interp, b);
+
+    saneify_string(a);
+    saneify_string(b);
+
+    /* If the destination&#39;s constant, or external then just fall back to
+       string_concat */
+    if (PObj_is_cowed_TESTALL(a)) {
+        return string_concat(interp, a, b, 0);
+    }
+
+    cs = string_rep_compatible(interp, a, b, &#38;enc);
+    if (cs != NULL) {
+        a&#45;&#62;charset = cs;
+        a&#45;&#62;encoding = enc;
+    }
+    else {
+        /* upgrade to utf16 */
+        Parrot_utf16_encoding_ptr&#45;&#62;to_encoding(interp, a, NULL);
+        b = Parrot_utf16_encoding_ptr&#45;&#62;to_encoding(interp, b,
+                new_string_header(interp, 0));
+        /*
+         * result could be mixed ucs2 / utf16
+         */
+        if (b&#45;&#62;encoding == Parrot_utf16_encoding_ptr)
+            a&#45;&#62;encoding = Parrot_utf16_encoding_ptr;
+    }
+    /*
+     * calc usable and total bytes
+     */
+    a_capacity = string_capacity(interp, a);
+    total_length = a&#45;&#62;bufused + b&#45;&#62;bufused;
+
+    /* make sure A&#39;s big enough for both  */
+    if (total_length &#62;= a_capacity)  {
+        Parrot_reallocate_string(interp, a,
+                total_length &#60;&#60; 1);
+    }
+
+    /* A is now ready to receive the contents of B */
+
+    /* Tack B on the end of A */
+    mem_sys_memcopy((void *)((ptrcast_t)a&#45;&#62;strstart + a&#45;&#62;bufused),
+            b&#45;&#62;strstart, b&#45;&#62;bufused);
+
+    a&#45;&#62;bufused += b&#45;&#62;bufused;
+    a&#45;&#62;strlen += b_len;
+    a&#45;&#62;hashval = 0;
+    return a;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Make a Parrot string from a specified C string.</p>
+
+<p>*/</p>
+
+<p>STRING * string_from_cstring(Interp *interp, const void *buffer, UINTVAL len) { return string_make_direct(interp, buffer, len ? len : buffer ? strlen(buffer) : 0, PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET, 0); /* Force an 8&#45;bit encoding at some point? */ }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Make a Parrot string from a specified C string.</p>
+
+<p>*/</p>
+
+<p>STRING * string_from_const_cstring(Interp *interp, const void *buffer, UINTVAL len) { return string_make_direct(interp, buffer, len ? len : buffer ? strlen(buffer) : 0, PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET, 0); /* make this utf&#45;8 eventually? */ }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Returns the primary encoding for the specified representation.</p>
+
+<p>This is needed for packfile unpacking, unless we just always use UTF&#45;8 or BOCU.</p>
+
+<p>*/</p>
+
+<p>const char* string_primary_encoding_for_representation(Interp *interp, parrot_string_representation_t representation) { switch (representation) { case enum_stringrep_one: return &#34;ascii&#34;; break; default: internal_exception(INVALID_STRING_REPRESENTATION, &#34;string_primary_encoding_for_representation: &#34; &#34;invalid string representation&#34;); return NULL; break; } }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Creates and returns a constant Parrot string.</p>
+
+<p>*/</p>
+
+<p>STRING * const_string(Interp *interp, const char *buffer /*NN*/) { /* TODO cache the strings */ return string_make_direct(interp, buffer, strlen(buffer), PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET, PObj_external_FLAG|PObj_constant_FLAG); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC:</p>
+
+<p>Creates and returns a new Parrot string using <code lang='und' xml:lang='und'>len</code> bytes of string data read from <code lang='und' xml:lang='und'>buffer</code>.</p>
+
+<p>The value of <code lang='und' xml:lang='und'>charset_name</code> specifies the string&#39;s representation. The currently recognised values are:</p>
+
+<pre lang='und' xml:lang='und'>    &#39;iso&#45;8859&#45;1&#39;
+    &#39;ascii&#39;
+    &#39;binary&#39;
+    &#39;unicode&#39;</pre>
+
+<p>The encoding is implicitly guessed; <code lang='und' xml:lang='und'>unicode</code> impliies the <code lang='und' xml:lang='und'>utf&#45;8</code> encoding, and the other three assume <code lang='und' xml:lang='und'>fixed&#45;8</code> encoding.</p>
+
+<p>If <code lang='und' xml:lang='und'>charset</code> is unspecified the default charset &#39;ascii&#39; will be used.</p>
+
+<p>The value of <code lang='und' xml:lang='und'>flags</code> is optionally one or more <code lang='und' xml:lang='und'>PObj_*</code> flags <code lang='und' xml:lang='und'>OR</code>&#45;ed together.</p>
+
+<p>*/</p>
+
+<p>STRING * string_make(Interp *interp, const void *buffer, UINTVAL len, const char *charset_name, UINTVAL flags) { ENCODING *encoding; CHARSET *charset;</p>
+
+<pre lang='und' xml:lang='und'>    if (!charset_name) {
+        charset_name = &#34;ascii&#34;;
+    }
+    charset = Parrot_find_charset(interp, charset_name);
+    if (!charset) {
+        internal_exception(UNIMPLEMENTED,
+                &#34;Can&#39;t make &#39;%s&#39; charset strings&#34;, charset_name);
+    }
+    encoding = charset&#45;&#62;preferred_encoding;
+    return string_make_direct(interp, buffer, len,
+            encoding, charset, flags);</pre>
+
+<p>}</p>
+
+<p>STRING * string_make_direct(Interp *interp, const void *buffer, UINTVAL len, ENCODING *encoding, CHARSET *charset, UINTVAL flags) { STRING * const s = new_string_header(interp, flags); DECL_CONST_CAST;</p>
+
+<pre lang='und' xml:lang='und'>    s&#45;&#62;encoding = encoding;
+    s&#45;&#62;charset = charset;
+
+    if (flags &#38; PObj_external_FLAG) {
+        /*
+         * fast path for external (constant) strings &#45; don&#39;t allocate
+         * and copy data
+         */
+        /* The following cast discards the &#39;const&#39;.  That raises
+           a warning with gcc, but is ok since the caller indicated
+           it was safe by setting PObj_external_FLAG.
+           (The cast is necessary to pacify TenDRA&#39;s tcc.)
+           */
+        PObj_bufstart(s) = s&#45;&#62;strstart = const_cast(buffer);
+        PObj_buflen(s)   = s&#45;&#62;bufused = len;
+        if (encoding == Parrot_fixed_8_encoding_ptr)
+            s&#45;&#62;strlen = len;
+        else
+            string_compute_strlen(interp, s);
+
+        return s;
+    }
+
+    Parrot_allocate_string(interp, s, len);
+
+    if (buffer) {
+        mem_sys_memcopy(s&#45;&#62;strstart, buffer, len);
+        s&#45;&#62;bufused = len;
+        if (encoding == Parrot_fixed_8_encoding_ptr)
+            s&#45;&#62;strlen = len;
+        else
+            string_compute_strlen(interp, s);
+    }
+    else {
+        s&#45;&#62;strlen = s&#45;&#62;bufused = 0;
+    }
+
+    return s;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC:</p>
+
+<p>Grows the Parrot string&#39;s buffer by the specified number of characters.</p>
+
+<p>*/</p>
+
+<p>STRING * string_grow(Interp * interp, STRING * s, INTVAL addlen) { Parrot_unmake_COW(interp,s);</p>
+
+<pre lang='und' xml:lang='und'>    /* Don&#39;t check buflen, if we are here, we already checked. */
+    Parrot_reallocate_string(interp,
+        s, PObj_buflen(s) + string_max_bytes(interp, s, addlen));
+    return s;
+}</pre>
+
+<p>/*</p>
+
+<h2><a name="Ordinary_user&#45;visible_string_operations"
+>Ordinary user&#45;visible string operations <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>FUNCDOC:</p>
+
+<p>Returns the number of characters in the specified Parrot string.</p>
+
+<p>*/</p>
+
+<p>UINTVAL string_length(Interp *interp, const STRING *s) { return s ? s&#45;&#62;strlen : 0; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Returns the character (or glyph, depending upon the string&#39;s encoding) This is to abstract the process of finding the Nth character in a (possibly unicode or JIS&#45;encoded) string, the idea being that once the encoding functions are fleshed out, this function can do the right thing.</p>
+
+<p>Note that this is not range&#45;checked.</p>
+
+<p>*/</p>
+
+<p>INTVAL string_index(Interp *interp, const STRING *s, UINTVAL idx) { saneify_string(s); return (INTVAL)CHARSET_GET_CODEPOINT(interp, s, idx); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Returns the character position of the second Parrot string in the first at or after <code lang='und' xml:lang='und'>start</code>. The return value is a (0 based) offset in characters, not bytes. If second string is not specified, then return &#45;1.</p>
+
+<p>*/</p>
+
+<p>INTVAL string_str_index(Interp *interp, const STRING *s, const STRING *s2, INTVAL start) { STRING *src, *search; UINTVAL len; DECL_CONST_CAST;</p>
+
+<pre lang='und' xml:lang='und'>    if (start &#60; 0)
+        return &#45;1;
+    len = string_length(interp, s);
+    if (!len)
+        return &#45;1;
+    if (start &#62;= (INTVAL)len)
+        return &#45;1;
+    if (!string_length(interp, s2))
+        return &#45;1;
+
+    saneify_string(s);
+    saneify_string(s2);
+    src = const_cast(s);
+    search = const_cast(s2);
+
+    return CHARSET_INDEX(interp, src, search, start);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Returns the codepoint at a given index into a string. Negative indexes are treated as counting from the end of the string.</p>
+
+<p>*/</p>
+
+<p>INTVAL string_ord(Interp *interp, const STRING *s, INTVAL idx) { const UINTVAL len = string_length(interp, s);</p>
+
+<pre lang='und' xml:lang='und'>    if (len == 0) {
+        internal_exception(ORD_OUT_OF_STRING,
+            &#34;Cannot get character of empty string&#34;);
+    }
+    else {
+        UINTVAL true_index;
+        true_index = (UINTVAL)idx;
+
+        if (idx &#60; 0) {
+            if ((INTVAL)(idx + len) &#60; 0) {
+                internal_exception(ORD_OUT_OF_STRING,
+                    &#34;Cannot get character before beginning of string&#34;);
+            }
+            else {
+                true_index = (UINTVAL)(len + idx);
+            }
+        }
+
+        if (true_index &#62; (len &#45; 1)) {
+            internal_exception(ORD_OUT_OF_STRING,
+                &#34;Cannot get character past end of string&#34;);
+        }
+
+        return string_index(interp, s, true_index);
+    }
+    return &#45;1;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Returns a single character Parrot string.</p>
+
+<p>TODO &#45; Allow this to take an array of characters?</p>
+
+<p>*/</p>
+
+<p>STRING * string_chr(Interp *interp, UINTVAL character) { if (character &#62; 0xff) return Parrot_unicode_charset_ptr&#45;&#62;string_from_codepoint(interp, character); else if (character &#62; 0x7f) return Parrot_iso_8859_1_charset_ptr&#45;&#62;string_from_codepoint(interp, character); else return Parrot_ascii_charset_ptr&#45;&#62;string_from_codepoint(interp, character); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Creates and returns a copy of the specified Parrot string.</p>
+
+<p>*/</p>
+
+<p>STRING * string_copy(Interp *interp, STRING *s) { return Parrot_make_COW_reference(interp, s); }</p>
+
+<p>/*</p>
+
+<h2><a name="Vtable_Dispatch_Functions"
+>Vtable Dispatch Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>FUNCDOC: Calculates and returns the number of characters in the specified Parrot string.</p>
+
+<p>*/</p>
+
+<p>INTVAL string_compute_strlen(Interp *interp, STRING *s /*NN*/) { s&#45;&#62;strlen = CHARSET_CODEPOINTS(interp, s); return s&#45;&#62;strlen; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Returns the number of bytes required to safely contain the specified number of characters in the specified Parrot string&#39;s representation.</p>
+
+<p>*/</p>
+
+<p>INTVAL string_max_bytes(Interp *interp, STRING *s, INTVAL nchars) { assert(s&#45;&#62;encoding); return ENCODING_MAX_BYTES_PER_CODEPOINT(interp, s) * nchars; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Concatenates two Parrot string. If necessary, converts the second string&#39;s encoding and/or type to match those of the first string. If either string is <code lang='und' xml:lang='und'>NULL</code>, then a copy of the non&#45;<code lang='und' xml:lang='und'>NULL</code> string is returned. If both strings are <code lang='und' xml:lang='und'>NULL</code>, then a new zero&#45;length string is created and returned.</p>
+
+<p>*/</p>
+
+<p>STRING * string_concat(Interp *interp, STRING *a, STRING *b, UINTVAL Uflags) { if (a != NULL &#38;&#38; a&#45;&#62;strlen != 0) { if (b != NULL &#38;&#38; b&#45;&#62;strlen != 0) { CHARSET *cs; ENCODING *enc; STRING *result;</p>
+
+<pre lang='und' xml:lang='und'>            cs = string_rep_compatible(interp, a, b, &#38;enc);
+            if (!cs) {
+                cs = a&#45;&#62;charset;
+                enc =a&#45;&#62;encoding;
+            }
+            result =
+                string_make_direct(interp, NULL,
+                        a&#45;&#62;bufused + b&#45;&#62;bufused,
+                        enc, cs, 0);
+
+            result = string_append(interp, result, a);
+            result = string_append(interp, result, b);
+
+            return result;
+        }
+        else {
+            return string_copy(interp, a);
+        }
+    }
+    else {
+        if (b != NULL) {
+            return string_copy(interp, b);
+        }
+        else {
+            return string_make(interp, NULL, 0, NULL, Uflags);
+        }
+    }
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Repeats the specified Parrot string <i>num</i> times and stores the result in the second string, and returns it. The second string is created if necessary.</p>
+
+<p>*/</p>
+
+<p>STRING * string_repeat(Interp *interp, const STRING *s, UINTVAL num, STRING **d) { UINTVAL i;</p>
+
+<pre lang='und' xml:lang='und'>    STRING * const dest = string_make_direct(interp, NULL,
+                        s&#45;&#62;bufused * num,
+                        s&#45;&#62;encoding, s&#45;&#62;charset, 0);
+
+    if (num == 0) {
+        return dest;
+    }
+
+    /* copy s into dest num times */
+    for (i = 0; i &#60; num; i++) {
+        mem_sys_memcopy((void *)((ptrcast_t)dest&#45;&#62;strstart + s&#45;&#62;bufused * i),
+                        s&#45;&#62;strstart, s&#45;&#62;bufused);
+    }
+
+    dest&#45;&#62;bufused = s&#45;&#62;bufused * num;
+    dest&#45;&#62;strlen = s&#45;&#62;strlen * num;
+
+    if (d != NULL) {
+        *d = dest;
+    }
+    return dest;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Copies the substring of length <code lang='und' xml:lang='und'>length</code> from <code lang='und' xml:lang='und'>offset</code> from the specified Parrot string and stores it in <code lang='und' xml:lang='und'>**d</code>, allocating memory if necessary. The substring is also returned.</p>
+
+<p>*/</p>
+
+<p>STRING * string_substr(Interp *interp, STRING *src, INTVAL offset, INTVAL length, STRING **d, int replace_dest) { STRING *dest; UINTVAL true_offset; UINTVAL true_length;</p>
+
+<pre lang='und' xml:lang='und'>    saneify_string(src);
+    true_offset = (UINTVAL)offset;
+
+    /* Allow regexes to return $&#39; easily for &#34;aaa&#34; =~ /aaa/ */
+    if (offset == (INTVAL)string_length(interp, src) || length &#60; 1) {
+        return string_make_empty(interp, enum_stringrep_one, 0);
+    }
+
+    if (offset &#60; 0) {
+        true_offset = (UINTVAL)(src&#45;&#62;strlen + offset);
+    }
+
+    if (src&#45;&#62;strlen == 0 || true_offset &#62; src&#45;&#62;strlen &#45; 1) {   /* 0 based... */
+        internal_exception(SUBSTR_OUT_OF_STRING,
+                &#34;Cannot take substr outside string&#34;);
+    }
+
+    true_length = (UINTVAL)length;
+    if (true_length &#62; (src&#45;&#62;strlen &#45; true_offset)) {
+        true_length = (UINTVAL)(src&#45;&#62;strlen &#45; true_offset);
+    }
+
+    /* do in&#45;place i.e. reuse existing header if one */
+    if (replace_dest &#38;&#38; *d) {
+        assert(src&#45;&#62;encoding == Parrot_fixed_8_encoding_ptr);
+        dest = *d;
+        dest&#45;&#62;encoding = src&#45;&#62;encoding;
+        dest&#45;&#62;charset = src&#45;&#62;charset;
+
+        dest&#45;&#62;strstart = (char *)src&#45;&#62;strstart + true_offset ;
+        dest&#45;&#62;bufused = true_length;
+
+        dest&#45;&#62;strlen = true_length;
+        dest&#45;&#62;hashval = 0;
+    }
+    else
+        dest = CHARSET_GET_CODEPOINTS(interp, src, true_offset,
+                true_length);
+
+    if (d != NULL) {
+        *d = dest;
+    }
+    return dest;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: This should follow the Perl semantics for:</p>
+
+<pre lang='und' xml:lang='und'>    substr EXPR, OFFSET, LENGTH, REPLACEMENT</pre>
+
+<p>Replaces a sequence of <code lang='und' xml:lang='und'>length</code> characters from <code lang='und' xml:lang='und'>offset</code> in the first Parrot string with the second Parrot string, returning what was replaced.</p>
+
+<p>Replacing a sequence of characters with a longer string grows the string; a shorter string shrinks it.</p>
+
+<p>Replacing 2 past the end of the string is undefined. However replacing 1 past the end of the string concatenates the two strings.</p>
+
+<p>A negative offset is allowed to replace from the end.</p>
+
+<p>*/</p>
+
+<p>STRING * string_replace(Interp *interp, STRING *src, INTVAL offset, INTVAL length, STRING *rep, STRING **d) { STRING *dest = NULL; UINTVAL start_byte, end_byte; UINTVAL true_offset; UINTVAL true_length; INTVAL diff; CHARSET *cs; ENCODING *enc; String_iter iter;</p>
+
+<pre lang='und' xml:lang='und'>    /* special case */
+    if (d == NULL &#38;&#38;
+            src &#38;&#38;
+            rep &#38;&#38;
+            src&#45;&#62;encoding == Parrot_fixed_8_encoding_ptr &#38;&#38;
+            rep&#45;&#62;encoding == Parrot_fixed_8_encoding_ptr &#38;&#38;
+            offset &#62;= 0 &#38;&#38;
+            (UINTVAL)offset &#60; src&#45;&#62;strlen &#38;&#38;
+            length == 1 &#38;&#38;
+            rep&#45;&#62;strlen == 1
+            ) {
+        if (PObj_is_cowed_TESTALL(src)) {
+            Parrot_unmake_COW(interp, src);
+        }
+        ((char*)src&#45;&#62;strstart)[offset] = ((char*)rep&#45;&#62;strstart)[0];
+        return NULL;
+    }
+
+    true_offset = (UINTVAL)offset;
+    true_length = (UINTVAL)length;
+    /* abs(&#45;offset) may not be &#62; strlen&#45;1 */
+    if (offset &#60; 0) {
+        true_offset = (UINTVAL)(src&#45;&#62;strlen + offset);
+    }
+
+    /* Can replace 1 past end of string which is technically outside the string
+     * but is same as a concat().
+     * Only give exception if caller trys to replace end of string + 2
+     */
+    if (true_offset &#62; src&#45;&#62;strlen) {
+        internal_exception(SUBSTR_OUT_OF_STRING,
+                &#34;Can only replace inside string or index after end of string&#34;);
+    }
+    if (true_length &#62; (src&#45;&#62;strlen &#45; true_offset)) {
+        true_length = (UINTVAL)(src&#45;&#62;strlen &#45; true_offset);
+    }
+
+    /* Save the substring that is replaced for the return value */
+    if (d != NULL) {
+        dest = CHARSET_GET_CODEPOINTS(interp, src,
+                true_offset, true_length);
+        *d = dest;
+    }
+
+    /* may have different reps..... */
+    cs = string_rep_compatible(interp, src, rep, &#38;enc);
+    if (!cs) {
+        Parrot_utf16_encoding_ptr&#45;&#62;to_encoding(interp, src, NULL);
+        rep = Parrot_utf16_encoding_ptr&#45;&#62;to_encoding(interp, rep,
+                new_string_header(interp, 0));
+    }
+    else {
+        src&#45;&#62;charset = cs;
+        src&#45;&#62;encoding = enc;
+    }
+
+    /* get byte position of the part that will be replaced */
+    ENCODING_ITER_INIT(interp, src, &#38;iter);
+    iter.set_position(interp, &#38;iter, true_offset);
+    start_byte = iter.bytepos;
+    iter.set_position(interp, &#38;iter, true_offset + true_length);
+    end_byte = iter.bytepos;
+
+    /* not possible.... */
+    if (end_byte &#60; start_byte) {
+        internal_exception(SUBSTR_OUT_OF_STRING,
+                &#34;replace: subend somehow is less than substart&#34;);
+    }
+
+    /* Now do the replacement */
+
+    /*
+     * If the replacement string fits inside the original substring
+     * don&#39;t create a new string, just pack it.
+     */
+    diff = (end_byte &#45; start_byte) &#45; rep&#45;&#62;bufused;
+
+    if(diff &#62;= 0
+            || ((INTVAL)src&#45;&#62;bufused &#45; (INTVAL)PObj_buflen(src)) &#60;= diff) {
+        Parrot_unmake_COW(interp, src);
+
+        if(diff != 0) {
+            mem_sys_memmove((char*)src&#45;&#62;strstart + start_byte + rep&#45;&#62;bufused,
+                    (char*)src&#45;&#62;strstart + end_byte,
+                    src&#45;&#62;bufused &#45; end_byte);
+            src&#45;&#62;bufused &#45;= diff;
+        }
+
+        mem_sys_memcopy((char*)src&#45;&#62;strstart + start_byte,
+                rep&#45;&#62;strstart, rep&#45;&#62;bufused);
+        if(diff != 0)
+            (void)string_compute_strlen(interp, src);
+    }
+    /*
+     * Replacement is larger than avail buffer, grow the string
+     */
+    else {
+        /* diff is negative here, make it positive */
+        diff = &#45;(diff);
+        string_grow(interp, src, diff);
+
+        /* Move the end of old string that isn&#39;t replaced to new offset
+         * first */
+        mem_sys_memmove((char*)src&#45;&#62;strstart + end_byte + diff,
+                (char*)src&#45;&#62;strstart + end_byte,
+                src&#45;&#62;bufused &#45; end_byte);
+        /* Copy the replacement in */
+        mem_sys_memcopy((char *)src&#45;&#62;strstart + start_byte, rep&#45;&#62;strstart,
+                rep&#45;&#62;bufused);
+        src&#45;&#62;bufused += diff;
+        (void)string_compute_strlen(interp, src);
+    }
+
+    /* src is modified, now return the original substring */
+    return dest;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC:</p>
+
+<p>Chops off the last <code lang='und' xml:lang='und'>n</code> characters of the specified Parrot string. If <code lang='und' xml:lang='und'>n</code> is negative, cuts the string after <code lang='und' xml:lang='und'>+n</code> characters. If <code lang='und' xml:lang='und'>in_place</code> is true, the string is chopped in places, else a copy of the string is chopped and returned.</p>
+
+<p>*/</p>
+
+<p>STRING * string_chopn(Interp *interp, STRING *s, INTVAL n, int in_place) { UINTVAL new_length, uchar_size; String_iter iter;</p>
+
+<pre lang='und' xml:lang='und'>    if (!s)
+        return NULL;
+    if (in_place) {
+        /*
+         *  constant or external strings can&#39;t be chopped inplace
+         */
+        Parrot_unmake_COW(interp, s);
+    }
+    else
+        s = string_copy(interp, s);
+
+    if (n &#60; 0) {
+        new_length = &#45;n;
+        if (new_length &#62; s&#45;&#62;strlen)
+            return s;
+    }
+    else {
+        if (s&#45;&#62;strlen &#62; (UINTVAL)n)
+            new_length = s&#45;&#62;strlen &#45; n;
+        else
+            new_length = 0;
+    }
+    s&#45;&#62;hashval = 0;
+    if (!new_length || !s&#45;&#62;strlen) {
+        s&#45;&#62;bufused = s&#45;&#62;strlen = 0;
+        return s;
+    }
+    uchar_size = s&#45;&#62;bufused / s&#45;&#62;strlen;
+    s&#45;&#62;strlen = new_length;
+    if (s&#45;&#62;encoding == Parrot_fixed_8_encoding_ptr) {
+        s&#45;&#62;bufused = new_length;
+    }
+    else if (s&#45;&#62;encoding == Parrot_ucs2_encoding_ptr) {
+        s&#45;&#62;bufused = new_length * uchar_size;
+    }
+    else {
+        ENCODING_ITER_INIT(interp, s, &#38;iter);
+        iter.set_position(interp, &#38;iter, new_length);
+        s&#45;&#62;bufused = iter.bytepos;
+    }
+
+    return s;
+}</pre>
+
+<p>INTVAL string_compare(Interp *interp, STRING *s1, STRING *s2) { if (!s1 &#38;&#38; !s2) { return 0; } if (!s2) { return s1&#45;&#62;strlen != 0; } if (!s1) { return &#45;(s2&#45;&#62;strlen != 0); }</p>
+
+<pre lang='und' xml:lang='und'>    saneify_string(s1);
+    saneify_string(s2);
+
+    return CHARSET_COMPARE(interp, s1, s2);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Compares two Parrot strings, performing type and encoding conversions if necessary.</p>
+
+<p>Note that this function returns 0 if the strings are equal and 1 otherwise.</p>
+
+<p>*/</p>
+
+<p>INTVAL string_equal(Interp *interp, STRING *s1, STRING *s2) { if ( (s1 == s2) || (!s1 &#38;&#38; !s2) ) { return 0; } else if (!s2) { return s1&#45;&#62;strlen != 0; } else if (!s1) { return s2&#45;&#62;strlen != 0; } else if (s1&#45;&#62;strlen != s2&#45;&#62;strlen) { return 1; /* we don&#39;t care which is bigger */ } else if (s1&#45;&#62;hashval != s2&#45;&#62;hashval &#38;&#38; s1&#45;&#62;hashval &#38;&#38; s2&#45;&#62;hashval) { return 1; } else if (!s1&#45;&#62;strlen) { /* s2&#45;&#62;strlen is the same here */ return 0; } else if (s1&#45;&#62;strstart == s2&#45;&#62;strstart &#38;&#38; s1&#45;&#62;bufused == s2&#45;&#62;bufused) { /* COWed strings */ return 0; }</p>
+
+<pre lang='und' xml:lang='und'>    /*
+     * now,
+     * both strings are non&#45;null
+     * both strings have same length
+     */
+    return CHARSET_COMPARE(interp, s1, s2);</pre>
+
+<p>}</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Makes the specified Parrot string writable with minimum length <code lang='und' xml:lang='und'>len</code>. The <code lang='und' xml:lang='und'>representation</code> argument is required in case a new Parrot string has to be created.</p>
+
+<p>*/</p>
+
+<p>static void make_writable(Interp *interp, STRING **s /*NN*/, const size_t len, parrot_string_representation_t representation) { if (!*s) *s = string_make_empty(interp, representation, len); else if ((*s)&#45;&#62;strlen &#60; len) string_grow(interp, *s, len &#45; (*s)&#45;&#62;strlen); else if (PObj_is_cowed_TESTALL(*s)) Parrot_unmake_COW(interp, *s); }</p>
+
+<p>#define BITWISE_AND_STRINGS(type1, type2, restype, s1, s2, res, minlen) \ do { \ const type1 *curr1 = (type1 *)s1&#45;&#62;strstart; \ const type2 *curr2 = (type2 *)s2&#45;&#62;strstart; \ restype *dp = (restype *)res&#45;&#62;strstart; \ size_t len = minlen; \ \ for ( ; len ; ++curr1, ++curr2, ++dp, &#45;&#45;len) \ *dp = *curr1 &#38; *curr2; \ } while(0)</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Performs a bitwise <code lang='und' xml:lang='und'>AND</code> on two Parrot string, performing type and encoding conversions if necessary. If the second string is not <code lang='und' xml:lang='und'>NULL</code> then it is reused, otherwise a new Parrot string is created.</p>
+
+<p>*/</p>
+
+<p>STRING * string_bitwise_and(Interp *interp, STRING *s1, STRING *s2, STRING **dest) { STRING *res = NULL; size_t minlen;</p>
+
+<pre lang='und' xml:lang='und'>    /* we could also trans_charset to iso&#45;8859&#45;1 */
+    if (s1 &#38;&#38; s1&#45;&#62;encoding != Parrot_fixed_8_encoding_ptr) {
+        real_exception(interp, NULL, INVALID_ENCODING,
+                &#34;string bitwise_and (%s/%s) unsupported&#34;,
+                ((ENCODING *)(s1&#45;&#62;encoding))&#45;&#62;name,
+                ((ENCODING *)(s2&#45;&#62;encoding))&#45;&#62;name);
+    }
+    if (s2 &#38;&#38; s2&#45;&#62;encoding != Parrot_fixed_8_encoding_ptr) {
+        real_exception(interp, NULL, INVALID_ENCODING,
+                &#34;string bitwise_and (%s/%s) unsupported&#34;,
+                ((ENCODING *)(s2&#45;&#62;encoding))&#45;&#62;name,
+                ((ENCODING *)(s2&#45;&#62;encoding))&#45;&#62;name);
+    }
+    /* think about case of dest string is one of the operands */
+    if (s1 &#38;&#38; s2) {
+        minlen = s1&#45;&#62;strlen &#62; s2&#45;&#62;strlen ? s2&#45;&#62;strlen : s1&#45;&#62;strlen;
+    }
+    else
+        minlen = 0;
+
+    if (dest &#38;&#38; *dest) {
+        res = *dest;
+        res&#45;&#62;encoding = Parrot_fixed_8_encoding_ptr;
+        res&#45;&#62;charset  = Parrot_binary_charset_ptr;
+    }
+    else
+        res = string_make_direct(interp, NULL, minlen,
+                Parrot_fixed_8_encoding_ptr, Parrot_binary_charset_ptr, 0);
+
+    if (!s1 || !s2) {
+        res&#45;&#62;bufused = 0;
+        res&#45;&#62;strlen = 0;
+        return res;
+    }
+#if ! DISABLE_GC_DEBUG
+    /* trigger GC for debug */
+    if (interp &#38;&#38; GC_DEBUG(interp))
+        Parrot_do_dod_run(interp, DOD_trace_stack_FLAG);
+#endif
+
+    make_writable(interp, &#38;res, minlen, enum_stringrep_one);
+
+    BITWISE_AND_STRINGS(Parrot_UInt1, Parrot_UInt1,
+            Parrot_UInt1, s1, s2, res, minlen);
+
+    res&#45;&#62;bufused = res&#45;&#62;strlen = minlen;
+
+    if (dest)
+        *dest = res;
+
+    return res;
+}</pre>
+
+<p>#define BITWISE_OR_STRINGS(type1, type2, restype, s1, s2, res, maxlen, op) \ do { \ const type1 *curr1 = NULL; \ const type2 *curr2 = NULL; \ size_t length1 = 0; \ size_t length2 = 0; \ restype *dp; \ size_t _index; \ \ if (s1) { \ curr1 = (type1 *)s1&#45;&#62;strstart; \ length1 = s1&#45;&#62;strlen; \ } \ if (s2) { \ curr2 = (type2 *)s2&#45;&#62;strstart; \ length2 = s2&#45;&#62;strlen; \ } \ dp = (restype *)res&#45;&#62;strstart; \ _index = 0; \ \ for ( ; _index &#60; maxlen ; ++curr1, ++curr2, ++dp, ++_index) { \ if (_index &#60; length1) { \ if (_index &#60; length2) \ *dp = *curr1 op *curr2; \ else \ *dp = *curr1; \ } \ else if (_index &#60; length2) { \ *dp = *curr2; \ } \ } \ } while(0)</p>
+
+<p>/*</p>
+
+<p>FUNCDOC:</p>
+
+<p>Performs a bitwise <code lang='und' xml:lang='und'>OR</code> on two Parrot string, performing type and encoding conversions if necessary. If the third string is not <code lang='und' xml:lang='und'>NULL</code> then it is reused, otherwise a new Parrot string is created.</p>
+
+<p>*/</p>
+
+<p>STRING * string_bitwise_or(Interp *interp, STRING *s1, STRING *s2, STRING **dest) { STRING *res; size_t maxlen = 0;</p>
+
+<pre lang='und' xml:lang='und'>    if (s1) {
+        if (s1&#45;&#62;encoding != Parrot_fixed_8_encoding_ptr) {
+            real_exception(interp, NULL, INVALID_ENCODING,
+                    &#34;string bitwise_and (%s/%s) unsupported&#34;,
+                    ((ENCODING *)(s1&#45;&#62;encoding))&#45;&#62;name,
+                    ((ENCODING *)(s2&#45;&#62;encoding))&#45;&#62;name);
+        }
+        maxlen = s1&#45;&#62;bufused;
+    }
+    if (s2) {
+        if (s2&#45;&#62;encoding != Parrot_fixed_8_encoding_ptr) {
+            real_exception(interp, NULL, INVALID_ENCODING,
+                    &#34;string bitwise_and (%s/%s) unsupported&#34;,
+                    ((ENCODING *)(s2&#45;&#62;encoding))&#45;&#62;name,
+                    ((ENCODING *)(s2&#45;&#62;encoding))&#45;&#62;name);
+        }
+        if (s2&#45;&#62;bufused &#62; maxlen)
+            maxlen = s2&#45;&#62;bufused;
+    }
+
+    if (dest &#38;&#38; *dest) {
+        res = *dest;
+        res&#45;&#62;encoding = Parrot_fixed_8_encoding_ptr;
+        res&#45;&#62;charset  = Parrot_binary_charset_ptr;
+    }
+    else
+        res = string_make_direct(interp, NULL, maxlen,
+                Parrot_fixed_8_encoding_ptr, Parrot_binary_charset_ptr, 0);
+
+    if (!maxlen) {
+        res&#45;&#62;bufused = 0;
+        res&#45;&#62;strlen = 0;
+        return res;
+    }</pre>
+
+<p>#if ! DISABLE_GC_DEBUG /* trigger GC for debug */ if (interp &#38;&#38; GC_DEBUG(interp)) Parrot_do_dod_run(interp, DOD_trace_stack_FLAG); #endif</p>
+
+<pre lang='und' xml:lang='und'>    make_writable(interp, &#38;res, maxlen, enum_stringrep_one);
+
+    BITWISE_OR_STRINGS(Parrot_UInt1, Parrot_UInt1, Parrot_UInt1,
+            s1, s2, res, maxlen, |);
+    res&#45;&#62;bufused = res&#45;&#62;strlen = maxlen;
+
+    if (dest)
+        *dest = res;
+
+    return res;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC:</p>
+
+<p>Performs a bitwise <code lang='und' xml:lang='und'>XOR</code> on two Parrot strings, performing type and encoding conversions if necessary. If the second string is not <code lang='und' xml:lang='und'>NULL</code> then it is reused, otherwise a new Parrot string is created.</p>
+
+<p>*/</p>
+
+<p>STRING * string_bitwise_xor(Interp *interp, STRING *s1, STRING *s2, STRING **dest) { STRING *res; size_t maxlen = 0;</p>
+
+<pre lang='und' xml:lang='und'>    if (s1) {
+        if (s1&#45;&#62;encoding != Parrot_fixed_8_encoding_ptr) {
+            real_exception(interp, NULL, INVALID_ENCODING,
+                    &#34;string bitwise_and (%s/%s) unsupported&#34;,
+                    ((ENCODING *)(s1&#45;&#62;encoding))&#45;&#62;name,
+                    ((ENCODING *)(s2&#45;&#62;encoding))&#45;&#62;name);
+        }
+        maxlen = s1&#45;&#62;bufused;
+    }
+    if (s2) {
+        if (s2&#45;&#62;encoding != Parrot_fixed_8_encoding_ptr) {
+            real_exception(interp, NULL, INVALID_ENCODING,
+                    &#34;string bitwise_and (%s/%s) unsupported&#34;,
+                    ((ENCODING *)(s2&#45;&#62;encoding))&#45;&#62;name,
+                    ((ENCODING *)(s2&#45;&#62;encoding))&#45;&#62;name);
+        }
+        if (s2&#45;&#62;bufused &#62; maxlen)
+            maxlen = s2&#45;&#62;bufused;
+    }
+
+    if (dest &#38;&#38; *dest) {
+        res = *dest;
+        res&#45;&#62;encoding = Parrot_fixed_8_encoding_ptr;
+        res&#45;&#62;charset  = Parrot_binary_charset_ptr;
+    }
+    else
+        res = string_make_direct(interp, NULL, maxlen,
+                Parrot_fixed_8_encoding_ptr, Parrot_binary_charset_ptr, 0);
+
+    if (!maxlen) {
+        res&#45;&#62;bufused = 0;
+        res&#45;&#62;strlen = 0;
+        return res;
+    }</pre>
+
+<p>#if ! DISABLE_GC_DEBUG /* trigger GC for debug */ if (interp &#38;&#38; GC_DEBUG(interp)) Parrot_do_dod_run(interp, DOD_trace_stack_FLAG); #endif</p>
+
+<pre lang='und' xml:lang='und'>    make_writable(interp, &#38;res, maxlen, enum_stringrep_one);
+
+    BITWISE_OR_STRINGS(Parrot_UInt1, Parrot_UInt1, Parrot_UInt1,
+            s1, s2, res, maxlen, ^);
+    res&#45;&#62;bufused = res&#45;&#62;strlen = maxlen;
+
+    if (dest)
+        *dest = res;
+
+    return res;
+}</pre>
+
+<p>#define BITWISE_NOT_STRING(type, s, res) \ do { \ if (s &#38;&#38; res) { \ const type *curr = (type *)s&#45;&#62;strstart; \ size_t length = s&#45;&#62;strlen; \ Parrot_UInt1 *dp = (Parrot_UInt1 *)res&#45;&#62;strstart; \ \ for ( ; length ; &#45;&#45;length, ++dp, ++curr) \ *dp = 0xFF &#38; ~ *curr; \ } \ } while(0)</p>
+
+<p>/*</p>
+
+<p>FUNCDOC:</p>
+
+<p>Performs a bitwise <code lang='und' xml:lang='und'>NOT</code> on a Parrot string. If the second string is not <code lang='und' xml:lang='und'>NULL</code> then it is reused, otherwise a new Parrot string is created.</p>
+
+<p>*/</p>
+
+<p>STRING * string_bitwise_not(Interp *interp, STRING *s, STRING **dest) { STRING *res; size_t len;</p>
+
+<pre lang='und' xml:lang='und'>    if (s) {
+        if (s&#45;&#62;encoding != Parrot_fixed_8_encoding_ptr) {
+            real_exception(interp, NULL, INVALID_ENCODING,
+                    &#34;string bitwise_and (%s/%s) unsupported&#34;,
+                    ((ENCODING *)(s&#45;&#62;encoding))&#45;&#62;name,
+                    ((ENCODING *)(s&#45;&#62;encoding))&#45;&#62;name);
+        }
+        len = s&#45;&#62;bufused;
+    }
+    else
+        len = 0;
+    if (dest &#38;&#38; *dest) {
+        res = *dest;
+        res&#45;&#62;encoding = Parrot_fixed_8_encoding_ptr;
+        res&#45;&#62;charset  = Parrot_binary_charset_ptr;
+    }
+    else
+        res = string_make_direct(interp, NULL, len,
+                Parrot_fixed_8_encoding_ptr, Parrot_binary_charset_ptr, 0);
+
+    if (!len) {
+        res&#45;&#62;bufused = 0;
+        res&#45;&#62;strlen = 0;
+        return res;
+    }</pre>
+
+<p>#if ! DISABLE_GC_DEBUG /* trigger GC for debug */ if (interp &#38;&#38; GC_DEBUG(interp)) Parrot_do_dod_run(interp, DOD_trace_stack_FLAG); #endif</p>
+
+<pre lang='und' xml:lang='und'>    make_writable(interp, &#38;res, len, enum_stringrep_one);
+
+    res&#45;&#62;strlen = res&#45;&#62;bufused = len;
+
+    BITWISE_NOT_STRING(Parrot_UInt1, s, res);
+    if (dest)
+        *dest = res;
+
+    return res;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC:</p>
+
+<p>Returns whether the specified Parrot string is true. A string is true if it is equal to anything other than <code lang='und' xml:lang='und'>0</code>, <code lang='und' xml:lang='und'>&#34;&#34;</code> or <code lang='und' xml:lang='und'>&#34;0&#34;</code>.</p>
+
+<p>*/</p>
+
+<p>INTVAL string_bool(Interp *interp, const STRING *s) { const INTVAL len = string_length(interp, s);</p>
+
+<pre lang='und' xml:lang='und'>    if (len == 0)
+        return 0;
+
+    if (len == 1) {
+
+        const UINTVAL c = string_index(interp, s, 0);
+
+        /* relying on character literals being interpreted as ASCII&#45;&#45;may
+        not be correct on EBCDIC systems. use numeric value instead? */
+        if (c == &#39;0&#39;)
+            /* later, accept other chars with digit value 0? or, no */
+            return 0;
+    }
+
+    return 1;                   /* it must be true */
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: This is like <code lang='und' xml:lang='und'>Parrot_snprintf()</code> except that it writes to and returns a Parrot string.</p>
+
+<p>Note that <code lang='und' xml:lang='und'>bytelen</code> does <i>not</i> include space for a (non&#45;existent) trailing <code lang='und' xml:lang='und'>&#39;\0&#39;</code>. <code lang='und' xml:lang='und'>dest</code> may be a <code lang='und' xml:lang='und'>NULL</code> pointer, in which case a new native string will be created. If <code lang='und' xml:lang='und'>bytelen</code> is 0, the behaviour becomes more <code lang='und' xml:lang='und'>sprintf</code>&#45;ish than <code lang='und' xml:lang='und'>snprintf</code>&#45;like. <code lang='und' xml:lang='und'>bytelen</code> is measured in the encoding of <code lang='und' xml:lang='und'>*dest</code>.</p>
+
+<p>*/</p>
+
+<p>STRING* string_nprintf(Interp *interp, STRING *dest, INTVAL bytelen, const char *format, ...) { STRING *output; va_list args;</p>
+
+<pre lang='und' xml:lang='und'>    va_start(args, format);
+    output = Parrot_vsprintf_c(interp, format, args);
+    va_end(args);
+
+    /*
+     * XXX &#45;leo: bytelen with strlen compare
+     */
+    if (bytelen &#62; 0 &#38;&#38; bytelen &#60; (INTVAL)string_length(interp, output)) {
+        string_substr(interp, output, 0, bytelen, &#38;output, 1);
+    }
+
+    if (dest == NULL) {
+        return output;
+    }
+    else {
+        string_set(interp, dest, output);
+        return dest;
+    }
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC:</p>
+
+<p>Writes and returns a Parrot string.</p>
+
+<p>*/</p>
+
+<p>STRING* string_printf(Interp *interp, const char *format, ...) { STRING *output; va_list args;</p>
+
+<pre lang='und' xml:lang='und'>    va_start(args, format);
+    output = Parrot_vsprintf_c(interp, format, args);
+    va_end(args);
+
+    return output;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC:</p>
+
+<p>Converts a numeric Parrot string to an integer value.</p>
+
+<p>A number is such that:</p>
+
+<pre lang='und' xml:lang='und'>    sign            =  &#39;+&#39; | &#39;&#45;&#39;
+    digit           =  &#34;Any code point considered a digit by the chartype&#34;
+    indicator       =  &#39;e&#39; | &#39;E&#39;
+    digits          =  digit [digit]...
+    decimal&#45;part    =  digits &#39;.&#39; [digits] | [&#39;.&#39;] digits
+    exponent&#45;part   =  indicator [sign] digits
+    numeric&#45;string  =  [sign] decimal&#45;part [exponent&#45;part]</pre>
+
+<p>The integer value is the appropriate integer representation of such a number, rounding towards zero.</p>
+
+<p>*/</p>
+
+<p>INTVAL string_to_int(Interp *interp, const STRING *s) { #if 1 INTVAL i = 0;</p>
+
+<pre lang='und' xml:lang='und'>    if (s) {
+        const char *start = s&#45;&#62;strstart;
+        const char * const end = start + s&#45;&#62;bufused;
+        int sign = 1;
+        INTVAL in_number = 0;
+
+        while (start &#60; end) {
+            const unsigned char c = *start;
+
+            if (isdigit(c)) {
+                in_number = 1;
+                i = i * 10 + (c &#45; &#39;0&#39;);
+            }
+            else if (!in_number) {
+                /* we&#39;ve not yet seen any digits */
+                if (c == &#39;&#45;&#39;) {
+                    sign = &#45;1;
+                    in_number = 1;
+                }
+                else if (c == &#39;+&#39;)
+                    in_number = 1;
+                else if (isspace(c))
+                    ;
+                else
+                    break;
+            }
+            else {
+                break;
+            }
+            ++start;
+        }
+
+        i = i * sign;
+    }
+
+    return i;
+#else
+    return (INTVAL) string_to_num(interp, s);
+#endif
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Same as <code lang='und' xml:lang='und'>string_to_int()</code> except that a floating&#45;point value is returned.</p>
+
+<p>*/</p>
+
+<p>FLOATVAL string_to_num(Interp *interp, const STRING *s) { FLOATVAL f = 0.0; DECL_CONST_CAST;</p>
+
+<pre lang='und' xml:lang='und'>    if (s) {
+        /*
+         * XXX C99 atof interpreters 0x prefix
+         * XXX would strtod() be better for detecting malformed input?
+         */
+        char * const cstr = string_to_cstring(interp, const_cast(s));
+        const char *p = cstr;
+        while (isspace(*p))
+            p++;
+        f = atof(p);
+        /* Not all atof()s return &#45;0 from &#34;&#45;0&#34; */
+        if (*p == &#39;&#45;&#39; &#38;&#38; f == 0.0)
+#if defined(_MSC_VER)
+            /* Visual C++ compiles &#45;0.0 to 0.0, so we need to trick
+               the compiler. */
+            f = 0.0 * &#45;1;
+#else
+            f = &#45;0.0;
+#endif
+        string_cstring_free(cstr);
+        return f;
+    }
+    /*
+     * results from that code below aren&#39;t really exact:
+     * float(&#34;1e100&#34;) != 10**100
+     */
+
+    if (s) {
+        UINTVAL idx = 0;
+        const UINTVAL length = s&#45;&#62;strlen;
+        int sign = 1;
+        INTVAL seen_dot = 0;
+        INTVAL seen_e = 0;
+        int exp_sign = 0;
+        INTVAL in_exp = 0;
+        INTVAL in_number = 0;
+        INTVAL exponent = 0;
+        INTVAL fake_exponent = 0;
+        INTVAL digit_family = 0;
+        FLOATVAL exp_log=10.0, exp_val=1.0;
+
+        while (idx &#60; length) {
+            const UINTVAL c = string_index(interp, s, idx);
+            const INTVAL df = Parrot_char_is_digit(interp, c);
+
+            if (df &#38;&#38; !digit_family)
+                digit_family = df;
+
+            if (df &#38;&#38; df == digit_family) {
+                if (in_exp) {
+                    exponent = exponent*10 +
+                        Parrot_char_digit_value(interp, c);
+                    if (!exp_sign) {
+                        exp_sign = 1;
+                    }
+                }
+                else {
+                    /* We&#39;re somewhere in the main string of numbers */
+                    in_number = 1;
+                    f = f * 10 + Parrot_char_digit_value(interp, c);
+                    if (seen_dot) {
+                        fake_exponent&#45;&#45;;
+                    }
+                }
+            }
+            else if (!in_number) {
+                /* we&#39;ve not yet seen any digits */
+                if (c == &#39;&#45;&#39;) { /* XXX: ascii */
+                    sign = &#45;1;
+                }
+                else if (c == &#39;.&#39;) {    /* XXX: ascii */
+                    seen_dot = 1;
+                }
+                else {
+                    seen_dot = 0;
+                    sign = 1;
+                }
+            }
+            else {
+                /* we&#39;ve seen some digits, are we done yet? */
+                if (!seen_dot &#38;&#38; c == &#39;.&#39; &#38;&#38; !in_exp) { /* XXX: ascii */
+                    seen_dot = 1;
+                }
+                else if (!seen_e &#38;&#38; (c == &#39;e&#39; || c == &#39;E&#39;)) { /* XXX: ascii */
+                    seen_e = 1;
+                    in_exp = 1;
+                }
+                else if (seen_e &#38;&#38; !exp_sign) {
+                    if (c == &#39;+&#39;) {     /* XXX: ascii */
+                        exp_sign = 1;
+                    }
+                    else if (c == &#39;&#45;&#39;) {        /* XXX: ascii */
+                        exp_sign = &#45;1;
+                    }
+                    else {
+                        break;  /* e&#45;&#45; is silly */
+                    }
+                }
+                else {
+                    break;      /* run out of number, all done */
+                }
+            }
+
+            ++idx;
+        }
+
+        exponent = fake_exponent + exponent * exp_sign;
+
+        if(exponent &#60; 0) {
+            exponent = &#45;exponent;
+            exp_sign=&#45;1;
+        }
+
+        for (;;) {
+            if (exponent &#38; 1) {
+                exp_val *= exp_log;
+                exponent&#45;&#45;;
+            }
+            if (!exponent)
+                break;
+            exp_log *= exp_log;
+            exponent &#62;&#62;= 1;
+        }
+
+        if(exp_sign &#60; 0)
+            f /= exp_val;
+        else
+            f *= exp_val;
+
+
+        if(sign &#60; 0)
+            f = &#45;f;
+    }
+
+    return f;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Returns a Parrot string representation of the specified integer value.</p>
+
+<p>*/</p>
+
+<p>STRING * string_from_int(Interp *interp, INTVAL i) { char buf[128]; return int_to_str(interp, buf, i, 10); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Returns a Parrot string representation of the specified floating&#45;point value.</p>
+
+<p>*/</p>
+
+<p>STRING * string_from_num(Interp *interp, FLOATVAL f) { /* Too damn hard&#45;&#45;hand it off to Parrot_sprintf, which&#39;ll probably use the system sprintf anyway, but has gigantic buffers that are awfully hard to overflow. */ return Parrot_sprintf_c(interp, &#34;%vg&#34;, f); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Returns a C string for the specified Parrot string. Use <code lang='und' xml:lang='und'>string_cstring_free()</code> to free the string. Failure to do this will result in a memory leak.</p>
+
+<p>*/</p>
+
+<p>char * string_to_cstring(Interp *interp, STRING * s) { char *p; /* * TODO always provide a NUL at end of strings * ICU needs this too for a lot of string functions */ if (s == NULL) { return NULL; } p = mem_sys_allocate(s&#45;&#62;bufused + 1); memcpy(p, s&#45;&#62;strstart, s&#45;&#62;bufused); p[s&#45;&#62;bufused] = 0; return p; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Free a string created by <code lang='und' xml:lang='und'>string_to_cstring()</code>.</p>
+
+<p>TODO &#45; Hopefully this can be a go away at some point, as it&#39;s got all sorts of leak potential otherwise.</p>
+
+<p>*/</p>
+
+<p>void string_cstring_free(void *ptr) { mem_sys_free(ptr); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Replace the specified Parrot string&#39;s managed buffer memory by system memory.</p>
+
+<p>*/</p>
+
+<p>void string_pin(Interp *interp, STRING * s) { void *memory; INTVAL size;</p>
+
+<pre lang='und' xml:lang='und'>    /* XXX &#45;lt: COW strings have the external_FLAG set, so this will
+     *          not work for these
+     *          so probably only sysmem should be tested
+     */
+    Parrot_unmake_COW(interp, s);
+    size = PObj_buflen(s);
+    memory = mem_sys_allocate(size);
+    mem_sys_memcopy(memory, PObj_bufstart(s), size);
+    PObj_bufstart(s) = memory;
+    s&#45;&#62;strstart = memory;
+    /* Mark the memory as both from the system and immobile */
+    PObj_sysmem_SET(s);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Undo a <code lang='und' xml:lang='und'>string_pin()</code> so that the string once again uses managed memory.</p>
+
+<p>*/</p>
+
+<p>void string_unpin(Interp *interp, STRING * s) { void *memory; INTVAL size;</p>
+
+<pre lang='und' xml:lang='und'>    /* If this string is not marked using system memory,
+     * we just don&#39;t do this
+     */
+    if (!(PObj_sysmem_TEST(s)))
+        return;
+
+    /* Parrot_unmake_COW(interp, s); XXX &#45;lt: can not be cowed ??? */
+    size = PObj_buflen(s);
+    /* We need a handle on the fixed memory so we can get rid of it
+       later */
+    memory = PObj_bufstart(s);
+    /* Reallocate it the same size
+     * NOTE can&#39;t use Parrot_reallocate_string because of the LEA
+     * allocator, where this is a noop for the same size
+     *
+     * We have to block GC here, as we have a pointer to bufstart
+     */
+    Parrot_block_GC(interp);
+    Parrot_allocate_string(interp, s, size);
+    Parrot_unblock_GC(interp);
+    mem_sys_memcopy(PObj_bufstart(s), memory, size);
+    /* Mark the memory as neither immobile nor system allocated */
+    PObj_sysmem_CLEAR(s);
+    /* Free up the memory */
+    mem_sys_free(memory);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Returns the hash value for the specified Parrot string, caching it in <code lang='und' xml:lang='und'>s&#45;&#62;hashval</code>.</p>
+
+<p>*/</p>
+
+<p>size_t string_hash(Interp *interp, STRING *s, size_t seed) { register size_t h;</p>
+
+<pre lang='und' xml:lang='und'>    if (!s)
+        return seed;
+
+    /* ZZZZZ workaround for something not setting up encodings right */
+    saneify_string(s);
+
+    h = CHARSET_COMPUTE_HASH(interp, s, seed);
+    s&#45;&#62;hashval = h;
+
+    return h;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Escape all non&#45;ascii chars to backslash sequences. Control chars that <code lang='und' xml:lang='und'>string_unescape_cstring</code> can handle are esacped as <i>\x</i>, as well as a double quote character. Other control chars and codepoints &#60; 0x100 are escaped as <i>\xhh</i>, codepoints up to 0xffff, as <i>\uhhhh</i>, and codepoints greater than this as <i>\x{hh...hh}</i>.</p>
+
+<p>*/</p>
+
+<p>STRING * string_escape_string(Interp *interp, STRING *src) { return string_escape_string_delimited(interp, src, (UINTVAL) ~0); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Like above but limit output to len chars (used for trace output of strings).</p>
+
+<p>*/</p>
+
+<p>STRING * string_escape_string_delimited(Interp *interp, STRING *src, UINTVAL limit) { STRING *result, *hex; UINTVAL i, len, charlen; String_iter iter; unsigned char *dp;</p>
+
+<pre lang='und' xml:lang='und'>    if (!src)
+        return NULL;
+    len = src&#45;&#62;strlen;
+    if (len &#62; limit)
+        len = limit;
+    /* expect around 2x the chars */
+    charlen = 2 * len;
+    if (charlen &#60; 16)
+        charlen = 16;
+    /* create ascii result */
+    result = string_make_direct(interp, NULL, charlen,
+            Parrot_fixed_8_encoding_ptr, Parrot_ascii_charset_ptr, 0);
+    /* more work TODO */
+    ENCODING_ITER_INIT(interp, src, &#38;iter);
+    dp = result&#45;&#62;strstart;
+    for (i = 0; len &#62; 0; &#45;&#45;len) {
+        UINTVAL c = iter.get_and_advance(interp, &#38;iter);
+        if (c &#60; 0x7f) {
+            /* process ASCII chars */
+            if (i &#62;= charlen &#45; 2) {
+                /* resize &#45; still len codepoints to go */
+                charlen += len * 2 + 16;
+                Parrot_reallocate_string(interp, result, charlen);
+                /* start can change */
+                dp = result&#45;&#62;strstart;
+            }
+            switch (c) {
+                case &#39;\\&#39;:
+                    dp[i++] = &#39;\\&#39;;
+                    break;
+                case &#39;\a&#39;:
+                    dp[i++] = &#39;\\&#39;;
+                    c = &#39;a&#39;;
+                    break;
+                case &#39;\b&#39;:
+                    dp[i++] = &#39;\\&#39;;
+                    c = &#39;b&#39;;
+                    break;
+                case &#39;\n&#39;:
+                    dp[i++] = &#39;\\&#39;;
+                    c = &#39;n&#39;;
+                    break;
+                case &#39;\r&#39;:
+                    dp[i++] = &#39;\\&#39;;
+                    c = &#39;r&#39;;
+                    break;
+                case &#39;\t&#39;:
+                    dp[i++] = &#39;\\&#39;;
+                    c = &#39;t&#39;;
+                    break;
+                case &#39;\f&#39;:
+                    dp[i++] = &#39;\\&#39;;
+                    c = &#39;f&#39;;
+                    break;
+                case &#39;&#34;&#39;:
+                    dp[i++] = &#39;\\&#39;;
+                    c = &#39;&#34;&#39;;
+                    break;
+                case 27:
+                    dp[i++] = &#39;\\&#39;;
+                    c = &#39;e&#39;;
+                    break;
+            }
+            if (c &#62;= 0x20) {
+                dp[i++] = (unsigned char)c;
+                assert(i &#60; charlen);
+                continue;
+            }
+        }
+        /* escape by appending either \uhhhh or \x{hh...} */
+        result&#45;&#62;bufused = result&#45;&#62;strlen = i;
+        if (c &#60; 0x0100 || c &#62;= 0x10000)
+            hex = Parrot_sprintf_c(interp, &#34;\\x{%x}&#34;, c);
+        else
+            hex = Parrot_sprintf_c(interp, &#34;\\u%04x&#34;, c);
+        result = string_append(interp, result, hex);
+        /* adjust our insert idx */
+        i += hex&#45;&#62;strlen;
+        /* and usable len */
+        charlen = PObj_buflen(result);
+        dp = result&#45;&#62;strstart;
+        assert(i &#60; charlen);
+    }
+    result&#45;&#62;bufused = result&#45;&#62;strlen = i;
+    return result;
+}
+/*</pre>
+
+<p>FUNCDOC: Unescapes the specified C string. These sequences are covered:</p>
+
+<pre lang='und' xml:lang='und'>  \xhh        1..2 hex digits
+  \ooo        1..3 oct digits
+  \cX         control char X
+  \x{h..h}    1..8 hex digits
+  \uhhhh      4 hex digits
+  \Uhhhhhhhh  8 hex digits
+  \a, \b, \t, \n, \v, \f, \r, \e</pre>
+
+<p>*/</p>
+
+<p>STRING * string_unescape_cstring(Interp *interp, const char *cstring, char delimiter, const char *enc_char) { size_t clength = strlen(cstring); STRING *result; UINTVAL offs, d; Parrot_UInt4 r; UINTVAL flags; String_iter iter; ENCODING *encoding; CHARSET *charset; char *p;</p>
+
+<pre lang='und' xml:lang='und'>    if (delimiter &#38;&#38; clength)
+        &#45;&#45;clength;
+    /* we are constructing const table strings here */
+    flags = PObj_constant_FLAG;
+    /* default is ascii */
+    if (!enc_char)
+        enc_char = &#34;ascii&#34;;
+    /* check for encoding: */
+    p = strchr(enc_char, &#39;:&#39;);
+    if (p) {
+        *p = &#39;\0&#39;;
+        encoding = Parrot_find_encoding(interp, enc_char);
+        if (!encoding) {
+            internal_exception(UNIMPLEMENTED,
+                    &#34;Can&#39;t make &#39;%s&#39; encoding strings&#34;, enc_char);
+        }
+        charset = Parrot_find_charset(interp, p + 1);
+        if (!charset) {
+            internal_exception(UNIMPLEMENTED,
+                    &#34;Can&#39;t make &#39;%s&#39; charset strings&#34;, p + 1);
+        }
+        result = string_make_direct(interp, cstring, clength,
+                encoding, charset, flags);
+        encoding = Parrot_fixed_8_encoding_ptr;
+    }
+    else {
+        result = string_make(interp, cstring, clength, enc_char, flags);
+        encoding = result&#45;&#62;encoding;
+    }
+    encoding&#45;&#62;iter_init(interp, result, &#38;iter);
+    for (offs = d = 0; offs &#60; clength; ++offs) {
+        r = (Parrot_UInt4)((unsigned char*)result&#45;&#62;strstart)[offs];
+        /* There cannot be any NULs within this string.  */
+        assert(r != &#39;\0&#39;);
+        if (r == &#39;\\&#39;) {
+            ++offs;
+            r = string_unescape_one(interp, &#38;offs, result);
+            &#45;&#45;offs;
+        }
+        if (d == offs) {
+            /* we did it in place &#45; no action */
+            ++d;
+            iter.bytepos++;
+            iter.charpos++;
+            continue;
+        }
+        assert(d &#60; offs);
+        iter.set_and_advance(interp, &#38;iter, r);
+        ++d;
+    }
+    result&#45;&#62;strlen = d;
+    result&#45;&#62;bufused = iter.bytepos;
+    if (encoding != result&#45;&#62;encoding) {
+        /* this also validates the string */
+        string_compute_strlen(interp, result);
+    }
+    else if (!CHARSET_VALIDATE(interp, result, 0)) {
+        internal_exception(INVALID_STRING_REPRESENTATION,
+                &#34;Malformed string&#34;);
+    }
+    if (result&#45;&#62;encoding == Parrot_utf8_encoding_ptr) {
+        /* Pythonic unicode flag &#45; get rid of that, Python will
+         * probably need a second string class anyway
+         */
+        PObj_get_FLAGS(result) |= PObj_private7_FLAG;
+    }
+    return result;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Returns a copy of the specified Parrot string converted to upper case. Non&#45;caseable characters are left unchanged.</p>
+
+<p>TODO &#45; implemented only for ASCII.</p>
+
+<p>*/</p>
+
+<p>STRING * string_upcase(Interp *interp, const STRING *s) { DECL_CONST_CAST; STRING * const dest = string_copy(interp, const_cast(s)); string_upcase_inplace(interp, dest); return dest; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Converts the specified Parrot string to upper case.</p>
+
+<p>*/</p>
+
+<p>void string_upcase_inplace(Interp *interp, STRING *s) { if (!s) return; Parrot_unmake_COW(interp, s); CHARSET_UPCASE(interp, s); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Returns a copy of the specified Parrot string converted to lower case. Non&#45;caseable characters are left unchanged.</p>
+
+<p>*/</p>
+
+<p>STRING * string_downcase(Interp *interp, const STRING *s) { DECL_CONST_CAST; STRING * const dest = string_copy(interp, const_cast(s)); string_downcase_inplace(interp, dest); return dest; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Converts the specified Parrot string to lower case.</p>
+
+<p>*/</p>
+
+<p>void string_downcase_inplace(Interp *interp, STRING *s) { if (!s) return; /* * TODO get rid of all the inplace variants. We have for utf8: * * 1 string_copy from the non&#45;incase variant * * conversion to utf16, with doubling the buffer * * possibly one more reallocation in downcase */ Parrot_unmake_COW(interp, s); CHARSET_DOWNCASE(interp, s); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Returns a copy of the specified Parrot string converted to title case. Non&#45;caseable characters are left unchanged.</p>
+
+<p>*/</p>
+
+<p>STRING * string_titlecase(Interp *interp, const STRING *s) { DECL_CONST_CAST; STRING * const dest = string_copy(interp, const_cast(s)); string_titlecase_inplace(interp, dest); return dest; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Converts the specified Parrot string to title case.</p>
+
+<p>*/</p>
+
+<p>void string_titlecase_inplace(Interp *interp, STRING *s) { if (!s) return; Parrot_unmake_COW(interp, s); CHARSET_TITLECASE(interp, s); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Perl5ish increment the string. Currently single char only.</p>
+
+<p>*/</p>
+
+<p>STRING * string_increment(Interp *interp, const STRING *s) { INTVAL o;</p>
+
+<pre lang='und' xml:lang='und'>    if (string_length(interp, s) != 1)
+        internal_exception(1, &#34;increment only for length=1 done&#34;);
+
+    o = string_ord(interp, s, 0);
+    if ((o &#62;= &#39;A&#39; &#38;&#38; o &#60; &#39;Z&#39;) ||
+            (o &#62;= &#39;a&#39; &#38;&#38; o &#60; &#39;z&#39;)) {
+        ++o;
+        /* TODO increment in place */
+        return string_chr(interp, o);
+    }
+    internal_exception(1, &#34;increment out of range &#45; unimplemented&#34;);
+    return NULL;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Return a C string from a Parrot string. Both sides are treated as constants &#45;&#45; i.e. do not resize the result.</p>
+
+<p>*/</p>
+
+<p>const char * Parrot_string_cstring(Interp *interp, const STRING *str /*NN*/) { /* TODO handle NUL and friends */ return str&#45;&#62;strstart; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Return 1 if the codepoint of string <code lang='und' xml:lang='und'>s</code> at given offset is in the given character class <code lang='und' xml:lang='und'>flags</code>. See also <em lang='und' xml:lang='und'>include/parrot/cclass.h</em> for possible character classes. Returns 0 otherwise, or if the string is empty or NULL.</p>
+
+<p>*/</p>
+
+<p>INTVAL Parrot_string_is_cclass(Interp *interp, PARROT_CCLASS_FLAGS flags, STRING *s, UINTVAL offset) { if (!string_length(interp, s)) return 0; return CHARSET_IS_CCLASS(interp, flags, s, offset); }</p>
+
+<p>INTVAL Parrot_string_find_cclass(Interp *interp, PARROT_CCLASS_FLAGS flags, STRING *s, UINTVAL offset, UINTVAL count) { if (!s) return &#45;1; return CHARSET_FIND_CCLASS(interp, flags, s, offset, count); }</p>
+
+<p>INTVAL Parrot_string_find_not_cclass(Interp *interp, PARROT_CCLASS_FLAGS flags, STRING *s, UINTVAL offset, UINTVAL count) { if (!s) return &#45;1; return CHARSET_FIND_NOT_CCLASS(interp, flags, s, offset, count); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: If <code lang='und' xml:lang='und'>dest</code> == NULL convert <code lang='und' xml:lang='und'>src</code> to the given charset or encoding inplace, else return a copy of <code lang='und' xml:lang='und'>src</code> with the charset/encoding in dest.</p>
+
+<p>*/</p>
+
+<p>STRING* Parrot_string_trans_charset(Interp *interp, STRING *src, INTVAL charset_nr, STRING *dest) { CHARSET *new_charset;</p>
+
+<pre lang='und' xml:lang='und'>    if (!src)
+        return NULL;
+    new_charset = Parrot_get_charset(interp, charset_nr);
+    if (!new_charset)
+        real_exception(interp, NULL, INVALID_CHARTYPE,
+                &#34;charset #%d not found&#34;, (int) charset_nr);
+    /*
+     * dest is an empty string header or NULL, if an inplace
+     * operation is desired
+     */
+    if (dest) {
+        if (new_charset == src&#45;&#62;charset) {
+            dest = Parrot_reuse_COW_reference(interp, src, dest);
+            dest&#45;&#62;charset = new_charset;
+            /* keep encoding */
+            return dest;
+        }
+        dest&#45;&#62;charset = new_charset;
+        /* get prefered encoding for charset */
+        dest&#45;&#62;encoding = CHARSET_GET_PREFERRED_ENCODING(interp, dest);
+    }
+    else {
+        if (new_charset == src&#45;&#62;charset) {
+            return src;
+        }
+        Parrot_unmake_COW(interp, src);
+    }
+    return new_charset&#45;&#62;to_charset(interp, src, dest);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: If <code lang='und' xml:lang='und'>dest</code> == NULL convert <code lang='und' xml:lang='und'>src</code> to the given charset or encoding inplace, else return a copy of <code lang='und' xml:lang='und'>src</code> with the charset/encoding in dest.</p>
+
+<p>*/</p>
+
+<p>STRING* Parrot_string_trans_encoding(Interp *interp, STRING *src, INTVAL encoding_nr, STRING *dest) { ENCODING *new_encoding;</p>
+
+<pre lang='und' xml:lang='und'>    if (!src)
+        return NULL;
+    new_encoding = Parrot_get_encoding(interp, encoding_nr);
+    if (!new_encoding)
+        real_exception(interp, NULL, INVALID_CHARTYPE,
+                &#34;encoding #%d not found&#34;, (int) encoding_nr);
+    /*
+     * dest is an empty string header or NULL, if an inplace
+     * operation is desired
+     */
+    if (dest) {
+        dest&#45;&#62;encoding = new_encoding;
+        if (new_encoding == src&#45;&#62;encoding) {
+            dest = Parrot_reuse_COW_reference(interp, src, dest);
+            return dest;
+        }
+    }
+    else {
+        if (new_encoding == src&#45;&#62;encoding) {
+            return src;
+        }
+        Parrot_unmake_COW(interp, src);
+    }
+    return new_encoding&#45;&#62;to_encoding(interp, src, dest);
+}</pre>
+
+<p>STRING * string_compose(Interp *interp, STRING *src) { if (!src) return NULL; if (!src&#45;&#62;strlen) return string_make_empty(interp, enum_stringrep_one, 0); return CHARSET_COMPOSE(interp, src); }</p>
+
+<p>STRING* string_join(Interp *interp, STRING *j, PMC *ar) { STRING *res; STRING *s; int i, ar_len = VTABLE_elements(interp, ar);</p>
+
+<pre lang='und' xml:lang='und'>    if (ar_len == 0) {
+        return string_make_empty(interp, enum_stringrep_one, 0);
+    }
+    s = VTABLE_get_string_keyed_int(interp, ar, 0);
+    res = string_copy(interp, s);
+    for (i = 1; i &#60; ar_len; ++i) {
+        res = string_append(interp, res, j);
+        s = VTABLE_get_string_keyed_int(interp, ar, i);
+        res = string_append(interp, res, s);
+    }
+    return res;
+}</pre>
+
+<p>PMC* string_split(Interp *interp, STRING *delim, STRING *str) { PMC * const res = pmc_new(interp, enum_class_ResizableStringArray); const int slen = string_length(interp, str); int dlen; int ps,pe;</p>
+
+<pre lang='und' xml:lang='und'>    if (!slen)
+        return res;
+
+    dlen = string_length(interp, delim);
+    if (dlen == 0) {
+        int i;
+        VTABLE_set_integer_native(interp, res, slen);
+        for (i = 0; i &#60; slen; ++i) {
+           STRING * const p = string_substr(interp, str, i, 1, NULL, 0);
+           VTABLE_set_string_keyed_int(interp, res, i, p);
+        }
+        return res;
+    }
+
+    pe = string_str_index(interp,str,delim,0);
+    if (pe &#60; 0) {
+        VTABLE_push_string(interp,res,str);
+        return res;
+    }
+    ps = 0;
+    while (ps &#60;= slen) {
+        const int pl = pe &#45; ps;
+        STRING * const tstr = string_substr(interp, str, ps, pl, NULL, 0);
+        VTABLE_push_string(interp,res,tstr);
+        ps = pe + string_length(interp,delim);
+        if (ps &#62; slen)
+            break;
+        pe = string_str_index(interp,str,delim,ps);
+        if (pe &#60; 0)
+            pe = slen;
+    }
+    return res;
+}</pre>
+
+<p>/*</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="src/string_primitives.c"
+><em lang='und' xml:lang='und'><a href="string_primitives.c.html">src/string_primitives.c</a></em></a></dt><p class="pad"></p>
+
+<dt><a name="include/parrot/string.h"
+><em lang='und' xml:lang='und'>include/parrot/string.h</em></a></dt><p class="pad"></p>
+
+<dt><a name="include/parrot/string_funcs.h"
+><em lang='und' xml:lang='und'>include/parrot/string_funcs.h</em></a></dt><p class="pad"></p>
+
+<dt><a name="docs/strings.pod"
+><em lang='und' xml:lang='und'><a href="../docs/strings.pod.html">docs/strings.pod</a></em></a></dt><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

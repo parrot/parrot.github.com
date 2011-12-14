@@ -1,0 +1,759 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/perl6.html">Perl6</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="Nodes"
+><b>Nodes</b> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This file declares the different node&#45;types that occur in the parse tree.
+These types may be generated from the parser output (see <code lang='und' xml:lang='und'>Tree.pm</code>),
+or by the compiler itself during a pass.</p>
+
+<dl>
+<dt><a name="sv_literal"
+><b>sv_literal</b></a></dt><p class="pad"></p>
+
+<dd>Represents a scalar literal value.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="type"
+><b>type</b></a></dt><p class="pad"></p>
+
+<dd>The literal&#39;s type,
+either one of the scalar types,
+<code lang='und' xml:lang='und'>PerlHash</code> for an anonymous hash reference,
+or <code lang='und' xml:lang='und'>PerlArray</code> for an anonymous array reference.</dd><p class="pad"></p>
+
+<dt><a name="lval"
+><b>lval</b></a></dt><p class="pad"></p>
+
+<dd>The thing&#39;s value.
+This is <b>not</b> the same as the code&#45;generating <code lang='und' xml:lang='und'>val</code> method.
+For scalar types,
+<code lang='und' xml:lang='und'>lval</code> is a string; for reference types,
+a reference to the contents&#39; parse tree.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="variable"
+><b>variable</b></a></dt><p class="pad"></p>
+
+<dd>A variable.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="type"
+><b>type</b></a></dt><p class="pad"></p>
+
+<dd>Either one of the scalar types,
+<code lang='und' xml:lang='und'>PerlHash</code>,
+or <code lang='und' xml:lang='und'>PerlArray</code>.</dd><p class="pad"></p>
+
+<dt><a name="global"
+><b>global</b></a></dt><p class="pad"></p>
+
+<dd>True if the variable is global (currently unimplemented).</dd><p class="pad"></p>
+
+<dt><a name="implicit"
+><b>implicit</b></a></dt><p class="pad"></p>
+
+<dd>True for implicit block parameters,
+e.g.
+<code lang='und' xml:lang='und'>$^a</code>.</dd><p class="pad"></p>
+
+<dt><a name="topical"
+><b>topical</b></a></dt><p class="pad"></p>
+
+<dd>True for members of the current topic,
+e.g.
+<code lang='und' xml:lang='und'>$.foo</code>.</dd><p class="pad"></p>
+
+<dt><a name="name"
+><b>name</b></a></dt><p class="pad"></p>
+
+<dd>The variable&#39;s name.
+For simple variables,
+this is the literal name,
+including sigil (e.g.
+<code lang='und' xml:lang='und'>$foo</code>).
+For &#34;complicated&#34; variables,
+this is a reference to their parse tree (currently unimplemented).</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="Binop"
+><b>Binop</b></a></dt><p class="pad"></p>
+
+<dd>A node type representing a binary infix operation.
+Note that comparison operators are not binary,
+since they can be chained.
+Both comma and semicolon are binary.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="op"
+><b>op</b></a></dt><p class="pad"></p>
+
+<dd>For simple operators,
+the operator name as a string.
+For hyper operators,
+a reference to a <code lang='und' xml:lang='und'>hype</code> node.</dd><p class="pad"></p>
+
+<dt><a name="l,_r"
+><b>l</b>,
+<b>r</b></a></dt><p class="pad"></p>
+
+<dd>The left and right operands of the operator.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="hype"
+><b>hype</b></a></dt><p class="pad"></p>
+
+<dd>A &#34;hyped&#34; operator.
+Its single member,
+<code lang='und' xml:lang='und'>op</code> is the normal operator that has been lifted.
+If it turns out that other things besides operators can be hyped,
+op may refer to more complex nodes.</dd><p class="pad"></p>
+
+<dt><a name="apply_rhs"
+><b>apply_rhs</b></a></dt><p class="pad"></p>
+
+<dd>The right&#45;hand side of an apply operation (e.g.
+the &#34;foo()&#34; in &#34;$a.foo()&#34;).</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="prop"
+><b>prop</b></a></dt><p class="pad"></p>
+
+<dd>The function&#45; or property&#45;name being accessed (e.g.
+&#34;foo&#34;).</dd><p class="pad"></p>
+
+<dt><a name="subscripts"
+><b>subscripts</b></a></dt><p class="pad"></p>
+
+<dd>A reference to a list of subscripts,
+or an empty array if none are present.
+Subscripts may be either an <code lang='und' xml:lang='und'>indices</code> node,
+as for variable subscripts,
+or &#34;something else&#34; representing a parameter list.
+This is kind of ugly,
+and may change once these things actually get implemented.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="indices"
+><b>indices</b></a></dt><p class="pad"></p>
+
+<dd>A single subscript,
+e.g.
+<code lang='und' xml:lang='und'>[@xs]</code>.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="type"
+><b>type</b></a></dt><p class="pad"></p>
+
+<dd>The type of thing on which the subscript operates,
+either <code lang='und' xml:lang='und'>PerlHash</code> or <code lang='und' xml:lang='und'>PerlArray</code>.</dd><p class="pad"></p>
+
+<dt><a name="indices"
+><b>indices</b></a></dt><p class="pad"></p>
+
+<dd>The parse tree for the subscript contents.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="subscript_exp"
+><b>subscript_exp</b></a></dt><p class="pad"></p>
+
+<dd>An item and one or more indices.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="thing"
+><b>thing</b></a></dt><p class="pad"></p>
+
+<dd>The expression or variable to be subscripted.</dd><p class="pad"></p>
+
+<dt><a name="subscripts"
+><b>subscripts</b></a></dt><p class="pad"></p>
+
+<dd>A reference to an array of indices.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="incr"
+><b>incr</b></a></dt><p class="pad"></p>
+
+<dd>An increment or decrement operator.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="post"
+><b>post</b></a></dt><p class="pad"></p>
+
+<dd>True if the operator is a postincrement.</dd><p class="pad"></p>
+
+<dt><a name="op"
+><b>op</b></a></dt><p class="pad"></p>
+
+<dd>The operator.</dd><p class="pad"></p>
+
+<dt><a name="thing"
+><b>thing</b></a></dt><p class="pad"></p>
+
+<dd>The incremented expression.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="prefix"
+><b>prefix</b></a></dt><p class="pad"></p>
+
+<dd>A prefix operator.
+Many things are prefix operators: filetests (possibly combined),
+declared functions,
+and unary <code lang='und' xml:lang='und'>&#45;</code>,
+<code lang='und' xml:lang='und'>~</code>,
+<code lang='und' xml:lang='und'>\\</code>,
+and <code lang='und' xml:lang='und'>!</code>.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="name"
+><b>name</b></a></dt><p class="pad"></p>
+
+<dd>The operator name.</dd><p class="pad"></p>
+
+<dt><a name="args"
+><b>args</b></a></dt><p class="pad"></p>
+
+<dd>The argument tree.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="context"
+><b>context</b></a></dt><p class="pad"></p>
+
+<dd>A single context operator (eg the * in *@arr).</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="ctx"
+><b>ctx</b></a></dt><p class="pad"></p>
+
+<dd>The operator.</dd><p class="pad"></p>
+
+<dt><a name="thing"
+><b>thing</b></a></dt><p class="pad"></p>
+
+<dd>The operand.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="pair"
+><b>pair</b></a></dt><p class="pad"></p>
+
+<dd>A pair (e.g.
+<code lang='und' xml:lang='und'>a =&#62; &#34;pair&#34;</code>).</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="l,_r"
+><b>l</b>,
+<b>r</b></a></dt><p class="pad"></p>
+
+<dd>The left and right operands of the pair constructor.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="compare"
+><b>compare</b></a></dt><p class="pad"></p>
+
+<dd>A comparison sequence.
+Its single member,
+<code lang='und' xml:lang='und'>seq</code>,
+is a reference to a list of operators and operands in left&#45;to&#45;right order.
+For example,
+<code lang='und' xml:lang='und'>1 lt 3 lt &#34;three&#34;</code> becomes <code lang='und' xml:lang='und'>[1, &#34;lt&#34;, 3, &#34;lt&#34;, &#34;three&#34;]</code></dd><p class="pad"></p>
+
+<dt><a name="ternary"
+><b>ternary</b></a></dt><p class="pad"></p>
+
+<dd>A ternary operation.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="if"
+><b>if</b></a></dt><p class="pad"></p>
+
+<dd>The test.</dd><p class="pad"></p>
+
+<dt><a name="then"
+><b>then</b></a></dt><p class="pad"></p>
+
+<dd>The &#34;true&#34; branch.</dd><p class="pad"></p>
+
+<dt><a name="else"
+><b>else</b></a></dt><p class="pad"></p>
+
+<dd>The &#34;false&#34; branch.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="scope_class"
+><b>scope_class</b></a></dt><p class="pad"></p>
+
+<dd>Qualifiers that occur before the variables in a declaration.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="scope"
+><b>scope</b></a></dt><p class="pad"></p>
+
+<dd>The variable scope,
+e.g.
+&#34;my&#34;,
+&#34;our&#34;,
+&#34;temp&#34;.</dd><p class="pad"></p>
+
+<dt><a name="class"
+><b>class</b></a></dt><p class="pad"></p>
+
+<dd>The variable class,
+e.g.
+&#34;int&#34;.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="decl"
+><b>decl</b></a></dt><p class="pad"></p>
+
+<dd>A declaration of one or more variables,
+not including initializers.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="qual"
+><b>qual</b></a></dt><p class="pad"></p>
+
+<dd>The variables&#39; scope/class.</dd><p class="pad"></p>
+
+<dt><a name="vars"
+><b>vars</b></a></dt><p class="pad"></p>
+
+<dd>The variables&#39; names.</dd><p class="pad"></p>
+
+<dt><a name="props"
+><b>props</b></a></dt><p class="pad"></p>
+
+<dd>A list of properties (e.g.
+&#34;is foo(42)&#34;).</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="property"
+><b>property</b></a></dt><p class="pad"></p>
+
+<dd>A single variable,
+class,
+or function property.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="name"
+><b>name</b></a></dt><p class="pad"></p>
+
+<dd>The property name.</dd><p class="pad"></p>
+
+<dt><a name="args"
+><b>args</b></a></dt><p class="pad"></p>
+
+<dd>The argument list (for e.g.
+<code lang='und' xml:lang='und'>something(1, 2)</code>).</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="but"
+><b>but</b></a></dt><p class="pad"></p>
+
+<dd>A node representing a &#34;but&#34; clause,
+e.g.
+<code lang='und' xml:lang='und'>$foo = 23 but false but Inf</code>.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="thing"
+><b>thing</b></a></dt><p class="pad"></p>
+
+<dd>The exceptional thing.</dd><p class="pad"></p>
+
+<dt><a name="buts"
+><b>buts</b></a></dt><p class="pad"></p>
+
+<dd>A reference to an array of exception clauses.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="adverb"
+><b>adverb</b></a></dt><p class="pad"></p>
+
+<dd>An adverbial modifier (i.e.
+&#39;:&#39;).</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="thing"
+><b>thing</b></a></dt><p class="pad"></p>
+
+<dd>The left&#45;hand side of the colon.</dd><p class="pad"></p>
+
+<dt><a name="adv"
+><b>adv</b></a></dt><p class="pad"></p>
+
+<dd>The right&#45;hand side.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="signature"
+><b>signature</b></a></dt><p class="pad"></p>
+
+<dd>A sub parameter list (not argument list).</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="positional"
+><b>positional</b></a></dt><p class="pad"></p>
+
+<dd>A reference to an array of required positional parameters,
+or an empty array if none.</dd><p class="pad"></p>
+
+<dt><a name="optional"
+><b>optional</b></a></dt><p class="pad"></p>
+
+<dd>A reference to an array of optional positional parameters,
+i.e.
+those occurring after the &#39;;&#39;,
+or an empty array if none.</dd><p class="pad"></p>
+
+<dt><a name="required_named"
+><b>required_named</b></a></dt><p class="pad"></p>
+
+<dd>A reference to an array of required named parameters.</dd><p class="pad"></p>
+
+<dt><a name="slurpy_array"
+><b>slurpy_array</b></a></dt><p class="pad"></p>
+
+<dd>The final &#34;slurping&#34; parameter,
+or <code lang='und' xml:lang='und'>undef</code> if none present.</dd><p class="pad"></p>
+
+<dt><a name="slurpy_named"
+><b>slurpy_named</b></a></dt><p class="pad"></p>
+
+<dd>The &#34;slurping&#34; parameter for named arguments,
+or <code lang='und' xml:lang='und'>undef</code> if none present.</dd><p class="pad"></p>
+
+<dt><a name="optional_named"
+><b>optional_named</b></a></dt><p class="pad"></p>
+
+<dd>A reference to an array of optional named parameters.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="sigparam"
+><b>sigparam</b></a></dt><p class="pad"></p>
+
+<dd>A subroutine parameter.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="type"
+><b>type</b></a></dt><p class="pad"></p>
+
+<dd>The type of the parameter.</dd><p class="pad"></p>
+
+<dt><a name="zone"
+><b>zone</b></a></dt><p class="pad"></p>
+
+<dd>Which zone the parameter is in &#45;&#45; positional,
+optional,
+named,
+etc.</dd><p class="pad"></p>
+
+<dt><a name="var"
+><b>var</b></a></dt><p class="pad"></p>
+
+<dd>The variable.</dd><p class="pad"></p>
+
+<dt><a name="traits"
+><b>traits</b></a></dt><p class="pad"></p>
+
+<dd>Its traits.</dd><p class="pad"></p>
+
+<dt><a name="init"
+><b>init</b></a></dt><p class="pad"></p>
+
+<dd>An initializer expression,
+or <code lang='und' xml:lang='und'>undef</code> if none.</dd><p class="pad"></p>
+
+<dd>Private variable: &#39;no_named&#39; means that named arguments are not used.
+For the caller,
+this means that the extra hash containing named arguments is not passed.
+For the callee,
+this means that the extra hash is not expected,
+and therefore is not read off of the passed&#45;in arguments.
+Both of these had better agree!</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="initializer"
+><b>initializer</b></a></dt><p class="pad"></p>
+
+<dd>A parameter initializer (<b>not</b> an initializer in a variable declaration).</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="op"
+><b>op</b></a></dt><p class="pad"></p>
+
+<dd>The initializing operator,
+probably <code lang='und' xml:lang='und'>=</code>.</dd><p class="pad"></p>
+
+<dt><a name="expr"
+><b>expr</b></a></dt><p class="pad"></p>
+
+<dd>The initialization expression.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="sub_def"
+><b>sub_def</b></a></dt><p class="pad"></p>
+
+<dd>A subroutine definition or declaration.
+This is created for all of: method X ...
+sub X ...
+rule X ...</dd><p class="pad"></p>
+
+<dd>The sub_def contains only the name and properties; the signature and body are stored in a P6C::closure object.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="qual"
+><b>qual</b></a></dt><p class="pad"></p>
+
+<dd>Sub scope.
+(my/our/...)</dd><p class="pad"></p>
+
+<dt><a name="name"
+><b>name</b></a></dt><p class="pad"></p>
+
+<dt><a name="props"
+><b>props</b></a></dt><p class="pad"></p>
+
+<dd>An array of subroutine properties,
+or an empty array if none.</dd><p class="pad"></p>
+
+<dt><a name="closure"
+><b>closure</b></a></dt><p class="pad"></p>
+
+<dd>The closure associated with this name.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="closure"
+><b>closure</b></a></dt><p class="pad"></p>
+
+<dd>A closure,
+which may be either an anonymous function or the parameters and body of a named subroutine &#45;&#45; or merely a bare block.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="params"
+><b>params</b></a></dt><p class="pad"></p>
+
+<dd>The subroutine parameter list,
+or <code lang='und' xml:lang='und'>undef</code> if no parameter list was given.
+The appropriate implicit parameter list then depends on context.</dd><p class="pad"></p>
+
+<dt><a name="rettype"
+><b>rettype</b></a></dt><p class="pad"></p>
+
+<dd>The subroutine&#39;s return type.</dd><p class="pad"></p>
+
+<dt><a name="block"
+><b>block</b></a></dt><p class="pad"></p>
+
+<dd>The sequence of statements making up the closure body.
+This is a reference to an array of statements,
+or a single <code lang='und' xml:lang='und'>yadda</code> node for <code lang='und' xml:lang='und'>...</code> definitions,
+or undef for a declaration.</dd><p class="pad"></p>
+
+<dt><a name="bare"
+><b>bare</b></a></dt><p class="pad"></p>
+
+<dd>True only for bare blocks,
+eg $x = { print &#34;hi!&#34; } or just { print &#34;hi!&#34; }</dd><p class="pad"></p>
+
+<dd>Appears to be used only to determine that a particular block is an anonymous subroutine (Addcontext.pm&#39;s is_anon_sub() says that it is an anonymous subroutine unless it is marked noreturn,
+or it is a sub_def,
+or it&#39;s both a bare block and in a &#34;last statement&#34; context.
+Urk?)</dd><p class="pad"></p>
+
+<dt><a name="is_rule"
+><b>is_rule</b></a></dt><p class="pad"></p>
+
+<dd>A boolean flag saying whether the closure is a rule (as opposed to a sub).</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="yadda"
+><b>yadda</b></a></dt><p class="pad"></p>
+
+<dd>A node representing a <code lang='und' xml:lang='und'>...</code> statement.
+Its single member,
+<code lang='und' xml:lang='und'>msg</code>,
+is either undef or an appropriate error message to be generated if the statement is reached.</dd><p class="pad"></p>
+
+<dt><a name="guard"
+><b>guard</b></a></dt><p class="pad"></p>
+
+<dd>A guard (statement modifier?),
+e.g.
+the <code lang='und' xml:lang='und'>unless</code> in <code lang='und' xml:lang='und'>die unless $foo</code>.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="name"
+><b>name</b></a></dt><p class="pad"></p>
+
+<dd>The modifier name,
+either &#34;if&#34;,
+&#34;unless&#34;,
+&#34;while&#34;,
+&#34;until&#34;,
+or &#34;for&#34;.</dd><p class="pad"></p>
+
+<dt><a name="expr"
+><b>expr</b></a></dt><p class="pad"></p>
+
+<dt><a name="test"
+><b>test</b></a></dt><p class="pad"></p>
+</dl>
+
+<dt><a name="directive"
+><b>directive</b></a></dt><p class="pad"></p>
+
+<dd>A &#34;use&#34;,
+&#34;package&#34;,
+or &#34;module&#34; directive</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="name"
+><b>name</b></a></dt><p class="pad"></p>
+
+<dd>The directive name (e.g.
+&#34;use&#34;).</dd><p class="pad"></p>
+
+<dt><a name="thing"
+><b>thing</b></a></dt><p class="pad"></p>
+
+<dd>The directive&#39;s object (e.g.
+&#34;perl&#34; in &#34;use perl&#34;).</dd><p class="pad"></p>
+
+<dt><a name="args"
+><b>args</b></a></dt><p class="pad"></p>
+
+<dd>Whatever else is on the directive line.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="label"
+><b>label</b></a></dt><p class="pad"></p>
+
+<dd>A statement label.
+It will appear before the labeled statement in a statement sequence.</dd><p class="pad"></p>
+
+<dt><a name="loop"
+><b>loop</b></a></dt><p class="pad"></p>
+
+<dd>A <code lang='und' xml:lang='und'>loop(;;) { ... }</code> statement.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="init"
+><b>init</b></a></dt><p class="pad"></p>
+
+<dt><a name="test"
+><b>test</b></a></dt><p class="pad"></p>
+
+<dt><a name="incr"
+><b>incr</b></a></dt><p class="pad"></p>
+
+<dd>The initialization,
+test,
+and increment expressions in the loop header.</dd><p class="pad"></p>
+
+<dt><a name="block"
+><b>block</b></a></dt><p class="pad"></p>
+
+<dd>The block (sequence of statements,
+not closure) controlled by the loop.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="label"
+><b>label</b></a></dt><p class="pad"></p>
+
+<dl>
+<dt><a name="name"
+><b>name</b></a></dt><p class="pad"></p>
+
+<dd>The string name of the label.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="class_def"
+><b>class_def</b></a></dt><p class="pad"></p>
+
+<dd>A class definition</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="qual"
+><b>qual</b></a></dt><p class="pad"></p>
+
+<dd>Class scope.</dd><p class="pad"></p>
+
+<dt><a name="name"
+><b>name</b></a></dt><p class="pad"></p>
+
+<dt><a name="props"
+><b>props</b></a></dt><p class="pad"></p>
+
+<dt><a name="block"
+><b>block</b></a></dt><p class="pad"></p>
+</dl>
+
+<dt><a name="Regexes_or_rules"
+><b>Regexes or rules</b></a></dt><p class="pad"></p>
+
+<dt><a name="P6C::ValueList"
+><b>P6C::ValueList</b></a></dt><p class="pad"></p>
+
+<dd>List operators and functions with named parameters currently receive their arguments in different formats &#45;&#45; the former as a tree of binary &#39;,&#39; ops,
+the latter as an array.
+This is a common class to do context handling for both.</dd><p class="pad"></p>
+
+<dt><a name="P6C::Register"
+><b>P6C::Register</b></a></dt><p class="pad"></p>
+
+<dd>Gratuitous object?
+Not quite...
+It&#39;s a way of passing a temporary register in place of an unexpanded rvalue.
+Useful for e.g.
+autoincrement,
+where we have the register lying around.</dd><p class="pad"></p>
+
+<dd>NOTE: this would be a good place to take care of conversions between register types.
+Right now things are always passed in P regs,
+but we could do better by passing back a wrapped S,
+I,
+or N register,
+which would be promoted if necessary.
+On the other hand,
+we might do better using context to do this.
+Hopefully all will be clear once things get a bit more developed.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Mathematical Opcodes</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/ops.html">Opcodes</a> &raquo; Mathematical Opcodes
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>math.ops &#45; Mathematical Opcodes</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Parrot&#39;s library of mathematical ops.</p>
+
+<p>To use this library of ops,
+add this directive to your PIR:</p>
+
+<pre> .loadlib &#39;math_ops&#39;</pre>
+
+<h2><a name="General_Math"
+>General Math</a></h2>
+
+<dl>
+<dt><a name="cmod(out_INT,_in_INT,_in_INT)"
+><b>cmod</b>(out INT, in INT, in INT)</a></dt>
+
+<dt><a name="cmod(invar_PMC,_invar_PMC,_in_INT)"
+><b>cmod</b>(invar PMC, invar PMC, in INT)</a></dt>
+
+<dt><a name="cmod(invar_PMC,_invar_PMC,_invar_PMC)"
+><b>cmod</b>(invar PMC, invar PMC, invar PMC)</a></dt>
+NOTE: This &#34;uncorrected mod&#34; algorithm uses the C language&#39;s built&#45;in mod operator (x % y), which is
+<pre>    ... the remainder when x is divided by y, and thus is zero
+    when y divides x exactly.
+    ...
+    The direction of truncation for / and the sign of the result
+    for % are machine&#45;dependent for negative operands, as is the
+    action taken on overflow or underflow.
+                                                     &#45;&#45; [1], page 41</pre>
+Also:
+<pre>    ... if the second operand is 0, the result is undefined.
+    Otherwise, it is always true that (a/b)*b + a%b is equal to z. If
+    both operands are non&#45;negative, then the remainder is non&#45;
+    negative and smaller than the divisor; if not, it is guaranteed
+    only that the absolute value of the remainder is smaller than
+    the absolute value of the divisor.
+                                                     &#45;&#45; [1], page 205</pre>
+This op is provided for those who need it (such as speed&#45;sensitive applications with heavy use of mod, but using it only with positive arguments), but a more mathematically useful mod based on ** floor(x/y) and defined with y == 0 is provided by the mod op.
+<pre>  [1] Brian W. Kernighan and Dennis M. Ritchie, *The C Programming
+      Language*, Second Edition. Prentice Hall, 1988.</pre>
+If the denominator is zero, a &#39;Divide by zero&#39; exception is thrown.
+<dt><a name="cmod(out_NUM,_in_NUM,_in_NUM)"
+><b>cmod</b>(out NUM, in NUM, in NUM)</a></dt>
+
+<dt><a name="cmod(invar_PMC,_invar_PMC,_in_NUM)"
+><b>cmod</b>(invar PMC, invar PMC, in NUM)</a></dt>
+NOTE: This &#34;uncorrected mod&#34; algorithm uses the built&#45;in C math library&#39;s fmod() function, which computes
+<pre>    ... the remainder of dividing x by y. The return value is
+    x &#45; n * y, where n is the quotient of x / y, rounded towards
+    zero to an integer.
+                                &#45;&#45; fmod() manpage on RedHat Linux 7.0</pre>
+In addition, fmod() returns
+<pre>    the remainder, unless y is zero, when the function fails and
+    errno is set.</pre>
+According to page 251 of [1], the result when y is zero is implementation&#45; defined.This op is provided for those who need it, but a more mathematically useful numeric mod based on floor(x/y) instead of truncate(x/y) and defined with y == 0 is provided by the mod op.
+<pre>  [1] Brian W. Kernighan and Dennis M. Ritchie, *The C Programming
+      Language*, Second Edition. Prentice Hall, 1988.</pre>
+If the denominator is zero, a &#39;Divide by zero&#39; exception is thrown.</dl>
+
+<h2><a name="Pseudorandom_number_operations"
+>Pseudorandom number operations</a></h2>
+
+<p>These operations perform various pseudorandom number operations.</p>
+
+<dl>
+<dt><a name="rand(out_NUM)"
+><b>rand</b>(out NUM)</a></dt>
+Set $1 to a random floating point number between 0 and 1, inclusive.
+<dt><a name="rand(out_INT)"
+><b>rand</b>(out INT)</a></dt>
+Set $1 to a random integer between <code>[&#45;2^31, 2^31)</code> .
+<dt><a name="rand(out_NUM,_in_NUM)"
+><b>rand</b>(out NUM, in NUM)</a></dt>
+Set $1 to a random floating point number between 0 and and $2, inclusive.
+<dt><a name="rand(out_INT,_in_INT)"
+><b>rand</b>(out INT, in INT)</a></dt>
+Set $1 to a integer between 0 and and $2, inclusive.
+<dt><a name="rand(out_NUM,_in_NUM,_in_NUM)"
+><b>rand</b>(out NUM, in NUM, in NUM)</a></dt>
+Set $1 to a random floating point number between $2 and and $3, inclusive.
+<dt><a name="srand(in_NUM)"
+><b>srand</b>(in NUM)</a></dt>
+Set the random number seed to $1. $1 is casted to an INTVAL.
+<dt><a name="srand(in_INT)"
+><b>srand</b>(in INT)</a></dt>
+Set the random number seed to $1.
+<dt><a name="rand(out_INT,_in_INT,_in_INT)"
+><b>rand</b>(out INT, in INT, in INT)</a></dt>
+Set $1 to a integer between $2 and and $3, inclusive.</dl>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT</a></h1>
+
+<p>Copyright (C) 2001&#45;2009, Parrot Foundation.</p>
+
+<h1><a name="LICENSE"
+>LICENSE</a></h1>
+
+<p>This program is free software. It is subject to the same license as the Parrot interpreter itself.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

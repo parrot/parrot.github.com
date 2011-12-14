@@ -1,0 +1,237 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Running</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Home</a> &raquo; Running
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>Parrot &#45; Running</p>
+
+<h1><a name="VERSION"
+>VERSION</a></h1>
+
+<p>$Revision$</p>
+
+<h1><a name="OVERVIEW"
+>OVERVIEW</a></h1>
+
+<p>This document describes Parrot&#39;s command line options.</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre> parrot [&#45;options] &#60;file&#62; [arguments ...]</pre>
+
+<h1><a name="ENVIRONMENT"
+>ENVIRONMENT</a></h1>
+
+<dl>
+<dt><a name="PARROT_RUNTIME"
+>PARROT_RUNTIME</a></dt>
+If this environment variable is set, parrot will use this path as its runtime prefix instead of the compiled in path.
+<dt><a name="PARROT_GC_DEBUG"
+>PARROT_GC_DEBUG</a></dt>
+Turn on the <i>&#45;&#45;gc&#45;debug</i> flag.</dl>
+
+<h1><a name="OPTIONS"
+>OPTIONS</a></h1>
+
+<h2><a name="Assembler_options"
+>Assembler options</a></h2>
+
+<dl>
+<dt><a name="&#45;a,_&#45;&#45;pasm"
+>&#45;a, &#45;&#45;pasm</a></dt>
+Assume PASM input on stdin.
+<dt><a name="&#45;c,_&#45;&#45;pbc"
+>&#45;c, &#45;&#45;pbc</a></dt>
+Assume PBC file on stdin, run it.
+<dt><a name="&#45;d,_&#45;&#45;imcc&#45;debug_[hexbits]"
+>&#45;d, &#45;&#45;imcc&#45;debug [hexbits]</a></dt>
+The <b>&#45;d</b> switch takes an optional argument which is considered to hold a hex value of debug bits. Without a value, debug is set to 1.The individual bits can be listed on the command line by use of the <b>&#45;&#45;help&#45;debug</b> switch.To produce really huge output on <em>stderr</em> run <code>&#34;parrot <b>&#45;d 0ffff</b> ...&#34;</code>. Note: If the argument is separated by whitespace from the <b>&#45;d</b> switch, it has to start with a number.
+<dt><a name="&#45;h,_&#45;&#45;help"
+>&#45;h, &#45;&#45;help</a></dt>
+Print command line option summary.
+<dt><a name="&#45;&#45;help&#45;debug"
+>&#45;&#45;help&#45;debug</a></dt>
+Print debugging and tracing flag bits summary.
+<dt><a name="&#45;o_outputfile,_&#45;&#45;output=outputfile"
+>&#45;o outputfile, &#45;&#45;output=outputfile</a></dt>
+Act like an assembler. Don&#39;t run code, unless <b>&#45;r</b> is given too. If the outputfile ends with <em>.pbc</em>, a PBC file is written. If it ends with <em>.pasm</em>, a PASM output is generated, even from PASM input. This can be handy to check various optimizations, including <code>&#45;Op</code>.
+<dt><a name="&#45;&#45;output&#45;pbc"
+>&#45;&#45;output&#45;pbc</a></dt>
+Act like an assembler, but always output bytecode, even if the output file does not end in <em>.pbc</em>
+<dt><a name="&#45;r,_&#45;&#45;run&#45;pbc"
+>&#45;r, &#45;&#45;run&#45;pbc</a></dt>
+Only useful after <code>&#45;o</code> or <code>&#45;&#45;output&#45;pbc</code>. Run the program from the compiled in&#45;memory image. If two <code>&#45;r</code> options are given, the <em>.pbc</em> file is read from disc and run. This is mainly needed for tests.
+<dt><a name="&#45;v,_&#45;&#45;verbose"
+>&#45;v, &#45;&#45;verbose</a></dt>
+One <code>&#45;v</code> shows which files are worked on and prints a summary over register usage and optimization stats per <i>subroutine</i>. With two <code>&#45;v</code> switches, <code>parrot</code> prints a line per individual processing step too.
+<dt><a name="&#45;y,_&#45;&#45;yydebug"
+>&#45;y, &#45;&#45;yydebug</a></dt>
+Turn on yydebug in <em>yacc</em>/<em>bison</em>.
+<dt><a name="&#45;V,_&#45;&#45;version"
+>&#45;V, &#45;&#45;version</a></dt>
+Print version information and exit.
+<dt><a name="&#45;Ox"
+>&#45;Ox</a></dt>
+Optimize
+<pre> &#45;O0 no optimization (default)
+ &#45;O1 optimizations without life info (e.g. branches)
+ &#45;O  same
+ &#45;O2 optimizations with life info
+ &#45;Op rewrite I and N PASM registers most used first
+ &#45;Ot select fastest runcore
+ &#45;Oc turns on the optional/experimental tail call optimizations</pre>
+See <em><a href="dev/optimizer.pod.html">docs/dev/optimizer.pod</a></em> for more information on the optimizer. Note that optimization is currently experimental and these options are likely to change.
+<dt><a name="&#45;E,_&#45;&#45;pre&#45;process&#45;only"
+>&#45;E, &#45;&#45;pre&#45;process&#45;only</a></dt>
+Preprocess source file (expand macros) and print result to stdout:
+<pre>  $ parrot &#45;E t/op/macro_10.pasm
+  $ parrot &#45;E t/op/macro_10.pasm | parrot &#45;&#45; &#45;</pre>
+</dl>
+
+<h2><a name="Runcore_Options"
+>Runcore Options</a></h2>
+
+<p>These options select the runcore, which is useful for performance tuning and debugging. See <a href='#About_runcores'>&#34;About runcores&#34;</a> for details.</p>
+
+<dl>
+<dt><a name="&#45;R,_&#45;&#45;runcore_CORE"
+>&#45;R, &#45;&#45;runcore CORE</a></dt>
+Select the runcore. The following cores are available in Parrot, but not all may be available on your system:
+<pre>  slow, bounds  bounds checking core (default)
+  gcdebug       performs a full GC run before every op dispatch (good for
+                debugging GC problems)
+  trace         bounds checking core w/ trace info (see &#39;parrot &#45;&#45;help&#45;debug&#39;)
+  profiling     see F&#60;docs/dev/profilling.pod&#62;</pre>
+The <code>jit</code>, <code>switch&#45;jit</code>, and <code>cgp&#45;jit</code> options are currently aliases for the <code>fast</code>, <code>switch</code>, and <code>cgp</code> options, respectively. We do not recommend their use in new code; they will continue working for existing code per our deprecation policy.
+<dt><a name="&#45;p,_&#45;&#45;profile"
+>&#45;p, &#45;&#45;profile</a></dt>
+Run with the slow core and print an execution profile.
+<dt><a name="&#45;t,_&#45;&#45;trace"
+>&#45;t, &#45;&#45;trace</a></dt>
+Run with the slow core and print trace information to <b>stderr</b>. See <code>parrot &#45;&#45;help&#45;debug</code> for available flag bits.</dl>
+
+<h2><a name="VM_Options"
+>VM Options</a></h2>
+
+<dl>
+<dt><a name="&#45;w,_&#45;&#45;warnings"
+>&#45;w, &#45;&#45;warnings</a></dt>
+Turn on warnings. See <code>parrot &#45;&#45;help&#45;debug</code> for available flag bits.
+<dt><a name="&#45;D,_&#45;&#45;parrot&#45;debug"
+>&#45;D, &#45;&#45;parrot&#45;debug</a></dt>
+Turn on interpreter debug flag. See <code>parrot &#45;&#45;help&#45;debug</code> for available flag bits.
+<dt><a name="&#45;&#45;gc&#45;debug"
+>&#45;&#45;gc&#45;debug</a></dt>
+Turn on GC (Garbage Collection) debugging. This imposes some stress on the GC subsystem and can slow down execution considerably.
+<dt><a name="&#45;G,_&#45;&#45;no&#45;gc"
+>&#45;G, &#45;&#45;no&#45;gc</a></dt>
+This turns off GC. This may be useful to find GC related bugs. Don&#39;t use this option for longer running programs: as memory is no longer recycled, it may quickly become exhausted.
+<dt><a name="&#45;&#45;leak&#45;test,_&#45;&#45;destroy&#45;at&#45;end"
+>&#45;&#45;leak&#45;test, &#45;&#45;destroy&#45;at&#45;end</a></dt>
+Free all memory of the last interpreter. This is useful when running leak checkers.
+<dt><a name="&#45;.,_&#45;&#45;wait"
+>&#45;., &#45;&#45;wait</a></dt>
+Read a keystroke before starting. This is useful when you want to attach a debugger on platforms such as Windows.
+<dt><a name="&#45;&#45;runtime&#45;prefix"
+>&#45;&#45;runtime&#45;prefix</a></dt>
+Print the runtime prefix path and exit.</dl>
+
+<h2><a name="&#60;file&#62;"
+>&#60;file&#62;</a></h2>
+
+<p>If the file ends in <em>.pbc</em> it will be interpreted immediately.</p>
+
+<p>If the file ends in <em>.pasm</em>, then it is parsed as PASM code. Otherwise, it is parsed as PIR code. In both cases, it will then be run, unless the <code>&#45;o</code> flag was given.</p>
+
+<p>If the <code>file</code> is a single dash, input from <code>stdin</code> is read.</p>
+
+<h2><a name="[arguments_...]"
+>[arguments ...]</a></h2>
+
+<p>Optional arguments passed to the running program as ARGV. The program is assumed to know what to do with these.</p>
+
+<h1><a name="Generated_files"
+>Generated files</a></h1>
+
+<h1><a name="About_runcores"
+>About runcores</a></h1>
+
+<p>The runcore (or runloop) tells Parrot how to find the C code that implements each instruction. Parrot provides more than one way to do this, partly because no single runcore will perform optimally on all architectures (or even for all problems on a given architecture), and partly because some of the runcores have specific debugging and tracing capabilities.</p>
+
+<p>In the default &#34;slow&#34; runcore, each opcode is a separate C function. That&#39;s pretty easy in pseudocode:</p>
+
+<pre>    slow_runcore( op ):
+        while ( op ):
+            op = op_function( op )
+            check_for_events()</pre>
+
+<p>The GC debugging runcore is similar:</p>
+
+<pre>    gcdebug_runcore( op ):
+        while ( op ):
+            perform_full_gc_run()
+            op = op_function( op )
+            check_for_events()</pre>
+
+<p>Of course, this is much slower, but is extremely helpful for pinning memory corruption problems that affect GC down to single&#45;instruction resolution. See <a href='http://www.oreillynet.com/onlamp/blog/2007/10/debugging_gc_problems_in_parro.html'><a href="http://www.oreillynet.com/onlamp/blog/2007/10/debugging_gc_problems_in_parro.html">http://www.oreillynet.com/onlamp/blog/2007/10/debugging_gc_problems_in_parro.html</a></a> for more information.</p>
+
+<p>The trace and profile cores are also based on the &#34;slow&#34; core, doing full bounds checking, and also printing runtime information to stderr.</p>
+
+<h1><a name="Operation_table"
+>Operation table</a></h1>
+
+<pre> Command Line          Action         Output
+ &#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;
+ parrot x.pir          run
+ parrot x.pasm         run
+ parrot x.pbc          run
+ &#45;o x.pasm x.pir       ass            x.pasm
+ &#45;o x.pasm y.pasm      ass            x.pasm
+ &#45;o x.pbc  x.pir       ass            x.pbc
+ &#45;o x.pbc  x.pasm      ass            x.pbc
+ &#45;o x.pbc &#45;r x.pasm    ass/run pasm   x.pbc
+ &#45;o x.pbc &#45;r &#45;r x.pasm ass/run pbc    x.pbc
+ &#45;o x.o    x.pbc       obj</pre>
+
+<p>... where the possible actions are:</p>
+
+<pre>  run ... yes, run the program
+  ass ... assemble sourcefile
+  obj ..  produce native (ELF) object file for the EXEC subsystem</pre>
+
+<h1><a name="FILES"
+>FILES</a></h1>
+
+<p><em>main.c</em></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

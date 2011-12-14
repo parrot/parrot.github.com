@@ -1,0 +1,962 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Abstract root class</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Abstract root class</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/pmc.html">PMCs</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/pmc/default.pmc &#45; Abstract root class</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>These are the vtable functions for the default PMC class.</p>
+
+<p>All methods which are not defined here get a default implementation generated from <em lang='und' xml:lang='und'>src/vtable.tbl</em> by <em lang='und' xml:lang='und'><a href="../../tools/build/pmc2c.pl.html">tools/build/pmc2c.pl</a></em>.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_STRING_*caller(PARROT_INTERP,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>static STRING *caller(PARROT_INTERP, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a C string for the name of <code lang='und' xml:lang='und'>*pmc</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_void_cant_do_method(PARROT_INTERP,_PMC_*pmc,_const_char_*methname)"
+><b><code lang='und' xml:lang='und'>static void cant_do_method(PARROT_INTERP, PMC *pmc, const char *methname)</b></code></a></dt><p class="pad"></p>
+
+<dd>Throws an exception &#34;$methname() not implemented in class &#39;$class&#39;&#34;,
+used by all unimplemented messages.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_check_set_std_props(PARROT_INTERP,_PMC_*pmc,_STRING_*key,_PMC_*value)"
+><b><code lang='und' xml:lang='und'>static INTVAL check_set_std_props(PARROT_INTERP, PMC *pmc, STRING *key, PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Called from <code lang='und' xml:lang='und'>setprop()</code>.</dd><p class="pad"></p>
+
+<dd>Returns a true value if <code lang='und' xml:lang='und'>setprop()</code> can avoid actually setting a property in the prophash.
+If it returns true,
+the property setting will be reflected in a future call to <code lang='und' xml:lang='und'>propagate_std_props()</code></dd><p class="pad"></p>
+
+<dt><a name="static_void_propagate_std_props(PARROT_INTERP,_PMC_*self,_PMC_*prop_hash)"
+><b><code lang='und' xml:lang='und'>static void propagate_std_props(PARROT_INTERP, PMC *self, PMC *prop_hash)</b></code></a></dt><p class="pad"></p>
+
+<dd>Set pending standard properties in <code lang='und' xml:lang='und'>prop_hash</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_has_pending_std_props(PMC_*self)"
+><b><code lang='und' xml:lang='und'>static INTVAL has_pending_std_props(PMC *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns true if propagate_std_props() would create a non&#45;empty prophash.</dd><p class="pad"></p>
+
+<dt><a name="static_PMC*_check_get_std_props(PARROT_INTERPeter,_PMC_*self,_STRING_*key)"
+><b><code lang='und' xml:lang='und'>static PMC *check_get_std_props(PARROT_INTERPeter, PMC *self, STRING *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Checks if we can infer the value of <code lang='und' xml:lang='und'>key</code> property from <code lang='und' xml:lang='und'>self</code> without looking at its prophash.
+Returns <code lang='und' xml:lang='und'>PMCNULL</code> if not,
+returns the value otherwise.</dd><p class="pad"></p>
+
+<dt><a name="static_PMC_*_make_prop_hash(PARROT_INTERP,_PMC_*self)"
+><b><code lang='und' xml:lang='und'>static PMC *make_prop_hash(PARROT_INTERP, PMC *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a property hash for <code lang='und' xml:lang='und'>self</code>.
+Returns the created hash.
+Inferred properties will be added to the hash and it will be set as <code lang='und' xml:lang='und'>PMC_metadata(self)</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_does_isa(PARROT_INTERP,_STRING_*method,_STRING_*what)"
+><b><code lang='und' xml:lang='und'>static INTVAL does_isa(PARROT_INTERP, STRING *method, STRING *what)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compares <code lang='und' xml:lang='und'>*method</code> and <code lang='und' xml:lang='und'>*what</code>.
+Returns true (1) if <b>method</b> is found in <b>what</b>,
+false (0) otherwise.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code lang='und' xml:lang='und'>void init()</b></code></a></dt><p class="pad"></p>
+
+<dd>Does nothing.</dd><p class="pad"></p>
+
+<dt><a name="void_init_pmc(PMC_*initializer)"
+><b><code lang='und' xml:lang='und'>void init_pmc(PMC *initializer)</b></code></a></dt><p class="pad"></p>
+
+<dd>With a null <code lang='und' xml:lang='und'>initializer</code>,
+calls <code lang='und' xml:lang='und'>init()</code>,
+else throws an exception.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*instantiate(PMC_*init)"
+><b><code lang='und' xml:lang='und'>PMC *instantiate(PMC *init)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Creates a new PMC of the type of the class SELF and calls init().</dd><p class="pad"></p>
+
+<dt><a name="void_mark()"
+><b><code lang='und' xml:lang='und'>void mark()</b></code></a></dt><p class="pad"></p>
+
+<dd>Panics with a &#34;no custom mark routine defined&#34; error message.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*getprop(STRING_*key)"
+><b><code lang='und' xml:lang='und'>PMC *getprop(STRING *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the property for <code lang='und' xml:lang='und'>*key</code>.
+If no property is defined then the NULL PMC is returned.</dd><p class="pad"></p>
+
+<dt><a name="void_setprop(STRING_*key,_PMC_*value)"
+><b><code lang='und' xml:lang='und'>void setprop(STRING *key, PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the property for <code lang='und' xml:lang='und'>*key</code> to <code lang='und' xml:lang='und'>*value</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_delprop(STRING_*key)"
+><b><code lang='und' xml:lang='und'>void delprop(STRING *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Deletes the property for <code lang='und' xml:lang='und'>*key</code>.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*getprops()"
+><b><code lang='und' xml:lang='und'>PMC *getprops()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the PMC&#39;s properties or the NULL PMC if no properties exist.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_type()"
+><b><code lang='und' xml:lang='und'>INTVAL type()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the PMC&#39;s type.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*name()"
+><b><code lang='und' xml:lang='und'>STRING *name()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the name of the PMC.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_namespace"
+><b><code lang='und' xml:lang='und'>PMC *get_namespace</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the namespace for this PMC.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*find_method(STRING_*method_name)"
+><b><code lang='und' xml:lang='und'>PMC *find_method(STRING *method_name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Looks up the method for <code lang='und' xml:lang='und'>*method_name</code> and returns it.
+If no method is found then <code lang='und' xml:lang='und'>NULL</code> is returned.</dd><p class="pad"></p>
+
+<dt><a name="void_add_method(STRING_*method_name,_PMC_*sub)"
+><b><code lang='und' xml:lang='und'>void add_method(STRING *method_name, PMC *sub)</b></code></a></dt><p class="pad"></p>
+
+<dd>Store the method as a global in the namespace of this class.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_integer_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>INTVAL get_integer_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>get_integer_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="FLOATVAL_get_number_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>FLOATVAL get_number_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>get_number_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*get_string_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>STRING *get_string_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>get_string_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_elements_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>INTVAL elements_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>elements_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_pmc_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>PMC *get_pmc_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>get_pmc_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="void_*get_pointer()"
+><b><code lang='und' xml:lang='und'>void *get_pointer()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the address of the PMC.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_is_same(PMC_*value)"
+><b><code lang='und' xml:lang='und'>INTVAL is_same(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns whether the PMC is numerically equal to <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_assign_pmc(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void assign_pmc(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="void_assign_string_native(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void assign_string_native(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Defaults fall back to <code lang='und' xml:lang='und'>set_pmc</code> and <code lang='und' xml:lang='und'>set_string_native</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_morph(INTVAL_type)"
+><b><code lang='und' xml:lang='und'>void morph(INTVAL type)</b></code></a></dt><p class="pad"></p>
+
+<dd>Changes the PMC to a PMC of a new type</dd><p class="pad"></p>
+
+<dt><a name="void_set_integer_keyed_int(INTVAL_key,_INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_integer_keyed_int(INTVAL key, INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and calls <code lang='und' xml:lang='und'>set_integer_keyed()</code> with it and <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_number_keyed_int(INTVAL_key,_FLOATVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_number_keyed_int(INTVAL key, FLOATVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and calls <code lang='und' xml:lang='und'>set_number_keyed()</code> with it and <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_string_keyed_int(INTVAL_key,_STRING_*string)"
+><b><code lang='und' xml:lang='und'>void set_string_keyed_int(INTVAL key, STRING *string)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and calls <code lang='und' xml:lang='und'>set_string_keyed()</code> with it and <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_bool_keyed_int(INTVAL_key,_INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_bool_keyed_int(INTVAL key, INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and calls <code lang='und' xml:lang='und'>set_bool_keyed()</code> with it and <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_pmc_keyed_int(INTVAL_key,_PMC_*value)"
+><b><code lang='und' xml:lang='und'>void set_pmc_keyed_int(INTVAL key, PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and calls <code lang='und' xml:lang='und'>set_pmc_keyed()</code> with it and <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_is_equal(PMC_*value)"
+><b><code lang='und' xml:lang='und'>INTVAL is_equal(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;is_equal&#39;.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_is_equal_num(PMC_*value)"
+><b><code lang='und' xml:lang='und'>INTVAL is_equal_num(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;is_equal_num&#39;.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_is_equal_string(PMC_*value)"
+><b><code lang='und' xml:lang='und'>INTVAL is_equal_string(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;is_equal&#39;.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_exists_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>INTVAL exists_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>exists_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_defined()"
+><b><code lang='und' xml:lang='und'>INTVAL defined()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns true.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_defined_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>INTVAL defined_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>defined_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="void_delete_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>void delete_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and calls <code lang='und' xml:lang='und'>delete_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*nextkey_keyed_int(INTVAL_key,_INTVAL_w)"
+><b><code lang='und' xml:lang='und'>PMC *nextkey_keyed_int(INTVAL key, INTVAL w)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>nextkey_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_can(STRING_*method)"
+><b><code lang='und' xml:lang='und'>INTVAL can(STRING *method)</b></code></a></dt><p class="pad"></p>
+
+<dd>Reports whether the PMC &#34;can&#34; perform <code lang='und' xml:lang='und'>method</code>.
+If the PMC implements the vtable function <code lang='und' xml:lang='und'>method</code>,
+true (1) is returned; otherwise,
+false (0) is returned.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_does(STRING_*interface)"
+><b><code lang='und' xml:lang='und'>INTVAL does(STRING *interface)</b></code></a></dt><p class="pad"></p>
+
+<dd>Reports whether the PMC &#34;does&#34; perform <code lang='und' xml:lang='und'>interface</code>.
+If the interface <code lang='und' xml:lang='und'>interface</code> is found in the PMC&#39;s interface list,
+true (1) is returned; otherwise,
+false (0) is returned.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_does_pmc(PMC_*role)"
+><b><code lang='und' xml:lang='und'>INTVAL does_pmc(PMC *role)</b></code></a></dt><p class="pad"></p>
+
+<dd>Reports whether the PMC &#34;does&#34; the <code lang='und' xml:lang='und'>role</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_isa_pmc(PMC_*_class)"
+><b><code lang='und' xml:lang='und'>INTVAL isa_pmc(PMC *_class)</b></code></a></dt><p class="pad"></p>
+
+<dd>Reports whether the PMC &#34;isa&#34; <code lang='und' xml:lang='und'>_class</code>.
+If the class <code lang='und' xml:lang='und'>_class</code> is found in the PMC&#39;s class hierarchy,
+true (1) is returned; otherwise,
+false (0) is returned.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_isa(STRING_*_class)"
+><b><code lang='und' xml:lang='und'>INTVAL isa(STRING *_class)</b></code></a></dt><p class="pad"></p>
+
+<dd>Reports whether the PMC &#34;isa&#34; <code lang='und' xml:lang='und'>_class</code>.
+If the class <code lang='und' xml:lang='und'>_class</code> is found in the PMC&#39;s class hierarchy,
+true (1) is returned; otherwise,
+false (0) is returned.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*inspect_str(STRING_*what)"
+><b><code lang='und' xml:lang='und'>PMC *inspect_str(STRING *what)</b></code></a></dt><p class="pad"></p>
+
+<dd>Provides introspection of a specific piece of information about the PMC.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*inspect()"
+><b><code lang='und' xml:lang='und'>PMC *inspect()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a Hash describing the class,
+with key/value pairs as described in inspect_str.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_class()"
+><b><code lang='und' xml:lang='und'>PMC *get_class()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns SELF.
+A PMC is its own class.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_attr_str(STRING_*attr)"
+><b><code lang='und' xml:lang='und'>PMC *get_attr_str(STRING *attr)</b></code></a></dt><p class="pad"></p>
+
+<dd>Look for NCI methods and properties.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_attr_keyed(PMC_*key,_STRING_*name)"
+><b><code lang='und' xml:lang='und'>PMC *get_attr_keyed(PMC *key, STRING *name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default version of keyed attribute lookups.
+Discards the key and does a lookup by the string name passed in.</dd><p class="pad"></p>
+
+<dt><a name="void_set_attr_keyed(PMC_*key,_STRING_*name,_PMC_*value)"
+><b><code lang='und' xml:lang='und'>void set_attr_keyed(PMC *key, STRING *name, PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default version of keyed attribute set.
+Discards the key and does a set by the string name passed in.</dd><p class="pad"></p>
+
+<dt><a name="void_add_parent(PMC_*parent)"
+><b><code lang='und' xml:lang='und'>void add_parent(PMC *parent)</b></code></a></dt><p class="pad"></p>
+
+<dd>Add class <code lang='und' xml:lang='und'>parent</code> to the list of our parents.</dd><p class="pad"></p>
+
+<dt><a name="void_visit(visit_info_*info)"
+><b><code lang='und' xml:lang='und'>void visit(visit_info *info)</b></code></a></dt><p class="pad"></p>
+
+<dd>Used by DOD to mark the PMC.</dd><p class="pad"></p>
+
+<dt><a name="PMC*_clone()"
+><b><code lang='und' xml:lang='und'>PMC *clone()</b></code></a></dt><p class="pad"></p>
+
+<dd>Clones this PMC.
+By default,
+this just does a freeze and thaw.</dd><p class="pad"></p>
+
+<dt><a name="void_freeze(visit_info_*info)"
+><b><code lang='und' xml:lang='und'>void freeze(visit_info *info)</b></code></a></dt><p class="pad"></p>
+
+<dd>Does nothing.</dd><p class="pad"></p>
+
+<dt><a name="void_thaw(visit_info_*info)"
+><b><code lang='und' xml:lang='und'>void thaw(visit_info *info)</b></code></a></dt><p class="pad"></p>
+
+<dd>Initializes the PMC during unarchiving.</dd><p class="pad"></p>
+
+<dt><a name="void_thawfinish(visit_info_*info)"
+><b><code lang='und' xml:lang='und'>void thawfinish(visit_info *info)</b></code></a></dt><p class="pad"></p>
+
+<dd>Does nothing.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*add(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *add(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;add&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*add_int(INTVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *add_int(INTVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;add_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*add_float(FLOATVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *add_float(FLOATVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;add_float&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_add(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_add(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_add&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_add_int(INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_add_int(INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_add_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_add_float(FLOATVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_add_float(FLOATVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_add_float&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*subtract(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *subtract(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;subtract&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*subtract_int(INTVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *subtract_int(INTVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;subtract_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*subtract_float(FLOATVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *subtract_float(FLOATVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;subtract_float&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_subtract(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_subtract(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_subtract&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_subtract_int(INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_subtract_int(INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_subtract_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_subtract_float(FLOATVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_subtract_float(FLOATVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_subtract_float&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*multiply(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *multiply(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;multiply&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*multiply_int(INTVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *multiply_int(INTVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;multiply_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*multiply_float(FLOATVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *multiply_float(FLOATVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;multiply_float&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_multiply(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_multiply(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_multiply&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_multiply_int(INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_multiply_int(INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_multiply_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_multiply_float(FLOATVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_multiply_float(FLOATVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_multiply_float&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*divide(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *divide(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;divide&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*divide_int(INTVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *divide_int(INTVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;divide_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*divide_float(FLOATVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *divide_float(FLOATVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;divide_float&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_divide(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_divide(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_divide&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_divide_int(INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_divide_int(INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_divide_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_divide_float(FLOATVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_divide_float(FLOATVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_divide_float&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*floor_divide(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *floor_divide(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;floor_divide&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*floor_divide_int(INTVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *floor_divide_int(INTVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;floor_divide_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*floor_divide_float(FLOATVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *floor_divide_float(FLOATVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;floor_divide_float&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_floor_divide(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_floor_divide(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_floor_divide&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_floor_divide_int(INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_floor_divide_int(INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_floor_divide_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_floor_divide_float(FLOATVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_floor_divide_float(FLOATVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_floor_divide_float&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*modulus(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *modulus(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;modulus&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*modulus_int(INTVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *modulus_int(INTVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;modulus_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*modulus_float(FLOATVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *modulus_float(FLOATVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;modulus_float&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_modulus(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_modulus(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_modulus&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_modulus_int(INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_modulus_int(INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_modulus_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_modulus_float(FLOATVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_modulus_float(FLOATVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_modulus_float&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*pow(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *pow(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;pow&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*pow_int(INTVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *pow_int(INTVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;pow_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*pow_float(FLOATVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *pow_float(FLOATVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;pow_float&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_pow(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_pow(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_pow&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_pow_int(INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_pow_int(INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_pow_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_pow_float(FLOATVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_pow_float(FLOATVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_pow_float&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_or(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_or(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_or&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_or_int(INTVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_or_int(INTVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_or_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_or(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_or(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_or&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_or_int(INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_or_int(INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_or_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_and(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_and(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_and&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_and_int(INTVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_and_int(INTVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_and_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_and(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_and(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_and&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_and_int(INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_and_int(INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_and_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_xor(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_xor(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_xor&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_xor_int(INTVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_xor_int(INTVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_xor_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_xor(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_xor(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_xor&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_xor_int(INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_xor_int(INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_xor_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_ors(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_ors(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_ors&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_ors_str(STRING_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_ors_str(STRING *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_ors_str&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_ors(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_ors(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_ors&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_ors_str(STRING_*value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_ors_str(STRING *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_ors_str&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_ands(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_ands(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_ands&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_ands_str(STRING_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_ands_str(STRING *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_ands_str&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_ands(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_ands(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_ands&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_ands_str(STRING_*value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_ands_str(STRING *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_ands_str&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_xors(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_xors(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_xors&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_xors_str(STRING_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_xors_str(STRING *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_xors_str&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_xors(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_xors(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_xors&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_xors_str(STRING_*value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_xors_str(STRING *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_xors_str&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_shl(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_shl(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_shl&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_shl_int(INTVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_shl_int(INTVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_shl_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_shl(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_shl(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_shl&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_shl_int(INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_shl_int(INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_shl_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_shr(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_shr(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_shr&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_shr_int(INTVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_shr_int(INTVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_shr_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_shr(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_shr(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_shr&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_shr_int(INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_shr_int(INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_shr_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_lsr(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_lsr(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_lsr&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*bitwise_lsr_int(INTVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *bitwise_lsr_int(INTVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;bitwise_lsr_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_lsr(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_lsr(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_lsr&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_bitwise_lsr_int(INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_bitwise_lsr_int(INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_bitwise_lsr_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_cmp(PMC_*value)"
+><b><code lang='und' xml:lang='und'>INTVAL cmp(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;cmp&#39;.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_cmp_num(PMC_*value)"
+><b><code lang='und' xml:lang='und'>INTVAL cmp_num(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;cmp_num&#39;.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_cmp_string(PMC_*value)"
+><b><code lang='und' xml:lang='und'>INTVAL cmp_string(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;cmp_string&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*cmp_pmc(PMC_*value)"
+><b><code lang='und' xml:lang='und'>PMC *cmp_pmc(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;cmp_pmc&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*logical_or(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *logical_or(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;logical_or&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*logical_and(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *logical_and(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;logical_and&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*logical_xor(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *logical_xor(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;logical_xor&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*concatenate(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *concatenate(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;concatenate&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*concatenate_str(STRING_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *concatenate_str(STRING *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;concatenate_str&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_concatenate(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_concatenate(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_concatenate&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_concatenate_str(STRING_*value)"
+><b><code lang='und' xml:lang='und'>void i_concatenate_str(STRING *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_concatenate_str&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*repeat(PMC_*value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *repeat(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;repeat&#39;.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*repeat_int(INTVAL_value,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *repeat_int(INTVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;repeat_int&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_repeat(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void i_repeat(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_repeat&#39;.</dd><p class="pad"></p>
+
+<dt><a name="void_i_repeat_int(INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void i_repeat_int(INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Performs a multiple dispatch call for &#39;i_repeat_int&#39;.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

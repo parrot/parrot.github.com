@@ -1,0 +1,303 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PDD 3: Calling Conventions</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; PDD 3: Calling Conventions
+                </div>
+
+<h1><a name="PDD_3:_Calling_Conventions"
+>PDD 3: Calling Conventions</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>Parrot&#39;s inter&#45;routine calling conventions.</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Synopsis"
+>Synopsis</a></h2>
+
+<p>Not applicable.</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<p>This document describes how to pass arguments from registers to subroutines,
+and how subroutines can extract their parameters into registers for use.</p>
+
+<p>Since Parrot&#39;s calling conventions are continuation&#45;based,
+there is arguably very little difference between a call and a return.
+Because of this,
+the conversion rules are the same regardless of whether code is invoking a subroutine or a return continuation.</p>
+
+<h3><a name="Common_Features_of_Argument/Return_Opcodes"
+>Common Features of Argument/Return Opcodes</a></h3>
+
+<p>There are four opcodes involved in parameter and return value propagation:</p>
+
+<ul>
+<li><code>set_args</code>,
+for passing arguments;</li>
+
+<li><code>set_returns</code>,
+for returning values;</li>
+
+<li><code>get_params</code>,
+for accepting parameters; and</li>
+
+<li><code>get_results</code>,
+for accepting return values.</li>
+</ul>
+
+<p>FAQ: Given Parrot&#39;s internal use of continuation&#45;passing style [&#34;CPS&#34;],
+it would be possible to use one pair of opcodes for both call and return,
+since under CPS returns <i>are</i> calls.
+And perhaps someday we will have only two opcodes.
+But for now,
+certain efficiency hacks are easier with four opcodes.</p>
+
+<p>The common syntax of these opcodes is:</p>
+
+<pre> &#60;set_opcode&#62; &#34;flags0, flags1, ..., flagsN&#34;, VAL0, VAL1, ... VALN
+ &#60;get_opcode&#62; &#34;flags0, flags1, ..., flagsN&#34;, REG0, REG1, ... REGN
+ &#60;get_opcode&#62; &#34;..., 0x200, flags0, ...&#34;, ..., &#34;name&#34;, REG0, ...</pre>
+
+<p>The flags string is a literal quoted string denoting a list of zero or more comma&#45;separated integers. Integers may be specified either in decimal, or if prefixed with &#34;0b&#34;/&#34;0x&#34;, in binary/hexadecimal. There must be exactly one integer for each value or register given.</p>
+
+<p>For documentation purposes we&#39;ll number the bits 0 (low) through 30 (high). Bit 31 (and higher, where available) will not be used.</p>
+
+<p>Some values and registers do not correspond directly to values passed or received. (See the descriptions of the OPT_FLAG and NAMED bits, below.)</p>
+
+<h4><a name="Flag_Words;_Common_Flag_Word_Bits"
+>Flag Words; Common Flag Word Bits</a></h4>
+
+<p>Each integer in the flag string controls the processing of the corresponding value or register.</p>
+
+<p>These bits of each flag word have common meanings for all argument/ return&#45;value opcodes:</p>
+
+<pre>    0&#45;3   TYPE
+               0b0000 = I
+               0b0001 = S
+               0b0010 = P
+               0b0011 = N</pre>
+
+<p>Don&#39;t set these bits yourself; the assembler will do it.</p>
+
+<h3><a name="Passing_Arguments,_Returning_Values"
+>Passing Arguments, Returning Values</a></h3>
+
+<p>Just before calling a subroutine with <code>invokecc</code> or calling a method with <code>call_methodcc</code>, use the <code>set_args</code> opcode to tell Parrot where the subroutine&#39;s or method&#39;s arguments will come from and how they should be expanded by the target.</p>
+
+<p>Similarly, just before returning from such a subroutine or method, use the <code>set_returns</code> opcode to tell Parrot where the return values will come from and how to expand them for the caller&#39;s use.</p>
+
+<h4><a name="Flag_Word_Bits_For_&#39;Setting&#39;"
+>Flag Word Bits For &#39;Setting&#39;</a></h4>
+
+<p>These bits of each flag word have these meanings specific to <code>set_args</code> and <code>set_returns</code>:</p>
+
+<dl>
+<dt><a name="4_CONSTANT"
+>4 <b><code>CONSTANT</b></code></a></dt>
+The value is a literal constant, not a register. (Don&#39;t set this bit yourself; the assembler will do it.)
+<dt><a name="5_FLAT_(P_only)"
+>5 <b><code>FLAT</b></code> (P only)</a></dt>
+If this bit is set on a PMC value, then the PMC must be an aggregate. The contents of the aggregate, rather than the aggregate itself, will be passed.If the <code>NAMED</code> bit is also set, the aggregate will be used as a hash; its contents, as key/value pairs, will be passed as named arguments. The PMC must implement the full hash interface. {{ TT #1288: Limit the required interface. }}If the <code>NAMED</code> bit is not set, the aggregate will be used as an array; its contents will be passed as positional arguments.The meaning of this bit is undefined when applied to integer, number, and string values.
+<dt><a name="6_(unused)"
+>6 (unused)</a></dt>
+
+<dt><a name="7_(unused)"
+>7 (unused)</a></dt>
+
+<dt><a name="8_(unused)"
+>8 (unused)</a></dt>
+
+<dt><a name="9_NAMED_(FLAT_or_string_constant_only)"
+>9 <b><code>NAMED</b></code> (<b><code>FLAT</b></code> or string constant only)</a></dt>
+When the FLAT bit is also set, behavior is as described above in the &#34;FLAT&#34; section. Otherwise, this bit may only be set on a unique string constant specifying the name of the next argument (or returned value).</dl>
+
+<h3><a name="Accepting_Parameters,_Accepting_Return_Values"
+>Accepting Parameters, Accepting Return Values</a></h3>
+
+<p>As the <i>first opcode</i> in a subroutine that will be called with <code>invokecc</code> or a method that will be called with <code>call_methodcc</code>, use the <code>get_params</code> opcode to tell Parrot where the subroutine&#39;s or method&#39;s arguments should be stored and how they should be expanded.</p>
+
+<p>Similarly, just <i>before</i> (yes, <i>before</i>) calling such a subroutine or method, use the <code>get_results</code> opcode to tell Parrot where the return values should be stored and how to expand them for your use.</p>
+
+<p>NOTE: It should be obvious, but in case it&#39;s not: You must name only registers as targets of these opcodes, not constants. (You can&#39;t store anything into a constant. That would make it a variable.)</p>
+
+<h4><a name="Flag_Word_Bits_For_&#39;Getting&#39;"
+>Flag Word Bits For &#39;Getting&#39;</a></h4>
+
+<p>These bits of each flag word have these meanings specific to <code>get_params</code> and <code>get_results</code>:</p>
+
+<dl>
+<dt><a name="4_(unused)"
+>4 (unused)</a></dt>
+
+<dt><a name="5_SLURPY_(P_only)"
+>5 <b><code>SLURPY</b></code> (P only)</a></dt>
+If this bit is set on a P register, then it will be populated with an aggregate that will contain all of the remaining values that have not already been stored in other registers.All such values will be converted to PMCs according to the detailed rules below, and those PMCs will be stored into the new aggregate.If the <code>NAMED</code> bit is also set, the aggregate will be the HLL&#45;specific hash type and the contents will be all unassigned _named_ arguments.If the <code>NAMED</code> bit is not set, the aggregate will be the HLL&#45;specific array type and the contents will be all unassigned positional arguments.
+<dt><a name="6_(unused)"
+>6 (unused)</a></dt>
+
+<dt><a name="7_OPTIONAL"
+>7 <b><code>OPTIONAL</b></code></a></dt>
+If this bit is set on a register for which no value has been passed, no exception will be raised; rather, the register will be set to a default value: a Null PMC for P, an empty string for S, or zero for N or I.
+<dt><a name="8_OPT_FLAG_(I_only)"
+>8 <b><code>OPT_FLAG</b></code> (I only)</a></dt>
+An I register with this bit set is set to one if the immediately preceding <b>OPTIONAL</b> register received a value; otherwise, it is set to zero. If the preceding register was not marked <b>OPTIONAL</b>, the behavior is undefined; but we promise you won&#39;t like it.
+<dt><a name="8_READONLY_(P_only)"
+>8 <b><code>READONLY</b></code> (P only)</a></dt>
+<i>XXX &#45; PROPOSED ONLY &#45; XXX</i>If this bit is set on a P register that receives a value, Parrot will ensure that the final value in the P register is read&#45;only (i.e. will not permit modification). If the received value was a mutable PMC, then Parrot will create and set the register to a {not yet invented} read&#45;only PMC wrapper around the original PMC.Future Notes: Parrot&#39;s algorithm for deciding what is writable may be simplistic. In initial implementations, it may assume that any PMC not of a known read&#45;only&#45;wrapper type is mutable. Later it may allow the HLL to provide the test. But we must beware overdesigning this; any HLL with a truly complex notion of read&#45;only probably needs to do this kind of wrapping itself.
+<dt><a name="8_(unused_for_S_and_N)"
+>8 (unused for S and N)</a></dt>
+
+<dt><a name="9_NAMED_(SLURPY_or_string_constant_only)"
+>9 <b><code>NAMED</b></code> (<b><code>SLURPY</b></code> or string constant only)</a></dt>
+When the SLURPY bit is also set, behavior is as described above in the &#34;SLURPY&#34; section. Otherwise, this bit may only be set on a unique string constant specifying the name of the next parameter (or returned value).</dl>
+
+<h4><a name="Overflow_and_underflow"
+>Overflow and underflow</a></h4>
+
+<p>If too many or too few values are provided for the given target registers, Parrot by default will throw an exception for <code>get_params</code>, but not for <code>get_results</code>. This error behavior can be controlled via the <code>errorson</code> and <code>errorsoff</code> opcodes using <code>PARROT_ERRORS_PARAM_COUNT_FLAG</code> for <code>get_params</code> and <code>PARROT_ERRORS_RESULT_COUNT_FLAG</code> for <code>get_results</code>. (It is not possible to control underflow behavior separately from overflow.)</p>
+
+<p>Note that if the final target is a P register with FLAT set, then overflow can never occur. Similarly, if all target registers are marked <b>OPTIONAL</b>, then underflow is impossible.</p>
+
+<p>Note also that when these errors are off, any excess destination registers in the case of underflow are left untouched, rather than being reset to zero or null. Excess registers explicitly marked <b>OPTIONAL</b> are always reset, regardless of the error flag settings.</p>
+
+<h4><a name="Ordering_of_named_values_(outgoing)"
+>Ordering of named values (outgoing)</a></h4>
+
+<p>Named values (arguments, or values to return) must be listed textually after all the positional values. <code>FLAT</code> and non&#45;<code>FLAT</code> values may be mixed in any order.</p>
+
+<h4><a name="Ordering_of_named_targets_(incoming)"
+>Ordering of named targets (incoming)</a></h4>
+
+<p>Named targets (parameters, or returned values) must appear <i>after</i> all the positional targets. A <code>SLURPY</code> positional target, if present, must be the last positional target; a <code>SLURPY</code> named target, if present, must be the last named target.</p>
+
+<p>So the acceptable ordering of targets is:</p>
+
+<ul>
+<li>positional non&#45;SLURPY (any number)</li>
+
+<li>positional SLURPY array (optional)</li>
+
+<li>NAMED non&#45;SLURPY (any number)</li>
+
+<li>NAMED SLURPY hash (optional)</li>
+</ul>
+
+<h4><a name="Mixing_named_and_positional_values"
+>Mixing named and positional values</a></h4>
+
+<p>Positional targets can only be filled with positional values.</p>
+
+<p>Named targets can be filled with either positional or named values. However, if a named target was already filled by a positional value, and then a named value is also given, this is an overflow error.</p>
+
+<h4><a name="Type_Conversions"
+>Type Conversions</a></h4>
+
+<p>Unlike the <code>set_*</code> opcodes, the <code>get_*</code> opcodes must perform conversion from one register type to another. Here are the conversion rules:</p>
+
+<ul>
+<li>When the target is an I, N, or S register, storage will behave like an <code>assign</code> (standard conversion).</li>
+
+<li>When the target and source are both P registers, storage will behave like a <code>set</code> (pass by reference).</li>
+
+<li>When the target is a P register and the source is an integer, the P will be set to a new Integer[1] which has been <code>assign</code>ed the given integer.</li>
+
+<li>When the target is a P register and the source is a number, the P will be set to a new Float[1] which has been <code>assign</code>ed the given number.</li>
+
+<li>When the target is a P register and the source is a string, the P will be set to a new String[1] which has been <code>assign</code>ed the given string.</li>
+</ul>
+
+<p>[1] or some other type specified by the current HLL type map, which may substitute an alternative type for each default low&#45;level Parrot type (array, hash, string, number, etc.).</p>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<p>Not applicable.</p>
+
+<h2><a name="Bugs"
+>Bugs</a></h2>
+
+<p>Required features are missing:</p>
+
+<ul>
+<li>Specific exceptions to throw for specific errors.</li>
+</ul>
+
+<h2><a name="PIR_Syntax_Examples"
+>PIR Syntax Examples</a></h2>
+
+<h3><a name="Function_Calls"
+>Function Calls</a></h3>
+<pre>  .local pmc foo, i, ar, y, p, value, kw, a, b, c, z
+  # ...
+  foo(1, i)                       # 2 positional arguments
+  foo(x, ar :flat, y)             # flattening array
+  foo(p, 'key' => value)          # named argument
+  foo(p, value :named('key'))     # the same
+  foo(kw :named :flat)            # a flattening hash
+
+  # all together now: three positional (one flat) with two named (one flat)
+  foo(a, b, c :flat, 'x' => 3, 'y' => 4, z :flat :named('z'))
+</pre>
+<h3><a name="Parameters"
+>Parameters</a></h3>
+<pre>  .sub foo 
+    .param int i                    # positional parameter
+    .param pmc argv :slurpy         # slurpy array
+    .param pmc value :named('key')  # named parameter
+    .param int x :optional          # optional parameter
+    .param int has_x :opt_flag      # flag 0/1 x was passed
+    .param pmc kw :slurpy :named    # slurpy hash
+    # ...
+  .end
+</pre>
+<h3><a name="Return_Values"
+>Return Values</a></h3>
+<pre>  .sub foo
+    .local pmc i, ar, value
+    .return (i, ar: flat, value :named('key') )
+  .end
+</pre>
+<h3><a name="Call_Results"
+>Call Results</a></h3>
+<pre>  .local pmc x, foo, i, j, ar, value
+  x = foo()                       # single result
+  (i, j :optional, ar :slurpy, value :named('key') ) = foo()
+</pre>
+<h2><a name="References"
+>References</a></h2>
+
+<p><em>pdd23_exceptions.pod</em></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

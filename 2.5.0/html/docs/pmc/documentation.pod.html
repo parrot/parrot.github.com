@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Documenting PMCs</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Documenting PMCs
+                </div>
+
+<h1><a name="TITLE"
+>TITLE</a></h1>
+
+<p>Documenting PMCs</p>
+
+<h1><a name="Overview"
+>Overview</a></h1>
+
+<p>This document describes guidelines for writing documentation for PMCs.
+All core PMCs <b>must</b> be documented using the format outlined here.
+We encourage other PMC developers to follow these practices,
+too.</p>
+
+<p>Follow all documentation guidelines in <em><a href="../pdds/pdd07_codingstd.pod.html">docs/pdds/pdd07_codingstd.pod</a></em>.</p>
+
+<dl>
+<dt><a name="NAME"
+>NAME</a></dt>
+Required.
+Specify the filename relative to the Parrot root,
+followed by a brief description of the PMC&#39;s intent.
+<pre> =head1 NAME
+
+ src/pmc/exporter.pmc &#45; Export globals from one namespace to another</pre>
+
+<dt><a name="DESCRIPTION"
+>DESCRIPTION</a></dt>
+Required. A verbose description of the PMC&#39;s intent, mentioning the major use cases. Include links to spec/design documentation or other related files. Describe the interface (what this PMC inherits from, and what interfaces it provides) &#45;&#45; a description of the information contained in the <code>pmclass</code> declaration.
+<pre> =head1 DESCRIPTION
+
+ Exports globals from one namespace to another. Exporter always uses
+ the typed namespace interface, as outlined in
+ F&#60;docs/pdds/pdd21_namespaces.pod&#62;.
+
+ Exporter is not derived from any other PMC, and does not provide any
+ standard interface&#45;&#45;its interface consists solely of methods, not
+ vtable functions.</pre>
+The <b>DESCRIPTION</b> section is further broken down as follows:
+<dl>
+<dt><a name="Structure"
+>Structure</a></dt>
+Describe the underlying structure of the PMC. Often this information has been contained in source comments. It should be formalized and made available to others by converting it to POD. Mention initialization and finalization behavior.
+<pre> =head2 Structure
+
+ The Exporter PMC structure (C&#60;Parrot_Exporter&#62;) consists of three items:
+
+ =over 4
+
+ =item C&#60;ns_src&#62;
+
+ The source namespace &#45;&#45; a NameSpace PMC.
+ An empty PMC of this type is allocated upon initialization.
+
+ =item C&#60;ns_dest&#62;
+
+ The destination namespace &#45;&#45; a NameSpace PMC.
+ An empty PMC of this type is allocated upon initialization.
+
+ =item C&#60;globals&#62;
+
+ The globals to export &#45;&#45; a ResizableStringArray.
+ A Null PMC is allocated during initialization.</pre>
+
+<dt><a name="Functions"
+>Functions</a></dt>
+Required. Group all PMC functions together in the source, and describe them individually.
+<pre> =head2 Functions
+
+ =over 4
+
+ =item C&#60;void init()&#62;
+
+ Instantiates an Exporter.</pre>
+etc.
+<dt><a name="Methods"
+>Methods</a></dt>
+Required. Group all PMC methods together (VTABLE or otherwise,) and describe function, expected parameters, and return values.
+<pre> =head2 Methods
+
+ =over 4
+
+ =item C&#60;PCCMETHOD
+ import(PMC *dest :optional :named[&#34;destination&#34;], int got_dest :opt_flag,
+ PMC *src :optional :named[&#34;source&#34;], int got_src :opt_flag,
+ PMC *globals :optional :named[&#34;globals&#34;], int got_globals :opt_flag)&#62;
+
+ Import C&#60;globals&#62; from the C&#60;src&#62; namespace to the C&#60;dest&#62; namespace.
+ If C&#60;src&#62;, C&#60;dest&#62;, or C&#60;globals&#62; are passed, they will override
+ the current value.
+ C&#60;import&#62; follows the semantics of the C&#60;export_to&#62; method
+ of the C&#60;NameSpace&#62; PMC. in particular, if a NULL value is passed
+ for C&#60;globals&#62;, the default set of items will be imported.
+ Throws an exception upon error.</pre>
+</dl>
+
+<dt><a name="STABILITY"
+>STABILITY</a></dt>
+Required. List the stability of this PMC, as classified in <em><a href="../stability.pod.html">docs/stability.pod</a></em>.
+<dt><a name="SEE_ALSO"
+>SEE ALSO</a></dt>
+Recommended. List related documentation.
+<pre> =head1 SEE ALSO
+
+ F&#60;docs/pdds/pdd17_basic_types.pod&#62;, F&#60;docs/pdds/pdd21_namespaces.pod&#62;.</pre>
+</dl>
+
+<h1><a name="STABILITY"
+>STABILITY</a></h1>
+
+<p>Unstable. This is a draft document, which must be reviewed and accepted by the Project Team.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

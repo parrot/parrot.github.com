@@ -1,0 +1,225 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Memory Internals</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Home</a> &raquo; <a href="../../html/developer.html">Developer Documentation</a> &raquo; Memory Internals
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/memory_internals.pod &#45; Memory Internals</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT</a></h1>
+
+<p>This document tries to explain the internals of the Parrot memory subsystem,
+and the data structures related to memory management and garbage collection.</p>
+
+<h1><a name="OVERVIEW"
+>OVERVIEW</a></h1>
+
+<p>All allocated items are managed in memory pools.
+Memory pools hold collections of similar items,
+items of the same data type and usually of the same size.
+These can be roughly divided into two kinds: pools holding fixed sized items and pools holding variable sized items.</p>
+
+<p>A pool is organized as a linked list of big chunks,
+called <i>Arenas</i>.
+Each Arena holds and manages a set number of items of a single size and shape.</p>
+
+<h2><a name="Abbreviations_used_here"
+>Abbreviations used here</a></h2>
+
+<ul>
+<li>GC</li>
+
+<p>Garbage collector.
+A garbage collector is a system that finds memory objects that are not being used by the system,
+and frees them automatically.
+Garbage collection is broken into two distinct phases: the <i>mark phase</i> that searches for unreferenced objects,
+and the <i>sweep phase</i> that frees all dead objects.</p>
+
+<li>DOD</li>
+
+<p>Dead object detection,
+a deprecated term that refers to the <i>mark phase</i> of the garbage collector.</p>
+</ul>
+
+<p>By scanning through all the interpreter&#39;s registers,
+stacks and the processor stack,
+all objects that are detected by the garbage collector are marked as alive.
+Objects in all pools not alive at the end of the mark phase are considered dead and are collected.</p>
+
+<p>See <em><a href="pdds/pdd09_gc.pod.html">docs/pdds/pdd09_gc.pod</a></em> for details about the garbage collector system.</p>
+
+<h1><a name="Top_down:_the_interpreter"
+>Top down: the interpreter</a></h1>
+
+<p>A overall layout of the interpreter&#39;s memory management looks like so:</p>
+
+<pre>    typedef struct Interp {
+        ...
+        struct Memory_Pools *mem_pools;
+        ...
+    } Interp;</pre>
+
+<p>All object&#45;like things that get allocated during the execution of parrot bytecode are managed from the <code>mem_pools</code> member of the interpreter structure.</p>
+
+<h1><a name="Memory_Pools"
+>Memory Pools</a></h1>
+
+<p><code>struct Memory_Pools</code> holds pointers to a variety of different kinds of managed memory. A simplification looks similar to this:</p>
+
+<pre>    typedef struct Memory_Pools {
+        struct Var_Size_Pool *memory_pool;
+        ...
+        struct Fixed_Size_Pool * header_pool;
+        struct Fixed_Size_Pool ** sized_pools;
+    } Memory_Pools;</pre>
+
+<p><code>memory_pool</code> and <code>header_pool</code> are variable and fixed sized pool pointers respectively. These are just two examples, there are other <code>Var_Size_Pool</code>s and <code>Fixed_Size_Pool</code>s in the Parrot system. Pools of type <code>struct Var_Size_Pool</code> are for variable&#45;size objects, such as constant string buffers. Pools of type <code>struct Fixed_Size_Pool</code> are for fixed&#45;size objects such as headers or PMCs.</p>
+
+<h1><a name="Fixed_sized_items"
+>Fixed sized items</a></h1>
+
+<p>Fixed&#45;size items are either objects by themselves, like a <code>PMC</code>, or are header structures of variable&#45;sized objects like <code>STRING</code>. The general object of this kind is a buffer&#45;like object, which consists of a <code>Buffer</code> or a <code>PObj</code> header at the beginning connected to a variable&#45;sized memory block for data.</p>
+
+<p>Buffer&#45;like objects of the same size are maintained in the list of <code>sized_pools</code>, which manage objects of the same size in one slot.</p>
+
+<p>Every garbage collector must supply 4 function pointers: an initialization routine, a de&#45;initialization routine, a function to initialize a new memory pool, and a function to initiate a garbage collection run. Every pool also requires the garbage collector to supply 4 additional function pointers: a function to allocate a new arena for the pool, a function to find more items (possibly through running the garbage collector, or allocating objects otherwise), a function to add an unused item to the free list, and a function to retrieve a new free item from the pool.</p>
+
+<p>Every pool maintains a list of unused items within the pool, called the <code>free_list</code> When there is need for a new object it is taken off the free list, and when it stops being used, it will be put back on the free list again. GC mark determines which objects are not being used, and GC sweep adds those unused items back to the free list.</p>
+
+<p>If the free list is empty then a GC run could be initiated. This may be able to find some dead objects and free them up for immediate reuse. However, if there are no objects that can be immediately recycled, a new arena will be allocated.</p>
+
+<p>Arenas, which contain the fixed&#45;sized items used by Parrot, are never returned to the operating system, even if they are empty. In the future, this behavior may change, however. Variable&#45;sized buffers may be returned when they are no longer being used.</p>
+
+<h2><a name="General_structure_of_a_buffer&#45;like_item"
+>General structure of a buffer&#45;like item</a></h2>
+
+<pre>    struct parrot_object_t {
+        unsigned flags;
+        ...
+    } PObj;</pre>
+
+<p>The flags field may contain a series of flags which indicate the type, status, configuration, and special requirements of each item. <code>Buffer</code>s, <code>PMC</code>s, and <code>PObj</code>s all have this basic field in common.</p>
+
+<p><code>PMC</code>s and <code>Buffer</code>s each have an additional field which contain a pointer to a block of data.</p>
+
+<h2><a name="GC&#45;related_PObj_flags"
+>GC&#45;related PObj flags</a></h2>
+
+<p>Only three flags need to be checked during a mark run: <code>PObj_live_FLAG</code>, <code>PObj_on_free_list_FLAG</code>, and <code>PObj_is_special_PMC_FLAG</code>. Normally these flags are stored in <code>PObj&#45;&#62;flags</code>, meaning that each PMC must be accessed during the mark run.</p>
+
+<p><em>pobj.h</em> provides macros to facilitate referencing individual object flags: <code>gc_flag_SET</code>, <code>gc_flag_CLEAR</code> and <code>gc_flag_TEST</code>. They make up a portable way of manipulating the GC&#45;relevant object flags.</p>
+
+<h1><a name="Variable_sized_items"
+>Variable sized items</a></h1>
+
+<p>Variable&#45;sized items do not exist by themselves, they are always wrapped by a buffer structure that contains a pointer to the data information about them. The variable&#45;sized data items are managed in two different pools: the <code>memory_pool</code>, which contains a general mish&#45;mash of data types, and the <code>constant_string_pool</code> which contains immutable string buffers used by programs running on Parrot.</p>
+
+<p>Here, different memory allocation schemes jump in:</p>
+
+<h2><a name="Copying_GC"
+>Copying GC</a></h2>
+
+<p>A <code>memory_pool</code> gets allocated in big blocks, namely a <code>Memory_Block</code>. When some part is needed, e.g. to store a string, this part is carved out of the memory block, until this block is used up. If no more space is available in this memory block, a special copying garbage collection (GC) is started. This copies all living items of all used memory blocks into one new block, which holds thereafter only used items tightly packed together.</p>
+
+<p>The old memory blocks, containing sparse unused parts and used parts already copied to the new place, are then unused altogether and get <code>free()</code>ed thereafter. When GC doesn&#39;t provide enough free space needed for a new item, a new block is added to the memory pool.</p>
+
+<p>This also implies that buffers are moved around during their life. Users of these buffers are therefore not allowed to hold pointers to buffers over pieces of code that might trigger a GC run, like <code>Parrot_allocate()</code> or <code>Parrot_str_compare()</code>.</p>
+
+<h2><a name="Defragmenting_allocator"
+>Defragmenting allocator</a></h2>
+
+<p>An alternative to the above is to use a memory allocator, which is as fast as the above and does reuse <code>free()</code>ed items in a memory&#45;conserving way. Actually, the malloc implementations in some systems&#39; <em>libc</em> efficiently provide this, such as the glibc malloc based on Doug Lea&#39;s allocator.</p>
+
+<p>Using this allocator, all variable sized items are just allocated via a plain <code>malloc()</code> call, or resized with <code>realloc()</code>, and after they lose their existence (ie when the mark phase detects that the managing buffer header is no longer in use) they are <code>free()</code>ed. That&#39;s all. The underlying allocator collects these pieces, coalesces them if possible to form bigger pieces, and then puts them on free lists, sorted by size. Eventually, when a new allocation request arrives, it may give them back to Parrot.</p>
+
+<p>So here, the variable length <code>memory_pool</code> is unused. You can consider this pool to live inside the allocator. Buffers allocated this way don&#39;t move around, except when reallocated, of course.</p>
+
+<p>The <em><a href="../Configure.pl.html">Configure.pl</a></em> option <code>&#45;&#45;gc</code> allows one to use either method.</p>
+
+<h2><a name="Buffer_Tail_and_COW"
+>Buffer_Tail and COW</a></h2>
+
+<p>Both implementations have the same problem to solve: <code>STRING</code>s that get copied, or parts of strings as the result of a substr() call, do not allocate new space in the memory pool to hold this string or part of string. They just use a <code>new_string_header()</code> and set up a pointer (<code>strstart</code>) pointing somewhere into the original string and remember the used length there in <code>bufused</code>.</p>
+
+<p>This is all OK, as long as the original and the lazy copy of the string are not modified. So that&#39;s well&#45;known and called COW (copy on write). We don&#39;t have to make a copy of the buffer until one of the copies tries to modify it. In practice, strings often get copied from place to place but do not often get modified, so this optimization saves us a lot of time.</p>
+
+<p>Now, during GC (or freeing buffers) the problem arises: to whom does this string belong? You shouldn&#39;t copy the same string to different places, thus rendering COW to a noop, nor are you allowed to free this same string more then once. Both allocation schemes therefore use a part of the allocated string to do this bookkeeping.</p>
+
+<p>The <code>malloc()</code>/<code>free()</code> approach stores a refcount at <code>bufstart</code>. During the mark phase all dead users increment the refcount, living users set it to an huge value. When freeing the buffer, the string is only freed if the refcount reaches zero.</p>
+
+<h1><a name="Simplified_Figure"
+>Simplified Figure</a></h1>
+
+<pre>                         +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+      +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#60;&#45;&#45;&#45;| Memory Pools |&#60;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+      |                  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;+      |
+      |                                     |      |
+      |         +&#45;&#45;&#45;&#45;&#45;&#45;+    +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+   |  +=============+
+      |         | S0   |&#60;&#45;&#45;&#45;| Registers |&#60;&#45;&#45;)&#45;&#45;| Interpreter |
+      |         +&#45;&#45;&#45;&#45;&#45;&#45;+    +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+   |  +=============+
+      |     +&#45;&#45;&#45;| S1   |                    |
+      |     |   +&#45;&#45;&#45;&#45;&#45;&#45;+                    +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+ +&#45;&#45;&#45;&#45;&#45;&#45;&#45;+  |                                          |
+ | Blk 1 |&#45;&#45;)&#45;&#45;&#62;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+    +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+ +&#45;&#45;&#45;&#45;&#45;&#45;&#45;+  |   | Buffer 1 |    | OnestringAno |   | Block 1 |
+ | Blk 2 |  |   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+    | therstring.. |   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+ +&#45;&#45;&#45;&#45;&#45;&#45;&#45;+  |   | Buffer 2 |    | ..String...  |&#60;&#45;&#45;| Block 2 |
+ | .     |  |   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+    +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+ +&#45;&#45;&#45;&#45;&#45;&#45;&#45;+  |   | ...      |        ^    ^         | ...     |
+Fixed Size  |   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+        |    |         +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+   Pool     +&#45;&#45;&#62;| Buffer N |&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;+        Var Size Pool
+                +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+                 Buffer          Memory Block</pre>
+
+<p>Now consider that the <i>Interpreter</i> shall be a <code>PMC</code> living in <code>Buffer X</code> of the underlying interpreter and is currently running <em>perldoc docs/memory_internals.pod</em>, and then redo this figure, with all the blanks filled in.</p>
+
+<h1><a name="FILES"
+>FILES</a></h1>
+
+<p>src/gc/api.c, src/gc/gc_private.h, pobj.h, mark_sweep.[ch], alloc_resources.[ch], string.[ch]. Other garbage collector implementations may use separate files as well.</p>
+
+<h1><a name="BUGS"
+>BUGS</a></h1>
+
+<p>To minimize this bugs section &#45; please patch this document and keep it up to date &#45; thanks.</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Leopold T&#195;&#182;tsch <code>lt@toetsch.at</code></p>
+
+<h1><a name="VERSION"
+>VERSION</a></h1>
+
+<p>0.1.1 June 2008</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

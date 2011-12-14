@@ -1,0 +1,188 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot Developer FAQ</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Home</a> &raquo; Parrot Developer FAQ
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/gettingstarted.pod &#45; Parrot Developer FAQ</p>
+
+<h1><a name="DEVELOPER_FAQ"
+>DEVELOPER FAQ</a></h1>
+
+<h2><a name="I&#39;m_interested_in_helping_out._What_should_I_do?"
+>I&#39;m interested in helping out.
+What should I do?</a></h2>
+
+<p>You&#39;re already on the right track.
+This FAQ should help you find everything you need to become an active member of the Parrot community.
+Just look through the questions below and read the ones that apply to you.</p>
+
+<p>More current information is also available at <a href='https://trac.parrot.org/parrot/wiki/NewParrotDeveloperGuide'>https://trac.parrot.org/parrot/wiki/NewParrotDeveloperGuide</a>.</p>
+
+<h2><a name="Where_can_I_get_Parrot?"
+>Where can I get Parrot?</a></h2>
+
+<ul>
+<li>There is a web interface to the subversion repository,
+in case you just want to browse the source.</li>
+
+<p><a href='https://trac.parrot.org/parrot/browser'>https://trac.parrot.org/parrot/browser</a></p>
+
+<li>The easiest solution is to grab the latest monthly development release.
+You can find it here:</li>
+
+<p><a href='http://www.parrot.org/release/current'><a href="http://www.parrot.org/release/current">http://www.parrot.org/release/current</a></a></p>
+
+<li>An even better option is to use SVN,
+which gets you the very latest copy of the Parrot distribution.
+The procedure for this is:</li>
+
+<pre>    svn checkout https://svn.parrot.org/parrot/trunk parrot</pre>
+
+<li>If you&#39;re using git&#45;svn, you should check out just the latest version. First:</li>
+
+<p><code>git svn clone &#45;s &#45;r HEAD https://svn.parrot.org/parrot</code></p>
+</ul>
+
+<p>The above instructions are also on the Parrot website:</p>
+
+<p><a href='http://www.parrot.org/download'><a href="http://www.parrot.org/download">http://www.parrot.org/download</a></a></p>
+
+<h2><a name="Now_that_I&#39;ve_got_Parrot,_what_do_I_do?"
+>Now that I&#39;ve got Parrot, what do I do?</a></h2>
+
+<p>Now that you&#39;ve downloaded Parrot, you probably want to try it out. All you need is Perl 5.8.0 or later, a C compiler (any ANSI C compliant compiler should do &#45; if you find one that doesn&#39;t work, please report it to us), and some reasonable form of <code>make</code>. To do this, follow these three easy steps.</p>
+
+<ol>
+<li><code>cd</code> to your parrot directory and run <code>Configure.pl</code> to create the makefile for your platform.</li>
+
+<li>Run <code>make</code> to compile everything and build parrot.</li>
+
+<li>Run <code>make test</code> to run the test suite and verify that everything works on your system.</li>
+</ol>
+
+<h2><a name="Where&#39;s_the_Parrot_documentation?"
+>Where&#39;s the Parrot documentation?</a></h2>
+
+<p>Well, Parrot documentation is a great place to contribute, should you be looking for something to do. Figure out which parts were confusing, and either help us fix them, or let us know where we should fix them. Luckily, all of the current Parrot documentation is included along with the Parrot distribution, in the /docs/ directory.</p>
+
+<p>There is also some experimental auto&#45;generated HTML documentation available by running the following command in the Parrot distribution&#39;s root directory:</p>
+
+<pre>    % make html</pre>
+
+<p>To view the HTML documentation start with the page <em>docs/html/index.html</em>.</p>
+
+<p>There are a few categories of documentation, each with different intents. It&#39;ll probably help to be aware of them before you go digging in. I highly suggest you check out <em><a href="pdds/pdd07_codingstd.pod.html">/docs/pdds/pdd07_codingstd.pod</a></em> for guidelines on how documentation is supposed to be laid out. For now, here&#39;s the executive summary:</p>
+
+<ul>
+<li>PDDs</li>
+
+<p>Parrot Design Documents (PDDs) document the basic design of the Parrot interpreter, with each PDD focusing on a particular topic, such as the design of the garbage collector (PDD 09) or the object system (PDD 15). They can be found in the <em>/docs/pdds</em> directory.</p>
+
+<p>NB: Some important areas are still missing PDDs; we&#39;re working to rectify that.</p>
+
+<li>Developer files</li>
+
+<p>These are files which correspond to a specific source file, and can be found in <em>/docs/dev/</em>. A developer file contains documentation on all the implementation decisions associated with the source file. (Note that this is in contrast to PDDs, which describe design decisions). This is the place for mini&#45;essays on how to avoid overflows in unsigned arithmetic, or on the pros and cons of differing hash algorithms, and why the current one was chosen, and how it works.</p>
+
+<p>If you are coming to a particular source file for the first time, you should be able to read the developer file and gain an immediate overview of what the source file is for, the algorithms it implements, etc.</p>
+
+<p>NB: We need more developer files too. Patches welcome!</p>
+
+<li>Source file documentation</li>
+
+<p>Each source file includes comments embedded in the document. Usually this means function&#45;level documentation that describes the purpose and intent of a function, along with any other important information. For larger functions, it will include additional documentation that explains the meaning of code, as opposed to a verbatim translation of code.</p>
+</ul>
+
+<h2><a name="Where_can_I_find_the_main_developer_mailing_list?"
+>Where can I find the main developer mailing list?</a></h2>
+
+<p>Most of the Parrot&#45;related development discussion occurs on the parrot&#45;dev (previously known as parrot&#45;porters and perl6&#45;internals) mailing list. There are a variety of interfaces to the list:</p>
+
+<ul>
+<li>Developer Mailing List Interface (subscribing, unsubscribing, etc)</li>
+
+<p><a href='http://lists.parrot.org/mailman/listinfo/parrot&#45;dev'><a href="http://lists.parrot.org/mailman/listinfo/parrot&#45;dev">http://lists.parrot.org/mailman/listinfo/parrot&#45;dev</a></a></p>
+
+<li>Parrot NNTP Interface</li>
+
+<p><a href='nntp://news.gmane.org/gmane.comp.compilers.parrot.devel'>nntp://news.gmane.org/gmane.comp.compilers.parrot.devel</a></p>
+
+<li>Parrot Archives, RSS</li>
+
+<p><a href='http://groups.google.com/group/parrot&#45;dev'><a href="http://groups.google.com/group/parrot&#45;dev">http://groups.google.com/group/parrot&#45;dev</a></a> provides archives, search, and RSS feeds.</p>
+
+<p><a href='http://news.gmane.org/gmane.comp.compilers.parrot.devel'><a href="http://news.gmane.org/gmane.comp.compilers.parrot.devel">http://news.gmane.org/gmane.comp.compilers.parrot.devel</a></a></p>
+
+<p><a href='http://lists.parrot.org/pipermail/parrot&#45;dev/'><a href="http://lists.parrot.org/pipermail/parrot&#45;dev/">http://lists.parrot.org/pipermail/parrot&#45;dev/</a></a></p>
+</ul>
+
+<p>In addition, there is a mailing list which logs all commits to the Parrot SVN repository. If you&#39;re interested in Parrot development, you might find it very helpful to subscribe and keep up on changes that people are making.</p>
+
+<ul>
+<li>Mailing List Interface (subscribing, unsubscribing, etc)</li>
+
+<p><a href='http://lists.parrot.org/mailman/listinfo/parrot&#45;commits'><a href="http://lists.parrot.org/mailman/listinfo/parrot&#45;commits">http://lists.parrot.org/mailman/listinfo/parrot&#45;commits</a></a></p>
+
+<li>Parrot Commits NNTP Interface</li>
+
+<p><a href='TODO'>...</a></p>
+
+<p><a href='TODO'>...</a></p>
+
+<li>Commit List Archives, RSS</li>
+
+<p><a href='TODO'>...</a></p>
+
+<p><a href='http://lists.parrot.org/pipermail/parrot&#45;commits/'><a href="http://lists.parrot.org/pipermail/parrot&#45;commits/">http://lists.parrot.org/pipermail/parrot&#45;commits/</a></a></p>
+</ul>
+
+<h2><a name="What_other_ways_can_I_get_in_contact_with_the_Parrot_developers?"
+>What other ways can I get in contact with the Parrot developers?</a></h2>
+
+<p>The mailing list is the main resource for Parrot development. However, there is an IRC channel which you may find useful if your problem is better solved with real&#45;time discussion. Visit the channel #parrot on the IRC server <a href='TODO'>irc.parrot.org</a>. Alternative IRC servers are <a href='TODO'>irc.rhizomatic.net</a> and <a href='TODO'>irc.pobox.com</a>.</p>
+
+<h2><a name="I&#39;ve_developed_a_patch._What_should_I_do_with_it?"
+>I&#39;ve developed a patch. What should I do with it?</a></h2>
+
+<p>See <em><a href="submissions.pod.html">docs/submissions.pod</a></em> for details.</p>
+
+<h2><a name="I&#39;ve_found_a_bug,_what_now?"
+>I&#39;ve found a bug, what now?</a></h2>
+
+<p>See <em><a href="submissions.pod.html">docs/submissions.pod</a></em> for details.</p>
+
+<h2><a name="What_other_useful_resources_are_there_for_developers?"
+>What other useful resources are there for developers?</a></h2>
+
+<p>A number of other useful resources that can be found via on the Parrot wiki, located at <a href='http://trac.parrot.org/parrot/wiki'><a href="http://trac.parrot.org/parrot/wiki">http://trac.parrot.org/parrot/wiki</a></a>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

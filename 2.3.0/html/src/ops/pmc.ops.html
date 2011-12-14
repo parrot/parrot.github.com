@@ -1,0 +1,268 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PMC Opcodes</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/ops.html">Opcodes</a> &raquo; PMC Opcodes
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>pmc.ops &#45; PMC Opcodes</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Operations that deal with PMCs,
+including creation and destruction,
+manipulation,
+and introspection.</p>
+
+<h2><a name="Creation_and_Types"
+>Creation and Types</a></h2>
+
+<p>These operations are used to create PMCs and examine type information.</p>
+
+<dl>
+<dt><a name="new(out_PMC,_in_STR)"
+><b>new</b>(out PMC,
+in STR)</a></dt>
+
+<dt><a name="new(out_PMC,_in_STR,_in_PMC)"
+><b>new</b>(out PMC,
+in STR,
+in PMC)</a></dt>
+
+<dt><a name="new(out_PMC,_in_PMC)"
+><b>new</b>(out PMC,
+in PMC)</a></dt>
+
+<dt><a name="new(out_PMC,_in_PMC,_in_PMC)"
+><b>new</b>(out PMC,
+in PMC,
+in PMC)</a></dt>
+Instantiate a new object from a string PMC or key name,
+or from a class object.
+For strings and keys,
+first check the namespace for a class object,
+then fall back to the type ID if no class object is stored in the namespace.
+<pre>  new $P0, &#39;ResizableBooleanArray&#39;</pre>
+Optionally a PMC may be passed to the constructor. It&#39;s up to the class what to do with the initializer. See PDD17 and the init_pmc function for more.
+<dt><a name="root_new(out_PMC,_in_PMC)"
+><b>root_new</b>(out PMC, in PMC)</a></dt>
+
+<dt><a name="root_new(out_PMC,_in_PMC,_in_PMC)"
+><b>root_new</b>(out PMC, in PMC, in PMC)</a></dt>
+Instantiate a new object from a key name relative to the root namespace.
+<pre>  root_new $P0, [&#39;parrot&#39;;&#39;ResizableBooleanArray&#39;]</pre>
+Optionally a PMC may be passed to the constructor. It&#39;s up to the class what to do with the initializer.
+<dt><a name="typeof(out_STR,_invar_PMC)"
+><b>typeof</b>(out STR, invar PMC)</a></dt>
+
+<dt><a name="typeof(out_PMC,_invar_PMC)"
+><b>typeof</b>(out PMC, invar PMC)</a></dt>
+Return the type of PMC in $2.
+<dt><a name="get_repr(out_STR,_invar_PMC)"
+><b>get_repr</b>(out STR, invar PMC)</a></dt>
+Set $1 to a string representation of $2</dl>
+
+<h2><a name="Basic_Operations"
+>Basic Operations</a></h2>
+
+<p>A few simple and common PMC operations.</p>
+
+<dl>
+<dt><a name="find_method(out_PMC,_invar_PMC,_in_STR)"
+><b>find_method</b>(out PMC, invar PMC, in STR)</a></dt>
+Looks up method $3 in $2&#39;s vtable, placing the corresponding method PMC in $1.
+<dt><a name="defined(out_INT,_invar_PMC)"
+><b>defined</b>(out INT, invar PMC)</a></dt>
+
+<dt><a name="defined(out_INT,_invar_PMC,_in_INTKEY)"
+><b>defined</b>(out INT, invar PMC, in INTKEY)</a></dt>
+
+<dt><a name="defined(out_INT,_invar_PMC,_in_KEY)"
+><b>defined</b>(out INT, invar PMC, in KEY)</a></dt>
+Test PMC for definedness.
+<dt><a name="exists(out_INT,_invar_PMC,_in_INTKEY)"
+><b>exists</b>(out INT, invar PMC, in INTKEY)</a></dt>
+
+<dt><a name="exists(out_INT,_invar_PMC,_in_KEY)"
+><b>exists</b>(out INT, invar PMC, in KEY)</a></dt>
+Tests whether KEY or INTKEY exists in the aggregate PMC. Places the answer in INT.
+<dt><a name="delete(invar_PMC,_in_KEY)"
+><b>delete</b>(invar PMC, in KEY)</a></dt>
+
+<dt><a name="delete(invar_PMC,_in_INTKEY)"
+><b>delete</b>(invar PMC, in INTKEY)</a></dt>
+Delete the specified entry $2 from aggregate $1.
+<dt><a name="elements(out_INT,_invar_PMC)"
+><b>elements</b>(out INT, invar PMC)</a></dt>
+Returns the number of items in aggregate $2</dl>
+
+<h2><a name="Fast_access_ops"
+>Fast access ops</a></h2>
+
+<p>The fast access ops are shortcuts to common operations implemented in var PMCs.</p>
+
+<dl>
+<dt><a name="push(invar_PMC,_in_INT)"
+><b>push</b>(invar PMC, in INT)</a></dt>
+
+<dt><a name="push(invar_PMC,_in_NUM)"
+><b>push</b>(invar PMC, in NUM)</a></dt>
+
+<dt><a name="push(invar_PMC,_in_STR)"
+><b>push</b>(invar PMC, in STR)</a></dt>
+
+<dt><a name="push(invar_PMC,_invar_PMC)"
+><b>push</b>(invar PMC, invar PMC)</a></dt>
+Push $2 onto the end of the aggregate PMC $1, if that operation is defined.
+<dt><a name="pop(out_INT,_invar_PMC)"
+><b>pop</b>(out INT, invar PMC)</a></dt>
+
+<dt><a name="pop(out_NUM,_invar_PMC)"
+><b>pop</b>(out NUM, invar PMC)</a></dt>
+
+<dt><a name="pop(out_STR,_invar_PMC)"
+><b>pop</b>(out STR, invar PMC)</a></dt>
+
+<dt><a name="pop(out_PMC,_invar_PMC)"
+><b>pop</b>(out PMC, invar PMC)</a></dt>
+Pop off last entry in the aggregate $2, placing the result in $1.
+<dt><a name="unshift(invar_PMC,_in_INT)"
+><b>unshift</b>(invar PMC, in INT)</a></dt>
+
+<dt><a name="unshift(invar_PMC,_in_NUM)"
+><b>unshift</b>(invar PMC, in NUM)</a></dt>
+
+<dt><a name="unshift(invar_PMC,_in_STR)"
+><b>unshift</b>(invar PMC, in STR)</a></dt>
+
+<dt><a name="unshift(invar_PMC,_invar_PMC)"
+><b>unshift</b>(invar PMC, invar PMC)</a></dt>
+Unshift $2 onto the front of the aggregate PMC $1.
+<dt><a name="shift(out_INT,_invar_PMC)"
+><b>shift</b>(out INT, invar PMC)</a></dt>
+
+<dt><a name="shift(out_NUM,_invar_PMC)"
+><b>shift</b>(out NUM, invar PMC)</a></dt>
+
+<dt><a name="shift(out_STR,_invar_PMC)"
+><b>shift</b>(out STR, invar PMC)</a></dt>
+
+<dt><a name="shift(out_PMC,_invar_PMC)"
+><b>shift</b>(out PMC, invar PMC)</a></dt>
+Shift off the first entry in the aggregate $2 and places it in $1.
+<dt><a name="splice(invar_PMC,_invar_PMC,_in_INT,_in_INT)"
+><b>splice</b>(invar PMC, invar PMC, in INT, in INT)</a></dt>
+Replace $4 values at offset $3 in aggregate $1 with the PMCs in aggregate $2. The values are put into the aggregate by a shallow copy. If the values would be reused, they have to be <b>clone</b>d.</dl>
+
+<h2><a name="Properties"
+>Properties</a></h2>
+
+<p>Ops to deal with PMC properties.</p>
+
+<dl>
+<dt><a name="setprop(invar_PMC,_in_STR,_invar_PMC)"
+><b>setprop</b>(invar PMC, in STR, invar PMC)</a></dt>
+Set property $2 to value $3 for PMC $1.
+<dt><a name="getprop(out_PMC,_in_STR,_invar_PMC)"
+><b>getprop</b>(out PMC, in STR, invar PMC)</a></dt>
+Get property $2 of PMC $3 and put it in $1.
+<dt><a name="delprop(invar_PMC,_in_STR)"
+><b>delprop</b>(invar PMC, in STR)</a></dt>
+Delete property $2 from PMC $1.
+<dt><a name="prophash(out_PMC,_invar_PMC)"
+><b>prophash</b>(out PMC, invar PMC)</a></dt>
+Get a hash for the properties invar PMC $2 and put it in $1. If the property hash doesn&#39;t exist, the <code>Null</code> PMC is returned.</dl>
+
+<h2><a name="Freeze,_thaw_and_friends"
+>Freeze, thaw and friends</a></h2>
+
+<p>Ops to PMC freeze, thaw.</p>
+
+<dl>
+<dt><a name="freeze(out_STR,_invar_PMC)"
+><b>freeze</b>(out STR, invar PMC)</a></dt>
+Set $1 to the frozen image of $2.
+<dt><a name="thaw(out_PMC,_in_STR)"
+><b>thaw</b>(out PMC, in STR)</a></dt>
+Set $1 to a newly created PMC from the image $2.</dl>
+
+<h2><a name="Vtable_MMD_manipulation_functions"
+>Vtable MMD manipulation functions</a></h2>
+
+<p>These functions manipulate the vtable MMD function table.</p>
+
+<p>These functions allow bytecode to register subs or methods and query which sub or method would get called for a particular vtable operation. This way you&#39;re not required to drop to C to register a new method variant for addition or subtraction, or one of the other binary MMD operations.</p>
+
+<dl>
+<dt><a name="add_multi(in_STR,_in_STR,_invar_PMC)"
+><b>add_multi</b>(in STR, in STR, invar PMC)</a></dt>
+Register method $3 as the MMD method for the sub named $1 with signature $2.
+<dt><a name="find_multi(out_PMC,_in_STR,_in_STR)"
+><b>find_multi</b>(out PMC, in STR, in STR)</a></dt>
+Set $1 to the sub that would be called for sub named $2 with signature $3.</dl>
+
+<h2><a name="Misc_PMC_related_ops"
+>Misc PMC related ops</a></h2>
+
+<dl>
+<dt><a name="register(invar_PMC)"
+><b>register</b>(invar PMC)</a></dt>
+Add a reference of PMC $1 to the interpreter&#39;s root set of PMCs. This is needed for extensions to make sure that the PMC is properly marked during GC, if that PMC is not known to Parrot&#39;s core elsewhere.A PMC can be registered multiple times. If it&#39;s unregistered and the registration count reaches zero, it will be destroyed during the next GC run.
+<dt><a name="unregister(invar_PMC)"
+><b>unregister</b>(invar PMC)</a></dt>
+Remove one reference of $1.
+<dt><a name="box(out_PMC,_in_INT)"
+><b>box</b>(out PMC, in INT)</a></dt>
+
+<dt><a name="box(out_PMC,_in_NUM)"
+><b>box</b>(out PMC, in NUM)</a></dt>
+
+<dt><a name="box(out_PMC,_in_STR)"
+><b>box</b>(out PMC, in STR)</a></dt>
+Create a HLL&#45;mapped PMC containing the provided primitive.
+<dt><a name="iter(out_PMC,_invar_PMC)"
+><b>iter</b>(out PMC, invar PMC)</a></dt>
+Return a new Iterator PMC $1 for aggregate $2.
+<dt><a name="morph(invar_PMC,_in_PMC)"
+><b>morph</b>(invar PMC, in PMC)</a></dt>
+Have $1 turn itself into a PMC of type $2.</dl>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT</a></h1>
+
+<p>Copyright (C) 2001&#45;2010, Parrot Foundation.</p>
+
+<h1><a name="LICENSE"
+>LICENSE</a></h1>
+
+<p>This program is free software. It is subject to the same license as the Parrot interpreter itself.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

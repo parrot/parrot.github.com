@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This file contains emit functions.
+Depending on the requested output,
+the appropriate emit functions are used.
+Options are:</p>
+
+<pre> &#45;p     for PASM output
+ &#45;b     for bytecode output</pre>
+
+<p>The functions in this file walk the data structure that is built during the parse phase. During the traversal, bytecode for instructions and their operands are emitted through the <code>bcgen</code> module.</p>
+
+<h1><a name="FUNCTIONS"
+>FUNCTIONS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="void_print_key(lexer_state_*_const_lexer,_key_*_const_k)"
+><b><code>void print_key(lexer_state *const lexer, key *const k)</b></code></a></dt>
+Print the key <code>k</code>. The total key is enclosed in square brackets, and different key elements are separated by semicolons. Example:
+<pre> [&#34;hi&#34;;42]</pre>
+has two elements: <code>&#34;hi&#34;</code> and <code>42</code>.
+<dt><a name="void_print_target(lexer_state_*_const_lexer,_target_*_const_t)"
+><b><code>void print_target(lexer_state *const lexer, target *const t)</b></code></a></dt>
+Print the target <code>t</code>; if <code>t</code> has a key, that key is printed as well. Examples:
+<pre> S1, P1[42]</pre>
+
+<dt><a name="void_print_constant(lexer_state_*_const_lexer,_constant_*_const_c)"
+><b><code>void print_constant(lexer_state *const lexer, constant *const c)</b></code></a></dt>
+Print the value of constant <code>c</code>. Based on <code>c</code>&#39;s type, the appropriate value is printed.
+<dt><a name="void_print_expr(lexer_state_*_const_lexer,_expression_*_const_expr)"
+><b><code>void print_expr(lexer_state *const lexer, expression *const expr)</b></code></a></dt>
+Print the expression <code>expr</code>. This is a dispatch function, calling a specialized function based on <code>expr</code>&#39;s type.
+<dt><a name="void_print_expressions(expression_*_const_expr)"
+><b><code>void print_expressions(expression *const expr)</b></code></a></dt>
+Print the list of expressions pointed to by <code>expr</code>, if <code>expr</code> is not NULL. If <code>expr</code> is NULL, the function does nothing and returns. Expressions are separated by commas.
+<dt><a name="void_print_instruction(lexer_state_*_const_lexer,_instruction_*_const_ins)"
+><b><code>void print_instruction(lexer_state *const lexer, instruction *const ins)</b></code></a></dt>
+Print the instruction <code>ins</code>.
+<dt><a name="void_print_statement(lexer_state_*_const_lexer,_subroutine_*_const_sub)"
+><b><code>void print_statement(lexer_state *const lexer, subroutine *const sub)</b></code></a></dt>
+XXX
+<dt><a name="void_print_subs(struct_lexer_state_*_const_lexer)"
+><b><code>void print_subs(struct lexer_state *const lexer)</b></code></a></dt>
+Top&#45;level function to print all generated code. This function iterates over all subs and prints their instructions.
+<dt><a name="static_void_emit_pir_instruction(lexer_state_*_const_lexer,_instruction_*_const_instr)"
+><b><code>static void emit_pir_instruction(lexer_state *const lexer, instruction *const instr)</b></code></a></dt>
+Print the PIR representation of <code>instr</code>. If <code>instr</code> has a label, that is printed first.
+<dt><a name="static_void_emit_pir_statement(lexer_state_*_const_lexer,_subroutine_*_const_sub)"
+><b><code>static void emit_pir_statement(lexer_state *const lexer, subroutine *const sub)</b></code></a></dt>
+Emit all statements of the subroutine <code>sub</code>. The statements are emitted in PIR format. If there are no statements in <code>sub</code>, this function returns.
+<dt><a name="void_emit_pir_subs(lexer_state_*_const_lexer)"
+><b><code>void emit_pir_subs(lexer_state *const lexer)</b></code></a></dt>
+Print the PIR representation of all subroutines stored in the <code>lexer</code>. If there are no subroutines, thre function does nothing and returns.
+<dt><a name="static_void_emit_pbc_const_arg(lexer_state_*_const_lexer,_constant_*_const_c)"
+><b><code>static void emit_pbc_const_arg(lexer_state *const lexer, constant *const c)</b></code></a></dt>
+Emit a constant argument into the bytecode. An integer is emitted inline in the bytecode; other types are stored in the constant table, and their index in the constant table is emitted into the bytecode.
+<dt><a name="static_void_emit_pbc_label_arg(lexer_state_*_const_lexer,_label_*_const_l)"
+><b><code>static void emit_pbc_label_arg(lexer_state *const lexer, label *const l)</b></code></a></dt>
+Emit the value of the label offset of label <code>l</code>.
+<dt><a name="static_void_emit_pbc_key(lexer_state_*_const_lexer,_key_*_const_k)"
+><b><code>static void emit_pbc_key(lexer_state *const lexer, key *const k)</b></code></a></dt>
+Emit bytecode for the key <code>k</code>. First the bytecode is written to a temporary buffer, which is later unpacked in the actual PackFile. See <code>store_key_bytecode()</code>.
+<dt><a name="static_void_emit_pbc_target_arg(lexer_state_*_const_lexer,_target_*_const_t)"
+><b><code>static void emit_pbc_target_arg(lexer_state *const lexer, target *const t)</b></code></a></dt>
+Emit the assigned register of target <code>t</code>. The assigned register is stored in the <code>color</code> field, of either the <code>pir_reg</code> or <code>symbol</code> structure, depending on whether <code>t</code> is a register or a symbol, respectively. If <code>t</code> has a key, the key is emitted as well.
+<dt><a name="static_void_emit_pbc_expr(lexer_state_*_const_lexer,_expression_*_const_operand)"
+><b><code>static void emit_pbc_expr(lexer_state *const lexer, expression *const operand)</b></code></a></dt>
+Emit bytecode for the expression <code>operand</code>. This is a dispatch function, invoking the appropriate function depending on <code>operand</code>&#39;s type.
+<dt><a name="static_void_optimize_instr(lexer_state_*_const_lexer,_instruction_*_const_instr)"
+><b><code>static void optimize_instr(lexer_state *const lexer, instruction *const instr)</b></code></a></dt>
+Optimize the instruction <code>instr</code>. Currently, these instructions are optimized:
+<pre> box_p_ic  &#45;&#45;&#62; set_p_pc
+ box_p_nc  &#45;&#45;&#62; set_p_pc
+ box_p_sc  &#45;&#45;&#62; set_p_pc</pre>
+
+<dt><a name="static_void_emit_pbc_instr(lexer_state_*_const_lexer,_instruction_*_const_instr)"
+><b><code>static void emit_pbc_instr(lexer_state *const lexer, instruction *const instr)</b></code></a></dt>
+Emit PBC for one instruction. If the <code>opinfo</code> attribute of <code>instr</code> is NULL, the function does nothing and returns.
+<dt><a name="static_void_emit_pbc_sub(lexer_state_*_const_lexer,_subroutine_*_const_sub)"
+><b><code>static void emit_pbc_sub(lexer_state *const lexer, subroutine *const sub)</b></code></a></dt>
+Emit bytecode for the subroutine <code>sub</code>.
+<dt><a name="static_void_emit_pbc_annotations(lexer_state_*_const_lexer)"
+><b><code>static void emit_pbc_annotations(lexer_state *const lexer)</b></code></a></dt>
+Emit all annotations into the PackFile. First a new annotations segment is created. Then, for each annotation, its value is stored in the constants table.
+<dt><a name="void_emit_pbc(lexer_state_*_const_lexer)"
+><b><code>void emit_pbc(lexer_state *const lexer)</b></code></a></dt>
+Generate Parrot Byte Code from the abstract syntax tree. This is the top&#45;level function. After all instructions have been emitted, the PBC is written to a file.</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

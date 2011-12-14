@@ -1,0 +1,486 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Mathematical Opcodes</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/ops.html">Opcodes</a> &raquo; Mathematical Opcodes
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>math.ops &#45; Mathematical Opcodes</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Operations that perform some sort of mathematics,
+including both basic math and transcendental functions.</p>
+
+<h2><a name="Arithmetic_operations"
+>Arithmetic operations</a></h2>
+
+<p>These operations store the results of arithmetic on other registers and constants into their destination register,
+$1.</p>
+
+<dl>
+<dt><a name="abs(inout_INT)"
+><b>abs</b>(inout INT)</a></dt>
+
+<dt><a name="abs(inout_NUM)"
+><b>abs</b>(inout NUM)</a></dt>
+
+<dt><a name="abs(invar_PMC)"
+><b>abs</b>(invar PMC)</a></dt>
+Set $1 to its absolute value.
+<dt><a name="abs(out_INT,_in_INT)"
+><b>abs</b>(out INT,
+in INT)</a></dt>
+
+<dt><a name="abs(out_NUM,_in_NUM)"
+><b>abs</b>(out NUM,
+in NUM)</a></dt>
+
+<dt><a name="abs(out_PMC,_invar_PMC)"
+><b>abs</b>(out PMC,
+invar PMC)</a></dt>
+Set $1 to absolute value of $2.
+<dt><a name="add(inout_INT,_in_INT)"
+><b>add</b>(inout INT,
+in INT)</a></dt>
+
+<dt><a name="add(inout_NUM,_in_NUM)"
+><b>add</b>(inout NUM,
+in NUM)</a></dt>
+
+<dt><a name="add(invar_PMC,_invar_PMC)"
+><b>add</b>(invar PMC,
+invar PMC)</a></dt>
+
+<dt><a name="add(invar_PMC,_in_INT)"
+><b>add</b>(invar PMC,
+in INT)</a></dt>
+
+<dt><a name="add(invar_PMC,_in_NUM)"
+><b>add</b>(invar PMC,
+in NUM)</a></dt>
+Increase $1 by the amount in $2.
+<dt><a name="add(out_INT,_in_INT,_in_INT)"
+><b>add</b>(out INT,
+in INT,
+in INT)</a></dt>
+
+<dt><a name="add(out_NUM,_in_NUM,_in_NUM)"
+><b>add</b>(out NUM,
+in NUM,
+in NUM)</a></dt>
+
+<dt><a name="add(invar_PMC,_invar_PMC,_invar_PMC)"
+><b>add</b>(invar PMC,
+invar PMC,
+invar PMC)</a></dt>
+
+<dt><a name="add(invar_PMC,_invar_PMC,_in_INT)"
+><b>add</b>(invar PMC,
+invar PMC,
+in INT)</a></dt>
+
+<dt><a name="add(invar_PMC,_invar_PMC,_in_NUM)"
+><b>add</b>(invar PMC,
+invar PMC,
+in NUM)</a></dt>
+Set $1 to the sum of $2 and $3.
+<dt><a name="cmod(out_INT,_in_INT,_in_INT)"
+><b>cmod</b>(out INT,
+in INT,
+in INT)</a></dt>
+
+<dt><a name="cmod(invar_PMC,_invar_PMC,_in_INT)"
+><b>cmod</b>(invar PMC,
+invar PMC,
+in INT)</a></dt>
+
+<dt><a name="cmod(invar_PMC,_invar_PMC,_invar_PMC)"
+><b>cmod</b>(invar PMC,
+invar PMC,
+invar PMC)</a></dt>
+NOTE: This &#34;uncorrected mod&#34; algorithm uses the C language&#39;s built&#45;in mod operator (x % y),
+which is
+<pre>    ... the remainder when x is divided by y, and thus is zero
+    when y divides x exactly.
+    ...
+    The direction of truncation for / and the sign of the result
+    for % are machine&#45;dependent for negative operands, as is the
+    action taken on overflow or underflow.
+                                                     &#45;&#45; [1], page 41</pre>
+Also:
+<pre>    ... if the second operand is 0, the result is undefined.
+    Otherwise, it is always true that (a/b)*b + a%b is equal to z. If
+    both operands are non&#45;negative, then the remainder is non&#45;
+    negative and smaller than the divisor; if not, it is guaranteed
+    only that the absolute value of the remainder is smaller than
+    the absolute value of the divisor.
+                                                     &#45;&#45; [1], page 205</pre>
+This op is provided for those who need it (such as speed&#45;sensitive applications with heavy use of mod, but using it only with positive arguments), but a more mathematically useful mod based on ** floor(x/y) and defined with y == 0 is provided by the mod op.
+<pre>  [1] Brian W. Kernighan and Dennis M. Ritchie, *The C Programming
+      Language*, Second Edition. Prentice Hall, 1988.</pre>
+If the denominator is zero, a &#39;Divide by zero&#39; exception is thrown.
+<dt><a name="cmod(out_NUM,_in_NUM,_in_NUM)"
+><b>cmod</b>(out NUM, in NUM, in NUM)</a></dt>
+
+<dt><a name="cmod(invar_PMC,_invar_PMC,_in_NUM)"
+><b>cmod</b>(invar PMC, invar PMC, in NUM)</a></dt>
+NOTE: This &#34;uncorrected mod&#34; algorithm uses the built&#45;in C math library&#39;s fmod() function, which computes
+<pre>    ... the remainder of dividing x by y. The return value is
+    x &#45; n * y, where n is the quotient of x / y, rounded towards
+    zero to an integer.
+                                &#45;&#45; fmod() manpage on RedHat Linux 7.0</pre>
+In addition, fmod() returns
+<pre>    the remainder, unless y is zero, when the function fails and
+    errno is set.</pre>
+According to page 251 of [1], the result when y is zero is implementation&#45; defined.This op is provided for those who need it, but a more mathematically useful numeric mod based on floor(x/y) instead of truncate(x/y) and defined with y == 0 is provided by the mod op.
+<pre>  [1] Brian W. Kernighan and Dennis M. Ritchie, *The C Programming
+      Language*, Second Edition. Prentice Hall, 1988.</pre>
+If the denominator is zero, a &#39;Divide by zero&#39; exception is thrown.
+<dt><a name="dec(inout_INT)"
+><b>dec</b>(inout INT)</a></dt>
+
+<dt><a name="dec(inout_NUM)"
+><b>dec</b>(inout NUM)</a></dt>
+
+<dt><a name="dec(invar_PMC)"
+><b>dec</b>(invar PMC)</a></dt>
+Decrease $1 by one.
+<dt><a name="div(inout_INT,_in_INT)"
+><b>div</b>(inout INT, in INT)</a></dt>
+
+<dt><a name="div(inout_NUM,_in_NUM)"
+><b>div</b>(inout NUM, in NUM)</a></dt>
+
+<dt><a name="div(invar_PMC,_invar_PMC)"
+><b>div</b>(invar PMC, invar PMC)</a></dt>
+
+<dt><a name="div(invar_PMC,_in_INT)"
+><b>div</b>(invar PMC, in INT)</a></dt>
+
+<dt><a name="div(invar_PMC,_in_NUM)"
+><b>div</b>(invar PMC, in NUM)</a></dt>
+Divide $1 by $2.
+<dt><a name="div(out_INT,_in_INT,_in_INT)"
+><b>div</b>(out INT, in INT, in INT)</a></dt>
+
+<dt><a name="div(out_NUM,_in_NUM,_in_NUM)"
+><b>div</b>(out NUM, in NUM, in NUM)</a></dt>
+
+<dt><a name="div(invar_PMC,_invar_PMC,_invar_PMC)"
+><b>div</b>(invar PMC, invar PMC, invar PMC)</a></dt>
+
+<dt><a name="div(invar_PMC,_invar_PMC,_in_INT)"
+><b>div</b>(invar PMC, invar PMC, in INT)</a></dt>
+
+<dt><a name="div(invar_PMC,_invar_PMC,_in_NUM)"
+><b>div</b>(invar PMC, invar PMC, in NUM)</a></dt>
+Set $1 to the quotient of $2 divided by $3. In the case of INTVAL division, the result is truncated (NOT rounded or floored). If the denominator is zero, a &#39;Divide by zero&#39; exception is thrown.
+<dt><a name="fdiv(inout_INT,_in_INT)"
+><b>fdiv</b>(inout INT, in INT)</a></dt>
+
+<dt><a name="fdiv(inout_NUM,_in_NUM)"
+><b>fdiv</b>(inout NUM, in NUM)</a></dt>
+
+<dt><a name="fdiv(invar_PMC,_invar_PMC)"
+><b>fdiv</b>(invar PMC, invar PMC)</a></dt>
+
+<dt><a name="fdiv(invar_PMC,_in_INT)"
+><b>fdiv</b>(invar PMC, in INT)</a></dt>
+
+<dt><a name="fdiv(invar_PMC,_in_NUM)"
+><b>fdiv</b>(invar PMC, in NUM)</a></dt>
+Floor divide $1 by $2.
+<dt><a name="fdiv(out_INT,_in_INT,_in_INT)"
+><b>fdiv</b>(out INT, in INT, in INT)</a></dt>
+
+<dt><a name="fdiv(out_NUM,_in_NUM,_in_NUM)"
+><b>fdiv</b>(out NUM, in NUM, in NUM)</a></dt>
+
+<dt><a name="fdiv(invar_PMC,_invar_PMC,_invar_PMC)"
+><b>fdiv</b>(invar PMC, invar PMC, invar PMC)</a></dt>
+
+<dt><a name="fdiv(invar_PMC,_invar_PMC,_in_INT)"
+><b>fdiv</b>(invar PMC, invar PMC, in INT)</a></dt>
+
+<dt><a name="fdiv(invar_PMC,_invar_PMC,_in_NUM)"
+><b>fdiv</b>(invar PMC, invar PMC, in NUM)</a></dt>
+Set $1 to the quotient of $2 divided by $3. The result is the floor() of the division i.e. the next whole integer towards &#45;inf. If the denominator is zero, a &#39;Divide by zero&#39; exception is thrown.
+<dt><a name="ceil(inout_NUM)"
+><b>ceil</b>(inout NUM)</a></dt>
+Set $1 to the smallest integral value greater than or equal to $1.
+<dt><a name="ceil(out_INT,_in_NUM)"
+><b>ceil</b>(out INT, in NUM)</a></dt>
+
+<dt><a name="ceil(out_NUM,_in_NUM)"
+><b>ceil</b>(out NUM, in NUM)</a></dt>
+Set $1 to the smallest integral value greater than or equal to $2.
+<dt><a name="floor(inout_NUM)"
+><b>floor</b>(inout NUM)</a></dt>
+Set $1 to the largest integral value less than or equal to $1.
+<dt><a name="floor(out_INT,_in_NUM)"
+><b>floor</b>(out INT, in NUM)</a></dt>
+
+<dt><a name="floor(out_NUM,_in_NUM)"
+><b>floor</b>(out NUM, in NUM)</a></dt>
+Set $1 to the largest integral value less than or equal to $2.
+<dt><a name="inc(inout_INT)"
+><b>inc</b>(inout INT)</a></dt>
+
+<dt><a name="inc(inout_NUM)"
+><b>inc</b>(inout NUM)</a></dt>
+
+<dt><a name="inc(invar_PMC)"
+><b>inc</b>(invar PMC)</a></dt>
+Increase $1 by one.
+<dt><a name="mod(out_INT,_in_INT,_in_INT)"
+><b>mod</b>(out INT, in INT, in INT)</a></dt>
+
+<dt><a name="mod(out_NUM,_in_NUM,_in_NUM)"
+><b>mod</b>(out NUM, in NUM, in NUM)</a></dt>
+
+<dt><a name="mod(invar_PMC,_invar_PMC,_invar_PMC)"
+><b>mod</b>(invar PMC, invar PMC, invar PMC)</a></dt>
+
+<dt><a name="mod(invar_PMC,_invar_PMC,_in_INT)"
+><b>mod</b>(invar PMC, invar PMC, in INT)</a></dt>
+
+<dt><a name="mod(invar_PMC,_invar_PMC,_in_NUM)"
+><b>mod</b>(invar PMC, invar PMC, in NUM)</a></dt>
+Sets $1 to the modulus of $2 and $3.
+<dt><a name="mod(inout_INT,_in_INT)"
+><b>mod</b>(inout INT, in INT)</a></dt>
+
+<dt><a name="mod(inout_NUM,_in_NUM)"
+><b>mod</b>(inout NUM, in NUM)</a></dt>
+
+<dt><a name="mod(invar_PMC,_invar_PMC)"
+><b>mod</b>(invar PMC, invar PMC)</a></dt>
+
+<dt><a name="mod(invar_PMC,_in_INT)"
+><b>mod</b>(invar PMC, in INT)</a></dt>
+
+<dt><a name="mod(invar_PMC,_in_NUM)"
+><b>mod</b>(invar PMC, in NUM)</a></dt>
+Sets $1 to the modulus of $1 and $2.NOTE: This &#34;corrected mod&#34; algorithm is based on the C code on page 70 of [1]. Assuming correct behavior of the built&#45;in mod operator (%) with positive arguments, this algorithm implements a mathematically convenient version of mod, defined thus:
+<pre>  x mod y = x &#45; y * floor(x / y)</pre>
+For more information on this definition of mod, see section 3.4 of [2], pages 81&#45;85.References:
+<pre>  [1] Donald E. Knuth, *MMIXware: A RISC Computer for the Third
+      Millennium* Springer, 1999.
+
+  [2] Ronald L. Graham, Donald E. Knuth and Oren Patashnik, *Concrete
+      Mathematics*, Second Edition. Addison&#45;Wesley, 1994.</pre>
+
+<dt><a name="mul(inout_INT,_in_INT)"
+><b>mul</b>(inout INT, in INT)</a></dt>
+
+<dt><a name="mul(inout_NUM,_in_NUM)"
+><b>mul</b>(inout NUM, in NUM)</a></dt>
+
+<dt><a name="mul(invar_PMC,_invar_PMC)"
+><b>mul</b>(invar PMC, invar PMC)</a></dt>
+
+<dt><a name="mul(invar_PMC,_in_INT)"
+><b>mul</b>(invar PMC, in INT)</a></dt>
+
+<dt><a name="mul(invar_PMC,_in_NUM)"
+><b>mul</b>(invar PMC, in NUM)</a></dt>
+Set $1 to the product of $1 and $2.
+<dt><a name="mul(out_INT,_in_INT,_in_INT)"
+><b>mul</b>(out INT, in INT, in INT)</a></dt>
+
+<dt><a name="mul(out_NUM,_in_NUM,_in_NUM)"
+><b>mul</b>(out NUM, in NUM, in NUM)</a></dt>
+
+<dt><a name="mul(invar_PMC,_invar_PMC,_invar_PMC)"
+><b>mul</b>(invar PMC, invar PMC, invar PMC)</a></dt>
+
+<dt><a name="mul(invar_PMC,_invar_PMC,_in_INT)"
+><b>mul</b>(invar PMC, invar PMC, in INT)</a></dt>
+
+<dt><a name="mul(invar_PMC,_invar_PMC,_in_NUM)"
+><b>mul</b>(invar PMC, invar PMC, in NUM)</a></dt>
+Set $1 to the product of $2 and $3.
+<dt><a name="neg(inout_INT)"
+><b>neg</b>(inout INT)</a></dt>
+
+<dt><a name="neg(inout_NUM)"
+><b>neg</b>(inout NUM)</a></dt>
+
+<dt><a name="neg(invar_PMC)"
+><b>neg</b>(invar PMC)</a></dt>
+Set $1 to its negative.
+<dt><a name="neg(out_INT,_in_INT)"
+><b>neg</b>(out INT, in INT)</a></dt>
+
+<dt><a name="neg(out_NUM,_in_NUM)"
+><b>neg</b>(out NUM, in NUM)</a></dt>
+
+<dt><a name="neg(out_PMC,_invar_PMC)"
+><b>neg</b>(out PMC, invar PMC)</a></dt>
+Set $1 to the negative of $2.
+<dt><a name="pow(out_NUM,_in_NUM,_in_NUM)"
+><b>pow</b>(out NUM, in NUM, in NUM)</a></dt>
+
+<dt><a name="pow(out_NUM,_in_NUM,_in_INT)"
+><b>pow</b>(out NUM, in NUM, in INT)</a></dt>
+
+<dt><a name="pow(invar_PMC,_invar_PMC,_invar_PMC)"
+><b>pow</b>(invar PMC, invar PMC, invar PMC)</a></dt>
+
+<dt><a name="pow(invar_PMC,_invar_PMC,_in_INT)"
+><b>pow</b>(invar PMC, invar PMC, in INT)</a></dt>
+
+<dt><a name="pow(invar_PMC,_invar_PMC,_in_NUM)"
+><b>pow</b>(invar PMC, invar PMC, in NUM)</a></dt>
+Set $1 to $2 raised to the power $3.
+<dt><a name="sub(inout_INT,_in_INT)"
+><b>sub</b>(inout INT, in INT)</a></dt>
+
+<dt><a name="sub(inout_NUM,_in_NUM)"
+><b>sub</b>(inout NUM, in NUM)</a></dt>
+
+<dt><a name="sub(invar_PMC,_invar_PMC)"
+><b>sub</b>(invar PMC, invar PMC)</a></dt>
+
+<dt><a name="sub(invar_PMC,_in_INT)"
+><b>sub</b>(invar PMC, in INT)</a></dt>
+
+<dt><a name="sub(invar_PMC,_in_NUM)"
+><b>sub</b>(invar PMC, in NUM)</a></dt>
+Decrease $1 by the amount in $2.
+<dt><a name="sub(out_INT,_in_INT,_in_INT)"
+><b>sub</b>(out INT, in INT, in INT)</a></dt>
+
+<dt><a name="sub(out_NUM,_in_NUM,_in_NUM)"
+><b>sub</b>(out NUM, in NUM, in NUM)</a></dt>
+
+<dt><a name="sub(invar_PMC,_invar_PMC,_invar_PMC)"
+><b>sub</b>(invar PMC, invar PMC, invar PMC)</a></dt>
+
+<dt><a name="sub(invar_PMC,_invar_PMC,_in_INT)"
+><b>sub</b>(invar PMC, invar PMC, in INT)</a></dt>
+
+<dt><a name="sub(invar_PMC,_invar_PMC,_in_NUM)"
+><b>sub</b>(invar PMC, invar PMC, in NUM)</a></dt>
+Set $1 to $2 minus $3.
+<dt><a name="sqrt(out_NUM,_in_NUM)"
+><b>sqrt</b>(out NUM, in NUM)</a></dt>
+Set $1 to the square root of $2.</dl>
+
+<h2><a name="Transcendental_mathematical_operations"
+>Transcendental mathematical operations</a></h2>
+
+<p>These operations perform various transcendental operations such as logarithmics and trigonometrics.</p>
+
+<dl>
+<dt><a name="acos(out_NUM,_in_NUM)"
+><b>acos</b>(out NUM, in NUM)</a></dt>
+Set $1 to the arc cosine (in radians) of $2.
+<dt><a name="asec(out_NUM,_in_NUM)"
+><b>asec</b>(out NUM, in NUM)</a></dt>
+Set $1 to the arc secant (in radians) of $2.
+<dt><a name="asin(out_NUM,_in_NUM)"
+><b>asin</b>(out NUM, in NUM)</a></dt>
+Set $1 to the arc sine (in radians) of $2.
+<dt><a name="atan(out_NUM,_in_NUM)"
+><b>atan</b>(out NUM, in NUM)</a></dt>
+
+<dt><a name="atan(out_NUM,_in_NUM,_in_NUM)"
+><b>atan</b>(out NUM, in NUM, in NUM)</a></dt>
+The two&#45;argument versions set $1 to the arc tangent (in radians) of $2.The three&#45;argument versions set $1 to the arc tangent (in radians) of $2 / $3, taking account of the signs of the arguments in determining the quadrant of the result.
+<dt><a name="cos(out_NUM,_in_NUM)"
+><b>cos</b>(out NUM, in NUM)</a></dt>
+Set $1 to the cosine of $2 (given in radians).
+<dt><a name="cosh(out_NUM,_in_NUM)"
+><b>cosh</b>(out NUM, in NUM)</a></dt>
+Set $1 to the hyperbolic cosine of $2 (given in radians).
+<dt><a name="exp(out_NUM,_in_NUM)"
+><b>exp</b>(out NUM, in NUM)</a></dt>
+Set $1 to <i>e</i> raised to the power $2. <i>e</i> is the base of the natural logarithm.
+<dt><a name="ln(out_NUM,_in_NUM)"
+><b>ln</b>(out NUM, in NUM)</a></dt>
+Set $1 to the natural (base <i>e</i>) logarithm of $2.
+<dt><a name="log10(out_NUM,_in_NUM)"
+><b>log10</b>(out NUM, in NUM)</a></dt>
+Set $1 to the base 10 logarithm of $2.
+<dt><a name="log2(out_NUM,_in_NUM)"
+><b>log2</b>(out NUM, in NUM)</a></dt>
+Set $1 to the base 2 logarithm of $2.
+<dt><a name="sec(out_NUM,_in_NUM)"
+><b>sec</b>(out NUM, in NUM)</a></dt>
+Set $1 to the secant of $2 (given in radians).
+<dt><a name="sech(out_NUM,_in_NUM)"
+><b>sech</b>(out NUM, in NUM)</a></dt>
+Set $1 to the hyperbolic secant of $2 (given in radians).
+<dt><a name="sin(out_NUM,_in_NUM)"
+><b>sin</b>(out NUM, in NUM)</a></dt>
+Set $1 to the sine of $2 (given in radians).
+<dt><a name="sinh(out_NUM,_in_NUM)"
+><b>sinh</b>(out NUM, in NUM)</a></dt>
+Set $1 to the hyperbolic sine of $2 (given in radians).
+<dt><a name="tan(out_NUM,_in_NUM)"
+><b>tan</b>(out NUM, in NUM)</a></dt>
+Set $1 to the tangent of $2 (given in radians).
+<dt><a name="tanh(out_NUM,_in_NUM)"
+><b>tanh</b>(out NUM, in NUM)</a></dt>
+Set $1 to the hyperbolic tangent of $2 (given in radians).</dl>
+
+<h2><a name="Other_mathematical_operations"
+>Other mathematical operations</a></h2>
+
+<p>Implementations of various mathematical operations</p>
+
+<dl>
+<dt><a name="gcd(out_INT,_in_INT,_in_INT)"
+><b>gcd</b>(out INT, in INT, in INT)</a></dt>
+Greatest Common divisor of $2 and $3.
+<dt><a name="lcm(out_INT,_in_INT,_in_INT)"
+><b>lcm</b>(out INT, in INT, in INT)</a></dt>
+Least Common Multiple of $2 and $3
+<dt><a name="fact(out_INT,_in_INT)"
+><b>fact</b>(out INT, in INT)</a></dt>
+
+<dt><a name="fact(out_NUM,_in_INT)"
+><b>fact</b>(out NUM, in INT)</a></dt>
+Factorial, n!. Calculates the product of 1 to N.</dl>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT</a></h1>
+
+<p>Copyright (C) 2001&#45;2009, Parrot Foundation.</p>
+
+<h1><a name="LICENSE"
+>LICENSE</a></h1>
+
+<p>This program is free software. It is subject to the same license as the Parrot interpreter itself.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

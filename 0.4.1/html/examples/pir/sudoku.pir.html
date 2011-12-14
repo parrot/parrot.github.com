@@ -1,0 +1,329 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>A sudoku solver</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">A sudoku solver</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/imcc.html">IMCC</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="TITLE"
+>TITLE <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Sudoku &#45; A sudoku solver</p>
+
+<h1><a name="OVERVIEW"
+>OVERVIEW <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This program implements scanning and blocked rows or columns invalidation.
+It does not consider all effects of multiple number blocking,
+where a combination of invalid numbers blocks a row or column.
+In such cases a simple backtracking algorithm continues to solve the sudoku.</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>  parrot &#45;Ot sudoku.pir [&#45;&#45;options] [file]</pre>
+
+<p>If no file is given a builtin game is run.</p>
+
+<p>Valid options are:</p>
+
+<dl>
+<dt><a name="&#45;&#45;version"
+>&#45;&#45;version</a></dt><p class="pad"></p>
+
+<dd>Print version information and exit.</dd><p class="pad"></p>
+
+<dt><a name="&#45;&#45;help"
+>&#45;&#45;help</a></dt><p class="pad"></p>
+
+<dd>Print help hint and exit.</dd><p class="pad"></p>
+
+<dt><a name="&#45;&#45;debug"
+>&#45;&#45;debug</a></dt><p class="pad"></p>
+
+<dd>Print debug output and game progress to stdout.</dd><p class="pad"></p>
+
+<dt><a name="&#45;&#45;inv=n.."
+>&#45;&#45;inv=n..</a></dt><p class="pad"></p>
+
+<dd>Print additionally invalid state of given number(s).</dd><p class="pad"></p>
+
+<dt><a name="&#45;&#45;builtin=name"
+>&#45;&#45;builtin=name</a></dt><p class="pad"></p>
+
+<dd>Run builtin game. If no name is given a list of builtins is printed.</dd><p class="pad"></p>
+
+<dt><a name="&#45;&#45;nc"
+>&#45;&#45;nc</a></dt><p class="pad"></p>
+
+<dd>Use ncurses for display and single step through progress. Press any key for next display.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The game state is held in multiple views which share one Integer PMC per common position. Thus updating a row sets also the column or square information. These three views are list of lists.</p>
+
+<h1><a name="GAME_FILES"
+>GAME FILES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Game files may contain comments (hash sign in the first column) digits, and dots for empty fields. E.g:</p>
+
+<pre lang='und' xml:lang='und'>  # std020.sud
+  # der standard 020 &#45; leicht
+  2.1..678.
+  ...2...36
+  8.9.3...5
+  .7...4..2
+  ..6.9.5..
+  9..5...6.
+  5...4.9.7
+  71...3...
+  .987..2.3</pre>
+
+<h1><a name="PARROT"
+>PARROT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Parrot_features_used"
+>Parrot features used <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="Parrot_OO"
+>Parrot OO</a></dt><p class="pad"></p>
+
+<dd>The solver is an object as well as the display.</dd><p class="pad"></p>
+
+<dt><a name="Freeze/thaw"
+>Freeze/thaw</a></dt><p class="pad"></p>
+
+<dd>For deep copying the game state for backtracking.</dd><p class="pad"></p>
+
+<dt><a name="Multi_Method_Dispatch"
+>Multi Method Dispatch</a></dt><p class="pad"></p>
+
+<dd>The display classes define multiple methods with the name <i>print</i>, which take different types and amounts of arguments.</dd><p class="pad"></p>
+
+<dt><a name="Libraries"
+>Libraries</a></dt><p class="pad"></p>
+
+<dd>The program uses Getopt/Long and the ncurses library.</dd><p class="pad"></p>
+
+<dt><a name="Exception_handling"
+>Exception handling</a></dt><p class="pad"></p>
+
+<dd>To turn off ncurses just in case.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Variable_indices"
+>Variable indices <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Column, rows, and sqares have zero&#45;based indices. Squares are numbered from top left to bottom right.</p>
+
+<h2><a name="Sudoku_Class_attributes"
+>Sudoku Class attributes <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="rows,_cols,_sqrs"
+><i>rows, cols, sqrs</i></a></dt><p class="pad"></p>
+
+<dd>LoL of 0 = free, 1..9 = number</dd><p class="pad"></p>
+
+<dt><a name="i_rows,_i_cols,_i_sqrs"
+><i>i_rows, i_cols, i_sqrs</i></a></dt><p class="pad"></p>
+
+<dd>LoL of a bitmask of invalid numbers per field. Bits are starting at bit one not zero.</dd><p class="pad"></p>
+
+<dt><a name="all"
+><i>all</i></a></dt><p class="pad"></p>
+
+<dd>Hash referencing these 6 items &#45; used for backtracking.</dd><p class="pad"></p>
+
+<dt><a name="opt"
+><i>opt</i></a></dt><p class="pad"></p>
+
+<dd>The option hash.</dd><p class="pad"></p>
+
+<dt><a name="disp"
+><i>disp</i></a></dt><p class="pad"></p>
+
+<dd>Holds an instance of the display class (<i>Dummy</i>, <i>NCurses</i>) to use.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Leopold Toetsch</p>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Same as parrot.</p>
+
+<h1><a name="Advanced_checks"
+>Advanced checks <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Double_blocked_rows/columns"
+>Double blocked rows/columns <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Consider this one:</p>
+
+<pre lang='und' xml:lang='und'>  # daily sudoku 16&#45;nov&#45;2005 very hard
+  .5..3.9..
+  .394.....
+  .....964.
+  .6...84..
+  5.......8
+  ..19...2.
+  .826.....
+  .....576.
+  ..5.9..8.</pre>
+
+<p>It got solved until here, then backtracking began (and succeeded).</p>
+
+<pre lang='und' xml:lang='und'>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 4  5  6 | 8  3  . | 9  .  . |    777 77. 7..
+  | .  3  9 | 4  .  . | 8  .  . |    .77 7.. 7..
+  | .  .  8 | .  .  9 | 6  4  3 |    ..7 ..7 777
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | .  6  . | .  .  8 | 4  .  . |    .7. ..7 7..
+  | 5  .  . | .  .  . | .  .  8 |    7.. ... 7.7
+  | 8  .  1 | 9  .  . | .  2  6 |    7.7 7.. 777  &#60;&#60;&#60;&#60;&#60;&#60;&#60;&#60;&#60;&#60;
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | .  8  2 | 6  .  . | .  .  . |    .77 7.. 777
+  | .  .  . | 2  8  5 | 7  6  . |    777 777 777
+  | 6  .  5 | .  9  . | 2  8  . |    7.7 .7. 777
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>Have a look at the marked row 5. &#39;3&#39; and &#39;5&#39; can&#39;t be in col 1. So &#39;3&#39; and &#39;5&#39; have to be at the right side of the row.</p>
+
+<p>Now take a look at the &#39;7&#39; &#45; invalid positions are shown above already (dumped with the &#45;&#45;inv=7 option).</p>
+
+<p>In both squares 0 and 6 the &#39;7&#39; can only be in columns 0 or 1. This implies that a &#39;7&#39; has to be in col 2, row 3 or 4. Looking at square 5, the &#39;7&#39; is also in row 3 or 4. Therefore the &#39;7&#39; in the middle square (4) has to be too in row 5.</p>
+
+<p>Voila we have 3 numbers (3,5,7) which are somewhere on the right side of row 5 and we get a unique number in row 5, col 1 &#45; the &#39;4&#39;.</p>
+
+<p>And then it&#39;s easy.</p>
+
+<p>One part (the &#39;7&#39;) is implemented in <code lang='und' xml:lang='und'>scan_dbl</code>, which boils down this case to the other one below.</p>
+
+<h2><a name="Blocking_due_to_multiple_others"
+>Blocking due to multiple others <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Given this sudoku:</p>
+
+<pre lang='und' xml:lang='und'>  # daily sudoku 16&#45;nov&#45;2005 very hard
+  .5..3.9..
+  .394.....
+  .....964.
+  .6...84..
+  5.......8
+  ..19...2.
+  .826.....
+  .....576.
+  ..5.9..8.</pre>
+
+<p>Earlier sudoku.pir started backtracking at:</p>
+
+<pre lang='und' xml:lang='und'>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | .  .  1 | 3  8  5 | .  .  . |
+  | 6  8  7 | .  1  . | .  9  . |
+  | 2  3  5 | 6  9  7 | .  .  1 |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1  .  . | 9  7  3 | .  5  . |
+  | .  7  6 | 5  .  8 | 1  3  . |
+  | .  5  . | .  6  1 | .  .  . |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 7  1  . | 8  .  . | .  .  4 |
+  | .  .  . | 7  .  . | .  1  8 |
+  | .  .  . | 1  .  9 | 7  .  . |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>In columns 7 the digits (9,5,3) are blocking this column in square 8 so that the digits (2,6) have to be in column 7 too. Which implies that in square 2 we have a unique &#39;7&#39; at row 0, col 7:</p>
+
+<pre lang='und' xml:lang='und'>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | .  .  1 | 3  8  5 | x  7  y |   (x,y) = (2|6)
+  | 6  8  7 | .  1  . | .  9  . |
+  | 2  3  5 | 6  9  7 | .  .  1 |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1  .  . | 9  7  3 | .  5  . |
+  | .  7  6 | 5  .  8 | 1  3  . |
+  | .  5  . | .  6  1 | .  .  . |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 7  1  . | 8  .  . | a  .  4 |  (a,b,c) = (3|5|9)
+  | .  .  . | 7  .  . | b  1  8 |
+  | .  .  . | 1  .  9 | 7  .  c |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>Now the tests in &#34;create_inv_n&#34; invalidate illegal positions due to multiple&#45;blocking and other tests are likely to proceed.</p>
+
+<h2><a name="TODO"
+>TODO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  # daily sudoku wed 28&#45;dec&#45;2005, very hard
+  # backtracking
+  ...52.63.
+  .5.....7.
+  9....8..2
+  .17..4...
+  .9.....6.
+  ...8..31.
+  1..6....5
+  .4.....9.
+  .86.95...</pre>
+
+<p>This one starts backtracking early. The &#39;6&#39; is an &#39;X&#45;Wing&#39; like configuration (col 1 and row 2 with a common corner have just 2 possible positions, just one is valid, when you try both). The same happens a bit later with &#39;9&#39;.</p>
+
+<pre lang='und' xml:lang='und'>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | .  7  . | 5  2  . | 6  3  . |    666 666 666
+  | .  5  . | .  .  . | .  7  . |    .66 6.. 666
+  | 9  .  . | .  .  8 | .  .  2 |    6.6 6.6 666
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | .  1  7 | .  .  4 | .  .  . |    .66 6.6 666
+  | .  9  . | .  .  . | .  6  . |    666 666 666
+  | .  .  . | 8  .  . | 3  1  . |    ..6 6.. 666
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | 1  .  9 | 6  .  . | .  .  5 |    666 666 666
+  | .  4  . | .  .  . | .  9  6 |    666 666 666
+  | .  8  6 | .  9  5 | .  .  3 |    666 666 666
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>Here is starts backtracking. A possible improvement would be:</p>
+
+<pre lang='und' xml:lang='und'>  &#45; detect such digit configuration
+  &#45; only backtrack try this digit (&#39;6&#39;) above</pre>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

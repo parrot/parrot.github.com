@@ -1,0 +1,842 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PDD 19: Parrot Intermediate Representation (PIR)</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; PDD 19: Parrot Intermediate Representation (PIR)
+                </div>
+
+<h1><a name="PDD_19:_Parrot_Intermediate_Representation_(PIR)"
+>PDD 19: Parrot Intermediate Representation (PIR)</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>This document outlines the architecture and core syntax of Parrot Intermediate Representation (PIR).</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<p>PIR is a stable,
+middle&#45;level language intended both as a target for the generated output from high&#45;level language compilers,
+and for human use developing core features and extensions for Parrot.</p>
+
+<h3><a name="Basic_Syntax"
+>Basic Syntax</a></h3>
+
+<p>A valid PIR program consists of a sequence of statements,
+directives,
+comments and empty lines.</p>
+
+<h4><a name="Statements"
+>Statements</a></h4>
+
+<p>A statement starts with an optional label,
+contains an instruction,
+and is terminated by a newline (&#60;NL&#62;).
+Each statement must be on its own line.</p>
+
+<pre>  [label:] [instruction] &#60;NL&#62;</pre>
+
+<p>An instruction may be either a low&#45;level opcode or a higher&#45;level PIR operation, such as a subroutine call, a method call, a directive, or PIR syntactic sugar.</p>
+
+<h4><a name="Directives"
+>Directives</a></h4>
+
+<p>A directive provides information for the PIR compiler that is outside the normal flow of executable statements. Directives are all prefixed with a &#34;.&#34;, as in <code>.local</code> or <code>.sub</code>.</p>
+
+<h4><a name="Comments"
+>Comments</a></h4>
+
+<p>Comments start with <code>#</code> and last until the following newline. PIR also allows comments in Pod format. Comments, Pod content, and empty lines are ignored.</p>
+
+<h4><a name="Identifiers"
+>Identifiers</a></h4>
+
+<p>Identifiers start with a letter or underscore, then may contain additionally letters, digits, and underscores. Identifiers don&#39;t have any limit on length at the moment, but some sane&#45;but&#45;generous length limit may be imposed in the future (256 chars, 1024 chars?). The following examples are all valid identifiers.</p>
+
+<pre>    a
+    _a
+    A42</pre>
+
+<p>Opcode names are not reserved words in PIR, and may be used as variable names. For example, you can define a local variable named <code>print</code>. Note that currently, by using an opcode name as a local variable name, the variable will <i>hide</i> the opcode name, effectively making the opcode unusable. In the future this will be resolved.</p>
+
+<p>The PIR language is designed to have as few reserved keywords as possible. Currently, in contrast to opcode names, PIR keywords <i>are</i> reserved, and cannot be used as identifiers. Some opcode names are, in fact, PIR keywords, which therefore cannot be used as identifiers. This, too, will be resolved in a future re&#45;implementation of the PIR compiler.</p>
+
+<p>The following are PIR keywords, and cannot currently be used as identifiers:</p>
+
+<pre> goto      if       int         null
+ num       pmc      string      unless</pre>
+
+<h4><a name="Labels"
+>Labels</a></h4>
+
+<p>A label declaration consists of a label name followed by a colon. A label name conforms to the standard requirements for identifiers. A label declaration may occur at the start of a statement, or stand alone on a line, but always within a subroutine.</p>
+
+<p>A reference to a label consists of only the label name, and is generally used as an argument to an instruction or directive.</p>
+
+<p>A PIR label is accessible only in the subroutine where it&#39;s defined. A label name must be unique within a subroutine, but it can be reused in other subroutines.</p>
+<pre>  goto label1
+     # ...
+  label1:
+</pre>
+<h4><a name="Registers_and_Variables"
+>Registers and Variables</a></h4>
+
+<p>There are two ways of referencing Parrot&#39;s registers. The first is through named local variables declared with <code>.local</code>.</p>
+<pre>  .local pmc foo
+</pre>
+<p>The type of a named variable can be <code>int</code>, <code>num</code>, <code>string</code> or <code>pmc</code>, corresponding to the types of registers. No other types are used.</p>
+
+<p>The second way of referencing a register is through a register variable <code>$In</code>, <code>$Sn</code>, <code>$Nn</code>, or <code>$Pn</code>. The capital letter indicates the type of the register (integer, string, number, or PMC). <i>n</i> consists of digit(s) only. There is no limit on the size of <i>n</i>. There is no direct correspondence between the value of <i>n</i> and the position of the register in the register set, <code>$P42</code> may be stored in the zeroth PMC register, if it is the only register in the subroutine.</p>
+
+<h3><a name="Constants"
+>Constants</a></h3>
+
+<p>Constants may be used in place of registers or variables. A constant is not allowed on the left side of an assignment, or in any other context where the variable would be modified.</p>
+
+<dl>
+<dt><a name="&#39;single&#45;quoted_string_constant&#39;"
+>&#39;single&#45;quoted string constant&#39;</a></dt>
+Are delimited by single&#45;quotes (<code>&#39;</code>). They are taken to be ASCII encoded. No escape sequences are processed.
+<dt><a name="&#34;double&#45;quoted_string_constants&#34;"
+>&#34;double&#45;quoted string constants&#34;</a></dt>
+Are delimited by double&#45;quotes (<code>&#34;</code>). A <code>&#34;</code> inside a string must be escaped by <code>\</code>. The default encoding for a double&#45;quoted string constant is 7&#45;bit ASCII, other character sets and encodings must be marked explicitly using a charset or encoding flag.
+<dt><a name="&#60;&#60;&#34;heredoc&#34;,_&#60;&#60;&#39;heredoc&#39;"
+>&#60;&#60;&#34;heredoc&#34;, &#60;&#60;&#39;heredoc&#39;</a></dt>
+Heredocs work like single or double quoted strings. All lines up to the terminating delimiter are slurped into the string. The delimiter has to be on its own line, at the beginning of the line and with no trailing whitespace.Assignment of a heredoc:<pre>  $S0 = <<"EOS"
+  ...
+EOS
+</pre>A heredoc as an argument:<pre>  .local pmc function, arg
+  # ...
+
+  function(<<"END_OF_HERE", arg)
+  ...
+END_OF_HERE
+
+  .yield(<<'EOS')
+  ...
+EOS
+
+  .return(<<'EOS')
+  ...
+EOS
+</pre>Although currently not possible, a future implementation of the PIR language will allow you to use multiple heredocs within a single statement or directive:
+<dt><a name="charset:&#34;string_constant&#34;"
+>charset:&#34;string constant&#34;</a></dt>
+Like above with a character set attached to the string. Valid character sets are currently: <code>ascii</code> (the default), <code>binary</code>, <code>unicode</code> (with UTF&#45;8 as the default encoding), and <code>iso&#45;8859&#45;1</code>.</dl>
+
+<h3><a name="String_escape_sequences"
+>String escape sequences</a></h3>
+
+<p>Inside double&#45;quoted strings the following escape sequences are processed.</p>
+
+<pre>  \xhh        1..2 hex digits
+  \ooo        1..3 oct digits
+  \cX         control char X
+  \x{h..h}    1..8 hex digits
+  \uhhhh      4 hex digits
+  \Uhhhhhhhh  8 hex digits
+  \a, \b, \t, \n, \v, \f, \r, \e, \\, \&#34;</pre>
+
+<dl>
+<dt><a name="encoding:charset:&#34;string_constant&#34;"
+>encoding:charset:&#34;string constant&#34;</a></dt>
+Like above with an extra encoding attached to the string. For example:
+<pre>  set S0, utf8:unicode:&#34;&#194;&#171;&#34;</pre>
+The encoding and charset are attached to the string constant, and adopted by any string container the constant is assigned to.The standard escape sequences are honored within strings with an alternate encoding, so in the example above, you can include a particular Unicode character as either a literal sequence of bytes, or as an escape sequence.
+<dt><a name="numeric_constants"
+>numeric constants</a></dt>
+Both integers (<code>42</code>) and numbers (<code>3.14159</code>) may appear as constants. <code>0x</code> and <code>0b</code> denote hex and binary constants respectively.</dl>
+
+<h3><a name="Directives"
+>Directives</a></h3>
+
+<dl>
+<dt><a name=".local_&#60;type&#62;_&#60;identifier&#62;_[:unique_reg]"
+>.local &#60;type&#62; &#60;identifier&#62; [:unique_reg]</a></dt>
+Define a local name <i>identifier</i> within a subroutine with the given <i>type</i>. You can define multiple identifiers of the same type by separating them with commas:
+<pre>  .local int i, j</pre>
+The optional <code>:unique_reg</code> modifier will force the register allocator to associate the identifier with a unique register for the duration of the subroutine. If the register allocator is thought of as an optimization tool for allowing fewer registers to be used in a register frame by reusing unused registers, then the <code>:unique_reg</code> directive forces this optimization to be turned off. This can be important in a number of situations:
+<ul>
+<li>When a subroutine has a small fixed number of registers</li>
+
+<li>When a named variable or named register is used throughout the entire subroutine</li>
+
+<li>When a reference needs to be made to a register</li>
+</ul>
+
+<dt><a name=".lex_&#60;string_constant&#62;,_&#60;reg&#62;"
+>.lex &#60;string constant&#62;, &#60;reg&#62;</a></dt>
+Declare a lexical variable that is an alias for a PMC register. For example, given this preamble:<pre>    .lex '$a', $P0
+    $P1 = new 'Integer'
+</pre>
+<pre>    These two opcodes have an identical effect:</pre>
+<pre>    $P0 = $P1
+    store_lex '$a', $P1
+</pre>
+<pre>    And these two opcodes also have an identical effect:</pre>
+<pre>    $P1 = $P0
+    $P1 = find_lex '$a'
+</pre>
+<dt><a name=".const_&#60;type&#62;_&#60;identifier&#62;_=_&#60;const&#62;"
+>.const &#60;type&#62; &#60;identifier&#62; = &#60;const&#62;</a></dt>
+Define a constant named <i>identifier</i> of type <i>type</i> and assign value <i>const</i> to it. The <i>type</i> must be <code>int</code>, <code>num</code>, <code>string</code> or a string constant indicating the PMC type. This allows you to create PMC constants representing subroutines; the value of the constant in that case is the name of the subroutine. If the referred subroutine has an <code>:immediate</code> modifier and it returns a value, then that value is stored instead of the subroutine.<code>.const</code> declarations representing subroutines can only be written within a <code>.sub</code>. The constant is stored in the constant table of the current bytecode file.
+<dt><a name=".globalconst_&#60;type&#62;_&#60;identifier&#62;_=_&#60;const&#62;"
+>.globalconst &#60;type&#62; &#60;identifier&#62; = &#60;const&#62;</a></dt>
+As <code>.const</code> above, but the defined constant is globally accessible. <code>.globalconst</code> may only be used within a <code>.sub</code>.
+<dt><a name=".sub"
+>.sub</a></dt>
+
+<pre>  .sub &#60;identifier&#62; [:&#60;modifier&#62; ...]
+  .sub &#60;quoted string&#62; [:&#60;modifier&#62; ...]</pre>
+Define a subroutine. All code in a PIR source file must be defined in a subroutine. See the section <a href='#Subroutine_modifiers'>&#34;Subroutine modifiers&#34;</a> for available modifiers. Optional modifiers are a list separated by spaces.The name of the sub may be either a bare identifier or a quoted string constant. Bare identifiers must be valid PIR identifiers (see <a href='TODO'>Identifiers</a> above), but string sub names can contain any characters, including characters from different character sets (see <a href='TODO'>Constants</a> above).Always paired with <code>.end</code>.
+<dt><a name=".end"
+>.end</a></dt>
+End a subroutine. Always paired with <code>.sub</code>.
+<dt><a name=".namespace_[_&#60;identifier&#62;_;_&#60;identifier&#62;_]"
+>.namespace [ &#60;identifier&#62; ; &#60;identifier&#62; ]</a></dt>
+
+<pre>   .namespace [ &#60;key&#62;? ]
+
+   key: &#60;identifier&#62; [&#39;;&#39; &#60;identifier&#62;]*</pre>
+Defines the namespace from this point onwards. By default the program is not in any namespace. If you specify more than one, separated by semicolons, it creates nested namespaces, by storing the inner namespace object in the outer namespace&#39;s global pad.You can specify the root namespace by using empty brackets, such as:<pre>    .namespace [ ]
+</pre>The brackets are not optional, although the key inside them is.
+<dt><a name=".loadlib_&#39;lib_name&#39;"
+>.loadlib &#39;lib_name&#39;</a></dt>
+Load the given library at compile time, that is, as soon that line is parsed. See also the <code>loadlib</code> opcode, which does the same at run time.A library loaded this way is also available at runtime, as if it has been loaded again in <code>:load</code>, so there is no need to call <code>loadlib</code> at runtime.
+<dt><a name=".HLL_&#60;hll_name&#62;"
+>.HLL &#60;hll_name&#62;</a></dt>
+Define the HLL namespace from that point on in the file. Takes one string constant, the name of the HLL. By default, the HLL namespace is &#39;parrot&#39;.
+<dt><a name=".line_&#60;integer&#62;"
+>.line &#60;integer&#62;</a></dt>
+Set the current PIR line number to the value specified. This is useful in case the PIR code is generated from some source PIR files, and error messages should print the source file&#39;s line number, not the line number of the generated file. Note that line numbers increment per line of PIR; if you are trying to store High Level Language debug information, you should instead be using the <code>.annotate</code> directive.
+<dt><a name=".file_&#60;quoted_string&#62;"
+>.file &#60;quoted_string&#62;</a></dt>
+Set the current PIR file name to the value specified. This is useful in case the PIR code is generated from some source PIR files, and error messages should print the source file&#39;s name, not the name of the generated file.
+<dt><a name=".annotate_&#60;key&#62;,_&#60;value&#62;"
+>.annotate &#60;key&#62;, &#60;value&#62;</a></dt>
+Makes an entry in the bytecode annotations table. This is used to store high level language debug information. Examples:<pre>  .annotate "file", "aardvark.p6"
+  .annotate "line", 5
+  .annotate "column", 24
+</pre>An annotation stays in effect until the next annotation with the same key or the end of the current file (that is, if you use a tool such as <code>pbc_merge</code> to link multiple bytecode files, then annotations will not spill over from one mergee&#39;s bytecode to another).One annotation covers many PIR instructions. If the result of compiling one line of HLL code is 15 lines of PIR, you only need to emit one annotation before the first of those 15 lines to set the line number.<pre>  .annotate "line", 42
+</pre>The key must always be a quoted string. The value may be an integer, a number or a quoted string. Note that integer values are stored most compactly; should you instead of the above annotate directive emit:<pre>  .annotate "line", "42"
+</pre>then instead &#34;42&#34; is stored as a string, taking up more space in the resulting bytecode file.</dl>
+
+<h4><a name="Subroutine_modifiers"
+>Subroutine modifiers</a></h4>
+
+<dl>
+<dt><a name=":main"
+>:main</a></dt>
+Define &#34;main&#34; entry point to start execution. If multiple subroutines are marked as <b>:main</b>, the <b>last</b> marked subroutine is used. Only the first file loaded or compiled counts; subs marked as <b>:main</b> are ignored by the <b>load_bytecode</b> op. If no <b>:main</b> modifier is specified, execution starts at the first subroutine in the file.
+<dt><a name=":load"
+>:load</a></dt>
+Run this subroutine when loaded by the <b>load_bytecode</b> op (i.e. neither in the initial program file nor compiled from memory). This is complementary to what <b>:init</b> does (below); to get both behaviours, use <b>:init :load</b>. If multiple subs have the <b>:load</b> pragma, the subs are run in source code order.
+<dt><a name=":init"
+>:init</a></dt>
+Run the subroutine when the program is run directly (that is, not loaded as a module), including when it is compiled from memory. This is complementary to what <b>:load</b> does (above); to get both behaviours, use <b>:init :load</b>.
+<dt><a name=":anon"
+>:anon</a></dt>
+Do not install this subroutine in the namespace. Allows the subroutine name to be reused.
+<dt><a name=":multi(type1,_type2...)"
+>:multi(type1, type2...)</a></dt>
+Engage in multiple dispatch with the listed types. See <em>docs/pdds/pdd27_multi_dispatch.pod</em> for more information on the multiple dispatch system.
+<dt><a name=":immediate"
+>:immediate</a></dt>
+Execute this subroutine immediately after being compiled, which is analogous to <code>BEGIN</code> in Perl 5.In addition, if the sub returns a PMC value, that value replaces the sub in the constant table of the bytecode file. This makes it possible to build constants at compile time, provided that (a) the generated constant can be computed at compile time (i.e. doesn&#39;t depend on the runtime environment), and (b) the constant value is of a PMC class that supports saving in a bytecode file.{{ TODO: need a freeze/thaw reference }}.For instance, after compilation of the sub &#39;init&#39;, that sub is executed immediately (hence the <code>:immediate</code> modifier). Instead of storing the sub &#39;init&#39; in the constants table, the value returned by &#39;init&#39; is stored, which in this example is a FixedIntegerArrray.<pre>    .sub main :main
+      .const "Sub" initsub = "init"
+    .end
+
+    .sub init :immediate
+      .local pmc array
+      array = new 'FixedIntegerArray'
+      array = 256 # set size to 256
+
+      # code to initialize array
+      .return (array)
+    .end
+</pre>
+<dt><a name=":postcomp"
+>:postcomp</a></dt>
+Execute immediately after being compiled, but only if the subroutine is in the initial file (i.e. not in PIR compiled as result of a <code>load_bytecode</code> instruction from another file).As an example, suppose file <code>main.pir</code> contains:<pre>    .sub main
+        load_bytecode 'foo.pir'
+    .end
+</pre>and the file <code>foo.pir</code> contains:<pre>    .sub foo :immediate
+        print '42'
+    .end
+
+    .sub bar :postcomp
+        print '43'
+    .end
+</pre>Executing <code>foo.pir</code> will run both <code>foo</code> and <code>bar</code>. On the other hand, executing <code>main.pir</code> will run only <code>foo</code>. If <code>foo.pir</code> is compiled to bytecode, only <code>foo</code> will be run, and loading <code>foo.pbc</code> will not run either <code>foo</code> or <code>bar</code>.
+<dt><a name=":method"
+>:method</a></dt>
+<pre>  .sub bar :method
+    # ...
+  .end
+
+  .sub bar :method('foo')
+    # ...
+  .end
+</pre>The marked <code>.sub</code> is a method, added as a method in the class that corresponds to the current namespace, and not stored in the namespace. In the method body, the object PMC can be referred to with <code>self</code>.If a string argument is given to <code>:method</code> the method is stored with that name instead of the <code>.sub</code> name.
+<dt><a name=":vtable"
+>:vtable</a></dt>
+<pre>  .sub bar :vtable
+    # ...
+  .end
+
+  .sub bar :vtable('foo')
+    # ...
+  .end
+</pre>The marked <code>.sub</code> overrides a vtable function, and is not stored in the namespace. By default, it overrides a vtable function with the same name as the <code>.sub</code> name. To override a different vtable function, use <code>:vtable(&#39;...&#39;)</code>. For example, to have a <code>.sub</code> named <i>ToString</i> also be the vtable function <code>get_string</code>), use <code>:vtable(&#39;get_string&#39;)</code>.When the <b>:vtable</b> modifier is set, the object PMC can be referred to with <code>self</code>, as with the <b>:method</b> modifier.
+<dt><a name=":outer(subname)"
+>:outer(subname)</a></dt>
+The marked <code>.sub</code> is lexically nested within the sub known by <i>subname</i>.
+<dt><a name=":subid(_&#60;string_constant&#62;_)"
+>:subid( &#60;string_constant&#62; )</a></dt>
+Specifies a unique string identifier for the subroutine. This is useful for referring to a particular subroutine with <code>:outer</code>, even though several subroutines in the file may have the same name (because they are multi, or in different namespaces).
+<dt><a name=":instanceof(_&#60;string_constant&#62;_)"
+>:instanceof( &#60;string_constant&#62; )</a></dt>
+The <code>:instanceof</code> pragma is an experimental pragma that creates a sub as a PMC type other than &#39;Sub&#39;. However, as currently implemented it doesn&#39;t work well with <code>:outer</code> or existing PMC types such as <code>Closure</code>, <code>Coroutine</code>, etc.
+<dt><a name=":nsentry(_&#60;string_constant&#62;_)"
+>:nsentry( &#60;string_constant&#62; )</a></dt>
+Specify the name by which the subroutine is stored in the namespace. The default name by which a subroutine is stored in the namespace (if this modifier is missing), is the subroutine&#39;s name as given after the <code>.sub</code> directive. This modifier allows to override this.</dl>
+
+<h4><a name="Directives_used_for_Parrot_calling_conventions."
+>Directives used for Parrot calling conventions.</a></h4>
+
+<dl>
+<dt><a name=".begin_call_and_.end_call"
+>.begin_call and .end_call</a></dt>
+Directives to start and end a subroutine invocation, respectively.
+<dt><a name=".begin_return_and_.end_return"
+>.begin_return and .end_return</a></dt>
+Directives to start and end a statement to return values.
+<dt><a name=".begin_yield_and_.end_yield"
+>.begin_yield and .end_yield</a></dt>
+Directives to start and end a statement to yield values.
+<dt><a name=".call"
+>.call</a></dt>
+Takes either 2 arguments: the sub and the return continuation, or the sub only. For the latter case an <b>invokecc</b> gets emitted. Providing an explicit return continuation is more efficient, if its created outside of a loop and the call is done inside a loop.
+<dt><a name=".invocant"
+>.invocant</a></dt>
+Directive to specify the object for a method call. Use it in combination with <code>.meth_call</code>.
+<dt><a name=".meth_call"
+>.meth_call</a></dt>
+Directive to do a method call. It calls the specified method on the object that was specified with the <code>.invocant</code> directive.
+<dt><a name=".nci_call"
+>.nci_call</a></dt>
+Directive to make a call through the Native Calling Interface (NCI). The specified subroutine must be loaded using the &#60;dlfunc&#62; op that takes the library, function name and function signature as arguments. See <em>docs/pdds/pdd16_native_call</em> for details.
+<dt><a name=".set_return_&#60;var&#62;_[:&#60;modifier&#62;]*"
+>.set_return &#60;var&#62; [:&#60;modifier&#62;]*</a></dt>
+Between <code>.begin_return</code> and <code>.end_return</code>, specify one or more of the return value(s) of the current subroutine. Available modifiers: <code>:flat</code>, <code>:named</code>.
+<dt><a name=".set_yield_&#60;var&#62;_[:&#60;modifier&#62;]*"
+>.set_yield &#60;var&#62; [:&#60;modifier&#62;]*</a></dt>
+Between <code>.begin_yield</code> and <code>.end_yield</code>, specify one or more of the yield value(s) of the current subroutine. Available modifiers: <code>:flat</code>, <code>:named</code>.
+<dt><a name=".set_arg_&#60;var&#62;_[:&#60;modifier&#62;]*"
+>.set_arg &#60;var&#62; [:&#60;modifier&#62;]*</a></dt>
+Between <code>.begin_call</code> and <code>.call</code>, specify an argument to be passed. Available modifiers: <code>:flat</code>, <code>:named</code>.
+<dt><a name=".get_result_&#60;var&#62;_[:&#60;modifier&#62;]*"
+>.get_result &#60;var&#62; [:&#60;modifier&#62;]*</a></dt>
+Between <code>.call</code> and <code>.end_call</code>, specify where one or more return value(s) should be stored. Available modifiers: <code>:slurpy</code>, <code>:named</code>, <code>:optional</code>, and <code>:opt_flag</code>.</dl>
+
+<h4><a name="Directives_for_subroutine_parameters"
+>Directives for subroutine parameters</a></h4>
+
+<dl>
+<dt><a name=".param_&#60;type&#62;_&#60;identifier&#62;_[:&#60;modifier&#62;]*"
+>.param &#60;type&#62; &#60;identifier&#62; [:&#60;modifier&#62;]*</a></dt>
+At the top of a subroutine, declare a local variable, in the manner of <code>.local</code>, into which parameter(s) of the current subroutine should be stored. Available modifiers: <code>:slurpy</code>, <code>:named</code>, <code>:optional</code>, <code>:opt_flag</code> and <code>:unique_reg</code>.</dl>
+
+<h4><a name="Parameter_Passing_and_Getting_Flags"
+>Parameter Passing and Getting Flags</a></h4>
+
+<p>See <a href='TODO#pdd03_calling_conventions.pod'>PDD03</a> for a description of the meaning of the flag bits <code>SLURPY</code>, <code>OPTIONAL</code>, <code>OPT_FLAG</code>, and <code>FLAT</code>, which correspond to the calling convention modifiers <code>:slurpy</code>, <code>:optional</code>, <code>:opt_flag</code>, and <code>:flat</code>.</p>
+
+<h4><a name="Catching_Exceptions"
+>Catching Exceptions</a></h4>
+
+<p>Using the <code>push_eh</code> op you can install an exception handler. If an exception is thrown, Parrot will execute the installed exception handler. In order to retrieve the thrown exception, use the <code>.get_results</code> directive. This directive always takes one argument: an exception object.</p>
+<pre>   push_eh handler
+   # ...
+ handler:
+   .local pmc exception
+   .get_results (exception)
+   # ...
+</pre>
+<p>This is syntactic sugar for the <code>get_results</code> op, but any modifiers set on the targets will be handled automatically by the PIR compiler. The <code>.get_results</code> directive must be the first instruction of the exception handler; only declarations (.lex, .local) may come first.</p>
+
+<p>To resume execution after handling the exception, just invoke the continuation stored in the exception.</p>
+<pre>   .local pmc exception, continuation
+   # ...
+   .get_results(exception)
+   # ...
+   continuation = exception['resume']
+   continuation()
+   # ...
+</pre>
+<p>See <a href='TODO#pdd23_exceptions.pod'>PDD23</a> for accessing the various attributes of the exception object.</p>
+
+<h3><a name="Syntactic_Sugar"
+>Syntactic Sugar</a></h3>
+
+<p>Any PASM opcode is a valid PIR instruction. In addition, PIR defines some syntactic shortcuts. These are provided for ease of use by humans producing and maintaining PIR code.</p>
+
+<dl>
+<dt><a name="goto_&#60;identifier&#62;"
+>goto &#60;identifier&#62;</a></dt>
+<code>branch</code> to <i>identifier</i> (label or subroutine name).Examples:
+<pre>  goto END</pre>
+
+<dt><a name="if_&#60;var&#62;_goto_&#60;identifier&#62;"
+>if &#60;var&#62; goto &#60;identifier&#62;</a></dt>
+If <i>var</i> evaluates as true, jump to the named <i>identifier</i>.
+<dt><a name="unless_&#60;var&#62;_goto_&#60;identifier&#62;"
+>unless &#60;var&#62; goto &#60;identifier&#62;</a></dt>
+Unless <i>var</i> evaluates as true, jump to the named <i>identifier</i>.
+<dt><a name="if_null_&#60;var&#62;_goto_&#60;identifier&#62;"
+>if null &#60;var&#62; goto &#60;identifier&#62;</a></dt>
+If <i>var</i> evaluates as null, jump to the named <i>identifier</i>.
+<dt><a name="unless_null_&#60;var&#62;_goto_&#60;identifier&#62;"
+>unless null &#60;var&#62; goto &#60;identifier&#62;</a></dt>
+Unless <i>var</i> evaluates as null, jump to the named <i>identifier</i>.
+<dt><a name="if_&#60;var1&#62;_&#60;relop&#62;_&#60;var2&#62;_goto_&#60;identifier&#62;"
+>if &#60;var1&#62; &#60;relop&#62; &#60;var2&#62; goto &#60;identifier&#62;</a></dt>
+The <i>relop</i> can be: <code>&#60;, &#60;=, ==, != &#62;= &#62;</code>. which translate to the PASM opcodes <code>lt</code>, <code>le</code>, <code>eq</code>, <code>ne</code>, <code>ge</code> or <code>gt</code>. If <i>var1 relop var2</i> evaluates as true, jump to the named <i>identifier</i>.
+<dt><a name="unless_&#60;var1&#62;_&#60;relop&#62;_&#60;var2&#62;_goto_&#60;identifier&#62;"
+>unless &#60;var1&#62; &#60;relop&#62; &#60;var2&#62; goto &#60;identifier&#62;</a></dt>
+The <i>relop</i> can be: <code>&#60;, &#60;=, ==, != &#62;= &#62;</code>. Unless <i>var1 relop var2</i> evaluates as true, jump to the named <i>identifier</i>.
+<dt><a name="&#60;var1&#62;_=_&#60;var2&#62;"
+>&#60;var1&#62; = &#60;var2&#62;</a></dt>
+Assign a value.
+<dt><a name="&#60;var1&#62;_=_&#60;unary&#62;_&#60;var2&#62;"
+>&#60;var1&#62; = &#60;unary&#62; &#60;var2&#62;</a></dt>
+Unary operations <code>!</code> (NOT), <code>&#45;</code> (negation) and <code>~</code> (bitwise NOT).
+<dt><a name="&#60;var1&#62;_=_&#60;var2&#62;_&#60;binary&#62;_&#60;var3&#62;"
+>&#60;var1&#62; = &#60;var2&#62; &#60;binary&#62; &#60;var3&#62;</a></dt>
+Binary arithmetic operations <code>+</code> (addition), <code>&#45;</code> (subtraction), <code>*</code> (multiplication), <code>/</code> (division), <code>%</code> (modulus) and <code>**</code> (exponent). Binary <code>.</code> is concatenation and only valid for string arguments.<code>&#60;&#60;</code> and <code>&#62;&#62;</code> are arithmetic shifts left and right. <code>&#62;&#62;&#62;</code> is the logical shift right.Binary logic operations <code>&#38;&#38;</code> (AND), <code>||</code> (OR) and <code>~~</code> (XOR).Binary bitwise operations <code>&#38;</code> (bitwise AND), <code>|</code> (bitwise OR) and <code>~</code> (bitwise XOR).Binary relational operations <code>&#60;, &#60;=, ==, != &#62;= &#62;</code>.
+<dt><a name="&#60;var1&#62;_&#60;op&#62;=_&#60;var2&#62;"
+>&#60;var1&#62; &#60;op&#62;= &#60;var2&#62;</a></dt>
+This is equivalent to <code>&#60;var1&#62; = &#60;var1&#62; &#60;op&#62; &#60;var2&#62;</code>. Where <i>op</i> is called an assignment operator and can be any of the following binary operators described earlier: <code>+</code>, <code>&#45;</code>, <code>*</code>, <code>/</code>, <code>%</code>, <code>.</code>, <code>&#38;</code>, <code>|</code>, <code>~</code>, <code>&#60;&#60;</code>, <code>&#62;&#62;</code> or <code>&#62;&#62;&#62;</code>.
+<dt><a name="&#60;var&#62;_=_&#60;var&#62;_[_&#60;var&#62;_]"
+>&#60;var&#62; = &#60;var&#62; [ &#60;var&#62; ]</a></dt>
+A keyed <code>set</code> operation for PMCs to retrieve a value from an aggregate. This maps to:
+<pre>  set &#60;var&#62;, &#60;var&#62; [ &#60;var&#62; ]</pre>
+
+<dt><a name="&#60;var&#62;_[_&#60;var&#62;_]_=_&#60;var&#62;"
+>&#60;var&#62; [ &#60;var&#62; ] = &#60;var&#62;</a></dt>
+A keyed <code>set</code> operation to set a value in an aggregate. This maps to:
+<pre>  set &#60;var&#62; [ &#60;var&#62; ], &#60;var&#62;</pre>
+
+<dt><a name="&#60;var&#62;_=_&#60;opcode&#62;_&#60;arguments&#62;"
+>&#60;var&#62; = &#60;opcode&#62; &#60;arguments&#62;</a></dt>
+Many opcodes can use this PIR syntactic sugar. The first argument for the opcode is placed before the <code>=</code>, and all remaining arguments go after the opcode name. For example:<pre>  new $P0, 'Type'
+</pre>becomes:<pre>  $P0 = new 'Type'
+</pre>Note that this only works for opcodes that have have a leading <code>OUT</code> parameter. [this restriction unimplemented: TT #906]
+<dt><a name="([&#60;var1&#62;_[:&#60;mod1&#62;_...],_...])_=_&#60;var2&#62;([&#60;arg1&#62;_[:&#60;mod2&#62;_...],_...])"
+>([&#60;var1&#62; [:&#60;mod1&#62; ...], ...]) = &#60;var2&#62;([&#60;arg1&#62; [:&#60;mod2&#62; ...], ...])</a></dt>
+This is short for:
+<pre>  .begin_call
+  .set_arg &#60;arg1&#62; &#60;modifier2&#62;
+  ...
+  .call &#60;var2&#62;
+  .get_result &#60;var1&#62; &#60;modifier1&#62;
+  ...
+  .end_call</pre>
+
+<dt><a name="&#60;var&#62;_=_&#60;var&#62;([arg_[:&#60;modifier&#62;_...],_...])"
+>&#60;var&#62; = &#60;var&#62;([arg [:&#60;modifier&#62; ...], ...])</a></dt>
+
+<dt><a name="&#60;var&#62;([arg_[:&#60;modifier&#62;_...],_...])"
+>&#60;var&#62;([arg [:&#60;modifier&#62; ...], ...])</a></dt>
+
+<dt><a name="&#60;var&#62;.&#34;_method&#34;([arg_[:&#60;modifier&#62;_...],_...])"
+>&#60;var&#62;.&#34;_method&#34;([arg [:&#60;modifier&#62; ...], ...])</a></dt>
+
+<dt><a name="&#60;var&#62;.&#60;var&#62;([arg_[:&#60;modifier&#62;_...],_...])"
+>&#60;var&#62;.&#60;var&#62;([arg [:&#60;modifier&#62; ...], ...])</a></dt>
+Function or method call. These notations are shorthand for a longer PCC function call. <i>var</i> can denote a global subroutine, a local <i>identifier</i> or a <i>reg</i>.
+<dt><a name=".return_([&#60;var&#62;_[:&#60;modifier&#62;_...],_...])"
+>.return ([&#60;var&#62; [:&#60;modifier&#62; ...], ...])</a></dt>
+Return from the current subroutine with zero or more values.
+<dt><a name=".tailcall_&#60;var&#62;(args)"
+>.tailcall &#60;var&#62;(args)</a></dt>
+
+<dt><a name=".tailcall_&#60;var&#62;.&#39;somemethod&#39;(args)"
+>.tailcall &#60;var&#62;.&#39;somemethod&#39;(args)</a></dt>
+
+<dt><a name=".tailcall_&#60;var&#62;.&#60;var&#62;(args)"
+>.tailcall &#60;var&#62;.&#60;var&#62;(args)</a></dt>
+Tail call: call a function or method and return from the sub with the function or method call return values.Internally, the call stack doesn&#39;t increase because of a tail call, so you can write recursive functions and not have stack overflows.Whitespace surrounding the dot (&#39;.&#39;) that separates the object from the method is not allowed.</dl>
+
+<h3><a name="Assignment_and_Morphing"
+>Assignment and Morphing</a></h3>
+
+<p>The <code>=</code> syntactic sugar in PIR, when used in the simple case of:</p>
+
+<pre>  &#60;var1&#62; = &#60;var2&#62;</pre>
+
+<p>directly corresponds to the <code>set</code> opcode. So, two low&#45;level arguments (int, num, or string registers, variables, or constants) are a direct C assignment, or a C&#45;level conversion (int cast, float cast, a string copy, or a call to one of the conversion functions like <code>string_to_num</code>).</p>
+
+<p>Assigning a PMC argument to a low&#45;level argument calls the <code>get_integer</code>, <code>get_number</code>, or <code>get_string</code> vtable function on the PMC. Assigning a low&#45;level argument to a PMC argument calls the <code>set_integer_native</code>, <code>set_number_native</code>, or <code>set_string_native</code> vtable function on the PMC (assign to value semantics). Two PMC arguments are a direct C assignment (assign to container semantics).</p>
+
+<p>For assign to value semantics for two PMC arguments use <code>assign</code>, which calls the <code>assign_pmc</code> vtable function.</p>
+
+<h3><a name="Macros"
+>Macros</a></h3>
+
+<p>This section describes the macro layer of the PIR language. The macro layer of the PIR compiler handles the following directives:</p>
+
+<ul>
+<li><code>.include</code> &#39;&#60;filename&#62;&#39;</li>
+
+<p>The <code>.include</code> directive takes a string argument that contains the name of the PIR file that is included. The contents of the included file are inserted as if they were written at the point where the <code>.include</code> directive occurs.</p>
+
+<p>The include file is searched for in the current directory and in runtime/parrot/include, in that order. The first file of that name to be found is included.</p>
+
+<p>The <code>.include</code> directive&#39;s search order is subject to change.</p>
+
+<li><code>.macro</code> &#60;identifier&#62; [&#60;parameters&#62;]</li>
+
+<p>The <code>.macro</code> directive starts the a macro definition named by the specified identifier. The optional parameter list is a comma&#45;separated list of identifiers, enclosed in parentheses. See <code>.endm</code> for ending the macro definition.</p>
+
+<li><code>.endm</code></li>
+
+<p>Closes a macro definition.</p>
+
+<li><code>.macro_const</code> &#60;identifier&#62; (&#60;literal&#62;|&#60;reg&#62;)</li>
+<pre> .macro_const   PI  3.14
+</pre>
+<p>The <code>.macro_const</code> directive is a special type of macro; it allows the user to use a symbolic name for a constant value. Like <code>.macro</code>, the substitution occurs at compile time. It takes two arguments (not comma separated), the first is an identifier, the second a constant value or a register.</p>
+</ul>
+
+<p>The macro layer is completely implemented in the lexical analysis phase. The parser does not know anything about what happens in the lexical analysis phase.</p>
+
+<p>When the <code>.include</code> directive is encountered, the specified file is opened and the following tokens that are requested by the parser are read from that file.</p>
+
+<p>A macro expansion is a dot&#45;prefixed identifier. For instance, if a macro was defined as shown below:</p>
+<pre> .macro foo(bar)
+   # ...
+ .endm
+</pre>
+<p>this macro can be expanded by writing <code>.foo(42)</code>. The body of the macro will be inserted at the point where the macro expansion is written.</p>
+
+<p>A <code>.macro_const</code> expansion is more or less the same as a <code>.macro</code> expansion, except that a constant expansion cannot take any arguments, and the substitution of a <code>.macro_const</code> contains no newlines, so it can be used within a line of code.</p>
+
+<h4><a name="Macro_parameter_list"
+>Macro parameter list</a></h4>
+
+<p>The parameter list for a macro is specified in parentheses after the name of the macro. Macro parameters are not typed.</p>
+<pre> .macro foo(bar, baz, buz)
+   # ...
+ .endm
+</pre>
+<p>The number of arguments in the call to a macro must match the number of parameters in the macro&#39;s parameter list. Macros do not perform multidispatch, so you can&#39;t have two macros with the same name but different parameters. Calling a macro with the wrong number of arguments gives the user an error.</p>
+
+<p>If a macro defines no parameter list, parentheses are optional on both the definition and the call. This means that a macro defined as:</p>
+<pre> .macro foo
+   # ...
+ .endm
+</pre>
+<p>can be expanded by writing either <code>.foo</code> or <code>.foo()</code>. And a macro definition written as:</p>
+<pre> .macro foo()
+   # ...
+ .endm
+</pre>
+<p>can also be expanded by writing either <code>.foo</code> or <code>.foo()</code>.</p>
+
+<p><b>Note: IMCC requires you to write parentheses if the macro was declared with (empty) parentheses. Likewise, when no parentheses were written (implying an empty parameter list), no parentheses may be used in the expansion.</b></p>
+
+<ul>
+<li>Heredoc arguments</li>
+
+<p>Heredoc arguments are not allowed when expanding a macro. The next implementation of PIR (&#34;PIRC&#34;) will be able to handle this correctly. This means that, currently, when using IMCC, the following is not allowed:</p>
+<pre>   .macro foo(bar)
+   ...
+   .endm
+
+   .foo(<<'EOS')
+ This is a heredoc
+    string.
+EOS</pre>
+<p>Using braces, { }, allows you to span multiple lines for an argument. See runtime/parrot/include/hllmacros.pir for examples and possible usage. A simple example is this:</p>
+<pre> .macro foo(a,b)
+   .a
+   .b
+ .endm
+
+ .sub main
+   .foo({ print "1"
+          print "2"
+        }, {
+          print "3"
+          print "4"
+        })
+ .end
+</pre>
+<p>This will expand the macro <code>foo</code>, after which the input to the PIR parser is:</p>
+<pre> .sub main
+   print "1"
+   print "2"
+   print "3"
+   print "4"
+ .end
+</pre>
+<p>which will result in the output:</p>
+
+<pre> 1234</pre>
+</ul>
+
+<h4><a name="Unique_local_labels"
+>Unique local labels</a></h4>
+
+<p>Within the macro body, the user can declare a unique label identifier using the value of a macro parameter, like so:</p>
+<pre>  .macro foo(a)
+    # ...
+ .label $a:
+    # ...
+  .endm
+</pre>
+<h4><a name="Unique_local_variables"
+>Unique local variables</a></h4>
+
+<p><b>Note: this is not yet implemented in IMCC</b>.</p>
+
+<p>Within the macro body, the user can declare a local variable with a unique name.</p>
+<pre>  .macro foo()
+    # ...
+  .macro_local int b
+    # ...
+  .b = 42
+  print .b # prints the value of the unique variable (42)
+    # ...
+  .endm
+</pre>
+<p>The <code>.macro_local</code> directive declares a local variable with a unique name in the macro. When the macro <code>.foo()</code> is called, the resulting code that is given to the parser will read as follows:</p>
+<pre>  .sub main
+    .local int local__foo__b__2
+      # ...
+    local__foo__b__2 = 42
+    print local__foo__b__2
+
+  .end
+</pre>
+<p>The user can also declare a local variable with a unique name set to the symbolic value of one of the macro parameters.</p>
+<pre>  .macro foo(b)
+    # ...
+  .macro_local int $b
+    # ...
+  .$b = 42
+  print .$b # prints the value of the unique variable (42)
+  print .b  # prints the value of parameter "b", which is
+            # also the name of the variable.
+  #  ...
+  .endm
+</pre>
+<p>So, the special <code>$</code> character indicates whether the symbol is interpreted as just the value of the parameter, or that the variable by that name is meant. Obviously, the value of <code>b</code> should be a string.</p>
+
+<p>The automatic name munging on <code>.macro_local</code> variables allows for using multiple macros, like so:</p>
+<pre>  .macro foo(a)
+  .macro_local int $a
+  .endm
+
+  .macro bar(b)
+  .macro_local int $b
+  .endm
+
+  .sub main
+    .foo("x")
+    .bar("x")
+  .end
+</pre>
+<p>This will result in code for the parser as follows:</p>
+<pre>  .sub main
+    .local int local__foo__x__2
+    .local int local__bar__x__4
+  .end
+</pre>
+<p>Each expansion is associated with a unique number; for labels declared with <code>.macro_label</code> and locals declared with <code>.macro_local</code> expansions, this means that multiple expansions of a macro will not result in conflicting label or local names.</p>
+
+<h4><a name="Ordinary_local_variables"
+>Ordinary local variables</a></h4>
+
+<p>Defining a non&#45;unique variable can still be done, using the normal syntax:</p>
+<pre>  .macro foo(b)
+  .local int b
+  .macro_local int $b
+  .endm
+</pre>
+<p>When invoking the macro <code>foo</code> as follows:</p>
+<pre>  .macro foo(b)
+    #...
+  .endm
+
+  .foo("x")
+</pre>
+<p>there will be two variables: <code>b</code> and <code>x</code>. When the macro is invoked twice:</p>
+<pre>  .sub main
+    .foo("x")
+    .foo("y")
+  .end
+</pre>
+<p>the resulting code that is given to the parser will read as follows:</p>
+<pre>  .sub main
+    .local int b
+    .local int local__foo__x
+    .local int b
+    .local int local__foo__y
+  .end
+</pre>
+<p>Obviously, this will result in an error, as the variable <code>b</code> is defined twice. If you intend the macro to create unique variables names, use <code>.macro_local</code> instead of <code>.local</code> to take advantage of the name munging.</p>
+
+<h2><a name="Examples"
+>Examples</a></h2>
+
+<h3><a name="Subroutine_Definition"
+>Subroutine Definition</a></h3>
+
+<p>A simple subroutine, marked with <code>:main</code>, indicating it&#39;s the entry point in the file. Other sub modifiers include <code>:load</code>, <code>:init</code>, etc.</p>
+<pre>    .sub sub_label :main
+      .param int a
+      .param int b
+      .param int c
+
+      # ...
+      .local pmc xy
+      .return(xy) 
+    .end
+</pre>
+<h3><a name="Subroutine_Call"
+>Subroutine Call</a></h3>
+
+<p>Invocation of a subroutine. In this case a continuation subroutine is created.</p>
+<pre>    .const "Sub" $P0 = "sub_label"
+    $P1 = new 'Continuation'
+    set_addr $P1, ret_addr
+    # ...
+    .local int x
+    .local num y
+    .local string z
+    .begin_call
+      .set_arg x
+      .set_arg y
+      .set_arg z
+      .call $P0, $P1    # r = _sub_label(x, y, z)
+  ret_addr:
+      .local int r      # optional - new result var
+      .get_result r
+    .end_call
+</pre>
+<h3><a name="NCI_Call"
+>NCI Call</a></h3>
+
+<h3><a name="Subroutine_Call_Syntactic_Sugar"
+>Subroutine Call Syntactic Sugar</a></h3>
+
+<p>Below there are three different ways to invoke the subroutine <code>sub_label</code>. The first retrieves a single return value, the second retrieves 3 return values, whereas the last discards any return values.</p>
+<pre>  .local int r0, r1, r2
+  r0 = sub_label($I0, $I1, $I2)
+  (r0, r1, r2) = sub_label($I0, $I1, $I2)
+  sub_label($I0, $I1, $I2)
+</pre>
+<p>This also works for NCI calls, as the subroutine PMC will be a NCI sub, and on invocation will do the Right Thing.</p>
+
+<p>Instead of the label a subroutine object can be used too:</p>
+
+<h3><a name="Methods"
+>Methods</a></h3>
+<pre>  .namespace [ "Foo" ]
+
+  .sub _sub_label :method [,Subpragma, ...]
+    .param int a
+    .param int b
+    .param int c
+    # ...
+    self."_other_meth"()
+    # ...
+    .begin_return
+    .set_return xy
+    .end_return
+    ...
+  .end
+</pre>
+<p>The variable &#34;self&#34; automatically refers to the invocating object, if the subroutine declaration contains &#34;method&#34;.</p>
+
+<h3><a name="Calling_Methods"
+>Calling Methods</a></h3>
+
+<p>The syntax is very similar to subroutine calls. The call is done with <code>.meth_call</code> which must immediately be preceded by the <code>.invocant</code>:</p>
+
+<p>The return continuation is optional. The method can be a string constant or a string variable.</p>
+
+<h3><a name="Returning_and_Yielding"
+>Returning and Yielding</a></h3>
+
+<pre>  .return ( a, b )      # return the values of a and b
+
+  .return ()            # return no value
+
+  .tailcall func_call()   # tail call function
+
+  .tailcall o.&#34;meth&#34;()    # tail method call</pre>
+
+<p>Similarly, one can yield using the .yield directive</p>
+
+<pre>  .yield ( a, b )      # yield with the values of a and b
+
+  .yield ()            # yield with no value</pre>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<p>There are multiple implementations of PIR, each of which will meet this specification for the syntax. Currently there are the following implementations:</p>
+
+<ul>
+<li>compilers/imcc</li>
+
+<p>This is the current implementation being used in Parrot. Some of the specified syntactic constructs in this PDD are not implemented in IMCC; these constructs are marked with notes saying so.</p>
+
+<li>compilers/pirc</li>
+
+<p>This is a new implementation which will fix several of IMCC&#39;s shortcomings. It will replace IMCC.</p>
+
+<li>languages/PIR</li>
+
+<p>This is a PGE&#45;based implementation, but needs to be updated and completed.</p>
+</ul>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p>None.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

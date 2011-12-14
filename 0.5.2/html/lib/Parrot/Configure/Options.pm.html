@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Process command&#45;line options to F&#60;Configure.pl&#62;</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Process command&#45;line options to F&#60;Configure.pl&#62;</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/perl.html">Perl Modules</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Parrot::Configure::Options &#45; Process command&#45;line options to <em lang='und' xml:lang='und'><a href="../../../Configure.pl.html">Configure.pl</a></em></p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>    use Parrot::Configure::Options qw( process_options );
+
+    $args = process_options( {
+        mode    =&#62; q{configure},
+    } );</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Parrot::Configure::Options exports on demand two subroutines: <code lang='und' xml:lang='und'>process_options()</code>, which processes the command&#45;line options provided to <em lang='und' xml:lang='und'><a href="../../../Configure.pl.html">Configure.pl</a></em>; and <code lang='und' xml:lang='und'>get_valid_options()</code>, which returns the list of currently valid options.</p>
+
+<p>If you provide <em lang='und' xml:lang='und'><a href="../../../Configure.pl.html">Configure.pl</a></em> with either <code lang='und' xml:lang='und'>&#45;&#45;help</code> or <code lang='und' xml:lang='und'>&#45;&#45;version</code>, <code lang='und' xml:lang='und'>process_options()</code> will print out the appropriate message and perform a bare <code lang='und' xml:lang='und'>return</code>, <i>i.e.</i>, the return value will be <code lang='und' xml:lang='und'>undef</code>. The calling script &#45;&#45; whether <em lang='und' xml:lang='und'><a href="../../../Configure.pl.html">Configure.pl</a></em> or a test file &#45;&#45; can then check for the definedness of <code lang='und' xml:lang='und'>process_options()</code>&#39;s return value and proceed appropriately.</p>
+
+<p>An array of valid command&#45;line option names stored internally is consulted; the program will die if an invalid option is called.</p>
+
+<h1><a name="SUBROUTINES"
+>SUBROUTINES <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="process_options()"
+><code lang='und' xml:lang='und'>process_options()</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<ul>
+<li>Purpose</li><p class="pad"></p>
+
+<p>Process command&#45;line options provided to <em lang='und' xml:lang='und'><a href="../../../Configure.pl.html">Configure.pl</a></em> and proceed appropriately.</p>
+
+<li>Arguments</li><p class="pad"></p>
+
+<p>One argument: Reference to a hash holding the following key&#45;value pairs:</p>
+
+<pre lang='und' xml:lang='und'>    argv            : reference to @ARGV; defaults to []
+    script          : Perl&#39;s $0:  the calling program;
+                      defaults to &#39;Configure.pl&#39;
+    parrot_version  : string holding Parrot version number
+                      (currently supplied by
+                      Parrot::BuildUtil::parrot_version())
+    svnid           : string holding Subversion Id string</pre>
+
+<li>Return Value</li><p class="pad"></p>
+
+<ul>
+<li><code lang='und' xml:lang='und'>&#45;&#45;version</code> or <code lang='und' xml:lang='und'>&#45;&#45;help</code></li><p class="pad"></p>
+
+<p>Bare return (<code lang='und' xml:lang='und'>undef</code>).</p>
+
+<li>All other options</li><p class="pad"></p>
+
+<p>Reference to a hash of option names and values.</p>
+</ul>
+
+<li>Comment</li><p class="pad"></p>
+</ul>
+
+<h2><a name="get_valid_options()"
+><code lang='und' xml:lang='und'>get_valid_options()</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<ul>
+<li>Purpose</li><p class="pad"></p>
+
+<p>Get a list of options currently valid for <em lang='und' xml:lang='und'><a href="../../../Configure.pl.html">Configure.pl</a></em>.</p>
+
+<li>Arguments</li><p class="pad"></p>
+
+<p>None.</p>
+
+<li>Return Value</li><p class="pad"></p>
+
+<p>List of currently valid options.</p>
+
+<li>Comment</li><p class="pad"></p>
+</ul>
+
+<h1><a name="NOTES"
+>NOTES <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>The functionality in this package was transferred from <em lang='und' xml:lang='und'><a href="../../../Configure.pl.html">Configure.pl</a></em> by Jim Keenan.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'><a href="../../../Configure.pl.html">Configure.pl</a></em>.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

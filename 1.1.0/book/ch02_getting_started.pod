@@ -1,0 +1,169 @@
+=pod
+
+=head1 Getting Started
+
+The first step before you start playing with Parrot 
+
+=head2 Installing Parrot
+
+The simplest way to install Parrot is with pre-compiled binaries for
+your operating system or distribution. Packages are available for many
+packaging systems, including Debian, Ubuntu, Fedora, Mandriva, FreeBSD,
+Cygwin, and MacPorts. A current list of available packages is maintained
+at U<http://www.parrot.org/download>. A binary installer for Windows is
+also available at U<http://parrotwin32.sourceforge.net/>.
+
+If packages aren't available on your system, you can download the latest
+supported release from U<http://www.parrot.org/release/supported>.
+
+To build Parrot you'll need a C compiler and a make utility. Generally,
+you'll use F<gcc> and F<make>, but many different versions of these
+tools are supported on different operation systems. Perl is also needed
+for parts of the configuration and build process.
+
+The following command-line instructions build the core virtual machine
+and compiler toolkit, and run the standard test suite.
+
+  $ perl Configure.pl
+  $ make
+  $ make test
+  $ make install
+
+If you're developing a language on Parrot, you'll also want to install
+the Parrot developer tools:
+
+  $ make install-dev
+
+By default, Parrot is installed in F</usr/local>, but you can
+specify a different location with the C<--prefix> flag to the
+configuration script.
+
+  $ perl Configure.pl --prefix=/home/me/parrot
+
+=head2 Running Parrot
+
+Once you've installed Parrot, you can run your first small script. Create
+a test file called F<fjord.pasm>. C<.pasm>
+files are written in Parrot Assembly Language (PASM) which is a
+low-level language native to the Parrot virtual machine.
+
+=begin PASM
+
+  print "He's pining for the fjords.\n"
+  end
+
+=end PASM
+
+Now run this file with:
+
+  $ parrot fjord.pasm
+
+which will print:
+
+  He's pining for the fjords.
+
+=head2 Running a Language on Parrot
+
+Next, try out one of Parrot's high-level languages. Create a test file
+called F<hello.nqp>:
+
+  say "Hello, World!"
+
+Then run it as:
+
+  $ nqp hello.nqp
+
+which will print:
+
+  Hello, World!
+
+=head2 What Next?
+
+This book provides details on the components of Parrot relevant to
+various development tasks. You may pick and choose chapters based on
+your area of interest:
+
+=over 4
+
+=item Chapter 3, I<Parrot Intermediate Representation>
+
+Parrot Intermediate Representation (PIR) is a mid-level language native
+to the Parrot virtual machine. It's commonly used for writing extensions
+and tools for Parrot.
+
+=item Chapter 4, I<Compiler Tools>
+
+The Parrot Compiler Toolkit (PCT) provides a common infrastructure and
+set of utilities for implementing languages on Parrot.
+
+=item Chapter 5, I<Grammar Engine>
+
+The Parrot Grammar Engine (PGE) is a next-generation regular expression
+engine and recursive descent parser. PGE is part of the compiler tools,
+and the first step to implementing a language on Parrot.
+
+=item Chapter 6, I<Grammar Actions>
+
+NQP (Not Quite Perl) is a lightweight language loosely inspired by the
+Perl 6 specification. NQP is part of the compiler tools and is an
+integral part of building language implementations on Parrot.
+
+=item Chapter 7, I<Dynamic C-Level Objects>
+
+Parrot allows dynamic extensions to Parrot's core data types. These are
+commonly used in more advanced language implementations. This chapter
+covers the details of writing and building these object extensions.
+
+=item Chapter 8, I<Dynamic Opcodes>
+
+Parrot allows dynamic extensions to the core instruction set. These are
+commonly used in more advanced language implementations. This chapter
+covers the details of writing and building these opcode extensions.
+
+=item Chapter 9, I<Parrot Assembly Language>
+
+Parrot Assembly Language (PASM) is a low-level language native to the
+Parrot virtual machine. It serves as a plain-English representation of
+Parrot's bytecode format.
+
+=item Chapter 10, I<Instruction Reference>
+
+The standard instruction set for the Parrot virtual machine.
+
+=item Chapter 11, I<Directive Reference>
+
+Out-of-band directives used within PIR/PASM code.
+
+=item Chapter 13, I<Operator Reference>
+
+Operator syntax in PIR code.
+
+=item Appendix A, I<Glossary>
+
+A quick reference to common Parrot terms.
+
+=item Appendix B, I<Command-Line Options>
+
+Further details on running Parrot.
+
+=item Appendix C, I<Build Options>
+
+Dependencies and additional options for building Parrot from source.
+
+=item Appendix D, I<Source Code>
+
+Navigating the Parrot source tree.
+
+=item Appendix E, I<Patch Submission>
+
+How to submit a patch to Parrot.
+
+
+=back
+
+=cut
+
+# Local variables:
+#   c-file-style: "parrot"
+# End:
+# vim: expandtab shiftwidth=4:

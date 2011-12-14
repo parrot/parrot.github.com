@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Array base class</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Array base class
+                </div>
+
+<h1><a name="TITLE"
+>TITLE</a></h1>
+
+<p>Array base class</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT</a></h1>
+
+<p>This pod file documents the Array base class usage.
+For implementation details you should look inside the class file,
+found at <em>src/pmc/array.pmc</em> in the parrot source code.</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+<pre>  new $P0, 'Array'    # initialize P0 as an array
+
+  set $I0, $P0        # set I0 to the size of the array in P0
+  set $P0, 2          # set the size of the array in P0 to 2
+
+  set $P0[0], "foo "  # put "foo" into the array at position 0
+  set $I1, $P0[1]     # get an integer value from the entry 
+                      # at array position 1
+
+  defined $I2, $P0[1] # is the value at position 1 defined?
+  exists  $I3, $P0[0] # is there an element at position 0?
+</pre>
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<h2><a name="Creation"
+>Creation</a></h2>
+
+<p>As with any other PMC,
+the following line creates an array PMC in register <code>P0</code>:</p>
+<pre>  new $P0, 'Array'
+</pre>
+<h2><a name="Array_sizes"
+>Array sizes</a></h2>
+
+<p>You can retrieve the size of the array using</p>
+<pre>  set $I0, $P0
+</pre>
+<p>This will put the size of the array in register <code>P0</code> into <code>I0</code>.
+In the same way,
+assigning an integer directly to the array sets the size of the array.
+For instance:</p>
+<pre>  new $P0, 'Array'
+  set $P0, 2
+</pre>
+<p>creates a new Array (with default size 0) and then expands the size of the array to two.</p>
+
+<p>Arrays do not automatically resize themselves when you access out&#45;of&#45;bounds elements.
+This means that you must remember to size an Array appropriately before storing anything in it.</p>
+
+<h2><a name="Accessing_elements"
+>Accessing elements</a></h2>
+
+<p>Elements are accessed using indexes,
+as in any programming language.</p>
+
+<p>The following code initializes an array in <code>P0</code> with size two,
+and sets the first position to the integer <code>&#45;8</code> and second position to the floating point number <code>3.1415</code>.</p>
+<pre>  new $P0, 'Array'
+  set $P0, 2
+
+  set $P0[0], -8
+  set $P0[1], 3.1415
+</pre>
+<p>You can also assign directly from registers; for instance:</p>
+<pre>  new $P0, 'Array'
+  set $P0, 2
+
+  set $I0, -8
+  set $N0, 3.1415
+
+  set $P0[0], $I0
+  set $P0[1], $N0
+</pre>
+<p>leaves P0 in the same state as in the previous code snippet.</p>
+
+<p>To retrieve elements,
+we use the same syntax:</p>
+<pre>  set $N1, $P0[1]
+  set $I1, $P0[0]
+</pre>
+<p>Those two lines retrieve the values from the array back into registers.</p>
+
+<p>The value stored at a given position is not fixed; it can be changed simply by assigning a new value:</p>
+<pre>  set $P0[1], "A string"
+</pre>
+<p>Accessing an out&#45;of&#45;bounds array element raises an exception; if you want an Array that will automatically resize,
+then use a <code>ResizablePMCArray</code>.</p>
+
+<p>You can test if there is a defined element at an array position by using</p>
+<pre>  defined $I0, $P0[1]
+</pre>
+<p>for the position you want to test.
+On the other hand,
+if you only want to test whether a given element exists (rather than whether it is defined),
+then use the <code>exists</code> op instead:</p>
+<pre>  exists $I0, $P0[0]
+</pre>
+<h2><a name="TODO"
+>TODO</a></h2>
+
+<p>Explain a little more which exception will be raised in case you access a out&#45;of&#45;bounds index on the array (as soon we have exceptions).</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

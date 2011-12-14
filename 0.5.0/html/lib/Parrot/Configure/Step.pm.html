@@ -1,0 +1,247 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Configuration Step Utilities</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Configuration Step Utilities</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/perl.html">Perl Modules</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Parrot::Configure::Step &#45; Configuration Step Utilities</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>The <code lang='und' xml:lang='und'>Parrot::Configure::Step</code> module contains utility functions for steps to use.</p>
+
+<p>Note that the actual configuration step itself is NOT an instance of this class,
+rather it is defined to be in the <code lang='und' xml:lang='und'>package</code> <code lang='und' xml:lang='und'>Configure::Step</code>.
+See <em lang='und' xml:lang='und'><a href="../../../docs/configuration.pod.html">docs/configuration.pod</a></em> for more information on how to create new configuration steps.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="integrate($orig,_$new)"
+><b><code lang='und' xml:lang='und'>integrate($orig, $new)</b></code></a></dt><p class="pad"></p>
+
+<dd>Integrates <code lang='und' xml:lang='und'>$new</code> into <code lang='und' xml:lang='und'>$orig</code>.
+Returns <code lang='und' xml:lang='und'>$orig</code> if <code lang='und' xml:lang='und'>$new</code> is undefined.</dd><p class="pad"></p>
+
+<dt><a name="prompt($message,_$value)"
+><b><code lang='und' xml:lang='und'>prompt($message, $value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Prints out &#34;message [default] &#34; and waits for the user&#39;s response.
+Returns the response,
+or the default if the user just hit <code lang='und' xml:lang='und'>ENTER</code>.</dd><p class="pad"></p>
+
+<dt><a name="file_checksum($filename,_$ignore_pattern)"
+><b><code lang='und' xml:lang='und'>file_checksum($filename, $ignore_pattern)</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates a checksum for the specified file.
+This is used to compare files.</dd><p class="pad"></p>
+
+<dd>Any lines matching the regular expression specified by <code lang='und' xml:lang='und'>$ignore_pattern</code> are not included in the checksum.</dd><p class="pad"></p>
+
+<dt><a name="copy_if_diff($from,_$to,_$ignore_pattern)"
+><b><code lang='und' xml:lang='und'>copy_if_diff($from, $to, $ignore_pattern)</b></code></a></dt><p class="pad"></p>
+
+<dd>Copies the file specified by <code lang='und' xml:lang='und'>$from</code> to the location specified by <code lang='und' xml:lang='und'>$to</code> if its contents have changed.</dd><p class="pad"></p>
+
+<dd>The regular expression specified by <code lang='und' xml:lang='und'>$ignore_pattern</code> is passed to <code lang='und' xml:lang='und'>file_checksum()</code> when comparing the files.</dd><p class="pad"></p>
+
+<dt><a name="move_if_diff($from,_$to,_$ignore_pattern)"
+><b><code lang='und' xml:lang='und'>move_if_diff($from, $to, $ignore_pattern)</b></code></a></dt><p class="pad"></p>
+
+<dd>Moves the file specified by <code lang='und' xml:lang='und'>$from</code> to the location specified by <code lang='und' xml:lang='und'>$to</code> if its contents have changed.</dd><p class="pad"></p>
+
+<dt><a name="genfile($source,_$target,_%options)"
+><b><code lang='und' xml:lang='und'>genfile($source, $target, %options)</b></code></a></dt><p class="pad"></p>
+
+<dd>Takes the specified source file,
+replacing entries like <code lang='und' xml:lang='und'>@FOO@</code> with <code lang='und' xml:lang='und'>FOO</code>&#39;s value from the configuration system&#39;s data,
+and writes the results to specified target file.</dd><p class="pad"></p>
+
+<dd>Respects the following options when manipulating files (Note: most of the replacement syntax assumes the source text is on a single line.)</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="makefile"
+>makefile</a></dt><p class="pad"></p>
+
+<dd>If set to a true value,
+this flag sets (unless overriden) <code lang='und' xml:lang='und'>comment_type</code> to &#39;#&#39;,
+<code lang='und' xml:lang='und'>replace_slashes</code> to enabled,
+and <code lang='und' xml:lang='und'>conditioned_lines</code> to enabled.</dd><p class="pad"></p>
+
+<dd>If the name of the file being generated ends in <code lang='und' xml:lang='und'>Makefile</code>,
+this option defaults to true.</dd><p class="pad"></p>
+
+<dt><a name="conditioned_lines"
+>conditioned_lines</a></dt><p class="pad"></p>
+
+<dd>If conditioned_lines is true,
+then lines in the file that begin with: <code lang='und' xml:lang='und'>#CONDITIONED_LINE(var):</code> are skipped if the var condition is false.
+Lines that begin with <code lang='und' xml:lang='und'>#INVERSE_CONDITIONED_LINE(var):</code> are skipped if the var condition is true.</dd><p class="pad"></p>
+
+<dt><a name="comment_type"
+>comment_type</a></dt><p class="pad"></p>
+
+<dd>This option takes has two possible values,
+<code lang='und' xml:lang='und'>#</code> or <code lang='und' xml:lang='und'>/*</code>.
+If present and set to one of these two values,
+the generated file will contain a generated header that is commented out appropriately.</dd><p class="pad"></p>
+
+<dt><a name="ignore_pattern"
+>ignore_pattern</a></dt><p class="pad"></p>
+
+<dd>A regular expression.
+Any lines in the file matching this expression are ignored when determining if the target file has changed (and should therefore be overwritten with a new copy).</dd><p class="pad"></p>
+
+<dt><a name="feature_file"
+>feature_file</a></dt><p class="pad"></p>
+
+<dd>When feature_file is set to a true value,
+a lines beginning with <code lang='und' xml:lang='und'>#perl</code> forces the remaining lines of the file to be evaluated as perl code.
+Before this evaluation occurs,
+any substitution of @@ values is performed on the original text.</dd><p class="pad"></p>
+
+<dt><a name="replace_slashes"
+>replace_slashes</a></dt><p class="pad"></p>
+
+<dd>If set to a true value,
+this causes any <code lang='und' xml:lang='und'>/</code>s in the file to automatically be replaced with an architecture appropriate slash.
+<code lang='und' xml:lang='und'>/</code> or <code lang='und' xml:lang='und'>\</code>.
+This is a very helpful option when writing Makefiles.</dd><p class="pad"></p>
+
+<dt><a name="expand_gmake_syntax"
+>expand_gmake_syntax</a></dt><p class="pad"></p>
+
+<dd>If set to a true value,
+then certain types of gmake syntax will be expanded into their full equivalents.
+For example:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> $(wildcard PATTERN)</pre>
+
+<dd>Will be replaced <i>at config time</i> with the list of files that match this pattern. Note! Be very careful when determining whether or not to disable this expansion during config time and letting gmake evaluate these: the config system itself may change state of the filesystem, causing the directives to expand differently depending on when they&#39;re run. Another potential issue to consider there is that most makefiles, while generated from the root directory, are <i>run</i> from a subdirectory. So relative path names become an issue.</dd><p class="pad"></p>
+
+<dd>The gmake replacements are done repeatedly on a single line, so nested syntax works ok.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="addprefix"
+>addprefix</a></dt><p class="pad"></p>
+
+<dt><a name="basename"
+>basename</a></dt><p class="pad"></p>
+
+<dt><a name="wildcard"
+>wildcard</a></dt><p class="pad"></p>
+
+<dt><a name="notdir"
+>notdir</a></dt><p class="pad"></p>
+</dl>
+</dl>
+
+<dt><a name="_run_command($command,_$out,_$err)"
+><b><code lang='und' xml:lang='und'>_run_command($command, $out, $err)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the specified command. Output is directed to the file specified by <code lang='und' xml:lang='und'>$out</code>, warnings and errors are directed to the file specified by <code lang='und' xml:lang='und'>$err</code>.</dd><p class="pad"></p>
+
+<dt><a name="_build_compile_command(_$cc,_$ccflags,_$cc_args_)"
+><b><code lang='und' xml:lang='und'>_build_compile_command( $cc, $ccflags, $cc_args )</b></code></a></dt><p class="pad"></p>
+
+<dd>Constructs a command&#45;line to do the compile.</dd><p class="pad"></p>
+
+<dt><a name="cc_gen($source)"
+><b><code lang='und' xml:lang='und'>cc_gen($source)</b></code></a></dt><p class="pad"></p>
+
+<dd>Generates <em lang='und' xml:lang='und'>test.c</em> from the specified source file.</dd><p class="pad"></p>
+
+<dt><a name="cc_build($cc_args,_$link_args)"
+><b><code lang='und' xml:lang='und'>cc_build($cc_args, $link_args)</b></code></a></dt><p class="pad"></p>
+
+<dd>These items are used from current config settings:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  $cc, $ccflags, $ldout, $o, $link, $linkflags, $cc_exe_out, $exe, $libs</pre>
+
+<dd>Calls the compiler and linker on <em lang='und' xml:lang='und'>test.c</em>.</dd><p class="pad"></p>
+
+<dt><a name="cc_run()"
+><b><code lang='und' xml:lang='und'>cc_run()</b></code></a></dt><p class="pad"></p>
+
+<dd>Calls the <em lang='und' xml:lang='und'>test</em> (or <em lang='und' xml:lang='und'>test.exe</em>) executable. Any output is directed to <em lang='und' xml:lang='und'>test.out</em>.</dd><p class="pad"></p>
+
+<dt><a name="cc_run_capture()"
+><b><code lang='und' xml:lang='und'>cc_run_capture()</b></code></a></dt><p class="pad"></p>
+
+<dd>Same as <code lang='und' xml:lang='und'>cc_run()</code> except that warnings and errors are also directed to <em lang='und' xml:lang='und'>test.out</em>.</dd><p class="pad"></p>
+
+<dt><a name="cc_clean()"
+><b><code lang='und' xml:lang='und'>cc_clean()</b></code></a></dt><p class="pad"></p>
+
+<dd>Cleans up all files in the root folder that match the glob <em lang='und' xml:lang='und'>test.*</em>.</dd><p class="pad"></p>
+
+<dt><a name="capture_output($command)"
+><b><code lang='und' xml:lang='und'>capture_output($command)</b></code></a></dt><p class="pad"></p>
+
+<dd>Executes the given command. The command&#39;s output (both stdout and stderr), and its return status is returned as a 3&#45;tuple. <b>STDERR</b> is redirected to <em lang='und' xml:lang='und'>test.err</em> during the execution, and deleted after the command&#39;s run.</dd><p class="pad"></p>
+
+<dt><a name="check_progs([$programs])"
+><b><code lang='und' xml:lang='und'>check_progs([$programs])</b></code></a></dt><p class="pad"></p>
+
+<dd>Where <code lang='und' xml:lang='und'>$programs</code> may be either a scalar with the name of a single program or an array ref of programs to search the current <code lang='und' xml:lang='und'>PATH</code> for. The first matching program name is returned or <code lang='und' xml:lang='und'>undef</code> on failure. Note: this function only returns the name of the program and not its complete path.</dd><p class="pad"></p>
+
+<dd>This function is similar to <code lang='und' xml:lang='und'>autoconf</code>&#39;s <code lang='und' xml:lang='und'>AC_CHECK_PROGS</code> macro.</dd><p class="pad"></p>
+
+<dt><a name="_slurp($filename)"
+><b><code lang='und' xml:lang='und'>_slurp($filename)</b></code></a></dt><p class="pad"></p>
+
+<dd>Slurps <code lang='und' xml:lang='und'>$filename</code> into memory and returns it as a string.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Parrot::Configure::RunSteps"
+><b><code lang='und' xml:lang='und'>Parrot::Configure::RunSteps</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="docs/configuration.pod"
+><em lang='und' xml:lang='und'><a href="../../../docs/configuration.pod.html">docs/configuration.pod</a></em></a></dt><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

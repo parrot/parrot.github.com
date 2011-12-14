@@ -1,0 +1,104 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Implementation of Iterator for Hashes.</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Implementation of Iterator for Hashes.
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/hashiterator.pmc &#45; Implementation of Iterator for Hashes.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Generic iterator for traversing Hash.</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<h2><a name="default_usage"
+>default usage</a></h2>
+
+<pre>    .local pmc iterator, hash, key, entry
+    iterator = iter hash
+  iter_loop:
+    unless iterator, iter_end  # while (more values)
+    key   = shift iterator     # get the key. Some key
+    entry = hash[key]
+    ...
+    goto iter_loop
+  iter_end:</pre>
+
+<h2><a name="C++&#45;style_usage"
+>C++&#45;style usage</a></h2>
+
+<pre>    .local pmc iterator, hash, iter_key, key, entry
+    iterator = iter hash
+  iter_loop:
+    unless iterator, iter_end  # while (more values)
+    iter_key = shift iterator     # get the key
+    key = iter_key.&#39;key&#39;()        # get an original key used to put value
+    key = iter_key.&#39;value&#39;()      # get an entry
+    ...
+    goto iter_loop
+  iter_end:</pre>
+
+<h1><a name="Methods"
+>Methods</a></h1>
+
+<dl>
+<dt><a name="static_void_advance_to_next(PARROT_INTERP,_PMC_*self)"
+><b><code>static void advance_to_next(PARROT_INTERP, PMC *self)</b></code></a></dt>
+Advance to next position. Return found (if any) HashBucket.
+<dt><a name="void_init_pmc(PMC_*initializer)"
+><b><code>void init_pmc(PMC *initializer)</b></code></a></dt>
+Initializes the iterator with an aggregate PMC. Defaults iteration mode to iterate from start.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Marks the hash as live.
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+
+<dt><a name="void_set_integer_native()"
+><b><code>void set_integer_native()</b></code></a></dt>
+
+<dt><a name="PMC_*get_pmc()"
+><b><code>PMC *get_pmc()</b></code></a></dt>
+Returns this Iterator&#39;s Hash.
+<dt><a name="INTVAL_get_bool()"
+><b><code>INTVAL get_bool()</b></code></a></dt>
+Returns true if there is more elements to iterate over.
+<dt><a name="INTVAL_elements()"
+><b><code>INTVAL elements()</b></code></a></dt>
+Returns the number of remaining elements in the Hash.
+<dt><a name="PMC_*shift_pmc()"
+><b><code>PMC *shift_pmc()</b></code></a></dt>
+Returns the HashIteratorKey for the current position and advance the next one.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

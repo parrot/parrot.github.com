@@ -1,0 +1,182 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Lua Debug Library</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Lua Debug Library</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/lua.html">Lua</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>lib/luadebug.pir &#45; Lua Debug Library</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>This library provides the functionality of the debug interface to Lua programs.
+You should exert care when using this library.
+The functions provided here should be used exclusively for debugging and similar tasks,
+such as profiling.
+Please resist the temptation to use them as a usual programming tool: They can be very slow.
+Moreover,
+several of its functions violate some assumptions about Lua code (e.g.,
+that variables local to a function cannot be accessed from outside or that userdata metatables cannot be changed by Lua code) and therefore can compromise otherwise secure code.</p>
+
+<p>All functions in this library are provided inside the <code>debug</code> table.</p>
+
+<p>See &#34;Lua 5.1 Reference Manual&#34;,
+section 5.9 &#34;The Debug Library&#34;,
+<a href='http://www.lua.org/manual/5.1/manual.html#5.9'><a href="http://www.lua.org/manual/5.1/manual.html#5.9">http://www.lua.org/manual/5.1/manual.html#5.9</a></a>.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="debug.debug_()"
+><b><code>debug.debug ()</b></code></a></dt>
+Enters an interactive mode with the user,
+running each string that the user enters.
+Using simple commands and other debug facilities,
+the user can inspect global and local variables,
+change their values,
+evaluate expressions,
+and so on.
+A line containing only the word <code>cont</code> finishes this function,
+so that the caller continues its execution.Note that commands for <code>debug.debug</code> are not lexically nested within any function,
+and so have no direct access to local variables.
+<dt><a name="debug.getfenv_(o)"
+><b><code>debug.getfenv (o)</b></code></a></dt>
+Returns the environment of object <code>o</code>.
+<dt><a name="debug.gethook_()"
+><b><code>debug.gethook ()</b></code></a></dt>
+Returns the current hook settings,
+as three values: the current hook function,
+the current hook mask,
+and the current hook count (as set by the <code>debug.sethook</code> function).NOT YET IMPLEMENTED.
+<dt><a name="debug.getinfo_(function_[,_what])"
+><b><code>debug.getinfo (function [, what])</b></code></a></dt>
+Returns a table with information about a function.
+You can give the function directly,
+or you can give a number as the value of <code>function</code>,
+which means the function running at level <code>function</code> of the call stack: Level 0 is the current function (<code>getinfo</code> itself); level 1 is the function that called <code>getinfo</code>; and so on.
+If <code>function</code> is a number larger than the number of active functions,
+then <code>getinfo</code> returns <b>nil</b>.The returned table contains all the fields returned by <code>lua_getinfo</code>,
+with the string <code>what</code> describing which fields to fill in.
+The default for <code>what</code> is to get all information available.
+If present,
+the option `<code>f</code>&#180; adds a field named <code>func</code> with the function itself.For instance,
+the expression <code>debug.getinfo(1,&#34;n&#34;).name</code> returns a name of the current function,
+if a reasonable name can be found,
+and <code>debug.getinfo(print)</code> returns a table with all available information about the <code>print</code> function.NOT YET IMPLEMENTED.
+<dt><a name="debug.getlocal_(level,_local)"
+><b><code>debug.getlocal (level, local)</b></code></a></dt>
+This function returns the name and the value of the local variable with index <code>local</code> of the function at level <code>level</code> of the stack.
+(The first parameter or local variable has index 1,
+and so on,
+until the last active local variable.) The function returns <b>nil</b> if there is no local variable with the given index,
+and raises an error when called with a <code>level</code> out of range.
+(You can call <code>debug.getinfo</code> to check whether the level is valid.)Variable names starting with `<code>(</code>&#180; (open parentheses) represent internal variables (loop control variables,
+temporaries,
+and C function locals).NOT YET IMPLEMENTED.
+<dt><a name="debug.getmetatable_(object)"
+><b><code>debug.getmetatable (object)</b></code></a></dt>
+Returns the metatable of the given <code>object</code> or <b>nil</b> if it does not have a metatable.
+<dt><a name="debug.getregistry_()"
+><b><code>debug.getregistry ()</b></code></a></dt>
+Returns the registry table.
+<dt><a name="debug.getupvalue_(func,_up)"
+><b><code>debug.getupvalue (func, up)</b></code></a></dt>
+This function returns the name and the value of the upvalue with index <code>up</code> of the function <code>func</code>.
+The function returns <b>nil</b> if there is no upvalue with the given index.NOT YET IMPLEMENTED.
+<dt><a name="debug.setfenv_(object,_table)"
+><b><code>debug.setfenv (object, table)</b></code></a></dt>
+Sets the environment of the given <code>object</code> to the given <code>table</code>.
+<dt><a name="debug.sethook_(hook,_mask_[,_count])"
+><b><code>debug.sethook (hook, mask [, count])</b></code></a></dt>
+Sets the given function as a hook.
+The string <code>mask</code> and the number <code>count</code> describe when the hook will be called.
+The string mask may have the following characters,
+with the given meaning:
+<dl>
+<dt><a name="&#34;c&#34;"
+><b><code>&#34;c&#34;</b></code></a></dt>
+The hook is called every time Lua calls a function;
+<dt><a name="&#34;r&#34;"
+><b><code>&#34;r&#34;</b></code></a></dt>
+The hook is called every time Lua returns from a function;
+<dt><a name="&#34;l&#34;"
+><b><code>&#34;l&#34;</b></code></a></dt>
+The hook is called every time Lua enters a new line of code.</dl>
+With a <code>count</code> different from zero,
+the hook is called after every <code>count</code> instructions.When called without arguments,
+<code>debug.sethook</code> turns off the hook.When the hook is called,
+its first parameter is a string describing the event that has triggered its call: <code>&#34;call&#34;</code>,
+<code>&#34;return&#34;</code> (or <code>&#34;tail return&#34;</code>),
+<code>&#34;line&#34;</code>,
+and <code>&#34;count&#34;</code>.
+For line events,
+the hook also gets the new line number as its second parameter.
+Inside a hook,
+you can call <code>getinfo</code> with level 2 to get more information about the running function (level 0 is the <code>getinfo</code> function,
+and level 1 is the hook function),
+unless the event is <code>&#34;tail return&#34;</code>.
+In this case,
+Lua is only simulating the return,
+and a call to <code>getinfo</code> will return invalid data.NOT YET IMPLEMENTED.
+<dt><a name="debug.setlocal_(level,_local,_value)"
+><b><code>debug.setlocal (level, local, value)</b></code></a></dt>
+This function assigns the value <code>value</code> to the local variable with index <code>local</code> of the function at level <code>level</code> of the stack.
+The function returns <b>nil</b> if there is no local variable with the given index,
+and raises an error when called with a <code>level</code> out of range.
+(You can call <code>getinfo</code> to check whether the level is valid.) Otherwise,
+it returns the name of the local variable.NOT YET IMPLEMENTED.
+<dt><a name="debug.setmetatable_(object,_table)"
+><b><code>debug.setmetatable (object, table)</b></code></a></dt>
+Sets the metatable for the given <code>object</code> to the given <code>table</code> (which can be <b>nil</b>).
+<dt><a name="debug.setupvalue_(func,_up,_value)"
+><b><code>debug.setupvalue (func, up, value)</b></code></a></dt>
+This function assigns the value <code>value</code> to the upvalue with index <code>up</code> of the function <code>func</code>.
+The function returns <b>nil</b> if there is no upvalue with the given index.
+Otherwise,
+it returns the name of the upvalue.NOT YET IMPLEMENTED.
+<dt><a name="debug.traceback_([message]_[,_level])"
+><b><code>debug.traceback ([message] [, level])</b></code></a></dt>
+Returns a string with a traceback of the call stack.
+An optional <code>message</code> string is appended at the beginning of the traceback.
+This function is typically used with <code>xpcall</code> to produce better error messages.STILL INCOMPLETE.</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

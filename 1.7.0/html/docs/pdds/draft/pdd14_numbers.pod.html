@@ -1,0 +1,499 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - [DRAFT] PDD 14: Numbers</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; <a href="../../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; [DRAFT] PDD 14: Numbers
+                </div>
+
+<h1><a name="[DRAFT]_PDD_14:_Numbers"
+>[DRAFT] PDD 14: Numbers</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>This PDD describes Parrot&#39;s numeric data types.</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<p>This PDD details the basic numeric datatypes that the Parrot core knows how to deal with,
+including the core numeric PMCs.</p>
+
+<h3><a name="Integer_data_types"
+>Integer data types</a></h3>
+
+<p>Parrot provides a native integer data type,
+generally known as an &#34;Int&#34;.
+The size of the integer is chosen at Parrot configuration time,
+the same size as platform&#45;native integers.
+In C,
+the typedefs <code>INTVAL</code> and <code>UINTVAL</code> are native signed and unsigned integers respectively.
+The semantics of native integer data types are the same as the semantics of their C equivalents.</p>
+
+<p>Integer data types have a dedicated register set.
+In PIR,
+the <code>I</code> register variables (<code>$I0</code>,
+etc.) and <code>.param</code>s or <code>.local</code>s declared with the <code>int</code> type are native integers.
+Native unsigned integers are not accessible directly in PIR.
+Many opcodes or vtable functions are defined with variants that take native integer arguments.
+When passed to a subroutine or method call,
+a native integer may be autoboxed as an <code>Integer</code> PMC,
+or as an HLL type mapped to <code>Integer</code>.</p>
+
+<h3><a name="Floating&#45;point_data_types"
+>Floating&#45;point data types</a></h3>
+
+<p>Parrot provides a native floating&#45;point data type,
+generally known as a &#34;Num&#34;.
+The size of the float is chosen at Parrot configuration time,
+the same size as platform&#45;native floats.
+In C,
+the typedef <code>FLOATVAL</code> is a native float data type.
+The semantics of the native float data type are the same as the semantics of the C equivalent.</p>
+
+<p>Float data types have a dedicated register set.
+In PIR,
+the <code>N</code> register variables (<code>$N0</code>,
+etc.) and <code>.param</code>s or <code>.local</code>s declared with the <code>num</code> type are native floats.
+Many opcodes or vtable functions are defined with variants that take native float arguments.
+When passed to a subroutine or method call,
+a native float may be autoboxed as a <code>Float</code> PMC,
+or as an HLL type mapped to <code>Float</code>.</p>
+
+<h3><a name="Integer_PMC"
+>Integer PMC</a></h3>
+
+<p>The <code>Integer</code> PMC is a high&#45;level integer type,
+providing the features of a integer data type appropriate for use in a high&#45;level language.
+Some languages may be able to use Parrot&#39;s <code>Integer</code> directly as their integer data type.
+Others may subclass <code>Integer</code> to add their own functionality,
+and others may implement their own high&#45;level integer data type.</p>
+
+<p>The <code>Integer</code> PMC has a single attribute,
+the integer value.</p>
+
+<h4><a name="Integer_Vtable_Functions"
+>Integer Vtable Functions</a></h4>
+
+<dl>
+<dt><a name="init()"
+><b><code>init()</b></code></a></dt>
+Initializes the <code>Integer</code> to 0.
+<dt><a name="set_pmc(PMC_*value)_and_set_integer_same(PMC_*value)"
+><b><code>set_pmc(PMC *value)</b></code> and <b><code>set_integer_same(PMC *value)</b></code></a></dt>
+Sets the <code>Integer</code> to the integer value of the PMC argument.
+<dt><a name="set_integer_native(INTVAL_value)"
+><b><code>set_integer_native(INTVAL value)</b></code></a></dt>
+Set the <code>Integer</code> to the passed&#45;in integer value.
+<dt><a
+><b><code>set_number_native(FLOATVAL value)</b></code>,
+<b><code>set_bool(INTVAL value)</b></code>,
+<b><code>set_bigint_int(INTVAL value)</b></code>,
+<b><code>set_string_native(STRING *value)</b></code></a></dt>
+Morphs the <code>Integer</code> PMC to a <code>Float</code>,
+<code>Boolean</code>,
+<code>BigInt</code>,
+or <code>String</code> PMC,
+and sets the value from the passed in value.{{NOTE: the morphing behavior is currently under consideration and may be rejected.}}
+<dt><a name="get_integer()"
+><b><code>get_integer()</b></code></a></dt>
+Retrieves the integer value of the <code>Integer</code>.
+<dt><a name="get_bool()"
+><b><code>get_bool()</b></code></a></dt>
+Returns the boolean value of the <code>Integer</code> (false if 0,
+true otherwise).
+<dt><a name="get_number()"
+><b><code>get_number()</b></code></a></dt>
+Returns the integer value of the <code>Integer</code> as a floating&#45;point number.
+<dt><a name="get_bigint()"
+><b><code>get_bigint()</b></code></a></dt>
+Returns the integer value of the <code>Integer</code> in a new <code>BigInt</code> PMC.{{ NOTE: this vtable entry may be deprecated }}
+<dt><a name="get_string()_and_get_repr()"
+><b><code>get_string()</b></code> and <b><code>get_repr()</b></code></a></dt>
+Returns the integer value of the <code>Integer</code> as a string.
+<dt><a name="[add|subtract|multiply|divide|floor_divide|modulus|pow]_int(INTVAL_b,_PMC_*dest)"
+><b><code>[add|subtract|multiply|divide|floor_divide|modulus|pow]_int(INTVAL b, PMC *dest)</b></code></a></dt>
+Adds/subtracts/multiplies/divides/moduluses/exponents an integer value with the <code>Integer</code> PMC,
+and returns the result as a new PMC.
+(The <code>dest</code> parameter is unused).
+Overflow of the native integer storage auto&#45;promotes the result PMC to a <code>BigInt</code>.
+Note that these are multidispatched.
+<dt><a name="i_[add|subtract|multiply|divide|floor_divide|modulus|pow]_int(INTVAL_b)"
+><b><code>i_[add|subtract|multiply|divide|floor_divide|modulus|pow]_int(INTVAL b)</b></code></a></dt>
+Adds/subtracts/multiplies/divides/moduluses/exponents an integer value with the <code>Integer</code> PMC,
+and sets the <code>Integer</code> to the resulting value.
+Overflow of the native integer storage auto&#45;promotes the <code>Integer</code> to a <code>BigInt</code>.
+Note that these are multidispatched.{{NOTE: there is some discussion of having this promotion of storage happen purely internally (perhaps by swapping vtables),
+rather than converting to a different PMC type.}}
+<dt><a name="i_[add|subtract|multiply|divide|floor_divide|modulus|pow]_float(INTVAL_b)"
+><b><code>i_[add|subtract|multiply|divide|floor_divide|modulus|pow]_float(INTVAL b)</b></code></a></dt>
+Add/subtract/multiply/divide/modulus/exponent an integer value with the the <code>Integer</code> PMC,
+and set the <code>Integer</code> to the resulting value,
+morphing it to a <code>Float</code>.
+Note that these are multidispatched.
+<dt><a name="increment()"
+><b><code>increment()</b></code></a></dt>
+Adds 1 to the value of the integer.
+This may autopromote the PMC to a <code>BigInt</code>.
+<dt><a name="decrement()"
+><b><code>decrement()</b></code></a></dt>
+Subtracts 1 from the value of the integer.
+This may autopromote the PMC to a <code>BigInt</code>.
+<dt><a name="absolute()"
+><b><code>absolute()</b></code></a></dt>
+Returns an <code>Integer</code> PMC set to the absolute value of the current <code>Integer</code>.
+<dt><a name="i_absolute()"
+><b><code>i_absolute()</b></code></a></dt>
+Sets the <code>Integer</code> to the absolute value of itself.
+<dt><a name="freeze()"
+><b><code>freeze()</b></code></a></dt>
+Freezes the <code>Integer</code> PMC for storage.
+<dt><a name="thaw()"
+><b><code>thaw()</b></code></a></dt>
+Thaws the <code>Integer</code> PMC from storage.</dl>
+
+<h4><a name="Integer_Multis"
+>Integer Multis</a></h4>
+
+<p>Many of the math vtable functions are defined as multiple dispatch functions.</p>
+
+<dl>
+<dt><a name="[add|subtract|multiply|divide|floor_divide|modulus|pow](PMC_*value,_PMC_*dest)"
+><b><code>[add|subtract|multiply|divide|floor_divide|modulus|pow](PMC *value, PMC *dest)</b></code></a></dt>
+Performs the addition/subtraction/multiplication/division/modulus/exponent operation,
+and returns a new PMC containing the resulting value.
+Multiple dispatch variants are defined for <code>Integer</code>,
+<code>Complex</code>,
+<code>BigInt</code>,
+<code>String</code>,
+and <code>DEFAULT</code>.Overflow of the native integer storage auto&#45;promotes the result PMC to a <code>BigInt</code>.
+<dt><a name="i_[add|subtract|multiply|divide|floor_divide|modulus|pow](PMC_*value)"
+><b><code>i_[add|subtract|multiply|divide|floor_divide|modulus|pow](PMC *value)</b></code></a></dt>
+Performs the addition/subtraction/multiplication/division/modulus/exponent operation,
+morphing the <code>Integer</code> to the passed in type,
+and setting it to the result.
+Multiple dispatch variants are defined for <code>Integer</code>,
+<code>Complex</code>,
+<code>BigInt</code>,
+and <code>DEFAULT</code>.Overflow of the native integer storage auto&#45;promotes the <code>Integer</code> to a <code>BigInt</code>.
+<dt><a name="is_equal(PMC_*value)"
+><b><code>is_equal(PMC *value)</b></code></a></dt>
+Compares the <code>Integer</code> to the passed in PMC,
+returning true (1) if they are equal,
+and false (0) otherwise.
+Multiple dispatch variants are defined for <code>BigInt</code> and <code>DEFAULT</code>.
+{{NOTE: Presumably the <code>String</code>,
+<code>Integer</code>,
+and <code>Float</code> cases are all covered by <code>DEFAULT</code>.}}
+<dt><a name="cmp(PMC_*value)"
+><b><code>cmp(PMC *value)</b></code></a></dt>
+Compares the <code>Integer</code> to the passed in PMC,
+returning 1 if <code>Integer</code> is greater,
+&#45;1 if the PMC is greater,
+and 0 if they are equal.
+Multiple dispatch variants are defined for <code>String</code>,
+<code>Float</code>,
+and <code>DEFAULT</code>.
+{{NOTE: Presumably the <code>Integer</code> and <code>BigInt</code> cases are covered by <code>DEFAULT</code>.}}
+<dt><a name="cmp_num(PMC_*value)"
+><b><code>cmp_num(PMC *value)</b></code></a></dt>
+Compares the <code>Integer</code> to the passed in PMC,
+returning 1 if <code>Integer</code> is greater,
+&#45;1 if the PMC is greater,
+and 0 if they are equal.
+Multiple dispatch variants are defined for <code>String</code>,
+<code>Float</code>,
+and <code>DEFAULT</code>.
+{{NOTE: Presumably the <code>Integer</code> and <code>BigInt</code> cases are covered by <code>DEFAULT</code>.}}</dl>
+
+<h4><a name="Integer_Methods"
+>Integer Methods</a></h4>
+
+<dl>
+<dt><a name="get_as_base(INTVAL_base)"
+><b><code>get_as_base(INTVAL base)</b></code></a></dt>
+Converts the decimal integer to another base (anything from base 2 to base 36),
+returning the result as a STRING.</dl>
+
+<h3><a name="Float_PMC"
+>Float PMC</a></h3>
+
+<h3><a name="BigInt_PMC"
+>BigInt PMC</a></h3>
+
+<p>The bigint library provides Parrot with both a collection of (nearly) infinite precision numeric types and an implementation of an extended decimal arithmetic (EDA).</p>
+
+<h3><a name="Why_decimal_arithmetic?"
+>Why decimal arithmetic?</a></h3>
+
+<p>There are benefits in using the big number library to provide both values of effectively unlimited precision and a defined arithmetic,
+complete with rounding and exceptional conditions,
+for values which are otherwise easily represented using standard low&#45;level types.
+Both require the same range of operations but differ in the environment under which those operations occur.
+The effort required to produce a library which implements a decimal arithmetic is not much greater than that needed to provide a base&#45;2 big number library.
+There is a trade&#45;off in both space and speed,
+but given the nature of dynamic languages,
+this should not present too great a burden.</p>
+
+<h3><a name="Numeric_types_provided"
+>Numeric types provided</a></h3>
+
+<p>The bignumber library provides the following data types to Parrot:</p>
+
+<dl>
+<dt><a name="Big_integers_(BigInt)"
+>Big integers (BigInt)</a></dt>
+Whole numbers with no limits on their size.
+<dt><a name="Big_floats_(BigNum)"
+>Big floats (BigNum)</a></dt>
+Numbers with decimal fractional parts,
+again with no limit on size.
+<dt><a name="Big_floats_with_fixed_fractional_parts"
+>Big floats with fixed fractional parts</a></dt>
+Numbers with a fixed maximum number of digits in their fractional part,
+again with no limit on size;.
+i.e BigRat.</dl>
+
+<p>The library implements these different forms of numbers using the same internal representation,
+and differentiates between them only when performing rounding operations.
+A number has the following abstract form:</p>
+
+<pre> [ sign, string of digits, exponent ]</pre>
+
+<p>If sign is zero, the number is positive. If equal to one, the number is negative. The number has the value:</p>
+
+<pre> sign, string of digits * 10 ** exponent</pre>
+
+<p>A big integer must always have a non&#45;negative exponent. A big float may have any exponent, and a float with a fixed fractional part will have an exponent greater than a given (negative) number. These limits are not attached to a numeric value, but instead are enforced by giving any operation involving the numbers a <i>context</i>.</p>
+
+<p>In general, Parrot functions will not need to care about what the bignum objects are or do. They should merely be used as arguments to big number functions. The objects will be managed by Parrot&#39;s garbage collection in a similar manner to strings.</p>
+
+<h3><a name="Special_Values"
+>Special Values</a></h3>
+
+<p>Additionally the library provides special values which represent the result of otherwise undefined operations (division by zero, for instance). Positive and negative infinity (<code>Inf</code> or <code>+Inf</code> and <code>&#45;Inf</code>, respectively) and both quiet and signalling Not a Number (<code>NaN</code>) are available. In general, the result of an operation with at least one argument which is <code>NaN</code> will be <code>NaN</code>. If the argument is a signalling <code>NaN</code>, an exception will also be raised. See the EDA for full details.</p>
+
+<h3><a name="Context"
+>Context</a></h3>
+
+<p>All operations occur within a defined context. This tells the operations how they should treat their arguments, what sort of rounding to perform, and what to do if rounding loses information.</p>
+
+<p>The context provides the environment in which an operation occurs, in particular the following options are available:</p>
+
+<dl>
+<dt><a name="precision"
+>precision</a></dt>
+A positive <i>precision</i> requires the use of big floats. These cannot have more than <i>precision</i> digits in their coefficient before or after any operation. Arguments to operations with more than <i>precision</i> digits will be truncated and rounded appropriately. Results of operations will not have more than <i>precision</i> digits in their coefficients, with any extra digits accumulated during the calculation of the operation being truncated and rounded as required.A <i>precision</i> of zero requires the use of integer operations. Arguments to operations are rounded so that they have no fractional part, and the result of all operations will be rounded to be integers.A negative value of <i>precision</i> requires the use of a fixed number of fractional digits, with arguments and results being truncated after those digits.With non&#45;positive values of <i>precision</i>, the total number of digits in the coefficient is limited only by available memory.
+<dt><a name="rounding"
+>rounding</a></dt>
+The rounding part of the context defines the rounding algorithm to apply when truncating digits from a number&#39;s coefficient. The available rounding forms are outlined below.
+<dt><a name="traps_and_flags"
+>traps and flags</a></dt>
+The <i>traps</i> part of the context defines how the library raises exceptions. Seven distinct classes of error can occur. If the corresponding trap is set (enabled), the library raises an exception. Otherwise, execution continues with the exception class recorded in flags. For more details, see the extended decimal arithmetic standard.</dl>
+
+<p>The current <i>context</i> determines the numeric type during a particular operation. This makes it easy to upgrade from one numeric form to another and also allows for considerable code&#45;reuse within the library.</p>
+
+<h3><a name="Exception_Classes"
+>Exception Classes</a></h3>
+
+<p>The following exception classes are available:</p>
+
+<dl>
+<dt><a name="Lost_Digits"
+>Lost Digits</a></dt>
+Non&#45;zero digits have been removed from an argument to a function during rounding before the operation.
+<dt><a name="Division_By_Zero"
+>Division By Zero</a></dt>
+Division by zero was attempted.
+<dt><a name="Inexact"
+>Inexact</a></dt>
+Because arguments were rounded, or because the result of an operation has lost significant digits, the result is inexact.
+<dt><a name="Invalid_Operation"
+>Invalid Operation</a></dt>
+An invalid operation was attempted, for instance when <code>NaN</code> is present as an argument to a function. This also covers recoverable errors such as 0/0, which signals Invalid Operation and can return <code>NaN</code>.
+<dt><a name="Overflow"
+>Overflow</a></dt>
+The exponent of a number has overflowed.
+<dt><a name="Rounded"
+>Rounded</a></dt>
+An argument has been rounded.
+<dt><a name="Underflow"
+>Underflow</a></dt>
+The exponent of a number has underflowed.</dl>
+
+<h3><a name="Rounding"
+>Rounding</a></h3>
+
+<p>The rounding part of the context defines the rounding algorithm to used. The following contexts are available (examples assume a precision of 5):</p>
+
+<dl>
+<dt><a name="Round_down"
+>Round down</a></dt>
+Any unwanted digits are simply truncated from the coefficient. This rounds towards zero.
+<pre> [0, 1234567, 10] =&#62; [0, 12345, 12]</pre>
+
+<dt><a name="Round_half_up"
+>Round half up</a></dt>
+The first lost digit is examined. If this is in the range 0&#45;4, the coefficient is truncated directly. If in the range 5&#45;9, one is added to the final digit of the coefficient. If this leads to a coefficient with more than <i>precision</i> digits, the number is rounded again, removing the trailing zero. This is essentially rounding to nearest.
+<pre> [0, 1234567, 10] =&#62; [0, 12346, 12]
+ [0, 1234549, 10] =&#62; [0, 12345, 12]
+ [0, 9999950, 10] =&#62; [0, 10000, 13]</pre>
+
+<dt><a name="Round_half_even"
+>Round half even</a></dt>
+The first lost digit is examined. If it lies in the range 0&#45;4, the coefficient is truncated directly. If in the range 6&#45;9, the coefficient is rounded up. If the first lost digit is equal to 5 and the remaining lost digits in the coefficient are non&#45;zero, the number is also rounded up. If the lost digits are equal to exactly half, the number is rounded up if the least significant retained digit is odd, and rounded down if it is even.
+<dt><a name="Round_Floor"
+>Round Floor</a></dt>
+If the digits to be discarded are non zero and the number is negative, the coefficient is rounded up, otherwise it remains the same.This is rounding towards <code>&#45;Inf</code>.
+<dt><a name="Round_Ceiling"
+>Round Ceiling</a></dt>
+If the digits to be discarded are non zero, and the number is positive, the coefficient is rounded up, otherwise it remains the same.This is rounding towards <code>Inf</code>.</dl>
+
+<h3><a name="Operations"
+>Operations</a></h3>
+
+<p>The library provides the following operations. They function exactly as those described in the Standard Decimal Arithmetic (SDA), with some extension to cope with integer and fixed fractional part numbers. Only the deviations are outlined here.</p>
+
+<p>In all cases, the sequence of rounding and promotion to zero outlined by the SDA are followed, even where the context implies integer operations.</p>
+
+<dl>
+<dt><a name="Addition,_Subtraction"
+>Addition, Subtraction</a></dt>
+
+<dt><a name="Multiplication"
+>Multiplication</a></dt>
+
+<dt><a name="Division"
+>Division</a></dt>
+Under integer conditions, division halts once the first fractional digit is calculated, with the result rounded to an integer and returned. Under fixed&#45;fraction conditions, one more digit than needed is calculated, with the coefficient then rounded and returned.If a floating point value is required, or if inexact division by a very small number is attempted, it may be wise to follow big float arithmetic to limit the number of digits returned. It is safe to chose a precision at least as large as the largest number of digits of either argument to the division function.
+<dt><a name="Integer_division,_Remainder"
+>Integer division, Remainder</a></dt>
+For both integer and fixed&#45;fraction numbers, the result returned by the remainder function will be an integer or fixed&#45;fraction number. The result of integer division will be an integer.
+<dt><a name="Rounding"
+>Rounding</a></dt>
+
+<dt><a name="Plus_/_Minus"
+>Plus / Minus</a></dt>
+
+<dt><a name="Comparison"
+>Comparison</a></dt>
+Comparison returns a big number which is equal to 1, 0, or &#45;1 if the first argument is larger, equal to, or smaller than the second. An alternate form returns an INTVAL.
+<dt><a name="Rescale"
+>Rescale</a></dt>
+
+<dt><a name="Power"
+>Power</a></dt>
+
+<dt><a name="Square_Root"
+>Square Root</a></dt>
+</dl>
+
+<h3><a name="Conversion_to_and_from_strings"
+>Conversion to and from strings</a></h3>
+
+<p>A one to one conversion between the abstract representation above and a string is provided by the library, and acts as defined by the standard decimal arithmetic. Other conversation operations may also be implemented; these may not provide one to one mapping.</p>
+
+<p>A pedantic error checking conversion is available within the library, but only works with native strings. Versions which work with Parrot STRINGs will also be provided, although in a separate file to the rest of the library. (They will share a common private header file).</p>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<p>Functions are provided which implement the arithmetic, conversion, creation and destruction of big numbers by dealing with otherwise opaque big number objects.</p>
+
+<h3><a name="Big_number_representation"
+>Big number representation</a></h3>
+
+<p>A big number is represented by the following structure, capable of being allocated, tracked, and destroyed by the Parrot garbage collection system.</p>
+
+<pre> typedef struct {
+    BN_NIB *buffer; /* string of nibbles */
+    UINTVAL nibs;   /* nibs allocated, in sizeof(BN_NIB) */
+    UINTVAL flags;  /* private flags store: 001 Inf,  010 qNAN, 110 sNAN */
+    INTVAL  digits; /* digits used */
+    INTVAL  expn;   /* exponent of number */
+    int     sign;   /* sign of number, 0 =&#62; positive or zero, 1 =&#62; negative */
+ } parrot_bignum_t;</pre>
+
+<p>Within the library, individual decimal digits can be accessed using macros. Outside the library, access must be made via exported functions. BN_NIB is likely to be a UINTVAL, but this is not essential.</p>
+
+<p>Special values are represented by setting <i>digits</i> to zero and setting appropriate private <i>flags</i>, using internal macros. Infinity has one flag field, NaN another flag field, and sNaN a third. In general the flags should not be examined directly, even within the module.</p>
+
+<h3><a name="Context"
+>Context</a></h3>
+
+<pre> typedef struct {
+    INTVAL        precision;  /* number of digs to retain */
+    BN_ROUNDING   rounding;   /* rounding type to perform */
+    BOOLVAL       extended;   /* do we use extended or base semantics? */
+    unsigned char flags;      /* records possible errors */
+    unsigned char traps;      /* throw errors or not? */
+ } parrot_bignum_context;</pre>
+
+<p><i>BN_ROUNDING</i> is an enumeration of the possible rounding types as described earlier. <i>traps</i> is a bitmask of exception traps. 0 implies that a trap is disabled and 1 implies it is enabled. <i>flags</i> is a bitmask which records exceptional conditions and has the same fields at <i>flags</i>.</p>
+
+<p>Language level types should implement big floats using a global floating point context available in an interpreter structure (and accessible). Big integers and fixed&#45;fraction number are provided by creating a context with an appropriate precision whenever a call into the library is made.</p>
+
+<h3><a name="Exceptional_Conditions"
+>Exceptional Conditions</a></h3>
+
+<p>When the module raises an exceptional condition, control passes to <code>BN_nonfatal()</code>. this examines the error which has occurred and the current context to determine which class of error has occurred. If the corresponding trap handler is not enabled, the context&#39;s flags are updated and control is returned to the bignumber library. Otherwise the exception becomes fatal. How this mechanism interacts with Parrot&#39;s own is yet to be decided.</p>
+
+<p>The possible exceptions are detailed in the extended decimal arithmetic.</p>
+
+<h2><a name="Tests"
+>Tests</a></h2>
+
+<p>The Standard Decimal Arithmetic provides a collection of tests for both its base and extended behavior.</p>
+
+<h2><a name="TODO"
+>TODO</a></h2>
+
+<p>Fill in the remaining functions from the EDA, verify that the test suite still passes, integrate the library into the rest of Parrot, provide PMC types and suitable opcodes. Conversion to and from Parrot strings, conversion to and from floating point types, sprintf output of bignumbers.</p>
+
+<h2><a name="Attachments"
+>Attachments</a></h2>
+
+<h2><a name="Footnotes"
+>Footnotes</a></h2>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p>IBM&#39;s Standard Decimal Arithmetic, with tests (<a href='http://speleotrove.com/decimal/'><a href="http://speleotrove.com/decimal/">http://speleotrove.com/decimal/</a></a>)</p>
+
+<p>The Perl modules Math::BigInt and Math::BigFloat.</p>
+
+<p>Alex Gough&#39;s suggestions for bigint/bignum implementation.</p>
+
+<p>GNU gmp. That&#39;s we currently use: mpz and mpf.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

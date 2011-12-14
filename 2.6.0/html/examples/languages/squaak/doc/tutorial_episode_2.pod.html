@@ -1,0 +1,202 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Episode 2: Poking in Compiler Guts</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Home</a> &raquo; <a href="../../../../../html/PCT_Tutorial.html">PCT Tutorial</a> &raquo; Episode 2: Poking in Compiler Guts
+                </div>
+
+<h1><a name="Episode_2:_Poking_in_Compiler_Guts"
+>Episode 2: Poking in Compiler Guts</a></h1>
+
+<h2><a name="Introduction"
+>Introduction</a></h2>
+
+<p>In the first episode,
+we introduced the Parrot Compiler Tools,
+and generated a very simple language using a shell script provided with the Parrot distribution.
+We also announced Squaak,
+a simple programming language developed specially for this tutorial.
+Squaak will be the case study to show how PCT can be used as a very effective set of tools to implement a language for Parrot.
+A list of features of Squaak was specified.
+If you felt lucky,
+you might even have tried to do the exercise at the end of the previous episode.</p>
+
+<p>In this episode,
+we will take a closer look at the generated compiler.
+We shall check out the different stages of the compilation process,
+and show what&#39;s going on in PCT&#45;based compilers.</p>
+
+<h2><a name="Under_the_Hood"
+>Under the Hood</a></h2>
+
+<p>Remember how we invoked our compiler in the previous episode?
+We can pass a file,
+or invoke the compiler without a command line argument,
+in which case our compiler enters the interactive mode.
+Consider the first case,
+passing the file test.sq,
+just as we did before:</p>
+
+<pre> $ ./installable_squeak test.sq</pre>
+
+<p>When invoking our compiler like this, the file test.sq is compiled and the generated code (bytecode) is executed immediately by Parrot. How does this work, you might wonder. The interpretation of a script is done through a series of transformations, starting at the script source and ending in a format that can be executed by Parrot. Compilers built with the PCT (based on the HLLCompiler class) can take a target option, to show one of the intermediate representations. This option can have the following values, corresponding to the four default compilation phases of an HLLCompiler object:</p>
+
+<ul>
+<li>&#45;&#45;target=parse</li>
+
+<li>&#45;&#45;target=past</li>
+
+<li>&#45;&#45;target=post</li>
+
+<li>&#45;&#45;target=pir</li>
+</ul>
+
+<p>This is an example of using the target option set to &#34;parse&#34;, which will print the parse tree of the input to stdout:</p>
+
+<pre> $ ./installable_squeak &#45;&#45;target=parse test.sq</pre>
+
+<p>In interactive mode, giving this input:</p>
+
+<pre> say 42;</pre>
+
+<p>will print this parse tree (without the line numbers):</p>
+
+<pre>  1 &#34;parse&#34; =&#62; PMC &#39;Regex;Match&#39; =&#62; &#34;say 42;\n&#34; @ 0 {
+  2    &#60;statementlist&#62; =&#62; PMC &#39;Regex;Match&#39; =&#62; &#34;say 42;\n&#34; @ 0 {
+  3         &#60;statement&#62; =&#62; ResizablePMCArray (size:1) [
+  4             PMC &#39;Regex;Match&#39; =&#62; &#34;say 42&#34; @ 0 {
+  5                 &#60;statement_control&#62; =&#62; PMC &#39;Regex;Match&#39; =&#62; &#34;say 42&#34; @ 0 {
+  6                     &#60;sym&#62; =&#62; PMC &#39;Regex;Match&#39; =&#62; &#34;say&#34; @ 0
+  7                     &#60;EXPR&#62; =&#62; ResizablePMCArray (size:1) [
+  8                         PMC &#39;Regex;Match&#39; =&#62; &#34;42&#34; @ 4 {
+  9                             &#60;integer&#62; =&#62; PMC &#39;Regex;Match&#39; =&#62; &#34;42&#34; @ 4 {
+ 10                                 &#60;VALUE&#62; =&#62; PMC &#39;Regex;Match&#39; =&#62; &#34;42&#34; @ 4
+ 11                                 &#60;decint&#62; =&#62; \parse[0][0]
+ 12                             }
+ 13                         }
+ 14                     ]
+ 15                 }
+ 16             }
+ 17         ]
+ 18     }
+ 19 }</pre>
+
+<p>When changing the value of the target option, the output changes into a different representation of the input. Why don&#39;t you try that right now?</p>
+
+<p>So, a HLLCompiler object has four compilation phases: parsing, construction of a Parrot Abstract Syntax Tree (PAST), construction of a Parrot Opcode Syntax Tree (POST) and generation of Parrot Intermediate Representation (PIR). After compilation, the generated PIR is executed immediately.</p>
+
+<p>If your compiler needs additional stages, you can add them to your HLLCompiler object. For Squaak, we will not need this, but for details, check out <em>compilers/pct/src/pct/HLLCompiler.pir</em>.</p>
+
+<p>We shall now discuss each compilation phase in more detail. The first two phases, parsing the input and construction of the PAST are executed simultaneously. Therefore, these are discussed together.</p>
+
+<p>Parse phase: match objects and PAST construction During the parsing phase, the input is analyzed using Perl 6&#39;s extended regular expressions, known as Rules (see Synopsis 5 for details). When a rule matches some input string, a Match object is created. A Match object is a combined array and hashtable and can be indexed by integers as well as strings. As rules typically consist of other (sub) rules, it is easy to retrieve a certain part of the match. For instance, this rule:</p>
+
+<pre> rule if_statement {
+     &#39;if&#39; &#60;expression&#62; &#39;then&#39; &#60;statement&#62; &#39;end&#39;
+ }</pre>
+
+<p>has two other subrules: expression and statement. The match object for the rule <code>if_statement</code> represents the whole string from if to end. You can retrieve a the Match for a subrule by indexing into the Match object using the name of that subrule. For instance, to get the match for <code>&#60;expression&#62;</code>, you would use <code>$/&#60;expression&#62;</code>. (In nqp, <code>$foo&#60;bar&#62;</code> indexes into <code>$foo</code> using the constant string <code>bar</code> as a hash key.)</p>
+
+<p>During the parse phase, the PAST is constructed. There is a small set of PAST node types. For instance, <code>PAST::Var</code> to represent variables (identifiers, such as <code>print</code>) and <code>PAST::Val</code> to represent literal values (for instance, <code>&#34;hello&#34;</code> and <code>42</code>). Later we&#39;ll go through the various PAST nodes in more detail.</p>
+
+<p>Now, you might wonder, at which point exactly is this PAST construction happening? At the end of a successfully matching rule, the rule&#39;s parse action is performed. Such a parse action is just a method that has the same name as the rule which triggers it (in this case: <code>if_statement</code>). So, during the parsing phase, several parse actions are executed, each of which builds a piece of the total PAST representing the input string.</p>
+
+<p>A Parrot Abstract Syntax Tree is just a compiler&#45;friendly tree&#45;based representation of your program. It is convenient both for analysis and optimization, and for further transformation into a lower&#45;level representation such as POST.</p>
+
+<h2><a name="PAST_to_POST"
+>PAST to POST</a></h2>
+
+<p>After the PAST is constructed, the HLLCompiler transforms this PAST into a Parrot Opcode Syntax Tree (POST). The POST representation is also a tree structure, but these nodes are on a lower abstraction level and correspond very closely to PIR ops. For instance, the PAST node type which represents a while statement (constructed as <code>PAST::Op.new( :pasttype(&#39;while&#39;) )</code> ) decomposes into several POST nodes.</p>
+
+<p>The template for a <code>while</code> statement typically consists of a number of labels and jump instructions. On the POST level, the same while statement is represented by a set of nodes, each representing a one instruction or a label. This makes it much easier to transforn POST into executable code.</p>
+
+<p>Usually, as a user of the PCT, you don&#39;t need to know details of POST nodes, which is why this will not be discussed in further detail. Use <code>&#45;&#45;target=post</code> to see what a POST looks like.</p>
+
+<h2><a name="POST_to_PIR"
+>POST to PIR</a></h2>
+
+<p>In the fourth (and final) stage, the POST is transformed into Parrot Intermediate Representation (PIR). As mentioned, transforming a POST into something executable is rather straightforward, as POST nodes already represent individual instructions and labels. Again, normal usage of the PCT does not require you to know any details about this transformation.</p>
+
+<h2><a name="And_now_for_the_good_news..."
+>And now for the good news...</a></h2>
+
+<p>We established the general data flow of PCT&#45;based compilers, which consists of four stages:</p>
+
+<dl>
+<dt><a name="1._source_to_parse_tree"
+>1. source to parse tree</a></dt>
+
+<dt><a name="2._parse_tree_to_PAST"
+>2. parse tree to PAST</a></dt>
+
+<dt><a name="3._PAST_to_POST"
+>3. PAST to POST</a></dt>
+
+<dt><a name="4._POST_to_PIR"
+>4. POST to PIR</a></dt>
+</dl>
+
+<p>The first two transformations happen during the parse stage. Now, as you&#39;re reading this tutorial, you&#39;re probably interested in using the PCT to implement Your Favorite Language on top of Parrot. We already saw that a language grammar is expressed in Perl 6 Rules. What about the other transformations? Well, earlier in this episode we mentioned parse actions and that these actions create PAST nodes. After you have written a parse action for each grammar rule, you&#39;re done!</p>
+
+<p>Say what?</p>
+
+<p>That&#39;s right. Once you have correctly constructed a PAST, your compiler can generate executable PIR, which means you just implemented your first language on top of Parrot. Of course, you&#39;ll still need to implement any language specific libraries, but that&#39;s beside the point.</p>
+
+<p>PCT&#45;based compilers already know how to transform PAST into POST and how to transform POST into PIR. These transformation stages are already provided by the PCT.</p>
+
+<h2><a name="What&#39;s_next?"
+>What&#39;s next?</a></h2>
+
+<p>In this episode we took a closer look at the internals of a PCT&#45;based compiler. We discussed the four compilation stages which transform an input string (a program or script, depending on your definition) into PAST, POST and finally executable PIR.</p>
+
+<p>The next episodes is where the Fun Stuff is: we will be implementing Squaak for Parrot. Piece by piece, we will implement the parser and the parse actions. Finally, we&#39;ll demonstrate John Conway&#39;s &#34;Game of Life&#34; running on Parrot, implemented in Squaak.</p>
+
+<h2><a name="Exercises"
+>Exercises</a></h2>
+
+<p>Last episode&#39;s exercise was to add a command line banner and prompt for the interactive mode of our compiler. Given the hints that were provided, it was probably not too hard to find the solution, which is shown below. This INIT block can be found in the file src/Squaak/Compiler.pm. The relevant lines are marked with a comment</p>
+
+<pre>  INIT {
+      Squaak::Compiler.language(&#39;Squaak&#39;);
+      Squaak::Compiler.parsegrammar(Squaak::Grammar);
+      Squaak::Compiler.parseactions(Squaak::Actions);
+
+      Squaak::Compiler.commandline_banner(&#34;Squaak for Parrot VM.\n&#34;); # set banner
+      Squaak::Compiler.commandline_prompt(&#39;&#62; &#39;); # set prompt
+  }</pre>
+
+<p>Starting in the next episode, the exercises will be more interesting. For now, it would be useful to browse around through the source files of the compiler, and see if you understand the relation between the grammar rules in src/Squaak/Grammar.pm and the methods in src/Squaak/Actions.pm. It&#39;s also useful to experiment with the &#45;&#45;target option described in this episode. If you don&#39;t know PIR, now is the time to do some preparation for that. There&#39;s sufficient information to be found on PIR, see the References section for details. In the mean time, if you have any suggestions, questions and whatnot, don&#39;t hesitate to leave a comment.</p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<dl>
+<dt><a name="1._PIR_language_specification:_docs/pdds/draft/PDD19_pir.pod"
+>1. PIR language specification: docs/pdds/draft/PDD19_pir.pod</a></dt>
+</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Event handling stuff</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Event handling stuff</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/events.c &#45; Event handling stuff</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>An event_thread handles async events for all interpreters.
+When events are due,
+they are placed in per interpreter task_queues,
+where they are handled then by the <code lang='und' xml:lang='und'>check_event*</code> opcodes.</p>
+
+<p>IO events and signals are caught in the io_thread,
+which again dispatches these to one or all interpreters.</p>
+
+<h2><a name="Signal_Handling"
+>Signal Handling <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_void_sig_handler"
+><b><code lang='und' xml:lang='und'>static void sig_handler</b></code></a></dt><p class="pad"></p>
+
+<dd>Handle signal <code lang='und' xml:lang='und'>signum</code>.</dd><p class="pad"></p>
+
+<dd>TODO &#45; Only <code lang='und' xml:lang='und'>SIGHUP</code> is handled at the moment for testing</dd><p class="pad"></p>
+
+<dt><a name="static_void_Parrot_sigaction"
+><b><code lang='und' xml:lang='und'>static void Parrot_sigaction</b></code></a></dt><p class="pad"></p>
+
+<dd>Signal handlers are common to all threads,
+signal block masks are specific,
+so we install one handler then block that signal and unblock it in the thread,
+that will receive that signal.</dd><p class="pad"></p>
+
+<dt><a name="static_void_Parrot_unblock_signal"
+><b><code lang='und' xml:lang='und'>static void Parrot_unblock_signal</b></code></a></dt><p class="pad"></p>
+
+<dd>unblock a signal</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_init_signals"
+><b><code lang='und' xml:lang='und'>void Parrot_init_signals</b></code></a></dt><p class="pad"></p>
+
+<dd>Set up actions to handle signals.
+Only SIGHUP handled at the moment.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Initialization"
+>Initialization <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_void_init_events_first"
+><b><code lang='und' xml:lang='und'>static void init_events_first</b></code></a></dt><p class="pad"></p>
+
+<dd>Init event system for first interpreter.</dd><p class="pad"></p>
+
+<dt><a name="static_void_init_events_all"
+><b><code lang='und' xml:lang='und'>static void init_events_all</b></code></a></dt><p class="pad"></p>
+
+<dd>Init events for all interpreters.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_init_events"
+><b><code lang='und' xml:lang='und'>void Parrot_init_events</b></code></a></dt><p class="pad"></p>
+
+<dd>Initialize the event system.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Event_Handler_Functions"
+>Event Handler Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_Parrot_schedule_event"
+><b><code lang='und' xml:lang='und'>void Parrot_schedule_event</b></code></a></dt><p class="pad"></p>
+
+<dd>Create queue entry and insert event into task queue.</dd><p class="pad"></p>
+
+<dt><a name="static_void_schedule_signal_event"
+><b><code lang='und' xml:lang='und'>static void schedule_signal_event</b></code></a></dt><p class="pad"></p>
+
+<dd>create and schedule a signal event</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_new_timer_event"
+><b><code lang='und' xml:lang='und'>void Parrot_new_timer_event</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a new timer event due at <code lang='und' xml:lang='und'>diff</code> from now,
+repeated at <code lang='und' xml:lang='und'>interval</code> and running the passed <code lang='und' xml:lang='und'>sub</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_new_cb_event"
+><b><code lang='und' xml:lang='und'>void Parrot_new_cb_event</b></code></a></dt><p class="pad"></p>
+
+<dd>Prepare and schedule a callback event.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_del_timer_event"
+><b><code lang='und' xml:lang='und'>void Parrot_del_timer_event</b></code></a></dt><p class="pad"></p>
+
+<dd>Deactivate the timer identified by <code lang='und' xml:lang='und'>timer</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_new_terminate_event"
+><b><code lang='und' xml:lang='und'>void Parrot_new_terminate_event</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a terminate event,
+interpreter will leave the run&#45;loop when this event arrives.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_new_suspend_for_gc_event"
+><b><code lang='und' xml:lang='und'>void Parrot_new_suspend_for_gc_event</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a suspend&#45;for&#45;GC event,
+interpreter will wait on a condition variable for GC to finish when the event arrives.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_kill_event_loop"
+><b><code lang='und' xml:lang='und'>void Parrot_kill_event_loop</b></code></a></dt><p class="pad"></p>
+
+<dd>Schedule event&#45;loop terminate event.
+This shuts down the event thread.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_schedule_interp_qentry"
+><b><code lang='und' xml:lang='und'>void Parrot_schedule_interp_qentry</b></code></a></dt><p class="pad"></p>
+
+<dd>Put a queue entry into the interpreters task queue and enable event checking for the interpreter.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_schedule_broadcast_qentry"
+><b><code lang='und' xml:lang='und'>void Parrot_schedule_broadcast_qentry</b></code></a></dt><p class="pad"></p>
+
+<dd>Broadcast an event.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="IO_Thread_Handling"
+>IO Thread Handling <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_void_store_io_event"
+><b><code lang='und' xml:lang='und'>static void store_io_event</b></code></a></dt><p class="pad"></p>
+
+<dd>Stores an event in the event stack.
+Allocates memory if necessary.</dd><p class="pad"></p>
+
+<dt><a name="static_void_io_thread_ready_rd"
+><b><code lang='und' xml:lang='und'>static void io_thread_ready_rd</b></code></a></dt><p class="pad"></p>
+
+<dd>Takes a list of pending i/o events and a file descriptor.
+If the fd is ready to read,
+the event is removed from the &#34;pending&#34; list and moved to the &#34;scheduled&#34; task queue.</dd><p class="pad"></p>
+
+<dt><a name="static_void*_io_thread"
+><b><code lang='und' xml:lang='und'>static void *io_thread</b></code></a></dt><p class="pad"></p>
+
+<dd>The IO thread uses select/poll to handle IO events and signals.</dd><p class="pad"></p>
+
+<dd>It waits on input from the message pipe to insert file descriptors in the wait sets.</dd><p class="pad"></p>
+
+<dt><a name="static_void_stop_io_thread"
+><b><code lang='und' xml:lang='und'>static void stop_io_thread</b></code></a></dt><p class="pad"></p>
+
+<dd>Tell the IO thread to stop.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_event_add_io_event"
+><b><code lang='und' xml:lang='und'>void Parrot_event_add_io_event</b></code></a></dt><p class="pad"></p>
+
+<dd>Create new i/o event.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Event_Handler_Thread_Functions"
+>Event Handler Thread Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_QUEUE_ENTRY*_dup_entry"
+><b><code lang='und' xml:lang='und'>static QUEUE_ENTRY *dup_entry</b></code></a></dt><p class="pad"></p>
+
+<dd>Duplicate queue entry.</dd><p class="pad"></p>
+
+<dt><a name="static_QUEUE_ENTRY*_dup_entry_interval"
+><b><code lang='und' xml:lang='und'>static QUEUE_ENTRY *dup_entry_interval</b></code></a></dt><p class="pad"></p>
+
+<dd>Duplicate timed entry and add interval to <code lang='und' xml:lang='und'>abs_time</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_int_process_events"
+><b><code lang='und' xml:lang='und'>static int process_events</b></code></a></dt><p class="pad"></p>
+
+<dd>Do something,
+when an event arrived caller has locked the mutex returns 0 if event thread terminates.</dd><p class="pad"></p>
+
+<dt><a name="static_void*_event_thread"
+><b><code lang='und' xml:lang='und'>static void *event_thread</b></code></a></dt><p class="pad"></p>
+
+<dd>The event thread is started by the first interpreter.
+It handles all events for all interpreters.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Sleep_Handling"
+>Sleep Handling <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_opcode_t_*_wait_for_wakeup"
+><b><code lang='und' xml:lang='und'>static opcode_t *wait_for_wakeup</b></code></a></dt><p class="pad"></p>
+
+<dd>Sleep on the event queue condition.
+If an event arrives,
+the event is processed.
+Terminate the loop if sleeping is finished.</dd><p class="pad"></p>
+
+<dt><a name="opcode_t_*_Parrot_sleep_on_event"
+><b><code lang='und' xml:lang='und'>opcode_t *Parrot_sleep_on_event</b></code></a></dt><p class="pad"></p>
+
+<dd>Go to sleep.
+This is called from the <code lang='und' xml:lang='und'>sleep</code> opcode.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Event_Handling_for_Run&#45;Loops"
+>Event Handling for Run&#45;Loops <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="opcode_t_*_Parrot_do_check_events"
+><b><code lang='und' xml:lang='und'>opcode_t *Parrot_do_check_events</b></code></a></dt><p class="pad"></p>
+
+<dd>Explicitly <code lang='und' xml:lang='und'>sync</code> called by the check_event opcode from run loops.</dd><p class="pad"></p>
+
+<dt><a name="static_void_event_to_exception"
+><b><code lang='und' xml:lang='und'>static void event_to_exception</b></code></a></dt><p class="pad"></p>
+
+<dd>Convert event to exception and throw it.</dd><p class="pad"></p>
+
+<dt><a name="static_opcode_t_*_do_event"
+><b><code lang='und' xml:lang='und'>static opcode_t *do_event</b></code></a></dt><p class="pad"></p>
+
+<dd>Run user code or such.
+The <code lang='und' xml:lang='und'>event</code> argument is freed after execution.</dd><p class="pad"></p>
+
+<dd>TODO: Instrument with splint args so splint knows event gets released.</dd><p class="pad"></p>
+
+<dt><a name="opcode_t_*_Parrot_do_handle_events"
+><b><code lang='und' xml:lang='und'>opcode_t *Parrot_do_handle_events</b></code></a></dt><p class="pad"></p>
+
+<dd>Called by the <code lang='und' xml:lang='und'>check_event__</code> opcode from run loops or from above.
+When called from the <code lang='und' xml:lang='und'>check_events__</code> opcode,
+we have to restore the <code lang='und' xml:lang='und'>op_func_table</code>.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/events.h</em> and <em lang='und' xml:lang='und'><a href="../docs/dev/events.pod.html">docs/dev/events.pod</a></em>.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

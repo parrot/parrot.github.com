@@ -1,0 +1,366 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Multimethod dispatch for binary opcode functions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Multimethod dispatch for binary opcode functions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/multidispatch.c &#45; Multimethod dispatch for binary opcode functions</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>This system is set up to handle type&#45;based dispatching for binary (two argument) functions.
+This includes,
+though isn&#39;t necessarily limited to,
+binary operators such as addition or subtraction.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>The MMD system is straightforward,
+and currently must be explicitly invoked,
+for example by a vtable function.
+(We reserve the right to use MMD in all circumstances,
+but currently do not).</p>
+
+<h2><a name="API"
+>API <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>For the purposes of the API,
+each MMD&#45;able function is assigned a unique number which is used to find the correct function table.
+This is the <code lang='und' xml:lang='und'>func_num</code> parameter in the following functions.
+While Parrot isn&#39;t restricted to a predefined set of functions,
+it <i>does</i> set things up so that all the binary vtable functions have a MMD table preinstalled for them,
+with default behaviour.</p>
+
+<h2><a name="Remarks"
+>Remarks <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p><code lang='und' xml:lang='und'>binop_mmd_funcs&#45;&#62;x</code> and <code lang='und' xml:lang='und'>&#45;&#62;y</code> are table sizes not highest type in table.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_void_dump_mmd"
+><b><code lang='und' xml:lang='und'>static void dump_mmd</b></code></a></dt><p class="pad"></p>
+
+<dd>RT #48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="funcptr_t_get_mmd_dispatch_type"
+><b><code lang='und' xml:lang='und'>funcptr_t get_mmd_dispatch_type</b></code></a></dt><p class="pad"></p>
+
+<dd>RT #48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="PMC*_Parrot_mmd_find_multi_from_sig_obj"
+><b><code lang='und' xml:lang='und'>PMC *Parrot_mmd_find_multi_from_sig_obj</b></code></a></dt><p class="pad"></p>
+
+<dd>Collect a list of possible candidates for a given sub name and call signature.
+Rank the possible candidates by Manhattan Distance,
+and return the best matching candidate.
+The candidate list is cached in the CallSignature object,
+to allow for iterating through it.</dd><p class="pad"></p>
+
+<dd>Currently this only looks in the global &#34;MULTI&#34; namespace.</dd><p class="pad"></p>
+
+<dt><a name="static_void_Parrot_mmd_ensure_writable"
+><b><code lang='und' xml:lang='und'>static void Parrot_mmd_ensure_writable</b></code></a></dt><p class="pad"></p>
+
+<dd>Make sure <code lang='und' xml:lang='und'>pmc</code> is writable enough for <code lang='und' xml:lang='und'>function</code>.</dd><p class="pad"></p>
+
+<dd>{{**DEPRECATE**}}</dd><p class="pad"></p>
+
+<dt><a name="PMC*_Parrot_build_sig_object_from_varargs"
+><b><code lang='und' xml:lang='und'>PMC *Parrot_build_sig_object_from_varargs</b></code></a></dt><p class="pad"></p>
+
+<dd>Take a varargs list,
+and convert it into a CallSignature PMC.
+The CallSignature stores the original short signature string,
+and an array of integer types to pass on to the multiple dispatch search.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_mmd_multi_dispatch_from_c_args"
+><b><code lang='und' xml:lang='und'>void Parrot_mmd_multi_dispatch_from_c_args</b></code></a></dt><p class="pad"></p>
+
+<dd>Dispatch to a MultiSub,
+from a variable&#45;sized list of C arguments.
+The multiple dispatch system will figure out which sub should be called based on the types of the arguments passed in.</dd><p class="pad"></p>
+
+<dd>Return arguments must be passed as a reference to the PMC,
+string,
+number,
+or integer,
+so the result can be set.</dd><p class="pad"></p>
+
+<dt><a name="void_mmd_add_function"
+><b><code lang='und' xml:lang='und'>void mmd_add_function</b></code></a></dt><p class="pad"></p>
+
+<dd>Add a new binary MMD function to the list of functions the MMD system knows of.
+<code lang='und' xml:lang='und'>func_num</code> is the number of the new function.
+<code lang='und' xml:lang='und'>function</code> is ignored.</dd><p class="pad"></p>
+
+<dd>RT #45941 change this to a MMD register interface that takes a function *name*.</dd><p class="pad"></p>
+
+<dd>{{**DEPRECATE**}}</dd><p class="pad"></p>
+
+<dt><a name="static_void_mmd_expand_x"
+><b><code lang='und' xml:lang='und'>static void mmd_expand_x</b></code></a></dt><p class="pad"></p>
+
+<dd>Expands the function table in the X dimension to include <code lang='und' xml:lang='und'>new_x</code>.</dd><p class="pad"></p>
+
+<dd>{{**DEPRECATE**}}</dd><p class="pad"></p>
+
+<dt><a name="static_void_mmd_expand_y"
+><b><code lang='und' xml:lang='und'>static void mmd_expand_y</b></code></a></dt><p class="pad"></p>
+
+<dd>Expands the function table in the Y direction.</dd><p class="pad"></p>
+
+<dd>{{**DEPRECATE**}}</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_mmd_register"
+><b><code lang='und' xml:lang='und'>void Parrot_mmd_register</b></code></a></dt><p class="pad"></p>
+
+<dd>Register a function <code lang='und' xml:lang='und'>funcptr</code> for MMD function table <code lang='und' xml:lang='und'>func_num</code> for classes <code lang='und' xml:lang='und'>left_type</code> and <code lang='und' xml:lang='und'>right_type</code>.
+The left and right types are <code lang='und' xml:lang='und'>INTVAL</code>s that represent the class ID numbers.</dd><p class="pad"></p>
+
+<dd>The function table must exist,
+but if it is too small,
+it will automatically be expanded.</dd><p class="pad"></p>
+
+<dd>Adding a new function to the table can be interestingly non&#45;trivial,
+so we get to be tricky.</dd><p class="pad"></p>
+
+<dd>If the left or right types are larger than anything we&#39;ve seen so far,
+it means that we have to expand the table.
+Making Y larger is simple &#45;&#45; just realloc with some more rows.
+Making X larger is less simple.
+In either case,
+we punt to other functions.</dd><p class="pad"></p>
+
+<dd>RT #45943 &#45; Currently the MMD system doesn&#39;t handle inheritance and best match searching,
+as it assumes that all PMC types have no parent type.
+This can be considered a bug,
+and will be resolved at some point in the future.</dd><p class="pad"></p>
+
+<dd>{{**DEPRECATE**}}</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_mmd_register_sub"
+><b><code lang='und' xml:lang='und'>void Parrot_mmd_register_sub</b></code></a></dt><p class="pad"></p>
+
+<dd>RT #48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dd>{{**DEPRECATE**}}</dd><p class="pad"></p>
+
+<dt><a name="void_mmd_destroy"
+><b><code lang='und' xml:lang='und'>void mmd_destroy</b></code></a></dt><p class="pad"></p>
+
+<dd>Frees all the memory allocated used the MMD subsystem.</dd><p class="pad"></p>
+
+<dd>{{**DEPRECATE**}}</dd><p class="pad"></p>
+
+<dt><a name="PMC_*_Parrot_mmd_find_multi_from_long_sig"
+><b><code lang='und' xml:lang='und'>PMC *Parrot_mmd_find_multi_from_long_sig</b></code></a></dt><p class="pad"></p>
+
+<dd>Find the best candidate multi for a given sub name and signature.
+The signature is a string containing a comma&#45;delimited list of type names.</dd><p class="pad"></p>
+
+<dd>Currently only searches the global MULTI namespace.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*_Parrot_MMD_search_default_infix"
+><b><code lang='und' xml:lang='und'>PMC *Parrot_MMD_search_default_infix</b></code></a></dt><p class="pad"></p>
+
+<dd>RT #48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dd>{{**DEPRECATE**}}</dd><p class="pad"></p>
+
+<dt><a name="PMC_*_Parrot_mmd_sort_manhattan_by_sig_pmc"
+><b><code lang='und' xml:lang='und'>PMC *Parrot_mmd_sort_manhattan_by_sig_pmc</b></code></a></dt><p class="pad"></p>
+
+<dd>Given an array PMC (usually a MultiSub) and a CallSignature PMC sort the mmd candidates by their manhattan distance to the signature args.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*_Parrot_mmd_sort_manhattan"
+><b><code lang='und' xml:lang='und'>PMC *Parrot_mmd_sort_manhattan</b></code></a></dt><p class="pad"></p>
+
+<dd>Given an array PMC (usually a MultiSub) sort the mmd candidates by their manhatten distance to the current args.</dd><p class="pad"></p>
+
+<dt><a name="static_PMC*_Parrot_mmd_arg_tuple_func"
+><b><code lang='und' xml:lang='und'>static PMC *Parrot_mmd_arg_tuple_func</b></code></a></dt><p class="pad"></p>
+
+<dd>Return a list of argument types.
+PMC arguments are taken from registers according to calling conventions.</dd><p class="pad"></p>
+
+<dt><a name="static_PMC*_Parrot_mmd_search_default"
+><b><code lang='und' xml:lang='und'>static PMC *Parrot_mmd_search_default</b></code></a></dt><p class="pad"></p>
+
+<dd>Default implementation of MMD search.
+Search scopes for candidates,
+walk the class hierarchy,
+sort all candidates by their Manhattan distance,
+and return result</dd><p class="pad"></p>
+
+<dd>{{**DEPRECATE??
+**}}</dd><p class="pad"></p>
+
+<dt><a name="static_void_Parrot_mmd_search_classes"
+><b><code lang='und' xml:lang='und'>static void Parrot_mmd_search_classes</b></code></a></dt><p class="pad"></p>
+
+<dd>Search all the classes in all MultiSubs of the candidates <code lang='und' xml:lang='und'>cl</code> and return a list of all candidates.
+<code lang='und' xml:lang='und'>start_at_parent</code> is 0 to start at the class itself or 1 to search from the first parent class.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_distance_cmp"
+><b><code lang='und' xml:lang='und'>static INTVAL distance_cmp</b></code></a></dt><p class="pad"></p>
+
+<dd>RT #48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="static_PMC*_mmd_build_type_tuple_from_type_list"
+><b><code lang='und' xml:lang='und'>static PMC *mmd_build_type_tuple_from_type_list</b></code></a></dt><p class="pad"></p>
+
+<dd>Construct a FixedIntegerArray of type numbers from an array of type names.
+Used for multiple dispatch.</dd><p class="pad"></p>
+
+<dt><a name="static_PMC*_mmd_build_type_tuple_from_long_sig"
+><b><code lang='und' xml:lang='und'>static PMC *mmd_build_type_tuple_from_long_sig</b></code></a></dt><p class="pad"></p>
+
+<dd>Construct a FixedIntegerArray of type numbers from a comma&#45;delimited string of type names.
+Used for multiple dispatch.</dd><p class="pad"></p>
+
+<dt><a name="static_PMC*_mmd_cvt_to_types"
+><b><code lang='und' xml:lang='und'>static PMC *mmd_cvt_to_types</b></code></a></dt><p class="pad"></p>
+
+<dd>Given a ResizablePMCArray PMC containing some form of type identifier (either the string name of a class or a PMC representing the type),
+resolves all type references to type IDs,
+if possible.
+If that&#39;s not possible,
+returns PMCNULL.
+In that case you can&#39;t dispatch to the multi variant with this type signature,
+as Parrot doesn&#39;t yet know about the respective types requested &#45;&#45; you have to register them first.</dd><p class="pad"></p>
+
+<dd>Otherwise,
+returns a ResizableIntegerArray PMC full of type IDs representing the signature of a multi variant to which you may be able to dispatch.</dd><p class="pad"></p>
+
+<dd>{{**DEPRECATE**}}</dd><p class="pad"></p>
+
+<dt><a name="static_UINTVAL_mmd_distance"
+><b><code lang='und' xml:lang='und'>static UINTVAL mmd_distance</b></code></a></dt><p class="pad"></p>
+
+<dd>Create Manhattan Distance of sub <code lang='und' xml:lang='und'>pmc</code> against given argument types.
+0xffff is the maximum distance</dd><p class="pad"></p>
+
+<dt><a name="static_void_Parrot_mmd_sort_candidates"
+><b><code lang='und' xml:lang='und'>static void Parrot_mmd_sort_candidates</b></code></a></dt><p class="pad"></p>
+
+<dd>Sort the candidate list <code lang='und' xml:lang='und'>cl</code> by Manhattan Distance</dd><p class="pad"></p>
+
+<dt><a name="static_PMC*_Parrot_mmd_search_scopes"
+><b><code lang='und' xml:lang='und'>static PMC *Parrot_mmd_search_scopes</b></code></a></dt><p class="pad"></p>
+
+<dd>Search all scopes for MMD candidates matching the arguments given in <code lang='und' xml:lang='und'>arg_tuple</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_int_mmd_maybe_candidate"
+><b><code lang='und' xml:lang='und'>static int mmd_maybe_candidate</b></code></a></dt><p class="pad"></p>
+
+<dd>If the candidate <code lang='und' xml:lang='und'>pmc</code> is a Sub PMC,
+push it on the candidate list and return TRUE to stop further search.</dd><p class="pad"></p>
+
+<dd>If the candidate is a MultiSub remember all matching Subs and return FALSE to continue searching outer scopes.</dd><p class="pad"></p>
+
+<dt><a name="static_int_mmd_search_local"
+><b><code lang='und' xml:lang='und'>static int mmd_search_local</b></code></a></dt><p class="pad"></p>
+
+<dd>Search the current package namespace for matching candidates.
+Return TRUE if the MMD search should stop.</dd><p class="pad"></p>
+
+<dt><a name="static_void_mmd_search_by_sig_obj"
+><b><code lang='und' xml:lang='und'>static void mmd_search_by_sig_obj</b></code></a></dt><p class="pad"></p>
+
+<dd>Search the namespace of the first argument to the sub call for matching candidates.</dd><p class="pad"></p>
+
+<dt><a name="static_void_mmd_search_global"
+><b><code lang='und' xml:lang='und'>static void mmd_search_global</b></code></a></dt><p class="pad"></p>
+
+<dd>Search the builtin namespace for matching candidates.</dd><p class="pad"></p>
+
+<dt><a name="static_void_mmd_add_multi_global"
+><b><code lang='und' xml:lang='und'>static void mmd_add_multi_global</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a MultiSub,
+or add a variant to an existing MultiSub.
+The MultiSub is stored in the global MULTI namespace.</dd><p class="pad"></p>
+
+<dt><a name="static_void_mmd_add_multi_to_namespace"
+><b><code lang='und' xml:lang='und'>static void mmd_add_multi_to_namespace</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a MultiSub,
+or add a variant to an existing MultiSub.
+The MultiSub is added as a method to a class.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_mmd_add_multi_from_long_sig"
+><b><code lang='und' xml:lang='und'>void Parrot_mmd_add_multi_from_long_sig</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a MultiSub,
+or add a variant to an existing MultiSub.
+The MultiSub is stored in the global MULTI namespace.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_mmd_add_multi_from_c_args"
+><b><code lang='und' xml:lang='und'>void Parrot_mmd_add_multi_from_c_args</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a MultiSub,
+or add a variant to an existing MultiSub.
+The MultiSub is stored in the specified namespace.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_mmd_add_multi_list_from_c_args"
+><b><code lang='und' xml:lang='und'>void Parrot_mmd_add_multi_list_from_c_args</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a collection of multiple dispatch subs from a C structure of information.
+Iterate through the list of details passed in.
+For each entry create a MultiSub or add a variant to an existing MultiSub.
+MultiSubs are created in the global &#39;MULTI&#39; namespace in the Parrot HLL.</dd><p class="pad"></p>
+
+<dd>Typically used to create all the multiple dispatch routines declared in a PMC from the PMC&#39;s class initialization function.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/multidispatch.h</em>,
+<em lang='und' xml:lang='und'>http://svn.perl.org/perl6/doc/trunk/design/apo/A12.pod</em>,
+<em lang='und' xml:lang='und'>http://svn.perl.org/perl6/doc/trunk/design/syn/S12.pod</em></p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

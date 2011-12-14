@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - FileHandle PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; FileHandle PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/filehandle.pmc &#45; FileHandle PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>The FileHandle PMC performs I/O operations on a source or destination file.</p>
+
+<h2><a name="Vtable_Functions"
+>Vtable Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes a newly created FileHandle object.
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+Create a copy of the filehandle.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Mark active filehandle data as live.
+<dt><a name="void_destroy()"
+><b><code>void destroy()</b></code></a></dt>
+Free structures.
+<dt><a name="INTVAL_get_integer_keyed_int(INTVAL_key)"
+><b><code>INTVAL get_integer_keyed_int(INTVAL key)</b></code></a></dt>
+Shortcut to get the value of some attributes.
+For internal usage only,
+subject to change without notice.
+<dt><a name="void_set_integer_keyed_int(INTVAL_key,_INTVAL_value)"
+><b><code>void set_integer_keyed_int(INTVAL key, INTVAL value)</b></code></a></dt>
+Shortcut to set the value of some attributes For internal usage only,
+subject to change without notice.
+<dt><a name="INTVAL_get_bool()"
+><b><code>INTVAL get_bool()</b></code></a></dt>
+Returns whether the FileHandle has reached the end of the file.</dl>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="METHOD_open(STRING_*filename_:optional,_STRING_*mode_:optional)"
+><b><code>METHOD open(STRING *filename :optional, STRING *mode :optional)</b></code></a></dt>
+Opens the file at the given filename (including path) with the given mode.
+The invocant is modified and becomes an open filehandle.
+A copy of the invocant is also returned by the method (some subclasses may create this as the primary filehandle,
+rather than modifying the invocant).
+<dt><a name="METHOD_isatty()"
+><b><code>METHOD isatty()</b></code></a></dt>
+Returns a boolean value indicating whether <code>SELF</code> is a console/tty.
+<dt><a name="METHOD_close()"
+><b><code>METHOD close()</b></code></a></dt>
+Close the filehandle.
+<dt><a name="METHOD_is_closed()"
+><b><code>METHOD is_closed()</b></code></a></dt>
+Test if the filehandle is closed.
+<dt><a name="METHOD_read(INTVAL_bytes)"
+><b><code>METHOD read(INTVAL bytes)</b></code></a></dt>
+Read the given number of bytes from the filehandle and return them in a string.
+<dt><a name="METHOD_readline()"
+><b><code>METHOD readline()</b></code></a></dt>
+Read a line from the filehandle and return it in a string.
+<dt><a name="METHOD_readline_interactive(STRING_*prompt)"
+><b><code>METHOD readline_interactive(STRING *prompt)</b></code></a></dt>
+Read a line from the filehandle and return it in a string.
+<dt><a name="METHOD_readall(STRING_*name);"
+>METHOD readall(STRING *name);</a></dt>
+Read the entire contents of a file named <i>name</i> into a Parrot string.
+On a filehandle object that isn&#39;t opened yet,
+the path to a file can be passed to <code>readall</code> and it will open a filehandle on that file,
+read in the contents,
+and close the filehandle.
+<pre>  .local pmc pio
+  pio = new &#39;FileHandle&#39;
+  $S0 = pio.&#39;readall&#39;(&#39;the_file&#39;)</pre>
+If the filehandle is already open, then no file path should be passed. The <code>readall</code> method will read the contents of the file, and will not close the filehandle when finished.
+<pre>  pio = open &#39;the_file&#39;, &#39;r&#39;
+  $S0 = pio.&#39;readall&#39;()</pre>
+
+<dt><a name="METHOD_flush()"
+><b><code>METHOD flush()</b></code></a></dt>
+Flushes the filehandle.
+<dt><a name="METHOD_print([INTVAL|FLOATVAL|STRING_*|PMC*]_value)"
+><b><code>METHOD print([INTVAL|FLOATVAL|STRING *|PMC*] value)</b></code></a></dt>
+Print the passed in integer, number, string, or PMC to the filehandle. (Integers, numbers, and strings are auto&#45;boxed as PMCs.)
+<dt><a name="METHOD_puts(STRING_*value)"
+><b><code>METHOD puts(STRING *value)</b></code></a></dt>
+Print the string to the filehandle.
+<dt><a name="METHOD_buffer_type(STRING_*new_type_:optional)"
+><b><code>METHOD buffer_type(STRING *new_type :optional)</b></code></a></dt>
+Set or retrieve the buffering behavior for the filehandle. The argument and return value are one of the following:
+<dl>
+<dt><a name="unbuffered"
+><b><code>unbuffered</b></code></a></dt>
+Buffering disabled, bytes are sent as soon as possible.
+<dt><a name="line&#45;buffered"
+><b><code>line&#45;buffered</b></code></a></dt>
+Line buffering, bytes are sent when a record separator is encountered.
+<dt><a name="full&#45;buffered"
+><b><code>full&#45;buffered</b></code></a></dt>
+Full buffering, bytes are sent when the buffer is full.
+<dt><a name="METHOD_buffer_size(INTVAL_new_size_:optional)"
+><b><code>METHOD buffer_size(INTVAL new_size :optional)</b></code></a></dt>
+Set or retrieve the buffer size for the filehandle.
+<dt><a name="METHOD_mode()"
+><b><code>METHOD mode()</b></code></a></dt>
+Retrieve the read mode string for the filehandle.
+<dt><a name="METHOD_encoding(STRING_*new_encoding)"
+><b><code>METHOD encoding(STRING *new_encoding)</b></code></a></dt>
+Set or retrieve the encoding attribute (a string name of the selected encoding scheme) for the filehandle.
+<dt><a name="METHOD_eof()"
+><b><code>METHOD eof()</b></code></a></dt>
+Returns true if the filehandle is at end&#45;of&#45;file, returns false otherwise.
+<dt><a name="METHOD_exit_status()"
+><b><code>METHOD exit_status()</b></code></a></dt>
+If this is a pipe, return the exit status of the child process.
+<dt><a name="METHOD_get_fd()"
+><b><code>METHOD get_fd()</b></code></a></dt>
+Retrieve the integer file descriptor for the FileHandle (only available on platforms that use integer file descriptors).
+<dt><a name="METHOD_tell()"
+><b><code>METHOD tell()</b></code></a></dt>
+Get the file position of the stream. 2 <code>INTVAL</code>s are returned. The first is the position. The second is the position shifted down by 32 bits to handle overflows on 32&#45;bit systems.
+<dt><a name="METHOD_seek(INTVAL_whence,_INTVAL_offs,_INTVAL_offs_overflow)"
+><b><code>METHOD seek(INTVAL whence, INTVAL offs, INTVAL offs_overflow)</b></code></a></dt>
+Set the file position to an offset specified by <code>offs</code> (and optionally <code>offs_overflow</code>). <code>whence</code> determines from where in the file the offset is taken.
+<pre> Whence Value      Meaning
+ 0                 Seek from the beginning of the file
+ 1                 Seek from the current position
+ 2                 Seek from the end of the file</pre>
+<code>offs_overflow</code> is optional and is used to handle offsets higher than 2Gb on 32bit systems.
+<dt><a name="METHOD_peek()"
+><b><code>METHOD peek()</b></code></a></dt>
+Returns the next byte from the stream, but does not remove it.</dl>
+</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

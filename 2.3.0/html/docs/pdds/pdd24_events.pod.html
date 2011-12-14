@@ -1,0 +1,340 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PDD 24: Events</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; PDD 24: Events
+                </div>
+
+<h1><a name="PDD_24:_Events"
+>PDD 24: Events</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>This document defines the requirements and implementation strategy for Parrot&#39;s event subsystem.</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<dl>
+<dt><a name="&#45;_Events_are_objects"
+>&#45; Events are objects</a></dt>
+
+<dt><a name="&#45;_Events_are_typed"
+>&#45; Events are typed</a></dt>
+
+<dt><a name="&#45;_Events_can_be_fatal_or_non&#45;fatal"
+>&#45; Events can be fatal or non&#45;fatal</a></dt>
+
+<dt><a name="&#45;_Event_handlers_are_code_objects"
+>&#45; Event handlers are code objects</a></dt>
+
+<dt><a name="&#45;_Event_handlers_can_be_final_or_non&#45;final"
+>&#45; Event handlers can be final or non&#45;final</a></dt>
+</dl>
+
+<h2><a name="Definitions"
+>Definitions</a></h2>
+
+<p>An event is a notification that something has happened: the user has manipulated a GUI element,
+an I/O request has completed,
+a signal has been triggered,
+or a timer has expired.
+Most systems these days have an event handler (often two or three,
+which is something of a problem),
+because handling events is so fundamental to modern GUI programming.</p>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<p>Parrot&#39;s event handling system is integrated with the central concurrency scheduler.
+When an event is created (by a GUI element,
+etc),
+it is added to concurrency task list.
+By default,
+events have a higher priority in the task list than asynchronous I/O operations or threaded code operations.
+At predetermined points in the execution cycle (between low&#45;level discrete operations for safety,
+behind the scenes during &#34;blocking&#34; operations,
+at the same operational lulls where GC runs are performed,
+etc),
+the task list is queried,
+and tasks are dispatched.
+Events are dispatched to event handlers.</p>
+
+<p>Event handlers are registered with the concurrency scheduler.
+When dispatching an event,
+the concurrency scheduler compares the type of the event to the type of the event handler and selects the closest match.
+An exact type match is always highest ranked,
+then a parent type,
+and finally a general handler designed to handle all types.
+In addition to the type of an event,
+an event handler may check the data attribute of an event and decide whether to accept or decline that event based on its data.
+(For example,
+a &#34;key press&#34; may contain a data attribute value specifying that it&#39;s a &#34;key &#39;a&#39; press&#34;.)</p>
+
+<p>In the simple case,
+the concurrency scheduler runs within the single interpreter thread.
+In more complex cases (particularly on multi&#45;processor machines),
+the concurrency scheduler runs in its own thread.
+In the multi&#45;threaded case,
+each individual thread may register an event handler with the concurrency scheduler,
+and the event that matches the registered handler will be dispatched to the thread that registered it.
+In the most complex case,
+each thread runs a lightweight concurrency scheduler that coordinates with the central scheduler (so,
+for example,
+the mini&#45;scheduler can decide when to run an event handler dispatched by the central scheduler).</p>
+
+<p>An event handler may mark itself as a final event handler,
+removing the event from the task list,
+or it may be a non&#45;final handler,
+leaving the event in the task list for another thread to collect.</p>
+
+<p>Most events are non&#45;fatal,
+so if a handler isn&#39;t found for them when they&#39;re extracted from the task list,
+they just expire and drop out of the task list.
+Events can also be fatal,
+in which case the interpreter will exit if a handler isn&#39;t found (essentially the same effect as an exception).
+When a non&#45;final event handler leaves an event in the task list,
+it will expire if no further relevant event handlers can be found for the event.</p>
+
+<p>The operation to query the concurrency scheduler and find if it has any tasks to process is as cheap as possible,
+so it may be queried at regular intervals.</p>
+
+<h3><a name="Event_API"
+>Event API</a></h3>
+
+<p>An event is a Task PMC object that contains a type,
+data for the event,
+and a priority.</p>
+
+<p>The type of an event is only used to match the event with an event handler,
+but is notionally similar to the class of an object.</p>
+
+<p>The data for the event is a PMC and could be any data passed to the event handler by the code that originates the event.</p>
+
+<p>The priority of an event affects when it is processed by the task list.
+Higher priority events are processed before lower priority events.
+Age is also a relevant factor,
+when two events have the same priority,
+the older one is processed first.
+An event handler or the scheduler may also be set to ignore events below a certain threshold of priority.
+When the central scheduler ignores an event because of its priority level,
+the event remains in the task list until the priority threshold changes.</p>
+
+<p>An instance of the Task PMC acting as an event uses 4 internal attributes,
+which are:</p>
+
+<ol>
+<li>The type of the task,
+which is &#34;event&#34;</li>
+
+<li>The subtype of this particular event</li>
+
+<li>The priority of the event</li>
+
+<li>A PMC containing any additional data associated with the event,
+which may be used by the event handler.</li>
+</ol>
+
+<p>In addition to the attributes,
+an event uses a private PMC flag to mark itself as fatal or non&#45;fatal.</p>
+
+<h4><a name="Event_Vtable_Entries"
+>Event Vtable Entries</a></h4>
+
+<dl>
+<dt><a name="get_string"
+>get_string</a></dt>
+
+<pre>    STRING * get_string()</pre>
+Returns a simple string name for the event, suitable for printing in error messages.
+<dt><a name="get_pmc"
+>get_pmc</a></dt>
+
+<pre>  PMC * get_pmc()</pre>
+Returns the data attribute of the event, or PMCNULL if the event has no data.
+<dt><a name="isa"
+>isa</a></dt>
+
+<pre>  INTVAL isa(STRING *)</pre>
+Returns true or false if the event is of the type passed in the string parameter, or has a parent of that type.</dl>
+
+<h3><a name="Event_Handler_API"
+>Event Handler API</a></h3>
+
+<p>An event handler contains a code object, as well as metainformation about where it was registered. More specifically, it contains a continuation object, capturing the full state of the interpreter where it was created. In many cases, this has no more effect than guaranteeing that the event handler code executes within the appropriate context of the thread that registered the handler.</p>
+
+<p>Because events are handled in mainline code, they don&#39;t have the restrictions commonly associated with interrupt&#45;level code. It&#39;s safe and acceptable for an event handler to throw an exception, allocate memory, or manipulate thread or global state safely. Event handlers can even acquire locks if they need to, though it&#39;s not a good idea to have an event handler blocking on lock acquisition.</p>
+
+<p>An instance of the EventHandler PMC has 3 internal attributes, which are:</p>
+
+<ol>
+<li>The type of event it handles</li>
+
+<li>A minimum threshhold of priority, below which it will ignore the event even if it is the right type. The default threshhold is 0, accepting all event priorities.</li>
+
+<li>The core code object of the event handler.</li>
+
+<li>A pointer to the interpreter that registered the event handler. The default is the interpreter in which the event handler was created.</li>
+</ol>
+
+<p>The interpreter pointer may be a proxy that simply provides the interface of an interpreter object, and knows how to communicate with its remote interpreter object (in threaded or clustering concurrency).</p>
+
+<h4><a name="Event_Handler_Vtable_Entries"
+>Event Handler Vtable Entries</a></h4>
+
+<dl>
+<dt><a name="init_pmc"
+>init_pmc</a></dt>
+
+<pre>    void init_pmc(PMC *)</pre>
+Initializes the PMC, either with a single sub object for the core code, or with a hash object containing arguments for the code object, type, priority threshold, and interpreter object for the handler.
+<dt><a name="set_string_native"
+>set_string_native</a></dt>
+
+<pre>    void set_string_native(STRING *)</pre>
+Set the type of event this handler responds to. {{NOTE: These basic attribute setting operations could be set_attr_str and get_attr_str instead.}}
+<dt><a name="get_string"
+>get_string</a></dt>
+
+<pre>    STRING* get_string()</pre>
+Retrieve the type of event this handler responds to.
+<dt><a name="set_integer_native"
+>set_integer_native</a></dt>
+
+<pre>    set_integer_native(INTVAL)</pre>
+Set the minimum threshhold of priority.
+<dt><a name="set_pmc(PMC_*)"
+>set_pmc(PMC *)</a></dt>
+Set the interpreter object for this event handler.
+<dt><a name="invoke"
+>invoke</a></dt>
+
+<pre>    opcode_t * invoke(void *)</pre>
+Invoke the event handler.</dl>
+
+<h3><a name="Opcodes"
+>Opcodes</a></h3>
+
+<p>The following opcodes are used with the event system:</p>
+
+<dl>
+<dt><a name="new"
+>new</a></dt>
+<pre>  $P1 = new 'Event'
+  $P1 = new 'EventHandler'
+  $P1 = new 'EventHandler', $P2
+</pre>Creates a new event or event handler.
+<dt><a name="schedule"
+>schedule</a></dt>
+<pre>  $P0 = new 'Event'
+  # set attributes
+  schedule $P0
+</pre>Register an event with the concurrency scheduler. If the concurrency scheduler for this interpreter (thread/clustered instance) is linked to another &#34;primary&#34; concurrency scheduler, this will pass along the event to the primary. All details about the event (its type, whether it&#39;s fatal or non&#45;fatal, whether it&#39;s a timer, etc) are stored within the event PMC.{{NOTE: other possibilities &#39;raise&#39; and &#39;fire&#39; by KJS}}
+<dt><a name="addhandler"
+>addhandler</a></dt>
+<pre>  $P0 = new 'EventHandler'
+  # set attributes
+  addhandler $P0
+</pre>Register an event handler with the concurrency scheduler. If the concurrency scheduler for this interpreter (thread/clustered instance) is linked to another &#34;primary&#34; concurrency scheduler, this will pass along the event handler to the primary.</dl>
+
+<h3><a name="Event_Type_Hierarchy"
+>Event Type Hierarchy</a></h3>
+
+<p>Parrot defines a core set of event types. Users may also define their own event types. An event type of &#39;allevents&#39; is effectively the parent of all event types, and will respond to any event in the task list that isn&#39;t handled by other event handlers in a final way.</p>
+
+<pre>  allevents
+
+  ioevent
+      packetsent
+      packetreceived
+      fileopened
+      fileclosed
+      readcomplete
+
+  keyevent
+      keydown
+      keypress
+      keyup
+
+  mouseevent
+      click
+      doubleclick
+      mousedown
+      mouseup
+      mousemove
+          mouseenter
+          mouseleave
+
+  windowevent
+      blur
+      focus
+      scroll
+      textselect
+      resize
+          minimize
+          maximize
+          restore
+
+  signal
+      alarm
+      interrupt
+      childdie</pre>
+
+<h3><a name="Signals"
+>Signals</a></h3>
+
+<p>Signals are a special form of event. Parrot presents them as mildly special, as a remnant of Perl&#39;s Unix heritage, but under the hood they&#39;re not treated any differently from events generated by other sources.</p>
+
+<p>Signals can be divided into two categories, those handled by the operating system, and those passed on to the process.</p>
+
+<p>OS&#45;handled signals are things like SIGKILL, which kills a process, or SIGSEGV, which indicates that the process has tried to access memory that isn&#39;t part of your process. Because these signals are handled before they reach the process, there&#39;s no way for Parrot to catch them.</p>
+
+<p>Signals Parrot can handle include things like SIGCHLD, indicating that a child process has died, or SIGINT, indicating that the user has hit <code>^C</code> on the keyboard, or SIGALRM, the timer expiration signal. Parrot turns these signals into events and puts them in the event task list, and will be processed and dispatched to an event handler in order of priority and age just like other events.</p>
+
+<h3><a name="Timers"
+>Timers</a></h3>
+
+<p>A timer is a special kind of event with a time delay. A timer can act as any builtin or custom event type. Timers can be be flagged as repeating. Parrot provides builtin timers for greater portability. Some platforms provide their own implementations of timers, which may be used when performance on a particular platform is more important than portability.</p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p><em>src/events.c</em></p>
+
+<p><a href='http://www.seas.upenn.edu/~lipeng/homepage/unify.html'><a href="http://www.seas.upenn.edu/~lipeng/homepage/unify.html">http://www.seas.upenn.edu/~lipeng/homepage/unify.html</a></a></p>
+
+<p><a href='http://developer.apple.com/documentation/Carbon/Conceptual/Carbon_Event_Manager/Concept/chapter_2_section_2.html'><a href="http://developer.apple.com/documentation/Carbon/Conceptual/Carbon_Event_Manager/Concept/chapter_2_section_2.html">http://developer.apple.com/documentation/Carbon/Conceptual/Carbon_Event_Manager/Concept/chapter_2_section_2.html</a></a></p>
+
+<p><a href='http://www.quirksmode.org/js/events_compinfo.html'><a href="http://www.quirksmode.org/js/events_compinfo.html">http://www.quirksmode.org/js/events_compinfo.html</a></a></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

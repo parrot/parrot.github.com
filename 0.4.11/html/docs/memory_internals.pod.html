@@ -1,0 +1,307 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Memory Internals</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Memory Internals</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>docs/memory_internals.pod &#45; Memory Internals</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>This document tries to explain the internals of parrot structures related to memory management and should give the answer 42,
+when questions are related to the whole and everything and memory management.</p>
+
+<h1><a name="OVERVIEW"
+>OVERVIEW <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>All allocated items are managed in memory pools.
+Memory pools hold collections of similar items.
+These pools can be roughly divided into two kinds: pools holding fixed sized items and variable sized items.</p>
+
+<p>A pool is organized as a linked list of big chunks,
+holding many managed items of one kind.</p>
+
+<h2><a name="Abbreviations_used_here"
+>Abbreviations used here <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>DOD ...
+dead object detection,
+see <em lang='und' xml:lang='und'>docs/pdds/pdd09_gc.pod</em> for details.</p>
+
+<p>By scanning through all the interpreter&#39;s registers,
+stacks and the processor stack,
+all objects that are detected here are marked as alive.
+Objects in all pools not alive are considered dead.</p>
+
+<h1><a name="Top_down:_the_interpreter"
+>Top down: the interpreter <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>A overall layout of the interpreter&#39;s memory management looks like so:</p>
+
+<pre lang='und' xml:lang='und'>    typedef Interp {
+        ...
+        struct Arenas *arena_base;
+        ...
+    } Interp;</pre>
+
+<p>All object&#45;like things that get allocated during the execution of parrot bytecode are managed here.</p>
+
+<h1><a name="Arenas"
+>Arenas <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><code lang='und' xml:lang='und'>struct Arenas</code> holds pointers to different subkinds of managed memory. A simplification looks similar to this:</p>
+
+<pre lang='und' xml:lang='und'>    struct Arenas {
+        struct Memory_Pool *memory_pool;
+        ...
+        struct Small_Object_Pool * header_pool;
+    }</pre>
+
+<p><code lang='und' xml:lang='und'>Memory_pool</code> and <code lang='und' xml:lang='und'>header_pool</code> are variable and fixed sized pool pointers respectively.</p>
+
+<h1><a name="Memory_Pool"
+>Memory_Pool <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Here all variable sized items are allocated, managed in linked lists of <code lang='und' xml:lang='und'>Memory_Blocks</code> &#45; but see below.</p>
+
+<h1><a name="Small_Object_Pool"
+>Small_Object_Pool <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>This pool manages <code lang='und' xml:lang='und'>Small_Object_Arena</code>s, linked together, which provide the space for the fixed sized objects.</p>
+
+<h1><a name="Fixed_sized_items"
+>Fixed sized items <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>These items are either objects by themselves, like a <code lang='und' xml:lang='und'>PMC</code>, or are a header structure of a variable sized object like a <code lang='und' xml:lang='und'>STRING</code>. The general object of this kind is a buffer&#45;like object, which consists of a <code lang='und' xml:lang='und'>Buffer</code> or a <code lang='und' xml:lang='und'>PObj</code> at the beginning and a variable but fixed sized part after the buffer structure. Examples of this are a <code lang='und' xml:lang='und'>STRING</code> or an <code lang='und' xml:lang='und'>IntList</code>.</p>
+
+<p>Buffer&#45;like objects of the same size are maintained in the <i>sized_header_pools</i>, which manage objects of the same size in one slot.</p>
+
+<p>All fixed sized objects are allocated with <code lang='und' xml:lang='und'>alloc_objects()</code>, and first put onto the pool&#39;s <code lang='und' xml:lang='und'>free_list</code>. When there is need for a new object it is taken off the free list, and when it stops being used, it will be put back on the free list again. DOD detects which objects are no longer being used.</p>
+
+<p>If the free list is empty then a DOD run is started, which may be able to refill the free list with dead objects it detects are free for re&#45;use. If it finds none then a new pool is allocated to hold more objects.</p>
+
+<p>These fixed sized objects are never freed during the lifetime of an interpreter, they just get reused or recycled.</p>
+
+<h2><a name="General_structure_of_a_buffer&#45;like_item"
+>General structure of a buffer&#45;like item <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>    struct parrot_object_t {
+    struct {
+        void *bufstart;
+        size_t buflen;
+    } b;
+    unsigned flags;
+    ...
+    } PObj;</pre>
+
+<p>This does not totally reflect the current implementation, but is the spirit of the abstraction of current objects. Above structure including <code lang='und' xml:lang='und'>flags</code> is the current <code lang='und' xml:lang='und'>Buffer</code>. With some additional fields like <code lang='und' xml:lang='und'>strstart</code> and <code lang='und' xml:lang='und'>bufused</code>, inserted at the ellipses, you get a <code lang='und' xml:lang='und'>STRING</code>. Adding a <i>vtable</i> (and some other structure members) yields a <code lang='und' xml:lang='und'>PMC</code>.</p>
+
+<h2><a name="ARENA_DOD_FLAGS"
+>ARENA_DOD_FLAGS <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Only three flags need to be checked during a DOD run: <code lang='und' xml:lang='und'>PObj_live_FLAG</code>, <code lang='und' xml:lang='und'>PObj_on_free_list_FLAG</code>, and <code lang='und' xml:lang='und'>PObj_is_special_PMC_FLAG</code>. Normally these flags are stored in <code lang='und' xml:lang='und'>PObj&#45;&#62;flags</code>, meaning that each PMC must be accessed during the DOD run.</p>
+
+<p>An alternative approach is to store the DOD&#45;Flags in the Arenas as a packed array of bits. This approach will be used if the preprocessor variable <code lang='und' xml:lang='und'>ARENA_DOD_FLAGS</code> is defined to 1, which happens by default if the system provides a memory alignment primitive such as <code lang='und' xml:lang='und'>memalign</code>. In this case the <code lang='und' xml:lang='und'>struct Small_Object_Arena</code> is extended with a pointer to the packed bitarray</p>
+
+<pre lang='und' xml:lang='und'>    struct Small_Object_Arena {
+        UINTVAL *dod_flags;
+        size_t object_size;
+        ...
+    };</pre>
+
+<p>The memory for this Small_Object_Arena is allocated at the beginning of a large aligned block of memory (currently 4Mib) and the objects in this arena come from this memory block. Therefore the arena of an object can be found by simply masking out the lower bits of the pointer to the object:</p>
+
+<pre lang='und' xml:lang='und'>    arena = object &#38; ARENA_MASK;</pre>
+
+<p>The macro <code lang='und' xml:lang='und'>GET_ARENA</code> does exactly this, including the necessary type casts to remove warnings. The dod_flags are accessed by getting the element number in the arena (this is possible because the <code lang='und' xml:lang='und'>object_size</code> is fixed and stored in the <code lang='und' xml:lang='und'>struct Small_Object_Arena</code>), creating the appropriate bitmask by shifting and accessing the right element of <code lang='und' xml:lang='und'>dod_flags[]</code>.</p>
+
+<pre lang='und' xml:lang='und'>    n = (object &#45; arena&#45;&#62;start_objects) / arena&#45;&#62;object_size;
+    arena&#45;&#62;dod_flags[n &#62;&#62; ARENA_FLAG_SHIFT] 
+        &#38; flag &#60;&#60; ((n &#38; ARENA_FLAG_MASK) &#60;&#60; 2)</pre>
+
+<p><em lang='und' xml:lang='und'>pobj.h</em> provides macros to facilitate referencing individual object flags: <code lang='und' xml:lang='und'>DOD_flag_SET</code>, <code lang='und' xml:lang='und'>DOD_flag_CLEAR</code> and <code lang='und' xml:lang='und'>DOD_flag_TEST</code>. They are also defined in the case without ARENA_DOD_FLAGS, so they make up a portable way of manipulating the DOD&#45;relevant object flags.</p>
+
+<h3><a name="Flag_packing_format"
+>Flag packing format</a></h3>
+
+<p>The three object flags consulted during DOD are packed into one 4&#45;bit nibble per object (one bit is currently unused). Since <code lang='und' xml:lang='und'>arena&#45;&#62;dod_flags[]</code> is an array of native&#45;sized UINTVALs (&#34;words&#34;), the number of nibbles per array entry varies depending on the platform.</p>
+
+<p>To reference a particular flag in a test, set, or clear operation, we require both the word containing the object&#39;s flags and a bitmask to isolate the flag.</p>
+
+<p>The flag word for object o is found as follows:</p>
+
+<p>&#45; Get the <code lang='und' xml:lang='und'>dod_flags[]</code> array for the object&#39;s arena</p>
+
+<pre lang='und' xml:lang='und'>    [GET_ARENA(o)&#45;&#62;dod_flags]</pre>
+
+<p>&#45; Get the index of the object in its arena</p>
+
+<pre lang='und' xml:lang='und'>    [n=GET_OBJ_N(arena,o)]</pre>
+
+<p>&#45; Determine which word in dod_flags contains the needed flag nibble</p>
+
+<pre lang='und' xml:lang='und'>    [(obj index)/(obj flag sets per word) = n&#62;&#62;ARENA_FLAG_SHIFT]</pre>
+
+<p>The composite expression to reference the flag word is then</p>
+
+<pre lang='und' xml:lang='und'>    GET_ARENA(o)&#45;&#62;dod_flags[ GET_OBJ_N(GET_ARENA(o), o) &#62;&#62; ARENA_FLAG_SHIFT ]</pre>
+
+<p>The bitmask for the desired flag is constructed as follows:</p>
+
+<p>&#45; Determine the index into the flag word of the object&#39;s nibble</p>
+
+<pre lang='und' xml:lang='und'>    [(obj index)%(nibbles per word) = n &#38; ARENA_FLAG_MASK]</pre>
+
+<p>&#45; Convert nibble index into bit index</p>
+
+<pre lang='und' xml:lang='und'>    [(nibble index)*(bits per nibble) = (n &#38; ARENA_FLAG_MASK) &#60;&#60; 2]</pre>
+
+<p>&#45; Create bitmask for desired flag by shifting base flag by bit index</p>
+
+<pre lang='und' xml:lang='und'>    [d_PObj_whatever_FLAG &#60;&#60; (nibble index)]</pre>
+
+<p>The composite expression to form the bitmask is then</p>
+
+<pre lang='und' xml:lang='und'>    (d_PObj_ ## flag ## _FLAG &#60;&#60; (( GET_OBJ_N(GET_ARENA(o), o) &#38;
+        ARENA_FLAG_MASK ) &#60;&#60; 2))</pre>
+
+<p>The DOD_flag_* macros combine these constructions to access the flags.</p>
+
+<h1><a name="Variable_sized_items"
+>Variable sized items <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>These items never live alone, they are part of a <code lang='und' xml:lang='und'>Buffer</code> structure, described above. They are allocated at <code lang='und' xml:lang='und'>bufstart</code>. This is, for example, used to manage the buffer&#39;s free list, where <code lang='und' xml:lang='und'>bufstart</code> is used as a pointer to the next object.</p>
+
+<p>These items are managed in two different pools: the <code lang='und' xml:lang='und'>memory_pool</code> and the <code lang='und' xml:lang='und'>constant_string_pool</code>. The former holds all variable sized items, while the latter containing the word &#34;string&#34;, holds constant strings only, as we don&#39;t have other variable sized constant items to store.</p>
+
+<p>Here, different memory allocation schemes jump in:</p>
+
+<h2><a name="Copying_GC"
+>Copying GC <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>A <code lang='und' xml:lang='und'>memory_pool</code> gets allocated in big blocks, namely a <code lang='und' xml:lang='und'>Memory_Block</code>.</p>
+
+<p>When some part is needed, e.g. to store a string, this part is carved out of the memory block, until this block is used up. If no more space is available in this memory block, a garbage collection (GC) is started. This copies all living items of all used memory blocks into one new block, which holds thereafter only used items tightly packed together.</p>
+
+<p>The old memory blocks, containing sparse unused parts and used parts already copied to the new place, are then unused altogether and get <code lang='und' xml:lang='und'>free()</code>ed thereafter.</p>
+
+<p>When GC doesn&#39;t provide enough free space needed for a new item, a new block is added to the memory pool.</p>
+
+<p>This also implies that buffers are moved around during their life. Users of these buffers are therefore not allowed to hold pointers to buffers over pieces of code that might trigger a GC run, like <code lang='und' xml:lang='und'>Parrot_allocate()</code> or <code lang='und' xml:lang='und'>string_compare()</code>.</p>
+
+<h2><a name="Defragmenting_allocator"
+>Defragmenting allocator <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>An alternative to the above is to use a memory allocator, which is as fast as the above and does reuse <code lang='und' xml:lang='und'>free()</code>ed items in a memory conserving way. Actually, the malloc implementations in some systems&#39; <em lang='und' xml:lang='und'>libc</em> efficiently provide this, such as the glibc malloc based on Doug Lea&#39;s allocator.</p>
+
+<p>Using this allocator, all variable sized items are just allocated via a plain <code lang='und' xml:lang='und'>malloc()</code> call, or resized with <code lang='und' xml:lang='und'>realloc()</code>, and after they lose their existence (ie when DOD detects that the managing buffer header is no longer in use) they are <code lang='und' xml:lang='und'>free()</code>ed. That&#39;s all. The underlying allocator collects these pieces, coalesces them if possible to form bigger pieces, and then puts them on free lists, sorted by size. Eventually, when a new allocation request arrives, it may give them back to Parrot.</p>
+
+<p>So here, the variable length <code lang='und' xml:lang='und'>memory_pool</code> is unused. You can consider this pool to live inside the allocator.</p>
+
+<p>Buffers allocated this way don&#39;t move around, except when reallocated of course.</p>
+
+<p>The <em lang='und' xml:lang='und'><a href="../Configure.pl.html">Configure.pl</a></em> option <code lang='und' xml:lang='und'>&#45;&#45;gc</code> allows one to use either method.</p>
+
+<h2><a name="Buffer_Tail_and_COW"
+>Buffer_Tail and COW <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Both implementations have the same problem to solve: <code lang='und' xml:lang='und'>STRING</code>s that get copied, or parts of strings as the result of a substr() call, do not allocate new space in the memory pool to hold this string or part of string. They just use a <code lang='und' xml:lang='und'>new_string_header()</code> and set up a pointer (<code lang='und' xml:lang='und'>strstart</code>) pointing somewhere into the original string and remember the used length there in <code lang='und' xml:lang='und'>bufused</code>.</p>
+
+<p>This is all OK, as long as the original and the lazy copy of the string are not modified. So that&#39;s well&#45;known and called COW (copy on write).</p>
+
+<p>Now, during GC (or freeing buffers) the problem arises: to whom does this string belong? You shouldn&#39;t copy the same string to different places, thus rendering COW to a noop, nor are you allowed to free this same string more then once (your debugger will tell you why...).</p>
+
+<p>Both allocation schemes therefore use a part of the allocated string to do this bookkeeping.</p>
+
+<p>Copying GC uses a <code lang='und' xml:lang='und'>Buffer_Tail</code> after the end of the actual variable length string and marks such COW strings with <code lang='und' xml:lang='und'>TAIL_moved</code> and stores the new address in the buffer header, so other users of this string can be updated to reuse the same string (XXX one or all other users?).</p>
+
+<p>The <code lang='und' xml:lang='und'>malloc()</code>/<code lang='und' xml:lang='und'>free()</code> approach stores a refcount at <code lang='und' xml:lang='und'>bufstart</code>. During DOD all dead users increment the refcount, living users set it to an huge value. When freeing the buffer, the string is only freed if the refcount reaches zero.</p>
+
+<h1><a name="Simplified_Figure"
+>Simplified Figure <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>                             +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+      +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#60;&#45;&#45;&#45;| Arenas |&#60;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+      |                      +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#62;&#45;&#45;+      |
+      |                                     |      |
+      |         +&#45;&#45;&#45;&#45;&#45;&#45;+    +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+   |  +=============+
+      |         | S0   |&#60;&#45;&#45;&#45;| Registers |&#60;&#45;&#45;)&#45;&#45;| Interpreter |
+      |         +&#45;&#45;&#45;&#45;&#45;&#45;+    +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+   |  +=============+
+      |     +&#45;&#45;&#45;| S1   |                    |
+      |     |   +&#45;&#45;&#45;&#45;&#45;&#45;+                    +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+ +&#45;&#45;&#45;&#45;&#45;&#45;&#45;+  |                                          |
+ | Blk 1 |&#45;&#45;)&#45;&#45;&#62;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+    +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+ +&#45;&#45;&#45;&#45;&#45;&#45;&#45;+  |   | Buffer 1 |    | OnestringAno |   | Block 1 |
+ | Blk 2 |  |   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+    | therstring.. |   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+ +&#45;&#45;&#45;&#45;&#45;&#45;&#45;+  |   | Buffer 2 |    | ..String...  |&#60;&#45;&#45;| Block 2 |
+ | .     |  |   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+    +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+ +&#45;&#45;&#45;&#45;&#45;&#45;&#45;+  |   | ...      |        ^    ^         | ...     |
+ Small Obj  |   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+        |    |         +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+ Pool       +&#45;&#45;&#62;| Buffer N |&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;+         Memory Pool
+                +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+                 Buffer          Memory Block</pre>
+
+<p>Now consider, that the <i>Interpreter</i> shall be a <code lang='und' xml:lang='und'>PMC</code> living in <code lang='und' xml:lang='und'>Buffer X</code> of the underlying interpreter and is currently running <em lang='und' xml:lang='und'>perldoc docs/memory_internals.pod</em>, and then redo this figure, with all the blanks filled in ;&#45;)</p>
+
+<h1><a name="FILES"
+>FILES <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>smallobject.[ch], headers.c, resources.[ch], res_lea.c, dod.c, string.[ch], pobj.h.</p>
+
+<h1><a name="BUGS"
+>BUGS <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>All spelling errors belong to those who honestly collected them, as well as all errors related to my abuse of the English language &#45; I&#39;m not natively speaking it.</p>
+
+<p>To minimize this bugs section &#45; please patch this document and keep it up to date &#45; thanks.</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Leopold T&#246;tsch <code lang='und' xml:lang='und'>lt@toetsch.at</code></p>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>0.1.0 Mar 2004</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

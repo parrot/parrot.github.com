@@ -1,0 +1,178 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>compilers/imcc/instructions.c</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">compilers/imcc/instructions.c</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>compilers/imcc/instructions.c</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>When generating the code,
+the instructions of the program are stored in an array.</p>
+
+<p>After the register allocation is resolved,
+the instructions array is flushed.</p>
+
+<p>These functions operate over this array and its contents.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_MALLOC PARROT_CANNOT_RETURN_NULL Instruction *_mk_instruction(ARGIN(const char *op), ARGIN(const char *fmt), int n, SymReg **r, int flags)</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates a new instruction</dd><p class="pad"></p>
+
+<dt><a name="void_imcc_init_tables(PARROT_INTERP)"
+><b><code lang='und' xml:lang='und'>void imcc_init_tables(PARROT_INTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="int_ins_reads2(ARGIN(const_Instruction_*ins),_int_t)"
+><b><code lang='und' xml:lang='und'>int ins_reads2(ARGIN(const Instruction *ins), int t)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns TRUE if instruction ins reads from a register of type t</dd><p class="pad"></p>
+
+<dt><a name="int_ins_writes2(ARGIN(const_Instruction_*ins),_int_t)"
+><b><code lang='und' xml:lang='und'>int ins_writes2(ARGIN(const Instruction *ins), int t)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns TRUE if instruction ins writes to a register of type t</dd><p class="pad"></p>
+
+<dt><a name="int_instruction_reads(ARGIN(const_Instruction_*ins),_ARGIN(const_SymReg_*r))"
+><b><code lang='und' xml:lang='und'>int instruction_reads(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))</b></code></a></dt><p class="pad"></p>
+
+<dd>next 2 functions are called very often,
+says gprof they should be fast</dd><p class="pad"></p>
+
+<dt><a name="int_instruction_writes(ARGIN(const_Instruction_*ins),_ARGIN(const_SymReg_*r))"
+><b><code lang='und' xml:lang='und'>int instruction_writes(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="int_get_branch_regno(ARGIN(const_Instruction_*ins))"
+><b><code lang='und' xml:lang='und'>int get_branch_regno(ARGIN(const Instruction *ins))</b></code></a></dt><p class="pad"></p>
+
+<dd>Get the register number of an address which is a branch target</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL SymReg *get_branch_reg(ARGIN(const Instruction *ins))</b></code></a></dt><p class="pad"></p>
+
+<dd>Get the register corresponding to an address which is a branch target</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_CAN_RETURN_NULL Instruction *delete_ins(NOTNULL(struct _IMC_Unit *unit), NOTNULL(Instruction *ins), int needs_freeing)</b></code></a></dt><p class="pad"></p>
+
+<dd>Delete instruction ins.
+Also free it if needs_freeing is true.
+The instruction following ins is returned.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>void insert_ins(NOTNULL(struct _IMC_Unit *unit), NULLOK(Instruction *ins), NOTNULL(Instruction *tmp))</b></code></a></dt><p class="pad"></p>
+
+<dd>insert tmp after ins</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>void prepend_ins(NOTNULL(struct _IMC_Unit *unit), NULLOK(Instruction *ins), NOTNULL(Instruction *tmp))</b></code></a></dt><p class="pad"></p>
+
+<dd>insert tmp before ins</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>void subst_ins(NOTNULL(struct _IMC_Unit *unit), NOTNULL(Instruction *ins), NOTNULL(Instruction *tmp), int needs_freeing)</b></code></a></dt><p class="pad"></p>
+
+<dd>Substitute tmp for ins.
+Free ins if needs_freeing is true.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_CAN_RETURN_NULL Instruction *move_ins(NOTNULL(struct _IMC_Unit *unit), NOTNULL(Instruction *ins), NOTNULL(Instruction *to))</b></code></a></dt><p class="pad"></p>
+
+<dd>Move instruction ins from its current position to the position following instruction to.
+Returns the instruction following the initial position of ins.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_CAN_RETURN_NULL Instruction *emitb(PARROT_INTERP, NULLOK(struct _IMC_Unit *unit), NULLOK(Instruction *i))</b></code></a></dt><p class="pad"></p>
+
+<dd>Emit a single instruction into the current unit buffer.</dd><p class="pad"></p>
+
+<dt><a name="void_free_ins(NOTNULL(Instruction_*ins))"
+><b><code lang='und' xml:lang='und'>void free_ins(NOTNULL(Instruction *ins))</b></code></a></dt><p class="pad"></p>
+
+<dd>Free the Instruction structure ins.</dd><p class="pad"></p>
+
+<dt><a name="int_ins_print(PARROT_INTERP,_NOTNULL(FILE_*fd),_ARGIN(const_Instruction_*ins))"
+><b><code lang='und' xml:lang='und'>int ins_print(PARROT_INTERP, NOTNULL(FILE *fd), ARGIN(const Instruction *ins))</b></code></a></dt><p class="pad"></p>
+
+<dd>Print details of instruction ins in file fd.</dd><p class="pad"></p>
+
+<dt><a name="static_int_e_file_open(SHIM_INTERP,_NOTNULL(void_*param))"
+><b><code lang='und' xml:lang='und'>static int e_file_open(SHIM_INTERP, NOTNULL(void *param))</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="static_int_e_file_close(PARROT_INTERP,_SHIM(void_*param))"
+><b><code lang='und' xml:lang='und'>static int e_file_close(PARROT_INTERP, SHIM(void *param))</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static int e_file_emit(PARROT_INTERP, SHIM(void *param), SHIM(IMC_Unit *unit), ARGIN(const Instruction *ins))</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="PARROT_API_int_emit_open(PARROT_INTERP,_int_type,_NULLOK(void_*param))"
+><b><code lang='und' xml:lang='und'>PARROT_API int emit_open(PARROT_INTERP, int type, NULLOK(void *param))</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API int emit_flush(PARROT_INTERP, NULLOK(void *param), NOTNULL(struct _IMC_Unit *unit))</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="PARROT_API_int_emit_close(PARROT_INTERP,_NULLOK(void_*param))"
+><b><code lang='und' xml:lang='und'>PARROT_API int emit_close(PARROT_INTERP, NULLOK(void *param))</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

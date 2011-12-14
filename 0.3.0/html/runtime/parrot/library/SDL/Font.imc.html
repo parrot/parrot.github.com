@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot class representing fonts in Parrot SDL</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot class representing fonts in Parrot SDL</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/libs.html">Libraries</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>SDL::Font &#45; Parrot class representing fonts in Parrot SDL</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>        # load this library
+        load_bytecode &#39;library/SDL/Font.imc&#39;
+
+        # set the font&#39;s arguments
+        .local pmc font_args
+        font_args                 = new PerlHash
+        font_args[ &#39;font_file&#39;  ] = &#39;myfont.ttf&#39;
+        font_args[ &#39;point_size&#39; ] = 48
+
+        # create a new SDL::Font object
+        .local pmc font
+        .local int font_type
+
+        find_type font_type, &#39;SDL::Font&#39;
+        font = new font_type, font_args
+
+        # draw text to the screen
+        #       presuming you have an SDL::Surface, SDL::Color, and SDL::Rect here...
+        font.&#39;draw&#39;( &#39;some text&#39;, font_color, destination_surface, dest_rect )
+
+        # or render it to a surface to use later
+        font.&#39;render_text&#39;( &#39;some text&#39;, font_color )</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>A SDL::Font object represents a TrueType font in SDL. You can use this to draw fonts to any <a href='TODO'>SDL::Surface</a>.</p>
+
+<h1><a name="METHODS"
+>METHODS <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>All SDL::Font objects have the following methods:</p>
+
+<dl>
+<dt><a name="_BUILD(_font_args_)"
+>_BUILD( font_args )</a></dt><p class="pad"></p>
+
+<dd>Given a Perlhash containing arguments, set the attributes of this font. The keys of this hash are <code lang='und' xml:lang='und'>font_file</code> and <code lang='und' xml:lang='und'>point_size</code>, two strings containing the path to a TrueType font to load and the size of the font when drawn, in pixels.</dd><p class="pad"></p>
+
+<dd>The name of this method may change.</dd><p class="pad"></p>
+
+<dt><a name="draw(_text_string,_text_color,_dest_surface,_dest_rect_)"
+>draw( text_string, text_color, dest_surface, dest_rect )</a></dt><p class="pad"></p>
+
+<dd>Given a string of text to draw, an <code lang='und' xml:lang='und'>SDL::Color</code> object representing the color of the text to draw, a <code lang='und' xml:lang='und'>SDL::Surface</code> to which to draw, and a <code lang='und' xml:lang='und'>SDL::Rect</code> representing the placement of the text within the surface, draws some text.</dd><p class="pad"></p>
+
+<dd>Whew.</dd><p class="pad"></p>
+
+<dt><a name="render_text(_text_string,_text_color_)"
+>render_text( text_string, text_color )</a></dt><p class="pad"></p>
+
+<dd>Renders a string of text of the given <code lang='und' xml:lang='und'>SDL::Color</code>. This returns a new <code lang='und' xml:lang='und'>SDL::Surface</code> containing the rendered font.</dd><p class="pad"></p>
+
+<dt><a name="font()"
+>font()</a></dt><p class="pad"></p>
+
+<dd>Returns the underlying <code lang='und' xml:lang='und'>SDL_Font</code> structure this object wraps. You should never need to call this directly unless you&#39;re calling SDL functions directly, in which case why not send me a patch?</dd><p class="pad"></p>
+
+<dt><a name="point_size(_[_new_size_]_)"
+>point_size( [ new_size ] )</a></dt><p class="pad"></p>
+
+<dd>Gets or sets the point size associated with this font object. The single argument is an integer and is optional.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Written and maintained by chromatic, &#60;chromatic at wgz dot org&#62;. Please send patches, feedback, and suggestions to the Perl 6 Internals mailing list.</p>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Copyright (c) 2004, The Perl Foundation.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

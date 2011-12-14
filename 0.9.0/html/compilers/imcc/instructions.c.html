@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>compilers/imcc/instructions.c</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">compilers/imcc/instructions.c</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>compilers/imcc/instructions.c</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>When generating the code,
+the instructions of the program are stored in an array.</p>
+
+<p>After the register allocation is resolved,
+the instructions array is flushed.</p>
+
+<p>These functions operate over this array and its contents.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="Instruction_*__mk_instruction"
+><b><code>Instruction *_mk_instruction</b></code></a></dt>
+Creates a new instruction
+<dt><a name="void_imcc_init_tables"
+><b><code>void imcc_init_tables</b></code></a></dt>
+Initializes IMCC&#39;s table of opcodes,
+based on the list maintained by the Parrot interpreter.
+Stores the results in global variable <code>w_special</code>.
+<dt><a name="int_ins_writes2"
+><b><code>int ins_writes2</b></code></a></dt>
+Returns TRUE if instruction ins writes to a register of type t
+<dt><a name="int_instruction_reads"
+><b><code>int instruction_reads</b></code></a></dt>
+next two functions are called very often,
+says gprof they should be fast
+<dt><a name="int_instruction_writes"
+><b><code>int instruction_writes</b></code></a></dt>
+Determines whether the instruction <code>ins</code> writes to the SymReg <code>r</code>.
+Returns 1 if it does,
+0 if not.
+<dt><a name="int_get_branch_regno"
+><b><code>int get_branch_regno</b></code></a></dt>
+Get the register number of an address which is a branch target
+<dt><a name="SymReg_*_get_branch_reg"
+><b><code>SymReg *get_branch_reg</b></code></a></dt>
+Get the register corresponding to an address which is a branch target
+<dt><a name="Instruction_*__delete_ins"
+><b><code>Instruction *_delete_ins</b></code></a></dt>
+Delete instruction ins.
+It&#39;s up to the caller to actually free the memory of ins,
+if appropriate.The instruction following ins is returned.
+<dt><a name="Instruction_*_delete_ins"
+><b><code>Instruction *delete_ins</b></code></a></dt>
+Delete instruction ins,
+and then free it.The instruction following ins is returned.
+<dt><a name="void_insert_ins"
+><b><code>void insert_ins</b></code></a></dt>
+Insert Instruction <code>tmp</code> in the execution flow after Instruction <code>ins</code>.
+<dt><a name="void_prepend_ins"
+><b><code>void prepend_ins</b></code></a></dt>
+Insert Instruction <code>tmp</code> into the execution flow before Instruction <code>ins</code>.
+<dt><a name="void_subst_ins"
+><b><code>void subst_ins</b></code></a></dt>
+Substitute Instruction <code>tmp</code> for Instruction <code>ins</code>.
+Free <code>ins</code> if <code>needs_freeing</code> is true.
+<dt><a name="Instruction_*_move_ins"
+><b><code>Instruction *move_ins</b></code></a></dt>
+Move instruction ins from its current position to the position following instruction to.
+Returns the instruction following the initial position of ins.
+<dt><a name="Instruction_*_emitb"
+><b><code>Instruction *emitb</b></code></a></dt>
+Emit a single instruction into the current unit buffer.
+<dt><a name="void_free_ins"
+><b><code>void free_ins</b></code></a></dt>
+Free the Instruction structure ins.
+<dt><a name="int_ins_print"
+><b><code>int ins_print</b></code></a></dt>
+Print details of instruction ins in file fd.
+<dt><a name="static_int_e_file_open"
+><b><code>static int e_file_open</b></code></a></dt>
+Prints a message to STDOUT.
+<dt><a name="static_int_e_file_close"
+><b><code>static int e_file_close</b></code></a></dt>
+RT#48260: Not yet documented!!!
+<dt><a name="static_int_e_file_emit"
+><b><code>static int e_file_emit</b></code></a></dt>
+RT#48260: Not yet documented!!!
+<dt><a name="int_emit_open"
+><b><code>int emit_open</b></code></a></dt>
+Opens the emitter function <code>open</code> of the given <code>type</code>.
+Passes the <code>param</code> to the open function.
+<dt><a name="int_emit_flush"
+><b><code>int emit_flush</b></code></a></dt>
+Flushes the emitter by emitting all the instructions in the current IMC_Unit <code>unit</code>.
+<dt><a name="int_emit_close"
+><b><code>int emit_close</b></code></a></dt>
+Closes the given emitter.</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

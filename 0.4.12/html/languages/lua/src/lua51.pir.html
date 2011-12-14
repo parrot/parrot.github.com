@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>The compiler for Lua 5.1</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">The compiler for Lua 5.1</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/lua.html">Lua</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>src/lua51.pir &#45;&#45; The compiler for Lua 5.1</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This compiler extends <code lang='und' xml:lang='und'>HLLCompiler</code> (see <em lang='und' xml:lang='und'><a href="../../../runtime/parrot/library/Parrot/HLLCompiler.pir.html">runtime/parrot/library/Parrot/HLLCompiler.pir</a></em>)</p>
+
+<p>This compiler defines the following stages:</p>
+
+<ul>
+<li>parse <em lang='und' xml:lang='und'><a href="lua51.pg.html">languages/lua/src/lua51.pg</a></em></li><p class="pad"></p>
+
+<li>past <em lang='und' xml:lang='und'><a href="ASTGrammar.tg.html">languages/lua/src/ASTGrammar.tg</a></em></li><p class="pad"></p>
+
+<li>post <em lang='und' xml:lang='und'>languages/lua/src/OSTGrammar.tg</em></li><p class="pad"></p>
+
+<li>pir <em lang='und' xml:lang='und'>languages/lua/src/PIRGrammar.tg</em></li><p class="pad"></p>
+
+<li>run</li><p class="pad"></p>
+</ul>
+
+<p>Used by <em lang='und' xml:lang='und'><a href="../luac.pir.html">languages/lua/luac.pir</a></em>.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Some grammar routines are handly written in PIR.</p>
+
+<p>See &#34;Lua 5.1 Reference Manual&#34;,
+section 2.1 &#34;Lexical Conventions&#34;,
+<a href='http://www.lua.org/manual/5.1/manual.html#2.1'><a href="http://www.lua.org/manual/5.1/manual.html#2.1">http://www.lua.org/manual/5.1/manual.html#2.1</a></a>.</p>
+
+<dl>
+<dt><a name="warning_(message)"
+><b><code lang='und' xml:lang='und'>warning (message)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="syntax_error_(match,_[message])"
+><b><code lang='und' xml:lang='und'>syntax_error (match, [message])</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="name"
+><b><code lang='und' xml:lang='und'>name</b></code></a></dt><p class="pad"></p>
+
+<dd><i>Names</i> (also called <i>identifiers</i>) in Lua can be any string of letters,
+digits,
+and underscores,
+not beginning with a digit.
+This coincides with the definition of names in most languages.
+(The definition of letter depends on the current locale: any character considered alphabetic by the current locale can be used in an identifier.) Identifiers are used to name variables and table fields.</dd><p class="pad"></p>
+
+<dd>The following keywords are reserved and cannot be used as names:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>     and       break     do        else      elseif
+     end       false     for       function  if
+     in        local     nil       not       or
+     repeat    return    then      true      until     while</pre>
+
+<dd>Lua is a case&#45;sensitive language: <code lang='und' xml:lang='und'>and</code> is a reserved word, but <code lang='und' xml:lang='und'>And</code> and <code lang='und' xml:lang='und'>AND</code> are two different, valid names. As a convention, names starting with an underscore followed by uppercase letters (such as <code lang='und' xml:lang='und'>_VERSION</code>) are reserved for internal global variables used by Lua.</dd><p class="pad"></p>
+
+<dt><a name="number"
+><b><code lang='und' xml:lang='und'>number</b></code></a></dt><p class="pad"></p>
+
+<dd>A <i>numerical constant</i> may be written with an optional decimal part and an optional decimal exponent. Lua also accepts integer hexadecimal constants, by prefixing them with <code lang='und' xml:lang='und'>0x</code>. Examples of valid numerical constants are</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>     3   3.0   3.1416   314.16e&#45;2   0.31416E1   0xff   0x56</pre>
+
+<dt><a name="quoted_literal"
+><b><code lang='und' xml:lang='und'>quoted_literal</b></code></a></dt><p class="pad"></p>
+
+<dd><i>Literal strings</i> can be delimited by matching single or double quotes, and can contain the following C&#45;like escape sequences: <code lang='und' xml:lang='und'>&#39;\a&#39;</code> (bell), <code lang='und' xml:lang='und'>&#39;\b&#39;</code> (backspace), <code lang='und' xml:lang='und'>&#39;\f&#39;</code> (form feed), <code lang='und' xml:lang='und'>&#39;\n&#39;</code> (newline), <code lang='und' xml:lang='und'>&#39;\r&#39;</code> (carriage return), <code lang='und' xml:lang='und'>&#39;\t&#39;</code> (horizontal tab), <code lang='und' xml:lang='und'>&#39;\v&#39;</code> (vertical tab), <code lang='und' xml:lang='und'>&#39;\\&#39;</code> (backslash), <code lang='und' xml:lang='und'>&#39;\&#34;&#39;</code> (quotation mark [double quote]), and <code lang='und' xml:lang='und'>&#39;\&#39;&#39;</code> (apostrophe [single quote]). Moreover, a backslash followed by a real newline results in a newline in the string. A character in a string may also be specified by its numerical value using the escape sequence <code lang='und' xml:lang='und'>\ddd</code>, where <i>ddd</i> is a sequence of up to three decimal digits. (Note that if a numerical escape is to be followed by a digit, it must be expressed using exactly three digits.) Strings in Lua may contain any 8&#45;bit value, including embedded zeros, which can be specified as <code lang='und' xml:lang='und'>&#39;\0&#39;</code>.</dd><p class="pad"></p>
+
+<dd>To put a double (single) quote, a newline, a backslash, or an embedded zero inside a literal string enclosed by double (single) quotes you must use an escape sequence. Any other character may be directly inserted into the literal. (Some control characters may cause problems for the file system, but Lua has no problem with them.)</dd><p class="pad"></p>
+
+<dt><a name="long_string"
+><b><code lang='und' xml:lang='und'>long_string</b></code></a></dt><p class="pad"></p>
+
+<dd>Literal strings can also be defined using a long format enclosed by <i>long brackets</i>. We define an <i>opening long bracket of level n</i> as an opening square bracket followed by <i>n</i> equal signs followed by another opening square bracket. So, an opening long bracket of level 0 is written as <code lang='und' xml:lang='und'>[[</code>, an opening long bracket of level 1 is written as <code lang='und' xml:lang='und'>[=[</code>, and so on. A <i>closing long bracket</i> is defined similarly; for instance, a closing long bracket of level 4 is written as <code lang='und' xml:lang='und'>]====]</code>. A long string starts with an opening long bracket of any level and ends at the first closing long bracket of the same level. Literals in this bracketed form may run for several lines, do not interpret any escape sequences, and ignore long brackets of any other level. They may contain anything except a closing bracket of the proper level.</dd><p class="pad"></p>
+
+<dd>For convenience, when the opening long bracket is immediately followed by a newline, the newline is not included in the string. As an example, in a system using ASCII (in which <code lang='und' xml:lang='und'>&#39;a&#39;</code> is coded as 97, newline is coded as 10, and <code lang='und' xml:lang='und'>&#39;1&#39;</code> is coded as 49), the five literals below denote the same string:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>     a = &#39;alo\n123&#34;&#39;
+     a = &#34;alo\n123\&#34;&#34;
+     a = &#39;\97lo\10\04923&#34;&#39;
+     a = [[alo
+     123&#34;]]
+     a = [==[
+     alo
+     123&#34;]==]</pre>
+
+<dt><a name="long_comment"
+><b><code lang='und' xml:lang='und'>long_comment</b></code></a></dt><p class="pad"></p>
+
+<dd>A <i>comment</i> starts with a double hyphen (<code lang='und' xml:lang='und'>&#45;&#45;</code>) anywhere outside a string. If the text immediately after <code lang='und' xml:lang='und'>&#45;&#45;</code> is not an opening long bracket, the comment is a <i>short comment</i>, which runs until the end of the line. Otherwise, it is a <i>long comment</i>, which runs until the corresponding closing long bracket. Long comments are frequently used to disable code temporarily.</dd><p class="pad"></p>
+
+<dt><a name="internal_error"
+><b><code lang='und' xml:lang='und'>internal_error</b></code></a></dt><p class="pad"></p>
+
+<dd>used in <em lang='und' xml:lang='und'><a href="ASTGrammar.tg.html">languages/lua/src/ASTGrammar.tg</a></em></dd><p class="pad"></p>
+</dl>
+
+<h1><a name="AUTHORS"
+>AUTHORS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Klaas&#45;Jan Stol &#60;parrotcode@gmail.com&#62;</p>
+
+<p>Francois Perrad</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

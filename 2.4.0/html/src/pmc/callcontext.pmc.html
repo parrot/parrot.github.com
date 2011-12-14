@@ -1,0 +1,144 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - CallContext PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; CallContext PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/callcontext.pmc &#45; CallContext PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>The CallContext PMC is used to store the argument list and argument meta information for a multiple dispatch call.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes a newly created CallContext object.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Mark any referenced strings and PMCs.
+<dt><a name="void_morph(PMC_*type)"
+><b><code>void morph(PMC *type)</b></code></a></dt>
+Morph the call signature into a return signature.
+(Currenly ignores the type passed in,
+and resets the named and positional arguments stored.)
+<dt><a name="void_set_string_native(STRING_*value)"
+><b><code>void set_string_native(STRING *value)</b></code></a></dt>
+Sets the short signature for the CallContext.
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+Returns the short signature for the CallContext.
+<dt><a name="void_set_pmc(PMC_*value)"
+><b><code>void set_pmc(PMC *value)</b></code></a></dt>
+Sets a fixed&#45;size array of integer types (a type tuple) for the CallContext.
+<dt><a name="PMC_*get_pmc()"
+><b><code>PMC *get_pmc()</b></code></a></dt>
+Returns a fixed&#45;size array of integer types (a type tuple) for the CallContext.
+<dt><a name="void_set_attr_str(STRING_*key,_PMC_*value)"
+><b><code>void set_attr_str(STRING *key, PMC *value)</b></code></a></dt>
+Set a PMC value for an attribute by string name.
+<dl>
+<dt><a name="results"
+>results</a></dt>
+Stores the return signature,
+an array of PMCs.
+<dt><a name="arg_flags"
+>arg_flags</a></dt>
+Stores a set of flags for the call signature arguments,
+an array of integers.
+<dt><a name="return_flags"
+>return_flags</a></dt>
+Stores a set of flags for the call signature return arguments,
+an array of integers.</dl>
+
+<dt><a name="PMC_*get_attr_str(STRING_*key)"
+><b><code>PMC *get_attr_str(STRING *key)</b></code></a></dt>
+Get a PMC value for an attribute by string name.
+<dl>
+<dt><a name="results"
+>results</a></dt>
+Retrieves the return signature,
+an array of PMCs.
+<dt><a name="arg_flags"
+>arg_flags</a></dt>
+Retrieves the flags for the call signature arguments,
+an array of integers.
+<dt><a name="return_flags"
+>return_flags</a></dt>
+Retrieves the flags for the call signature return arguments,
+an array of integers.
+<dt><a name="named"
+>named</a></dt>
+Retrieves the hash of named arguments.
+<dt><a name="caller_ctx"
+>caller_ctx</a></dt>
+return Caller Context
+<dt><a name="lex_pad"
+>lex_pad</a></dt>
+return LexPad
+<dt><a name="outer_ctx"
+>outer_ctx</a></dt>
+return Outer Context
+<dt><a name="current_sub"
+>current_sub</a></dt>
+return current Sub
+<dt><a name="handlers"
+>handlers</a></dt>
+return list of ExceptioHandlers
+<dt><a name="current_cont"
+>current_cont</a></dt>
+return current Continuation
+<dt><a name="current_object"
+>current_object</a></dt>
+return current Object (if in method call)
+<dt><a name="current_namespace"
+>current_namespace</a></dt>
+return current Namespace</dl>
+
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+Creates and returns a clone of the signature.
+<dt><a name="PMC_*backtrace"
+><b><code>PMC *backtrace</b></code></a></dt>
+Gets a representation of the backtrace starting from this Context.
+Returns an array of hashes.
+Each array element represents a caller in the backtrace,
+the most recent caller first.
+The hash has two keys: <code>sub</code>,
+which holds the PMC representing the sub,
+and <code>annotations</code> which is a hash of the annotations at the point where the exception was thrown for the current sub,
+or for the point of the call a level deeper for the rest.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

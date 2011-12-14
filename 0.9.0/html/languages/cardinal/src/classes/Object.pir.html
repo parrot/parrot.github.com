@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Cardinal Object class</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Cardinal Object class</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/cardinal.html">Cardinal</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="TITLE"
+>TITLE <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Object &#45; Cardinal Object class</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>This file sets up the base classes and methods for Cardinal&#39;s object system.
+Differences (and conflicts) between Parrot&#39;s object model and the Cardinal model means we have to do a little name and method trickery here and there,
+and this file takes care of much of that.</p>
+
+<p>Still heavily based off of Perl 6&#39;s.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="onload()"
+>onload()</a></dt>
+Perform initializations and create the base classes.
+<dt><a name="!keyword_class(name)"
+>!keyword_class(name)</a></dt>
+Internal helper method to create a class.
+<dt><a name="!keyword_role(name)"
+>!keyword_role(name)</a></dt>
+Internal helper method to create a role.
+<dt><a name="!keyword_does(class,_role_name)"
+>!keyword_does(class,
+role_name)</a></dt>
+Internal helper method to implement the functionality of the does keyword.
+<dt><a name="!keyword_has(class,_attr_name)"
+>!keyword_has(class,
+attr_name)</a></dt>
+Adds an attribute with the given name to the class.</dl>
+
+<h2><a name="Object_methods"
+>Object methods <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="new()"
+>new()</a></dt>
+Create a new object having the same class as the invocant.
+<dt><a name="WHENCE()"
+>WHENCE()</a></dt>
+Return the invocant&#39;s auto&#45;vivification closure.
+<dt><a name="REJECTS(topic)"
+>REJECTS(topic)</a></dt>
+Define REJECTS methods for objects (this would normally be part of the Pattern role,
+but we put it here for now until we get roles).
+<dt><a name="true()"
+>true()</a></dt>
+Defines the .true method on all objects via <code>prefix:?</code>.
+<dt><a name="get_bool(vtable)"
+>get_bool(vtable)</a></dt>
+Returns true if he object is defined,
+false otherwise
+<dt><a name="print()"
+>print()</a></dt>
+
+<dt><a name="say()"
+>say()</a></dt>
+Print the object
+<dt><a name="to_s()"
+>to_s()</a></dt>
+Return a CardinalString representation of the object.
+<dt><a name="inspect()"
+>inspect()</a></dt>
+This is the same a to_s by default unless overriden
+<dt><a name="!cloneattr(attrlist)"
+>!cloneattr(attrlist)</a></dt>
+Create a clone of self,
+also cloning the attributes given by attrlist.
+<dt><a name="methods()"
+>methods()</a></dt>
+Get a list of all methods in the object.</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,291 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Parrot debugging</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot debugging</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/debug.c &#45; Parrot debugging</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>This file implements Parrot debugging and is used by <code>parrot_debugger</code>,
+the Parrot debugger,
+and the <code>debug</code> ops.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_void_chop_newline"
+><b><code>static void chop_newline</b></code></a></dt>
+If the C string argument end with a newline,
+delete it.
+<dt><a name="static_const_char_*_nextarg"
+><b><code>static const char *nextarg</b></code></a></dt>
+Returns the position just past the current argument in the PASM instruction <code>command</code>.
+This is not the same as <code>skip_command()</code>,
+which is intended for debugger commands.
+This function is used for <code>eval</code>.
+<dt><a name="static_const_char_*_skip_command"
+><b><code>static const char *skip_command</b></code></a></dt>
+Returns the pointer past the current debugger command.
+(This is an alternative to the <code>skip_command()</code> macro above.)
+<dt><a name="static_const_char_*_parse_int"
+><b><code>static const char *parse_int</b></code></a></dt>
+Parse an <code>int</code> out of a string and return a pointer to just after the <code>int</code>.
+The output parameter <code>intP</code> contains the parsed value.
+<dt><a name="static_const_char_*_parse_string"
+><b><code>static const char *parse_string</b></code></a></dt>
+Parse a double&#45;quoted string out of a C string and return a pointer to just after the string.
+The parsed string is converted to a Parrot <code>STRING</code> and placed in the output parameter <code>strP</code>.
+<dt><a name="static_const_char*_parse_key"
+><b><code>static const char *parse_key</b></code></a></dt>
+Parse an aggregate key out of a string and return a pointer to just after the key.
+Currently only string and integer keys are allowed.
+<dt><a name="static_const_char_*_parse_command"
+><b><code>static const char *parse_command</b></code></a></dt>
+Convert the command at the beginning of a string into a numeric value that can be used as a switch key for fast lookup.
+<dt><a name="static_void_debugger_cmdline"
+><b><code>static void debugger_cmdline</b></code></a></dt>
+Debugger command line.Gets and executes commands,
+looping until the debugger state is changed,
+either to exit or to start executing code.
+<dt><a name="static_void_close_script_file"
+><b><code>static void close_script_file</b></code></a></dt>
+Close the script file,
+returning to command prompt mode.
+<dt><a name="void_Parrot_debugger_init"
+><b><code>void Parrot_debugger_init</b></code></a></dt>
+Initializes the Parrot debugger,
+if it&#39;s not already initialized.
+<dt><a name="void_Parrot_debugger_destroy"
+><b><code>void Parrot_debugger_destroy</b></code></a></dt>
+Destroy the current Parrot debugger instance.
+<dt><a name="void_Parrot_debugger_load"
+><b><code>void Parrot_debugger_load</b></code></a></dt>
+Loads a Parrot source file for the current program.
+<dt><a name="void_Parrot_debugger_start"
+><b><code>void Parrot_debugger_start</b></code></a></dt>
+Start debugger.
+<dt><a name="void_Parrot_debugger_break"
+><b><code>void Parrot_debugger_break</b></code></a></dt>
+Breaks execution and drops into the debugger.
+If we are already into the debugger and it is the first call,
+set a breakpoint.When you re run/continue the program being debugged it will pay no attention to the debug ops.RT #42377: clone the interpreter to allow people to play into the debugger and then continue the normal execution of the program.
+<dt><a name="void_PDB_get_command"
+><b><code>void PDB_get_command</b></code></a></dt>
+Get a command from the user input to execute.It saves the last command executed (in <code>pdb&#45;&#62;last_command</code>),
+so it first frees the old one and updates it with the current one.Also prints the next line to run if the program is still active.The user input can&#39;t be longer than DEBUG_CMD_BUFFER_LENGTH characters.The input is saved in <code>pdb&#45;&#62;cur_command</code>.
+<dt><a name="void_PDB_script_file"
+><b><code>void PDB_script_file</b></code></a></dt>
+Interprets the contents of a file as user input commands
+<dt><a name="int_PDB_run_command"
+><b><code>int PDB_run_command</b></code></a></dt>
+Run a command.Hash the command to make a simple switch calling the correct handler.
+<dt><a name="void_PDB_next"
+><b><code>void PDB_next</b></code></a></dt>
+Execute the next N operation(s).Inits the program if needed,
+runs the next N &#62;= 1 operations and stops.
+<dt><a name="void_PDB_trace"
+><b><code>void PDB_trace</b></code></a></dt>
+Execute the next N operations; if no number is specified,
+it defaults to 1.
+<dt><a name="PDB_condition_t_*_PDB_cond"
+><b><code>PDB_condition_t *PDB_cond</b></code></a></dt>
+Analyzes a condition from the user input.
+<dt><a name="void_PDB_watchpoint"
+><b><code>void PDB_watchpoint</b></code></a></dt>
+Set a watchpoint.
+<dt><a name="void_PDB_set_break"
+><b><code>void PDB_set_break</b></code></a></dt>
+Set a break point,
+the source code file must be loaded.
+<dt><a name="void_PDB_init"
+><b><code>void PDB_init</b></code></a></dt>
+Init the program.
+<dt><a name="void_PDB_continue"
+><b><code>void PDB_continue</b></code></a></dt>
+Continue running the program.
+If a number is specified,
+skip that many breakpoints.
+<dt><a name="PDB_breakpoint_t_*_PDB_find_breakpoint"
+><b><code>PDB_breakpoint_t *PDB_find_breakpoint</b></code></a></dt>
+Find breakpoint number N; returns <code>NULL</code> if the breakpoint doesn&#39;t exist or if no breakpoint was specified.
+<dt><a name="void_PDB_disable_breakpoint"
+><b><code>void PDB_disable_breakpoint</b></code></a></dt>
+Disable a breakpoint; it can be reenabled with the enable command.
+<dt><a name="void_PDB_enable_breakpoint"
+><b><code>void PDB_enable_breakpoint</b></code></a></dt>
+Reenable a disabled breakpoint; if the breakpoint was not disabled,
+has no effect.
+<dt><a name="void_PDB_delete_breakpoint"
+><b><code>void PDB_delete_breakpoint</b></code></a></dt>
+Delete a breakpoint.
+<dt><a name="void_PDB_delete_condition"
+><b><code>void PDB_delete_condition</b></code></a></dt>
+Delete a condition associated with a breakpoint.
+<dt><a name="void_PDB_skip_breakpoint"
+><b><code>void PDB_skip_breakpoint</b></code></a></dt>
+Skip <code>i</code> times all breakpoints.
+<dt><a name="char_PDB_program_end"
+><b><code>char PDB_program_end</b></code></a></dt>
+End the program.
+<dt><a name="char_PDB_check_condition"
+><b><code>char PDB_check_condition</b></code></a></dt>
+Returns true if the condition was met.
+<dt><a name="static_PDB_breakpoint_t_*_current_breakpoint&#62;"
+><b><code>static PDB_breakpoint_t *current_breakpoint</b></code>&#62;</a></dt>
+Returns a pointer to the breakpoint at the current position,
+or NULL if there is none.
+<dt><a name="char_PDB_break"
+><b><code>char PDB_break</b></code></a></dt>
+Returns true if we have to stop running.
+<dt><a name="char_*_PDB_escape"
+><b><code>char *PDB_escape</b></code></a></dt>
+Escapes <code>&#34;</code>,
+<code>\r</code>,
+<code>\n</code>,
+<code>\t</code>,
+<code>\a</code> and <code>\\</code>.The returned string must be freed.
+<dt><a name="int_PDB_unescape"
+><b><code>int PDB_unescape</b></code></a></dt>
+Do inplace unescape of <code>\r</code>,
+<code>\n</code>,
+<code>\t</code>,
+<code>\a</code> and <code>\\</code>.
+<dt><a name="size_t_PDB_disassemble_op"
+><b><code>size_t PDB_disassemble_op</b></code></a></dt>
+Disassembles <code>op</code>.
+<dt><a name="void_PDB_disassemble"
+><b><code>void PDB_disassemble</b></code></a></dt>
+Disassemble the bytecode.
+<dt><a name="long_PDB_add_label"
+><b><code>long PDB_add_label</b></code></a></dt>
+Add a label to the label list.
+<dt><a name="void_PDB_free_file"
+><b><code>void PDB_free_file</b></code></a></dt>
+Frees any allocated source files.
+<dt><a name="void_PDB_load_source"
+><b><code>void PDB_load_source</b></code></a></dt>
+Load a source code file.
+<dt><a name="char_PDB_hasinstruction"
+><b><code>char PDB_hasinstruction</b></code></a></dt>
+Return true if the line has an instruction.RT #46129:
+<ul>
+<li>This should take the line,
+get an instruction,
+get the opcode for that instruction and check that is the correct one.</li>
+
+<li>Decide what to do with macros if anything.</li>
+</ul>
+
+<dt><a name="void_PDB_list"
+><b><code>void PDB_list</b></code></a></dt>
+Show lines from the source code file.
+<dt><a name="void_PDB_eval"
+><b><code>void PDB_eval</b></code></a></dt>
+<code>eval</code>s an instruction.
+<dt><a name="opcode_t_*_PDB_compile"
+><b><code>opcode_t *PDB_compile</b></code></a></dt>
+Compiles instructions with the PASM compiler.Appends an <code>end</code> op.This may be called from <code>PDB_eval</code> above or from the compile opcode which generates a malloced string.
+<dt><a name="static_void_dump_string"
+><b><code>static void dump_string</b></code></a></dt>
+Dumps the buflen,
+flags,
+bufused,
+strlen,
+and offset associated with a string and the string itself.
+<dt><a name="void_PDB_print"
+><b><code>void PDB_print</b></code></a></dt>
+Print interp registers.
+<dt><a name="void_PDB_info"
+><b><code>void PDB_info</b></code></a></dt>
+Print the interpreter info.
+<dt><a name="void_PDB_help"
+><b><code>void PDB_help</b></code></a></dt>
+Print the help text.
+&#34;Help&#34; with no arguments prints a list of commands.
+&#34;Help xxx&#34; prints information on command xxx.
+<dt><a name="void_PDB_backtrace"
+><b><code>void PDB_backtrace</b></code></a></dt>
+Prints a backtrace of the interp&#39;s call chain.
+<dt><a name="static_const_char*_GDB_print_reg"
+><b><code>static const char *GDB_print_reg</b></code></a></dt>
+Used by GDB_P to convert register values for display.
+Takes register type and number as arguments.Returns a pointer to the start of the string,
+(except for PMCs,
+which print directly and return &#34;&#34;).
+<dt><a name="static_const_char*_GDB_P"
+><b><code>static const char *GDB_P</b></code></a></dt>
+Used by PDB_print to print register values.
+Takes a pointer to the register name(s).Returns &#34;&#34; or error message.
+<dt><a name="static_int_GDB_B"
+><b><code>static int GDB_B</b></code></a></dt>
+Inserts a break&#45;point into a table (which it creates if necessary).
+Takes an instruction counter (?).Currently unused.Returns break&#45;point count,
+or &#45;1 if point is out of bounds.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em>include/parrot/debugger.h</em>,
+<em>src/pdb.c</em> and <em>ops/debug.ops</em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Initial_version_by_Daniel_Grunblatt_on_2002.5.19."
+>Initial version by Daniel Grunblatt on 2002.5.19.</a></dt>
+
+<dt><a name="Start_of_rewrite_&#45;_leo_2005.02.16"
+>Start of rewrite &#45; leo 2005.02.16</a></dt>
+The debugger now uses its own interpreter.
+User code is run in Interp *debugee.
+We have:
+<pre>  debug_interp&#45;&#62;pdb&#45;&#62;debugee&#45;&#62;debugger
+    ^                            |
+    |                            v
+    +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45; := &#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+Debug commands are mostly run inside the <code>debugger</code>. User code runs of course in the <code>debugee</code>.</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

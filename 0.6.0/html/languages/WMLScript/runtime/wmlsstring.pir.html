@@ -1,0 +1,575 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>WMLScript String library</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">WMLScript String library</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/wmlscript.html">WMLScript</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>runtime/wmlsstring.pir &#45; WMLScript String library</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This library contains a set of string functions.
+A string is an array of characters.
+Each of the characters has an index.
+The first character in a string has an index zero (0).
+The length of the string is the number of characters in the array.</p>
+
+<p>The user of the String library can specify a special separator by which elements in a string can be separated.
+These elements can be accessed by specifying the separator and the element index.
+The first element in a string has an index zero (0).
+Each occurrence of the separator in the string separates two elements (no escaping of separators is allowed).</p>
+
+<p>A White space character is one of the following characters:</p>
+
+<ul>
+<li>TAB : Horizontal Tabulation</li><p class="pad"></p>
+
+<li>VT : Vertical Tabulation</li><p class="pad"></p>
+
+<li>FF : Form Feed</li><p class="pad"></p>
+
+<li>SP : Space</li><p class="pad"></p>
+
+<li>LF : Line Feed</li><p class="pad"></p>
+
+<li>CR : Carriage Return</li><p class="pad"></p>
+</ul>
+
+<p>See &#34;WMLScript Standard Libraries Specification&#34;,
+section 9 &#34;String&#34;.</p>
+
+<h1><a name="FUNCTIONS"
+>FUNCTIONS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="length(string)"
+><code lang='und' xml:lang='und'>length(string)</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="DESCRIPTION"
+>DESCRIPTION</a></h3>
+
+<p>Returns the length (number of characters) of the given string.</p>
+
+<h3><a name="PARAMETERS"
+>PARAMETERS</a></h3>
+
+<p>string = String</p>
+
+<h3><a name="RETURN_VALUE"
+>RETURN VALUE</a></h3>
+
+<p>Integer or invalid.</p>
+
+<h2><a name="isEmpty(string)"
+><code lang='und' xml:lang='und'>isEmpty(string)</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="DESCRIPTION"
+>DESCRIPTION</a></h3>
+
+<p>Returns a boolean true if the string length is zero and boolean false otherwise.</p>
+
+<h3><a name="PARAMETERS"
+>PARAMETERS</a></h3>
+
+<p>string = String</p>
+
+<h3><a name="RETURN_VALUE"
+>RETURN VALUE</a></h3>
+
+<p>Boolean or invalid.</p>
+
+<h2><a name="charAt(string,_index)"
+><code lang='und' xml:lang='und'>charAt(string, index)</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="DESCRIPTION"
+>DESCRIPTION</a></h3>
+
+<p>Returns a new string of length one containing the character at the specified index of the given string.</p>
+
+<p>If the index is of type floating&#45;point,
+Float.int() is first used to calculate the actual integer index.</p>
+
+<h3><a name="PARAMETERS"
+>PARAMETERS</a></h3>
+
+<p>string = String</p>
+
+<p>index = Number (the index of the character to be returned)</p>
+
+<h3><a name="RETURN_VALUE"
+>RETURN VALUE</a></h3>
+
+<p>String or invalid.</p>
+
+<h3><a name="EXCEPTIONS"
+>EXCEPTIONS</a></h3>
+
+<p>If index is out of range then an empty string (<code lang='und' xml:lang='und'>&#34;&#34;</code>) is returned.</p>
+
+<h2><a name="subString(string,_startIndex,_length)"
+><code lang='und' xml:lang='und'>subString(string, startIndex, length)</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="DESCRIPTION"
+>DESCRIPTION</a></h3>
+
+<p>Returns a new string that is a substring of the given string.
+The substring begins at the specified startIndex and its length (number of characters) is the given length.
+If the startIndex is less than 0 then 0 is used for the startIndex.
+If the length is larger than the remaining number of characters in the string,
+the length is replaced with the number of remaining characters.</p>
+
+<p>If the startIndex or the length is of type floating&#45;point,
+Float.int() is first used to calculate the actual integer value.</p>
+
+<h3><a name="PARAMETERS"
+>PARAMETERS</a></h3>
+
+<p>string = String</p>
+
+<p>startIndex = Number (the beginning index,
+inclusive)</p>
+
+<p>length = Number (the length of the substring)</p>
+
+<h3><a name="RETURN_VALUE"
+>RETURN VALUE</a></h3>
+
+<p>String or invalid.</p>
+
+<h3><a name="EXCEPTIONS"
+>EXCEPTIONS</a></h3>
+
+<p>If startIndex is larger than the last index an empty string (<code lang='und' xml:lang='und'>&#34;&#34;</code>) is returned.</p>
+
+<p>If length &#60;= 0 an empty string (<code lang='und' xml:lang='und'>&#34;&#34;</code>) is returned.</p>
+
+<h2><a name="find(string,_subString)"
+><code lang='und' xml:lang='und'>find(string, subString)</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="DESCRIPTION"
+>DESCRIPTION</a></h3>
+
+<p>Returns the index of the first character in the string that matches the requested subString.
+If no match is found integer value &#45;1 is returned.</p>
+
+<p>Two strings are defined to match when they are identical.
+Characters with multiple possible representations match only if they have the same representation in both strings.
+No case folding is performed.</p>
+
+<h3><a name="PARAMETERS"
+>PARAMETERS</a></h3>
+
+<p>string = String</p>
+
+<p>subString = String</p>
+
+<h3><a name="RETURN_VALUE"
+>RETURN VALUE</a></h3>
+
+<p>Integer or invalid.</p>
+
+<h3><a name="EXCEPTIONS"
+>EXCEPTIONS</a></h3>
+
+<p>If subString is an empty string (<code lang='und' xml:lang='und'>&#34;&#34;</code>),
+an invalid value is returned.</p>
+
+<h2><a name="replace(string,_oldSubString,_newSubString)"
+><code lang='und' xml:lang='und'>replace(string, oldSubString, newSubString)</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="DESCRIPTION"
+>DESCRIPTION</a></h3>
+
+<p>Returns a new string resulting from replacing all occurrences of oldSubString in this string with newSubString.</p>
+
+<p>Two strings are defined to match when they are identical.
+Characters with multiple possible representations match only if they have the same representation in both strings.
+No case folding is performed.</p>
+
+<h3><a name="PARAMETERS"
+>PARAMETERS</a></h3>
+
+<p>string = String</p>
+
+<p>oldSubString = String</p>
+
+<p>newSubString = String</p>
+
+<h3><a name="RETURN_VALUE"
+>RETURN VALUE</a></h3>
+
+<p>String or invalid.</p>
+
+<h3><a name="EXCEPTIONS"
+>EXCEPTIONS</a></h3>
+
+<p>If oldSubString is an empty string an <code lang='und' xml:lang='und'>invalid</code> value is returned.</p>
+
+<h2><a name="elements(string,_separator)"
+><code lang='und' xml:lang='und'>elements(string, separator)</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="DESCRIPTION"
+>DESCRIPTION</a></h3>
+
+<p>Returns the number of elements in the given string separated by the given separator.
+Empty string (&#34;&#34;) is a valid element (thus,
+this function can never return a value that is less or equal to zero).</p>
+
+<h3><a name="PARAMETERS"
+>PARAMETERS</a></h3>
+
+<p>string = String</p>
+
+<p>separator = String (the first character of the string used as separator)</p>
+
+<h3><a name="RETURN_VALUE"
+>RETURN VALUE</a></h3>
+
+<p>Integer or invalid.</p>
+
+<h3><a name="EXCEPTIONS"
+>EXCEPTIONS</a></h3>
+
+<p>Returns <code lang='und' xml:lang='und'>invalid</code> if the separator is an empty string.</p>
+
+<h2><a name="elementAt(string,_index,_separator)"
+><code lang='und' xml:lang='und'>elementAt(string, index, separator)</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="DESCRIPTION"
+>DESCRIPTION</a></h3>
+
+<p>Search string for index&#39;th element,
+elements being separated by separator and return the corresponding element.
+If the index is less than 0 then the first element is returned.
+If the index is larger than the number of elements then the last element is returned.
+If the string is an empty string then an empty string is returned.</p>
+
+<p>If the index is of type floating&#45;point,
+Float.int() is first used to calculate the actual index value.</p>
+
+<h3><a name="PARAMETERS"
+>PARAMETERS</a></h3>
+
+<p>string = String</p>
+
+<p>index = Number (the index of the element to be returned)</p>
+
+<p>separator = String (the first character of the string used as separator)</p>
+
+<h3><a name="RETURN_VALUE"
+>RETURN VALUE</a></h3>
+
+<p>String or invalid.</p>
+
+<h3><a name="EXCEPTIONS"
+>EXCEPTIONS</a></h3>
+
+<p>Returns <code lang='und' xml:lang='und'>invalid</code> if the separator is an empty string.</p>
+
+<h2><a name="removeAt(string,_index,_separator)"
+><code lang='und' xml:lang='und'>removeAt(string, index, separator)</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="DESCRIPTION"
+>DESCRIPTION</a></h3>
+
+<p>Returns a new string where the element and the corresponding separator (if existing) with the given index are removed from the given string.
+If the index is less than 0 then the first element is removed.
+If the index is larger than the number of elements then the last element is removed.
+If the string is empty,
+the function returns a new empty string.</p>
+
+<p>If the index is of type floating&#45;point,
+Float.int() is first used to calculate the actual index value.</p>
+
+<h3><a name="PARAMETERS"
+>PARAMETERS</a></h3>
+
+<p>string = String</p>
+
+<p>index = Number (the index of the element to be deleted)</p>
+
+<p>separator = String (the first character of the string used as separator)</p>
+
+<h3><a name="RETURN_VALUE"
+>RETURN VALUE</a></h3>
+
+<p>String or invalid.</p>
+
+<h3><a name="EXCEPTIONS"
+>EXCEPTIONS</a></h3>
+
+<p>Returns <code lang='und' xml:lang='und'>invalid</code> if the separator is an empty string.</p>
+
+<h2><a name="replaceAt(string,_element,_index,_separator)"
+><code lang='und' xml:lang='und'>replaceAt(string, element, index, separator)</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="DESCRIPTION"
+>DESCRIPTION</a></h3>
+
+<p>Returns a string with the current element at the specified index replaced with the given element.
+If the index is less than 0 then the first element is replaced.
+If the index is larger than the number of elements then the last element is replaced.
+If the string is empty,
+the function returns a new string with the given element.</p>
+
+<p>If the index is of type floating&#45;point,
+Float.int() is first used to calculate the actual index value.</p>
+
+<h3><a name="PARAMETERS"
+>PARAMETERS</a></h3>
+
+<p>string = String</p>
+
+<p>element = String</p>
+
+<p>index = Number (the index of the element to be replaced)</p>
+
+<p>separator = String (the first character of the string used as separator)</p>
+
+<h3><a name="RETURN_VALUE"
+>RETURN VALUE</a></h3>
+
+<p>String or invalid.</p>
+
+<h3><a name="EXCEPTIONS"
+>EXCEPTIONS</a></h3>
+
+<p>Returns <code lang='und' xml:lang='und'>invalid</code> if the separator is an empty string.</p>
+
+<h2><a name="insertAt(string,_element,_index,_separator)"
+><code lang='und' xml:lang='und'>insertAt(string, element, index, separator)</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="DESCRIPTION"
+>DESCRIPTION</a></h3>
+
+<p>Returns a string with the element and the corresponding separator (if needed) inserted at the specified element index of the original string.
+If the index is less than 0 then 0 is used as the index.
+If the index is larger than the number of elements then the element is appended at the end of the string.
+If the string is empty,
+the function returns a new string with the given element.</p>
+
+<p>If the index is of type floating&#45;point,
+Float.int() is first used to calculate the actual index value.</p>
+
+<h3><a name="PARAMETERS"
+>PARAMETERS</a></h3>
+
+<p>string = String (original string)</p>
+
+<p>element = String (element to be inserted)</p>
+
+<p>index = Number (the index of the element to be added)</p>
+
+<p>separator = String (the first character of the string used as separator)</p>
+
+<h3><a name="RETURN_VALUE"
+>RETURN VALUE</a></h3>
+
+<p>String or invalid.</p>
+
+<h3><a name="EXCEPTIONS"
+>EXCEPTIONS</a></h3>
+
+<p>Returns <code lang='und' xml:lang='und'>invalid</code> if the separator is an empty string.</p>
+
+<h2><a name="squeeze(string)"
+><code lang='und' xml:lang='und'>squeeze(string)</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="DESCRIPTION"
+>DESCRIPTION</a></h3>
+
+<p>Returns a string where all consecutive series of white spaces within the string are reduced to single inter&#45;word space.</p>
+
+<h3><a name="PARAMETERS"
+>PARAMETERS</a></h3>
+
+<p>String = String</p>
+
+<h3><a name="RETURN_VALUE"
+>RETURN VALUE</a></h3>
+
+<p>String or invalid.</p>
+
+<h2><a name="trim(string)"
+><code lang='und' xml:lang='und'>trim(string)</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="DESCRIPTION"
+>DESCRIPTION</a></h3>
+
+<p>Returns a string where all trailing and leading white spaces in the given string have been trimmed.</p>
+
+<h3><a name="PARAMETERS"
+>PARAMETERS</a></h3>
+
+<p>String = String</p>
+
+<h3><a name="RETURN_VALUE"
+>RETURN VALUE</a></h3>
+
+<p>String or invalid.</p>
+
+<h2><a name="compare(string1,_string2)"
+><code lang='und' xml:lang='und'>compare(string1, string2)</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="DESCRIPTION"
+>DESCRIPTION</a></h3>
+
+<p>The return value indicates the lexicographic relation of string1 to string2.
+The relation is based on the relation of the character codes in the native character set.
+The return value is &#45;1 if string1 is less than string2,
+0 if string1 is identical to string2 or 1 if string1 is greater than string2.</p>
+
+<h3><a name="PARAMETERS"
+>PARAMETERS</a></h3>
+
+<p>String1 = String</p>
+
+<p>String2 = String</p>
+
+<h3><a name="RETURN_VALUE"
+>RETURN VALUE</a></h3>
+
+<p>Integer or invalid.</p>
+
+<h2><a name="toString(value)"
+><code lang='und' xml:lang='und'>toString(value)</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="DESCRIPTION"
+>DESCRIPTION</a></h3>
+
+<p>Returns a string representation of the given value.
+This function performs exactly the same conversions as supported by the [WMLScript] language (automatic conversion from boolean,
+integer and floating&#45;point values to strings) except that <code lang='und' xml:lang='und'>invalid</code> value returns the string <code lang='und' xml:lang='und'>&#34;invalid&#34;</code>.</p>
+
+<h3><a name="PARAMETERS"
+>PARAMETERS</a></h3>
+
+<p>value = Any</p>
+
+<h3><a name="RETURN_VALUE"
+>RETURN VALUE</a></h3>
+
+<p>String.</p>
+
+<h2><a name="format(format,_value)"
+><code lang='und' xml:lang='und'>format(format, value)</code> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="DESCRIPTION"
+>DESCRIPTION</a></h3>
+
+<p>Converts the given value to a string by using the given formatting provided as a format string.
+The format string can contain only one format specifier,
+which can be located anywhere inside the string.
+If more than one is specified,
+only the first one (leftmost) is used and the remaining specifiers are replaced by an empty string.
+The format specifier has the following form:</p>
+
+<pre lang='und' xml:lang='und'> % [width] [.precision] type</pre>
+
+<p>The <code lang='und' xml:lang='und'>width</code> argument is a nonnegative decimal integer controlling the minimum number of characters printed. If the number of characters in the output value is less than the specified width, blanks are added to the left until the minimum width is reached. The <code lang='und' xml:lang='und'>width</code> argument never causes the value to be truncated. If the number of characters in the output value is greater than the specified width or, if width is not given, all characters of the value are printed (subject to the precision argument).</p>
+
+<p>The <code lang='und' xml:lang='und'>precision</code> argument specifies a nonnegative decimal integer, preceded by a period (.), which can be used to set the precision of the output value. The interpretation of this value depends on the given <code lang='und' xml:lang='und'>type</code>:</p>
+
+<dl>
+<dt><a name="d"
+>d</a></dt><p class="pad"></p>
+
+<dd>Specifies the minimum number of digits to be printed. If the number of digits in the value is less than precision, the output value is padded on the left with zeroes. The value is not truncated when the number of digits exceeds precision. Default precision is 1. If precision is specified as 0 and the value to be converted is 0, the result is an empty string.</dd><p class="pad"></p>
+
+<dt><a name="f"
+>f</a></dt><p class="pad"></p>
+
+<dd>Specifies the number of digits after the decimal point. If a decimal point appears, at least one digit appears before it. The value is rounded to the appropriate number of digits. Default precision is 6; if precision is 0 or if the period (.) appears without a number following it, no decimal point is printed.</dd><p class="pad"></p>
+
+<dt><a name="s"
+>s</a></dt><p class="pad"></p>
+
+<dd>Specifies the maximum number of characters to be printed. By default, all characters are printed.</dd><p class="pad"></p>
+</dl>
+
+<p>Unlike the <code lang='und' xml:lang='und'>width</code> argument, the <code lang='und' xml:lang='und'>precision</code> argument can cause either truncation of the output value or rounding of a floating&#45;point value.</p>
+
+<p>The <code lang='und' xml:lang='und'>type</code> argument is the only required format argument; it appears after any optional format fields. The type character determines whether the given value is interpreted as integer, floating&#45;point or string. If the value argument is of a different type than is specified by the type argument, it is converted according to WMLScript standard automatic conversion rules, with the addition that if value is of type floating&#45;point and type is <b>d</b>, Float.int() is called to convert the value. The supported <code lang='und' xml:lang='und'>type</code> arguments are:</p>
+
+<dl>
+<dt><a name="d"
+>d</a></dt><p class="pad"></p>
+
+<dd>Integer: The output value has the form [&#45;]dddd, where dddd is one or more decimal digits.</dd><p class="pad"></p>
+
+<dt><a name="f"
+>f</a></dt><p class="pad"></p>
+
+<dd>Floating&#45;point: The output value has the form [&#45;]dddd.dddd, where dddd is one or more decimal digits. The number of digits before the decimal point depends on the magnitude of the number and the number of digits after the decimal point depends on the requested precision. When the number of digits after the decimal point in the value is less than the precision, letter 0 should be padded to fill columns (e.g. the result of String.format(&#34;%2.3f&#34;, 1.2) will be &#34;1.200&#34;)</dd><p class="pad"></p>
+
+<dt><a name="s"
+>s</a></dt><p class="pad"></p>
+
+<dd>String: Characters are printed up to the end of the string or until the precision value is reached. When the width is larger than precision, the width should be ignored.</dd><p class="pad"></p>
+</dl>
+
+<p>A literal percent character (%) may be included in the format string by preceding it with another percent character (%%).</p>
+
+<p>MINIMALIST IMPLEMENTATION</p>
+
+<h3><a name="PARAMETERS"
+>PARAMETERS</a></h3>
+
+<p>format = String</p>
+
+<p>value = Any</p>
+
+<h3><a name="RETURN_VALUE"
+>RETURN VALUE</a></h3>
+
+<p>String or invalid.</p>
+
+<h3><a name="EXCEPTIONS"
+>EXCEPTIONS</a></h3>
+
+<p>Illegal format specifier results in an <code lang='und' xml:lang='und'>invalid</code> return value.</p>
+
+<h1><a name="AUTHORS"
+>AUTHORS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Francois Perrad.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

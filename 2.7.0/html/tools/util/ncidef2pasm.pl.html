@@ -1,0 +1,128 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - F&#60;tools/util/ncidef2asm.pl&#62;</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/tools.html">Tools</a> &raquo; F&#60;tools/util/ncidef2asm.pl&#62;
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p><em>tools/util/ncidef2asm.pl</em></p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Take an NCI library definition file and turn it into PASM.</p>
+
+<p>An NCI library definition file provides the information needed to generate a parrot wrapper for the named library (or libraries).
+Its format is simple,
+and looks like:</p>
+
+<pre>  [package]
+  ncurses
+
+  [lib]
+  libform.so
+
+  [defs]
+  p new_field i i i i i i
+
+  [lib]
+  libncurses.so
+
+  [defs]
+  i is_term_resized i i</pre>
+
+<p>Note that the assembly file is generated in the order you specify, so if there are library dependencies, make sure you have them in the correct order.</p>
+
+<h2><a name="package"
+>package</a></h2>
+
+<p>Declares the package that all subsequent sub PMCs will be put into. The name is a simple concatenation of the package name, double colon, and the routine name, with no preceding punctuation.</p>
+
+<h2><a name="lib"
+>lib</a></h2>
+
+<p>The name of the library to be loaded. Should be as qualified as necessary for your platform&#45;&#45;generally the full filename is required, though the directory generally isn&#39;t.</p>
+
+<p>You may load multiple libraries here, but only the last one loaded will be exposed to subsequent defs.</p>
+
+<h2><a name="defs"
+>defs</a></h2>
+
+<p>This section holds the definitions of functions. Each function is assumed to be in the immediate preceding library. The definition of the function is:</p>
+
+<pre>  return_type name [param [param [param ...]]]</pre>
+
+<p>The param and return_type parameters use the NCI standard, which for reference is:</p>
+
+<dl>
+<dt><a name="p"
+>p</a></dt>
+Parameter is a void pointer, taken from the PMC&#39;s data pointer. PMC is assumed to be an unmanagedstruct or child class.Taken from a P register
+<dt><a name="c"
+>c</a></dt>
+Parameter is a character.Taken from an I register
+<dt><a name="s"
+>s</a></dt>
+Parameter is a shortTaken from an I register
+<dt><a name="i"
+>i</a></dt>
+Parameter is an intTaken from an I register
+<dt><a name="l"
+>l</a></dt>
+Parameter is a longTaken from an I register
+<dt><a name="f"
+>f</a></dt>
+Paramter is a floatTaken from an N register.
+<dt><a name="d"
+>d</a></dt>
+Parameter is a double.Taken from an N register.
+<dt><a name="t"
+>t</a></dt>
+Paramter is a char *, presumably a C stringTaken from an S register
+<dt><a name="v"
+>v</a></dt>
+Void. Only valid as a return type, noting that the function returns no data.
+<dt><a name="I"
+>I</a></dt>
+Interpreter pointer. The current interpreter pointer is passed in
+<dt><a name="P"
+>P</a></dt>
+PMC.
+<dt><a name="2"
+>2</a></dt>
+Pointer to short.Taken from an I register.
+<dt><a name="3"
+>3</a></dt>
+Pointer to int.Taken from an I register
+<dt><a name="4"
+>4</a></dt>
+Pointer to longTaken from an I register</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

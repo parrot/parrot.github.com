@@ -1,0 +1,252 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot under Windows</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot under Windows</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../html/index.html">Contents</a> | <a href="../html/info.html">Project Information</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../resources/up.gif'></a></a></h1>
+
+<p>README.win32 &#45; Parrot under Windows</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../resources/up.gif'></a></a></h1>
+
+<p>These are instructions for building the &#34;native&#34; port of Parrot under Windows 2000/XP on the Intel x86 architecture.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../resources/up.gif'></a></a></h1>
+
+<p>Win32 &#34;native&#34; ports require no additional software to run but the operating system.
+There should be other READMEs for (emulation) systems that run on Win32,
+eg Cygwin.</p>
+
+<p>Native compilers include:</p>
+
+<pre lang='und' xml:lang='und'>       Borland C++ (bcc)                version xxx or later
+       Microsoft Visual C++ (cl)        version 13.10.3077 or later
+       MinGW32 with GCC (gcc)           version 3.4.2 or later
+       Intel C++ (icl)                  version 8.0.48 works</pre>
+
+<h2><a name="Setting_Up_Parrot"
+>Setting Up Parrot <a href='#_top'><img alt='^' border=0 src='../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="Make"
+>Make</a></dt><p class="pad"></p>
+
+<dd>You need &#34;nmake&#34; to build Parrot under Windows with Microsoft compilers. It should be available via Microsoft Visual Studio .NET 2003 or the Microsoft .NET Framework SDK 1.1. Download the latter from the Microsoft .NET Framework Homepage <a href='http://msdn.microsoft.com/netframework/'><a href="http://msdn.microsoft.com/netframework/">http://msdn.microsoft.com/netframework/</a></a>.</dd><p class="pad"></p>
+
+<dd>Note: Parrot will not build using nmake v1.5 from the MS web site. Download one of the above toolkits to obtain a later version, either v7 or v8.</dd><p class="pad"></p>
+
+<dd>MinGW works with its GNU &#34;make&#34; (v 3.81) port and its name is &#39;mingw32&#45;make.exe&#39;. If you also have the Minimal SYStem (MSYS) installed, you will need to remove the Msys/bin folder from your PATH environment variable before calling &#34;perl Configure.pl&#34; and mingw32&#45;make. Perl detects and calls /bin/sh.exe, if found, whenever shelling a new process. sh.exe causes problems for mingw32&#45;make.exe because of its inability to handle Windows pathnames with backslashes. You must run &#34;perl Configure.pl&#34; and mingw32&#45;make from a dosbox; running those commands from an MSYS shell window will experience the same backslash path problems.</dd><p class="pad"></p>
+
+<dt><a name="Command_Shell"
+>Command Shell</a></dt><p class="pad"></p>
+
+<dd>The surest way to build it is on Windows NT/2000/XP, using the cmd shell.</dd><p class="pad"></p>
+
+<dt><a name="ICU"
+>ICU</a></dt><p class="pad"></p>
+
+<dd>Parrot no longer comes with its own ICU, thus you need to install it on your system if you want to use it. Note that ICU is now optional, you can build Parrot without it, by not installing it or asking Parrot to ignore it (<code lang='und' xml:lang='und'>&#45;&#45;without&#45;icu</code>).</dd><p class="pad"></p>
+
+<dd>If you want to use ICU, download it from <a href='http://icu.sourceforge.net/download/'><a href="http://icu.sourceforge.net/download/">http://icu.sourceforge.net/download/</a></a>.</dd><p class="pad"></p>
+
+<dd>If you want to use precompiled binaries, do the following. Download the package matching your compiler, unpack it (say, into C:\usr\lib), add the <em lang='und' xml:lang='und'>bin</em> directory to <code lang='und' xml:lang='und'>PATH</code>, and tell Configure.pl to use it.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    mkdir C:\usr\lib
+    unzip icu4c&#45;3_6&#45;Win32&#45;msvc7_1.zip &#45;d C:\usr\lib
+    mkdir C:\usr\lib\data
+    set PATH=%PATH%;C:\usr\lib\icu\bin
+    cd &#60;parrot directory&#62;
+    perl Configure.pl
+        &#45;&#45;icushared=&#34;C:\usr\lib\icu\lib\icudt.lib C:\usr\lib\icu\lib\icuuc.lib&#34;
+        &#45;&#45;icuheaders=&#34;C:\usr\lib\icu\include&#34;
+        &#45;&#45;icudatadir=&#34;C:\usr\local\icu\data&#34;</pre>
+
+<dd>Note the step of creating the <em lang='und' xml:lang='und'>C:\usr\lib\data</em> directory, as Parrot really wants it and the binary packages don&#39;t contain it. It doesn&#39;t need to contain anything though, as the data is pulled in from <em lang='und' xml:lang='und'>lib/icudt.lib</em>, which contains the standard data in binary form.</dd><p class="pad"></p>
+
+<dt><a name="Optional_libraries"
+>Optional libraries</a></dt><p class="pad"></p>
+
+<dd>The availability of these libraries is checked by Configure.pl.</dd><p class="pad"></p>
+
+<dd><b>gdbm</b> &#45; GNU database manager <a href='http://gnuwin32.sourceforge.net/'><a href="http://gnuwin32.sourceforge.net/">http://gnuwin32.sourceforge.net/</a></a></dd><p class="pad"></p>
+
+<dd><b>GMP</b> &#45; GNU multiple precision arithmetic library <a href='http://developer.berlios.de/projects/win32gmp/'><a href="http://developer.berlios.de/projects/win32gmp/">http://developer.berlios.de/projects/win32gmp/</a></a></dd><p class="pad"></p>
+
+<dd><b>pcre</b> &#45; Perl&#45;Compatible Regular Expression library <a href='http://gnuwin32.sourceforge.net/'><a href="http://gnuwin32.sourceforge.net/">http://gnuwin32.sourceforge.net/</a></a></dd><p class="pad"></p>
+
+<dd><b>readline</b> &#45; edit command lines <a href='http://gnuwin32.sourceforge.net/'><a href="http://gnuwin32.sourceforge.net/">http://gnuwin32.sourceforge.net/</a></a></dd><p class="pad"></p>
+
+<dt><a name="Optional_utilities"
+>Optional utilities</a></dt><p class="pad"></p>
+
+<dd>The availability of these utilities is checked by Configure.pl or by some test.</dd><p class="pad"></p>
+
+<dd><b>antlr</b> &#45; ANother Tool for Language Recognition <a href='http://www.antlr.org/'><a href="http://www.antlr.org/">http://www.antlr.org/</a></a></dd><p class="pad"></p>
+
+<dd><b>bc</b> &#45; arbitrary&#45;precision arithmetic language and calculator <a href='http://gnuwin32.sourceforge.net/'><a href="http://gnuwin32.sourceforge.net/">http://gnuwin32.sourceforge.net/</a></a></dd><p class="pad"></p>
+
+<dd><b>m4</b> &#45; macro language processor <a href='http://gnuwin32.sourceforge.net/'><a href="http://gnuwin32.sourceforge.net/">http://gnuwin32.sourceforge.net/</a></a></dd><p class="pad"></p>
+
+<dd><b>Python</b> &#45; an interpreted, interactive, object&#45;oriented programming language <a href='http://www.python.org/'><a href="http://www.python.org/">http://www.python.org/</a></a></dd><p class="pad"></p>
+
+<dd><b>SVN::Client</b> &#45; Perl wrapper of Subversion client functions <a href='http://subversion.tigris.org/'><a href="http://subversion.tigris.org/">http://subversion.tigris.org/</a></a> (svn&#45;win32&#45;1.4.x_pl.zip)</dd><p class="pad"></p>
+
+<dt><a name="Inno_Setup"
+>Inno Setup</a></dt><p class="pad"></p>
+
+<dd>Inno Setup is a <i>free</i> installer for Windows programs.</dd><p class="pad"></p>
+
+<dd>The latest release of Inno Setup at the time of writing is 5.1.12.</dd><p class="pad"></p>
+
+<dd>The HomePage is on <a href='http://www.jrsoftware.org/'><a href="http://www.jrsoftware.org/">http://www.jrsoftware.org/</a></a>.</dd><p class="pad"></p>
+
+<dd>Add the directory to PATH.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    set PATH=%PATH%;C:\Program Files\Inno Setup 5</pre>
+
+<dt><a name="Borland_C++"
+>Borland C++</a></dt><p class="pad"></p>
+
+<dd>XXX</dd><p class="pad"></p>
+
+<dt><a name="Microsoft_Visual_C++"
+>Microsoft Visual C++</a></dt><p class="pad"></p>
+
+<dd>Since mid April 2004, Visual C++ comes in two flavors. Microsoft Visual Studio .NET 2003 (<a href='http://msdn.microsoft.com/visualc/'><a href="http://msdn.microsoft.com/visualc/">http://msdn.microsoft.com/visualc/</a></a>), which includes the full blown IDE, and Microsoft Visual C++ Toolkit 2003 (<a href='http://msdn.microsoft.com/visualc/vctoolkit2003/'><a href="http://msdn.microsoft.com/visualc/vctoolkit2003/">http://msdn.microsoft.com/visualc/vctoolkit2003/</a></a>), which is a free (but unsupported) package, containing only the basic compiler and linker stuff.</dd><p class="pad"></p>
+
+<dd>If you use the Toolkit, be sure to follow the directions for setting up your build environment that come with the perl distributions. (README.win32 in the latest perl distribution.) You may have to substitute &#34;Microsoft Platform SDK&#34; wherever &#34;Microsoft SDK&#34; is listed, depending on the your install. You can ignore the entries regarding &#34;win32/config.vc&#34;, but be sure to create the &#34;link.bat&#34; batch file. Copy the missing files mentioned, run the Toolkit Command Prompt, set the appropriate env vars, and you should be fine. (For env vars, you can update them under My Computer&#45;&#62; properties so they are available whenever you open a shell.)</dd><p class="pad"></p>
+
+<dd>Note: It is possible to use ActiveState Perl with the Toolkit: you don&#39;t have to compile your own perl.</dd><p class="pad"></p>
+
+<dt><a name="MinGW32_with_GCC"
+>MinGW32 with GCC</a></dt><p class="pad"></p>
+
+<dd>The latest release of MinGW package at the time of writing is 5.1.3, which contains gcc&#45;3.4.2 as current release (and 3.4.5 as candidate release). It can be downloaded here: <a href='http://downloads.sourceforge.net/mingw/MinGW&#45;5.1.3.exe'><a href="http://downloads.sourceforge.net/mingw/MinGW&#45;5.1.3.exe">http://downloads.sourceforge.net/mingw/MinGW&#45;5.1.3.exe</a></a></dd><p class="pad"></p>
+
+<dd>The HomePage is on <a href='http://www.mingw.org/'><a href="http://www.mingw.org/">http://www.mingw.org/</a></a>.</dd><p class="pad"></p>
+
+<dd>With the ActiveState Perl distribution or PXPerl distribution, tell Configure.pl to use gcc :</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    perl Configure.pl
+         &#45;&#45;cc=gcc
+         &#45;&#45;icushared=&#34;C:\usr\lib\icu\lib\icudt.lib C:\usr\lib\icu\lib\icuuc.lib&#34;
+         &#45;&#45;icuheaders=&#34;C:\usr\lib\icu\include&#34;
+         &#45;&#45;icudatadir=&#34;C:\usr\local\icu\data&#34;
+or
+    perl Configure.pl &#45;&#45;cc=gcc &#45;&#45;without&#45;icu</pre>
+
+<dt><a name="Intel_C++"
+>Intel C++</a></dt><p class="pad"></p>
+
+<dd>XXX</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Building"
+>Building <a href='#_top'><img alt='^' border=0 src='../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>    $MAKE</pre>
+
+<h2><a name="Testing"
+>Testing <a href='#_top'><img alt='^' border=0 src='../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>    $MAKE test</pre>
+
+<h2><a name="Installation"
+>Installation <a href='#_top'><img alt='^' border=0 src='../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>    $MAKE install</pre>
+
+<h2><a name="Installer"
+>Installer <a href='#_top'><img alt='^' border=0 src='../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>    $MAKE win32&#45;inno&#45;installer</pre>
+
+<p>This command creates a setup&#45;parrot&#45;x.y.z.exe that contains all parrot install directories.</p>
+
+<h2><a name="Usage_Hints"
+>Usage Hints <a href='#_top'><img alt='^' border=0 src='../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>    XXX</pre>
+
+<h1><a name="BUGS_AND_CAVEATS"
+>BUGS AND CAVEATS <a href='#_top'><img alt='^' border=0 src='../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Features"
+>Features</a></dt><p class="pad"></p>
+
+<dd>Threads, Events, and Signals are missing.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="ACKNOWLEDGEMENTS"
+>ACKNOWLEDGEMENTS <a href='#_top'><img alt='^' border=0 src='../resources/up.gif'></a></a></h1>
+
+<p>XXX</p>
+
+<h1><a name="AUTHORS"
+>AUTHORS <a href='#_top'><img alt='^' border=0 src='../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Ron_Blaschke_&#60;ron@rblasch.org&#62;"
+>Ron Blaschke &#60;ron@rblasch.org&#62;</a></dt><p class="pad"></p>
+
+<dt><a name="Fran&#231;ois_Perrad_&#60;francois.perrad@gadz.org&#62;"
+>Fran&#231;ois Perrad &#60;francois.perrad@gadz.org&#62;</a></dt><p class="pad"></p>
+</dl>
+
+<p>This document is maintained by The Parrot Developers (&#60;parrot&#45;porters@perl.org&#62;).</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>    L&#60;parrot&#62;</pre>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../resources/up.gif'></a></a></h1>
+
+<p>This document borrows heavily from Perl&#39;s README.win32.</p>
+
+<p>GCC/mingw32 support was added in 0.1.2 (Fran&#231;ois Perrad).</p>
+
+<p>Last updated: 15 May 2007</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

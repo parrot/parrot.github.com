@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Untitled</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Contents</a> &raquo; <a href="../../../../../html/languages.html">Language Implementations</a> &raquo; <a href="../../../../../html/abc.html">abc</a> &raquo; Untitled
+                </div>
+
+<p>rule TOP { ^ &#60;statement_list&#62; [ $ || &#60;panic: &#39;Syntax error&#39;&#62; ] {*} }</p>
+
+<p>rule statement_list { &#60;statement&#62;?
+[ &#39;;&#39; &#60;statement&#62;?
+]* {*} }</p>
+
+<p>rule statement { | &#60;if_statement&#62; {*} #= if_statement | &#60;while_statement&#62; {*} #= while_statement | &#60;for_statement&#62; {*} #= for_statement | &#60;compound_statement&#62; {*} #= compound_statement | &#60;string&#62; {*} #= string # | &#39;break&#39; # | &#39;continue&#39; # | &#39;halt&#39; # | &#39;return&#39; [ &#39;(&#39; &#60;expression&#62; &#39;)&#39; ]?
+| &#60;expression&#62; {*} #= expression }</p>
+
+<p>rule if_statement { &#39;if&#39; &#39;(&#39; &#60;expression&#62; &#39;)&#39; &#60;statement&#62; [ &#39;else&#39; &#60;statement&#62; ]?
+{*} }</p>
+
+<p>rule while_statement { &#39;while&#39; &#39;(&#39; &#60;expression&#62; &#39;)&#39; &#60;statement&#62; {*} }</p>
+
+<p>rule for_statement { &#39;for&#39; &#39;(&#39; &#60;expression&#62; &#39;;&#39; &#60;expression&#62; &#39;;&#39; &#60;expression&#62; &#39;)&#39; &#60;statement&#62; {*} }</p>
+
+<p>rule compound_statement { &#39;{&#39; &#60;statement_list&#62; &#39;}&#39; {*} }</p>
+
+<p>token string { &#39;&#34;&#39; &#60;string_literal: &#39;&#34;&#39;&#62; &#39;&#34;&#39; {*} }</p>
+
+<p>## create operator precedence parser rule &#39;expression&#39; is optable { ...
+}</p>
+
+<p>## recognize terms token term { | &#60;float&#62; {*} #= float | &#60;integer&#62; {*} #= integer | &#60;variable&#62; {*} #= variable }</p>
+
+<p>token float { [ | \d+ &#39;.&#39; \d* | &#39;.&#39; \d+ ] {*} }</p>
+
+<p>token integer { \d+ {*} }</p>
+
+<p>token variable { $&#60;name&#62;=[ &#60;[a..z]&#62; &#60;[_a..z0..9]&#62;* ] [ &#39;(&#39; &#60;expression&#62; &#39;)&#39; {*} #= call | &#60;.null&#62; {*} #= var ] }</p>
+
+<p>## vim: expandtab sw=4</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Hash PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Hash PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/hash.pmc &#45; Hash PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Hash PMC wraps Parrot&#39;s _hash to provide a high&#45;level API:</p>
+
+<ul>
+<li>Convert between various types to use as hash keys.</li>
+
+<li>Convert between various types to use as hash values.</li>
+
+<li>Handle compound Keys for nested Hash/Array lookups.</li>
+
+<li>Provide <code>HashIterator</code> to iterate over <code>Hash</code>.</li>
+</ul>
+
+<p>By default Hash uses string keys and PMC values.
+Methods <code>set_key_type</code> and <code>set_value_type</code> may be used to switch key and values type.
+For <code>PMC</code> keys hash value is calculated using VTABLE <code>get_hashvalue</code> function.</p>
+
+<p>These are the vtable functions for the Hash PMC.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes the instance.
+<dt><a name="void_destroy()"
+><b><code>void destroy()</b></code></a></dt>
+Free hash structure.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Marks the hash as live.
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+Creates and returns a clone of the hash.
+<dt><a name="void_set_pointer(void_*ptr)"
+><b><code>void set_pointer(void *ptr)</b></code></a></dt>
+Use <code>ptr</code> as this PMC&#39;s Hash*.
+<dt><a name="void_set_integer(INTVAL_type)"
+><b><code>void set_integer(INTVAL type)</b></code></a></dt>
+
+<dt><a name="void_set_key_type(INTVAL_type)"
+><b><code>void set_key_type(INTVAL type)</b></code></a></dt>
+Reset Hash to use different keys.
+See enum <code>Hash_key_type</code> for possible values.NB: this method will destroy all old data!
+<dt><a name="METHOD_get_key_type()"
+><b><code>METHOD get_key_type()</b></code></a></dt>
+Return type of keys in Hash.
+<dt><a name="METHOD_set_value_type(INTVAL_type)"
+><b><code>METHOD set_value_type(INTVAL type)</b></code></a></dt>
+Reset Hash to use different value&#45;type for stored items.
+If there is no previous _hash was set defaults to STRING* keys.NB: this method will destroy all old data!
+<dt><a name="void_*get_pointer()"
+><b><code>void *get_pointer()</b></code></a></dt>
+Get a pointer to this PMC&#39;s Hash*.
+<dt><a name="INTVAL_get_integer()"
+><b><code>INTVAL get_integer()</b></code></a></dt>
+
+<dt><a name="FLOATVAL_get_number()"
+><b><code>FLOATVAL get_number()</b></code></a></dt>
+Returns the size of the hash.
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+Returns a string representation of the hash,
+showing its class name and memory address.
+<dt><a name="STRING_*get_repr()"
+><b><code>STRING *get_repr()</b></code></a></dt>
+Return a representation of the hash contents.
+<dt><a name="INTVAL_get_integer_keyed_str(STRING_*key)"
+><b><code>INTVAL get_integer_keyed_str(STRING *key)</b></code></a></dt>
+
+<dt><a name="INTVAL_get_integer_keyed_int(INTVAL_key)"
+><b><code>INTVAL get_integer_keyed_int(INTVAL key)</b></code></a></dt>
+
+<dt><a name="INTVAL_get_integer_keyed(PMC_*key)"
+><b><code>INTVAL get_integer_keyed(PMC *key)</b></code></a></dt>
+Returns the integer value for the element at <code>*key</code>.
+<dt><a name="void_set_integer_keyed(PMC_*key,_INTVAL_value)"
+><b><code>void set_integer_keyed(PMC *key, INTVAL value)</b></code></a></dt>
+
+<dt><a name="void_set_integer_keyed_str(STRING_*key,_INTVAL_value)"
+><b><code>void set_integer_keyed_str(STRING *key, INTVAL value)</b></code></a></dt>
+
+<dt><a name="FLOATVAL_get_number_keyed_str(STRING_*key)"
+><b><code>FLOATVAL get_number_keyed_str(STRING *key)</b></code></a></dt>
+
+<dt><a name="FLOATVAL_get_number_keyed_int(INTVAL_key)"
+><b><code>FLOATVAL get_number_keyed_int(INTVAL key)</b></code></a></dt>
+
+<dt><a name="FLOATVAL_get_number_keyed(PMC_*key)"
+><b><code>FLOATVAL get_number_keyed(PMC *key)</b></code></a></dt>
+Returns the floating&#45;point value for the element at <code>*key</code>.
+<dt><a name="STRING_*get_string_keyed_str(STRING_*key)"
+><b><code>STRING *get_string_keyed_str(STRING *key)</b></code></a></dt>
+
+<dt><a name="STRING_*get_string_keyed_int(INTVAL_key)"
+><b><code>STRING *get_string_keyed_int(INTVAL key)</b></code></a></dt>
+
+<dt><a name="STRING_*get_string_keyed(PMC_*key)"
+><b><code>STRING *get_string_keyed(PMC *key)</b></code></a></dt>
+Returns the string value for the element at <code>*key</code>.
+<dt><a name="void_set_string_keyed(PMC_*key,_STRING_*value)"
+><b><code>void set_string_keyed(PMC *key, STRING *value)</b></code></a></dt>
+
+<dt><a name="void_set_string_keyed_str(STRING_*key,_STRING_*value)"
+><b><code>void set_string_keyed_str(STRING *key, STRING *value)</b></code></a></dt>
+
+<dt><a name="PMC_*get_pmc_keyed(PMC_*key)"
+><b><code>PMC *get_pmc_keyed(PMC *key)</b></code></a></dt>
+
+<dt><a name="PMC_*get_pmc_keyed_str(STRING_*key)"
+><b><code>PMC *get_pmc_keyed_str(STRING *key)</b></code></a></dt>
+
+<dt><a name="PMC_*get_pmc_keyed_int(INTVAL_key)"
+><b><code>PMC *get_pmc_keyed_int(INTVAL key)</b></code></a></dt>
+Returns the PMC value for the element at <code>*key</code>.
+<dt><a name="void_set_number_keyed(PMC_*key,_FLOATVAL_value)"
+><b><code>void set_number_keyed(PMC *key, FLOATVAL value)</b></code></a></dt>
+
+<dt><a name="void_set_number_keyed_str(STRING_*key,_FLOATVAL_value)"
+><b><code>void set_number_keyed_str(STRING *key, FLOATVAL value)</b></code></a></dt>
+Sets <code>value</code> as the value for <code>*key</code>.
+<dt><a name="void_set_pmc_keyed(PMC_*dest_key,_PMC_*value)"
+><b><code>void set_pmc_keyed(PMC *dest_key, PMC *value)</b></code></a></dt>
+
+<dt><a name="void_set_pmc_keyed_str(STRING_*key,_PMC_*value)"
+><b><code>void set_pmc_keyed_str(STRING *key, PMC *value)</b></code></a></dt>
+Sets <code>*value</code> as the value for <code>*key</code>.
+<dt><a name="INTVAL_exists_keyed_str(STRING_*key)"
+><b><code>INTVAL exists_keyed_str(STRING *key)</b></code></a></dt>
+
+<dt><a name="INTVAL_exists_keyed(PMC_*key)"
+><b><code>INTVAL exists_keyed(PMC *key)</b></code></a></dt>
+Returns whether a key <code>*key</code> exists in the hash.
+<dt><a name="INTVAL_defined_keyed_str(STRING_*key)"
+><b><code>INTVAL defined_keyed_str(STRING *key)</b></code></a></dt>
+
+<dt><a name="INTVAL_defined_keyed(PMC_*key)"
+><b><code>INTVAL defined_keyed(PMC *key)</b></code></a></dt>
+Returns whether the value for <code>*key</code> is defined.
+<dt><a name="void_delete_keyed_str(STRING_*key)"
+><b><code>void delete_keyed_str(STRING *key)</b></code></a></dt>
+
+<dt><a name="void_delete_keyed(PMC_*key)"
+><b><code>void delete_keyed(PMC *key)</b></code></a></dt>
+Deletes the element associated with <code>*key</code>.
+<dt><a name="INTVAL_get_bool()"
+><b><code>INTVAL get_bool()</b></code></a></dt>
+Returns true if the hash size is not zero.
+<dt><a name="INTVAL_elements()"
+><b><code>INTVAL elements()</b></code></a></dt>
+Returns the number of elements in the hash.
+<dt><a name="PMC_*get_iter()"
+><b><code>PMC *get_iter()</b></code></a></dt>
+Return a new iterator.
+<dt><a name="INTVAL_is_same(const_PMC_*other)"
+><b><code>INTVAL is_same(const PMC *other)</b></code></a></dt>
+Returns whether the hash is the same as <code>*other</code>.
+<dt><a name="INTVAL_is_equal(PMC_*value)"
+><b><code>INTVAL is_equal(PMC *value)</b></code></a></dt>
+The <code>==</code> operation.Check if two hashes hold the same keys and values.
+<dt><a name="PMC_*slice(PMC_*key)"
+><b><code>PMC *slice(PMC *key)</b></code></a></dt>
+Return a new iterator for the slice PMC <code>key</code>
+<dt><a name="void_visit(PMC_*info)"
+><b><code>void visit(PMC *info)</b></code></a></dt>
+Used during archiving to visit the elements in the hash.
+<dt><a name="void_freeze(PMC_*info)"
+><b><code>void freeze(PMC *info)</b></code></a></dt>
+Used to archive the hash.
+<dt><a name="void_thaw(PMC_*info)"
+><b><code>void thaw(PMC *info)</b></code></a></dt>
+Used to unarchive the hash.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em>docs/pdds/pdd08_keys.pod</em>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

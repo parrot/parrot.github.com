@@ -1,0 +1,216 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>src/charset/ascii.c</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">src/charset/ascii.c</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/charset/ascii.c</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This file implements the charset functions for ascii data and common charset functionality for similar charsets like iso&#45;8859&#45;1.</p>
+
+<dl>
+<dt><a name="STRING_*_ascii_get_graphemes"
+><b><code lang='und' xml:lang='und'>STRING *ascii_get_graphemes</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieves the graphemes for the STRING <code lang='und' xml:lang='und'>source_string</code>,
+starting at <code lang='und' xml:lang='und'>offset</code> and ending at <code lang='und' xml:lang='und'>offset + count</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_void_set_graphemes"
+><b><code lang='und' xml:lang='und'>static void set_graphemes</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the graphemes for <code lang='und' xml:lang='und'>source_string</code>,
+starting at <code lang='und' xml:lang='und'>offset</code>.
+Replace <code lang='und' xml:lang='und'>replace_count</code> graphemes with those from STRING <code lang='und' xml:lang='und'>insert_string</code>.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*_ascii_get_graphemes_inplace"
+><b><code lang='und' xml:lang='und'>STRING *ascii_get_graphemes_inplace</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieves the graphemes in place for ascii STRING <code lang='und' xml:lang='und'>source_string</code>,
+starting at <code lang='und' xml:lang='und'>offset</code>.
+Retrieves <code lang='und' xml:lang='und'>count</code> graphemes and puts them into <code lang='und' xml:lang='und'>dest_string</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_STRING_*_to_ascii"
+><b><code lang='und' xml:lang='und'>static STRING *to_ascii</b></code></a></dt><p class="pad"></p>
+
+<dd>Attempts to convert STRING <code lang='und' xml:lang='und'>src</code> to ASCII in STRING <code lang='und' xml:lang='und'>dest</code>.
+Throws an exception if unconvertable UNICODE characters are involved.</dd><p class="pad"></p>
+
+<dt><a name="static_STRING_*_to_unicode"
+><b><code lang='und' xml:lang='und'>static STRING *to_unicode</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts the ASCII STRING <code lang='und' xml:lang='und'>src</code> to UNICODE STRING <code lang='und' xml:lang='und'>dest</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_STRING_*_to_charset"
+><b><code lang='und' xml:lang='und'>static STRING *to_charset</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts STRING <code lang='und' xml:lang='und'>src</code> to ASCII charset STRING <code lang='und' xml:lang='und'>dest</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_STRING*_compose"
+><b><code lang='und' xml:lang='und'>static STRING *compose</b></code></a></dt><p class="pad"></p>
+
+<dd>Can&#39;t compose ASCII strings,
+so performs a string copy on it and returns the new string.</dd><p class="pad"></p>
+
+<dt><a name="static_STRING*_decompose"
+><b><code lang='und' xml:lang='und'>static STRING *decompose</b></code></a></dt><p class="pad"></p>
+
+<dd>Can&#39;t decompose ASCII,
+so we perform a string copy instead and return a pointer to the new string.</dd><p class="pad"></p>
+
+<dt><a name="static_void_upcase"
+><b><code lang='und' xml:lang='und'>static void upcase</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts the STRING <code lang='und' xml:lang='und'>source_string</code> to all uppercase.</dd><p class="pad"></p>
+
+<dt><a name="static_void_downcase"
+><b><code lang='und' xml:lang='und'>static void downcase</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts the STRING <code lang='und' xml:lang='und'>source_string</code> to all lower&#45;case.</dd><p class="pad"></p>
+
+<dt><a name="static_void_titlecase"
+><b><code lang='und' xml:lang='und'>static void titlecase</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts the STRING given by <code lang='und' xml:lang='und'>source_string</code> to title case,
+where the first character is upper case and all the rest of the characters are lower&#45;case.</dd><p class="pad"></p>
+
+<dt><a name="static_void_upcase_first"
+><b><code lang='und' xml:lang='und'>static void upcase_first</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the first character in the STRING <code lang='und' xml:lang='und'>source_string</code> to upper case,
+but doesn&#39;t modify the rest of the string.</dd><p class="pad"></p>
+
+<dt><a name="static_void_downcase_first"
+><b><code lang='und' xml:lang='und'>static void downcase_first</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the first character of the STRING <code lang='und' xml:lang='und'>source_string</code> to lowercase,
+but doesn&#39;t modify the rest of the characters.</dd><p class="pad"></p>
+
+<dt><a name="static_void_titlecase_first"
+><b><code lang='und' xml:lang='und'>static void titlecase_first</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts the first letter of STRING <code lang='und' xml:lang='und'>source_string</code> to upper case,
+but doesn&#39;t modify the rest of the string.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_ascii_compare"
+><b><code lang='und' xml:lang='und'>INTVAL ascii_compare</b></code></a></dt><p class="pad"></p>
+
+<dd>Compares two strings as ASCII strings.
+If STRING <code lang='und' xml:lang='und'>lhs</code> &#62; <code lang='und' xml:lang='und'>rhs</code>,
+returns 1.
+If <code lang='und' xml:lang='und'>lhs</code> == <code lang='und' xml:lang='und'>rhs</code> returns 0.
+If STRING <code lang='und' xml:lang='und'>lhs</code> &#60; <code lang='und' xml:lang='und'>rhs</code>,
+returns &#45;1.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_mixed_cs_index"
+><b><code lang='und' xml:lang='und'>INTVAL mixed_cs_index</b></code></a></dt><p class="pad"></p>
+
+<dd>Searches for the first instance of STRING <code lang='und' xml:lang='und'>search</code> in STRING <code lang='und' xml:lang='und'>src</code>.
+returns the position where the substring is found if it is indeed found.
+Returns &#45;1 otherwise.
+Operates on different types of strings,
+not just ASCII.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_ascii_cs_index"
+><b><code lang='und' xml:lang='und'>INTVAL ascii_cs_index</b></code></a></dt><p class="pad"></p>
+
+<dd>Searches for the first instance of STRING <code lang='und' xml:lang='und'>search</code> in STRING <code lang='und' xml:lang='und'>src</code>.
+returns the position where the substring is found if it is indeed found.
+Returns &#45;1 otherwise.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_ascii_cs_rindex"
+><b><code lang='und' xml:lang='und'>INTVAL ascii_cs_rindex</b></code></a></dt><p class="pad"></p>
+
+<dd>Searches for the last instance of STRING <code lang='und' xml:lang='und'>search_string</code> in STRING <code lang='und' xml:lang='und'>source_string</code>.
+Starts searching at <code lang='und' xml:lang='und'>offset</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_UINTVAL_validate"
+><b><code lang='und' xml:lang='und'>static UINTVAL validate</b></code></a></dt><p class="pad"></p>
+
+<dd>Verifies that the given string is valid ASCII.
+Returns 1 if it is ASCII,
+returns 0 otherwise.</dd><p class="pad"></p>
+
+<dt><a name="static_STRING_*_string_from_codepoint"
+><b><code lang='und' xml:lang='und'>static STRING *string_from_codepoint</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates a new STRING object from a single codepoint <code lang='und' xml:lang='und'>codepoint</code>.
+Returns the new STRING.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_is_cclass"
+><b><code lang='und' xml:lang='und'>static INTVAL is_cclass</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_find_cclass"
+><b><code lang='und' xml:lang='und'>static INTVAL find_cclass</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_find_not_cclass"
+><b><code lang='und' xml:lang='und'>static INTVAL find_not_cclass</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="size_t_ascii_compute_hash"
+><b><code lang='und' xml:lang='und'>size_t ascii_compute_hash</b></code></a></dt><p class="pad"></p>
+
+<dd>Computes the hash of STRING <code lang='und' xml:lang='und'>source_string</code> starting with seed value <code lang='und' xml:lang='und'>seed</code>.</dd><p class="pad"></p>
+
+<dt><a name="const_CHARSET_*_Parrot_charset_ascii_init"
+><b><code lang='und' xml:lang='und'>const CHARSET *Parrot_charset_ascii_init</b></code></a></dt><p class="pad"></p>
+
+<dd>Initialize the ASCII charset but registering all the necessary function pointers and settings.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*_charset_cvt_ascii_to_binary"
+><b><code lang='und' xml:lang='und'>STRING *charset_cvt_ascii_to_binary</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts an ASCII STRING <code lang='und' xml:lang='und'>src</code> to a binary STRING <code lang='und' xml:lang='und'>dest</code>.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*_charset_cvt_ascii_to_iso_8859_1"
+><b><code lang='und' xml:lang='und'>STRING *charset_cvt_ascii_to_iso_8859_1</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts ASCII STRING <code lang='und' xml:lang='und'>src</code> to ISO8859&#45;1 STRING <code lang='und' xml:lang='und'>dest</code>.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Interpreter &#45; Callback Function Handling</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Interpreter &#45; Callback Function Handling</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/inter_cb.c &#45; Parrot Interpreter &#45; Callback Function Handling</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>NCI callback functions may run whenever the C code executes the callback.
+To be prepared for asynchronous callbacks these are converted to callback events.</p>
+
+<p>Often callbacks should run synchronously.
+This can only happen when the C&#45;library calls the callback,
+because Parrot called a function in the C&#45;library.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="PMC*_Parrot_make_cb(Parrot_Interp_interpreter,_PMC*_sub,_PMC*_user_STRING*_cb_signature)"
+><b><code lang='und' xml:lang='und'>PMC *Parrot_make_cb(Parrot_Interp interpreter, PMC *sub, PMC *user STRING *cb_signature)</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a callback function according to pdd16.</dd><p class="pad"></p>
+
+<dt><a name="static_void_verify_CD(void_*external_data,_PMC_*user_data)"
+><b><code lang='und' xml:lang='und'>static void verify_CD(void *external_data, PMC *user_data)</b></code></a></dt><p class="pad"></p>
+
+<dd>Verify user_data PMC then continue with callback_CD</dd><p class="pad"></p>
+
+<dt><a name="static_void_callback_CD(Parrot_Interp,_void_*external_data,_PMC_*user_data)"
+><b><code lang='und' xml:lang='und'>static void callback_CD(Parrot_Interp, void *external_data, PMC *user_data)</b></code></a></dt><p class="pad"></p>
+
+<dd>Common callback function handler.
+See pdd16.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_run_callback(Parrot_Interp_interpreter,_PMC*_user_data,_void*_external_data)"
+><b><code lang='und' xml:lang='und'>void Parrot_run_callback(Parrot_Interp interpreter, PMC *user_data, void *external_data)</b></code></a></dt><p class="pad"></p>
+
+<dd>Run a callback function.
+The PMC* user_data holds all necessary items in its properties.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_callback_C(void_*external_data,_PMC_*user_data)"
+><b><code lang='und' xml:lang='und'>void Parrot_callback_C(void *external_data, PMC *user_data)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="void_Parrot_callback_D(PMC_*user_data,_void_*external_data)"
+><b><code lang='und' xml:lang='und'>void Parrot_callback_D(PMC *user_data, void *external_data)</b></code></a></dt><p class="pad"></p>
+
+<dd>NCI callback functions.
+See pdd16.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/interpreter.h</em>,
+<em lang='und' xml:lang='und'><a href="../docs/pdds/pdd16_native_call.pod.html">docs/pdds/pdd16_native_call.pod</a></em>.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

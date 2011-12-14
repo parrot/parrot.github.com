@@ -1,0 +1,178 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>subs that are part of the internals, not for users</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">subs that are part of the internals, not for users</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/perl6.html">Perl6</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>src/builtins/guts.pir &#45; subs that are part of the internals,
+not for users</p>
+
+<h1><a name="SUBS"
+>SUBS <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="!EXPORT(symbols,_from_:named(&#39;from&#39;)_[,_to_:named(&#39;to&#39;)]_)"
+>!EXPORT(symbols,
+from :named(&#39;from&#39;) [,
+to :named(&#39;to&#39;)] )</a></dt>
+Export symbols in namespace <code>from</code> to the namespace given by <code>to</code>.
+If <code>to</code> isn&#39;t given,
+then exports into the HLL global namespace.
+This function differs somewhat from Parrot&#39;s <code>Exporter</code> PMC in that it understands how to properly merge <code>MultiSub</code> PMCs.
+<dt><a name="!CALLMETHOD(&#39;method&#39;,_obj)"
+>!CALLMETHOD(&#39;method&#39;,
+obj)</a></dt>
+Invoke a method on a possibly foreign object.
+If the object supports the requested method,
+we use it,
+otherwise we assume the object is foreign and try using the corresponding method from <code>Any</code>.
+<dt><a name="!VAR"
+>!VAR</a></dt>
+Helper function for implementing the VAR and .VAR macros.
+<dt><a name="!DEREF"
+>!DEREF</a></dt>
+Helper function to dereference any chains
+<dt><a name="!SAMETYPE_EXACT"
+>!SAMETYPE_EXACT</a></dt>
+Takes two types and returns true if they match exactly (not accounting for any subtyping relations,
+etc).
+<dt><a name="!CREATE_SUBSET_TYPE"
+>!CREATE_SUBSET_TYPE</a></dt>
+Creates a subset type.
+Basically,
+we make an anonymous subclass of the original type,
+attach the refinement and override ACCEPTS.
+We also chase up to find a real,
+non&#45;subtype and stash that away for fast access later.
+<dt><a name="!TOPERL6MULTISUB"
+>!TOPERL6MULTISUB</a></dt>
+At the moment,
+we don&#39;t have the abilility to have Parrot use our own MultiSub type,
+nor are we ready to (because built&#45;ins need to get Perl 6 signatures first).
+So for now we just transform multis in user code like this.
+<dt><a name="!UNIT_START"
+>!UNIT_START</a></dt>
+
+<dt><a name="!capture"
+>!capture</a></dt>
+Combine slurpy positional and slurpy named args into a list.
+Note that original order may be lost &#45;&#45; that&#39;s the nature of captures.
+<dt><a name="!ADDTOROLE"
+>!ADDTOROLE</a></dt>
+Adds a given role initializing multi&#45;variant to a Role object,
+creating it and putting it in the namespace if it doesn&#39;t already exist.
+<dt><a name="!meta_create(type,_name,_also)"
+>!meta_create(type,
+name,
+also)</a></dt>
+Create a metaclass object for <code>type</code> with the given <code>name</code>.
+This simply creates a handle on which we can hang methods,
+attributes,
+traits,
+etc.
+&#45;&#45; the class itself isn&#39;t created until the class is composed (see <code>!meta_compose</code> below).
+<dt><a name="!meta_compose(Class_metaclass)"
+>!meta_compose(Class metaclass)</a></dt>
+Compose the class.
+This includes resolving any inconsistencies and creating the protoobjects.
+<dt><a name="!meta_compose()"
+>!meta_compose()</a></dt>
+Default meta composer &#45;&#45; does nothing.
+<dt><a name="!meta_trait(metaclass,_type,_name)"
+>!meta_trait(metaclass,
+type,
+name)</a></dt>
+Add a trait with the given <code>type</code> and <code>name</code> to <code>metaclass</code>.
+<dt><a name="!meta_attribute(metaclass,_name,_itype_[,_&#39;type&#39;=&#62;type]_)"
+>!meta_attribute(metaclass,
+name,
+itype [,
+&#39;type&#39;=&#62;type] )</a></dt>
+Add attribute <code>name</code> to <code>metaclass</code> with the given <code>itype</code> and <code>type</code>.
+<dt><a name="!sub_trait(sub,_type,_trait,_arg?)"
+>!sub_trait(sub,
+type,
+trait,
+arg?)</a></dt>
+
+<dt><a name="!sub_trait_default(trait,_block,_arg)"
+>!sub_trait_default(trait,
+block,
+arg)</a></dt>
+Sets the default trait,
+which marks a multi candidate as the default choice in an ambiguous multiple dispatch.
+<dt><a name="!sub_trait_export(trait,_block,_arg)"
+>!sub_trait_export(trait,
+block,
+arg)</a></dt>
+
+<dt><a name="!set_resolves_list(class)"
+>!set_resolves_list(class)</a></dt>
+Gets all the methods that the class has and adds them to the resolves list.
+<dt><a name="!compose_role_attributes(class,_role)"
+>!compose_role_attributes(class,
+role)</a></dt>
+Helper method to compose the attributes of a role into a class.
+<dt><a name="!keyword_role(name)"
+>!keyword_role(name)</a></dt>
+Internal helper method to create a role.
+<dt><a name="!keyword_enum(name)"
+>!keyword_enum(name)</a></dt>
+Internal helper method to create an enum class.
+<dt><a name="!keyword_does(class,_role)"
+>!keyword_does(class,
+role)</a></dt>
+Internal helper method to implement the functionality of the does keyword.
+<dt><a name="!keyword_has(class,_attr_name,_type)"
+>!keyword_has(class,
+attr_name,
+type)</a></dt>
+Adds an attribute with the given name to the class or role.
+<dt><a name="!anon_enum(value_list)"
+>!anon_enum(value_list)</a></dt>
+Constructs a Mapping,
+based upon the values list.
+<dt><a name="!fixup_routine_type(sub,_new_type)"
+>!fixup_routine_type(sub,
+new_type)</a></dt>
+Reblesses a sub into a new type.</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

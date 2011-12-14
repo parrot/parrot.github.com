@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - C function decoration guidelines</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; C function decoration guidelines
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/dev/c_functions.pod &#45; C function decoration guidelines</p>
+
+<h1><a name="Overview"
+>Overview</a></h1>
+
+<p>Compilers have the ability to detect a wide class of potential errors in code during the compilation phase,
+especially if certain metadata is provided by the programmer to indicate details about specific operations.
+This metadata is typically compiler&#45;dependent,
+but using a system of macros and our existing configuration system,
+we can instruct the compiler to search for and prevent certain types of errors.</p>
+
+<p>The net result is that errors (or potential errors) can be detected early at compile&#45;rime instead of later an runtime or during &#34;make test&#34;.</p>
+
+<p>Headerizer creates function declarations based on function definitions.
+It scans the source files passed to it and extracts the function declarations.
+Then it puts them into the appropriate .h file or,
+in the case of static functions,
+back into the source file itself.</p>
+
+<p>The headerizer also adds function attributes as specified by the decorations on the source.
+It&#39;s important to properly&#45;decorate functions that are written,
+so that programs like headerizer can pass on important metadata to the compiler.</p>
+
+<p>Notice that not all of these decorations will have a real effect for all compilers.
+In some cases,
+the various macros might be empty placeholders.
+Also,
+where it says &#34;compiler&#34;,
+it could also mean &#34;lint or any other static analysis tool like splint.&#34;</p>
+
+<h1><a name="Function_Parameter_Decorators"
+>Function Parameter Decorators</a></h1>
+
+<h2><a name="What&#39;s_a_shim?"
+>What&#39;s a shim?</a></h2>
+
+<p>Think of &#34;shim&#34; as shorthand for &#34;placeholder&#34;.
+It&#39;s 64% shorter.</p>
+
+<p>GCC (and lint and splint and other analysis tools) likes to complain if you pass an argument into a function and don&#39;t use it.
+If we know that we&#39;re not going to use an argument,
+we can either remove the argument from the function declaration,
+or mark it as unused.</p>
+
+<p>Throwing the argument away is not always possible.
+Usually,
+it&#39;s because the function is one that gets referred to by a function pointer,
+and all functions of this group must have the same signature.
+Consider a function with three args: Interp,
+Foo and Bar.
+Maybe a given function doesn&#39;t use Foo,
+but we still have to accept Foo because all the other functions like ours do.
+In this case we can use the <code>UNUSED(Foo)</code> macro in the body of the function to silence any compiler warnings.
+<code>UNUSED</code> lets the compiler know that we know the parameter isn&#39;t used,
+and that we haven&#39;t just forgotten about it.
+<code>UNUSED</code> is for cases where we don&#39;t currently use a particular parameter,
+but we might in the future.
+If we never will use it,
+mark it as a <code>SHIM(Foo)</code> in the declaration.
+Here&#39;s an example:</p>
+
+<pre>  void MyFunction(PARROT_INTERP, SHIM(int Foo), /* Never using Foo */
+          int Bar)
+  {
+      UNUSED(Bar);  /* We aren&#39;t using Bar YET */
+          ...
+  }</pre>
+
+<p>If the interpreter structure in a function is a shim, there is a special macro for that.</p>
+
+<h2><a name="Passing_Interpreter_Pointers"
+>Passing Interpreter Pointers</a></h2>
+
+<p>Most of the time, if you need an interpreter in your function, define that argument as <code>PARROT_INTERP</code>. If your interpreter is a shim, then use <code>SHIM_INTERP</code>, not <code>SHIM(PARROT_INTERP)</code>.</p>
+
+<h2><a name="What_are_input_and_output_arguments?"
+>What are input and output arguments?</a></h2>
+
+<p>Pointers are dangerous because they are so versatile. You can pass a pointer to a function only to have that function modify the data that the pointer is pointing to. In Parrot, we decorate all our pointer parameters with keywords like <code>ARGIN</code>, <code>ARGOUT</code>, and <code>ARGMOD</code> to specify whether the pointer is an input only, an output only, or is modified.</p>
+
+<p>Input pointers are pointers which are read, but the data they point to is not changed. The data after the function call is the same as the data you had before it. If you specify a parameter is an input parameter, and the function tries to modify its contents anyway, you&#39;ll get a warning. Also, if you pass in an uninitialized pointer, the compiler will throw a warning.</p>
+
+<p>Output pointers are pointers that are passed into a function, its existing contents are ignored, and new contents are created for it. It&#39;s called an output because the data in the pointed&#45;to structure are populated inside the function and passed back out to the caller. If you have a pointer that points to valid data and you pass it as an ARGOUT parameter, the compiler will throw a warning. Unlike input arguments, you can typically pass an uninitialized pointer as an ARGOUT parameter.</p>
+
+<p>Modifiable, or &#34;in&#45;out&#34; parameters are parameters that have both behaviors. Some fields in it are read, some fields in it are changed.</p>
+
+<p>Please note that these are only to be used on pointer types. If you&#39;re not absolutely sure that the argument is a pointer, don&#39;t use them. (The &#34;va_list&#34; builtin type is sometimes a pointer, sometimes a struct, depending on platform and compiler.)</p>
+
+<p>Here&#39;s a simple example of a function that uses these modifiers:</p>
+
+<pre>  void MyFunction(PARROT_INTERP, ARGIN(char *Foo),
+          ARGOUT(int *Bar), ARGMOD(float *Baz));</pre>
+
+<h2><a name="NOTNULL(x)"
+>NOTNULL(x)</a></h2>
+
+<p>For function arguments and variables that must never have NULL assigned to them, or passed into them. For example, if we were defining <code>strlen()</code> in Parrot, we&#39;d do it as <code>strlen(NOTNULL(const char *p))</code>. All the previous pointer decorations, <code>ARGIN</code>, <code>ARGOUT</code> and <code>ARGMOD</code> imply <code>NOTNULL</code>. The compiler will throw a warning if it detects a null value being passed to a <code>NOTNULL</code> parameter.</p>
+
+<h2><a name="NULLOK(x)"
+>NULLOK(x)</a></h2>
+
+<p>For function arguments and variables where it&#39;s OK to pass in NULL. For example, if we wrote <code>free()</code> in Parrot, it would be <code>strlen(NULLOK(void *p))</code>. There are variants of <code>ARGIN</code>, <code>ARGOUT</code>, and <code>ARGMOD</code> that allow NULL values: <code>ARGIN_NULLOK</code>, <code>ARGOUT_NULLOK</code>, and <code>ARGMOD_NULLOK</code>. These have the same semantics as their non&#45;NULLOK counterparts, except the compiler will not throw errors if a null value is passed.</p>
+
+<h1><a name="Function_Decorators"
+>Function Decorators</a></h1>
+
+<p>In addition to the <code>SHIM</code>, <code>ARGIN</code>, <code>ARGOUT</code> and <code>ARGMOD</code> parameters and variants for parameters, there are a number of helpful modifiers that can be applied directly to the function declaration itself.</p>
+
+<h2><a name="PARROT_WARN_UNUSED_RESULT"
+>PARROT_WARN_UNUSED_RESULT</a></h2>
+
+<p>Tells the compiler to warn if the function is called, but the result is ignored. For instance, on a memory allocation function you would want to keep track of the result so that you could free it later and not cause a memory leak.</p>
+
+<h2><a name="PARROT_IGNORABLE_RESULT"
+>PARROT_IGNORABLE_RESULT</a></h2>
+
+<p>Tells the compiler that it&#39;s OK to ignore the function&#39;s return value.</p>
+
+<h2><a name="PARROT_MALLOC"
+>PARROT_MALLOC</a></h2>
+
+<p>Functions marked with this are flagged as having received <code>malloc</code>ed memory. This lets the compiler do analysis on memory leaks.</p>
+
+<h2><a name="PARROT_CONST_FUNCTION"
+>PARROT_CONST_FUNCTION</a></h2>
+
+<p>The function is a deterministic one that will always return the same value if given the same arguments, every time. Examples include functions like <code>mod</code> or <code>max</code>. An anti&#45;example is <code>rand()</code> which returns a different value every time. Some compilers can do optimizations by replacing constant functions with lookup tables, if the results are always going to be the same.</p>
+
+<h2><a name="PARROT_PURE_FUNCTION"
+>PARROT_PURE_FUNCTION</a></h2>
+
+<p>Less stringent than PARROT_CONST_FUNCTION, these functions only operate on their arguments and the data they point to. These functions have no other side effects to worry about, and clever compilers may find ways to optimize these functions. Examples include <code>strlen()</code> or <code>strchr()</code>.</p>
+
+<h2><a name="PARROT_DOES_NOT_RETURN"
+>PARROT_DOES_NOT_RETURN</a></h2>
+
+<p>For functions that can&#39;t return, like <code>Parrot_x_exit()</code> or functions that cause exceptions to be thrown. This helps the compiler&#39;s flow analysis which can help detect unreachable code, or opportunities for optimization.</p>
+
+<h2><a name="PARROT_CANNOT_RETURN_NULL"
+>PARROT_CANNOT_RETURN_NULL</a></h2>
+
+<p>For functions that return a pointer, but the pointer is guaranteed to not be NULL. The compiler can help to detect null pointer dereferences, and this hint will simplify the process.</p>
+
+<h2><a name="PARROT_CAN_RETURN_NULL"
+>PARROT_CAN_RETURN_NULL</a></h2>
+
+<p>For functions that return a pointer that could be null. These return values should be tested for null values before they are used or dereferenced.</p>
+
+<h2><a name="PARROT_INLINE"
+>PARROT_INLINE</a></h2>
+
+<p>For functions that could be inlined by the compiler for optimization. This is more of a hint then a command, and many compilers might ignore it entirely. Use this instead of the <code>inline</code> keyword.</p>
+
+<h2><a name="PARROT_EXPORT"
+>PARROT_EXPORT</a></h2>
+
+<p>For functions that are important API functions.</p>
+
+<p>{{TODO: More detail is needed on this}}</p>
+
+<h1><a name="Examples"
+>Examples</a></h1>
+
+<pre>    PARROT_EXPORT
+    PARROT_WARN_UNUSED_RESULT
+    INTVAL
+    Parrot_str_find_index(PARROT_INTERP, NOTNULL(const STRING *s),
+            NOTNULL(const STRING *s2), INTVAL start)</pre>
+
+<p><code>Parrot_str_find_index</code> is part of the Parrot API, and returns an INTVAL. The interpreter is used somewhere in the function. String <code>s</code> and <code>s2</code> cannot be NULL. If the calling function ignores the return value, it&#39;s an error, because you&#39;d never want to call <code>Parrot_str_find_index()</code> without wanting to know its value.</p>
+
+<pre>    PARROT_EXPORT
+    PARROT_PURE_FUNCTION
+    INTVAL
+    parrot_hash_size(SHIM_INTERP, NOTNULL(const Hash *hash))
+    {
+        return hash&#45;&#62;entries;
+    }</pre>
+
+<p>This function is a pure function because it only looks at its parameters or global memory. The interpreter doesn&#39;t get used, but needs to be passed because all PARROT_EXPORT functions have interpreters passed, so is flagged as a SHIM_INTERP.</p>
+
+<p>We could put <code>PARROT_WARN_UNUSED_RESULT</code> on this function, but since all <code>PARROT_PURE_FUNCTION</code>s and <code>PARROT_CONST_FUNCTION</code>s get flagged that way anyway, there&#39;s no need.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

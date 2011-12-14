@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>TCPStream</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">TCPStream</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/libs.html">Libraries</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>TCPStream</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<pre>  .sub main :main
+      load_bytecode &#39;library/tcpstream.pir&#39;
+
+      .local pmc stream
+      stream = new &#39;TCPStream&#39;
+      stream.&#39;connect&#39;(&#34;www.google.com&#34;, 80)
+
+      stream.&#39;say&#39;(&#34;GET / HTTP/1.0&#34;)
+      stream.&#39;say&#39;(&#34;User&#45;agent: Parrot&#34;)
+      stream.&#39;say&#39;(&#34;&#34;)
+
+      $S0 = stream.&#39;slurp&#39;()
+      print $S0
+
+      stream.&#39;close&#39;()
+  .end</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This is a high&#45;level sockets library designed to mimic Tcl&#39;s socket builtins. As such, it uses <code>print</code> and <code>say</code> instaed of <code>send</code> and <code>readline</code> and <code>slurp</code> instead of <code>recv</code>.</p>
+
+<h1><a name="VTABLE_FUNCTIONS"
+>VTABLE FUNCTIONS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="init"
+><b><code>init</b></code></a></dt>
+Iniitialize a TCPStream object (create a socket and a buffer).
+<dt><a name="init_pmc"
+><b><code>init_pmc</b></code></a></dt>
+Initialize a TCPStream object from an already pre&#45;existing socket. This can be use to create servers, among other things.
+<dt><a name="get_bool"
+><b><code>get_bool</b></code></a></dt>
+Returns whether or not this socket has data waiting to be read.</dl>
+
+<h1><a name="METHODS"
+>METHODS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="void_close()"
+><b><code>void close()</b></code></a></dt>
+Closes the socket.
+<dt><a name="void_connect(string_host,_int_port)"
+><b><code>void connect(string host, int port)</b></code></a></dt>
+Connects to a host/port.Throws an exception if unable to connect.
+<dt><a name="void_flush()"
+><b><code>void flush()</b></code></a></dt>
+
+<dt><a name="string_readline()"
+><b><code>string readline()</b></code></a></dt>
+Reads and returns up to (and excluding) an end&#45;of&#45;line character and discards the end&#45;of&#45;line character.
+<dt><a name="void_say(string_msg)"
+><b><code>void say(string msg)</b></code></a></dt>
+Print <code>msg</code> and an end&#45;of&#45;line character to the socket.
+<dt><a name="string_slurp()"
+><b><code>string slurp()</b></code></a></dt>
+Return all the data in the socket.</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Matt Diephouse &#60;matt@diephouse.com&#62;.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,70 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>PIR code to call toolkits that alter argv</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Contents</a> &raquo; <a href="../../../../../html/libs.html">Libraries</a> &raquo; PIR code to call toolkits that alter argv
+                </div>
+
+<h1><a name="TITLE"
+>TITLE</a></h1>
+
+<p>call_toolkit_init.pir &#45; PIR code to call toolkits that alter argv</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    .sub main :main
+        .param pmc argv
+
+        # Load this library and the NCI wrapper for the toolkit
+        load_bytecode &#39;library/NCI/call_toolkit_init.pbc&#39;
+        load_bytecode &#39;library/FooTK.pbc&#39;
+
+        # Find Subs for toolkit&#39;s init function, and this helper routine
+        .local pmc fooInit, call_toolkit_init
+        fooInit           = get_global [&#39;FooTK&#39;], &#39;fooInit&#39;
+        call_toolkit_init = get_global [&#39;NCI&#39;],   &#39;call_toolkit_init&#39;
+
+        # Call toolkit&#39;s init function, overwriting argv with mangled copy
+        argv = call_toolkit_init(fooInit, argv)
+
+        # Alternately, you can save both the original argv and mangled copy
+        .local pmc mangled_argv
+        mangled_argv = call_toolkit_init(fooInit, argv)
+
+        # ...
+    .end</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Calling an NCI toolkit init function that expects to parse and mangle argv is a relatively grotty bit of code that no one should have to write twice. Hence this library, which provides just one routine:</p>
+
+<dl>
+<dt><a name="new_argv_=_call_toolkit_init(pmc_init_func,_pmc_orig_argv)"
+>new_argv = call_toolkit_init(pmc init_func, pmc orig_argv)</a></dt>
+Call an NCI void function with params <code>(&#38;argc, argv)</code> (and thus having Parrot signature <code>&#39;v3p&#39;</code>). This is a very common signature for toolkit (AKA framework) init functions that want to filter out command line options that the toolkit itself should process. Since it is expected that the init call will remove some arguments, <code>call_toolkit_init</code> returns an updated argv. <code>orig_argv</code> is never changed; the NCI call is performed using a copy.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

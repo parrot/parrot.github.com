@@ -1,0 +1,215 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>src/encodings/fixed_8.c</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">src/encodings/fixed_8.c</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/encodings/fixed_8.c</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This file implements the encoding functions for fixed&#45;width 8&#45;bit codepoints</p>
+
+<p>*/</p>
+
+<p>#include &#34;parrot/parrot.h&#34; #include &#34;fixed_8.h&#34;</p>
+
+<p>/* HEADER: src/encodings/fixed_8.h */</p>
+
+<p>static UINTVAL get_codepoint(Interp *interp,
+const STRING *source_string,
+UINTVAL offset); static void set_codepoint(Interp *interp,
+STRING *source_string,
+UINTVAL offset,
+UINTVAL codepoint); static UINTVAL get_byte(Interp *interp,
+const STRING *source_string,
+UINTVAL offset); static void set_byte(Interp *interp,
+const STRING *source_string,
+UINTVAL offset,
+UINTVAL byte); static STRING *get_codepoints(Interp *interp,
+STRING *source_string,
+UINTVAL offset,
+UINTVAL count); static STRING *get_bytes(Interp *interp,
+STRING *source_string,
+UINTVAL offset,
+UINTVAL count); static STRING *get_bytes_inplace(Interp *interp,
+STRING *source_string,
+UINTVAL offset,
+UINTVAL count,
+STRING *dest_string); static void set_codepoints(Interp *interp,
+STRING *source_string,
+UINTVAL offset,
+UINTVAL count,
+STRING *new_codepoints); static void set_bytes(Interp *interp,
+STRING *source_string,
+UINTVAL offset,
+UINTVAL count,
+STRING *new_bytes); static void become_encoding(Interp *interp,
+STRING *source_string); static UINTVAL codepoints(Interp *interp,
+STRING *source_string); static UINTVAL bytes(Interp *interp,
+STRING *source_string);</p>
+
+<p>#define UNIMPL internal_exception(UNIMPLEMENTED,
+&#34;unimpl fixed_8&#34;)</p>
+
+<p>static STRING * to_encoding(Interp *interp,
+STRING *src,
+STRING *dest) { UNIMPL; return NULL; }</p>
+
+<p>/* codepoints are bytes,
+so delegate */ static UINTVAL get_codepoint(Interp *interp,
+const STRING *source_string /*NN*/,
+UINTVAL offset) { return get_byte(interp,
+source_string,
+offset); }</p>
+
+<p>/* This is the same as set byte */ static void set_codepoint(Interp *interp,
+STRING *source_string,
+UINTVAL offset,
+UINTVAL codepoint) { set_byte(interp,
+source_string,
+offset,
+codepoint); }</p>
+
+<p>static UINTVAL get_byte(Interp *interp,
+const STRING *source_string,
+UINTVAL offset) { unsigned char *contents = (unsigned char *)source_string&#45;&#62;strstart; if (offset &#62;= source_string&#45;&#62;bufused) { /* internal_exception(0,
+&#34;get_byte past the end of the buffer (%i of %i)&#34;,
+offset,
+source_string&#45;&#62;bufused);*/ return 0; } return contents[offset]; }</p>
+
+<p>static void set_byte(Interp *interp,
+const STRING *source_string,
+UINTVAL offset,
+UINTVAL byte) { unsigned char *contents; if (offset &#62;= source_string&#45;&#62;bufused) { internal_exception(0,
+&#34;set_byte past the end of the buffer&#34;); } contents = (unsigned char *)source_string&#45;&#62;strstart; contents[offset] = (unsigned char)byte; }</p>
+
+<p>/* Delegate to get_bytes */ static STRING * get_codepoints(Interp *interp,
+STRING *source_string,
+UINTVAL offset,
+UINTVAL count) { STRING *return_string = get_bytes(interp,
+source_string,
+offset,
+count); return_string&#45;&#62;charset = source_string&#45;&#62;charset; return return_string; }</p>
+
+<p>static STRING * get_bytes(Interp *interp,
+STRING *source_string,
+UINTVAL offset,
+UINTVAL count) { STRING *return_string = Parrot_make_COW_reference(interp,
+source_string); return_string&#45;&#62;encoding = source_string&#45;&#62;encoding; return_string&#45;&#62;charset = source_string&#45;&#62;charset;</p>
+
+<pre lang='und' xml:lang='und'>    return_string&#45;&#62;strstart = (char *)return_string&#45;&#62;strstart + offset ;
+    return_string&#45;&#62;bufused = count;
+
+    return_string&#45;&#62;strlen = count;
+    return_string&#45;&#62;hashval = 0;
+
+    return return_string;
+}</pre>
+
+<p>/* Delegate to get_bytes */ static STRING * get_codepoints_inplace(Interp *interp, STRING *source_string, UINTVAL offset, UINTVAL count, STRING *dest_string) {</p>
+
+<pre lang='und' xml:lang='und'>    return get_bytes_inplace(interp, source_string, offset,
+            count, dest_string);
+}</pre>
+
+<p>static STRING * get_bytes_inplace(Interp *interp, STRING *source_string, UINTVAL offset, UINTVAL count, STRING *return_string) { Parrot_reuse_COW_reference(interp, source_string, return_string);</p>
+
+<pre lang='und' xml:lang='und'>    return_string&#45;&#62;strstart = (char *)return_string&#45;&#62;strstart + offset ;
+    return_string&#45;&#62;bufused = count;
+
+    return_string&#45;&#62;strlen = count;
+    return_string&#45;&#62;hashval = 0;
+
+    return return_string;
+}</pre>
+
+<p>/* Delegate to set_bytes */ static void set_codepoints(Interp *interp, STRING *source_string, UINTVAL offset, UINTVAL count, STRING *new_codepoints) { set_bytes(interp, source_string, offset, count, new_codepoints); }</p>
+
+<p>static void set_bytes(Interp *interp, STRING *source_string, UINTVAL offset, UINTVAL count, STRING *new_bytes) { string_replace(interp, source_string, offset, count, new_bytes, NULL); }</p>
+
+<p>/* Unconditionally makes the string be in this encoding, if that&#39;s valid */ static void become_encoding(Interp *interp, STRING *source_string) { UNIMPL; }</p>
+
+<p>static UINTVAL codepoints(Interp *interp, STRING *source_string) { return bytes(interp, source_string); }</p>
+
+<p>static UINTVAL bytes(Interp *interp, STRING *source_string) { return source_string&#45;&#62;bufused; }</p>
+
+<p>/* * iterator functions */</p>
+
+<p>static UINTVAL fixed8_get_next(Interp *interp, String_iter *iter) { UINTVAL c = get_byte(interp, iter&#45;&#62;str, iter&#45;&#62;charpos++); iter&#45;&#62;bytepos++; return c; }</p>
+
+<p>static void fixed8_set_next(Interp *interp, String_iter *iter, UINTVAL c) { set_byte(interp, iter&#45;&#62;str, iter&#45;&#62;charpos++, c); iter&#45;&#62;bytepos++; }</p>
+
+<p>static void fixed8_set_position(Interp *interp, String_iter *iter, UINTVAL pos) { iter&#45;&#62;bytepos = iter&#45;&#62;charpos = pos; assert(pos &#60;= PObj_buflen(iter&#45;&#62;str)); }</p>
+
+<p>static void iter_init(Interp *interp, const STRING *src, String_iter *iter) { iter&#45;&#62;str = src; iter&#45;&#62;bytepos = iter&#45;&#62;charpos = 0; iter&#45;&#62;get_and_advance = fixed8_get_next; iter&#45;&#62;set_and_advance = fixed8_set_next; iter&#45;&#62;set_position = fixed8_set_position; }</p>
+
+<p>ENCODING * Parrot_encoding_fixed_8_init(Interp *interp) { ENCODING * const return_encoding = Parrot_new_encoding(interp);</p>
+
+<pre lang='und' xml:lang='und'>    ENCODING base_encoding = {
+        &#34;fixed_8&#34;,
+        1, /* Max bytes per codepoint */
+        to_encoding,
+        get_codepoint,
+        set_codepoint,
+        get_byte,
+        set_byte,
+        get_codepoints,
+        get_codepoints_inplace,
+        get_bytes,
+        get_bytes_inplace,
+        set_codepoints,
+        set_bytes,
+        become_encoding,
+        codepoints,
+        bytes,
+        iter_init
+
+    };
+    memcpy(return_encoding, &#38;base_encoding, sizeof (ENCODING));
+    Parrot_register_encoding(interp, &#34;fixed_8&#34;, return_encoding);
+    return return_encoding;
+}</pre>
+
+<p>/* * Local variables: * c&#45;file&#45;style: &#34;parrot&#34; * End: * vim: expandtab shiftwidth=4: */</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Cardinal hash class and related functions</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Contents</a> &raquo; <a href="../../../../../html/languages.html">Language Implementations</a> &raquo; <a href="../../../../../html/cardinal.html">Cardinal</a> &raquo; Cardinal hash class and related functions
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/classes/CardinalHash.pir &#45; Cardinal hash class and related functions</p>
+
+<h1><a name="Methods"
+>Methods</a></h1>
+
+<dl>
+<dt><a name="to_s_(method)"
+>to_s (method)</a></dt>
+Returns a string of keys and values appended together.
+<dt><a name="kv_(method)"
+>kv (method)</a></dt>
+Returns elements of hash as array of <code>Pair(key, value)</code>
+<dt><a name="each(block)"
+>each(block)</a></dt>
+Run <code>block</code> once for each item in <code>self</code>,
+with the key and value passed as args.</dl>
+
+<h1><a name="Functions"
+>Functions</a></h1>
+
+<h1><a name="TODO:_Functions"
+>TODO: Functions</a></h1>
+
+<dl>
+<dt><a name="delete"
+>delete</a></dt>
+
+<pre> our List  multi method Hash::delete ( *@keys )
+ our Scalar multi method Hash::delete ( $key ) is default</pre>
+Deletes the elements specified by <code>$key</code> or <code>$keys</code> from the invocant. returns the value(s) that were associated to those keys.
+<dt><a name="exists"
+>exists</a></dt>
+
+<pre> our Bool multi method Hash::exists ( $key )</pre>
+True if invocant has an element whose key matches <code>$key</code>, false otherwise.
+<dt><a name="keys"
+>keys</a></dt>
+
+<dt><a name="kv"
+>kv</a></dt>
+
+<dt><a name="pairs"
+>pairs</a></dt>
+
+<dt><a name="values"
+>values</a></dt>
+
+<pre> multi Int|List Hash::keys ( %hash : MatchTest *@keytests )
+ multi Int|List Hash::kv ( %hash : MatchTest *@keytests )
+ multi Int|(List of Pair) Hash::pairs  (%hash : MatchTest *@keytests )
+ multi Int|List Hash::values ( %hash : MatchTest *@keytests )</pre>
+Iterates the elements of <code>%hash</code> in no apparent order, but the order will be the same between successive calls to these functions, as long as <code>%hash</code> doesn&#39;t change.If <code>@keytests</code> are provided, only elements whose keys evaluate <code>$key ~~ any(@keytests)</code> as true are iterated.What is returned at each element of the iteration varies with function. <code>keys</code> only returns the key; <code>values</code> the value; <code>kv</code> returns both as a 2 element list in (key, value) order, <code>pairs</code> a <code>Pair(key, value)</code>.Note that <code>kv %hash</code> returns the same as <code>zip(keys %hash; values %hash)</code>In Scalar context, they all return the count of elements that would have been iterated.The lvalue form of <code>keys</code> is not longer supported. Use the <code>.buckets</code> property instead.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

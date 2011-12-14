@@ -1,0 +1,474 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Abstract root class</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Abstract root class
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/default.pmc &#45; Abstract root class</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>These are the vtable functions for the default PMC class.</p>
+
+<p>All methods which are not defined here get a default implementation generated from <em>src/vtable.tbl</em> by <em><a href="../../tools/build/pmc2c.pl.html">tools/build/pmc2c.pl</a></em>.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="static_STRING_*_caller(PARROT_INTERP,_PMC_*pmc)"
+><b><code>static STRING * caller(PARROT_INTERP, PMC *pmc)</b></code></a></dt>
+Returns a C string for the name of <code>*pmc</code>.
+<dt><a name="static_void_cant_do_method(PARROT_INTERP,_PMC_*pmc,_int_index)"
+><b><code>static void cant_do_method(PARROT_INTERP, PMC *pmc, int index)</b></code></a></dt>
+Throws an exception &#34;$methname() not implemented in class &#39;$class&#39;&#34;,
+used by all unimplemented messages.
+<dt><a name="static_void_cant_do_write_method(PARROT_INTERP,_PMC_*pmc,_int_index)"
+><b><code>static void cant_do_write_method(PARROT_INTERP, PMC *pmc, int index)</b></code></a></dt>
+Throws an exception &#34;$methname() on read&#45;only instance of &#39;$class&#39;&#34;,
+used by all updating messages on read&#45;only instances.
+<dt><a name="static_INTVAL_check_set_std_props(PARROT_INTERP,_PMC_*pmc,_const_STRING_*key,_PMC_*value)"
+><b><code>static INTVAL check_set_std_props(PARROT_INTERP, PMC *pmc, const STRING *key, PMC *value)</b></code></a></dt>
+Called from <code>setprop()</code>.Returns a true value if <code>setprop()</code> can avoid actually setting a property in the prophash.
+If it returns true,
+the property setting will be reflected in a future call to <code>propagate_std_props()</code>
+<dt><a name="static_void_propagate_std_props(PARROT_INTERP,_PMC_*self,_PMC_*prop_hash)"
+><b><code>static void propagate_std_props(PARROT_INTERP, PMC *self, PMC *prop_hash)</b></code></a></dt>
+Set pending standard properties in <code>prop_hash</code>.
+<dt><a name="static_INTVAL_has_pending_std_props(const_PMC_*self)"
+><b><code>static INTVAL has_pending_std_props(const PMC *self)</b></code></a></dt>
+Returns true if propagate_std_props() would create a non&#45;empty prophash.
+<dt><a name="static_PMC*_check_get_std_props(PARROT_INTERP,_const_PMC_*self,_const_STRING_*key)"
+><b><code>static PMC* check_get_std_props(PARROT_INTERP, const PMC *self, const STRING *key)</b></code></a></dt>
+Checks if we can infer the value of <code>key</code> property from <code>self</code> without looking at its prophash.
+Returns <code>PMCNULL</code> if not,
+returns the value otherwise.
+<dt><a name="static_PMC*_make_prop_hash(PARROT_INTERP,_PMC_*self)"
+><b><code>static PMC* make_prop_hash(PARROT_INTERP, PMC *self)</b></code></a></dt>
+Create a property hash for <code>self</code>.
+Returns the created hash.
+Inferred properties will be added to the hash.</dl>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Does nothing.
+<dt><a name="void_init_pmc(PMC_*initializer)"
+><b><code>void init_pmc(PMC *initializer)</b></code></a></dt>
+With a null <code>initializer</code>,
+calls <code>init()</code>,
+else throws an exception.
+<dt><a name="void_init_int(INTVAL_initvalue)"
+><b><code>void init_int(INTVAL initvalue)</b></code></a></dt>
+Calls <code>init()</code> and <code>set_integer_native(initvalue)</code>.
+Default implementation to allow more usages of init_int without having to implement it everywhere.
+<dt><a name="void_destroy()"
+><b><code>void destroy()</b></code></a></dt>
+Does nothing.
+<dt><a name="PMC_*instantiate(PMC_*init)"
+><b><code>PMC *instantiate(PMC *init)</b></code></a></dt>
+Default fallback.
+Creates a new PMC of the type of the class SELF and calls init().
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Panics with a &#34;no custom mark routine defined&#34; error message.
+<dt><a name="PMC_*getprop(STRING_*key)"
+><b><code>PMC *getprop(STRING *key)</b></code></a></dt>
+Returns the property for <code>*key</code>.
+If no property is defined then the NULL PMC is returned.
+<dt><a name="void_setprop(STRING_*key,_PMC_*value)"
+><b><code>void setprop(STRING *key, PMC *value)</b></code></a></dt>
+Sets the property for <code>*key</code> to <code>*value</code>.
+<dt><a name="void_delprop(STRING_*key)"
+><b><code>void delprop(STRING *key)</b></code></a></dt>
+Deletes the property for <code>*key</code>.
+<dt><a name="PMC_*getprops()"
+><b><code>PMC *getprops()</b></code></a></dt>
+Returns the PMC&#39;s properties or the NULL PMC if no properties exist.
+<dt><a name="INTVAL_type()"
+><b><code>INTVAL type()</b></code></a></dt>
+Returns the PMC&#39;s type.
+<dt><a name="STRING_*name()"
+><b><code>STRING *name()</b></code></a></dt>
+Returns the name of the PMC.
+<dt><a name="PMC_*get_namespace"
+><b><code>PMC *get_namespace</b></code></a></dt>
+Return the namespace for this PMC.
+<dt><a name="PMC_*find_method(STRING_*method_name)"
+><b><code>PMC *find_method(STRING *method_name)</b></code></a></dt>
+Looks up the method for <code>*method_name</code> and returns it.
+If no method is found then <code>NULL</code> is returned.
+<dt><a name="void_add_method(STRING_*method_name,_PMC_*sub)"
+><b><code>void add_method(STRING *method_name, PMC *sub)</b></code></a></dt>
+Store the method as a global in the namespace of this class.
+<dt><a name="INTVAL_get_integer_keyed_int(INTVAL_key)"
+><b><code>INTVAL get_integer_keyed_int(INTVAL key)</b></code></a></dt>
+Converts <code>key</code> to a PMC key and returns the result of calling <code>get_integer_keyed()</code> with it.
+<dt><a name="FLOATVAL_get_number_keyed_int(INTVAL_key)"
+><b><code>FLOATVAL get_number_keyed_int(INTVAL key)</b></code></a></dt>
+Converts <code>key</code> to a PMC key and returns the result of calling <code>get_number_keyed()</code> with it.
+<dt><a name="STRING_*get_string_keyed_int(INTVAL_key)"
+><b><code>STRING *get_string_keyed_int(INTVAL key)</b></code></a></dt>
+Converts <code>key</code> to a PMC key and returns the result of calling <code>get_string_keyed()</code> with it.
+<dt><a name="PMC_*get_pmc_keyed_int(INTVAL_key)"
+><b><code>PMC *get_pmc_keyed_int(INTVAL key)</b></code></a></dt>
+Converts <code>key</code> to a PMC key and returns the result of calling <code>get_pmc_keyed()</code> with it.
+<dt><a name="void_*get_pointer()"
+><b><code>void *get_pointer()</b></code></a></dt>
+Returns the address of the PMC.
+<dt><a name="INTVAL_is_same(PMC_*value)"
+><b><code>INTVAL is_same(PMC *value)</b></code></a></dt>
+Returns whether the PMC is the same PMC as <code>value</code> (whether they&#39;re the same pointer).
+<dt><a name="void_assign_pmc(PMC_*value)"
+><b><code>void assign_pmc(PMC *value)</b></code></a></dt>
+
+<dt><a name="void_assign_string_native(PMC_*value)"
+><b><code>void assign_string_native(PMC *value)</b></code></a></dt>
+Defaults fall back to <code>set_pmc</code> and <code>set_string_native</code>.
+<dt><a name="void_morph(PMC*_type)"
+><b><code>void morph(PMC* type)</b></code></a></dt>
+Changes the PMC to a PMC of a new type
+<dt><a name="void_set_integer_keyed_int(INTVAL_key,_INTVAL_value)"
+><b><code>void set_integer_keyed_int(INTVAL key, INTVAL value)</b></code></a></dt>
+Converts <code>key</code> to a PMC key and calls <code>set_integer_keyed()</code> with it and <code>value</code>.
+<dt><a name="void_set_number_keyed_int(INTVAL_key,_FLOATVAL_value)"
+><b><code>void set_number_keyed_int(INTVAL key, FLOATVAL value)</b></code></a></dt>
+Converts <code>key</code> to a PMC key and calls <code>set_number_keyed()</code> with it and <code>value</code>.
+<dt><a name="void_set_string_keyed_int(INTVAL_key,_STRING_*string)"
+><b><code>void set_string_keyed_int(INTVAL key, STRING *string)</b></code></a></dt>
+Converts <code>key</code> to a PMC key and calls <code>set_string_keyed()</code> with it and <code>value</code>.
+<dt><a name="void_set_pmc_keyed_int(INTVAL_key,_PMC_*value)"
+><b><code>void set_pmc_keyed_int(INTVAL key, PMC *value)</b></code></a></dt>
+Converts <code>key</code> to a PMC key and calls <code>set_pmc_keyed()</code> with it and <code>value</code>.
+<dt><a name="INTVAL_hashvalue()"
+><b><code>INTVAL hashvalue()</b></code></a></dt>
+Calculate hashvalue for PMC.
+Default behaviour stringify and use string.
+<dt><a name="INTVAL_is_equal(PMC_*value)"
+><b><code>INTVAL is_equal(PMC *value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;is_equal&#39;.
+<dt><a name="INTVAL_is_equal_num(PMC_*value)"
+><b><code>INTVAL is_equal_num(PMC *value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;is_equal_num&#39;.
+<dt><a name="INTVAL_is_equal_string(PMC_*value)"
+><b><code>INTVAL is_equal_string(PMC *value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;is_equal&#39;.
+<dt><a name="INTVAL_exists_keyed_int(INTVAL_key)"
+><b><code>INTVAL exists_keyed_int(INTVAL key)</b></code></a></dt>
+Converts <code>key</code> to a PMC key and returns the result of calling <code>exists_keyed()</code> with it.
+<dt><a name="INTVAL_defined()"
+><b><code>INTVAL defined()</b></code></a></dt>
+Returns true.
+<dt><a name="INTVAL_defined_keyed_int(INTVAL_key)"
+><b><code>INTVAL defined_keyed_int(INTVAL key)</b></code></a></dt>
+Converts <code>key</code> to a PMC key and returns the result of calling <code>defined_keyed()</code> with it.
+<dt><a name="void_delete_keyed_int(INTVAL_key)"
+><b><code>void delete_keyed_int(INTVAL key)</b></code></a></dt>
+Converts <code>key</code> to a PMC key and calls <code>delete_keyed()</code> with it.
+<dt><a name="INTVAL_can(STRING_*method)"
+><b><code>INTVAL can(STRING *method)</b></code></a></dt>
+Reports whether the PMC &#34;can&#34; perform <code>method</code>.
+If the PMC implements the vtable function <code>method</code>,
+true (1) is returned; otherwise,
+false (0) is returned.
+<dt><a name="INTVAL_does(STRING_*interface_name)"
+><b><code>INTVAL does(STRING *interface_name)</b></code></a></dt>
+Reports whether the PMC &#34;does&#34; perform <code>interface_name</code>.
+If the interface <code>interface_name</code> is found in the PMC&#39;s interface list,
+true (1) is returned; otherwise,
+false (0) is returned.
+<dt><a name="INTVAL_does_pmc(PMC_*role)"
+><b><code>INTVAL does_pmc(PMC *role)</b></code></a></dt>
+Reports whether the PMC &#34;does&#34; the <code>role</code>.
+<dt><a name="INTVAL_isa_pmc(PMC_*_class)"
+><b><code>INTVAL isa_pmc(PMC *_class)</b></code></a></dt>
+Reports whether the PMC &#34;isa&#34; <code>_class</code>.
+If the class <code>_class</code> is found in the PMC&#39;s class hierarchy,
+true (1) is returned; otherwise,
+false (0) is returned.
+<dt><a name="INTVAL_isa(STRING_*_class)"
+><b><code>INTVAL isa(STRING *_class)</b></code></a></dt>
+Reports whether the PMC &#34;isa&#34; <code>_class</code>.
+If the class <code>_class</code> is found in the PMC&#39;s class hierarchy,
+true (1) is returned; otherwise,
+false (0) is returned.
+<dt><a name="PMC_*inspect_str(STRING_*what)"
+><b><code>PMC *inspect_str(STRING *what)</b></code></a></dt>
+Provides introspection of a specific piece of information about the PMC.
+<dt><a name="PMC_*inspect()"
+><b><code>PMC *inspect()</b></code></a></dt>
+Returns a Hash describing the class,
+with key/value pairs as described in inspect_str.
+<dt><a name="PMC_*get_class()"
+><b><code>PMC *get_class()</b></code></a></dt>
+Returns SELF.
+A PMC is its own class.
+<dt><a name="PMC_*get_attr_keyed(PMC_*key,_STRING_*name)"
+><b><code>PMC *get_attr_keyed(PMC *key, STRING *name)</b></code></a></dt>
+Default version of keyed attribute lookups.
+Discards the key and does a lookup by the string name passed in.
+<dt><a name="void_set_attr_keyed(PMC_*key,_STRING_*name,_PMC_*value)"
+><b><code>void set_attr_keyed(PMC *key, STRING *name, PMC *value)</b></code></a></dt>
+Default version of keyed attribute set.
+Discards the key and does a set by the string name passed in.
+<dt><a name="void_add_parent(PMC_*parent)"
+><b><code>void add_parent(PMC *parent)</b></code></a></dt>
+Add class <code>parent</code> to the list of our parents.
+<dt><a name="void_visit(PMC_*info)"
+><b><code>void visit(PMC *info)</b></code></a></dt>
+Used by GC to mark the PMC.
+<dt><a name="PMC*_clone()"
+><b><code>PMC* clone()</b></code></a></dt>
+Clones this PMC.
+By default,
+this just does a freeze and thaw.
+<dt><a name="void_freeze(PMC_*info)"
+><b><code>void freeze(PMC *info)</b></code></a></dt>
+Does nothing.
+<dt><a name="void_thaw(PMC_*info)"
+><b><code>void thaw(PMC *info)</b></code></a></dt>
+Initializes the PMC during unarchiving.
+<dt><a name="void_thawfinish(PMC_*info)"
+><b><code>void thawfinish(PMC *info)</b></code></a></dt>
+Does nothing.
+<dt><a name="PMC_*add(PMC_*value,_PMC_*dest)"
+><b><code>PMC *add(PMC *value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;add&#39;.
+<dt><a name="PMC_*add_int(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *add_int(INTVAL value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;add_int&#39;.
+<dt><a name="PMC_*add_float(FLOATVAL_value,_PMC_*dest)"
+><b><code>PMC *add_float(FLOATVAL value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;add_float&#39;.
+<dt><a name="void_i_add(PMC_*value)"
+><b><code>void i_add(PMC *value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_add&#39;.
+<dt><a name="void_i_add_int(INTVAL_value)"
+><b><code>void i_add_int(INTVAL value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_add_int&#39;.
+<dt><a name="void_i_add_float(FLOATVAL_value)"
+><b><code>void i_add_float(FLOATVAL value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_add_float&#39;.
+<dt><a name="PMC_*subtract(PMC_*value,_PMC_*dest)"
+><b><code>PMC *subtract(PMC *value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;subtract&#39;.
+<dt><a name="PMC_*subtract_int(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *subtract_int(INTVAL value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;subtract_int&#39;.
+<dt><a name="PMC_*subtract_float(FLOATVAL_value,_PMC_*dest)"
+><b><code>PMC *subtract_float(FLOATVAL value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;subtract_float&#39;.
+<dt><a name="void_i_subtract(PMC_*value)"
+><b><code>void i_subtract(PMC *value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_subtract&#39;.
+<dt><a name="void_i_subtract_int(INTVAL_value)"
+><b><code>void i_subtract_int(INTVAL value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_subtract_int&#39;.
+<dt><a name="void_i_subtract_float(FLOATVAL_value)"
+><b><code>void i_subtract_float(FLOATVAL value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_subtract_float&#39;.
+<dt><a name="PMC_*multiply(PMC_*value,_PMC_*dest)"
+><b><code>PMC *multiply(PMC *value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;multiply&#39;.
+<dt><a name="PMC_*multiply_int(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *multiply_int(INTVAL value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;multiply_int&#39;.
+<dt><a name="PMC_*multiply_float(FLOATVAL_value,_PMC_*dest)"
+><b><code>PMC *multiply_float(FLOATVAL value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;multiply_float&#39;.
+<dt><a name="void_i_multiply(PMC_*value)"
+><b><code>void i_multiply(PMC *value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_multiply&#39;.
+<dt><a name="void_i_multiply_int(INTVAL_value)"
+><b><code>void i_multiply_int(INTVAL value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_multiply_int&#39;.
+<dt><a name="void_i_multiply_float(FLOATVAL_value)"
+><b><code>void i_multiply_float(FLOATVAL value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_multiply_float&#39;.
+<dt><a name="PMC_*divide(PMC_*value,_PMC_*dest)"
+><b><code>PMC *divide(PMC *value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;divide&#39;.
+<dt><a name="PMC_*divide_int(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *divide_int(INTVAL value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;divide_int&#39;.
+<dt><a name="PMC_*divide_float(FLOATVAL_value,_PMC_*dest)"
+><b><code>PMC *divide_float(FLOATVAL value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;divide_float&#39;.
+<dt><a name="void_i_divide(PMC_*value)"
+><b><code>void i_divide(PMC *value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_divide&#39;.
+<dt><a name="void_i_divide_int(INTVAL_value)"
+><b><code>void i_divide_int(INTVAL value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_divide_int&#39;.
+<dt><a name="void_i_divide_float(FLOATVAL_value)"
+><b><code>void i_divide_float(FLOATVAL value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_divide_float&#39;.
+<dt><a name="PMC_*floor_divide(PMC_*value,_PMC_*dest)"
+><b><code>PMC *floor_divide(PMC *value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;floor_divide&#39;.
+<dt><a name="PMC_*floor_divide_int(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *floor_divide_int(INTVAL value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;floor_divide_int&#39;.
+<dt><a name="PMC_*floor_divide_float(FLOATVAL_value,_PMC_*dest)"
+><b><code>PMC *floor_divide_float(FLOATVAL value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;floor_divide_float&#39;.
+<dt><a name="void_i_floor_divide(PMC_*value)"
+><b><code>void i_floor_divide(PMC *value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_floor_divide&#39;.
+<dt><a name="void_i_floor_divide_int(INTVAL_value)"
+><b><code>void i_floor_divide_int(INTVAL value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_floor_divide_int&#39;.
+<dt><a name="void_i_floor_divide_float(FLOATVAL_value)"
+><b><code>void i_floor_divide_float(FLOATVAL value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_floor_divide_float&#39;.
+<dt><a name="PMC_*modulus(PMC_*value,_PMC_*dest)"
+><b><code>PMC *modulus(PMC *value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;modulus&#39;.
+<dt><a name="PMC_*modulus_int(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *modulus_int(INTVAL value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;modulus_int&#39;.
+<dt><a name="PMC_*modulus_float(FLOATVAL_value,_PMC_*dest)"
+><b><code>PMC *modulus_float(FLOATVAL value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;modulus_float&#39;.
+<dt><a name="void_i_modulus(PMC_*value)"
+><b><code>void i_modulus(PMC *value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_modulus&#39;.
+<dt><a name="void_i_modulus_int(INTVAL_value)"
+><b><code>void i_modulus_int(INTVAL value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_modulus_int&#39;.
+<dt><a name="void_i_modulus_float(FLOATVAL_value)"
+><b><code>void i_modulus_float(FLOATVAL value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_modulus_float&#39;.
+<dt><a name="INTVAL_cmp(PMC_*value)"
+><b><code>INTVAL cmp(PMC *value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;cmp&#39;.
+<dt><a name="INTVAL_cmp_num(PMC_*value)"
+><b><code>INTVAL cmp_num(PMC *value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;cmp_num&#39;.
+<dt><a name="INTVAL_cmp_string(PMC_*value)"
+><b><code>INTVAL cmp_string(PMC *value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;cmp_string&#39;.
+<dt><a name="PMC_*cmp_pmc(PMC_*value)"
+><b><code>PMC *cmp_pmc(PMC *value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;cmp_pmc&#39;.
+<dt><a name="PMC_*logical_or(PMC_*value,_PMC_*dest)"
+><b><code>PMC *logical_or(PMC *value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;logical_or&#39;.
+<dt><a name="PMC_*logical_and(PMC_*value,_PMC_*dest)"
+><b><code>PMC *logical_and(PMC *value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;logical_and&#39;.
+<dt><a name="PMC_*logical_xor(PMC_*value,_PMC_*dest)"
+><b><code>PMC *logical_xor(PMC *value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;logical_xor&#39;.
+<dt><a name="PMC_*concatenate(PMC_*value,_PMC_*dest)"
+><b><code>PMC *concatenate(PMC *value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;concatenate&#39;.
+<dt><a name="PMC_*concatenate_str(STRING_*value,_PMC_*dest)"
+><b><code>PMC *concatenate_str(STRING *value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;concatenate_str&#39;.
+<dt><a name="void_i_concatenate(PMC_*value)"
+><b><code>void i_concatenate(PMC *value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_concatenate&#39;.
+<dt><a name="void_i_concatenate_str(STRING_*value)"
+><b><code>void i_concatenate_str(STRING *value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_concatenate_str&#39;.
+<dt><a name="PMC_*repeat(PMC_*value,_PMC_*dest)"
+><b><code>PMC *repeat(PMC *value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;repeat&#39;.
+<dt><a name="PMC_*repeat_int(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *repeat_int(INTVAL value, PMC *dest)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;repeat_int&#39;.
+<dt><a name="void_i_repeat(PMC_*value)"
+><b><code>void i_repeat(PMC *value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_repeat&#39;.
+<dt><a name="void_i_repeat_int(INTVAL_value)"
+><b><code>void i_repeat_int(INTVAL value)</b></code></a></dt>
+Default fallback.
+Performs a multiple dispatch call for &#39;i_repeat_int&#39;.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

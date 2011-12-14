@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Untitled</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Contents</a> &raquo; <a href="../../../../../html/languages.html">Language Implementations</a> &raquo; <a href="../../../../../html/c99.html">C99</a> &raquo; Untitled
+                </div>
+
+<p>class C99::Grammar::Actions;</p>
+
+<p>method TOP($/) { for $&#60;external_declaration&#62; { my $fun := $( $_ );</p>
+
+<pre>        ## Look for the &#34;main&#34; function, and set that as the result
+        ## object.
+        if $fun.name() eq &#39;main&#39; {
+             make $fun;
+        }
+    }
+}</pre>
+
+<p>method external_declaration($/, $key) { make $( $/{$key} ); }</p>
+
+<p>method declaration($/) { my $past := PAST::Stmts.new( :node($/) );</p>
+
+<pre>    for $&#60;init_declarator&#62; {
+           $past.push( $( $_ ) );
+    }
+    make $past;
+}</pre>
+
+<p>method init_declarator($/) { make $( $&#60;declarator&#62; ); }</p>
+
+<p>method function_definition($/) { my $past := PAST::Block.new( :blocktype(&#39;declaration&#39;), :node($/) ); my $decl := $( $&#60;declarator&#62; ); $past.name( $decl.name() );</p>
+
+<pre>    my $body := $( $&#60;compound_statement&#62; );
+    $past.push($body);
+    make $past;
+}</pre>
+
+<p>method declaration($/) {</p>
+
+<p>}</p>
+
+<p>method declarator($/) { make $( $&#60;direct_declarator&#62; ); }</p>
+
+<p>method direct_declarator($/) { my $past := $( $&#60;declarator_prefix&#62; ); #my $past := $( $&#60;declarator_suffix&#62;[0] ); #$past.name($pref.name()); make $past; }</p>
+
+<p>method declarator_prefix($/, $key) { make $( $/{$key} ); }</p>
+
+<p>method declarator_suffix($/, $key) { make $( $/{$key} ); }</p>
+
+<p>method parameter_type_list($/) { my $past := $( $&#60;parameter_list&#62; ); if $&#60;vararg&#62; { $past.push( PAST::Var.new( :name(&#39;@vararg&#39;), :slurpy(1), :scope(&#39;parameter&#39;), :node($/) ) ); } make $past; }</p>
+
+<p>method parameter_list($/) { ## create the function block here already; it&#39;s needed to store the parameters my $past := PAST::Block.new( :blocktype(&#39;declaration&#39;), :node($/) ); for $&#60;parameter_declaration&#62; { $past.push( $( $_ ) ); } make $past; }</p>
+
+<p>method parameter_declaration($/, $key) { make $( $/{$key} ); }</p>
+
+<p>method statement($/, $key) { make $( $/{$key} ); }</p>
+
+<p>method jump_statement($/, $key) { if $key eq &#39;return&#39; { my $past := PAST::Op.new( :pirop(&#39;return&#39;), :node($/) ); if $&#60;expression&#62; { $past.push( $( $&#60;expression&#62;[0] ) ); } make $past; } else { $/.panic(&#34;$key is not implemented!&#34;); } }</p>
+
+<p>method for1_statement($/) { my $past := PAST::Stmts.new( :node($/) ); my $body := $( $&#60;statement&#62; ); my $cond; if $&#60;cond&#62; { $cond := $( $&#60;cond&#62;[0] ); } else { # a missing condition is true $cond := PAST::Val.new( :returns(&#39;Integer&#39;), :value(&#39;1&#39;), :node($/) ); }</p>
+
+<pre>    if $&#60;init&#62; {
+        my $init := $( $&#60;init&#62;[0] );
+        $past.unshift($init);
+    }
+
+
+    if $&#60;step&#62; {
+        my $step := $( $&#60;step&#62;[0] );
+        $body := PAST::Stmts.new( $body, $step, :node($/) );
+    }
+    my $loop := PAST::Op.new( $cond, $body, :pasttype(&#39;while&#39;), :node($/) );
+    $past.push($loop);
+
+    make $past;
+}</pre>
+
+<p>method for2_statement($/) { my $past := PAST::Block.new( :blocktype(&#39;immediate&#39;), :node($/) ); my $loop := PAST::Op.new( :pasttype(&#39;while&#39;), :node($/) );</p>
+
+<pre>    $past.push( $( $&#60;declaration&#62; ) );
+    my $body := $( $&#60;statement&#62; );
+
+    if $&#60;step&#62; {
+        my $step := $( $&#60;step&#62;[0] );
+    }
+    my $cond;
+    if $&#60;cond&#62; {
+        $cond := $( $&#60;cond&#62;[0] );
+    }
+    else {
+        $cond := PAST::Val.new( :returns(&#39;Integer&#39;), :value(&#39;1&#39;), :node($/) );
+    }
+    $loop.push($cond);
+    $loop.push($body);
+
+    $past.push($loop);
+    make $past;
+}</pre>
+
+<p>method expression($/) { if +$&#60;assignment_expression&#62; != 1 { my $past := PAST::Stmts.new( :node($/) ); for $&#60;assignment_expression&#62; { $past.push( $( $_ ) ); } make $past; } else { make $( $&#60;assignment_expression&#62;[0] ); } }</p>
+
+<p>method expression_statement($/) { if $&#60;expression&#62; { make $( $&#60;expression&#62;[0] ); } else { make PAST::Op.new( :inline(&#39; # empty statement&#39;), :node($/) ); } }</p>
+
+<p>method compound_statement($/) { my $past := PAST::Block.new( :blocktype(&#39;immediate&#39;), :node($/) ); #my $past := PAST::Stmts.new( :node($/) ); for $&#60;block_item&#62; { $past.push( $($_) ); } make $past; }</p>
+
+<p>method if_statement($/) { my $cond := $( $&#60;expression&#62; ); my $then := $( $&#60;statement&#62; ); my $past := PAST::Op.new( $cond, $then, :pasttype(&#39;if&#39;), :node($/) ); if $&#60;else&#62; { $past.push( $( $&#60;else&#62;[0] ) ); } make $past; }</p>
+
+<p>method do_while_statement($/) { my $cond := $( $&#60;expression&#62; ); my $body := $( $&#60;statement&#62; ); make PAST::Op.new( $cond, $body, :pasttype(&#39;repeat_while&#39;), :node($/) ); }</p>
+
+<p>method while_statement($/) { my $cond := $( $&#60;expression&#62; ); my $body := $( $&#60;statement&#62; ); make PAST::Op.new( $cond, $body, :pasttype(&#39;while&#39;), :node($/) ); }</p>
+
+<p>method block_item($/, $key) { make $( $/{$key} ); }</p>
+
+<p>method constant($/, $key) { make $( $/{$key} ); }</p>
+
+<p>method constant_expression($/) { make $( $&#60;conditional_expression&#62; ); }</p>
+
+<p>method assignment_expression($/) { make $( $&#60;conditional_expression&#62; ); }</p>
+
+<p>method conditional_expression($/) { my $cond := $( $&#60;logical_expression&#62; ); if $&#60;expression&#62; { my $then := $( $&#60;expression&#62;[0] ); my $else := $( $&#60;conditional_expression&#62;[0] ); make PAST::Op.new( $cond, $then, $else, :pasttype(&#39;if&#39;), :node($/) ); } else { make $cond; } }</p>
+
+<p>method postfix_expression_prefix($/, $key) { make $( $/{$key} ); }</p>
+
+<p>method postfix_expression_suffix($/, $key) { make $( $/{$key} ); }</p>
+
+<p>method index($/) { my $expr := $( $&#60;expression&#62; ); ## XXX make PAST::Op.new( $expr, :name(&#39;xxx_index&#39;), :pasttype(&#39;call&#39;), :node($/) ); }</p>
+
+<p>method direct_field($/) { my $field := $( $&#60;identifier&#62; ); ## XXX make PAST::Op.new( $field, :name(&#39;xxx_get_field&#39;), :pasttype(&#39;call&#39;), :node($/) ); }</p>
+
+<p>method indirect_field($/) { my $field := $( $&#60;identifier&#62; ); ## XXX make PAST::Op.new( $field, :name(&#39;xxx_get_indirect&#39;), :pasttype(&#39;call&#39;), :node($/) ); }</p>
+
+<p>method inc_or_dec($/) { my $opname := &#39;postfix:&#39; ~ ~$&#60;op&#62;; my $past := PAST::Op.new( :name($opname), :pasttype(&#39;call&#39;), :node($/) ); make $past; }</p>
+
+<p>method arguments($/) { if $&#60;argument_expression_list&#62; { make $( $&#60;argument_expression_list&#62;[0] ); } else { make PAST::Op.new( :pasttype(&#39;call&#39;), :node($/) ); } }</p>
+
+<p>method argument_expression_list($/) { my $past := PAST::Op.new( :pasttype(&#39;call&#39;), :node($/) ); for $&#60;assignment_expression&#62; { $past.push( $( $_ ) ); } make $past; }</p>
+
+<p>method postfix_expression($/) { my $past := $( $&#60;postfix_expression_prefix&#62; ); for $&#60;postfix_expression_suffix&#62; { ## XXX my $args := $( $_ ); $args.unshift($past); $past := $args; } make $past; }</p>
+
+<p>method prefix_expression($/) { my $opname := &#39;prefix:&#39; ~ ~$&#60;op&#62;; my $expr := $( $&#60;unary_expression&#62; ); make PAST::Op.new( $expr, :name($opname), :pasttype(&#39;call&#39;), :node($/) ); }</p>
+
+<p>method primary_expression($/, $key) { make $( $/{$key} ); }</p>
+
+<p>method unary_expression($/, $key) { make $( $/{$key} ); }</p>
+
+<p>method integer_constant($/) { make PAST::Val.new( :value( ~$/ ), :returns(&#39;Integer&#39;), :node($/) ); }</p>
+
+<p>method floating_constant($/) { make PAST::Val.new( :value( ~$/ ), :returns(&#39;Float&#39;), :node($/) ); }</p>
+
+<p>method c_string_literal($/) { make PAST::Val.new( :value( ~$&#60;string_literal&#62; ), :node($/) ); #make PAST::Val.new( :value( ~$/ ), :node($/) ); }</p>
+
+<p>method identifier($/) { ## XXX fix scopes ## XXX fix declarations so that :viviself can be removed make PAST::Var.new( :name( ~$/ ), :scope(&#39;package&#39;), :viviself(&#39;Integer&#39;), :node($/) ); }</p>
+
+<p>method cast_expression($/) { make $( $&#60;unary_expression&#62; ); }</p>
+
+<p>method logical_expression($/, $key) { if ($key eq &#39;end&#39;) { make $($&#60;expr&#62;); } else { my $past := PAST::Op.new( :name($&#60;type&#62;), :pasttype($&#60;top&#62;&#60;pasttype&#62;), :pirop($&#60;top&#62;&#60;pirop&#62;), :lvalue($&#60;top&#62;&#60;lvalue&#62;), :node($/) ); for @($/) { $past.push( $($_) ); } make $past; }</p>
+
+<p>}</p>
+
+<p># Local Variables: # mode: cperl # cperl&#45;indent&#45;level: 4 # fill&#45;column: 100 # End: # vim: expandtab shiftwidth=4:</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

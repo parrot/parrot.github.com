@@ -1,0 +1,299 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Command&#45;line option parsing</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Command&#45;line option parsing</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>longopt.c &#45; Command&#45;line option parsing</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>This is used by <code lang='und' xml:lang='und'>parrot</code>.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>*/</p>
+
+<p>#include &#34;parrot/parrot.h&#34; #include &#34;parrot/longopt.h&#34;</p>
+
+<p>/* HEADER: include/parrot/longopt.h */</p>
+
+<p>static int longopt_get_longopt(Parrot_Interp,
+int argc,
+char* argv[],
+const struct longopt_opt_decl options[],
+struct longopt_opt_info* info_buf);</p>
+
+<p>static int longopt_get_shortopt(Parrot_Interp,
+int argc,
+char* argv[],
+const struct longopt_opt_decl options[],
+struct longopt_opt_info* info_buf);</p>
+
+<p>static char longopt_error_buffer[512];</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: longopt_get</p>
+
+<p>Gets long or short options,
+specified in <code lang='und' xml:lang='und'>options[]</code> (see <em lang='und' xml:lang='und'>docs/dev/longopt.dev</em>).</p>
+
+<p>Call it iteratively with the same <code lang='und' xml:lang='und'>info_buf</code> until it returns 0 or &#45;1.</p>
+
+<p>0 means you have reached the end of options.</p>
+
+<p>&#45;1 means a parse error,
+with error put in <code lang='und' xml:lang='und'>info_buf&#45;&#62;opt_error</code>.</p>
+
+<p>Any other value is a valid option identifier.</p>
+
+<p>*/</p>
+
+<p>PARROT_API int longopt_get(Interp *interp /*NN*/,
+int argc,
+char* argv[] /*NN*/,
+const struct longopt_opt_decl options[] /*NN*/,
+struct longopt_opt_info* info_buf /*NN*/) { const int dex = info_buf&#45;&#62;opt_index;</p>
+
+<pre lang='und' xml:lang='und'>    info_buf&#45;&#62;opt_id = 0;
+    info_buf&#45;&#62;opt_arg = info_buf&#45;&#62;opt_error = NULL;
+
+    if (dex &#62;= argc || argv[dex] == NULL)
+        return 0;
+
+    if (argv[dex][0] != &#39;&#45;&#39;
+     || argv[dex][1] == &#39;\0&#39;)
+        return 0;
+
+    if (info_buf&#45;&#62;_shortopt_pos)
+        return longopt_get_shortopt(interp, argc, argv, options, info_buf);
+
+    if (argv[dex][1] == &#39;&#45;&#39;) { /* Long option or &#45;&#45; */
+        if (argv[dex][2] == &#39;\0&#39;) {
+            ++info_buf&#45;&#62;opt_index;
+            return 0;
+        }
+        else {                   /* Long option */
+            return longopt_get_longopt(interp, argc, argv, options, info_buf);
+        }
+    }
+    else {                       /* Short option */
+        return longopt_get_shortopt(interp, argc, argv, options, info_buf);
+    }
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: longopt_get_longopt</p>
+
+<p>Find the option identifier of a long option.</p>
+
+<p>Fill <code lang='und' xml:lang='und'>info_buf</code> appropriately, and return the option identifier.</p>
+
+<p><code lang='und' xml:lang='und'>argv[info_buf&#45;</code>opt_index]&#62; is guaranteed to have at least three characters and start with <code lang='und' xml:lang='und'>&#45;&#45;</code>.</p>
+
+<p>*/</p>
+
+<p>static int longopt_get_longopt(Interp *interp /*NN*/, int argc, char* argv[] /*NN*/, const struct longopt_opt_decl options[] /*NN*/, struct longopt_opt_info* info_buf) { const int dex = info_buf&#45;&#62;opt_index; int optlen = 0; const struct longopt_opt_decl* dptr;</p>
+
+<pre lang='und' xml:lang='und'>    while (argv[dex][optlen] != &#39;\0&#39; &#38;&#38; argv[dex][optlen] != &#39;=&#39;) {
+        optlen++;
+    }
+
+    for (dptr = options; dptr&#45;&#62;opt_id; dptr++) {
+        int sptr;
+        /* For each listed long option... */
+        for (sptr = 0; dptr&#45;&#62;opt_long[sptr]; sptr++) {
+            if (strncmp(dptr&#45;&#62;opt_long[sptr], argv[dex], optlen) == 0
+             &#38;&#38; dptr&#45;&#62;opt_long[sptr][optlen] == &#39;\0&#39;) {
+                /* Found it */
+                info_buf&#45;&#62;opt_id = dptr&#45;&#62;opt_id;
+                ++info_buf&#45;&#62;opt_index;
+
+                /* XXX: (LP) if a longopt is given an argument when it&#39;s
+                 * not expecting one, it is just ignored.  Bad. */
+
+                if (argv[dex][optlen] == &#39;=&#39;) {
+                    if (dptr&#45;&#62;opt_flags &#38;
+                            (OPTION_required_FLAG | OPTION_optional_FLAG)) {
+                        info_buf&#45;&#62;opt_arg = &#38;argv[dex][optlen+1];
+                    }
+                    else {
+                        Parrot_snprintf(interp, longopt_error_buffer,
+                                        sizeof (longopt_error_buffer),
+                                        &#34;Option %s does not expect an argument&#34;,
+                                                dptr&#45;&#62;opt_long[sptr]);
+                        info_buf&#45;&#62;opt_error = longopt_error_buffer;
+                        return &#45;1;
+                    }
+                }
+                else {
+                    if (dptr&#45;&#62;opt_flags &#38; OPTION_required_FLAG) {
+                        if (dex+1 &#60; argc) {
+                            info_buf&#45;&#62;opt_arg = argv[dex+1];
+                            ++info_buf&#45;&#62;opt_index;
+                        }
+                        else {
+                            Parrot_snprintf(interp, longopt_error_buffer,
+                                            sizeof (longopt_error_buffer),
+                                           &#34;Option %s needs an argument&#34;,
+                                                   dptr&#45;&#62;opt_long[sptr]);
+                            info_buf&#45;&#62;opt_error = longopt_error_buffer;
+                            return &#45;1;
+                        }
+                    }
+                    else if (dptr&#45;&#62;opt_flags &#38; OPTION_optional_FLAG) {
+                        if (dex+1 &#60; argc &#38;&#38; argv[dex+1][0] &#38;&#38;
+                                argv[dex+1][0] != &#39;&#45;&#39;) {
+                            info_buf&#45;&#62;opt_arg = argv[dex+1];
+                            ++info_buf&#45;&#62;opt_index;
+                        }
+                    }
+                }
+
+                return dptr&#45;&#62;opt_id;
+            }
+        }
+    }
+
+    /* Couldn&#39;t find it. */
+    info_buf&#45;&#62;opt_id = &#45;1;
+    Parrot_snprintf(interp, longopt_error_buffer,
+             sizeof (longopt_error_buffer),
+             &#34;Option %s not known&#34;, argv[dex]);
+    info_buf&#45;&#62;opt_error = longopt_error_buffer;
+    return &#45;1;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: longopt_get_shortopt</p>
+
+<p>Find the option identifier of the next short option.</p>
+
+<p>This next short option may be in the middle of a bundle (<code lang='und' xml:lang='und'>&#45;abcd</code>), and <code lang='und' xml:lang='und'>info_buf&#45;&#62;_shortopt_pos</code> maintains a pointer into that bundle.</p>
+
+<p><code lang='und' xml:lang='und'>argv[info_buf&#45;&#62;opt_index]</code> is guaranteed to be at least two characters long and start with a dash.</p>
+
+<p>*/</p>
+
+<p>static int longopt_get_shortopt(Interp *interp /*NN*/, int argc, char* argv[] /*NN*/, const struct longopt_opt_decl options[] /*NN*/, struct longopt_opt_info* info_buf /*NN*/) { const int dex = info_buf&#45;&#62;opt_index; const struct longopt_opt_decl* dptr; const char* pos;</p>
+
+<pre lang='und' xml:lang='und'>    if (!info_buf&#45;&#62;_shortopt_pos)
+        info_buf&#45;&#62;_shortopt_pos = &#38;argv[dex][1];
+    pos = info_buf&#45;&#62;_shortopt_pos;
+
+    for (dptr = options; dptr&#45;&#62;opt_id; dptr++) {
+        if (dptr&#45;&#62;opt_short == *pos) {
+            /* Found it */
+            info_buf&#45;&#62;opt_id = dptr&#45;&#62;opt_id;
+
+            if (dptr&#45;&#62;opt_flags &#38; OPTION_required_FLAG) {
+                if (*(pos + 1)) {
+                    info_buf&#45;&#62;opt_arg = pos + 1;
+                }
+                else {
+                    if (dex+1 &#60; argc) {
+                        info_buf&#45;&#62;opt_arg = argv[dex+1];
+                        ++info_buf&#45;&#62;opt_index;
+                    }
+                    else {
+                        Parrot_snprintf(interp, longopt_error_buffer,
+                                        sizeof (longopt_error_buffer),
+                                        &#34;Option &#45;%c expects an argument&#34;,
+                                                 *pos);
+                        info_buf&#45;&#62;opt_error = longopt_error_buffer;
+                        return &#45;1;
+                    }
+                }
+                info_buf&#45;&#62;_shortopt_pos = NULL;
+                ++info_buf&#45;&#62;opt_index;
+            }
+            else if (dptr&#45;&#62;opt_flags &#38; OPTION_optional_FLAG) {
+                if (*(pos + 1)) {
+                    info_buf&#45;&#62;opt_arg = pos + 1;
+                }
+                else if (dex+2 &#60; argc &#38;&#38; argv[dex+1][0] &#38;&#38;
+                        argv[dex+1][0] != &#39;&#45;&#39;) {
+                    info_buf&#45;&#62;opt_arg = argv[dex+1];
+                    ++info_buf&#45;&#62;opt_index;
+                }
+                info_buf&#45;&#62;_shortopt_pos = NULL;
+                ++info_buf&#45;&#62;opt_index;
+            }
+            else {             /* No argument expected */
+                if (! *(pos + 1)) {
+                    info_buf&#45;&#62;_shortopt_pos = NULL;
+                    ++info_buf&#45;&#62;opt_index;
+                }
+                else {
+                    ++info_buf&#45;&#62;_shortopt_pos;
+                }
+            }
+
+            return dptr&#45;&#62;opt_id;
+        }
+    }
+
+    /* Couldn&#39;t find it in the table */
+    info_buf&#45;&#62;opt_id = &#45;1;
+    Parrot_snprintf(interp, longopt_error_buffer,
+             sizeof (longopt_error_buffer),
+             &#34;Option &#45;%c not known&#34;, *pos);
+    info_buf&#45;&#62;opt_error = longopt_error_buffer;
+    return &#45;1;
+}</pre>
+
+<p>/*</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/longopt.h</em> and <em lang='und' xml:lang='und'>docs/dev/longopt.dev</em>.</p>
+
+<p>*/</p>
+
+<p>/* * Local variables: * c&#45;file&#45;style: &#34;parrot&#34; * End: * vim: expandtab shiftwidth=4: */</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

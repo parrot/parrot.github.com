@@ -1,0 +1,288 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>C struct with unmanaged memory</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">C struct with unmanaged memory</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/pmc.html">PMCs</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/classes/unmanagedstruct.pmc &#45; C struct with unmanaged memory</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>PMC class to hold C <code lang='und' xml:lang='und'>struct</code>s that parrot&#39;s not responsible for disposing of.</p>
+
+<p>Buffer can be accessed using keyed assignments to PMC.
+Out of bounds access will very likely segfault.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_char_*_char_offset_int(Interp*_interpreter,_PMC_*pmc,_INTVAL_ix,_int_*type)"
+><b><code lang='und' xml:lang='und'>static char *char_offset_int(Interp *interpreter, PMC *pmc, INTVAL ix, int *type)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the pointer for the element at index <code lang='und' xml:lang='und'>ix</code>,
+and sets the element type in <code lang='und' xml:lang='und'>*type</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_key_2_idx(Interp*_interpreter,_PMC_*pmc,_PMC_*key)"
+><b><code lang='und' xml:lang='und'>INTVAL key_2_idx(Interp *interpreter, PMC *pmc, PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the index for the element associated with key <code lang='und' xml:lang='und'>*key</code>.
+Raises an exception if the key doesn&#39;t exist.</dd><p class="pad"></p>
+
+<dt><a name="static_char_*_char_offset_key(Interp*_interpreter,_PMC_*pmc,_PMC_*key,_int_*type)"
+><b><code lang='und' xml:lang='und'>static char *char_offset_key(Interp *interpreter, PMC *pmc, PMC *key, int *type)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the pointer for the element associated with key <code lang='und' xml:lang='und'>*key</code>,
+and sets the element type in <code lang='und' xml:lang='und'>*type</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_ret_int(char_*p,_int_type)"
+><b><code lang='und' xml:lang='und'>static INTVAL ret_int(char *p, int type)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the element of type <code lang='und' xml:lang='und'>type</code> starting at <code lang='und' xml:lang='und'>*p</code> as an <code lang='und' xml:lang='und'>INTVAL</code>.</dd><p class="pad"></p>
+
+<dd>If,
+for example,
+<code lang='und' xml:lang='und'>char</code> or c&#60;short&#62; type size doesn&#39;t match,
+this will fail we need some more configure support for type sizes.</dd><p class="pad"></p>
+
+<dt><a name="static_FLOATVAL_ret_float(char_*p,_int_type)"
+><b><code lang='und' xml:lang='und'>static FLOATVAL ret_float(char *p, int type)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the element of type <code lang='und' xml:lang='und'>type</code> starting at <code lang='und' xml:lang='und'>*p</code> as a <code lang='und' xml:lang='und'>FLOATVAL</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_STRING*_ret_string(Interp*_interpreter,_char_*p,_int_type)"
+><b><code lang='und' xml:lang='und'>static STRING *ret_string(Interp *interpreter, char *p, int type)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the element of type <code lang='und' xml:lang='und'>type</code> starting at <code lang='und' xml:lang='und'>*p</code> as a Parrot string.</dd><p class="pad"></p>
+
+<dt><a name="static_PMC*_ret_pmc(Interp*_interpreter,_PMC*_pmc,_char_*p,_int_type,_INTVAL_idx)"
+><b><code lang='und' xml:lang='und'>static PMC *ret_pmc(Interp *interpreter, PMC *pmc, char *p, int type, INTVAL idx)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the element of type <code lang='und' xml:lang='und'>type</code> starting at <code lang='und' xml:lang='und'>*p</code> as a PMC.</dd><p class="pad"></p>
+
+<dt><a name="static_void_set_int(char_*p,_int_type,_INTVAL_value)"
+><b><code lang='und' xml:lang='und'>static void set_int(char *p, int type, INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="static_void_set_float(char_*p,_int_type,_FLOATVAL_value)"
+><b><code lang='und' xml:lang='und'>static void set_float(char *p, int type, FLOATVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the value of the element of type <code lang='und' xml:lang='und'>type</code> starting at <code lang='und' xml:lang='und'>*p</code> to <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_void_set_string(char_*p,_int_type,_STRING_*value)"
+><b><code lang='und' xml:lang='und'>static void set_string(char *p, int type, STRING *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the value of the element of type <code lang='und' xml:lang='und'>type</code> starting at <code lang='und' xml:lang='und'>*p</code> to <code lang='und' xml:lang='und'>*value</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_int_calc_align(Interp*_interpreter,_PMC_*pmc,_PMC_*type_pmc,_int_type,_int_offs)"
+><b><code lang='und' xml:lang='und'>static int calc_align(Interp *interpreter, PMC *pmc, PMC *type_pmc, int type, int offs)</b></code></a></dt><p class="pad"></p>
+
+<dd>Alignment of contained structures is the alignment of the biggest item in that <code lang='und' xml:lang='und'>struct</code>.</dd><p class="pad"></p>
+
+<dd>i386: <code lang='und' xml:lang='und'>long long</code> or <code lang='und' xml:lang='und'>double</code> is aligned on 4.</dd><p class="pad"></p>
+
+<dd>This is recursive as structure definitions.</dd><p class="pad"></p>
+
+<dt><a name="static_size_t_calc_offsets(Interp*_interpreter,_PMC_*pmc,_PMC_*value,_size_t_toff)"
+><b><code lang='und' xml:lang='und'>static size_t calc_offsets(Interp *interpreter, PMC *pmc, PMC *value, size_t toff)</b></code></a></dt><p class="pad"></p>
+
+<dd>Calculates the offsets for the <code lang='und' xml:lang='und'>struct</code>.
+See <code lang='und' xml:lang='und'>init_pmc()</code> for a description of <code lang='und' xml:lang='und'>*value</code>.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code lang='und' xml:lang='und'>void init()</b></code></a></dt><p class="pad"></p>
+
+<dd>Initializes the <code lang='und' xml:lang='und'>struct</code> with a default value of <code lang='und' xml:lang='und'>NULL</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_init_pmc(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void init_pmc(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Initialize the struct with some data.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>*value</code> should be an array of triples of:</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="0"
+>0</a></dt><p class="pad"></p>
+
+<dd>The datatype.
+See the <code lang='und' xml:lang='und'>enum</code> in <em lang='und' xml:lang='und'>include/parrot/datatypes.h</em>.</dd><p class="pad"></p>
+
+<dt><a name="1"
+>1</a></dt><p class="pad"></p>
+
+<dd>The count.</dd><p class="pad"></p>
+
+<dt><a name="2"
+>2</a></dt><p class="pad"></p>
+
+<dd>The offset.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="void_set_pmc(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void set_pmc(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets <code lang='und' xml:lang='und'>*value</code> (see <code lang='und' xml:lang='und'>init_pmc()</code> and calculates the offsets.</dd><p class="pad"></p>
+
+<dt><a name="void_mark()"
+><b><code lang='und' xml:lang='und'>void mark()</b></code></a></dt><p class="pad"></p>
+
+<dd>Marks the <code lang='und' xml:lang='und'>struct</code> as live.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_is_equal(PMC_*value)"
+><b><code lang='und' xml:lang='und'>INTVAL is_equal(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns whether the two <code lang='und' xml:lang='und'>struct</code>s are equivalent.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_defined()"
+><b><code lang='und' xml:lang='und'>INTVAL defined()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns whether the <code lang='und' xml:lang='und'>struct</code> is defined.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_integer()"
+><b><code lang='und' xml:lang='und'>INTVAL get_integer()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the size of the <code lang='und' xml:lang='und'>struct</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_integer_native(INTVAL_size)"
+><b><code lang='und' xml:lang='und'>void set_integer_native(INTVAL size)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the size of the <code lang='und' xml:lang='und'>struct</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_integer_keyed_int(INTVAL_ix)"
+><b><code lang='und' xml:lang='und'>INTVAL get_integer_keyed_int(INTVAL ix)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the integer value at index <code lang='und' xml:lang='und'>ix</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_integer_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>INTVAL get_integer_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the integer value associated with <code lang='und' xml:lang='und'>*key</code>.</dd><p class="pad"></p>
+
+<dt><a name="FLOATVAL_get_number_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>FLOATVAL get_number_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the floating&#45;point value at index <code lang='und' xml:lang='und'>ix</code>.</dd><p class="pad"></p>
+
+<dt><a name="FLOATVAL_get_number_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>FLOATVAL get_number_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the floating&#45;point value associated with <code lang='und' xml:lang='und'>*key</code>.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*get_string_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>STRING *get_string_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the Parrot string value at index <code lang='und' xml:lang='und'>ix</code>.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*get_string_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>STRING *get_string_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the Parrot string value associated with <code lang='und' xml:lang='und'>*key</code>.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_pmc_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>PMC *get_pmc_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the PMC value at index <code lang='und' xml:lang='und'>ix</code>.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_pmc_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>PMC *get_pmc_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the PMC value associated with <code lang='und' xml:lang='und'>*key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_*get_pointer()"
+><b><code lang='und' xml:lang='und'>void *get_pointer()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the pointer to the actual C <code lang='und' xml:lang='und'>struct</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_pointer(void*_value)"
+><b><code lang='und' xml:lang='und'>void set_pointer(void *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Set the pointer to the actual C <code lang='und' xml:lang='und'>struct</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_integer_keyed_int(INTVAL_ix,_INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_integer_keyed_int(INTVAL ix, INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the value of the element at index <code lang='und' xml:lang='und'>ix</code> to <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_integer_keyed(PMC_*key,_INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_integer_keyed(PMC *key, INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the value of the element associated with key <code lang='und' xml:lang='und'>*key</code> to <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dd>May cause segfaults if value is out of bounds.</dd><p class="pad"></p>
+
+<dt><a name="void_set_number_keyed_int(INTVAL_key,_FLOATVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_number_keyed_int(INTVAL key, FLOATVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the value of the element at index <code lang='und' xml:lang='und'>ix</code> to <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_number_keyed(PMC_*key,_FLOATVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_number_keyed(PMC *key, FLOATVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the value of the element associated with key <code lang='und' xml:lang='und'>*key</code> to <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_string_keyed_int(INTVAL_key,_STRING_*value)"
+><b><code lang='und' xml:lang='und'>void set_string_keyed_int(INTVAL key, STRING *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the value of the element at index <code lang='und' xml:lang='und'>key</code> to <code lang='und' xml:lang='und'>*value</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_string_keyed(PMC_*key,_STRING_*value)"
+><b><code lang='und' xml:lang='und'>void set_string_keyed(PMC *key, STRING *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the value of the element associated with key <code lang='und' xml:lang='und'>*key</code> to <code lang='und' xml:lang='und'>*value</code>.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Initial revision by sean 2002/08/04</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'><a href="../../docs/pmc/struct.pod.html">docs/pmc/struct.pod</a></em></p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

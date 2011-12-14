@@ -1,0 +1,306 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Document parrot&#39;s basic PMC types</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Document parrot&#39;s basic PMC types</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>docs/pdds/pdd17_basic_types.pod &#45; Document parrot&#39;s basic PMC types</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This PDD documents the base Parrot PMC types and their behaviours.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Parrot has a number of basic PMC types that all programs can guarantee will be available to them.
+(With the possible exception of parrot programs executing on an embedded device or other restricted environment)</p>
+
+<h2><a name="Scalar_types"
+>Scalar types <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="Undef"
+>Undef</a></dt><p class="pad"></p>
+
+<dd>This is the generic no&#45;value type.
+It has a numeric value of zero,
+a string value of empty string,
+and a boolean value of false.
+It will,
+on assignment,
+turn itself into a PMC of the source type,
+or if assigned a basic type will turn itself into one of the wrapper PMC types (detailed below) for the basic types.</dd><p class="pad"></p>
+
+<dt><a name="Integer"
+>Integer</a></dt><p class="pad"></p>
+
+<dd>The PMC wrapper for Parrot&#39;s low&#45;level integer type.
+Always an integer,
+with other types auto&#45;converted to an integer when stored into this PMC.
+The range and behaviour of the Integer PMC is identical to the platform low&#45;level integer.</dd><p class="pad"></p>
+
+<dd>The boolean value for an Integer is false if zero,
+otherwise true.</dd><p class="pad"></p>
+
+<dd>Floating point,
+string,
+and bignum values assigned to an Integer PMC round to the nearest integer.
+Floats,
+or strings which resolve to numbers,
+cap at the platform maximum or minimum integer value.</dd><p class="pad"></p>
+
+<dd>Integer PMCs take on a value of 1 if a boolean true is assigned,
+and a value of 0 if a boolean false is assigned.</dd><p class="pad"></p>
+
+<dd>If an out&#45;of&#45;range value is assigned to an Integer PMC,
+the PMC will throw an exception if exact math is enabled.</dd><p class="pad"></p>
+
+<dt><a name="Float"
+>Float</a></dt><p class="pad"></p>
+
+<dd>The PMC wrapper for Parrot&#39;s low&#45;level floating point type.
+Always a float,
+with other types autoconverted to a float when stored into this PMC.</dd><p class="pad"></p>
+
+<dd>The boolean value for a Float is false if exactly zero,
+otherwise true.</dd><p class="pad"></p>
+
+<dd>When converted to an integer,
+floats round to the closest integer,
+capping at the platform maximum or minimum integer value.</dd><p class="pad"></p>
+
+<dd>When converting to a string,
+floats use the platform default snprintf format.</dd><p class="pad"></p>
+
+<dt><a name="String"
+>String</a></dt><p class="pad"></p>
+
+<dd>The PMC wrapper for Parrot&#39;s low&#45;level string type.
+Always a simple string,
+with other types autoconverted to a string when stored into this PMC.</dd><p class="pad"></p>
+
+<dd>The boolean value for a String is false if empty or the string &#39;0&#39; (a one character string holding a zero) otherwise true.
+This PMC autoconverts to an integer or float when its integer or float value is fetched.</dd><p class="pad"></p>
+
+<dt><a name="Boolean"
+>Boolean</a></dt><p class="pad"></p>
+
+<dd>The PMC wrapper for Parrot&#39;s low&#45;level true/false value.
+Returns 0 for false,
+1 for true when fetched as an integer or float,
+empty string for false and &#39;1&#39; for true when fetched as a string.</dd><p class="pad"></p>
+
+<dt><a name="BigNum"
+>BigNum</a></dt><p class="pad"></p>
+
+<dd>The PMC wrapper for Parrot&#39;s low&#45;level BigNum type.</dd><p class="pad"></p>
+
+<dt><a name="ParrotClass"
+>ParrotClass</a></dt><p class="pad"></p>
+
+<dd>The PMC for Parrot&#39;s class.
+(Note that this may go away if we ultimately make all classes just objects)</dd><p class="pad"></p>
+
+<dt><a name="ParrotObject"
+>ParrotObject</a></dt><p class="pad"></p>
+
+<dd>The PMC for Parrot&#39;s base object type.</dd><p class="pad"></p>
+
+<dt><a name="Reference"
+>Reference</a></dt><p class="pad"></p>
+
+<dd>The PMC that represents a reference to another PMC.
+Delegates all functions to the referred&#45;to PMC.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Array_types"
+>Array types <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Note that for the following types you can set the size of the array by using the VTABLE_set_integer_native() method.
+Assigning an integer to the array as a whole sets the array to that size.</p>
+
+<p>Note that size&#45;changing operations,
+such as push,
+pop,
+shift,
+unshift,
+and splice,
+on fixed arrays will result in an exception.</p>
+
+<dl>
+<dt><a name="FixedBooleanArray"
+>FixedBooleanArray</a></dt><p class="pad"></p>
+
+<dd>A statically sized array which holds only Boolean values.</dd><p class="pad"></p>
+
+<dt><a name="ResizableBooleanArray"
+>ResizableBooleanArray</a></dt><p class="pad"></p>
+
+<dd>A dynamically sized array which holds only Boolean values.</dd><p class="pad"></p>
+
+<dt><a name="FixedIntegerArray"
+>FixedIntegerArray</a></dt><p class="pad"></p>
+
+<dd>A statically sized array which holds only Integer values.</dd><p class="pad"></p>
+
+<dt><a name="ResizableIntegerArray"
+>ResizableIntegerArray</a></dt><p class="pad"></p>
+
+<dd>A dynamically sized array which holds only Integer values.</dd><p class="pad"></p>
+
+<dt><a name="FixedFloatArray"
+>FixedFloatArray</a></dt><p class="pad"></p>
+
+<dd>A statically sized array which holds only Float values.</dd><p class="pad"></p>
+
+<dt><a name="ResizableFloatArray"
+>ResizableFloatArray</a></dt><p class="pad"></p>
+
+<dd>A dynamically sized array which holds only Float values.</dd><p class="pad"></p>
+
+<dt><a name="FixedPMCArray"
+>FixedPMCArray</a></dt><p class="pad"></p>
+
+<dd>A statically sized array which holds only PMC values.</dd><p class="pad"></p>
+
+<dt><a name="ResizablePMCArray"
+>ResizablePMCArray</a></dt><p class="pad"></p>
+
+<dd>A dynamically sized array which holds only PMC values.</dd><p class="pad"></p>
+
+<dt><a name="FixedStringArray"
+>FixedStringArray</a></dt><p class="pad"></p>
+
+<dd>A statically sized array which holds only String values.</dd><p class="pad"></p>
+
+<dt><a name="ResizableStringArray"
+>ResizableStringArray</a></dt><p class="pad"></p>
+
+<dd>A dynamically sized array which holds only String values.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Hash_types"
+>Hash types <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="Hash"
+>Hash</a></dt><p class="pad"></p>
+
+<dd>A container with key&#45;value semantics.
+The values are PMCs.</dd><p class="pad"></p>
+
+<dt><a name="Env"
+>Env</a></dt><p class="pad"></p>
+
+<dd>Env is a singleton PMC class,
+that is there is only one Env PMC in any interpreter.
+This PMC gives access to the process&#39; environment variables&#45;&#45;reading from it returns the value of the named process environment variable,
+while writing to it sets the value of a process environment variable.
+For example,
+to retrieve the current value of TERM (the terminal type on most Unix systems):</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>   new P1, .Env
+   set S1, P1[&#39;TERM&#39;]</pre>
+
+<dd>Note that an embedding system may override this behaviour.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Binary_Math_operations"
+>Binary Math operations <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>The following is a list of what should happen with the basic types when used in a binary math operation:</p>
+
+<dl>
+<dt><a name="Integer_x_Integer"
+>Integer x Integer</a></dt><p class="pad"></p>
+
+<dd>The operation is an integer.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="IMPLEMENTATION"
+>IMPLEMENTATION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<h1><a name="FOOTNOTES"
+>FOOTNOTES <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>List of footnotes to the text.</p>
+
+<h1><a name="REFERENCES"
+>REFERENCES <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="CURRENT"
+>CURRENT <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>    Maintainer: Dan Sugalski
+    Class: Internals
+    PDD Number: 17
+    Version: 1.0
+    Status: Developing
+    Last Modified: 2004/06/11
+    PDD Format: 1
+    Language: English</pre>
+
+<h2><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="version_1"
+>version 1</a></dt><p class="pad"></p>
+
+<dd>None. First version</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="CHANGES"
+>CHANGES <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Version_1.0"
+>Version 1.0</a></dt><p class="pad"></p>
+
+<dd>None. First version</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

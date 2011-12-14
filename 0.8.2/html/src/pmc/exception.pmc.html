@@ -1,0 +1,227 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Exception PMC</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Exception PMC</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/pmc.html">PMCs</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/pmc/exception.pmc &#45; Exception PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This is the exception base class.
+An exception object has the following attributes:</p>
+
+<dl>
+<dt><a name="message"
+><b><code lang='und' xml:lang='und'>message</b></code></a></dt><p class="pad"></p>
+
+<dd>Textual representation of the exception.</dd><p class="pad"></p>
+
+<dt><a name="severity"
+><b><code lang='und' xml:lang='und'>severity</b></code></a></dt><p class="pad"></p>
+
+<dd>The severity of the exception,
+(see <em lang='und' xml:lang='und'>include/parrot/exceptions.h</em>,
+<em lang='und' xml:lang='und'>except_severity.pasm</em>).</dd><p class="pad"></p>
+
+<dt><a name="type"
+><b><code lang='und' xml:lang='und'>type</b></code></a></dt><p class="pad"></p>
+
+<dd>The type of the exception.</dd><p class="pad"></p>
+
+<dt><a name="exit_code"
+><b><code lang='und' xml:lang='und'>exit_code</b></code></a></dt><p class="pad"></p>
+
+<dd>The exit code of the exception.
+(Added temporarily,
+to be removed.)</dd><p class="pad"></p>
+
+<dt><a name="handled"
+><b><code lang='und' xml:lang='und'>handled</b></code></a></dt><p class="pad"></p>
+
+<dd>Whether the exception has been handled.
+Defaults to 0,
+1 for handled,
+&#45;1 for a rethrown exception.</dd><p class="pad"></p>
+
+<dt><a name="payload"
+><b><code lang='und' xml:lang='und'>payload</b></code></a></dt><p class="pad"></p>
+
+<dd>Additional data for the exception.</dd><p class="pad"></p>
+</dl>
+
+<p>When an exception handler is called,
+the exception object is passed as as the first argument,
+the message as the second argument of the call.
+These arguments can be retrieved with the <code lang='und' xml:lang='und'>get_results</code> opcode.</p>
+
+<h2><a name="Vtable_Functions"
+>Vtable Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code lang='und' xml:lang='und'>void init()</b></code></a></dt><p class="pad"></p>
+
+<dd>Initializes the exception with default values.</dd><p class="pad"></p>
+
+<dt><a name="void_init_pmc()"
+><b><code lang='und' xml:lang='und'>void init_pmc()</b></code></a></dt><p class="pad"></p>
+
+<dd>Initializes the exception with supplied values.</dd><p class="pad"></p>
+
+<dt><a name="void_mark()"
+><b><code lang='und' xml:lang='und'>void mark()</b></code></a></dt><p class="pad"></p>
+
+<dd>Mark any active exception data as live.</dd><p class="pad"></p>
+
+<dt><a name="void_destroy()"
+><b><code lang='und' xml:lang='und'>void destroy()</b></code></a></dt><p class="pad"></p>
+
+<dd>Destroys the exception.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_bool()"
+><b><code lang='und' xml:lang='und'>INTVAL get_bool()</b></code></a></dt><p class="pad"></p>
+
+<dd>Return true.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*get_string()"
+><b><code lang='und' xml:lang='und'>STRING *get_string()</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the exception message.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_integer()"
+><b><code lang='und' xml:lang='und'>INTVAL get_integer()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the id of the exception.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*get_string_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>STRING *get_string_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the Parrot string value for <code lang='und' xml:lang='und'>*key</code>.
+The only current recognized <code lang='und' xml:lang='und'>key</code> is &#34;message&#34;.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_integer_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>INTVAL get_integer_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the integer value for <code lang='und' xml:lang='und'>*key</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_integer_keyed_str(STRING_*key)"
+><b><code lang='und' xml:lang='und'>INTVAL get_integer_keyed_str(STRING *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the integer value for <code lang='und' xml:lang='und'>*key</code>.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_pmc_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>PMC *get_pmc_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the PMC value for <code lang='und' xml:lang='und'>*key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_string_native(STRING_*value)"
+><b><code lang='und' xml:lang='und'>void set_string_native(STRING *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the <code lang='und' xml:lang='und'>message</code> of the Exception.</dd><p class="pad"></p>
+
+<dt><a name="void_set_integer_native(INTVAL_*value)"
+><b><code lang='und' xml:lang='und'>void set_integer_native(INTVAL *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the <code lang='und' xml:lang='und'>id</code> of the Exception.</dd><p class="pad"></p>
+
+<dt><a name="void_set_number_native(FLOATVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_number_native(FLOATVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the birthtime of the exception.</dd><p class="pad"></p>
+
+<dt><a name="void_set_string_keyed(PMC_*key,_STRING_*value)"
+><b><code lang='und' xml:lang='und'>void set_string_keyed(PMC *key, STRING *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the Parrot string value for <code lang='und' xml:lang='und'>*key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_integer_keyed(PMC_*key,_INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_integer_keyed(PMC *key, INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the integer value for <code lang='und' xml:lang='und'>*key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_integer_keyed_str(STRING_*key,_INTVAL_value)_"
+><b><code lang='und' xml:lang='und'>void set_integer_keyed_str(STRING *key, INTVAL value) </b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the integer value for <code lang='und' xml:lang='und'>*key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_pmc_keyed(PMC_*key,_PMC_*value)"
+><b><code lang='und' xml:lang='und'>void set_pmc_keyed(PMC *key, PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the PMC value for <code lang='und' xml:lang='und'>*key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_pointer(void_*context)"
+><b><code lang='und' xml:lang='und'>void set_pointer(void *context)</b></code></a></dt><p class="pad"></p>
+
+<dd>Store a context for the handler iterator.</dd><p class="pad"></p>
+
+<dt><a name="void_*get_pointer()"
+><b><code lang='und' xml:lang='und'>void *get_pointer()</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieve a context stored for the handler iterator.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_is_equal(PMC_*value)"
+><b><code lang='und' xml:lang='und'>INTVAL is_equal(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compare the passed in Exception with <code lang='und' xml:lang='und'>SELF</code>.
+Returns true if <code lang='und' xml:lang='und'>SELF</code> and <code lang='und' xml:lang='und'>value</code> are the same type,
+and have the same values for type,
+severity,
+and exit_code.</dd><p class="pad"></p>
+
+<dt><a name="get_attr_str"
+><b><code lang='und' xml:lang='und'>get_attr_str</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieve an attribute value for the exception object.</dd><p class="pad"></p>
+
+<dt><a name="set_attr_str"
+><b><code lang='und' xml:lang='und'>set_attr_str</b></code></a></dt><p class="pad"></p>
+
+<dd>Set an attribute value for the exception object.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*share_ro()"
+><b><code lang='und' xml:lang='und'>PMC *share_ro()</b></code></a></dt><p class="pad"></p>
+
+<dd>Set this PMC as shared.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

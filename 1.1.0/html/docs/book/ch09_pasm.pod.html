@@ -1,0 +1,1958 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot Assembly Language</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; Parrot Assembly Language
+                </div>
+
+<h1><a name="Parrot_Assembly_Language"
+>Parrot Assembly Language</a></h1>
+
+<p></p>
+
+<p><!--
+	INDEX: Parrot Assembly Language;;(see PASM)
+--> <!--
+	INDEX: PASM (Parrot assembly language)
+--> We&#39;ve seen some of the common ways for programming Parrot in earlier chapters: PIR is the intermediate language that&#39;s used most often for implementing routines in Parrot,
+NQP is used for writing grammar actions for high&#45;level language compilers,
+PGE is used for specifying grammar rules,
+and various high&#45;level languages that target Parrot are used for most other programming tasks.
+These options,
+though many and versatile,
+are not the only ways to interface with Parrot.</p>
+
+<p>In regular assemblers,
+assembly language mnemonics share a one&#45;to&#45;one correspondence with the underlying machine code words that they represent.
+A simple assembler (and,
+for that matter,
+a simple disassembler) could be implemented as a mere lookup table.
+PIR does not have this kind of direct correspondance to PBC.
+A number of PIR features,
+especially the various directives,
+typically translate into a number of individual operations.
+Register names,
+such as <code>$P7</code> don&#39;t indicate the actual storage location of the register in PIR either.
+The register allocator will intelligently move and rearrange registers to conserve memory,
+so the numbers you use to specify registers in PIR will be mapped to different numbers when compiled into PBC.</p>
+
+<p>Because PIR and PBC can&#39;t be directly translated to one another,
+and because it can be difficult to disassemble low&#45;level PBC back into the higher&#45;level composite statements of PIR,
+especially after optimization,
+another tool is needed.
+That tool is PASM.</p>
+
+<p>PASM,
+the Parrot Assembly Language,
+is the lowest&#45;level interface to Parrot.
+PASM instruction mnemonics do share a one&#45;to&#45;one correspondence to the underlying PBC opcodes,
+and for this reason is used by the Parrot disassembler instead of PIR.
+PASM is missing some of the features of PIR: Most directives,
+symbolic operators,
+<code>if</code> and <code>unless</code> compound statements,
+automatic register allocation,
+and a few other bits of syntactic sugar are missing from PASM.
+Because of these omissions,
+it is strongly recommended that most developers do not use PASM to write any large amount of code.
+Use PIR if you need to,
+or a higher&#45;level language if you can.</p>
+
+<h2><a name="PASM_Files"
+>PASM Files</a></h2>
+
+<p><!--
+	INDEX: .pasm files
+--> The Parrot compilers,
+IMCC and PIRC,
+differentiate between PIR and PASM code files based on the file extension.
+A file with a <em>.pasm</em> extension is treated as pure PASM code by Parrot,
+as is any file run with the <code>&#45;a</code> command&#45;line option.</p>
+
+<p>Early in the Parrot project&#39;s history,
+PIR was treated as a pure superset of PASM.
+All PASM was valid PIR,
+but PIR added a few extra features that the programmers found to be nice.
+However,
+this situation has changed and PIR is no longer a strict superset of PASM.
+For this reason,
+PASM and PIR code need to be kept in files with separate extensions.
+As we mentioned before,
+<code>.pasm</code> files are always treated as containing only PASM,
+while <code>.pir</code> files are used for PIR code,
+by convention.</p>
+
+<h2><a name="Basics"
+>Basics</a></h2>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);overview
+--> PASM has a simple syntax that will be familiar to people who have experience programming other assembly languages.
+Each statement stands on its own line and there is no end&#45;of&#45;line delimiter.
+Statements begin with a Parrot instruction,
+commonly referred to as an &#34;opcode&#34;More accurately,
+it should probably be referred to as a &#34;mnemonic&#34;.
+The arguments follow,
+separated by commas:</p>
+
+<pre>  [label] opcode dest, source, source ...</pre>
+
+<p>If the opcode returns a result, it is stored in the first argument. Sometimes the first register is both a source value and the destination of the result, this is the case when we want to modify a value in place, without consuming a new Parrot register to hold the value. The arguments can be either registers or constants, although the destination argument cannot be constant.</p>
+<pre>  LABEL:
+      print "The answer is: "
+      print 42
+      print "\n"
+      end                # halt the interpreter
+</pre>
+<p><!--
+	INDEX: PASM (Parrot assembly language);labels
+--> A label names a line of code so other instructions can refer to it. Label names consist of letters, numbers, and underscores, exactly the same syntax as is used for labels in PIR. Simple labels are often all capital letters to make them stand out from the rest of the source code more clearly. This is just a common convention and is not a rule. A label can be in front of a line of code, or it can be on it&#39;s own line. Keeping labels separate is usually recommended for readability, but again this is just a suggestion and not a rule.</p>
+<pre>  LABEL:
+      print "Norwegian Blue\n"
+</pre><pre>  LABEL: print "Norwegian Blue\n"
+</pre>
+<p><!--
+	INDEX: PASM (Parrot assembly language);comments
+--> POD (plain old documentation) is also allowed in PASM like it is in PIR. An equals sign in the first column marks the start of a POD block, and a <code>=cut</code> marker signals the end of a POD block.</p>
+<pre>  =head2
+
+  This is POD documentation, and is treated like a
+  comment. The PASM interpreter ignores this.
+
+  =cut
+
+  end
+</pre>
+<p>Besides POD, there are also ordinary 1&#45;line comments using the # sign, which is the same in PIR:</p>
+<pre>  LABEL:                        # This is a comment
+    print "Norwegian Blue\n"    # Print a color name
+</pre>
+<h3><a name="Constants"
+>Constants</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);constants
+--> We&#39;ve already seen constants in PIR, and for the most part the syntax is the same in PASM. We will give a brief refresher here, but see the chapter on PIR for a more in&#45;depth discussion of constants and datatypes.</p>
+
+<p>Integer constants in Parrot are signed integers.The sizes of integers and all other data values like floats are defined when Parrot is configured and built. Integers are typically 32 bits wide on 32&#45;bit computers (a range of &#45;231 to +231&#45;1) and twice that size on 64&#45;bit processors. Decimal integer constants can have a positive (<code>+</code>) or negative (<code>&#45;</code>) sign in front. Binary integers are preceded by <code>0b</code> or <code>0B</code>, and hexadecimal integers are preceded by <code>0x</code> or <code>0X</code>:</p>
+<pre>  print 42         # Decimalinteger constant
+  print +144       # integer constant
+  print 0x2A       # hexadecimal integer
+  print 0b1101     # binary integer
+</pre>
+<p>Floating&#45;point constants can also be positive or negative. Scientific notation provides an exponent, marked with <code>e</code> or <code>E</code> (the sign of the exponent is optional):</p>
+<pre>  print 3.14159    # floating point constant
+  print 1.e6       # scientific notation
+  print -1.23e+45
+</pre>
+<p>String constants are wrapped in single or double quotation marks. Quotation marks inside the string must be escaped by a backslash. Other special characters also have escape sequences. These are the same as for Perl 5&#39;s <code>qq()</code> operator: <code>\t</code> (tab), <code>\n</code> (newline), <code>\r</code> (return), <code>\f</code> (form feed), <code>\\</code> (literal slash), <code>\&#34;</code> (literal double quote), etc.</p>
+<pre>  print "string\n"    # string constant with escaped newline
+  print "\\"          # a literal backslash
+  print 'a\n'         # three chars: 'a', a backslash, and a 'n'
+</pre>
+<h3><a name="Working_with_Registers"
+>Working with Registers</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);registers
+--> <!--
+	INDEX: registers;Parrot;;(see PASM, registers)
+--> Parrot is a register&#45;based virtual machine. It has 4 typed register sets: integers, floating&#45;point numbers, strings, and Parrot objects (called PMCs). Register names consist of a capital letter indicating the register set type and the number of the register. Register numbers are non&#45;negative (zero and positive numbers), and do not have a pre&#45;defined upper limit At least not a restrictive limit. Parrot registers are stored internally as an array. More registers means a larger allocated array, which can bring penalties on some systems. For example:</p>
+
+<pre>  I0   integer register #0
+  N11  number or floating point register #11
+  S2   string register #2
+  P33  PMC register #33</pre>
+
+<p>We see the immediate difference here that PASM registers do not have the <code>$</code> dollar sign in front of them like PIR registers do. The syntactical difference indicates that there is an underlying semantic difference: In PIR, register numbers are just suggestions and registers are automatically allocated; In PASM, register numbers are literal offsets into the register array, and registers are not automatically managed. Let&#39;s take a look at a simple PIR function:</p>
+<pre>  .sub 'foo'
+      $I33 = 1
+  .end
+</pre>
+<p>This function allocates only one register. The register allocator counts that there is only one register needed, and converts <code>$I33</code> to <code>I0</code> internally. Now, let&#39;s look at a similar PASM subroutine:</p>
+<pre>  foo:
+      set I33, 1
+  end
+</pre>
+<p>This function, which looks to perform the same simple operation actually is a little different. This small snippet of code actually allocates 33 registers, even though only one of them is needed. It&#39;s up to the programmer to keep track of memory usage and not allocate more registers then are needed.</p>
+
+<h4><a name="Register_assignment"
+>Register assignment</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);registers;assignment
+--> The most basic operation on registers is assignment using the <code>set</code> opcode:</p>
+<pre>  set I0, 42        # set integer register #0 to the integer value 42
+  set N3, 3.14159   # set number register #3 to an approximation of pi
+  set I1, I0        # set register I1 to what I0 contains
+  set I2, N3        # truncate the floating point number to an integer
+</pre>
+<p>The <code>exchange</code> opcode swaps the contents of two registers of the same type:</p>
+<pre>  exchange I1, I0   # set register I1 to what I0 contains
+                    # and set register I0 to what I1 contains
+</pre>
+<p>PMC registers contain references to PMC structures internally. So, the set opcode doesn&#39;t copy the entire PMC, it only copies the reference to the PMC data.</p>
+<pre>  new P0, "String"
+  set P0, "Ford"
+  set P1, P0
+  set P1, "Zaphod"
+  print P0                # prints "Zaphod"
+  print P1                # prints "Zaphod"
+  end
+</pre>
+<p>In this example, both <code>P0</code> and <code>P1</code> are both references to the same internal data structure, so when we set <code>P1</code> to the string literal <code>&#34;Zaphod&#34;</code>, it overwrites the previous value <code>&#34;Ford&#34;</code>. Now, both <code>P0</code> and <code>P1</code> point to the String PMC <code>&#34;Zaphod&#34;</code>, even though it appears that we only set one of those two registers to that value.</p>
+
+<p>Strings in Parrot are also stored as references to internal data structures like PMCs. However, strings use Copy&#45;On&#45;Write (COW) optimizations. When we call <code>set S1, S0</code> we copy the pointer only, so both registers point to the same string memory. We don&#39;t actually make a copy of the string until one of two registers is modified. Here&#39;s the same example using string registers instead of PMC registers:</p>
+<pre>  set S0, "Ford"
+  set S1, S0
+  set S1, "Zaphod"
+  print S0                # prints "Ford"
+  print S1                # prints "Zaphod"
+  end
+</pre>
+<p>Some developers have suggested that PMCs should also use COW semantics to help optimize copy operations like this. However, it hasn&#39;t been implemented yet. One day in the future, Parrot might change this, but it hasn&#39;t changed yet.</p>
+
+<h4><a name="PMC_object_types"
+>PMC object types</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: PMCs (Polymorphic Containers);object types
+--> Every PMC has a distinct type that determines its behavior through the vtable interface. Vtables, as we have mentioned previously, are arrays of function pointers to implement various operations and behaviors.</p>
+
+<p>The <code>typeof</code> opcode can be used to determine the type of a PMC. When the source argument is a PMC and the destination is a string register, <code>typeof</code> returns the name of the type:</p>
+<pre>  new P0, "String"
+  typeof S0, P0               # S0 is "String"
+  print S0
+  print "\n"
+  end
+</pre>
+<p>Using <code>typeof</code> with a PMC output parameter instead, it returns the Class PMC for that type.</p>
+
+<h4><a name="Autoboxing"
+>Autoboxing</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: Autoboxing
+--> As we&#39;ve seen in the previous chapters about PIR, we can convert between primitive string, integer, and number types and PMCs. PIR used the <code>=</code> operator to make these conversions. PASM uses the <code>set</code> opcode to do the same thing. <code>set</code> will perform the type conversions for us automatically, in a process called <i>autoboxing</i>.</p>
+
+<p>Assigning a primitive data type to a PMC of a String, Integer, or Float type converts that PMC to the new type. So, assigning a string to a Number PMC converts it into a String PMC. Assigning an integer value converts it to a <code>Integer</code>, and assigning <code>undef</code> converts it to an <code>Undef</code> PMC:</p>
+<pre>  new P0, "String"
+  set P0, "Ford\n"
+  print P0           # prints "Ford\n"
+  set P0, 42
+  print P0           # prints 42
+  print "\n"
+  typeof S0, P0
+  print S0           # prints "Integer"
+  print "\n"
+  end
+</pre>
+<p><code>P0</code> starts as a <code>String</code>, but when <code>set</code> assigns it an integer value 42 (replacing the old string value <code>&#34;Ford&#34;</code>), it changes type to <code>Integer</code>. This behavior only works for the wrapper PMC types for the primitive values string, int, and num. Other PMC classes will have different behaviors when you try to assign a primitive value to them.</p>
+
+<p>We can also use the <code>box</code> opcode to explicitly convert an integer, a float, or a string into an appropriate PMC type.</p>
+<pre>  box P0, 3
+  typeof S0, P0         # P0 is an "Integer"
+  box P1, "hello"
+  typeof S0, P1         # P1 is a "String"
+  box P2, 3.14
+  typeof S0, P2         # P2 is a "Number"
+</pre>
+<h3><a name="Math_Operations"
+>Math Operations</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);math operations
+--> PASM has a full set of math instructions. These work with integers, floating&#45;point numbers, and PMCs that implement the vtable methods of a numeric object. Most of the major math opcodes have two&#45; and three&#45;argument forms:</p>
+<pre>  add I0, I1              # I0 += I1
+  add I10, I11, I2        # I10 = I11 + I2
+</pre>
+<p>The three&#45;argument form of <code>add</code><!--
+	INDEX: add opcode (PASM)
+--> stores the sum of the last two registers in the first register. The two&#45;argument form adds the first register to the second and stores the result back in the first register.</p>
+
+<p>The source arguments can be Parrot registers or constants, but they must be compatible with the type of the destination register. Generally, &#34;compatible&#34; means that the source and destination have to be the same type, but there are a few exceptions:</p>
+<pre>  sub P0, P1, 2          # P0 = P1 - 2
+  sub P0, P1, 1.5        # P0 = P1 - 1.5
+</pre>
+<p>If the destination register is an integer register, like <code>I0</code>, the other arguments must be integer registers or integer constants. A floating&#45;point destination, like <code>N0</code>, usually requires floating&#45;point arguments, but many math opcodes also allow the final argument to be an integer. Opcodes with a PMC destination register may take an integer, floating&#45;point, or PMC final argument:</p>
+<pre>  mul P0, P1             # P0 *= P1
+  mul P0, I1
+  mul P0, N1
+  mul P0, P1, P2         # P0 = P1 * P2
+  mul P0, P1, I2
+  mul P0, P1, N2
+</pre>
+<p><!--
+	INDEX: PMCs (Polymorphic Containers);operations on
+--> Operations on a PMC are implemented by the vtable method of the destination (in the two&#45;argument form) or the left source argument (in the three argument form). The result of an operation is entirely determined by the PMC. A class implementing imaginary number operations might return an imaginary number, for example.</p>
+
+<p>We won&#39;t list every math opcode here, but we&#39;ll list some of the most common ones. You can get a complete list in &#34;PASM Opcodes&#34; in Chapter 11.</p>
+
+<h4><a name="Unary_math_opcodes"
+>Unary math opcodes</a></h4>
+
+<p></p>
+
+<p>The unary opcodes have either a destination argument and a source argument, or a single argument as destination and source. Some of the most common unary math opcodes are <code>inc</code> (increment), <code>dec</code> (decrement), <code>abs</code> (absolute value), <code>neg</code> (negate), and <code>fact</code> (factorial):</p>
+<pre>  abs N0, -5.0  # the absolute value of -5.0 is 5.0
+  fact I1, 5    # the factorial of 5 is 120
+  inc I1        # 120 incremented by 1 is 121
+</pre>
+<h4><a name="Binary_math_opcodes"
+>Binary math opcodes</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);math operations;binary
+--> Binary opcodes have two source arguments and a destination argument. As we mentioned before, most binary math opcodes have a two&#45;argument form in which the first argument is both a source and the destination. Parrot provides <code>add</code><!--
+	INDEX: add opcode (PASM)
+--> (addition), <code>sub</code><!--
+	INDEX: sub opcode (PASM)
+--> (subtraction), <code>mul</code><!--
+	INDEX: mul opcode (PASM)
+--> (multiplication), <code>div</code><!--
+	INDEX: div opcode (PASM)
+--> (division), and <code>pow</code><!--
+	INDEX: pow opcode (PASM)
+--> (exponent) opcodes, as well as two different modulus operations. <code>mod</code><!--
+	INDEX: mod opcode (PASM)
+--> is Parrot&#39;s implementation of modulus, and <code>cmod</code><!--
+	INDEX: cmod opcode (PASM)
+--> is the <code>%</code> operator from the C library. It also provides <code>gcd</code><!--
+	INDEX: gcd opcode (PASM)
+--> (greatest common divisor) and <code>lcm</code><!--
+	INDEX: lcm opcode (PASM)
+--> (least common multiple).</p>
+<pre>  div I0, 12, 5   # I0 = 12 / 5
+  mod I0, 12, 5   # I0 = 12 % 5
+</pre>
+<h4><a name="Floating&#45;point_operations"
+>Floating&#45;point operations</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);math operations;floating&#45;point
+--> Although most of the math operations work with both floating&#45;point numbers and integers, a few require floating&#45;point destination registers. Among these are <code>ln</code> (natural log), <code>log2</code> (log base 2), <code>log10</code> (log base 10), and <code>exp</code> (<i>e</i>x), as well as a full set of trigonometric opcodes such as <code>sin</code> (sine), <code>cos</code> (cosine), <code>tan</code> (tangent), <code>sec</code> (secant), <code>cosh</code> (hyperbolic cosine), <code>tanh</code> (hyperbolic tangent), <code>sech</code> (hyperbolic secant), <code>asin</code> (arc sine), <code>acos</code> (arc cosine), <code>atan</code> (arc tangent), <code>asec</code> (arc secant), <code>exsec</code> (exsecant), <code>hav</code> (haversine), and <code>vers</code> (versine). All angle arguments for the <!--
+	INDEX: trigonometric functions (PASM)
+--> trigonometric functions are in radians:</p>
+<pre>  sin N1, N0
+  exp N1, 2
+</pre>
+<p>The majority of the floating&#45;point operations have a single source argument and a single destination argument. Even though the destination must be a floating&#45;point register, the source can be either an integer or floating&#45;point number.</p>
+
+<p>The <code>atan</code><!--
+	INDEX: atan opcode (PASM)
+--> opcode also has a three&#45;argument variant that implements C&#39;s <code>atan2()</code>:</p>
+<pre>  atan N0, 1, 1
+</pre>
+<h3><a name="Working_with_Strings"
+>Working with Strings</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);string operations
+--> String operations work with string registers and with PMCs that implement a string class. String operations on PMC registers require all their string arguments to be String PMCs.</p>
+
+<h4><a name="Concatenating_strings"
+>Concatenating strings</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);string operations;concatenation
+--> Use the <code>concat</code><!--
+	INDEX: concat opcode (PASM)
+--> opcode to concatenate strings. With string register or string constant arguments, <code>concat</code> has both a two&#45;argument and a three&#45;argument form. The first argument is a source and a destination in the two&#45;argument form:</p>
+<pre>  set S0, "ab"
+  concat S0, "cd"     # S0 has "cd" appended
+  print S0            # prints "abcd"
+  print "\n"
+
+  concat S1, S0, "xy" # S1 is the string S0 with "xy" appended
+  print S1            # prints "abcdxy"
+  print "\n"
+  end
+</pre>
+<p>The first <code>concat</code> concatenates the string &#34;cd&#34; onto the string &#34;ab&#34; in <code>S0</code>. It generates a new string &#34;abcd&#34; and changes <code>S0</code> to point to the new string. The second <code>concat</code> concatenates &#34;xy&#34; onto the string &#34;abcd&#34; in <code>S0</code> and stores the new string in <code>S1</code>.</p>
+
+<p><!--
+	INDEX: PMCs (Polymorphic Containers);concatenation
+--> For PMC registers, <code>concat</code> has only a three&#45;argument form with separate registers for source and destination:</p>
+<pre>  new P0, "String"
+  new P1, "String"
+  new P2, "String"
+  set P0, "ab"
+  set P1, "cd"
+  concat P2, P0, P1
+  print P2            # prints abcd
+  print "\n"
+  end
+</pre>
+<p>Here, <code>concat</code> concatenates the strings in <code>P0</code> and <code>P1</code> and stores the result in <code>P2</code>.</p>
+
+<h4><a name="Repeating_strings"
+>Repeating strings</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);string operations;repeating strings
+--> The <code>repeat</code><!--
+	INDEX: repeat opcode (PASM)
+--> opcode repeats a string a certain number of times:</p>
+<pre>  set S0, "x"
+  repeat S1, S0, 5  # S1 = S0 x 5
+  print S1          # prints "xxxxx"
+  print "\n"
+  end
+</pre>
+<p>In this example, <code>repeat</code> generates a new string with &#34;x&#34; repeated five times and stores a pointer to it in <code>S1</code>.</p>
+
+<h4><a name="Length_of_a_string"
+>Length of a string</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);string operations;length
+--> The <code>length</code><!--
+	INDEX: length opcode (PASM)
+--> opcode returns the length of a string in characters. This won&#39;t be the same as the length in bytes for multibyte encoded strings:</p>
+<pre>  set S0, "abcd"
+  length I0, S0                # the length is 4
+  print I0
+  print "\n"
+  end
+</pre>
+<p><code>length</code> doesn&#39;t have an equivalent for PMC strings.</p>
+
+<h4><a name="Substrings"
+>Substrings</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);string operations;substrings
+--> The simplest version of the <code>substr</code><!--
+	INDEX: substr opcode (PASM)
+--> opcode takes four arguments: a destination register, a string, an offset position, and a length. It returns a substring of the original string, starting from the offset position (0 is the first character) and spanning the length:</p>
+<pre>  substr S0, "abcde", 1, 2        # S0 is "bc"
+</pre>
+<p>This example extracts a two&#45;character string from &#34;abcde&#34; at a one&#45;character offset from the beginning of the string (starting with the second character). It generates a new string, &#34;bc&#34;, in the destination register <code>S0</code>.</p>
+
+<p>When the offset position is negative, it counts backward from the end of the string. So an offset of &#45;1 starts at the last character of the string.</p>
+
+<p><code>substr</code> also has a five&#45;argument form, where the fifth argument is a string to replace the substring. This modifies the second argument and returns the removed substring in the destination register.</p>
+<pre>  set S1, "abcde"
+  substr S0, S1, 1, 2, "XYZ"
+  print S0                        # prints "bc"
+  print "\n"
+  print S1                        # prints "aXYZde"
+  print "\n"
+  end
+</pre>
+<p>This replaces the substring &#34;bc&#34; in <code>S1</code> with the string &#34;XYZ&#34;, and returns &#34;bc&#34; in <code>S0</code>.</p>
+
+<p>When the offset position in a replacing <code>substr</code> is one character beyond the original string length, <code>substr</code> appends the replacement string just like the <code>concat</code> opcode. If the replacement string is an empty string, the characters are just removed from the original string.</p>
+
+<p>When you don&#39;t need to capture the replaced string, there&#39;s an optimized version of <code>substr</code> that just does a replace without returning the removed substring.</p>
+<pre>  set S1, "abcde"
+  substr S1, 1, 2, "XYZ"
+  print S1                        # prints "aXYZde"
+  print "\n"
+  end
+</pre>
+<p>The PMC versions of <code>substr</code> are not yet implemented.</p>
+
+<h4><a name="Chopping_strings"
+>Chopping strings</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);string operations;chopping strings
+--> The <code>chopn</code><!--
+	INDEX: chopn opcode (PASM)
+--> opcode removes characters from the end of a string. It takes two arguments: the string to modify and the count of characters to remove.</p>
+<pre>  set S0, "abcde"
+  chopn S0, 2
+  print S0         # prints "abc"
+  print "\n"
+  end
+</pre>
+<p>This example removes two characters from the end of <code>S0</code>. If the count is negative, that many characters are kept in the string:</p>
+<pre>  set S0, "abcde"
+  chopn S0, -2
+  print S0         # prints "ab"
+  print "\n"
+  end
+</pre>
+<p>This keeps the first two characters in <code>S0</code> and removes the rest. <code>chopn</code> also has a three&#45;argument version that stores the chopped string in a separate destination register, leaving the original string untouched:</p>
+<pre>  set S0, "abcde"
+  chopn S1, S0, 1
+  print S1         # prints "abcd"
+  print "\n"
+  end
+</pre>
+<h4><a name="Copying_strings"
+>Copying strings</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);string operations;copying
+--> The <code>clone</code><!--
+	INDEX: clone opcode (PASM)
+--> opcode makes a deep copy of a string or PMC. Instead of just copying the pointer, as normal assignment would, it recursively copies the string or object underneath.</p>
+<pre>  new P0, "String"
+  set P0, "Ford"
+  clone P1, P0
+  set P0, "Zaphod"
+  print P1        # prints "Ford"
+  end
+</pre>
+<p>This example creates an identical, independent clone of the PMC in <code>P0</code> and puts a pointer to it in <code>P1</code>. Later changes to <code>P0</code> have no effect on <code>P1</code>.</p>
+
+<p>With simple strings, the copy created by <code>clone</code>, as well as the results from <code>substr</code>, are copy&#45;on&#45;write (COW). These are rather cheap in terms of memory usage because the new memory location is only created when the copy is assigned a new value. Cloning is rarely needed with ordinary string registers since they always create a new memory location on assignment.</p>
+
+<h4><a name="Converting_characters"
+>Converting characters</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);string operations;converting strings
+--> The <code>chr</code><!--
+	INDEX: chr opcode (PASM)
+--> opcode takes an integer value and returns the corresponding character as a one&#45;character string, while the <code>ord</code><!--
+	INDEX: ord opcode (PASM)
+--> opcode takes a single character string and returns the integer that represents that character in the string&#39;s encoding:</p>
+<pre>  chr S0, 65                # S0 is "A"
+  ord I0, S0                # I0 is 65
+</pre>
+<p><code>ord</code> has a three&#45;argument variant that takes a character offset to select a single character from a multicharacter string. The offset must be within the length of the string:</p>
+<pre>  ord I0, "ABC", 2        # I0 is 67
+</pre>
+<p>A negative offset counts backward from the end of the string, so &#45;1 is the last character.</p>
+<pre>  ord I0, "ABC", -1        # I0 is 67
+</pre>
+<h4><a name="Formatting_strings"
+>Formatting strings</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);string operations;formatting strings
+--> The <code>sprintf</code><!--
+	INDEX: sprintf opcode (PASM)
+--> opcode generates a formatted string from a series of values. It takes three arguments: the destination register, a string specifying the format, and an ordered aggregate PMC (like a <code>Array</code>) containing the values to be formatted. The format string and the destination register can be either strings or PMCs:</p>
+<pre>  sprintf S0, S1, P2
+  sprintf P0, P1, P2
+</pre>
+<p>The format string is similar to the one for C&#39;s <code>sprintf</code> function, but with some extensions for Parrot data types. Each format field in the string starts with a <code>%</code> <!--
+	INDEX: % (percent sign);% format strings for sprintf opcode (PASM)
+--> and ends with a character specifying the output format. The output format characters are listed in Table 9&#45;1.</p>
+
+<p>Each format field can be specified with several options: flags, width, precision, and size. The format flags are listed in Table 9&#45;2.</p>
+
+<p>The width is a number defining the minimum width of the output from a field. The precision is the maximum width for strings or integers, and the number of decimal places for floating&#45;point fields. If either width or precision is an asterisk (<code>*</code>), it takes its value from the next argument in the PMC.</p>
+
+<p>The size modifier defines the type of the argument the field takes. The flags are listed in Table 9&#45;3.</p>
+
+<p>The values in the aggregate PMC must have a type compatible with the specified size.</p>
+
+<p>Here&#39;s a short illustration of string formats:</p>
+<pre>  new P2, "Array"
+  new P0, "Int"
+  set P0, 42
+  push P2, P0
+  new P1, "Num"
+  set P1, 10
+  push P2, P1
+  sprintf S0, "int %#Px num %+2.3Pf\n", P2
+  print S0     # prints "int 0x2a num +10.000"
+  print "\n"
+  end
+</pre>
+<p>The first eight lines create a <code>Array</code> with two elements: a <code>Int</code> and a <code>Num</code>. The format string of the <code>sprintf</code> has two format fields. The first, <code>%#Px</code>, takes a PMC argument from the aggregate (<code>P</code>) and formats it as a hexadecimal integer (<code>x</code>), with a leading 0x (<code>#</code>). The second format field, <code>%+2.3Pf</code>, takes a PMC argument (<code>P</code>) and formats it as a floating&#45;point number (<code>f</code>), with a minimum of two whole digits and a maximum of three decimal places (<code>2.3</code>) and a leading sign (<code>+</code>).</p>
+
+<p>The test files <em><a href="../../t/op/string.t.html">t/op/string.t</a></em> and <em>t/src/sprintf.t</em> have many more examples of format strings.</p>
+
+<h4><a name="Testing_for_substrings"
+>Testing for substrings</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);string operations;testing for substrings
+--> The <code>index</code><!--
+	INDEX: index opcode (PASM)
+--> opcode searches for a substring within a string. If it finds the substring, it returns the position where the substring was found as a character offset from the beginning of the string. If it fails to find the substring, it returns &#45;1:</p>
+<pre>  index I0, "Beeblebrox", "eb"
+  print I0                       # prints 2
+  print "\n"
+  index I0, "Beeblebrox", "Ford"
+  print I0                       # prints -1
+  print "\n"
+  end
+</pre>
+<p><code>index</code> also has a four&#45;argument version, where the fourth argument defines an offset position for starting the search:</p>
+<pre>  index I0, "Beeblebrox", "eb", 3
+  print I0                         # prints 5
+  print "\n"
+  end
+</pre>
+<p>This finds the second &#34;eb&#34; in &#34;Beeblebrox&#34; instead of the first, because the search skips the first three characters in the string.</p>
+
+<h4><a name="Joining_strings"
+>Joining strings</a></h4>
+
+<p>The <code>join</code> opcode joins the elements of an array PMC into a single string. The second argument separates the individual elements of the PMC in the final string result.</p>
+<pre>  new P0, "Array"
+  push P0, "hi"
+  push P0, 0
+  push P0, 1
+  push P0, 0
+  push P0, "parrot"
+  join S0, "__", P0
+  print S0              # prints "hi__0__1__0__parrot"
+  end
+</pre>
+<p>This example builds a <code>Array</code> in <code>P0</code> with the values <code>&#34;hi&#34;</code>, <code>0</code>, <code>1</code>, <code>0</code>, and <code>&#34;parrot&#34;</code>. It then joins those values (separated by the string <code>&#34;__&#34;</code>) into a single string, and stores it in <code>S0</code>.</p>
+
+<h4><a name="Splitting_strings"
+>Splitting strings</a></h4>
+
+<p>Splitting a string yields a new array containing the resulting substrings of the original string.</p>
+<pre>  split P0, "", "abc"
+  set P1, P0[0]
+  print P1              # 'a'
+  set P1, P0[2]
+  print P1              # 'c'
+  end
+</pre>
+<p>This example splits the string &#34;abc&#34; into individual characters and stores them in an array in <code>P0</code>. It then prints out the first and third elements of the array. For now, the split pattern (the second argument to the opcode) is ignored except for a test to make sure that its length is zero.</p>
+
+<h3><a name="Logical_and_Bitwise_Operations"
+>Logical and Bitwise Operations</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);bitwise operations
+--> <!--
+	INDEX: PASM (Parrot assembly language);logical operations
+--> The <!--
+	INDEX: logical opcodes
+--> logical opcodes evaluate the truth of their arguments. They&#39;re often used to make decisions on control flow. Logical operations are implemented for integers and PMCs. Numeric values are false if they&#39;re 0, and true otherwise. Strings are false if they&#39;re the empty string or a single character &#34;0&#34;, and true otherwise. PMCs are true when their <code>get_bool</code><!--
+	INDEX: get_bool vtable method (PASM)
+--> vtable method returns a nonzero value.</p>
+
+<p>The <code>and</code><!--
+	INDEX: and opcode (PASM)
+--> opcode returns the second argument if it&#39;s false and the third argument otherwise:</p>
+<pre>  and I0, 0, 1  # returns 0
+  and I0, 1, 2  # returns 2
+</pre>
+<p>The <code>or</code><!--
+	INDEX: or opcode (PASM)
+--> opcode returns the second argument if it&#39;s true and the third argument otherwise:</p>
+<pre>  or I0, 1, 0  # returns 1
+  or I0, 0, 2  # returns 2
+
+  or P0, P1, P2
+</pre>
+<p>Both <code>and</code> and <code>or</code> are short&#45;circuiting. If they can determine what value to return from the second argument, they&#39;ll never evaluate the third. This is significant only for PMCs, as they might have side effects on evaluation.</p>
+
+<p>The <code>xor</code><!--
+	INDEX: xor opcode (PASM)
+--> opcode returns the second argument if it is the only true value, returns the third argument if it is the only true value, and returns false if both values are true or both are false:</p>
+<pre>  xor I0, 1, 0  # returns 1
+  xor I0, 0, 1  # returns 1
+  xor I0, 1, 1  # returns 0
+  xor I0, 0, 0  # returns 0
+</pre>
+<p>The <code>not</code><!--
+	INDEX: not opcode (PASM)
+--> opcode returns a true value when the second argument is false, and a false value if the second argument is true:</p>
+<pre>  not I0, I1
+  not P0, P1
+</pre>
+<p>The <!--
+	INDEX: bitwise;opcodes (PASM)
+--> bitwise opcodes operate on their values a single bit at a time. <code>band</code><!--
+	INDEX: band opcode (PASM)
+-->, <code>bor</code><!--
+	INDEX: bor opcode (PASM)
+-->, and <code>bxor</code><!--
+	INDEX: bxor opcode (PASM)
+--> return a value that is the logical AND, OR, or XOR of each bit in the source arguments. They each take a destination register and two source registers. They also have two&#45;argument forms where the destination is also a source. <code>bnot</code><!--
+	INDEX: bnot opcode (PASM)
+--> is the logical NOT of each bit in a single source argument.</p>
+<pre>  bnot I0, I1
+  band P0, P1
+  bor I0, I1, I2
+  bxor P0, P1, I2
+</pre>
+<p><!--
+	INDEX: bitwise;string opcodes
+--> The bitwise opcodes also have string variants for AND, OR, and XOR: <code>bors</code><!--
+	INDEX: bors opcode (PASM)
+-->, <code>bands</code><!--
+	INDEX: bands opcode (PASM)
+-->, and <code>bxors</code><!--
+	INDEX: bxors opcode (PASM)
+-->. These take string register or PMC string source arguments and perform the logical operation on each byte of the strings to produce the final string.</p>
+<pre>  bors S0, S1
+  bands P0, P1
+  bors S0, S1, S2
+  bxors P0, P1, S2
+</pre>
+<p>The bitwise string opcodes only have meaningful results when they&#39;re used with simple ASCII strings because the bitwise operation is done per byte.</p>
+
+<p>The logical and arithmetic shift operations shift their values by a specified number of bits:</p>
+<pre>  shl  I0, I1, I2        # shift I1 left by count I2 giving I0
+  shr  I0, I1, I2        # arithmetic shift right
+  lsr  P0, P1, P2        # logical shift right
+</pre>
+<h2><a name="Working_with_PMCs"
+>Working with PMCs</a></h2>
+
+<p></p>
+
+<p>In most of the examples we&#39;ve shown so far, <!--
+	INDEX: PMCs (Polymorphic Containers);working with
+--> PMCs just duplicate the functionality of integers, numbers, and strings. They wouldn&#39;t be terribly useful if that&#39;s all they did, though. PMCs offer several advanced features, each with its own set of operations.</p>
+
+<h3><a name="Aggregates"
+>Aggregates</a></h3>
+
+<p></p>
+
+<p>PMCs can define complex types that hold multiple values. These are commonly called &#34;<!--
+	INDEX: PMCs (Polymorphic Containers);aggregate
+--> <!--
+	INDEX: aggregate PMCs
+--> aggregates.&#34; The most important feature added for aggregates is keyed access. Elements within an aggregate PMC can be stored and retrieved by a numeric or string key. PASM also offers a full set of operations for manipulating aggregate data types.</p>
+
+<p>Since PASM is intended to implement Perl, the two most fully featured aggregates already in operation are arrays and hashes. Any aggregate defined for any language could take advantage of the features described here.</p>
+
+<h4><a name="Arrays"
+>Arrays</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: PMCs (Polymorphic Containers);arrays
+--> The <code>Array</code><!--
+	INDEX: Array PMC
+--> PMC is an ordered aggregate with zero&#45;based integer keys. The syntax for <!--
+	INDEX: keyed access to PMCs
+--> keyed access to a PMC puts the key in square brackets after the register name:</p>
+<pre>  new P0, "Array"     # obtain a new array object
+  set P0, 2           # set its length
+  set P0[0], 10       # set first element to 10
+  set P0[1], I31      # set second element to I31
+  set I0, P0[0]       # get the first element
+  set I1, P0          # get array length
+</pre>
+<p>A key on the destination register of a <code>set</code> operation sets a value for that key in the aggregate. A key on the source register of a <code>set</code> returns the value for that key. If you set <code>P0</code> without a key, you set the length of the array, not one of its values.<code>Array</code> is an autoextending array, so you never need to set its length. Other array types may require the length to be set explicitly. And if you assign the <code>Array</code> to an integer, you get the length of the array.</p>
+
+<p>By the time you read this, the syntax for getting and setting the length of an array may have changed. The change would separate array allocation (how much storage the array provides) from the actual element count. The currently proposed syntax uses <code>set</code> to set or retrieve the allocated size of an array, and an <code>elements</code> <!--
+	INDEX: elements opcode (PASM)
+--> opcode to retrieve the count of elements stored in the array.</p>
+<pre>  set P0, 100         # allocate store for 100 elements
+  set I0, P0          # obtain current allocation size
+  elements I0, P0     # get element count
+</pre>
+<p>Some other useful instructions for working with arrays are <code>push</code>, <code>pop</code>, <code>shift</code>, and <code>unshift</code> (you&#39;ll find them in &#34;PASM Opcodes&#34; in Chapter 11).</p>
+
+<h4><a name="Hashes"
+>Hashes</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: PMCs (Polymorphic Containers);hashes
+--> The <code>Hash</code><!--
+	INDEX: Hash PMC
+--> PMC is an unordered aggregate with string keys:</p>
+<pre>  new P1, "Hash"      # generate a new hash object
+  set P1["key"], 10   # set key and value
+  set I0, P1["key"]   # obtain value for key
+  set I1, P1          # number of entries in hash
+</pre>
+<p>The <code>exists</code><!--
+	INDEX: exists opcode (PASM)
+--> opcode tests whether a keyed value exists in an aggregate. It returns 1 if it finds the key in the aggregate, and returns 0 if it doesn&#39;t. It doesn&#39;t care if the value itself is true or false, only that the key has been set:</p>
+<pre>  new P0, "Hash"
+  set P0["key"], 0
+  exists I0, P0["key"] # does a value exist at "key"
+  print I0             # prints 1
+  print "\n"
+  end
+</pre>
+<p>The <code>delete</code><!--
+	INDEX: delete opcode (PASM)
+--> opcode is also useful for working with hashes: it removes a key/value pair.</p>
+
+<h4><a name="Iterators"
+>Iterators</a></h4>
+
+<p></p>
+
+<p>Iterators extract values from an aggregate PMC. You create an iterator by creating a new <code>Iterator</code> PMC, and passing the array to <code>new</code> as an additional parameter:</p>
+<pre>      new P1, "Iterator", P2
+</pre>
+<p>The include file <em>iterator.pasm</em> defines some constants for working with iterators. The <code>.ITERATE_FROM_START</code> and <code>.ITERATE_FROM_END</code> constants are used to select whether an array iterator starts from the beginning or end of the array. The <code>shift</code> opcode extracts values from the array. An iterator PMC is true as long as it still has values to be retrieved (tested by <code>unless</code> below).</p>
+<pre>  .include "iterator.pasm"
+      new P2, "Array"
+      push P2, "a"
+      push P2, "b"
+      push P2, "c"
+      new P1, "Iterator", P2
+      set P1, .ITERATE_FROM_START
+
+  iter_loop:
+      unless P1, iter_end
+      shift P5, P1
+      print P5                        # prints "a", "b", "c"
+      branch iter_loop
+  iter_end:
+      end
+</pre>
+<p>Hash iterators work similarly to array iterators, but they extract keys. With hashes it&#39;s only meaningful to iterate in one direction, since they don&#39;t define any order for their keys.</p>
+<pre>  .include "iterator.pasm"
+      new P2, "Hash"
+      set P2["a"], 10
+      set P2["b"], 20
+      set P2["c"], 30
+      new P1, "Iterator", P2
+      set P1, .ITERATE_FROM_START_KEYS
+
+  iter_loop:
+      unless P1, iter_end
+      shift S5, P1                    # one of the keys "a", "b", "c"
+      set I9, P2[S5]
+      print I9                        # prints e.g. 20, 10, 30
+      branch iter_loop
+  iter_end:
+      end
+</pre>
+<h4><a name="Data_structures"
+>Data structures</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: PMCs (Polymorphic Containers);data structures
+--> Arrays and hashes can hold any data type, including other aggregates. Accessing elements deep within nested data structures is a common operation, so PASM provides a way to do it in a single instruction. Complex keys specify a series of nested data structures, with each individual key separated by a semicolon:</p>
+<pre>  new P0, "Hash"
+  new P1, "Array"
+  set P1[2], 42
+  set P0["answer"], P1
+  set I1, 2
+  set I0, P0["answer";I1]        # $i = %hash{"answer"}[2]
+  print I0
+  print "\n"
+  end
+</pre>
+<p>This example builds up a data structure of a hash containing an array. The complex key <code>P0[&#34;answer&#34;;I1]</code> retrieves an element of the array within the hash. You can also set a value using a complex key:</p>
+<pre>  set P0["answer";0], 5   # %hash{"answer"}[0] = 5
+</pre>
+<p>The individual keys are integers or strings, or registers with integer or string values.</p>
+
+<h3><a name="PMC_Assignment"
+>PMC Assignment</a></h3>
+
+<p></p>
+
+<p>We mentioned before that <code>set</code> on two <!--
+	INDEX: PMCs (Polymorphic Containers);assignment
+--> PMCs simply aliases them both to the same object, and that <code>clone</code> creates a complete duplicate object. But if you just want to assign the value of one PMC to another PMC, you need the <code>assign</code><!--
+	INDEX: assign opcode (PASM)
+--> opcode:</p>
+<pre>  new P0, "Int"
+  new P1, "Int"
+  set P0, 42
+  set P2, P0
+  assign P1, P0     # note: P1 has to exist already
+  inc P0
+  print P0          # prints 43
+  print "\n"
+  print P1          # prints 42
+  print "\n"
+  print P2          # prints 43
+  print "\n"
+  end
+</pre>
+<p>This example creates two <code>Int</code> PMCs: <code>P0</code> and <code>P1</code>. It gives <code>P0</code> a value of 42. It then uses <code>set</code> to give the same value to <code>P2</code>, but uses <code>assign</code> to give the value to <code>P1</code>. When <code>P0</code> is incremented, <code>P2</code> also changes, but <code>P1</code> doesn&#39;t. The destination register for <code>assign</code> must have an existing object of the right type in it, since <code>assign</code> doesn&#39;t create a new object (as with <code>clone</code>) or reuse the source object (as with <code>set</code>).</p>
+
+<h3><a name="Properties"
+>Properties</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: PMCs (Polymorphic Containers);properties
+--> PMCs can have additional values attached to them as &#34;properties&#34; of the PMC. What these properties do is entirely up to the language being implemented. Perl 6 uses them to store extra information about a variable: whether it&#39;s a constant, if it should always be interpreted as a true value, etc.</p>
+
+<p>The <code>setprop</code><!--
+	INDEX: setprop opcode (PASM)
+--> opcode sets the value of a named property on a PMC. It takes three arguments: the PMC to be set with a property, the name of the property, and a PMC containing the value of the property. The <code>getprop</code><!--
+	INDEX: getprop opcode (PASM)
+--> opcode returns the value of a property. It also takes three arguments: the PMC to store the property&#39;s value, the name of the property, and the PMC from which the property value is to be retrieved:</p>
+<pre>  new P0, "String"
+  set P0, "Zaphod"
+  new P1, "Int"
+  set P1, 1
+  setprop P0, "constant", P1        # set a property on P0
+  getprop P3, "constant", P0        # retrieve a property on P0
+  print P3                          # prints 1
+  print "\n"
+  end
+</pre>
+<p>This example creates a <code>String</code> object in <code>P0</code>, and a <code>Int</code> object with the value 1 in <code>P1</code>. <code>setprop</code> sets a property named &#34;constant&#34; on the object in <code>P0</code> and gives the property the value in <code>P1</code>.The &#34;constant&#34; property is ignored by PASM, but is significant to the Perl 6 code running on top of it. <code>getprop</code> retrieves the value of the property &#34;constant&#34; on <code>P0</code> and stores it in <code>P3</code>.</p>
+
+<p>Properties are kept in a separate hash for each PMC. Property values are always PMCs, but only references to the actual PMCs. Trying to fetch the value of a property that doesn&#39;t exist returns a <code>Undef</code>.</p>
+
+<p><code>delprop</code><!--
+	INDEX: delprop opcode (PASM)
+--> deletes a property from a PMC.</p>
+<pre>  delprop P1, "constant"  # delete property
+</pre>
+<p>You can also return a complete hash of all properties on a PMC with <code>prophash</code><!--
+	INDEX: prophash opcode (PASM)
+-->.</p>
+<pre>  prophash P0, P1         # set P0 to the property hash of P1
+</pre>
+<h2><a name="Flow_Control"
+>Flow Control</a></h2>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);flow control
+--> Although it has many advanced features, at heart PASM is an assembly language. All flow control in PASM&#45;&#45;as in most assembly languages&#45;&#45;is done with branches and jumps.</p>
+
+<p>Branch instructions transfer control to a relative offset from the current instruction. The rightmost argument to every branch opcode is a label, which the assembler converts to the integer value of the offset. You can also branch on a literal integer value, but there&#39;s rarely any need to do so. The simplest branch instruction is <code>branch</code>:</p>
+<pre>    branch L1                # branch 4
+    print "skipped\n"
+  L1:
+    print "after branch\n"
+    end
+</pre>
+<p>This example unconditionally branches to the location of the label <code>L1</code>, skipping over the first <code>print</code> statement.</p>
+
+<p>Jump instructions transfer control to an absolute address. The <code>jump</code> opcode doesn&#39;t calculate an address from a label, so it&#39;s used together with <code>set_addr</code>:</p>
+<pre>    set_addr I0, L1
+    jump I0
+    print "skipped\n"
+    end
+  L1:
+    print "after jump\n"
+    end
+</pre>
+<p>The <code>set_addr</code><!--
+	INDEX: set_addr opcode (PASM)
+--> opcode takes a label or an integer offset and returns an absolute address.</p>
+
+<p>You&#39;ve probably noticed the <code>end</code><!--
+	INDEX: end opcode (PASM)
+--> opcode as the last statement in many examples above. This terminates the execution of the current run loop. Terminating the main bytecode segment (the first run loop) stops the interpreter. Without the <code>end</code> statement, execution just falls off the end of the bytecode segment, with a good chance of crashing the interpreter.</p>
+
+<h3><a name="Conditional_Branches"
+>Conditional Branches</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);conditional branches
+--> <!--
+	INDEX: conditional branches in PASM
+--> Unconditional jumps and branches aren&#39;t really enough for flow control. What you need to implement the control structures of high&#45;level languages is the ability to select different actions based on a set of conditions. PASM has opcodes that conditionally branch based on the truth of a single value or the comparison of two values. The following example has <code>if</code><!--
+	INDEX: if (conditional);opcode (PASM)
+--> and <code>unless</code><!--
+	INDEX: unless (conditional);opcode (PASM)
+--> conditional branches:</p>
+<pre>    set I0, 0
+    if I0, TRUE
+    unless I0, FALSE
+    print "skipped\n"
+    end
+  TRUE:
+    print "shouldn't happen\n"
+    end
+  FALSE:
+    print "the value was false\n"
+    end
+</pre>
+<p><code>if</code> branches if its first argument is a true value, and <code>unless</code> branches if its first argument is a false value. In this case, the <code>if</code> doesn&#39;t branch because <code>I0</code> is false, but the <code>unless</code> does branch. The comparison branching opcodes compare two values and branch if the stated relation holds true. These are <code>eq</code><!--
+	INDEX: eq (equal);opcode (PASM)
+--> (branch when equal), <code>ne</code><!--
+	INDEX: ne (not equal);opcode (PASM)
+--> (when not equal), <code>lt</code><!--
+	INDEX: lt (less than);opcode (PASM)
+--> (when less than), <code>gt</code><!--
+	INDEX: gt (greater than);opcode (PASM)
+--> (when greater than), <code>le</code><!--
+	INDEX: le (less than or equal);opcode (PASM)
+--> (when less than or equal), and <code>ge</code><!--
+	INDEX: ge (greater than or equal);opcode (PASM)
+--> (when greater than or equal). The two compared arguments must be the same register type:</p>
+<pre>    set I0, 4
+    set I1, 4
+    eq I0, I1, EQUAL
+    print "skipped\n"
+    end
+  EQUAL:
+    print "the two values are equal\n"
+    end
+</pre>
+<p>This compares two integers, <code>I0</code> and <code>I1</code>, and branches if they&#39;re equal. Strings of different character sets or encodings are converted to Unicode before they&#39;re compared. PMCs have a <code>cmp</code> vtable method. This gets called on the left argument to perform the comparison of the two objects.</p>
+
+<p>The comparison opcodes don&#39;t specify if a numeric or string comparison is intended. The type of the register selects for integers, floats, and strings. With PMCs, the vtable method <code>cmp</code> or <code>is_equal</code> of the first argument is responsible for comparing the PMC meaningfully with the other operand. If you need to force a numeric or string comparison on two PMCs, use the alternate comparison opcodes that end in the <code>_num</code> and <code>_str</code> suffixes.</p>
+<pre>  eq_str P0, P1, label     # always a string compare
+  gt_num P0, P1, label     # always numerically
+</pre>
+<p>Finally, the <code>eq_addr</code> opcode branches if two PMCs or strings are actually the same object (have the same address):</p>
+<pre>  eq_addr P0, P1, same_pmcs_found
+</pre>
+<h3><a name="Iteration"
+>Iteration</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: iteration;in PASM
+--> <!--
+	INDEX: PASM (Parrot assembly language);iteration
+--> PASM doesn&#39;t define high&#45;level loop constructs. These are built up from a combination of conditional and unconditional branches. A <i>do&#45;while</i><!--
+	INDEX: do&#45;while style loop;(PASM)
+--> style loop can be constructed with a single conditional branch:</p>
+<pre>    set I0, 0
+    set I1, 10
+  REDO:
+    inc I0
+    print I0
+    print "\n"
+    lt I0, I1, REDO
+    end
+</pre>
+<p>This example prints out the numbers 1 to 10. The first time through, it executes all statements up to the <code>lt</code> statement. If the condition evaluates as true (<code>I0</code> is less than <code>I1</code>) it branches to the <code>REDO</code> label and runs the three statements in the loop body again. The loop ends when the condition evaluates as false.</p>
+
+<p>Conditional and unconditional branches can build up quite complex looping constructs, as follows:</p>
+<pre>    # loop ($i=1; $i<=10; $i++) {
+    #    print "$i\n";
+    # }
+  loop_init:
+    set I0, 1
+    branch loop_test
+  loop_body:
+    print I0
+    print "\n"
+    branch loop_continue
+  loop_test:
+    le I0, 10, loop_body
+    branch out
+  loop_continue:
+    inc I0
+    branch loop_test
+  out:
+    end
+</pre>
+<p><!--
+	INDEX: loops;PASM
+--> <!--
+	INDEX: PASM (Parrot assembly language);loops
+--> This example emulates a <!--
+	INDEX: counter&#45;controlled loop
+--> counter&#45;controlled loop like Perl 6&#39;s <code>loop</code> keyword or C&#39;s <code>for</code>. The first time through the loop it sets the initial value of the counter in <code>loop_init</code>, tests that the loop condition is met in <code>loop_test</code>, and then executes the body of the loop in <code>loop_body</code>. If the test fails on the first iteration, the loop body will never execute. The end of <code>loop_body</code> branches to <code>loop_continue</code>, which increments the counter and then goes to <code>loop_test</code> again. The loop ends when the condition fails, and it branches to <code>out</code>. The example is more complex than it needs to be just to count to 10, but it nicely shows the major components of a loop.</p>
+
+<h2><a name="Lexicals_and_Globals"
+>Lexicals and Globals</a></h2>
+
+<p></p>
+
+<p>So far, we&#39;ve been treating Parrot registers like the variables of a high&#45;level language. This is fine, as far as it goes, but it isn&#39;t the full picture. The dynamic nature and introspective features of languages like Perl make it desirable to manipulate variables by name, instead of just by register or stack location. These languages also have global variables, which are visible throughout the entire program. Storing a global variable in a register would either tie up that register for the lifetime of the program or require some unwieldy way to shuffle the data into and out of registers.</p>
+
+<p>Parrot provides structures for storing both global and lexically scoped named variables. Lexical and global variables must be PMC values. PASM provides instructions for storing and retrieving variables from these structures so the PASM opcodes can operate on their values.</p>
+
+<h3><a name="Globals"
+>Globals</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);global variables
+--> Global variables are stored in a <code>Hash</code>, so every variable name must be unique. PASM has two opcodes for globals, <code>set_global</code> and <code>get_global</code>:</p>
+<pre>  new P10, "Int"
+  set P10, 42
+  set_global "$foo", P10
+  # ...
+  get_global P0, "$foo"
+  print P0                        # prints 42
+  end
+</pre>
+<p>The first two statements create a <code>Int</code> in the PMC register <code>P10</code> and give it the value 42. In the third statement, <code>set_global</code> stores that PMC as the named global variable <code>$foo</code>. At some later point in the program, <code>get_global</code> retrieves the PMC from the global variable by name, and stores it in <code>P0</code> so it can be printed.</p>
+
+<p>The <code>set_global</code> opcode only stores a reference to the object. If we add an increment statement:</p>
+<pre>  inc P10
+</pre>
+<p>after the <code>set_global</code> it increments the stored global, printing 43. If that&#39;s not what you want, you can <code>clone</code> the PMC before you store it. Leaving the global variable as an alias does have advantages, though. If you retrieve a stored global into a register and modify it as follows:</p>
+<pre>  get_global P0, "varname"
+  inc P0
+</pre>
+<p>the value of the stored global is directly modified, so you don&#39;t need to call <code>set_global</code> again.</p>
+
+<p>The two&#45;argument forms of <code>set_global</code> and <code>get_global</code> store or retrieve globals from the outermost namespace (what Perl users will know as the &#34;main&#34; namespace). A simple flat global namespace isn&#39;t enough for most languages, so Parrot also needs to support hierarchical namespaces for separating packages (classes and modules in Perl 6). Use <code>set_rootglobal</code> and <code>get_root_global</code> add an argument to select a nested namespace:</p>
+<pre>  set_root_global ["Foo"], "var", P0 # store P0 as var in the Foo namespace
+  get_root_global P1, ["Foo"], "var"  # get Foo::var
+</pre>
+<p>Eventually the global opcodes will have variants that take a PMC to specify the namespace, but the design and implementation of these aren&#39;t finished yet.</p>
+
+<h3><a name="Lexicals"
+>Lexicals</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: PASM (Parrot assembly language);lexical variables
+--> Lexical variables are stored in a lexical scratchpad. There&#39;s one pad for each lexical scope. Every pad has both a hash and an array, so elements can be stored either by name or by numeric index.</p>
+
+<h4><a name="Basic_instructions"
+>Basic instructions</a></h4>
+
+<p></p>
+
+<p>To store a lexical variable in the current scope pad, use <code>store_lex</code>. Likewise, use <code>find_lex</code> to retrieve a variable from the current pad.</p>
+<pre>  new P0, "Int"            # create a variable
+  set P0, 10               # assign value to it
+  store_lex "foo", P0      # store the var with the variable name "foo"
+  # ...
+  find_lex P1, "foo"       # get the var "foo" into P1
+  print P1
+  print "\n"               # prints 10
+  end
+</pre>
+<h2><a name="Subroutines"
+>Subroutines</a></h2>
+
+<p></p>
+
+<p><!--
+	INDEX: subroutines
+--> Subroutines and methods are the basic building blocks of larger programs. At the heart of every subroutine call are two fundamental actions: it has to store the current location so it can come back to it, and it has to transfer control to the subroutine. The <code>bsr</code><!--
+	INDEX: bsr opcode (PASM)
+--> opcode does both. It pushes the address of the next instruction onto the control stack, and then branches to a label that marks the subroutine:</p>
+<pre>    print "in main\n"
+    bsr _sub
+    print "and back\n"
+    end
+  _sub:
+    print "in sub\n"
+    ret
+</pre>
+<p>At the end of the subroutine, the <code>ret</code> instruction pops a location back off the control stack and goes there, returning control to the caller. The <code>jsr</code><!--
+	INDEX: jsr opcode (PASM)
+--> opcode pushes the current location onto the call stack and jumps to a subroutine. Just like the <code>jump</code> opcode, it takes an absolute address in an integer register, so the address has to be calculated first with the <code>set_addr</code><!--
+	INDEX: set_addr opcode (PASM)
+--> opcode:</p>
+<pre>    print "in main\n"
+    set_addr I0, _sub
+    jsr I0
+    print "and back\n"
+    end
+  _sub:
+    print "in sub\n"
+    ret
+</pre>
+<h3><a name="Calling_Conventions"
+>Calling Conventions</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: registers;usage for subroutine calls
+--> <!--
+	INDEX: subroutines;register usage
+--> <!--
+	INDEX: subroutines;calling conventions
+--> A <code>bsr</code> or <code>jsr</code> is fine for a simple subroutine call, but few subroutines are quite that simple. Who is responsible for saving and restoring the registers, however, so that they don&#39;t get overwritten when we perform a c&#60;bsr&#62; or <code>jsr</code>? How are arguments passed? Where are the subroutine&#39;s return values stored? A number of different answers are possible. You&#39;ve seen how many ways Parrot has of storing values. The critical point is that the caller and the called subroutine have to agree on all the answers.</p>
+
+<h4><a name="Parrot_calling_conventions"
+>Parrot calling conventions</a></h4>
+
+<p></p>
+
+<p>Internal subroutines can use whatever calling convention serves them best. Externally visible subroutines and methods need stricter rules. Since these routines may be called as part of an included library or module and even from a different high level language, it&#39;s important to have a consistent interface.</p>
+
+<p>The <code>.sub</code> directive defines globally accessible subroutine objects.</p>
+
+<p>Subroutine objects of all kinds can be called with the <code>invoke</code><!--
+	INDEX: invoke opcode (PASM)
+--> opcode. There is also an <code>invoke</code> <code>Px</code> instruction for calling objects held in a different register.</p>
+
+<p>The <code>invokecc</code><!--
+	INDEX: invokecc opcode (PASM)
+--> opcode is like <code>invoke</code>, but it also creates and stores a new return continuation. When the called subroutine invokes this return continuation, it returns control to the instruction after the function call. This kind of call is known as Continuation Passing Style (CPS). <!--
+	INDEX: CPS (Continuation Passing Style)
+--> <!--
+	INDEX: Continuation Passing Style (CPS)
+--></p>
+
+<h3><a name="Native_Call_Interface"
+>Native Call Interface</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: subroutines;calling conventions;NCI
+--> A special version of the Parrot calling conventions are used by the <!--
+	INDEX: NCI (Native Call Interface)
+--> Native Call Interface (NCI) for calling subroutines with a known prototype in shared libraries. This is not really portable across all libraries, but it&#39;s worth a short example. This is a simplified version of the first test in <em><a href="../../t/pmc/nci.t.html">t/pmc/nci.t</a></em>:</p>
+<pre>    loadlib P1, "libnci_test"     # get library object for a shared lib
+    print "loaded\n"
+    dlfunc P0, P1, "nci_dd", "dd" # obtain the function object
+    print "dlfunced\n"
+    set I0, 1                     # prototype used - unchecked
+    set_args "0", 4.0             # set the argument
+    get_results "0", N5           # prepare to store the return value
+    invokecc P0                   # call nci_dd
+    ne N5, 8.0, nok_1             # the test functions returns 2*arg
+    print "ok 1\n"
+    end
+    nok_1:
+    #...
+</pre>
+<p>This example shows two new instructions: <code>loadlib</code> and <code>dlfunc</code>. The <code>loadlib</code><!--
+	INDEX: loadlib opcode (PASM)
+--> opcode obtains a handle for a shared library. It searches for the shared library in the current directory, in <em>runtime/parrot/dynext</em>, and in a few other configured directories. It also tries to load the provided filename unaltered and with appended extensions like <code>.so</code> or <code>.dll</code>. Which extensions it tries depends on the OS Parrot is running on.</p>
+
+<p>The <code>dlfunc</code><!--
+	INDEX: dlfunc opcode (PASM)
+--> opcode gets a function object from a previously loaded library (second argument) of a specified name (third argument) with a known function signature (fourth argument). The function signature is a string where the first character is the return value and the rest of the parameters are the function parameters. The characters used in <!--
+	INDEX: NCI (Native Call Interface);function signatures
+--> NCI function signatures are listed in Table 9&#45;5.</p>
+
+<p>For more information on callback functions, read the documentation in <em>docs/pdds/pdd16_native_call.pod</em> and <em><a href="../pmc/struct.pod.html">docs/pmc/struct.pod</a></em>.</p>
+
+<h3><a name="Coroutines"
+>Coroutines</a></h3>
+
+<p></p>
+
+<p>As we mentioned in the previous chapter, coroutines are <!--
+	INDEX: subroutines;coroutines
+--> subroutines that can suspend themselves and return control to the caller&#45;&#45;and then pick up where they left off the next time they&#39;re called, as if they never left.</p>
+
+<p><!--
+	INDEX: coroutines
+--> In PASM, coroutines are subroutine&#45;like objects:</p>
+<pre>  newsub P0, .Coroutine, _co_entry
+</pre>
+<p>The <code>Coroutine</code> object has its own user stack, register frame stacks, control stack, and pad stack. The pad stack is inherited from the caller. The coroutine&#39;s control stack has the caller&#39;s control stack prepended, but is still distinct. When the coroutine invokes itself, it returns to the caller and restores the caller&#39;s context (basically swapping all stacks). The next time the coroutine is invoked, it continues to execute from the point at which it previously returned:</p>
+<pre>    new_pad 0                # push a new lexical pad on stack
+    new P0, "Int"            # save one variable in it
+    set P0, 10
+    store_lex -1, "var", P0
+
+    newsub P0, .Coroutine, _cor
+                             # make a new coroutine object
+    saveall                  # preserve environment
+    invoke                   # invoke the coroutine
+    restoreall
+    print "back\n"
+    saveall
+    invoke                   # invoke coroutine again
+    restoreall
+    print "done\n"
+    pop_pad
+    end
+
+  _cor:
+    find_lex P1, "var"       # inherited pad from caller
+    print "in cor "
+    print P1
+    print "\n"
+    inc P1                   # var++
+    saveall
+    invoke                   # yield(  )
+    restoreall
+    print "again "
+    branch _cor              # next invocation of the coroutine
+</pre>
+<p>This prints out the result:</p>
+
+<pre>  in cor 10
+  back
+  again in cor 11
+  done</pre>
+
+<p><!--
+	INDEX: invoke opcode (PASM);coroutines and
+--> The <code>invoke</code> inside the coroutine is commonly referred to as <i>yield</i>. The coroutine never ends. When it reaches the bottom, it branches back up to <code>_cor</code> and executes until it hits <code>invoke</code> again.</p>
+
+<p>The interesting part about this example is that the coroutine yields in the same way that a subroutine is called. This means that the coroutine has to preserve its own register values. This example uses <code>saveall</code> but it could have only stored the registers the coroutine actually used. Saving off the registers like this works because coroutines have their own register frame stacks.</p>
+
+<h3><a name="Continuations"
+>Continuations</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: continuations
+--> <!--
+	INDEX: subroutines;continuations
+--> A continuation is a subroutine that gets a complete copy of the caller&#39;s context, including its own copy of the call stack. Invoking a continuation starts or restarts it at the entry point:</p>
+<pre>    new P1, "Int"
+    set P1, 5
+
+    newsub P0, .Continuation, _con
+  _con:
+    print "in cont "
+    print P1
+    print "\n"
+    dec P1
+    unless P1, done
+    invoke                        # P0
+  done:
+    print "done\n"
+    end
+</pre>
+<p>This prints:</p>
+
+<pre>  in cont 5
+  in cont 4
+  in cont 3
+  in cont 2
+  in cont 1
+  done</pre>
+
+<h3><a name="Evaluating_a_Code_String"
+>Evaluating a Code String</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: code strings, evaluating
+--> This isn&#39;t really a subroutine operation, but it does produce a code object that can be invoked. In this case, it&#39;s a <!--
+	INDEX: bytecode segment object
+--> bytecode segment object.</p>
+
+<p>The first step is to get an assembler or compiler for the target language:</p>
+<pre>  compreg P1, "PASM"
+</pre>
+<p>Within the Parrot interpreter there are currently three registered languages: <code>PASM</code>, <code>PIR</code>, and <code>PASM1</code>. The first two are for parrot assembly language and parrot intermediate representation code. The third is for evaluating single statements in PASM. Parrot automatically adds an <code>end</code> opcode at the end of <code>PASM1</code> strings before they&#39;re compiled.</p>
+
+<p>This example places a bytecode segment object into the destination register <code>P0</code> and then invokes it with <code>invoke</code>:</p>
+<pre>  compreg P1, "PASM1"                # get compiler
+  set S1, "in eval\n"
+  compile P0, P1, "print S1"
+  invoke                             # eval code P0
+  print "back again\n"
+  end
+</pre>
+<p>You can register a compiler or assembler for any language inside the Parrot core and use it to compile and invoke code from that language. These compilers may be written in PASM or reside in shared libraries.</p>
+<pre>  compreg "MyLanguage", P10
+</pre>
+<p>In this example the <code>compreg</code> opcode registers the subroutine&#45;like object <code>P10</code> as a compiler for the language &#34;MyLanguage&#34;. See <em>examples/compilers</em> and <em>examples/japh/japh16.pasm</em> for an external compiler in a shared library.</p>
+
+<h2><a name="Exceptions_and_Exception_Handlers"
+>Exceptions and Exception Handlers</a></h2>
+
+<p></p>
+
+<p><!--
+	INDEX: exceptions
+--> <!--
+	INDEX: exception handlers
+--> Exceptions provide a way of calling a piece of code outside the normal flow of control. They are mainly used for error reporting or cleanup tasks, but sometimes exceptions are just a funny way to branch from one code location to another one. The design and implementation of exceptions in Parrot isn&#39;t complete yet, but this section will give you an idea where we&#39;re headed.</p>
+
+<p>Exceptions are objects that hold all the information needed to handle the exception: the error message, the severity and type of the error, etc. The class of an exception object indicates the kind of exception it is.</p>
+
+<p>Exception handlers are derived from continuations. They are ordinary subroutines that follow the Parrot calling conventions, but are never explicitly called from within user code. User code pushes an exception handler onto the control stack with the <code>set_eh</code><!--
+	INDEX: set_eh opcode (PASM)
+--> opcode. The system calls the installed exception handler only when an exception is thrown (perhaps because of code that does division by zero or attempts to retrieve a global that wasn&#39;t stored.)</p>
+<pre>    newsub P20, .ExceptionHandler, _handler
+    set_eh P20                  # push handler on control stack
+    null P10                    # set register to null
+    get_global P10, "none"     # may throw exception
+    clear_eh                    # pop the handler off the stack
+    #...
+
+  _handler:                     # if not, execution continues here
+    is_null P10, not_found      # test P10
+    #...
+</pre>
+<p>This example creates a new exception handler subroutine with the <code>newsub</code> opcode and installs it on the control stack with the <code>set_eh</code> opcode. It sets the <code>P10</code> register to a null value (so it can be checked later) and attempts to retrieve the global variable named <code>none</code>. If the global variable is found, the next statement (<code>clear_eh</code>) pops the exception handler off the control stack and normal execution continues. If the <code>get_global</code> call doesn&#39;t find <code>none</code> it throws an exception by pushing an exception object onto the control stack. When Parrot sees that it has an exception, it pops it off the control stack and calls the exception handler <code>_handler</code>.</p>
+
+<p>The first exception handler in the control stack sees every exception thrown. The handler has to examine the exception object and decide whether it can handle it (or discard it) or whether it should <code>rethrow</code> the exception to pass it along to an exception handler deeper in the stack. The <code>rethrow</code><!--
+	INDEX: rethrow opcode (PASM)
+--> opcode is only valid in exception handlers. It pushes the exception object back onto the control stack so Parrot knows to search for the next exception handler in the stack. The process continues until some exception handler deals with the exception and returns normally, or until there are no more exception handlers on the control stack. When the system finds no installed exception handlers it defaults to a final action, which normally means it prints an appropriate message and terminates the program.</p>
+
+<p>When the system installs an exception handler, it creates a return continuation with a snapshot of the current interpreter context. If the exception handler just returns (that is, if the exception is cleanly caught) the return continuation restores the control stack back to its state when the exception handler was called, cleaning up the exception handler and any other changes that were made in the process of handling the exception.</p>
+
+<p>Exceptions thrown by standard Parrot opcodes (like the one thrown by <code>get_global</code> above or by the <code>throw</code> opcode) are always resumable, so when the exception handler function returns normally it continues execution at the opcode immediately after the one that threw the exception. Other exceptions at the run&#45;loop level are also generally resumable.</p>
+<pre>  new P10, 'Exception'    # create new Exception object
+  set P10, 'I die'        # set message attribute
+  throw P10               # throw it
+</pre>
+<p>Exceptions are designed to work with the Parrot calling conventions. Since the return addresses of <code>bsr</code> subroutine calls and exception handlers are both pushed onto the control stack, it&#39;s generally a bad idea to combine the two.</p>
+
+<h2><a name="Events"
+>Events</a></h2>
+
+<p></p>
+
+<p>An event is a notification that something has happened: a timer expired, an IO operation finished, a thread sent a message to another thread, or the user pressed <code>Ctrl&#45;C</code> to interrupt program execution.</p>
+
+<p>What all of these events have in common is that they arrive asynchronously. It&#39;s generally not safe to interrupt program flow at an arbitrary point and continue at a different position, so the event is placed in the interpreter&#39;s task queue. The run loops code regularly checks whether an event needs to be handled. Event handlers may be an internal piece of code or a user&#45;defined event handler subroutine.</p>
+
+<p>Events are still experimental in Parrot, so the implementation and design is subject to change.</p>
+
+<h3><a name="Timers"
+>Timers</a></h3>
+
+<p></p>
+
+<p><code>Timer</code> objects are the replacement for Perl 5&#39;s <code>alarm</code> handlers. They are also a significant improvement. Timers can fire once or repeatedly, and multiple timers can run independently. The precision of a timer is limited by the OS Parrot runs on, but it is always more fine&#45;grained then a whole second. The final syntax isn&#39;t yet fixed, so please consult the documentation for examples.</p>
+
+<h3><a name="Signals"
+>Signals</a></h3>
+
+<p></p>
+
+<p>Signal handling is related to events. When Parrot gets a signal it needs to handle from the OS, it converts that signal into an event and broadcasts it to all running threads. Each thread independently decides if it&#39;s interested in this signal and, if so, how to respond to it.</p>
+<pre>    newsub P20, .ExceptionHandler, _handler
+    set_eh P20                  # establish signal handler
+    print "send SIGINT:\n"
+    sleep 2                     # press ^C after you saw start
+    print "no SIGINT\n"
+    end
+  _handler:
+    .include "signal.pasm"      # get signal definitions
+    print "caught "
+    set I0, P5["type"]         # if _type is negative, the ...
+    neg I0, I0                  # ... negated type is the signal
+    ne I0, .SIGINT, nok
+    print "SIGINT\n"
+  nok:
+    end
+</pre>
+<p>This example creates a signal handler and pushes it on to the control stack. It then prompts the user to send a <code>SIGINT</code> from the shell (this is usually <code>Ctrl&#45;C</code>, but it varies in different shells), and waits for 2 seconds. If the user doesn&#39;t send a SIGINT in 2 seconds the example just prints &#34;no SIGINT&#34; and ends. If the user does send a SIGINT, the signal handler catches it, prints out &#34;caught SIGINT&#34; and ends.Currently, only Linux installs a <code>SIGINT</code> <code>sigaction</code> handler, so this example won&#39;t work on other platforms.</p>
+
+<h2><a name="Threads"
+>Threads</a></h2>
+
+<p></p>
+
+<p>Threads allow multiple pieces of code to run in parallel. This is useful when you have multiple physical CPUs to share the load of running individual threads. With a single processor, threads still provide the feeling of parallelism, but without any improvement in execution time. Even worse, sometimes using threads on a single processor will actually slow down your program.</p>
+
+<p>Still, many algorithms can be expressed more easily in terms of parallel running pieces of code and many applications profit from taking advantage of multiple CPUs. Threads can vastly simplify asynchronous programs like internet servers: a thread splits off, waits for some IO to happen, handles it, and relinquishes the processor again when it&#39;s done.</p>
+
+<p>Parrot compiles in thread support by default (at least, if the platform provides some kind of support for it). Unlike Perl 5, compiling with threading support doesn&#39;t impose any execution time penalty for a non&#45;threaded program. Like exceptions and events, threads are still under development, so you can expect significant changes in the near future.</p>
+
+<p>As outlined in the previous chapter, Parrot implements three different threading models. (<b>Note</b>: As of version 1.0, the <code>TQueue</code> PMC will be deprecated, rendering the following discussion obsolete.) The following example uses the third model, which takes advantage of shared data. It uses a <code>TQueue</code> (thread&#45;safe queue) object to synchronize the two parallel running threads. This is only a simple example to illustrate threads, not a typical usage of threads (no&#45;one really wants to spawn two threads just to print out a simple string).</p>
+<pre>    get_global P5, "_th1"              # locate thread function
+    new P2, "ParrotThread"              # create a new thread
+    find_method P0, P2, "thread3"       # a shared thread's entry
+    new P7, "TQueue"                    # create a Queue object
+    new P8, "Int"                       # and a Int
+    push P7, P8                         # push the Int onto queue
+    new P6, "String"                    # create new string
+    set P6, "Js nte artHce\n"
+    set I3, 3                           # thread function gets 3 args
+    invoke                              # _th1.run(P5,P6,P7)
+    new P2, "ParrotThread"              # same for a second thread
+    get_global P5, "_th2"
+    set P6, "utaohrPro akr"             # set string to 2nd thread's
+    invoke                              # ... data, run 2nd thread too
+    end                                 # Parrot joins both
+
+  .pcc_sub _th1:                        # 1st thread function
+  w1: sleep 0.001                       # wait a bit and schedule
+    defined I1, P7                      # check if queue entry is ...
+    unless I1, w1                       # ... defined, yes: it's ours
+    set S5, P6                          # get string param
+    substr S0, S5, I0, 1                # extract next char
+    print S0                            # and print it
+    inc I0                              # increment char pointer
+    shift P8, P7                        # pull item off from queue
+    if S0, w1                           # then wait again, if todo
+    invoke P1                           # done with string
+
+  .pcc_sub _th2:                        # 2nd thread function
+  w2: sleep 0.001
+    defined I1, P7                      # if queue entry is defined
+    if I1, w2                           # then wait
+    set S5, P6
+    substr S0, S5, I0, 1                # if not print next char
+    print S0
+    inc I0
+    new P8, "Int"                       # and put a defined entry
+    push P7, P8                         # onto the queue so that
+    if S0, w2                           # the other thread will run
+    invoke P1                           # done with string
+</pre>
+<p>This example creates a <code>ParrotThread</code> object and calls its <code>thread3</code> method, passing three arguments: a PMC for the <code>_th1</code> subroutine in <code>P5</code>, a string argument in <code>P6</code>, and a <code>TQueue</code> object in <code>P7</code> containing a single integer. Remember from the earlier section &#34;Parrot calling conventions&#34; that registers 5&#45;15 hold the arguments for a subroutine or method call and <code>I3</code> stores the number of arguments. The thread object is passed in <code>P2</code>.</p>
+
+<p>This call to the <code>thread3</code> method spawns a new thread to run the <code>_th1</code> subroutine. The main body of the code then creates a second <code>ParrotThread</code> object in <code>P2</code>, stores a different subroutine in <code>P5</code>, sets <code>P6</code> to a new string value, and then calls the <code>thread3</code> method again, passing it the same <code>TQueue</code> object as the first thread. This method call spawns a second thread. The main body of code then ends, leaving the two threads to do the work.</p>
+
+<p>At this point the two threads have already started running. The first thread (<code>_th1</code>) starts off by sleeping for a 1000th of a second. It then checks if the <code>TQueue</code> object contains a value. Since it contains a value when the thread is first called, it goes ahead and runs the body of the subroutine. The first thing this does is shift the element off the <code>TQueue</code>. It then pulls one character off a copy of the string parameter using <code>substr</code>, prints the character, increments the current position (<code>I0</code>) in the string, and loops back to the <code>w1</code> label and sleeps. Since the queue doesn&#39;t have any elements now, the subroutine keeps sleeping.</p>
+
+<p>Meanwhile, the second thread (<code>_th2</code>) also starts off by sleeping for a 1000th of a second. It checks if the shared <code>TQueue</code> object contains a defined value but unlike the first thread it only continues sleeping if the queue does contain a value. Since the queue contains a value when the second thread is first called, the subroutine loops back to the <code>w2</code> label and continues sleeping. It keeps sleeping until the first thread shifts the integer off the queue, then runs the body of the subroutine. The body pulls one character off a copy of the string parameter using <code>substr</code>, prints the character, and increments the current position in the string. It then creates a new <code>Int</code>, pushes it onto the shared queue, and loops back to the <code>w2</code> label again to sleep. The queue has an element now, so the second thread keeps sleeping, but the first thread runs through its loop again.</p>
+
+<p>The two threads alternate like this, printing a character and marking the queue so the next thread can run, until there are no more characters in either string. At the end, each subroutine invokes the return continuation in <code>P1</code> which terminates the thread. The interpreter waits for all threads to terminate in the cleanup phase after the <code>end</code> in the main body of code.</p>
+
+<p>The final printed result (as you might have guessed) is:</p>
+
+<pre>  Just another Parrot Hacker</pre>
+
+<p>The syntax for threads isn&#39;t carved in stone and the implementation still isn&#39;t finished but as this example shows, threads are working now and already useful.</p>
+
+<p>Several methods are useful when working with threads. The <code>join</code> method belongs to the <code>ParrotThread</code> class. When it&#39;s called on a <code>ParrotThread</code> object, the calling code waits until the thread terminates.</p>
+<pre>    new P2, "ParrotThread"      # create a new thread
+    set I5, P2                  # get thread ID
+
+    find_method P0, P2, "join"  # get the join method...
+    invoke                      # ...and join (wait for) the thread
+    set P16, P5                 # the return result of the thread
+</pre>
+<p><code>kill</code> and <code>detach</code> are interpreter methods, so you have to grab the current interpreter object before you can look up the method object.</p>
+<pre>    set I5, P2                  # get thread ID of thread P2
+    getinterp P3                # get this interpreter object
+    find_method P0, P3, "kill"  # get kill method
+    invoke                      # kill thread with ID I5
+
+    find_method P0, P3, "detach"
+    invoke                      # detach thread with ID I5
+</pre>
+<p>By the time you read this, some of these combinations of statements and much of the threading syntax above may be reduced to a simpler set of opcodes.</p>
+
+<h2><a name="Loading_Bytecode"
+>Loading Bytecode</a></h2>
+
+<p></p>
+
+<p>In addition to running Parrot bytecode on the command&#45;line, you can also load pre&#45;compiled bytecode directly into your PASM source file. The <code>load_bytecode</code><!--
+	INDEX: load_bytecode opcode (PASM)
+--> opcode takes a single argument: the name of the bytecode file to load. So, if you create a file named <em>file.pasm</em> containing a single subroutine:</p>
+<pre>  # file.pasm
+  .sub _sub2:               # .sub stores a global sub
+     print "in sub2\n"
+     invoke P1
+</pre>
+<p>and compile it to bytecode using the <code>&#45;o</code> command&#45;line switch:</p>
+
+<pre>  $ parrot &#45;o file.pbc file.pasm</pre>
+
+<p>You can then load the compiled bytecode into <em>main.pasm</em> and directly call the subroutine defined in <em>file.pasm</em>:</p>
+<pre>  # main.pasm
+  main:
+    load_bytecode "file.pbc"    # compiled file.pasm
+    get_global P0, "_sub2"
+    invokecc
+    end
+</pre>
+<p>The <code>load_bytecode</code> opcode also works with source files, as long as Parrot has a compiler registered for that type of file:</p>
+<pre>  # main2.pasm
+  main:
+    load_bytecode "file.pasm"  # PASM source code
+    set_global P0, "_sub2"
+    invokecc
+    end
+</pre>
+<p>Subroutines marked with <code>:load</code> run as soon as they&#39;re loaded (before <code>load_bytecode</code> returns), rather than waiting to be called. A subroutine marked with <code>:main</code> will always run first, no matter what name you give it or where you define it in the file.</p>
+<pre>  # file3.pasm
+  .sub :load                    # mark the sub as to be run
+    print "file3\n"
+    invoke P1                   # return
+
+  # main3.pasm
+  first:                        # first is never invoked
+    print "never\n"
+    invoke P1
+
+  .sub :main                    # because _main is marked as the
+    print "main\n"              # MAIN entry of program execution
+    load_bytecode "file3.pasm"
+    print "back\n"
+    end
+</pre>
+<p>This example uses both <code>:load</code> and <code>:main</code>. Because the <code>main</code> subroutine is defined with <code>:main</code> it will execute first even though another subroutine comes before it in the file. <code>main</code> prints a line, loads the PASM source file, and then prints another line. Because <code>_entry</code> in <em>file3.pasm</em> is marked with <code>:load</code> it runs before <code>load_bytecode</code> returns, so the final output is:</p>
+
+<pre>  main
+  file3
+  back</pre>
+
+<h2><a name="Classes_and_Objects"
+>Classes and Objects</a></h2>
+
+<p></p>
+
+<p>This section revolves around one complete example that defines a class, instantiates objects, and uses them. The whole example is included at the end of the section.</p>
+
+<h3><a name="Class_declaration"
+>Class declaration</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: classes;in PASM
+--> The <code>newclass</code><!--
+	INDEX: newclass opcode (PASM)
+--> opcode defines a new class. It takes two arguments, the name of the class and the destination register for the class PMC. All classes (and objects) inherit from the <code>ParrotClass</code> PMC<!--
+	INDEX: ParrotClass PMC
+-->, which is the core of the Parrot object system.</p>
+<pre>    newclass P1, "Foo"
+</pre>
+<p>To instantiate a new object of a particular class, you first look up the integer value for the class type with the <code>find_type</code> opcode, then create an object of that type with the <code>new</code> opcode:</p>
+<pre>    find_type I1, "Foo"
+    new P3I I1
+</pre>
+<p>The <code>new</code> opcode also checks to see if the class defines a method named &#34;__init&#34; and calls it if it exists.</p>
+
+<h3><a name="Attributes"
+>Attributes</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: attributes;in PASM
+--> <!--
+	INDEX: classes;attributes
+--> The <code>addattribute</code> opcode creates a slot in the class for an attribute (sometimes known as an <i>instance variable</i>) and associates it with a name:</p>
+<pre>    addattribute P1, ".i"                # Foo.i
+</pre>
+<p>This chunk of code from the <code>__init</code> method looks up the position of the first attribute, creates a <code>Int</code> PMC, and stores it as the first attribute:</p>
+<pre>    classoffset I0, P2, "Foo"     # first "Foo" attribute of object P2
+    new P6, "Int"                 # create storage for the attribute
+    setattribute P2, I0, P6       # store the first attribute
+</pre>
+<p>The <code>classoffset</code> opcode<!--
+	INDEX: classoffset opcode (PASM)
+--> takes a PMC containing an object and the name of its class, and returns an integer index for the position of the first attribute. The <code>setattribute</code> opcode uses the integer index to store a PMC value in one of the object&#39;s attribute slots. This example initializes the first attribute. The second attribute would be at <code>I0 + 1</code>, the third attribute at <code>I0 + 2</code>, etc:</p>
+<pre>    inc I0
+    setattribute P2, I0, P7       # store next attribute
+    #...
+</pre>
+<p>There is also support for named parameters with fully qualified parameter names (although this is a little bit slower than getting the class offset once and accessing several attributes by index):</p>
+<pre>    new P6, "Int"
+    setattribute P2, "Foo\x0.i", P6   # store the attribute
+</pre>
+<p>You use the same integer index to retrieve the value of an attribute. The <code>getattribute</code><!--
+	INDEX: getattribute opcode (PASM)
+--> opcode takes an object and an index as arguments and returns the attribute PMC at that position:</p>
+<pre>    classoffset I0, P2, "Foo"         # first "Foo" attribute of object P2
+    getattribute P10, P2, I0          # indexed get of attribute
+</pre>
+<p>or</p>
+<pre>    getattribute P10, P2, "Foo\x0.i"  # named get
+</pre>
+<p>To set the value of an attribute PMC, first retrieve it with <code>getattribute</code> and then assign to the returned PMC. Because PMC registers are only pointers to values, you don&#39;t need to store the PMC again after you modify its value:</p>
+<pre>    getattribute P10, P2, I0
+    set P10, I5
+</pre>
+<h3><a name="Methods"
+>Methods</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: methods;in PASM
+--> <!--
+	INDEX: classes;methods
+--> <!--
+	INDEX: classes;namespaces
+--> Methods in PASM are just subroutines installed in the namespace of the class. You define a method with the <code>.pcc_sub</code> directive before the label:</p>
+<pre>  .pcc_sub _half:                 # I5 = self."_half"()
+    classoffset I0, P2, "Foo"
+    getattribute P10, P2, I0
+    set I5, P10                   # get value
+    div I5, 2
+    invoke P1
+</pre>
+<p>This routine returns half of the value of the first attribute of the object. Method calls use the Parrot calling conventions so they always pass the <i>invocant</i> object (often called <i>self</i>) in <code>P2</code>. Invoking the return continuation in <code>P1</code> returns control to the caller.</p>
+
+<p>The <code>.pcc_sub</code> directive automatically stores the subroutine as a global in the current namespace. The <code>.namespace</code> directive sets the current namespace:</p>
+<pre>  .namespace [ "Foo" ]
+</pre>
+<p>If the namespace is explicitly set to an empty string or key, then the subroutine is stored in the outermost namespace.</p>
+
+<p>The <code>callmethodcc</code><!--
+	INDEX: callmethodcc opcode (PASM)
+--> opcode makes a method call. It follows the Parrot calling conventions, so it expects to find the invocant object in <code>P2</code>, the method object in <code>P0</code>, etc. It adds one bit of magic, though. If you pass the name of the method in <code>S0</code>, <code>callmethodcc</code> looks up that method name in the invocant object and stores the method object in <code>P0</code> for you:</p>
+<pre>    set S0, "_half"             # set method name
+    set P2, P3                  # the object
+    callmethodcc                # create return continuation, call
+    print I5                    # result of method call
+    print "\n"
+</pre>
+<p>The <code>callmethodcc</code> opcode also generates a return continuation and stores it in <code>P1</code>. The <code>callmethod</code> opcode doesn&#39;t generate a return continuation, but is otherwise identical to <code>callmethodcc</code>. Just like ordinary subroutine calls, you have to preserve and restore any registers you want to keep after a method call. Whether you store individual registers, register frames, or half register frames is up to you.</p>
+
+<h4><a name="Overriding_vtable_functions"
+>Overriding vtable functions</a></h4>
+
+<p></p>
+
+<p>Every object inherits a default set of <i>vtable</i> functions from the <code>ParrotObject</code> PMC, but you can also override them with your own methods. The vtable functions have predefined names that start with a double underscore &#34;__&#34;. The following code defines a method named <code>__init</code> in the <code>Foo</code> class that initializes the first attribute of the object with an integer:</p>
+<pre>  .sub __init:
+    classoffset I0, P2, "Foo"     # lookup first attribute position
+    new P6, "Int"                 # create storage for the attribute
+    setattribute P2, I0, P6       # store the first attribute
+    invoke P1                     # return
+</pre>
+<p>Ordinary methods have to be called explicitly, but the vtable functions are called implicitly in many different contexts. Parrot saves and restores registers for you in these calls. The <code>__init</code> method is called whenever a new object is constructed:</p>
+<pre>    find_type I1, "Foo"
+    new P3, I1          # call __init if it exists
+</pre>
+<p>A few other vtable functions in the complete code example for this section are <code>__set_integer_native</code>, <code>__add</code>, <code>__get_integer</code>, <code>__get_string</code>, and <code>__increment</code>. The <code>set</code> opcode calls Foo&#39;s <code>__set_integer_native</code> vtable function when its destination register is a <code>Foo</code> object and the source register is a native integer:</p>
+<pre>    set P3, 30          # call __set_integer_native method
+</pre>
+<p>The <code>add</code> opcode calls Foo&#39;s <code>__add</code> vtable function when it adds two <code>Foo</code> objects:</p>
+<pre>    new P4, I1          # same with P4
+    set P4, 12
+    new P5, I1          # create a new store for add
+
+    add P5, P3, P4      # __add method
+</pre>
+<p>The <code>inc</code> opcode calls Foo&#39;s <code>__increment</code> vtable function when it increments a <code>Foo</code> object:</p>
+<pre>    inc P3              # __increment
+</pre>
+<p>Foo&#39;s <code>__get_integer</code> and <code>__get_string</code> vtable functions are called whenever an integer or string value is retrieved from a <code>Foo</code> object:</p>
+<pre>    set I10, P5         # __get_integer
+    #...
+    print P5            # calls __get_string, prints 'fortytwo'
+</pre>
+<h3><a name="Inheritance"
+>Inheritance</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: inheritance;in PASM
+--> <!--
+	INDEX: classes;inheritance
+--> The <code>subclass</code><!--
+	INDEX: subclass opcode (PASM)
+--> opcode creates a new class that inherits methods and attributes from another class. It takes 3 arguments: the destination register for the new class, a register containing the parent class, and the name of the new class:</p>
+<pre>    subclass P3, P1, "Bar"
+</pre>
+<p><!--
+	INDEX: multiple inheritance; in PASM
+--> For multiple inheritance, the <code>addparent</code><!--
+	INDEX: addparent opcode (PASM)
+--> opcode adds additional parents to a subclass.</p>
+<pre>  newclass P4, "Baz"
+  addparent P3, P4
+</pre>
+<p>To override an inherited method, define a method with the same name in the namespace of the subclass. The following code overrides Bar&#39;s <code>__increment</code> method so it decrements the value instead of incrementing it:</p>
+<pre>  .namespace [ "Bar" ]
+
+  .sub __increment:
+    classoffset I0, P2, "Foo"     # get Foo's attribute slot offset
+    getattribute P10, P2, I0      # get the first Foo attribute
+    dec P10                       # the evil line
+    invoke P1
+</pre>
+<p>Notice that the attribute inherited from <code>Foo</code> can only be looked up with the <code>Foo</code> class name, not the <code>Bar</code> class name. This preserves the distinction between attributes that belong to the class and inherited attributes.</p>
+
+<p>Object creation for subclasses is the same as for ordinary classes:</p>
+<pre>    find_type I1, "Bar"
+    new P5, I1
+</pre>
+<p>Calls to inherited methods are just like calls to methods defined in the class:</p>
+<pre>    set P5, 42                  # inherited __set_integer_native
+    inc P5                      # overridden __increment
+    print P5                    # prints 41 as Bar's __increment decrements
+    print "\n"
+
+    set S0, "_half"             # set method name
+    set P2, P5                  # the object
+    callmethodcc                # create return continuation, call
+    print I5
+    print "\n"
+</pre>
+<h3><a name="Additional_Object_Opcodes"
+>Additional Object Opcodes</a></h3>
+
+<p></p>
+
+<p>The <code>isa</code> and <code>can</code> opcodes are also useful when working with objects. <code>isa</code><!--
+	INDEX: isa opcode (PASM)
+--> checks whether an object belongs to or inherits from a particular class. <code>can</code><!--
+	INDEX: can opcode (PASM)
+--> checks whether an object has a particular method. Both return a true or false value.</p>
+<pre>    isa I0, P3, "Foo"           # 1
+    isa I0, P3, "Bar"           # 1
+    can I0, P3, "__add"         # 1
+</pre>
+<h3><a name="Complete_Example"
+>Complete Example</a></h3>
+
+<p></p>
+<pre>    newclass P1, "Foo"
+    addattribute P1, "$.i"                # Foo.i
+
+    find_type I1, "Foo"
+    new P3, I1          # call __init if it exists
+    set P3, 30          # call __set_integer_native method
+
+    new P4, I1          # same with P4
+    set P4, 12
+    new P5, I1          # create a new LHS for add
+
+    add P5, P3, P4      # __add method
+    set I10, P5         # __get_integer
+    print I10
+    print "\n"
+    print P5            # calls __get_string prints 'fortytwo'
+    print "\n"
+
+    inc P3              # __increment
+    add P5, P3, P4
+    print P5            # calls __get_string prints '43'
+    print "\n"
+
+    subclass P3, P1, "Bar"
+
+    find_type I1, "Bar"
+    new P3, I1
+
+    set P3, 100
+    new P4, I1
+    set P4, 200
+    new P5, I1
+
+    add P5, P3, P4
+    print P5                    # prints 300
+    print "\n"
+
+    set P5, 42
+    print P5                    # prints 'fortytwo'
+    print "\n"
+
+    inc P5
+    print P5                    # prints 41 as Bar's
+    print "\n"                  # __increment decrements
+
+    set S0, "_half"             # set method name
+    set P2, P3                  # the object
+    callmethodcc                # create return continuation, call
+    print I5                    # prints 50
+    print "\n"
+
+    end
+
+  .namespace [ "Foo" ]
+
+  .sub __init:
+    classoffset I0, P2, "Foo"     # lookup first attribute position
+    new P6, "Int"                 # create a store for the attribute
+    setattribute P2, I0, P6       # store the first attribute
+    invoke P1                     # return
+
+  .sub __set_integer_native:
+    classoffset I0, P2, "Foo"
+    getattribute P10, P2, I0
+    set P10, I5                   # assign passed in value
+    invoke P1
+
+  .sub __get_integer:
+    classoffset I0, P2, "Foo"
+    getattribute P10, P2, I0
+    set I5, P10                   # return value
+    invoke P1
+
+  .sub __get_string:
+    classoffset I0, P2, "Foo"
+    getattribute P10, P2, I0
+    set I5, P10
+    set S5, P10                   # get stringified value
+    ne I5, 42, ok
+    set S5, "fortytwo"            # or return modified one
+  ok:
+    invoke P1
+
+  .sub __increment:
+    classoffset I0, P2, "Foo"
+    getattribute P10, P2, I0      # as with all aggregates, this
+    inc P10                       # has reference semantics - no
+    invoke P1                     # setattribute needed
+
+  .sub __add:
+    classoffset I0, P2, "Foo"
+    getattribute P10, P2, I0      # object
+    getattribute P11, P5, I0      # argument
+    getattribute P12, P6, I0      # destination
+    add P12, P10, P11
+    invoke P1
+
+  .sub _half:                 # I5 = _half(self)
+    classoffset I0, P2, "Foo"
+    getattribute P10, P2, I0
+    set I5, P10                   # get value
+    div I5, 2
+    invoke P1
+
+
+  .namespace [ "Bar" ]
+
+  .sub __increment:
+    classoffset I0, P2, "Foo"     # get Foo's attribute slot offset
+    getattribute P10, P2, I0      # get the first Foo attribute
+    dec P10                       # the evil line
+    invoke P1
+</pre>
+<p>This example prints out:</p>
+
+<pre>  42
+  fortytwo
+  43
+  300
+  fortytwo
+  41
+  50</pre>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

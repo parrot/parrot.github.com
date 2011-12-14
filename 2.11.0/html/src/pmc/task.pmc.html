@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - A concurrent task</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; A concurrent task
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/task.pmc &#45; A concurrent task</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Implements the basic task behavior for the concurrency scheduler.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initialize a concurrency task object.
+<dt><a name="void_init_pmc(PMC_*data)"
+><b><code>void init_pmc(PMC *data)</b></code></a></dt>
+Initializes a new Task with a <code>Hash</code> PMC with any or all of the keys:
+<dl>
+<dt><a name="id"
+><b><code>id</b></code></a></dt>
+An <code>Integer</code> representing the task&#39;s unique identifier.
+<dt><a name="type"
+><b><code>type</b></code></a></dt>
+A <code>String</code> representing the type of the task.
+<dt><a name="subtype"
+><b><code>subtype</b></code></a></dt>
+A <code>String</code> representing the subtype of the task.
+(Used mostly by events and exceptions to identify appropriate handlers.)
+<dt><a name="priority"
+><b><code>priority</b></code></a></dt>
+An <code>Integer</code> representing the task&#39;s priority,
+from 0 to 100.
+<dt><a name="status"
+><b><code>status</b></code></a></dt>
+A <code>String</code> representing the task&#39;s status,
+one of <code>created</code>,
+<code>invoked</code>,
+<code>inprocess</code>,
+or <code>completed</code>.
+<dt><a name="birthtime"
+><b><code>birthtime</b></code></a></dt>
+The time at which this Task was inserted into the task list.
+<dt><a name="code"
+><b><code>code</b></code></a></dt>
+A <code>Sub</code> or descendant PMC related to this task.
+<dt><a name="interp"
+><b><code>interp</b></code></a></dt>
+An interpreter in which to execute this task.</dl>
+
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+Create a copy of the task,
+resetting status,
+ID,
+and birthtime.
+<dt><a name="PMC_*get_attr_str(STRING_*name)"
+><b><code>PMC *get_attr_str(STRING *name)</b></code></a></dt>
+Gets the value of an attribute for this task.
+<dt><a name="void_set_attr_str(STRING_*name,_PMC_*value)"
+><b><code>void set_attr_str(STRING *name, PMC *value)</b></code></a></dt>
+Sets the value of an attribute for this task.
+<dt><a name="INTVAL_get_integer()"
+><b><code>INTVAL get_integer()</b></code></a></dt>
+Retrieves the task ID for this task.
+<dt><a name="void_set_integer_native(INTVAL_value)"
+><b><code>void set_integer_native(INTVAL value)</b></code></a></dt>
+Sets the task ID of the task.
+<dt><a name="void_set_number_native(FLOATVAL_value)"
+><b><code>void set_number_native(FLOATVAL value)</b></code></a></dt>
+Sets the birthtime of the task.
+<dt><a name="void_set_string_native(STRING_*value)"
+><b><code>void set_string_native(STRING *value)</b></code></a></dt>
+Sets the type of the task.
+<dt><a name="PMC_*share_ro()"
+><b><code>PMC *share_ro()</b></code></a></dt>
+Set this PMC as shared.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Mark any referenced strings and PMCs.
+<dt><a name="void_visit(PMC_*info)"
+><b><code>void visit(PMC *info)</b></code></a></dt>
+This is used by freeze/thaw to visit the contents of the task.<code>*info</code> is the visit info,
+(see <em>include/parrot/pmc_freeze.h</em>).
+<dt><a name="void_freeze(PMC_*info)"
+><b><code>void freeze(PMC *info)</b></code></a></dt>
+Used to archive the task.
+<dt><a name="void_thaw(PMC_*info)"
+><b><code>void thaw(PMC *info)</b></code></a></dt>
+Used to unarchive the task.
+<dt><a name="void_thawfinish(PMC_*info)"
+><b><code>void thawfinish(PMC *info)</b></code></a></dt>
+Called after the task has been thawed.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em><a href="../../docs/pdds/pdd15_objects.pod.html">docs/pdds/pdd15_objects.pod</a></em>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

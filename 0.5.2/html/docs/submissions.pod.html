@@ -1,0 +1,258 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Submission Instructions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Submission Instructions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>docs/submissions.pod &#45; Parrot Submission Instructions</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>How to submit bug reports,
+patches and new files to Parrot.</p>
+
+<h1><a name="How_To_Submit_A_Bug_Report"
+>How To Submit A Bug Report <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>If you encounter an error while working with Parrot,
+and don&#39;t understand what is causing it,
+then submit a bug report using the <em lang='und' xml:lang='und'><a href="../parrotbug.html">parrotbug</a></em> utility.
+The simplest way to use it is to run</p>
+
+<pre lang='und' xml:lang='und'>    % ./parrotbug</pre>
+
+<p>in the distribution&#39;s root directory, and follow the prompts.</p>
+
+<p>However, if you do know how to fix the problem you encountered, then think about submitting a patch, or (see below) getting commit privileges.</p>
+
+<h1><a name="How_To_Submit_A_Patch"
+>How To Submit A Patch <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Try to keep your patches specific to a single change, and ensure that your change does not break any tests. This sanity checking can be done by running &#39;make test&#39;. If there is no test for the fixed bug, please provide one.</p>
+
+<ol>
+<li>Create the patch.</li><p class="pad"></p>
+
+<p>In the following examples, <em lang='und' xml:lang='und'>parrot</em> contains the Parrot distribution, and <em lang='und' xml:lang='und'>workingdir</em> contains <em lang='und' xml:lang='und'>parrot</em>. The name <em lang='und' xml:lang='und'>workingdir</em> is just a placeholder for whatever the distribution&#39;s parent directory is called on your machine.</p>
+
+<pre lang='und' xml:lang='und'>    workingdir
+        |
+        +&#45;&#45;&#62; parrot
+                |
+                +&#45;&#45;&#62; LICENSES
+                |
+                +&#45;&#45;&#62; src 
+                |
+                +&#45;&#45;&#62; tools
+                |
+                +&#45;&#45;&#62; ...</pre>
+
+<dl>
+<dt><a name="svn"
+><b><code lang='und' xml:lang='und'>svn</b></code></a></dt><p class="pad"></p>
+
+<dd>If you are working with a checked out copy of parrot then please generate your patch with <code lang='und' xml:lang='und'>svn diff</code>.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    cd parrot
+    svn status
+    svn diff &#62; my_contribution.patch</pre>
+
+<dt><a name="Single_diff"
+>Single <b><code lang='und' xml:lang='und'>diff</b></code></a></dt><p class="pad"></p>
+
+<dd>If you are working from a released distribution of Parrot and the change you wish to make affects only one or two files, then you can supply a <code lang='und' xml:lang='und'>diff</code> for each file. The <code lang='und' xml:lang='und'>diff</code> should be created in <em lang='und' xml:lang='und'>parrot</em>.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    cd parrot
+    diff &#45;u docs/submissions.pod docs/submissions.new &#62; submissions.patch</pre>
+
+<dd>Win32 users will probably need to specify <code lang='und' xml:lang='und'>&#45;ub</code>.</dd><p class="pad"></p>
+
+<dt><a name="Recursive_diff"
+>Recursive <b><code lang='und' xml:lang='und'>diff</b></code></a></dt><p class="pad"></p>
+
+<dd>If the change is more wide&#45;ranging, then create an identical copy of <em lang='und' xml:lang='und'>parrot</em> in <em lang='und' xml:lang='und'>workingdir</em> and rename it <em lang='und' xml:lang='und'>parrot.new</em>. Modify <em lang='und' xml:lang='und'>parrot.new</em> and run a recursive <code lang='und' xml:lang='und'>diff</code> on the two directories to create your patch. The <code lang='und' xml:lang='und'>diff</code> should be created in <em lang='und' xml:lang='und'>workingdir</em>.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    cd workingdir
+    diff &#45;ur &#45;&#45;exclude=&#39;.svn&#39; parrot parrot.new &#62; docs.patch</pre>
+
+<dd>OS X users should also specify <code lang='und' xml:lang='und'>&#45;&#45;exclude=.DS_Store</code>.</dd><p class="pad"></p>
+
+<dt><a name="CREDITS"
+><b><code lang='und' xml:lang='und'>CREDITS</b></code></a></dt><p class="pad"></p>
+
+<dd>Each and every patch is an important contribution to Parrot and it&#39;s important that these efforts are recognized. To that end, the <em lang='und' xml:lang='und'>CREDITS</em> file contains an informal list of contributors and their contributions made to Parrot. Patch submitters are encouraged to include a new or updated entry for themselves in <em lang='und' xml:lang='und'>CREDITS</em> as part of their patch.</dd><p class="pad"></p>
+
+<dd>The format for entries in <em lang='und' xml:lang='und'>CREDITS</em> is defined at the top of the file.</dd><p class="pad"></p>
+</dl>
+
+<li>Create a plain text email.</li><p class="pad"></p>
+
+<li>Set the recipient to <b>parrotbug</b> <i>at</i> <b>parrotcode</b> <i>dot</i> <b>org</b>.</li><p class="pad"></p>
+
+<li>Give the message a clear and concise subject.</li><p class="pad"></p>
+
+<p>Prefix it with a <code lang='und' xml:lang='und'>[PATCH]</code> identifier.</p>
+
+<li>The message body should contain an explanation of the purpose of the patch, and a list of all files affected with summary of the changes made in each file. Optionally, the output of the <code lang='und' xml:lang='und'>diffstat(1)</code> utility when run on your patch(s) may be included at the bottom of the message body.</li><p class="pad"></p>
+
+<li>Attach the patch file(s).</li><p class="pad"></p>
+
+<p>Double&#45;check that you&#39;ve actually done this, because it&#39;s easy to forget.</p>
+
+<p><b>DO NOT</b> paste the patch file content into the body of the message.</p>
+
+<li>Send the mail.</li><p class="pad"></p>
+</ol>
+
+<h1><a name="Applying_Patches"
+>Applying Patches <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>You may wish to apply a patch submitted by someone else before the patch is incorporated into SVN.</p>
+
+<p>For single <code lang='und' xml:lang='und'>diff</code> patches or <code lang='und' xml:lang='und'>svn</code> patches, copy the patch file to <em lang='und' xml:lang='und'>parrot</em>, and run:</p>
+
+<pre lang='und' xml:lang='und'>    cd parrot
+    patch &#45;p0 &#60; some.patch</pre>
+
+<p>For recursive <code lang='und' xml:lang='und'>diff</code> patches, copy the patch file to <em lang='und' xml:lang='und'>workingdir</em>, and run:</p>
+
+<pre lang='und' xml:lang='und'>    cd workingdir
+    patch &#45;p0 &#60; some.patch</pre>
+
+<p>In order to be on the safe side run &#39;make test&#39; before actually committing the changes.</p>
+
+<h2><a name="Configuration_of_to_be_ignored_files"
+>Configuration of to be ignored files <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Sometimes new files will be created in the configuration and build process of Parrot. These files should not show up when checking the distribution with</p>
+
+<pre lang='und' xml:lang='und'>    svn status</pre>
+
+<p>or</p>
+
+<pre lang='und' xml:lang='und'>    perl tools/dev/manicheck.pl</pre>
+
+<p>The list of these ignore files can be set up with:</p>
+
+<pre lang='und' xml:lang='und'>    svn propedit svn:ignore &#60;PATH&#62;</pre>
+
+<p>In order to keep the two different checks synchronized, the MANIFEST and MANIFEST.SKIP file should be regenerated with:</p>
+
+<pre lang='und' xml:lang='und'>    perl tools/dev/mk_manifest_and_skip.pl</pre>
+
+<h1><a name="How_To_Submit_Something_New"
+>How To Submit Something New <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>If you have a new feature to add to Parrot, such as a new test.</p>
+
+<ol>
+<li>Add your new file path(s), relative to <em lang='und' xml:lang='und'>parrot</em>, to the file MANIFEST. Create a patch for the MANIFEST file according to the instructions above in <b>How To Submit A Patch</b></li><p class="pad"></p>
+
+<li>If you have a new test script ending in <code lang='und' xml:lang='und'>.t</code>, some mailers may become confused and consider it an application/x&#45;troff. One way around this (for *nix users) is to diff the file against /dev/null like this:</li><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    cd parrot
+    diff &#45;u /dev/null newfile.t &#62; newfile.patch</pre>
+
+<li>Create a plain text email.</li><p class="pad"></p>
+
+<li>Set the recipient to <b>parrotbug</b> <i>at</i> <b>parrotcode</b> <i>dot</i> <b>org</b>.</li><p class="pad"></p>
+
+<li>Give the message a clear and concise subject.</li><p class="pad"></p>
+
+<p>Prefix it with a <code lang='und' xml:lang='und'>[NEW]</code> identifier.</p>
+
+<li>The message body should contain an explanation of the purpose of the feature you are adding. Optionally, the output of the <code lang='und' xml:lang='und'>diffstat(1)</code> utility when run on your patch(s) may be included at the bottom of the message body.</li><p class="pad"></p>
+
+<li>Attach the patch for MANIFEST and your new file(s).</li><p class="pad"></p>
+
+<p>Double&#45;check that you&#39;ve actually done this, because it&#39;s easy to forget.</p>
+
+<p><b>DO NOT</b> paste the content of the new file or files into the body of the message.</p>
+
+<li>Send the mail.</li><p class="pad"></p>
+</ol>
+
+<h1><a name="What_Happens_Next?"
+>What Happens Next? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>RT creates a ticket for the submission, and you will receive an automatic reply with details of the ticket identifier. This identifier should be used in all further correspondence concerning the submission.</p>
+
+<p>Everyone on the list sees the submission, and can comment on it. A developer with SVN commit authority will commit it to SVN once it is clear that it is the right thing to do.</p>
+
+<p>Even those developers with SVN commit authority stick to this scheme for all but the most trivial of their own patches, to allow time for peer review of their changes.</p>
+
+<p>You can check the progress of your submission at the Parrot bugs page <a href='http://bugs6.perl.org/'><a href="http://bugs6.perl.org/">http://bugs6.perl.org/</a></a>. If you have trouble logging in try username <code lang='und' xml:lang='und'>guest</code> with password <code lang='und' xml:lang='und'>guest</code>.</p>
+
+<p>A Parrot Bug Summary page is also generated and can be viewed here <a href='https://rt.perl.org/rt3/NoAuth/parrot/Overview.html'>https://rt.perl.org/rt3/NoAuth/parrot/Overview.html</a></p>
+
+<p>A list of all the unresolved patches is at <a href='http://www.parrotcode.org/openpatches.html'><a href="http://www.parrotcode.org/openpatches.html">http://www.parrotcode.org/openpatches.html</a></a></p>
+
+<h1><a name="Patches_for_the_Parrot_website"
+>Patches for the Parrot website <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>The sources for <a href='http://www.parrotcode.org'><a href="http://www.parrotcode.org">http://www.parrotcode.org</a></a> are managed in a subversion repository. The repository can be fetched from https://svn.perl.org/perl.org/docs/live/parrotcode/. A read only copy can be retrieved with &#39;guest/guest&#39;.</p>
+
+<p>You will notice that some of the content is generated directly from the Parrot repository. So the usual rules for Parrot patches apply for this content.</p>
+
+<p>For changes specific for parrotcode.org please send patches to <b>webmaster</b> <i>at</i> <b>perl</b> <i>dot</i> <b>org</b>, and cc <b>parrot&#45;porters</b> <i>at</i> <b>perl</b> <i>dot</i> <b>org</b>.</p>
+
+<h1><a name="Getting_Commit_Privileges"
+>Getting Commit Privileges <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>If you are interested in getting commit privileges to parrot, here is the procedure:</p>
+
+<ol>
+<li>Submit one or more patches via the process described in this document that are accepted.</li><p class="pad"></p>
+
+<li>Obtain a perl.org account at https://auth.perl.org/auth/account</li><p class="pad"></p>
+
+<li>The pumpkin or architect must put in a request to have your perl.org account granted svn commit privileges.</li><p class="pad"></p>
+
+<p>The two best ways to let us know you&#39;re interested in becoming a committer are via the parrot&#45;porters mailing list, or via IRC (#parrot on irc.perl.org). Thanks for your help!</p>
+</ol>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Adapted by Michael Scott from a tutorial submitted by Aldo Calpini, with some additional remarks from Bruce Gray.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

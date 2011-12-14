@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Perl 6&#45;like methods and metaclasses for Parrot</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Contents</a> &raquo; <a href="../../../../html/libs.html">Libraries</a> &raquo; Perl 6&#45;like methods and metaclasses for Parrot
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>P6object &#45; Perl 6&#45;like methods and metaclasses for Parrot</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    .sub &#39;main&#39;
+        # load this library
+        load_bytecode &#39;P6object.pbc&#39;
+
+        ##  grab the P6metaclass protoobject
+        .local pmc p6meta
+        p6meta = get_hll_global &#39;P6metaclass&#39;
+
+        ##  create a new class ABC::Def with three attributes
+        p6meta.&#39;new_class&#39;(&#39;ABC::Def&#39;, &#39;attr&#39;=&#62;&#39;$a @b %c&#39;)
+
+        ##  get the protoobject for ABC::Def
+        .local pmc defproto
+        defproto = get_hll_global [&#39;ABC&#39;], &#39;Def&#39;
+
+        ##  use the protoobject to create a new ABC::Def object
+        .local pmc obj
+        obj = defproto.&#39;new&#39;()
+
+        ##  get the class protoobject from any object
+        $P0 = obj.&#39;WHAT&#39;()
+
+        ##  get the metaclass for any object
+        $P0 = obj.&#39;HOW&#39;()
+
+        ##  create a new class MyHash as a subclass of Parrot&#39;s &#39;Hash&#39;
+        p6meta.&#39;new_class&#39;(&#39;MyHash&#39;, &#39;parent&#39;=&#62;&#39;Hash&#39;)
+
+        ##  tell Parrot classes to use a specific protoobject
+        $P0 = get_hll_global &#39;MyHash&#39;
+        p6meta.&#39;register&#39;(&#39;Hash&#39;, &#39;protoobject&#39;=&#62;$P0)
+        $P1 = new &#39;Hash&#39;               # create a Hash
+        $P2 = $P1.&#39;WHAT&#39;()             # get its protoobject
+        $S3 = $P2                      # stringify
+        say $S3                        # &#34;MyHash\n&#34;</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p><code>P6object</code> is intended to add Perl 6&#45;like behaviors to objects in Parrot. It creates and maintains protoobjects, and supplies <code>.WHAT</code> and <code>.HOW</code> methods to objects and protoobjects in Parrot. Protoobjects also have a default <code>.new</code> method for creating new instances of a class (classes are able to override this, however).</p>
+
+<h1><a name="CLASSES"
+>CLASSES</a></h1>
+
+<h2><a name="P6object"
+>P6object</a></h2>
+
+<p><code>P6object</code> is the base class for objects that make use of the P6metamodel. It supplies the <code>.WHAT</code> and <code>.HOW</code> methods.</p>
+
+<dl>
+<dt><a name="onload()_:anon_:init_:load"
+>onload() :anon :init :load</a></dt>
+Initializes the P6object system. Builds protoobjects for <code>P6object</code> and <code>P6metaclass</code>.
+<dt><a name="HOW()"
+>HOW()</a></dt>
+Return the <code>P6metaclass</code> of the invocant.
+<dt><a name="WHAT()"
+>WHAT()</a></dt>
+Return the <code>P6protoobject</code> for the invocant.
+<dt><a name="PROTOOVERRIDES()"
+>PROTOOVERRIDES()</a></dt>
+Return a list of methods to be overridden in protoobjects for the class. Defaults to &#39;new&#39; (i.e., any &#39;.new&#39; method in a class will override the one given for P6protoobject below).</dl>
+
+<h2><a name="P6metaclass"
+>P6metaclass</a></h2>
+
+<dl>
+<dt><a name="WHAT()"
+>WHAT()</a></dt>
+Return the protoobject for this metaclass.
+<dt><a name="isa(x)"
+>isa(x)</a></dt>
+Return a true value if the invocant &#39;isa&#39; <code>x</code>.
+<dt><a name="can(x)"
+>can(x)</a></dt>
+Return a true value if the invocant &#39;can&#39; <code>x</code>.
+<dt><a name="add_parent(parentclass_[,_&#39;to&#39;=&#62;parrotclass])"
+>add_parent(parentclass [, &#39;to&#39;=&#62;parrotclass])</a></dt>
+
+<dt><a name="add_method(name,_method,_[,_&#39;to&#39;=&#62;parrotclass])"
+>add_method(name, method, [, &#39;to&#39;=&#62;parrotclass])</a></dt>
+Add <code>method</code> with <code>name</code> to <code>parrotclass</code>.
+<dt><a name="add_role(role,_[,_&#39;to&#39;=&#62;parrotclass])"
+>add_role(role, [, &#39;to&#39;=&#62;parrotclass])</a></dt>
+Add <code>role</code> to <code>parrotclass</code>.
+<dt><a name="register(parrotclass_[,_&#39;name&#39;=&#62;name]_[,_&#39;protoobject&#39;=&#62;proto]_[,_&#39;parent&#39;=&#62;parentclass]_[,_&#39;hll&#39;=&#62;hll])"
+>register(parrotclass [, &#39;name&#39;=&#62;name] [, &#39;protoobject&#39;=&#62;proto] [, &#39;parent&#39;=&#62;parentclass] [, &#39;hll&#39;=&#62;hll])</a></dt>
+Sets objects of type <code>parrotclass</code> to use <code>protoobject</code>, and verifies that <code>parrotclass</code> has P6object methods defined on it. This happens either by setting <code>P6object</code> as a parent of <code>parrotclass</code>, or by individually composing <code>P6object</code>&#39;s methods into <code>parrotclass</code>.The <code>name</code> parameter causes objects to be registered using a name that differs from the parrotclass name. This is useful when needing to map to a class name that already exists in Parrot (e.g., &#39;Hash&#39; or &#39;Object&#39;).
+<dt><a name="new_class(name_[,_&#39;parent&#39;=&#62;parentclass]_[,_&#39;attr&#39;=&#62;attr]_[,_&#39;hll&#39;=&#62;hll])"
+>new_class(name [, &#39;parent&#39;=&#62;parentclass] [, &#39;attr&#39;=&#62;attr] [, &#39;hll&#39;=&#62;hll])</a></dt>
+Create a new class called <code>name</code> as a subclass of <code>parentclass</code>. When <code>name</code> is a string, then double&#45;colons will be treated as separators. If <code>parentclass</code> isn&#39;t supplied, defaults to using <code>P6object</code> as the parent. The <code>attr</code> parameter is a list of attribute names to be added to the class, specified as either an array or a string of names separated by spaces.
+<dt><a name="get_proto(name)"
+>get_proto(name)</a></dt>
+Retrieve the protoobject for <code>name</code>. Return null if no protoobject exists, or whatever is present isn&#39;t a protoobject.
+<dt><a name="get_parrotclass(x)"
+>get_parrotclass(x)</a></dt>
+Multimethod helper to return the parrotclass for <code>x</code>.</dl>
+
+<h2><a name="P6protoobject"
+>P6protoobject</a></h2>
+
+<dl>
+<dt><a name="get_string()_(vtable_method)"
+>get_string() (vtable method)</a></dt>
+Returns the &#34;shortname&#34; of the protoobject&#39;s class.
+<dt><a name="defined()_(vtable_method)"
+>defined() (vtable method)</a></dt>
+Protoobjects are always treated as being undefined.
+<dt><a name="name()_(vtable_method)"
+>name() (vtable method)</a></dt>
+Have protoobjects return their longname in response to a <code>typeof_s_p</code> opcode.
+<dt><a name="new()"
+>new()</a></dt>
+Provides a default constructor for creating objects in the class.Note that unlike Perl 6, the <code>new</code> method here exists only in the protoobject and not in the individual instances of the class. (If you want all objects in a class to have a <code>new</code> method, then define one in the class and it will be used in lieu of this one.)
+<dt><a name="ACCEPTS(topic)"
+>ACCEPTS(topic)</a></dt>
+</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Written and maintained by Patrick R. Michaud, <code>pmichaud at pobox.com</code>. Please send patches, feedback, and suggestions to the parrot&#45;dev mailing list or to <code> parrotbug@parrotcode.org </code>.</p>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT</a></h1>
+
+<p>Copyright (C) 2008, Parrot Foundation.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

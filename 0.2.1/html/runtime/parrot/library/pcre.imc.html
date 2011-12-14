@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>user interface to Perl&#45;Compatible Regular Expression library</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">user interface to Perl&#45;Compatible Regular Expression library</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/libs.html">Libraries</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="TITLE"
+>TITLE <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>pcre.imc &#45; user interface to Perl&#45;Compatible Regular Expression library</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>    load_bytecode &#39;library/pcre.imc&#39;
+    lib = pcre_init()
+
+    func = find_global &#39;PCRE&#39;, &#39;compile&#39;
+    ( regex, error, errptr )= func( pat, options )
+
+    func = find_global &#39;PCRE&#39;, &#39;match&#39;
+    ( ok, result )= func( regex, string, start, options )
+
+    func = find_global &#39;PCRE&#39;, &#39;dollar&#39;
+    match = func( string, ok, result, i )</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This is the user interface to PCRE. Use this to initialize the library, compile regexes, match against strings, and return the results. All functions are found in the &#39;PCRE&#39; namespace.</p>
+
+<p>The NCI interface is contained in libpcre.imc.</p>
+
+<dl>
+<dt><a name="sub_init()"
+>sub init()</a></dt><p class="pad"></p>
+
+<dd>Intialize the pcre library. The library handle is returned as a PMC and is additionally stored as global &#39;PCRE&#39;, &#39;lib&#39;.</dd><p class="pad"></p>
+
+<dt><a name="sub_(_regex,_error,_errptr_)=_compile(_pattern,_options_)"
+>sub ( regex, error, errptr )= compile( pattern, options )</a></dt><p class="pad"></p>
+
+<dd>Compile the string <b>pattern</b> with int <b>options</b>. Returns pmc <b>regex</b>, string <b>error</b> and int <b>errptr</b>.</dd><p class="pad"></p>
+
+<dt><a name="sub_(_ok,_result_)=_match(_regex,_string,_start,_options_)_sub_match_()=_match()"
+>sub ( ok, result )= match( regex, string, start, options ) sub match ()= match()</a></dt><p class="pad"></p>
+
+<dd>Match the pmc <b>regex</b> against string <b>string</b> from int <b>start</b> with int <b>options</b>. Returns the number of matches in int <b>ok</b> and the ovector in pmc <b>result</b>.</dd><p class="pad"></p>
+
+<dt><a name="sub_match=_dollar(_string,_ok,_result,_i_)"
+>sub match= dollar( string, ok, result, i )</a></dt><p class="pad"></p>
+
+<dd>Extract from string <b>string</b> the int <b>i</b>th result into string <b>match</b>. Returns the match.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="BUGS"
+>BUGS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>None known, but this hasn&#39;t been well tested. This interface is designed to work on all platforms where PCRE and parrot are supported, but has not been tested on all of them. Send bug reports to &#60;parrotbug@parrotcode.org&#60;gt&#62;</p>
+
+<h1><a name="FILES"
+>FILES <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>pcre.imc, libpcre.imc</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>pcre(3)</p>
+
+<h1><a name="AUTHORS"
+>AUTHORS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Original code by Leo Toetsch, updated by Jerry Gay &#60;jerry dot gay at gmail dot com&#60;gt&#62;</p>
+
+<h1><a name="POD_ERRORS"
+>POD ERRORS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Hey! <b>The above document had some coding errors, which are explained below:</b></p>
+
+<dl>
+<dt><a name="Around_line_168:"
+>Around line 168:</a></dt><p class="pad"></p>
+
+<dd>You forgot a &#39;=back&#39; before &#39;=head1&#39;</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

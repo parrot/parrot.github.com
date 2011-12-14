@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>pir.l</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">pir.l</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>pir.l</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This is a complete rewrite of the PIR lexical analyzer,
+as defined in IMCC.
+Goal is to fix the issues with the current implementation of the PIR language.</p>
+
+<p>The current approach is to create a three&#45;pass compiler,
+but if any optimizations in this schedule can be made,
+then this is preferred.
+This needs more experimentation.</p>
+
+<p>The first pass is the heredoc pre&#45;processor,
+which converts all heredoc strings into normal strings (they are &#34;flattened).
+Furthermore,
+this phase strips all comments,
+both POD and line comments.</p>
+
+<p>The second pass is the macro pre&#45;processor,
+which handles the <code lang='und' xml:lang='und'>.macro</code>,
+<code lang='und' xml:lang='und'>.macro_const</code> and <code lang='und' xml:lang='und'>.include</code> directives.
+The resulting output is the file that can be fed into the actual PIR parser.</p>
+
+<p>The third pass is then the PIR parsing phase.
+It takes the output of the macro pre&#45;processor,
+which contains no heredoc strings and macros.
+For that reason,
+the PIR lexer is very simple and straightforward.</p>
+
+<p>Each of the phases can be easily implemented.
+When they must be combined,
+the complexity grows quickly.
+Therefore,
+this approach,
+which is probably not the most efficient,
+is easier to maintain,
+and preferable.</p>
+
+<dl>
+<dt><a name="update_location"
+><b><code lang='und' xml:lang='und'>update_location</b></code></a></dt><p class="pad"></p>
+
+<dd>Update the line number.
+The yytext buffer is scanned for &#39;\n&#39; characters; for each one,
+the line number is incremented.
+It&#39;s done this way,
+because we can&#39;t increment it in the rule for matching newlines,
+as a set of consecutive newlines are matched together and a single newline token is returned.</dd><p class="pad"></p>
+
+<dd>*/ static void update_location(void *yyscanner,
+lexer_state * const lexer) { char const *iter = yyget_text(yyscanner); assert(lexer != NULL);</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    /* TODO: is yytext NULL terminated? */
+    while (*iter != &#39;\0&#39;) {
+        if (*iter == &#39;\n&#39;) {
+            ++lexer&#45;&#62;line_nr;
+            lexer&#45;&#62;line_pos = 1; /* reset column */
+        }
+        else {
+            ++lexer&#45;&#62;line_pos;
+        }
+        iter++;
+    }
+}</pre>
+
+<dd>/*</dd><p class="pad"></p>
+
+<dt><a name="dupstr"
+><b><code lang='und' xml:lang='und'>dupstr</b></code></a></dt><p class="pad"></p>
+
+<dd>The C89 standard does not define a strdup() in the C library, so define our own strdup. Function names beginning with &#34;str&#34; are reserved (I think), so make it dupstr, as that is what it does: duplicate a string.</dd><p class="pad"></p>
+
+<dd>*/ static char * dupstr(char const * const source) { char *newstring = (char *)calloc(strlen(source) + 1, sizeof (char)); assert(newstring); strcpy(newstring, source); return newstring; }</dd><p class="pad"></p>
+
+<dd>/*</dd><p class="pad"></p>
+
+<dt><a name="dupstrn"
+><b><code lang='und' xml:lang='und'>dupstrn</b></code></a></dt><p class="pad"></p>
+
+<dd>See dupstr, except that this version takes the number of characters to be copied. Easy for copying a string except the quotes.</dd><p class="pad"></p>
+
+<dd>*/ static char * dupstrn(char const * const source, size_t num_chars) { char *newstring = (char *)calloc(num_chars + 1, sizeof (char)); assert(newstring); /* only copy num_chars characters */ strncpy(newstring, source, num_chars); return newstring; }</dd><p class="pad"></p>
+
+<dd>/* after each rule execute update_location() */ #define YY_USER_ACTION do { \ lexer_state *my_lexer = yyget_extra(yyscanner); \ update_location(yyscanner, my_lexer); \ } \ while(0);</dd><p class="pad"></p>
+
+<dd>/*</dd><p class="pad"></p>
+
+<dt><a name="new_lexer"
+><b><code lang='und' xml:lang='und'>new_lexer</b></code></a></dt><p class="pad"></p>
+
+<dd>constructor for a lexer. It&#39;s very important to initialize all fields.</dd><p class="pad"></p>
+
+<dd>*/ lexer_state * new_lexer(char * const filename) { lexer_state *lexer = (lexer_state *)malloc(sizeof (lexer_state)); assert(lexer != NULL);</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    lexer&#45;&#62;filename      = filename;
+    lexer&#45;&#62;line_nr       = 1;
+    lexer&#45;&#62;line_pos      = 1;
+    lexer&#45;&#62;parse_errors  = 0;
+
+    lexer&#45;&#62;subs          = NULL;
+    lexer&#45;&#62;is_instr      = 0;
+
+    printdebug(stderr, &#34;Constructing new lexer\n&#34;);
+
+    return lexer;
+}</pre>
+
+<dd>/*</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/languages.html">Language Implementations</a> | <a href="../../../html/pynie.html">Pynie</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="Pynie_&#45;_A_Python_compiler_for_Parrot"
+>Pynie &#45; A Python compiler for Parrot <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This is a Pynie parser/compiler,
+an early version (no version numbers yet).
+It&#39;s still very early,
+only simple expressions and functions are available.</p>
+
+<p>However,
+even though this is not a complete compiler yet,
+you can still see how programs are parsed,
+help us create test cases,
+and extend/improve the grammar and runtime to cover more of Python.
+Here&#39;s how the system currently works:</p>
+
+<h2><a name="Compiling"
+>Compiling <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Pynie lives in pynie.pbc.
+To create this file,
+simply issue the command</p>
+
+<pre lang='und' xml:lang='und'>  $ make</pre>
+
+<p>To invoke pynie on a Python program from a shell prompt, use:</p>
+
+<pre lang='und' xml:lang='und'>  $ parrot pynie.pbc foo.py</pre>
+
+<p>To run interactively, entering single&#45;line statements:</p>
+
+<pre lang='und' xml:lang='und'>  $ parrot pynie.pbc</pre>
+
+<p>Note that pynie&#39;s interactive mode is not yet up to spec with Python&#39;s interactive mode (it doesn&#39;t handle blocks yet).</p>
+
+<p>To display the parse tree, add the &#34;&#45;&#45;target=parse&#34; option:</p>
+
+<pre lang='und' xml:lang='und'>  $ parrot pynie.pbc &#45;&#45;target=parse foo.py</pre>
+
+<p>Or, to display the abstract syntax tree, the opcode syntax tree, or the generated PIR code, use &#34;&#45;&#45;target=PAST&#34;, &#34;&#45;&#45;target=POST&#34;, or &#34;&#45;&#45;target=PIR&#34;.</p>
+
+<pre lang='und' xml:lang='und'>  $ parrot pynie.pbc</pre>
+
+<h2><a name="Files"
+>Files <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The &#34;top&#34; file for the parser is <em lang='und' xml:lang='und'>pynie.pir</em> which is used to create the <em lang='und' xml:lang='und'>pynie.pbc</em> file. It initializes the overall parsing system and registers the parser as a Parrot &#34;Pynie&#34; compiler.</p>
+
+<p>The other files needed for the compiler are in the <em lang='und' xml:lang='und'>src/</em> subdirectory.</p>
+
+<p>The <em lang='und' xml:lang='und'>src/parser/Grammar.pg</em> file defines the tokens, rules, and protos for Python. Much of this has been taken from the &#34;Python Language Reference Manual (release 2.3)&#34; by Guido van Rossum (Fred L. Drake, Jr., editor). PGE&#39;s &#34;Perl6Grammar.pbc&#34; compiler is then used to compile the two grammar files into <em lang='und' xml:lang='und'>src/parser/Grammar_gen.pir</em>, which is included by <em lang='und' xml:lang='und'>pynie.pir</em>. (See Synopsis 5 for more details on Perl 6 rules syntax, and <em lang='und' xml:lang='und'>compilers/pge/</em> for more details about PGE.)</p>
+
+<p>The <em lang='und' xml:lang='und'>src/parse.pir</em> file defines a few special&#45;purpose rules needed to support parsing that are better written directly in PIR instead of using the rules or token syntax. Currently this file defines the <code lang='und' xml:lang='und'>&#60;expression&#62;</code> rule, which just calls into the operator precedence parser.</p>
+
+<p>The file <em lang='und' xml:lang='und'>src/parser/Actions.pm</em> defines the actions that are invoked during the parse. These actions construct the Parrot AST (PAST) nodes. At the end of the parse, the whole PAST is constructed and handed off to the next compilation phases (PAST&#45;&#62;POST&#45;&#62;PIR)</p>
+
+<p>The file <em lang='und' xml:lang='und'>src/PAST/Grammar.tg</em> is a tree grammar that specifies how to convert the parse tree into the abstract syntax tree (PAST). This file is no longer used in the current implementation.</p>
+
+<p>The PIR files in <em lang='und' xml:lang='und'>src/builtins</em> are included as part of compiling <em lang='und' xml:lang='und'>pynie.pir</em> to produce <em lang='und' xml:lang='und'>pynie.pbc</em>.</p>
+
+<p>The <em lang='und' xml:lang='und'>pynie.pbc</em> file can also be used to compile Python code from PIR:</p>
+
+<pre lang='und' xml:lang='und'>    load_bytecode &#39;pynie.pbc&#39;
+    $S0 = &#39;print &#34;hello world&#34;&#39;          # source code to compile
+    $P0 = compreg(&#39;Pynie&#39;)               # obtain the compiler
+    $P1 = $P0($S0)                       # compile source code
+    $P1()                                # execute</pre>
+
+<p>One can also provide the &#34;target&#34; option to the compiler:</p>
+
+<pre lang='und' xml:lang='und'>    $P1 = $P0($S0, &#39;target&#39;=&#62;&#39;parse&#39;)    # obtain parse tree
+    $P1 = $P0($S0, &#39;target&#39;=&#62;&#39;PAST&#39;)     # get AST
+    $P1 = $P0($S0, &#39;target&#39;=&#62;&#39;POST&#39;)     # get OST
+    $P1 = $P0($S0, &#39;target&#39;=&#62;&#39;PIR&#39;)      # get PIR</pre>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Patrick Michaud &#60;pmichaud@pobox.com&#62; is the current author and maintainer. Patches and suggestions can be sent to &#60;parrotbug@parrotcode.org&#62;.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

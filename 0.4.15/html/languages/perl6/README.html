@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/languages.html">Language Implementations</a> | <a href="../../../html/perl6.html">Perl6</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="Perl_6_parser/compiler"
+>Perl 6 parser/compiler <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This is a Perl 6 parser/compiler,
+an early version (no version numbers yet).
+It&#39;s still very early,
+only simple expressions and functions are available.
+If you&#39;re in a hurry to write &#34;real Perl 6&#34; programs,
+you might try looking at Pugs &#45;&#45; <a href="http://www.pugscode.org.">http://www.pugscode.org.</a>
+Or,
+you can send patches and contributions to the one being built here!</p>
+
+<p>However,
+even though this is not a complete compiler yet,
+you can still see how Perl 6 programs are parsed,
+help us create test cases,
+and extend/improve the grammar and runtime to cover more of Perl 6.
+Here&#39;s how the system currently works:</p>
+
+<h2><a name="Compiling"
+>Compiling <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The perl6 parser/compiler lives in the perl6.pbc file.
+To create this file,
+simply issue the command</p>
+
+<pre lang='und' xml:lang='und'>  $ make</pre>
+
+<p>To invoke perl6 from a shell prompt on a (Perl 6) input file named &#34;foo.p6&#34;, use:</p>
+
+<pre lang='und' xml:lang='und'>  $ parrot perl6.pbc foo.p6</pre>
+
+<p>To run interactively, entering single&#45;line statements:</p>
+
+<pre lang='und' xml:lang='und'>  $ parrot perl6.pbc</pre>
+
+<p>To display the parse tree, add the &#34;&#45;&#45;target=parse&#34; option:</p>
+
+<pre lang='und' xml:lang='und'>  $ parrot perl6.pbc &#45;&#45;target=parse foo.p6</pre>
+
+<p>Or, to display the abstract syntax tree, the opcode syntax tree, or the generated PIR code, use &#34;&#45;&#45;target=PAST&#34;, &#34;&#45;&#45;target=POST&#34;, or &#34;&#45;&#45;target=PIR&#34;.</p>
+
+<p>To get a dump of the parser&#39;s operator precedence table, use &#45;&#45;dump&#45;optable:</p>
+
+<pre lang='und' xml:lang='und'>  $ parrot perl6.pbc &#45;&#45;dump&#45;optable</pre>
+
+<h2><a name="Files"
+>Files <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The &#34;top&#34; file for the parser is <em lang='und' xml:lang='und'>perl6.pir</em> which is used to create the <em lang='und' xml:lang='und'>perl6.pbc</em> file. It initializes the overall parsing system and registers the parser as a Parrot &#34;Perl6&#34; compiler.</p>
+
+<p>The other files needed for the compiler are in the <em lang='und' xml:lang='und'>src/</em> subdirectory.</p>
+
+<p>The <em lang='und' xml:lang='und'>src/grammar_rules.pg</em> file defines the &#34;top&#45;down&#34; grammar used for large Perl 6 program structures, defined using rules in Perl 6 rules syntax. The <em lang='und' xml:lang='und'>src/grammar_optok.pg</em> file defines the operator tokens used for expression parsing with PGE&#39;s operator&#45;precedence parser. The tokens in src/grammar_optok.pge are defined using a pseudo&#45;Perl6 syntax. PGE&#39;s &#34;pgc.pir&#34; compiler is then used to compile the two grammar files into <em lang='und' xml:lang='und'>src/grammar_gen.pir</em>, which is included by <em lang='und' xml:lang='und'>perl6.pir</em>. (See Synopsis 5 for more details on Perl 6 rules syntax, and <em lang='und' xml:lang='und'>compilers/pge/</em> for more details about PGE.)</p>
+
+<p>The <em lang='und' xml:lang='und'>src/parse.pir</em> file defines a few special&#45;purpose rules needed to support parsing that are better written directly in PIR instead of using the rules or token syntax. Currently this file defines the <code lang='und' xml:lang='und'>&#60;expression&#62;</code> rule, which just calls into the operator precedence parser.</p>
+
+<p>The file <em lang='und' xml:lang='und'>src/pge2past.tg</em> is a tree grammar that specifies how to convert the parse tree into the abstract syntax tree (PAST), and <em lang='und' xml:lang='und'>src/past2post.tg</em> generates POST from PAST.</p>
+
+<p>The <em lang='und' xml:lang='und'>src/main.pir</em> file controls what happens when the perl6.pbc file is invoked directly from parrot (as opposed to being loaded via the load_bytecode op).</p>
+
+<p>The PIR files in <em lang='und' xml:lang='und'>src/</em> are included as part of compiling <em lang='und' xml:lang='und'>perl6.pir</em> to produce <em lang='und' xml:lang='und'>perl6.pbc</em>.</p>
+
+<p>The <em lang='und' xml:lang='und'>perl6.pbc</em> file can also be used to compile Perl 6 code from PIR:</p>
+
+<pre lang='und' xml:lang='und'>    load_bytecode &#34;perl6.pbc&#34;
+    $S0 = &#39;say &#34;hello world&#34;&#39;            # source code to compile
+    $P0 = compreg(&#34;Perl6&#34;)               # obtain the compiler
+    $P1 = $P0($S0)                       # compile source code
+    $P1()                                # execute</pre>
+
+<p>One can also provide the &#34;target&#34; option to the compiler:</p>
+
+<pre lang='und' xml:lang='und'>    $P1 = $P0($S0, &#39;target&#39;=&#62;&#39;parse&#39;)    # obtain parse tree
+    $P1 = $P0($S0, &#39;target&#39;=&#62;&#39;PAST&#39;)     # get AST
+    $P1 = $P0($S0, &#39;target&#39;=&#62;&#39;POST&#39;)     # get OST
+    $P1 = $P0($S0, &#39;target&#39;=&#62;&#39;PIR&#39;)      # get PIR</pre>
+
+<h2><a name="Testing"
+>Testing <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>To run the parrot&#45;specific tests:</p>
+
+<pre lang='und' xml:lang='und'> make test</pre>
+
+<p>To run the official test suite:</p>
+
+<pre lang='und' xml:lang='und'> make spectest</pre>
+
+<p>Note that this requires svn: it exports a copy of the official tests to a a local directory (once) and runs those tests. Right now we only run tests we&#39;re sure we might pass.</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Patrick Michaud (pmichaud@pobox.com) is the author and maintainer. Patches and suggestions should be sent to the Perl 6 compiler list (perl6&#45;compiler@perl.org).</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,391 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Class and object</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Class and object</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>objects.c &#45; Class and object</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Handles class and object manipulation.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="PARROT_API_INTVAL_Parrot_get_vtable_index(PARROT_INTERP,_NOTNULL(const_STRING_*name))"
+><b><code lang='und' xml:lang='und'>PARROT_API INTVAL Parrot_get_vtable_index(PARROT_INTERP, NOTNULL(const STRING *name))</b></code></a></dt><p class="pad"></p>
+
+<dd>Return index if <code lang='und' xml:lang='und'>name</code> is a valid vtable slot name.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL static PMC *find_vtable_meth_ns(PARROT_INTERP, NOTNULL(PMC *ns), INTVAL vtable_index)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return Sub PMC if a method with the vtable name exists in ns</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CAN_RETURN_NULL PMC *Parrot_find_vtable_meth(PARROT_INTERP, NOTNULL(PMC *pmc), NOTNULL(STRING *meth))</b></code></a></dt><p class="pad"></p>
+
+<dd>Given pmc,
+run through its mro looking for the meth vtable method.
+Return the vtable method PMC if found.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL STRING *readable_name(PARROT_INTERP, NOTNULL(PMC *name))</b></code></a></dt><p class="pad"></p>
+
+<dd>Given a String or Key PMC return the STRING* representation</dd><p class="pad"></p>
+
+<dd>RT#45967 this function,
+key_set_to_string,
+and the key PMC get_repr should be consolidated</dd><p class="pad"></p>
+
+<dt><a name="static_void_fail_if_exist(PARROT_INTERP,_NOTNULL(PMC_*name))"
+><b><code lang='und' xml:lang='und'>static void fail_if_exist(PARROT_INTERP, NOTNULL(PMC *name))</b></code></a></dt><p class="pad"></p>
+
+<dd>Throws an exception if a PMC or class with the same name already exists.</dd><p class="pad"></p>
+
+<dd>RT#45969 uses global class registry</dd><p class="pad"></p>
+
+<dt><a name="static_void_rebuild_attrib_stuff(PARROT_INTERP,_NOTNULL(PMC_*_class))"
+><b><code lang='und' xml:lang='und'>static void rebuild_attrib_stuff(PARROT_INTERP, NOTNULL(PMC *_class))</b></code></a></dt><p class="pad"></p>
+
+<dd>Take the class and completely rebuild the attribute stuff for it.
+Horribly destructive,
+and definitely not a good thing to do if there are instantiated objects for the class</dd><p class="pad"></p>
+
+<dt><a name="static_void_create_deleg_pmc_vtable(PARROT_INTERP,_NOTNULL(PMC_*_class),_int_full)"
+><b><code lang='und' xml:lang='und'>static void create_deleg_pmc_vtable(PARROT_INTERP, NOTNULL(PMC *_class), int full)</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a vtable that dispatches either to the contained PMC in the first attribute (deleg_pmc) or to an overridden method (delegate),
+depending on the existence of the method for this class.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_PURE_FUNCTION PARROT_CAN_RETURN_NULL const char *Parrot_MMD_method_name(SHIM_INTERP, INTVAL idx)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the method name for the given MMD enum.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_PURE_FUNCTION INTVAL Parrot_MMD_method_idx(SHIM_INTERP, NOTNULL(const char *name))</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the MMD function number for method name or &#45;1 on failure.</dd><p class="pad"></p>
+
+<dd>RT#45973 allow dynamic expansion at runtime.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL PMC *Parrot_single_subclass(PARROT_INTERP, NOTNULL(PMC *base_class), NULLOK(PMC *name))</b></code></a></dt><p class="pad"></p>
+
+<dd>Subclass a class.
+Single parent class,
+nice and straightforward.
+If <code lang='und' xml:lang='und'>child_class</code> is <code lang='und' xml:lang='und'>NULL</code>,
+this is an anonymous subclass we&#39;re creating,
+function.</dd><p class="pad"></p>
+
+<dt><a name="PARROT_API_void_Parrot_new_class(PARROT_INTERP,_NOTNULL(PMC_*_class),_NOTNULL(PMC_*name))"
+><b><code lang='und' xml:lang='und'>PARROT_API void Parrot_new_class(PARROT_INTERP, NOTNULL(PMC *_class), NOTNULL(PMC *name))</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates a new class,
+named <code lang='und' xml:lang='und'>class_name</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CAN_RETURN_NULL PARROT_WARN_UNUSED_RESULT PMC *Parrot_class_lookup(PARROT_INTERP, NOTNULL(STRING *class_name))</b></code></a></dt><p class="pad"></p>
+
+<dd>Looks for the class named <code lang='und' xml:lang='und'>class_name</code> and returns it if it exists.
+Otherwise it returns <code lang='und' xml:lang='und'>PMCNULL</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_CAN_RETURN_NULL PARROT_WARN_UNUSED_RESULT PMC *Parrot_class_lookup_p(PARROT_INTERP, NOTNULL(PMC *class_name))</b></code></a></dt><p class="pad"></p>
+
+<dd>Looks for the class named <code lang='und' xml:lang='und'>class_name</code> and returns it if it exists.
+Otherwise it returns <code lang='und' xml:lang='und'>PMCNULL</code>.</dd><p class="pad"></p>
+
+<dt><a name="PARROT_WARN_UNUSED_RESULT_static_INTVAL_register_type(PARROT_INTERP,_NOTNULL(PMC_*name))"
+><b><code lang='und' xml:lang='und'>PARROT_WARN_UNUSED_RESULT static INTVAL register_type(PARROT_INTERP, NOTNULL(PMC *name))</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void parrot_class_register(PARROT_INTERP, NOTNULL(PMC *name), NOTNULL(PMC *new_class), NULLOK(PMC *parent), NOTNULL(PMC *mro))</b></code></a></dt><p class="pad"></p>
+
+<dd>This is the way to register a new Parrot class as an instantiable type.
+Doing this involves putting it in the class hash,
+setting its vtable so that the <code lang='und' xml:lang='und'>init</code> method initializes objects of the class rather than the class itself,
+and adding it to the interpreter&#39;s base type table so you can create a new <code lang='und' xml:lang='und'>foo</code> in PASM like this: <code lang='und' xml:lang='und'>new Px, foo</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL static PMC *get_init_meth(PARROT_INTERP, NOTNULL(PMC *_class), NOTNULL(STRING *prop_str), NOTNULL(STRING **meth_str))</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void do_initcall(PARROT_INTERP, NULLOK(PMC *_class), NULLOK(PMC *object), NULLOK(PMC *init))</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API void Parrot_instantiate_object_init(PARROT_INTERP, NOTNULL(PMC *object), NOTNULL(PMC *init))</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates a Parrot object.
+Takes a passed&#45;in class PMC that has sufficient information to describe the layout of the object and makes the object.</dd><p class="pad"></p>
+
+<dt><a name="PARROT_API_void_Parrot_instantiate_object(PARROT_INTERP,_NOTNULL(PMC_*object))"
+><b><code lang='und' xml:lang='und'>PARROT_API void Parrot_instantiate_object(PARROT_INTERP, NOTNULL(PMC *object))</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="static_void_instantiate_object(PARROT_INTERP,_NOTNULL(PMC_*object),_NULLOK(PMC_*init))"
+><b><code lang='und' xml:lang='und'>static void instantiate_object(PARROT_INTERP, NOTNULL(PMC *object), NULLOK(PMC *init))</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL static PMC *not_empty(PARROT_INTERP, NOTNULL(PMC *seqs))</b></code></a></dt><p class="pad"></p>
+
+<dd>Add the parent class to the current class&#39; parent list.
+This also involved adding all the parent&#39;s parents,
+as well as all attributes of the parent classes that we&#39;re adding in.</dd><p class="pad"></p>
+
+<dd>The MRO (method resolution order) is the C3 algorithm used by Perl6 and Python (&#62;= 2.3).
+See also: <a href='http://pugs.blogs.com/pugs/2005/07/day_165_r5671_j.html'><a href="http://pugs.blogs.com/pugs/2005/07/day_165_r5671_j.html">http://pugs.blogs.com/pugs/2005/07/day_165_r5671_j.html</a></a></dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL static PMC *class_mro_merge(PARROT_INTERP, NOTNULL(PMC *seqs))</b></code></a></dt><p class="pad"></p>
+
+<dd>merge the list if lists</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL static PMC *create_class_mro(PARROT_INTERP, NOTNULL(PMC *_class))</b></code></a></dt><p class="pad"></p>
+
+<dd>create C3 MRO</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_IGNORABLE_RESULT PARROT_CAN_RETURN_NULL PMC *Parrot_remove_parent(PARROT_INTERP, NOTNULL(PMC *removed_class), NOTNULL(PMC *existing_class))</b></code></a></dt><p class="pad"></p>
+
+<dd>This currently does nothing but return <code lang='und' xml:lang='und'>PMCNULL</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL PMC *Parrot_multi_subclass(PARROT_INTERP, NOTNULL(PMC *base_class_array), NOTNULL(STRING *child_class_name))</b></code></a></dt><p class="pad"></p>
+
+<dd>This currently does nothing but return <code lang='und' xml:lang='und'>PMCNULL</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT INTVAL Parrot_object_isa(PARROT_INTERP, NOTNULL(PMC *pmc), NOTNULL(PMC *_class))</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns whether the object <code lang='und' xml:lang='und'>pmc</code> is an instance of class <code lang='und' xml:lang='und'>_class</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL PMC *Parrot_new_method_cache(PARROT_INTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>This should create and return a new method cache PMC.</dd><p class="pad"></p>
+
+<dd>Currently it does nothing but return <code lang='und' xml:lang='und'>PMCNULL</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_mark_object_cache(PARROT_INTERP)"
+><b><code lang='und' xml:lang='und'>void mark_object_cache(PARROT_INTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="void_init_object_cache(PARROT_INTERP)"
+><b><code lang='und' xml:lang='und'>void init_object_cache(PARROT_INTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="void_destroy_object_cache(PARROT_INTERP)"
+><b><code lang='und' xml:lang='und'>void destroy_object_cache(PARROT_INTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="static_void_invalidate_type_caches(PARROT_INTERP,_UINTVAL_type)"
+><b><code lang='und' xml:lang='und'>static void invalidate_type_caches(PARROT_INTERP, UINTVAL type)</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="static_void_invalidate_all_caches(PARROT_INTERP)"
+><b><code lang='und' xml:lang='und'>static void invalidate_all_caches(PARROT_INTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API void Parrot_invalidate_method_cache(PARROT_INTERP, NULLOK(STRING *_class), NOTNULL(STRING *meth))</b></code></a></dt><p class="pad"></p>
+
+<dd>Clear method cache for the given class.
+If class is NULL,
+caches for all classes are invalidated.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CAN_RETURN_NULL PARROT_WARN_UNUSED_RESULT PMC *Parrot_find_method_direct(PARROT_INTERP, NOTNULL(PMC *_class), NOTNULL(STRING *method_name))</b></code></a></dt><p class="pad"></p>
+
+<dd>Find a method PMC for a named method,
+given the class PMC,
+current interpreter,
+and name of the method.
+Don&#39;t use a possible method cache.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CAN_RETURN_NULL PARROT_WARN_UNUSED_RESULT PMC *Parrot_find_method_with_cache(PARROT_INTERP, NOTNULL(PMC *_class), NOTNULL(STRING *method_name))</b></code></a></dt><p class="pad"></p>
+
+<dd>Find a method PMC for a named method,
+given the class PMC,
+current interp,
+and name of the method.</dd><p class="pad"></p>
+
+<dd>This routine should use the current scope&#39;s method cache,
+if there is one.
+If not,
+it creates a new method cache.
+Or,
+rather,
+it will when we&#39;ve got that bit working.
+For now it unconditionally goes and looks up the name in the global stash.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void debug_trace_find_meth(PARROT_INTERP, NOTNULL(PMC *_class), NOTNULL(STRING *name), NULLOK(PMC *sub))</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL static PMC *find_method_direct_1(PARROT_INTERP, NOTNULL(PMC *_class), NOTNULL(STRING *method_name))</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API void Parrot_note_method_offset(PARROT_INTERP, UINTVAL offset, NOTNULL(PMC *method))</b></code></a></dt><p class="pad"></p>
+
+<dd>Notes where in the hierarchy we just found a method.
+Used so that we can do a next and continue the search through the hierarchy for the next instance of this method.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API INTVAL Parrot_add_attribute(PARROT_INTERP, NOTNULL(PMC *_class), NOTNULL(STRING *attr))</b></code></a></dt><p class="pad"></p>
+
+<dd>Adds the attribute <code lang='und' xml:lang='und'>attr</code> to the class.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>   Life is ever so much easier if a class keeps its attributes at the
+   end of the attribute array, since we don&#39;t have to insert and
+   reorder attributes. Inserting&#39;s no big deal, especially since we&#39;re
+   going to break horribly if you insert into a class that&#39;s been
+   subclassed, but it&#39;ll do for now.</pre>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CAN_RETURN_NULL PARROT_WARN_UNUSED_RESULT PMC *Parrot_get_attrib_by_num(PARROT_INTERP, NOTNULL(PMC *object), INTVAL attrib)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns attribute number <code lang='und' xml:lang='und'>attrib</code> from <code lang='und' xml:lang='und'>object</code>. Presumably the code is asking for the correct attribute number.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_attr_str_2_num(PARROT_INTERP,_NOTNULL(PMC_*object),_NOTNULL(STRING_*attr))"
+><b><code lang='und' xml:lang='und'>static INTVAL attr_str_2_num(PARROT_INTERP, NOTNULL(PMC *object), NOTNULL(STRING *attr))</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CAN_RETURN_NULL PARROT_WARN_UNUSED_RESULT PMC *Parrot_get_attrib_by_str(PARROT_INTERP, NOTNULL(PMC *object), NOTNULL(STRING *attr))</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns attribute with full qualified name <code lang='und' xml:lang='und'>attr</code> from <code lang='und' xml:lang='und'>object</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API void Parrot_set_attrib_by_num(PARROT_INTERP, NOTNULL(PMC *object), INTVAL attrib, NOTNULL(PMC *value))</b></code></a></dt><p class="pad"></p>
+
+<dd>Set attribute number <code lang='und' xml:lang='und'>attrib</code> from <code lang='und' xml:lang='und'>object</code> to <code lang='und' xml:lang='und'>value</code>. Presumably the code is asking for the correct attribute number.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API void Parrot_set_attrib_by_str(PARROT_INTERP, NOTNULL(PMC *object), NOTNULL(STRING *attr), NOTNULL(PMC *value))</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets attribute with full qualified name <code lang='und' xml:lang='und'>attr</code> from <code lang='und' xml:lang='und'>object</code> to <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API INTVAL Parrot_class_offset(PARROT_INTERP, NOTNULL(PMC *object), NOTNULL(STRING *_class))</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CAN_RETURN_NULL PMC *Parrot_find_class_constructor(PARROT_INTERP, NOTNULL(STRING *_class), INTVAL classtoken)</b></code></a></dt><p class="pad"></p>
+
+<dd>Find and return the constructor method PMC for the named sub. The classtoken is an identifier for the class used for fast lookup, or 0 if you don&#39;t have an identifier token (which, as they&#39;re currently undefined, is pretty likely).</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CAN_RETURN_NULL PMC *Parrot_find_class_destructor(PARROT_INTERP, NOTNULL(STRING *_class), INTVAL classtoken)</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CAN_RETURN_NULL PMC *Parrot_find_class_fallback(PARROT_INTERP, NOTNULL(STRING *_class), INTVAL classtoken)</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API void Parrot_set_class_constructor(PARROT_INTERP, NOTNULL(STRING *_class), INTVAL classtoken, NOTNULL(STRING *method))</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API void Parrot_set_class_destructor(PARROT_INTERP, NOTNULL(STRING *_class), INTVAL classtoken, NOTNULL(STRING *method))</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API void Parrot_set_class_fallback(PARROT_INTERP, NOTNULL(STRING *_class), INTVAL classtoken, NOTNULL(STRING *method))</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL static PMC *C3_merge(PARROT_INTERP, NOTNULL(PMC *merge_list))</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL PMC *Parrot_ComputeMRO_C3(PARROT_INTERP, NOTNULL(PMC *_class))</b></code></a></dt><p class="pad"></p>
+
+<dd>Computes the C3 linearization for the given class.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API void Parrot_ComposeRole(PARROT_INTERP, NOTNULL(PMC *role), NOTNULL(PMC *exclude), int got_exclude, NOTNULL(PMC *alias), int got_alias, NOTNULL(PMC *methods_hash), NOTNULL(PMC *roles_list))</b></code></a></dt><p class="pad"></p>
+
+<dd>Used by the Class and Object PMCs internally to compose a role into either of them. The <code lang='und' xml:lang='und'>role</code> parameter is the role that we are composing into the class or role. <code lang='und' xml:lang='und'>methods_hash</code> is the hash of method names to invokable PMCs that contains the methods the class or role has. <code lang='und' xml:lang='und'>roles_list</code> is the list of roles the the class or method does.</dd><p class="pad"></p>
+
+<dd>The <code lang='und' xml:lang='und'>role</code> parameter is only dealt with by its external interface. Whether this routine is usable by any other object system implemented in Parrot very much depends on how closely the role composition semantics they want are to the default implementation.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/objects.h</em>, <em lang='und' xml:lang='und'><a href="../docs/pdds/pdd15_objects.pod.html">docs/pdds/pdd15_objects.pod</a></em>.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

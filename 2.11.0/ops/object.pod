@@ -1,0 +1,232 @@
+=head1 NAME
+
+object.ops - Class and Object Opcodes
+
+=head1 DESCRIPTION
+
+Parrot's library of object ops
+
+When making changes to any ops file, run C<make bootstrap-ops> to regenerate
+all generated ops files.
+
+=over 4
+
+
+=cut
+
+=item B<callmethodcc>(invar PMC, in STR)
+
+Call method $2 with invocant $1 and generate a new return continuation.
+The invocant ($1) is used for method lookup. The object is passed as
+the first argument in B<set_args>.
+
+Throws a Method_Not_Found_Exception for a non-existent method.
+
+=item B<callmethodcc>(invar PMC, invar PMC)
+
+Like above but use the Sub object $2 as method.
+
+=item B<callmethod>(invar PMC, in STR, invar PMC)
+
+=item B<callmethod>(invar PMC, invar PMC, invar PMC)
+
+Like above, but use continuation $3 instead of creating a new continuation.
+
+
+=cut
+
+=item B<tailcallmethod>(invar PMC, in STR)
+
+=item B<tailcallmethod>(invar PMC, invar PMC)
+
+Make a tailcall to method $2 with invocant $1.
+
+
+=cut
+
+=item B<addmethod>(invar PMC, in STR, invar PMC)
+
+Adds $3 as a method named $2 to $1.
+
+
+=cut
+
+=item B<can>(out INT, invar PMC, in STR)
+
+Sets result $1 to the result of the "can" vtable function for PMC $2,
+given method $3.
+
+
+=cut
+
+=item B<does>(out INT, invar PMC, in STR)
+
+Sets result $1 to the result of the "does" vtable function for PMC $2,
+given the role of name $3.
+
+
+=cut
+
+=item B<does>(out INT, invar PMC, in PMC)
+
+Sets result $1 to the result of the "does" vtable function for PMC $2,
+given the role $3.
+
+
+=cut
+
+=item B<isa>(out INT, invar PMC, in STR)
+
+=item B<isa>(out INT, invar PMC, in PMC)
+
+Sets result $1 to the result of the "isa" vtable function for PMC $2,
+given class $3.
+
+
+=cut
+
+=item B<newclass>(out PMC, in STR)
+
+Create a new Parrot-style class, named $2, and puts the new PMC for it
+into $1.
+
+=item B<newclass>(out PMC, in PMC)
+
+Create a new Parrot-style class, with the name given in $2 as a key,
+namespace, or string PMC.
+
+
+=cut
+
+=item B<subclass>(out PMC, in PMC)
+
+=item B<subclass>(out PMC, in PMC, in STR)
+
+=item B<subclass>(out PMC, in PMC, in PMC)
+
+Create a new class, put in $1, that is a subclass of $2.  $3, if available
+and not null, is the name of the new class--if not, the subclass is an
+anonymous subclass.
+
+
+=cut
+
+=item B<subclass>(out PMC, in STR)
+
+=item B<subclass>(out PMC, in STR, in STR)
+
+=item B<subclass>(out PMC, in STR, in PMC)
+
+Create a new class, put in $1, that is a subclass of the class named $2.
+$3, if available and not null, is the name of the new class--if not, the
+subclass is an anonymous subclass.
+
+
+=cut
+
+=item B<get_class>(out PMC, in STR)
+
+=item B<get_class>(out PMC, in PMC)
+
+Find the PMC for a class, by string name, key or namespace.  This op does
+C<not> find the class of an instance of an object.  use C<typeof> for that.
+
+
+=cut
+
+=item B<class>(out PMC, invar PMC)
+
+Get the class PMC for the object in $2 and put it in $1.
+
+
+=cut
+
+=item B<addparent>(invar PMC, invar PMC)
+
+Add class $2 to the list of parent classes for $1.
+
+
+=cut
+
+=item B<removeparent>(invar PMC, invar PMC)
+
+Remove class $2 from class $1's list of parents.
+
+
+=cut
+
+=item B<addrole>(invar PMC, invar PMC)
+
+Compose the role $2 into $1.
+
+
+=cut
+
+=item B<addattribute>(invar PMC, in STR)
+
+Add the attribute named $2 to the class $1.
+
+
+=cut
+
+=item B<removeattribute>(invar PMC, in STR) B<(unimplemented)>
+
+Remove attribute $2 from class $1, specified by name.
+
+
+=cut
+
+=item B<getattribute>(out PMC, invar PMC, in STR)
+
+Get the attribute $3 from object $2 and put the result in $1.
+
+=item B<getattribute>(out PMC, invar PMC, in PMC, in STR)
+
+Get the attribute $4 from the parent $3 of object $2 and put the
+result in $1. (This is useful for storing data for a parent class
+attribute that is overridden in a child class.) The parent $3 is a
+class name, namespace, or key PMC.
+
+
+=cut
+
+=item B<setattribute>(invar PMC, in STR, invar PMC)
+
+Set attribute $2 of object $1 to $3.
+
+=item B<setattribute>(invar PMC, in PMC, in STR, invar PMC)
+
+Set attribute $3 of the parent $2 of object $1 to $4. (This is useful
+for storing data for a parent class attribute that is overridden in a
+child class.) The parent $2 is a class name, namespace, or key PMC.
+
+
+=cut
+
+=item B<inspect>(out PMC, in PMC)
+
+Sets $1 to a PMC hash of all introspection data available for $2, keyed on
+name.
+
+=item B<inspect>(out PMC, in PMC, in STR)
+
+Sets $1 to a PMC Hash, Array, String, Integer, or Number value with
+introspection information corresponding to the requested string name.
+
+
+=cut
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (C) 2001-2009, Parrot Foundation.
+
+=head1 LICENSE
+
+This program is free software. It is subject to the same license
+as the Parrot interpreter itself.
+
+
+=cut
+

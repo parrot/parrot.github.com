@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>implementation of the lexical analyzer of the PIR assembly language.</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">implementation of the lexical analyzer of the PIR assembly language.</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>pir.l &#45; implementation of the lexical analyzer of the PIR assembly language.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This file implements the lexical analyzer of the PIR assembly language.
+The macro layer is implemented here as well.
+Heredocs are processed by a different preprocessor.</p>
+
+<h1><a name="FUNCTIONS"
+>FUNCTIONS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Helper functions for macro expansion.
+These function are only used by the lexer,
+so keep them local to this file.</p>
+
+<dl>
+<dt><a name="void_init_scanner_state(yyscan_t_yyscanner)"
+><b><code lang='und' xml:lang='und'>void init_scanner_state(yyscan_t yyscanner)</b></code></a></dt><p class="pad"></p>
+
+<dd>Initializes <code lang='und' xml:lang='und'>yyscanner</code> to the SPECIALSTART state,
+which can then decide whether to scan PASM or PIR tokens.</dd><p class="pad"></p>
+
+<dt><a name="static_macro_table_*_peek_macro_table(lexer_state_*_const_lexer)"
+><b><code lang='und' xml:lang='und'>static macro_table *peek_macro_table(lexer_state *const lexer)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the top of the macro_table stack; this is the currently active macro_table object.</dd><p class="pad"></p>
+
+<dt><a name="static_char_*_munge_id(char_const_*_const_id,_lexer_state_*_const_lexer)"
+><b><code lang='und' xml:lang='und'>static char *munge_id(char const *const id, lexer_state *const lexer)</b></code></a></dt><p class="pad"></p>
+
+<dd>Generate an identifier based on a macro label or local expansion.</dd><p class="pad"></p>
+
+<dd>A label expansion looks like &#34;.$&#60;LABEL&#62;&#34;,
+from which a label identifier is generated,
+formatted as: &#34;$macro_&#60;MACRO&#62;_&#60;LABEL&#62;_&#60;SCOPE&#62;&#34;.</dd><p class="pad"></p>
+
+<dd>In this format,
+<code lang='und' xml:lang='und'>MACRO</code> refers to the macro name of the macro in which the .macro_local or .macro_label was defined; <code lang='und' xml:lang='und'>LABEL</code> refers to the runtime value of the label or local variable (this can be a macro&#39;s argument&#39;s value).
+<code lang='und' xml:lang='und'>SCOPE</code> refers to the unique scope ID of this macro expansion.</dd><p class="pad"></p>
+
+<dt><a name="static_macro_table_*_pop_macro_table(lexer_state_*_const_lexer)"
+><b><code lang='und' xml:lang='und'>static macro_table *pop_macro_table(lexer_state *const lexer)</b></code></a></dt><p class="pad"></p>
+
+<dd>Pop off the current macro symbol table from the macro symbol table stack and return it.</dd><p class="pad"></p>
+
+<dt><a name="static_void_push_macro_table(lexer_state_*_const_lexer,_macro_table_*_const_table)"
+><b><code lang='und' xml:lang='und'>static void push_macro_table(lexer_state *const lexer, macro_table *const table)</b></code></a></dt><p class="pad"></p>
+
+<dd>Push macro_table <code lang='und' xml:lang='und'>table</code> onto the macro scope stack.
+Any attempt to find a macro definition will start in <code lang='und' xml:lang='und'>table</code>.
+If not found,
+the stack will be walked down (recursing into older entries).</dd><p class="pad"></p>
+
+<dt><a name="static_void_update_unique_id(lexer_state_*_const_lexer)"
+><b><code lang='und' xml:lang='und'>static void update_unique_id(lexer_state *const lexer)</b></code></a></dt><p class="pad"></p>
+
+<dd>Update the unique ID generator; the number of characters that the new number is taking in a string is recalculated,
+as the unique IDs are used in string context.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void expand(yyscan_t yyscanner, macro_def *const macro, list *args, lexer_state *const lexer)</b></code></a></dt><p class="pad"></p>
+
+<dd>Expand the specified macro (or constant).
+The current yy_buffer_state is saved,
+as well as the current scope ID (for macro expansions; each expansion has its own unique scope ID); as well as the current line number.
+The macro_table,
+which defines the macro parameters/arguments,
+gets a reference to the macro definition that is being expanded; that&#39;s the <code lang='und' xml:lang='und'>thismacro</code> field of the <code lang='und' xml:lang='und'>macro_table</code> structure.</dd><p class="pad"></p>
+
+<dd>An argument count check is done to make sure there&#39;s exactly enough arguments for the defined parameters.
+Then,
+the macro definition&#39;s body (a string buffer) is scanned (instead of the file that we were scanning).</dd><p class="pad"></p>
+
+<dd>The function returns the body of the macro being expanded.</dd><p class="pad"></p>
+
+<dt><a name="void_*_yyalloc(size_t_bytes,_yyscan_t_yyscanner)"
+><b><code lang='und' xml:lang='und'>void *yyalloc(size_t bytes, yyscan_t yyscanner)</b></code></a></dt><p class="pad"></p>
+
+<dd>Allocate <code lang='und' xml:lang='und'>bytes</code> of memory; the <code lang='und' xml:lang='und'>yyscanner</code> argument is not used.</dd><p class="pad"></p>
+
+<dt><a name="void_*_yyrealloc(void_*_ptr,_size_t_bytes,_yyscan_t_yyscanner)"
+><b><code lang='und' xml:lang='und'>void *yyrealloc(void *ptr, size_t bytes, yyscan_t yyscanner)</b></code></a></dt><p class="pad"></p>
+
+<dd>Reallocate memory pointed to by <code lang='und' xml:lang='und'>ptr</code>.
+The new memory region is <code lang='und' xml:lang='und'>bytes</code> in size; the <code lang='und' xml:lang='und'>yyscanner</code> argument is not used.</dd><p class="pad"></p>
+
+<dt><a name="void_yyfree(void_*ptr,_yyscan_t_yyscanner)"
+><b><code lang='und' xml:lang='und'>void yyfree(void *ptr, yyscan_t yyscanner)</b></code></a></dt><p class="pad"></p>
+
+<dd>Free memory pointed to by <code lang='und' xml:lang='und'>ptr</code>.
+The <code lang='und' xml:lang='und'>yyscanner</code> argument is not used,
+but part of the signature as it is a Flex&#45;generated function.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - System Interaction Opcodes</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/ops.html">Opcodes</a> &raquo; System Interaction Opcodes
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>sys.ops &#45; System Interaction Opcodes</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Operations that allow the user to interact with the system.</p>
+
+<p>When making changes to any ops file,
+run <code>make bootstrap&#45;ops</code> to regenerate all generated ops files.</p>
+
+<dl>
+<dt><a name="spawnw(out_INT,_in_STR)"
+><b>spawnw</b>(out INT,
+in STR)</a></dt>
+Spawn a subprocess whose program name and arguments are contained in the string $2 and wait for it to finish.
+The return status,
+which is very system&#45;dependent,
+goes in $1.
+<dt><a name="spawnw(out_INT,_invar_PMC)"
+><b>spawnw</b>(out INT,
+invar PMC)</a></dt>
+Spawn a subprocess whose program name and arguments are contained in the array $2 and wait for it to finish.
+The return status,
+which is very system&#45;dependent,
+goes in $1.TT #847: <code>spawnw()</code> should itself handle splitting up command&#45;line arguments,
+rather than depending on the shell to do so in potentially unsafe manner.
+See https://trac.parrot.org/parrot/ticket/847.TT #848: <code>spawnw()</code> should return something less system&#45;dependent,
+and more object&#45;like.
+See https://trac.parrot.org/parrot/ticket/848.
+<dt><a name="err(out_INT)"
+><b>err</b>(out INT)</a></dt>
+Store the system error code in $1.
+<dt><a name="err(out_STR)"
+><b>err</b>(out STR)</a></dt>
+Store the system error message in $1.
+<dt><a name="err(out_STR,_in_INT)"
+><b>err</b>(out STR,
+in INT)</a></dt>
+Get the system error message for the system error code $2 and store it in $1.
+<dt><a name="time(out_INT)"
+><b>time</b>(out INT)</a></dt>
+Puts the current system time (represented as a whole number of seconds) in $1.
+<dt><a name="time(out_NUM)"
+><b>time</b>(out NUM)</a></dt>
+Puts the current system time (represented as a number of seconds,
+with microseconds) in $1.
+<dt><a name="sleep(in_INT)"
+><b>sleep</b>(in INT)</a></dt>
+
+<dt><a name="sleep(in_NUM)"
+><b>sleep</b>(in NUM)</a></dt>
+Sleep for $1 seconds.</dl>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT</a></h1>
+
+<p>Copyright (C) 2001&#45;2009,
+Parrot Foundation.</p>
+
+<h1><a name="LICENSE"
+>LICENSE</a></h1>
+
+<p>This program is free software.
+It is subject to the same license as the Parrot interp itself.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

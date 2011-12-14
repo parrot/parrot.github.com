@@ -1,0 +1,284 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot Configuration System</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Home</a> &raquo; <a href="../../html/tools.html">Tools</a> &raquo; Parrot Configuration System
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/configuration.pod &#45; Parrot Configuration System</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Parrot configuration is broken up into <i>steps</i>.
+Each step contains several related <i>prompts</i>,
+<i>probes</i>,
+or <i>generations</i>.
+Steps should be mostly of a single type,
+though some overlap is allowed (for example,
+allowing a probe to ask the user what to do in an exceptional situation).</p>
+
+<p>The directory <em>config</em> contains subdirectories for each type of step.
+Each step should consist of <i>exactly one</i> <em>.pm</em> file and any number of supporting <em>.c</em>,
+<em>.in</em>,
+etc.
+files.
+Any supporting files should be in a folder whose name is the same as the basename of the step&#39;s <em>.pm</em> file; for example,
+if <em>foo.pm</em> uses <em>bar_c.in</em>,
+<em>bar_c.in</em> should be in a directory called <em>foo</em>; the full path might be <em>config/auto/foo/bar_c.in</em>.</p>
+
+<p>Generally,
+when adding a new component to the configuration process you should add a new step unless that component <i>clearly</i> belongs in a current step.
+For example,
+if you added a new user&#45;configurable type called <code>FOOVAL</code>,
+you would add the code used to determine its size in <em><a href="../config/auto/sizes.pm.html">config/auto/sizes.pm</a></em>.
+However,
+if you were determining what dynaloading capabilities are available,
+you would create a new step.
+It is strongly recommended that you file a Trac ticket in which you state the rationale for adding a new configuration step and sketch out what the code in the step would look like.</p>
+
+<h2><a name="Initialization_Steps"
+>Initialization Steps</a></h2>
+
+<p><i>Initialization steps</i> are run before any other steps.
+They do tasks such as preparing the configuration system&#39;s data structures and checking the <em>MANIFEST</em>.
+New initialization steps will only be added when the configuration system is getting significant new capabilities.
+They&#39;re kept in the directory <em>config/init</em>.</p>
+
+<h2><a name="Prompts"
+>Prompts</a></h2>
+
+<p>Prompts ask the user for some information.
+These should be used sparingly.
+A step containing prompts is an <i>interactive step</i>.
+Interactive steps should be in the <em>config/inter</em> folder.</p>
+
+<p>Interactive steps often include simple probes to determine good guesses of what the user will answer.
+See <a href='#Prompt_or_Probe%3F'>&#34;Prompt or Probe?&#34;</a> for more information.</p>
+
+<p>Note that,
+by default,
+these prompts are turned off.
+To enable them run <em><a href="../Configure.pl.html">Configure.pl</a></em> with the <code>&#45;&#45;ask</code> option.</p>
+
+<h2><a name="Probes"
+>Probes</a></h2>
+
+<p>Probes are automated tests of some feature of the computer.
+These should be used wherever a value will not need to be modified often by the user.
+A step containing probes is an <i>automatic step</i>.
+Automatic steps should be in the <em>config/auto</em> folder.</p>
+
+<h2><a name="Generations"
+>Generations</a></h2>
+
+<p>Generations create files which will be needed once configuration has completed,
+such as Makefiles and configuration headers.
+A step containing generations is a <i>generation step</i>.
+Generation steps should be in the <em>config/gen</em> folder.</p>
+
+<p>Templates for files to be generated usually have the extension <em>.in</em>.
+There are variable substitutes and funny macros like <code>#IF</code> and <code>#UNLESS</code> (conditional lines).</p>
+
+<h2><a name="Prompt_or_Probe?"
+>Prompt or Probe?</a></h2>
+
+<p>It can sometimes be hard to decide whether a given step should be an automatic or an interactive step.
+The guiding question is <i>Would a user ever want to change this?</i>,
+or conversely,
+<i>Is this something that can be completely determined without user intervention?</i> A step figuring out what the compiler&#39;s command is would probably be an interactive step; conversely,
+a step figuring out if that command is connected to a specific compiler (like <em>gcc</em>) would be an automatic step.</p>
+
+<h2><a name="Configuring_Configuration"
+>Configuring Configuration</a></h2>
+
+<p>The configuration system gets its own configuration data from,
+and is invoked via,
+the <em><a href="../Configure.pl.html">Configure.pl</a></em> script.
+The system is invoked by instantiating a <a href='..%2Flib%2FParrot%2FConfigure.pm.html'>Parrot::Configure</a> object,
+registering one or more steps with that object,
+and then calling <code>Parrot::Configure::runsteps()</code>.</p>
+
+<h2><a name="Adding_New_Steps"
+>Adding New Steps</a></h2>
+
+<p>New steps should be added in one of the four folders mentioned above.</p>
+
+<p>All steps are really classes; each exists in a unique namespace.
+The namespace used depends on the step&#39;s relative path in the source tree sans the <em>config</em> prefix.
+For example,
+the step <em><a href="../config/init/defaults.pm.html">config/init/defaults.pm</a></em> uses the <code>init::defaults</code> namespace.</p>
+
+<p>Each step inherits its constructor and some other methods from <em><a href="../lib/Parrot/Configure/Step.pm.html">lib/Parrot/Configure/Step.pm</a></em>.
+Each step needs to define only two methods: <code>_init()</code> and <code>runstep()</code>.</p>
+
+<p>The <code>_init()</code> method should follow the following example,
+defining three elements within an internal hash:</p>
+
+<pre>    sub _init {
+        my $self = shift;
+        my %data;
+        $data{description} = q{This is the step description};
+        $data{result}      = q{};
+        return \%data;
+    }</pre>
+
+<dl>
+<dt><a name="description"
+><b><code>description</b></code></a></dt>
+Of these three elements, <code>description</code> is the most important as it is used extensively within <code>lib/Parrot/Configure.pm</code>.Returns a short descriptive message that should be printed before the step executes.Some example descriptions:
+<dl>
+<dt><a name="gen/config_h.pm"
+><em>gen/config_h.pm</em></a></dt>
+
+<pre>    Generate C headers...</pre>
+</dl>
+Note that on non&#45;interactive steps, the text <i>done</i> will be printed after the description when the step finishes executing; for example, the user will see:
+<pre>    Determine flags for building shared libraries.....&#45;fPIC</pre>
+
+<dt><a name="result"
+><b><code>result</b></code></a></dt>
+The <code>result</code> is initialized to an empty string mainly to quiet &#39;uninitialized variable&#39; warnings. Most configuration steps override the <code>result</code> value inside their <code>runstep()</code> method.
+<dt><a name="runstep()"
+><b><code>runstep()</b></code></a></dt>
+This method is called to actually execute the step. The return value should be <code>1</code> if the step accomplishes what it is intended to do. Otherwise, the step should simply <code>return</code>, <i>i.e.</i>, return an undefined value.</dl>
+
+<p>The configuration system won&#39;t execute your step by default unless it&#39;s specifically told to. To do this, edit <em><a href="../lib/Parrot/Configure/Step/List.pm.html">lib/Parrot/Configure/Step/List.pm</a></em>. Steps are run in the order in which that are registered with the <a href='..%2Flib%2FParrot%2FConfigure.pm.html'>Parrot::Configure</a> object.</p>
+
+<p>Various utility functions for configuration steps are provided by the <a href='..%2Flib%2FParrot%2FConfigure%2FUtils.pm.html'>Parrot::Configure::Utils</a> module.</p>
+
+<p>A template for a new step might look like this:</p>
+
+<pre>    package auto::newstep;
+
+    use strict;
+    use warnings;
+    our qw($description $result);
+
+    use base qw(Parrot::Configure::Step);
+
+    use Parrot::Configure::Utils;
+
+    sub _init {
+        my $self = shift;
+        my %data;
+        $data{description} = q{This is the step description};
+        $data{result}      = q{};
+        return \%data;
+    }
+
+    sub runstep {
+        my ($self, $conf) = @_
+        ...
+        if ($success) {
+            $self&#45;&#62;set_result(&#39;yes&#39;);
+            return 1;
+        } else {
+            $self&#45;&#62;set_result(&#39;no&#39;);
+            return;
+        }
+    }</pre>
+
+<p>The step&#39;s <code>runstep()</code> method should return <code>1</code> upon success and do a bare return on failure (thereby returning an undefined value).</p>
+
+<h2><a name="Command&#45;line_Arguments"
+>Command&#45;line Arguments</a></h2>
+
+<p>Command&#45;line arguments look like <code>/&#45;&#45;[&#45;\w]+(=.*)?/</code>; the equals sign separates the name and the value. If the value is omitted, it&#39;s assumed to be <code>1</code>. The options <code>&#45;&#45;help</code> and <code>&#45;&#45;version</code> are built in to Configure; any others are defined by steps.</p>
+
+<p>Command&#45;line arguments are now processed by <code>process_options()</code>, a subroutine exported by <a href='..%2Flib%2FParrot%2FConfigure%2FOptions.pm.html'>Parrot::Configure::Options</a>. If you add a new option, don&#39;t forget to add it to this documentation and to appropriate locations. Most options should be added to <code>@shared_valid_options</code> in <em><a href="../lib/Parrot/Configure/Options/Conf/Shared.pm.html">lib/Parrot/Configure/Options/Conf/Shared.pm</a></em>.</p>
+
+<p>Arguments passed to <em><a href="../Configure.pl.html">Configure.pl</a></em> are held in a <a href='..%2Flib%2FParrot%2FConfigure%2FData.pm.html'>Parrot::Configure::Data</a> object stored inside the <a href='..%2Flib%2FParrot%2FConfigure.pm.html'>Parrot::Configure</a> object. The options data object may be accessed via the <code>Parrot::Configure::options()</code> method.</p>
+
+<h2><a name="Configuration_by_File"
+>Configuration by File</a></h2>
+
+<p>As an alternative to typing a long string of options on the command&#45;line, Parrot can now be configured from a configuration file. You put the options in a configuration file, then call <em><a href="../Configure.pl.html">Configure.pl</a></em> as follows:</p>
+
+<pre>    perl Configure.pl &#45;&#45;file=/path/to/config/file</pre>
+
+<p>That&#39;s it! No other command&#45;line arguments needed (or permitted)! To learn how to create such a configuration file, call:</p>
+
+<pre>    perldoc Configure.pl</pre>
+
+<h2><a name="Building_Up_Configuration_Data"
+>Building Up Configuration Data</a></h2>
+
+<p>The second step is <em><a href="../config/init/defaults.pm.html">config/init/defaults.pm</a></em>, which sets up some defaults in a <a href='..%2Flib%2FParrot%2FConfigure%2FData.pm.html'>Parrot::Configure::Data</a> object contained by the main <a href='..%2Flib%2FParrot%2FConfigure.pm.html'>Parrot::Configure</a> object. It can be accessed via the <code>Parrot::Configure::data()</code> method. You get and set configuration system&#39;s data by interacting with this object. Some of its methods are summarized below.</p>
+
+<dl>
+<dt><a name="get(keys)"
+><b><code>get(keys)</b></code></a></dt>
+Returns the values for the given keys.
+<dt><a name="set(key,_value,_[key,_value,_...])"
+><b><code>set(key, value, [key, value, ...])</b></code></a></dt>
+Sets the given keys to the given values.
+<dt><a name="add(delim,_key,_value,_[key,_value,_...])"
+><b><code>add(delim, key, value, [key, value, ...])</b></code></a></dt>
+Sets the given keys to the given values or appends values delimited by <i>delim</i> to existing keys.
+<dt><a name="keys()"
+><b><code>keys()</b></code></a></dt>
+Returns a list of all keys.
+<dt><a name="dump()"
+><b><code>dump()</b></code></a></dt>
+Returns a string that can be <code>eval</code>ed by Perl to create a hash representing the configuration system&#39;s data.See the <a href='..%2Flib%2FParrot%2FConfigure%2FData.pm.html'>Parrot::Configure::Data</a> documentation for further details.</dl>
+
+<h2><a name="Special_Configuration_Items"
+>Special Configuration Items</a></h2>
+
+<p>Some configuration items, by convention, have a special meaning (mainly prefixes) and are handled with some magic internally.</p>
+
+<dl>
+<dt><a name="i_(\w+)_include_files"
+><b><code>i_(\w+)</b></code> include files</a></dt>
+defines or undefs PARROT_HAS_HEADER_XXX in <em>include/parrot/has_header.h</em>
+<dt><a name="HAS_(\w+)_features"
+><b><code>HAS_(\w+)</b></code> features</a></dt>
+defines PARROT_HAS_XXX in <em>include/parrot/has_header.h</em>
+<dt><a name="TEMP_(\w+)_temporary_settings"
+><b><code>TEMP_(\w+)</b></code> temporary settings</a></dt>
+These settings are deleted before <em><a href="../lib/Parrot/Config.pm.html">lib/Parrot/Config.pm</a></em> is written. These entries are only used e.g. for Makefile creation.</dl>
+
+<h2><a name="Accessing_Configuration_Information_via_Perl_5_Variables"
+>Accessing Configuration Information via Perl 5 Variables</a></h2>
+
+<p>Parrot configuration is currently jump&#45;started by extracting considerable information from variables associated with the instance of Perl 5 which the user is using to run <em><a href="../Configure.pl.html">Configure.pl</a></em>. These variables are largely looked up in the <code>%Config</code> found in the Perl 5 <em>Config.pm</em>, but may also be sought in Perl 5 special variables such as <code>$^O</code>. All such lookups should be done in configuration step <code>init::defaults</code> and <b>only</b> in that step. Special accessors are available for working with such variables; see <em><a href="../config/init/defaults.pm.html">config/init/defaults.pm</a></em> and <em><a href="../lib/Parrot/Configure/Data.pm.html">lib/Parrot/Configure/Data.pm</a></em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY</a></h1>
+
+<p>The Parrot configuration system was created by Brent Dax and has been heavily mangled by Joshua Hoblitt. James Keenan refactored the configuration system.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><a href='..%2Flib%2FParrot%2FConfigure.pm.html'>Parrot::Configure</a>, <a href='..%2Flib%2FParrot%2FConfigure%2FData.pm.html'>Parrot::Configure::Data</a>, <a href='..%2Flib%2FParrot%2FConfigure%2FUtils.pm.html'>Parrot::Configure::Utils</a>, <a href='..%2Flib%2FParrot%2FConfigure%2FStep.pm.html'>Parrot::Configure::Step</a></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

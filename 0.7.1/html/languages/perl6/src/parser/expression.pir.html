@@ -1,0 +1,68 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Parsing of &#60;expression&#62; and &#60;listop_expression&#62; subrules</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parsing of &#60;expression&#62; and &#60;listop_expression&#62; subrules</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/perl6.html">Perl6</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="TITLE"
+>TITLE <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>expression.pir &#45; Parsing of &#60;expression&#62; and &#60;listop_expression&#62; subrules</p>
+
+<h2><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p>This file contains the grammar subrules for &#60;expression&#62; and &#60;listop_expression&#62;.
+These have special parsing requirements,
+and are therefore written in PIR instead of as a standard Perl 6 rule statement.</p>
+
+<dl>
+<dt><a name="EXPR([tighter])"
+><b><code lang='und' xml:lang='und'>EXPR([tighter])</b></code></a></dt><p class="pad"></p>
+
+<dd>The <code lang='und' xml:lang='und'>EXPR</code> method implements the Perl6::Grammar &#60;EXPR&#62; subrule.
+It forwards the match object (invocant) to the operator precedence parser to obtain an expression,
+and returns the result to the caller.
+Any <code lang='und' xml:lang='und'>tighter</code> option is passed as a corresponding option to the operator precedence parser,
+which parses expressions of tighter precedence.</dd><p class="pad"></p>
+
+<dd>(FIXME Parrot bug RT#53296 prevents us from using :optional on the <code lang='und' xml:lang='und'>tighter</code> argument along with :slurpy :named parameters,
+so we use :multi as a temporary workaround.)</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,301 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Stack Ops</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Stack Ops</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/ops.html">Ops</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>stack.ops &#45; Stack Ops</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Operations that manipulate Parrot&#39;s register,
+user and integer stacks.</p>
+
+<h2><a name="Register_stack_operations"
+>Register stack operations <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>These operations affect entire sets of registers.</p>
+
+<dl>
+<dt><a name="popi()"
+><b>popi</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="popn()"
+><b>popn</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="popp()"
+><b>popp</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="pops()"
+><b>pops</b>()</a></dt><p class="pad"></p>
+
+<dd>Restore all the registers of the type indicated in the name of the operation from the most recently <b>push</b>ed register frames.</dd><p class="pad"></p>
+
+<dd>A register frame holds only 16 registers,
+so we pop two frames from the frame stack.
+We use the first frame to restore registers 16&#45;31,
+and the second frame to restore registers 0&#45;15.
+By restoring in this order,
+we ensure that a <code lang='und' xml:lang='und'>push</code> followed by a <code lang='und' xml:lang='und'>pop</code> returns the working set of registers to their original state.</dd><p class="pad"></p>
+
+<dt><a name="popbottomi()"
+><b>popbottomi</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="popbottomn()"
+><b>popbottomn</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="popbottomp()"
+><b>popbottomp</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="popbottoms()"
+><b>popbottoms</b>()</a></dt><p class="pad"></p>
+
+<dd>Restore registers 0&#45;15 of the type indicated in the name of the operation from a register frame popped off the corresponding frame stack.</dd><p class="pad"></p>
+
+<dt><a name="poptopi()"
+><b>poptopi</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="poptopn()"
+><b>poptopn</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="poptopp()"
+><b>poptopp</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="poptops()"
+><b>poptops</b>()</a></dt><p class="pad"></p>
+
+<dd>Restore registers 16&#45;31 of the type indicated in the name of the operation from a register frame popped off the corresponding frame stack.</dd><p class="pad"></p>
+
+<dt><a name="pushi()"
+><b>pushi</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="pushn()"
+><b>pushn</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="pushp()"
+><b>pushp</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="pushs()"
+><b>pushs</b>()</a></dt><p class="pad"></p>
+
+<dd>Save all the registers of the type indicated in the name of the operation on the appropriate register frame stack.</dd><p class="pad"></p>
+
+<dd>A register frame holds only 16 registers,
+so we push two frames onto the stack.
+The first frame holds the values from registers 0&#45;15; the second frame holds the values from registers 16&#45;31.</dd><p class="pad"></p>
+
+<dt><a name="pushtopi()"
+><b>pushtopi</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="pushtopn()"
+><b>pushtopn</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="pushtopp()"
+><b>pushtopp</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="pushtops()"
+><b>pushtops</b>()</a></dt><p class="pad"></p>
+
+<dd>Save registers 16&#45;31 of the type indicated in the name of the operation on the appropriate register frame stack.</dd><p class="pad"></p>
+
+<dt><a name="pushbottomi()"
+><b>pushbottomi</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="pushbottomn()"
+><b>pushbottomn</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="pushbottomp()"
+><b>pushbottomp</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="pushbottoms()"
+><b>pushbottoms</b>()</a></dt><p class="pad"></p>
+
+<dd>Save registers 0&#45;15 of the type indicated in the name of the operation on the appropriate register frame stack.</dd><p class="pad"></p>
+
+<dt><a name="saveall()"
+><b>saveall</b>()</a></dt><p class="pad"></p>
+
+<dd>Save all of the registers onto the appropriate frame stacks.
+This op is equivalent to:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>        pushi
+        pushn
+        pushs
+        pushp</pre>
+
+<dd>(or some other permutation of these ops).</dd><p class="pad"></p>
+
+<dt><a name="restoreall()"
+><b>restoreall</b>()</a></dt><p class="pad"></p>
+
+<dd>Restore all the registers from the appropriate frame stacks. This op is equivalent to:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>        popi
+        popn
+        pops
+        popp</pre>
+
+<dd>(or some other permutation of these ops).</dd><p class="pad"></p>
+
+<dt><a name="savetop()"
+><b>savetop</b>()</a></dt><p class="pad"></p>
+
+<dd>Save registers 16&#45;31 of all the register sets on the appropriate frame stacks. This op is equivalent to:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>        pushtopi
+        pushtopn
+        pushtops
+        pushtopp</pre>
+
+<dd>(or some other permutation of these ops).</dd><p class="pad"></p>
+
+<dt><a name="restoretop()"
+><b>restoretop</b>()</a></dt><p class="pad"></p>
+
+<dd>Restore registers 16&#45;31 of all the register sets from the appropriate frame stacks. This op is equivalent to:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>        poptopi
+        poptopn
+        poptops
+        poptopp</pre>
+
+<dd>(or some other permutation of these ops).</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="User_stack_operations"
+>User stack operations <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>These operations affect individual registers.</p>
+
+<dl>
+<dt><a name="entrytype(out_INT,_in_INT)"
+><b>entrytype</b>(out INT, in INT)</a></dt><p class="pad"></p>
+
+<dd>Gets the type of entry $2 of the user stack and puts it in $1.</dd><p class="pad"></p>
+
+<dt><a name="depth(out_INT)"
+><b>depth</b>(out INT)</a></dt><p class="pad"></p>
+
+<dd>Puts the depth of the user stack in $1.</dd><p class="pad"></p>
+
+<dt><a name="lookback(out_INT,_in_INT)"
+><b>lookback</b>(out INT, in INT)</a></dt><p class="pad"></p>
+
+<dt><a name="lookback(out_STR,_in_INT)"
+><b>lookback</b>(out STR, in INT)</a></dt><p class="pad"></p>
+
+<dt><a name="lookback(out_NUM,_in_INT)"
+><b>lookback</b>(out NUM, in INT)</a></dt><p class="pad"></p>
+
+<dt><a name="lookback(out_PMC,_in_INT)"
+><b>lookback</b>(out PMC, in INT)</a></dt><p class="pad"></p>
+
+<dd>Finds the entry in the user stack at offset $2 from the top and put it in register $1. Positive numbers count down from the top of the stack, negative numbers count up from the bottom. (0 is the topmost entry, &#45;1 is the bottom&#45;most)</dd><p class="pad"></p>
+
+<dt><a name="save(in_INT)"
+><b>save</b>(in INT)</a></dt><p class="pad"></p>
+
+<dt><a name="save(in_NUM)"
+><b>save</b>(in NUM)</a></dt><p class="pad"></p>
+
+<dt><a name="save(in_STR)"
+><b>save</b>(in STR)</a></dt><p class="pad"></p>
+
+<dt><a name="save(in_PMC)"
+><b>save</b>(in PMC)</a></dt><p class="pad"></p>
+
+<dd>Save register or constant $1 onto the user stack.</dd><p class="pad"></p>
+
+<dt><a name="savec(in_STR)"
+><b>savec</b>(in STR)</a></dt><p class="pad"></p>
+
+<dt><a name="savec(in_PMC)"
+><b>savec</b>(in PMC)</a></dt><p class="pad"></p>
+
+<dd>Save a clone of register or constant $1 onto the user stack.</dd><p class="pad"></p>
+
+<dt><a name="restore(out_INT)"
+><b>restore</b>(out INT)</a></dt><p class="pad"></p>
+
+<dt><a name="restore(out_NUM)"
+><b>restore</b>(out NUM)</a></dt><p class="pad"></p>
+
+<dt><a name="restore(out_PMC)"
+><b>restore</b>(out PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="restore(out_STR)"
+><b>restore</b>(out STR)</a></dt><p class="pad"></p>
+
+<dd>Restore register $1 from the user stack.</dd><p class="pad"></p>
+
+<dt><a name="rotate_up(in_INT)"
+><b>rotate_up</b>(in INT)</a></dt><p class="pad"></p>
+
+<dd>Rotate the top $1 entries in the user stack by one. If $1 is positive, then the stack rotates upwards: the ($1)th entry becomes the ($1&#45;1)th entry and so on, all the way up to the top of the stack, while the entry formerly at the top of the stack becomes the new ($1)th entry. If $1 is negative, the stack rotates downwards: the top entry becomes the second entry, the second becomes the third etc., while the former ($1)th entry becomes the new top entry.</dd><p class="pad"></p>
+
+<dt><a name="intsave(in_INT)"
+><b>intsave</b>(in INT)</a></dt><p class="pad"></p>
+
+<dd>Save register or constant $1 onto the high&#45;speed int stack.</dd><p class="pad"></p>
+
+<dt><a name="intrestore(out_INT)"
+><b>intrestore</b>(out INT)</a></dt><p class="pad"></p>
+
+<dd>Restore register $1 from the high&#45;speed int stack.</dd><p class="pad"></p>
+
+<dt><a name="intdepth(out_INT)"
+><b>intdepth</b>(out INT)</a></dt><p class="pad"></p>
+
+<dd>Puts the depth of the high&#45;speed int stack in $1.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Copyright (C) 2001&#45;2004 The Perl Foundation. All rights reserved.</p>
+
+<h1><a name="LICENSE"
+>LICENSE <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>This program is free software. It is subject to the same license as the Parrot interpreter itself.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

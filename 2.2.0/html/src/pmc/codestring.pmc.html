@@ -1,0 +1,87 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - CodeString PMC Class</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; CodeString PMC Class
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/codestring.pmc &#45; CodeString PMC Class</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p><code>CodeString</code> is a class intended to simplify the process of emitting code strings.
+Ideally this will eventually become a form of &#34;CodeBuffer&#34; that is more efficient than string concatenation,
+but for now it works well enough for me.</p>
+
+<p>The primary method for <code>CodeString</code> objects is <code>emit</code>,
+which appends a line (or lines) of code to the string according to a format parameter.
+The line can contain substitution markers (ala printf) that indicate where other parameters to the call should be placed.</p>
+
+<p>Note that <code>CodeString</code> is just a subclass of Parrot&#39;s native <code>String</code> class,
+so it&#39;s easy to combine CodeString objects with other strings outside of the <code>emit</code> method.</p>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="init()"
+><b><code>init()</b></code></a></dt>
+Initialize the CodeString.
+<dt><a name="mark()"
+><b><code>mark()</b></code></a></dt>
+Mark the CodeString as live.
+<dt><a name="emit(string_fmt_[,_pmc_args_]_[,_pmc_hash_])"
+><b><code>emit(string fmt [, pmc args ] [, pmc hash ])</b></code></a></dt>
+Add a line to a <code>CodeString</code> object according to <code>fmt</code>.
+The <code>fmt</code> string can contain any number of &#34;%&#45;replacements&#34; which are replaced by the corresponding values from <code>args</code> or <code>hash</code> prior to being appended to the string.
+(Here <code>args</code> is a slurpy array,
+and <code>hash</code> is a slurpy hash.)The currently defined replacements include:
+<pre>    %0 %1 ... %9     the value from the args array at index 0..9
+    %,               the values of the args array separated by commas
+    %%               a percent sign</pre>
+A percent&#45;sign followed by any other character that is a hash key receives the value of the hash element.A newline is automatically added to the end of the fmt.
+<dt><a name="lineof(INTVAL_pos)"
+>lineof(INTVAL pos)</a></dt>
+Return the line number of the line at offset <code>pos</code>. This code assumes that the first line is line number zero.
+<dt><a name="unique([string_fmt])"
+><b><code>unique([string fmt])</b></code></a></dt>
+Each call to <code>unique</code> returns a unique number, or if a <code>fmt</code> parameter is given it returns a unique string beginning with <code>fmt</code>. (This may eventually be generalized to allow uniqueness anywhere in the string.) The function starts counting at 10 (so that the values 0..9 can be considered &#34;safe&#34;).
+<dt><a name="escape(string_str)"
+><b><code>escape(string str)</b></code></a></dt>
+Returns an escaped value of <code>str</code> suitable for including in PIR. If the string contains any non&#45;ASCII characters, then it&#39;s prefixed with &#39;unicode:&#39;.
+<dt><a name="charname_to_ord(string_name)"
+><b><code>charname_to_ord(string name)</b></code></a></dt>
+Converts the Unicode character name given by <code>name</code> to its codepoint value. Returns &#45;1 if an error occurs in conversion.
+<dt><a name="key(_string_name1_[,_string_name2,_...]_)"
+><b><code>key( string name1 [, string name2, ...] )</b></code></a></dt>
+Constructs a PIR key using the strings passed as arguments. For example, <code>key(&#39;Foo&#39;, &#39;Bar&#39;)</code> returns <code>[&#34;Foo&#34;;&#34;Bar&#34;]</code>.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

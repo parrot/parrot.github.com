@@ -1,0 +1,523 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot FAQ</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot FAQ</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>docs/faq.pod &#45; Parrot FAQ</p>
+
+<h1><a name="GENERAL_QUESTIONS"
+>GENERAL QUESTIONS <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<h2><a name="What_is_Parrot?"
+>What is Parrot? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Parrot is a virtual machine for dynamic languages such as PHP,
+Perl,
+Python,
+Ruby,
+Scheme,
+Tcl,
+etc.
+It compiles and executes bytecode,
+but is also designed to act as an interpreter.</p>
+
+<h2><a name="Why_did_you_call_it_&#34;Parrot&#34;?"
+>Why did you call it &#34;Parrot&#34;? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>The name &#34;Parrot&#34; started with Simon Cozens&#39;s April Fool&#39;s Joke (<a href='http://www.perl.com/pub/a/2001/04/01/parrot.htm'><a href="http://www.perl.com/pub/a/2001/04/01/parrot.htm">http://www.perl.com/pub/a/2001/04/01/parrot.htm</a></a>) where Larry Wall and Guido van Rossum announced the merger of the Perl and Python languages.</p>
+
+<p>A year later,
+when we were looking for a name for our virtual machine that could run both Perl and Python,
+it seemed like a perfect fit.</p>
+
+<h2><a name="Is_Parrot_the_same_as_Perl_6?"
+>Is Parrot the same as Perl 6? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>No.
+Perl 6 is just one of the languages that will run on Parrot.
+For information about Perl 6 on Parrot,
+see <a href='TODO#perl6%2F'>&#34;perl6/&#34; in languages</a>.</p>
+
+<h2><a name="Can_I_use_Parrot_today?"
+>Can I use Parrot today? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Yes.</p>
+
+<p>Although Parrot is currently still under development,
+Parrot has been usable for a long time.
+The primary way to use Parrot is to write Parrot Intermediate Representation (PIR),
+described in <a href='TODO#pdds%2Fdraft%2Fpdd19_pir.pod'>PDD19</a>.
+PIR is a high&#45;level assembly language.
+PIR maps to the more low&#45;level Parrot Assembly language (PASM),
+which is harder to write and read.
+Although you could write PASM instead of PIR,
+PIR is the recommended way to program for Parrot.
+See the examples to see what both PIR and PASM looks like.</p>
+
+<p>You can also create dynamic content within Apache using Ask Bjorn Hansen&#39;s mod_parrot module.
+You are strongly advised that mod_parrot is a toy,
+and should not be used with any production code.</p>
+
+<h2><a name="Why_should_I_program_in_PIR?"
+>Why should I program in PIR? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Lots of reasons,
+actually.
+:^)</p>
+
+<ul>
+<li>All the <a href='#LINKS'>cool kids</a> are doing it.</li><p class="pad"></p>
+
+<li>It&#39;s easy to write and read.</li><p class="pad"></p>
+
+<li>You get all the pleasure of programming in assembly language (albeit a high&#45;level assembly language) without any of the requisite system crashes.</li><p class="pad"></p>
+</ul>
+
+<p>Seriously,
+though,
+PIR is generally easy to learn if you have a background in dynamic languages.
+Programming in PIR is an effective way to write libraries for Parrot,
+and one of the best ways to write test cases for Parrot.</p>
+
+<h2><a name="When_can_I_expect_to_use_Parrot_with_a_real_programming_language?"
+>When can I expect to use Parrot with a <i>real</i> programming language? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>You can already today!
+There are quite a few high level languages being targeted to Parrot.
+Since the introduction of the Parrot Compiler Tools (the Parrot Grammar Engine (PGE) and the Tree Grammar Engine (TGE)),
+targeting a language to Parrot has become a snap!
+Please note that,
+although some languages have come a long way,
+due to the fact that Parrot is still under active development,
+most library development is still done in PIR.</p>
+
+<p>Below is a list of some languages that are actively worked on.</p>
+
+<ul>
+<li>Will Coleda and Matt Diephouse are working hard on their Tcl port to Parrot (called ParTcl).
+Will also created an APL implementation with Patrick R.
+Michaud.</li><p class="pad"></p>
+
+<li>Patrick R.
+Michaud is working on a Perl 6 implementation using the Parrot Compiler Tools.
+(although the Perl 6 specification is not finished yet).</li><p class="pad"></p>
+
+<li>Fran&#231;ois Perrad is working on a Lua implementation for Parrot.</li><p class="pad"></p>
+
+<li>Allison Randal is working on a Perl 1 port to Parrot,
+called Punie.</li><p class="pad"></p>
+
+<li>Jonathan Worthington has been working on a .NET to Parrot translator.</li><p class="pad"></p>
+
+<li>Many other languages are worked on,
+some more actively than others.
+See <code lang='und' xml:lang='und'>http://www.parrotcode.org/languages/</code> for a complete list.</li><p class="pad"></p>
+</ul>
+
+<h2><a name="What_language_is_Parrot_written_in?"
+>What language is Parrot written in? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>C.</p>
+
+<h2><a name="For_the_love_of_God,_man,_why?!?!?!?"
+>For the love of God,
+man,
+why?!?!?!? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Because it&#39;s the best we&#39;ve got.</p>
+
+<h2><a name="That&#39;s_sad."
+>That&#39;s sad. <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>So true.
+Regardless,
+C&#39;s available pretty much everywhere.
+Perl 5&#39;s in C,
+so we can potentially build any place Perl 5 builds.</p>
+
+<h2><a name="Why_not_write_it_in_insert_favorite_language_here?"
+>Why not write it in <i>insert favorite language here</i>? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Because of one of:</p>
+
+<ul>
+<li>Not available everywhere.</li><p class="pad"></p>
+
+<li>Limited talent pool for core programmers.</li><p class="pad"></p>
+
+<li>Not fast enough.</li><p class="pad"></p>
+</ul>
+
+<h2><a name="Why_aren&#39;t_you_using_external_tool_or_library_X?"
+>Why aren&#39;t you using external tool or library <i>X</i>? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>The most common issues are:</p>
+
+<ul>
+<li>License compatibility.</li><p class="pad"></p>
+
+<p>Parrot uses the Artistic License 2.0,
+which is compatible with the GNU GPL.
+This means you can combine Parrot with GPL&#39;ed code.</p>
+
+<p>Code accepted into the core interpreter must fall under the same terms as Parrot.
+Library code (for example the ICU library we&#39;re using for Unicode) we link into the interpreter can be covered by other licenses so long as their terms don&#39;t prohibit this.</p>
+
+<li>Platform compatibility.</li><p class="pad"></p>
+
+<p>Parrot has to work on most of Perl 5&#39;s platforms,
+as well as a few of its own.
+Perl 5 runs on eighty platforms; Parrot must run on Unix,
+Windows,
+Mac OS (X and Classic),
+VMS,
+Crays,
+Windows CE,
+and Palm OS,
+just to name a few.
+Among its processor architectures will be x86,
+SPARC,
+Alpha,
+IA&#45;64,
+ARM,
+and 68x00 (Palms and old Macs).
+If something doesn&#39;t work on all of these,
+we can&#39;t use it in Parrot.</p>
+
+<li>Speed,
+size,
+and flexibility.</li><p class="pad"></p>
+
+<p>Not only does Parrot have to run on all those platforms,
+but it must also run efficiently.
+Parrot&#39;s core size is currently between 250K and 700K,
+depending on compiler.
+That&#39;s pushing it on the handheld platforms.
+Any library used by Parrot must be fast enough to have a fairly small performance impact,
+small enough to have little impact on core size,
+and flexible enough to handle the varying demands of Perl,
+Python,
+Tcl,
+Ruby,
+Scheme,
+and whatever else some clever or twisted hacker throws at Parrot.</p>
+</ul>
+
+<p>These tests are very hard to pass; currently we&#39;re expecting we&#39;ll probably have to write everything but the Unicode stuff.</p>
+
+<h2><a name="Why_your_own_virtual_machine?_Why_not_compile_to_JVM/.NET?"
+>Why your own virtual machine?
+Why not compile to JVM/.NET? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Those VMs are designed for statically typed languages.
+That&#39;s fine,
+since Java,
+C#,
+and lots of other languages are statically typed.
+Perl isn&#39;t.
+For a variety of reasons,
+it means that Perl would run more slowly there than on an interpreter geared towards dynamic languages.</p>
+
+<p>The .NET VM didn&#39;t even exist when we started development,
+or at least we didn&#39;t know about it when we were working on the design.
+We do now,
+though it&#39;s still not suitable.</p>
+
+<h2><a name="So_you_won&#39;t_run_on_JVM/.NET?"
+>So you won&#39;t run on JVM/.NET? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Sure we will.
+They&#39;re just not our first target.
+We build our own interpreter/VM,
+then when that&#39;s working we start in on the JVM and/or .NET back ends.</p>
+
+<h2><a name="What_about_insert_other_VM_here"
+>What about <i>insert other VM here</i> <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>While I&#39;m sure that&#39;s a perfectly nice,
+fast VM,
+it&#39;s probably got the same issues as do the languages in the &#34;Why not something besides C&#34; question does.
+I realize that the Scheme&#45;48 interpreter&#39;s darned fast,
+for example,
+but we&#39;re looking at the same sort of portability and talent pool problems that we are with,
+say,
+Erlang or Haskell as an implementation language.</p>
+
+<h2><a name="Why_is_the_development_list_called_perl6&#45;internals?"
+>Why is the development list called perl6&#45;internals? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>It&#39;s not anymore.
+As of July 2006,
+the list is called parrot&#45;porters to reflect the growing list of languages and platforms embraced by Parrot.
+The old perl6&#45;internals list forwards to the new one.</p>
+
+<h1><a name="PARROT_IMPLEMENTATION_ISSUES"
+>PARROT IMPLEMENTATION ISSUES <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Why_a_register&#45;based_VM_instead_of_a_stack&#45;based_one?"
+>Why a register&#45;based VM instead of a stack&#45;based one? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>The JVM and the CLR (Mono and .NET) are two successful stack&#45;based virtual machines.
+Many interpreters such as Perl,
+Python,
+and Ruby are also internally stack&#45;based.</p>
+
+<p>On the other hand,
+most hardware is register&#45;based,
+as are several virtual machines designed to emulate hardware (such as the 68K emulator&#45;&#45;<a href='http://en.wikipedia.org/wiki/Mac_68k_emulator'><a href="http://en.wikipedia.org/wiki/Mac_68k_emulator">http://en.wikipedia.org/wiki/Mac_68k_emulator</a></a>&#45;&#45;Apple shipped with its PPC&#45;enabled versions of Mac OS).</p>
+
+<p>A few reasons we chose a register&#45;based architecture:</p>
+
+<ul>
+<li>Executing opcodes on a register&#45;based VM takes fewer instructions (since you eliminate all the steps to push items on to the stack and pull them off again),
+which means less CPU time.</li><p class="pad"></p>
+
+<li>One class of security problems in modern software are a result of problems with the stack (stack overflows,
+stack smashing).
+We can&#39;t entirely eliminate these (since Parrot is written in C,
+which is stack&#45;based),
+but we can significantly minimize them.</li><p class="pad"></p>
+
+<li>A register&#45;based VM is far more pleasant to work with than a stack&#45;based VM.</li><p class="pad"></p>
+
+<li>In the early days of Parrot one motivating factor was taking advantage of decades of register&#45;based hardware research.
+We&#39;ve now moved away from a fixed number of registers to a variable (and potentially unlimited) number of registers per sub.
+This change opens up many new possibilities,
+but it does push us past the limits of most research into register&#45;based hardware.</li><p class="pad"></p>
+
+<li>See also <a href='http://www.usenix.org/publications/library/proceedings/vee05/full_papers/p153&#45;yunhe.pdf'><a href="http://www.usenix.org/publications/library/proceedings/vee05/full_papers/p153&#45;yunhe.pdf">http://www.usenix.org/publications/library/proceedings/vee05/full_papers/p153&#45;yunhe.pdf</a></a>.</li><p class="pad"></p>
+
+<p>We&#39;re pushing forward the state&#45;of&#45;the art in virtual machines.
+Innovation often involves breaking with tradition.
+We&#39;re pleased with the results so far,
+and we&#39;re not finished yet.</p>
+</ul>
+
+<h2><a name="Why_aren&#39;t_you_using_reference_counting?"
+>Why aren&#39;t you using reference counting? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Reference counting has three big issues.</p>
+
+<dl>
+<dt><a name="Code_complexity"
+>Code complexity</a></dt><p class="pad"></p>
+
+<dd>Every single place where an object is referenced,
+and every single place where a reference is dropped,
+<i>must</i> properly alter the refcount of the objects being manipulated.
+One mistake and an object (and everything it references,
+directly or indirectly) lives forever or dies prematurely.
+Since a lot of code references objects,
+that&#39;s a lot of places to scatter reference counting code.
+While some of it can be automated,
+that&#39;s a lot of discipline that has to be maintained.</dd><p class="pad"></p>
+
+<dd>It&#39;s enough of a problem to track down garbage collection systems as it is,
+and when your garbage collection system is scattered across your entire source base,
+and possibly across all your extensions,
+it&#39;s a massive annoyance.
+More sophisticated garbage collection systems,
+on the other hand,
+involve much less code.
+It is,
+granted,
+trickier code,
+but it&#39;s a small chunk of code,
+contained in one spot.
+Once you get that one chunk correct,
+you don&#39;t have to bother with the garbage collector any more.</dd><p class="pad"></p>
+
+<dt><a name="Cost"
+>Cost</a></dt><p class="pad"></p>
+
+<dd>For reference counting to work right,
+you need to twiddle reference counts every time an object is referenced,
+or unreferenced.
+This generally includes even short&#45;lived objects that will exist only briefly before dying.
+The cost of a reference counting scheme is directly linked to the number of times code references,
+or unreferences,
+objects.
+A tracing system of one sort or another (and there are many) has an average&#45;case cost that&#39;s based on the number of live objects.</dd><p class="pad"></p>
+
+<dd>There are a number of hidden costs in a reference&#45;counting scheme.
+Since the code to manipulate the reference counts <i>must</i> be scattered throughout the interpreter,
+the interpreter code is less dense than it would be without reference counts.
+That means that more of the processor&#39;s cache is dedicated to reference count code,
+code that is ultimately just interpreter bookkeeping,
+and not dedicated to running your program.
+The data is also less dense,
+as there has to be a reference count embedded in it.
+Once again,
+that means more cache used for each object during normal running,
+and lower cache density.</dd><p class="pad"></p>
+
+<dd>A tracing collector,
+on the other hand,
+has much denser code,
+since all it&#39;s doing is running through active objects in a tight loop.
+If done right,
+the entire tracing system will fit nicely in a processor&#39;s L1 cache,
+which is about as tight as you can get.
+The data being accessed is also done in a linear fashion,
+at least in part,
+which lends itself well to processor&#39;s prefetch mechanisms where they exist.
+The garbage collection data can also be put in a separate area and designed in a way that&#39;s much tighter and more cache&#45;dense.</dd><p class="pad"></p>
+
+<dd>Having said that,
+the worst&#45;case performance for a tracing garbage collecting system is worse than that of a reference counting system.
+Luckily the pathological cases are quite rare,
+and there are a number of fairly good techniques to deal with those.
+Refcounting schemes are also more deterministic than tracing systems,
+which can be an advantage in some cases.
+Making a tracing collector deterministic can be somewhat expensive.</dd><p class="pad"></p>
+
+<dt><a name="Self&#45;referential_structures_live_forever"
+>Self&#45;referential structures live forever</a></dt><p class="pad"></p>
+
+<dd>Or nearly forever.
+Since the only time an object is destroyed is when its refcount drops to zero,
+data in a self&#45;referential structure will live on forever.
+It&#39;s possible to detect this and clean it up,
+of course...
+by implementing a full tracing garbage collector.
+That means that you have two full garbage collection systems rather than one,
+which adds to the code complexity.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Could_we_do_a_partial_refcounting_scheme?"
+>Could we do a partial refcounting scheme? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Well...
+no.
+It&#39;s all or nothing.
+If we were going to do a partial scheme we might as well do a full scheme.
+(A partial refcounting scheme is actually more expensive,
+since partial schemes check to see whether refcounts need twiddling,
+and checks are more expensive than you might think)</p>
+
+<h2><a name="Why_are_there_so_many_opcodes?"
+>Why are there so many opcodes? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Whether we have a lot or not actually depends on how you count.
+In absolute,
+unique op numbers we have more than pretty much any other processor,
+but that is in part because we have *no* runtime op variance.</p>
+
+<p>It&#39;s also important to note that there&#39;s no less code (or,
+for the hardware,
+complexity) involved in doing it our way or the decode&#45;at&#45;runtime way &#45;&#45; all the code is still there in every case,
+since we all have to do the same things (add a mix of ints,
+floats,
+and objects,
+with a variety of ways of finding them) so there&#39;s no real penalty to doing it our way.
+It actually simplifies the JIT some (no need to puzzle out the parameter types),
+so in that we get a win over other platforms since JIT expenses are paid by the user every run,
+while our form of decoding&#39;s only paid when you compile.</p>
+
+<p>Finally,
+there&#39;s the big &#34;does it matter,
+and to whom?&#34; question.
+To someone actually writing Parrot assembly,
+it looks like Parrot only has one &#34;add&#34; op &#45;&#45; when emitting PASM or PIR you use the &#34;add&#34; mnemonic.
+That it gets qualified and assembles down to one variant or another based on the (fixed at assemble time) parameters is just an implementation detail.
+For those of us writing op bodies,
+it just looks like we&#39;ve got an engine with full signature&#45;based dispatching (which,
+really,
+we do &#45;&#45; it&#39;s just a static variant),
+so rather than having to have a big switch statement or chain of ifs at the beginning of the add op we just write the specific variants identified by function prototype and leave it to the engine to choose the right variant.</p>
+
+<p>Heck,
+we could,
+if we chose,
+switch over to a system with a single add op with tagged parameter types and do runtime decoding without changing the source for the ops at all &#45;&#45; the op preprocessor could glob them all together and autogenerate the big switch/if ladder at the head of the function.
+(We&#39;re not going to,
+of course,
+but we could.)</p>
+
+<h2><a name="What_are_the_criteria_for_adding_and_deleting_opcodes?"
+>What are the criteria for adding and deleting opcodes? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>As for what the rationale is...
+well,
+it&#39;s a combination of whim and necessity for adding them,
+and brutal reality for deleting them.</p>
+
+<p>Our ops fall into two basic categories.
+The first,
+like add,
+are just basic operations that any engine has to perform.
+The second,
+like time,
+are low&#45;level library functions.</p>
+
+<p>For something like hardware,
+splitting standard library from the CPU makes sense &#45;&#45; often the library requires resources that the hardware doesn&#39;t have handy.
+Hardware is also often bit&#45;limited &#45;&#45; opcodes need to fit in 8 or 9 bits.</p>
+
+<p>Parrot,
+on the other hand,
+*isn&#39;t* bit&#45;limited,
+since our ops are 32 bits.
+(A more efficient design on RISC systems where byte&#45;access is expensive.) That opens things up a bunch.</p>
+
+<p>If you think about it,
+the core opcode functions and the core low&#45;level libraries are *always* available.
+Always.
+The library functions also have a very fixed parameter list.
+Fixed parameter list,
+guaranteed availability...
+looks like an opcode function to me.
+So they are.
+We could make them library functions instead,
+but all that&#39;d mean would be that they&#39;d be more expensive to call (our sub/method call is a bit heavyweight) and that you&#39;d have to do more work to find and call the functions.
+Seemed silly.</p>
+
+<p>Or,
+I suppose,
+you could think of it as if we had *no* opcodes at all other than <code lang='und' xml:lang='und'>end</code> and <code lang='und' xml:lang='und'>loadoplib</code>.
+Heck,
+we&#39;ve a loadable opcode system &#45;&#45; it&#39;d not be too much of a stretch to consider all the opcode functions other than those two as just functions with a fast&#45;path calling system.
+The fact that a while bunch of &#39;em are available when you start up&#39;s just a convenience for you.</p>
+
+<p>See <a href='http://www.nntp.perl.org/group/perl.perl6.internals/22003'><a href="http://www.nntp.perl.org/group/perl.perl6.internals/22003">http://www.nntp.perl.org/group/perl.perl6.internals/22003</a></a> for more details.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

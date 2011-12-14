@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Lua Input/Output Library</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Lua Input/Output Library</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/lua.html">Lua</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>lib/luafile.pir &#45; Lua Input/Output Library</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>See <em>languages/lua/lib/luaio.pir</em>.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="file:close_()"
+><b><code>file:close ()</b></code></a></dt>
+Closes <code>file</code>.
+Note that files are automatically closed when their handles are garbage collected,
+but that takes an unpredictable amount of time to happen.
+<dt><a name="file:flush_()"
+><b><code>file:flush ()</b></code></a></dt>
+Saves any written data to <code>file</code>.
+<dt><a name="file:lines_()"
+><b><code>file:lines ()</b></code></a></dt>
+Returns an iterator function that,
+each time it is called,
+returns a new line from the file.
+Therefore,
+the construction
+<pre>    for line in file:lines() do ... end</pre>
+will iterate over all lines of the file. (Unlike <code>io.lines</code>, this function does not close the file when the loop ends.)
+<dt><a name="file:read_(format1,_...)"
+><b><code>file:read (format1, ...)</b></code></a></dt>
+Reads the file <code>file</code>, according to the given formats, which specify what to read. For each format, the function returns a string (or a number) with the characters read, or <b>nil</b> if it cannot read data with the specified format. When called without formats, it uses a default format that reads the entire next line (see below).The available formats are
+<dl>
+<dt><a name="&#34;*n&#34;"
+><b>&#34;*n&#34;</b></a></dt>
+reads a number; this is the only format that returns a number instead of a string.
+<dt><a name="&#34;*a&#34;"
+><b>&#34;*a&#34;</b></a></dt>
+reads the whole file, starting at the current position. On end of file, it returns the empty string.
+<dt><a name="&#34;*l&#34;"
+><b>&#34;*l&#34;</b></a></dt>
+reads the next line (skipping the end of line), returning <b>nil</b> on end of file. This is the default format.
+<dt><a name="number"
+><b>number</b></a></dt>
+reads a string with up to that number of characters, returning <b>nil</b> on end of file. If number is zero, it reads nothing and returns an empty string, or <b>nil</b> on end of file.</dl>
+
+<dt><a name="file:seek_([whence]_[,_offset])"
+><b><code>file:seek ([whence] [, offset])</b></code></a></dt>
+Sets and gets the file position, measured from the beginning of the file, to the position given by <code>offset</code> plus a base specified by the string <code>whence</code>, as follows:
+<dl>
+<dt><a name="&#34;set&#34;"
+><b>&#34;set&#34;</b></a></dt>
+base is position 0 (beginning of the file);
+<dt><a name="&#34;cur&#34;"
+><b>&#34;cur&#34;</b></a></dt>
+base is current position;
+<dt><a name="&#34;end&#34;"
+><b>&#34;end&#34;</b></a></dt>
+base is end of file;</dl>
+In case of success, function <code>seek</code> returns the final file position, measured in bytes from the beginning of the file. If this function fails, it returns <b>nil</b>, plus a string describing the error.The default value for <code>whence</code> is <code>&#34;cur&#34;</code>, and for <code>offset</code> is 0. Therefore, the call <code>file:seek()</code> returns the current file position, without changing it; the call <code>file:seek(&#34;set&#34;)</code> sets the position to the beginning of the file (and returns 0); and the call <code>file:seek(&#34;end&#34;)</code> sets the position to the end of the file, and returns its size.
+<dt><a name="file:setvbuf_(mode_[,_size])"
+><b><code>file:setvbuf (mode [, size])</b></code></a></dt>
+Sets the buffering mode for an output file. There are three available modes:
+<dl>
+<dt><a name="&#34;no&#34;"
+><b>&#34;no&#34;</b></a></dt>
+no buffering; the result of any output operation appears immediately.
+<dt><a name="&#34;full&#34;"
+><b>&#34;full&#34;</b></a></dt>
+full buffering; output operation is performed only when the buffer is full (or when you explicitly flush the file).
+<dt><a name="&#34;line&#34;"
+><b>&#34;line&#34;</b></a></dt>
+line buffering; output is buffered until a newline is output or there is any input from some special files (such as a terminal device).</dl>
+For the last two cases, sizes specifies the size of the buffer, in bytes. The default is an appropriate size.
+<dt><a name="file:write_(value1,_...)"
+><b><code>file:write (value1, ...)</b></code></a></dt>
+Writes the value of each of its arguments to the filehandle <code>file</code>. The arguments must be strings or numbers. To write other values, use <code>tostring</code> or <code>string.format</code> before write.</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

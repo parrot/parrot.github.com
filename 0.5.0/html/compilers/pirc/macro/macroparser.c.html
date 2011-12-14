@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="new_list"
+><b><code lang='und' xml:lang='und'>new_list</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a new list node.
+The specified item is assigned to the node&#39;s value.
+Returns the newly created node.</dd><p class="pad"></p>
+
+<dt><a name="add_item"
+><b><code lang='und' xml:lang='und'>add_item</b></code></a></dt><p class="pad"></p>
+
+<dd>Add a new item to the specified list.
+The item is added at the back of the list,
+so items added are kept in order.</dd><p class="pad"></p>
+
+<dd>A pointer to the beginning of the list is returned (the same as was specified).</dd><p class="pad"></p>
+
+<dt><a name="include_file"
+><b><code lang='und' xml:lang='und'>include_file</b></code></a></dt><p class="pad"></p>
+
+<dd>Process the specified file.</dd><p class="pad"></p>
+
+<dt><a name="update_unique_id"
+><b><code lang='und' xml:lang='und'>update_unique_id</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="expand"
+><b><code lang='und' xml:lang='und'>expand</b></code></a></dt><p class="pad"></p>
+
+<dd>Expand the specified macro (or constant).</dd><p class="pad"></p>
+
+<dt><a name="define_constant"
+><b><code lang='und' xml:lang='und'>define_constant</b></code></a></dt><p class="pad"></p>
+
+<dd>Define the specified name as an alias for the specified value.</dd><p class="pad"></p>
+
+<dt><a name="define_macro"
+><b><code lang='und' xml:lang='und'>define_macro</b></code></a></dt><p class="pad"></p>
+
+<dd>Define a macro by the given name,
+parameters and body.</dd><p class="pad"></p>
+
+<dt><a name="find_macro"
+><b><code lang='und' xml:lang='und'>find_macro</b></code></a></dt><p class="pad"></p>
+
+<dd>Find the specified macro.
+If the specified macro does not exist,
+NULL is returned.</dd><p class="pad"></p>
+
+<dt><a name="concat"
+><b><code lang='und' xml:lang='und'>concat</b></code></a></dt><p class="pad"></p>
+
+<dd>Concatenate two strings,
+and return the result.
+If the first string is NULL,
+then the result consists of the second string.</dd><p class="pad"></p>
+
+<dt><a name="emit"
+><b><code lang='und' xml:lang='und'>emit</b></code></a></dt><p class="pad"></p>
+
+<dd>Emit the specified string.
+This function will be the &#34;gateway&#34; to the output file.
+All tokens except <code lang='und' xml:lang='und'>.sub</code>,
+<code lang='und' xml:lang='und'>.end</code> and <code lang='und' xml:lang='und'>.namespace</code> are indented.
+All tokens are separated with a space,
+<code lang='und' xml:lang='und'>)</code>,
+<code lang='und' xml:lang='und'>]</code>,
+<code lang='und' xml:lang='und'>,</code>.</dd><p class="pad"></p>
+
+<dt><a name="new_constant_table"
+><b><code lang='und' xml:lang='und'>new_constant_table</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="pop_constant_table"
+><b><code lang='und' xml:lang='und'>pop_constant_table</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="delete_constant_table"
+><b><code lang='und' xml:lang='und'>delete_constant_table</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="munge_id"
+><b><code lang='und' xml:lang='und'>munge_id</b></code></a></dt><p class="pad"></p>
+
+<dd>Generate an identifier based on a macro label or locaal declaration,
+or a macro label or local expansion.</dd><p class="pad"></p>
+
+<dd>A label declaration looks like: &#34;.label $LABEL:&#34;,
+from which a normal PIR label is created,
+formatted as: &#34;_unique_MACRO_LABEL_?:&#34;.</dd><p class="pad"></p>
+
+<dd>A label expansion looks like &#34;.$LABEL&#34;,
+from which a label identifier is generated,
+formatted as: &#34;_unique_MACRO_LABEL_?&#34; (note the difference,
+there is no colon at the end.</dd><p class="pad"></p>
+
+<dd>The same works for local identifiers,
+but of course the is_label_declaration argument must be 0 for that.</dd><p class="pad"></p>
+
+<dt><a name="process_string"
+><b><code lang='und' xml:lang='und'>process_string</b></code></a></dt><p class="pad"></p>
+
+<dd>Process the string stored in <code lang='und' xml:lang='und'>buffer</code>.
+First a new yyscan_t object is created,
+initialized,
+after which the specified buffer is parsed.
+Afterwards the yyscan_t object is destroyed.</dd><p class="pad"></p>
+
+<dt><a name="process_file"
+><b><code lang='und' xml:lang='und'>process_file</b></code></a></dt><p class="pad"></p>
+
+<dd>Process the specified file.</dd><p class="pad"></p>
+
+<dt><a name="print_help"
+><b><code lang='und' xml:lang='und'>print_help</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="yyerror"
+><b><code lang='und' xml:lang='und'>yyerror</b></code></a></dt><p class="pad"></p>
+
+<dd>Function for syntax error handling.</dd><p class="pad"></p>
+
+<dt><a name="main"
+><b><code lang='und' xml:lang='und'>main</b></code></a></dt><p class="pad"></p>
+
+<dd>Pre&#45;processor main function.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

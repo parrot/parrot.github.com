@@ -1,0 +1,256 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Functions for testing Parrot and language implementations</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Functions for testing Parrot and language implementations</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/perl.html">Perl Modules</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Parrot::Test &#45; Functions for testing Parrot and language implementations</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Set the number of tests to be run like this:</p>
+
+<pre lang='und' xml:lang='und'>    use Parrot::Test tests =&#62; 8;</pre>
+
+<p>Write individual tests like this:</p>
+
+<pre lang='und' xml:lang='und'>    pasm_output_is(&#60;&#60;&#39;CODE&#39;, &#60;&#60;&#39;OUTPUT&#39;, &#34;description of test&#34;);
+    print &#34;this is ok\n&#34;
+    end
+    CODE
+    this is ok
+    OUTPUT</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This module provides various Parrot&#45;specific test functions.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The parameter <code lang='und' xml:lang='und'>$language</code> is the language of the code. The parameter <code lang='und' xml:lang='und'>$code</code> is the code that should be executed or transformed. The parameter <code lang='und' xml:lang='und'>$expected</code> is the expected result. The parameter <code lang='und' xml:lang='und'>$unexpected</code> is the unexpected result. The parameter <code lang='und' xml:lang='und'>$description</code> should describe the test.</p>
+
+<p>Any optional parameters can follow. For example, to mark a test as a TODO test (where you know the implementation does not yet work), pass:</p>
+
+<pre lang='und' xml:lang='und'>    todo =&#62; &#39;reason to consider this TODO&#39;</pre>
+
+<p>at the end of the argument list. Valid reasons include <code lang='und' xml:lang='und'>bug</code>, <code lang='und' xml:lang='und'>unimplemented</code>, and so on.</p>
+
+<dl>
+<dt><a name="language_output_is(_$language,_$code,_$expected,_$description)"
+><b><code lang='und' xml:lang='und'>language_output_is( $language, $code, $expected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs a langugage test and passes the test if a string comparison of the output with the expected result it true.</dd><p class="pad"></p>
+
+<dt><a name="language_output_like(_$language,_$code,_$expected,_$description)"
+><b><code lang='und' xml:lang='und'>language_output_like( $language, $code, $expected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs a langugage test and passes the test if the output matches the expected result.</dd><p class="pad"></p>
+
+<dt><a name="language_output_isnt(_$language,_$code,_$expected,_$description)"
+><b><code lang='und' xml:lang='und'>language_output_isnt( $language, $code, $expected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs a langugage test and passes the test if a string comparison if a string comparison of the output with the unexpected result is false.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>pasm_output_isnt($code, $unexpected, $description)</b></code> or <b><code lang='und' xml:lang='und'>output_isnt($code, $unexpected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the Parrot Assembler code and passes the test if a string comparison of the output with the unexpected result is false.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>pasm_output_is($code, $expected, $description)</b></code> or <b><code lang='und' xml:lang='und'>output_is($code, $expected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the Parrot Assembler code and passes the test if a string comparison of the output with the expected result it true.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>pasm_output_like($code, $expected, $description)</b></code> or <b><code lang='und' xml:lang='und'>output_like($code, $expected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the Parrot Assembler code and passes the test if the output matches the expected result.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>pasm_output_isnt($code, $unexpected, $description)</b></code> or <b><code lang='und' xml:lang='und'>output_isnt($code, $unexpected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the Parrot Assembler code and passes the test if a string comparison of the output with the unexpected result is false.</dd><p class="pad"></p>
+
+<dt><a name="past_output_is($code,_$expected,_$description)"
+><b><code lang='und' xml:lang='und'>past_output_is($code, $expected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the PAST code and passes the test if a string comparison of output with the expected result is true.</dd><p class="pad"></p>
+
+<dt><a name="past_output_like($code,_$expected,_$description)"
+><b><code lang='und' xml:lang='und'>past_output_like($code, $expected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the PAST code and passes the test if output matches the expected result.</dd><p class="pad"></p>
+
+<dt><a name="past_output_isnt($code,_$unexpected,_$description)"
+><b><code lang='und' xml:lang='und'>past_output_isnt($code, $unexpected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the PAST code and passes the test if a string comparison of the output with the unexpected result is false.</dd><p class="pad"></p>
+
+<dt><a name="pir_output_is($code,_$expected,_$description)"
+><b><code lang='und' xml:lang='und'>pir_output_is($code, $expected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the PIR code and passes the test if a string comparison of output with the expected result is true.</dd><p class="pad"></p>
+
+<dt><a name="pir_output_like($code,_$expected,_$description)"
+><b><code lang='und' xml:lang='und'>pir_output_like($code, $expected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the PIR code and passes the test if output matches the expected result.</dd><p class="pad"></p>
+
+<dt><a name="pir_output_isnt($code,_$unexpected,_$description)"
+><b><code lang='und' xml:lang='und'>pir_output_isnt($code, $unexpected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the PIR code and passes the test if a string comparison of the output with the unexpected result is false.</dd><p class="pad"></p>
+
+<dt><a name="pbc_output_is($code,_$expected,_$description)"
+><b><code lang='und' xml:lang='und'>pbc_output_is($code, $expected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the Parrot Bytecode and passes the test if a string comparison of output with the expected result is true.</dd><p class="pad"></p>
+
+<dt><a name="pbc_output_like($code,_$expected,_$description)"
+><b><code lang='und' xml:lang='und'>pbc_output_like($code, $expected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the Parrot Bytecode and passes the test if output matches the expected result.</dd><p class="pad"></p>
+
+<dt><a name="pbc_output_isnt($code,_$unexpected,_$description)"
+><b><code lang='und' xml:lang='und'>pbc_output_isnt($code, $unexpected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the Parrot Bytecode and passes the test if a string comparison of output with the unexpected result is false.</dd><p class="pad"></p>
+
+<dt><a name="pir_2_pasm_is($code,_$expected,_$description)"
+><b><code lang='und' xml:lang='und'>pir_2_pasm_is($code, $expected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compile the Parrot Intermediate Representation and generate Parrot Assembler Code. Pass if the generated PASM is $expected.</dd><p class="pad"></p>
+
+<dt><a name="pir_2_pasm_like($code,_$expected,_$description)"
+><b><code lang='und' xml:lang='und'>pir_2_pasm_like($code, $expected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compile the Parrot Intermediate Representation and generate Parrot Assembler Code. Pass if the generated PASM matches $expected.</dd><p class="pad"></p>
+
+<dt><a name="pir_2_pasm_isnt($code,_$unexpected,_$description)"
+><b><code lang='und' xml:lang='und'>pir_2_pasm_isnt($code, $unexpected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compile the Parrot Intermediate Representation and generate Parrot Assembler Code. Pass unless the generated PASM is $expected.</dd><p class="pad"></p>
+
+<dt><a name="c_output_is($code,_$expected,_$description)"
+><b><code lang='und' xml:lang='und'>c_output_is($code, $expected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compiles and runs the C code, passing the test if a string comparison of output with the expected result it true.</dd><p class="pad"></p>
+
+<dt><a name="c_output_like($code,_$expected,_$description)"
+><b><code lang='und' xml:lang='und'>c_output_like($code, $expected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compiles and runs the C code, passing the test if output matches the expected result.</dd><p class="pad"></p>
+
+<dt><a name="c_output_isnt($code,_$unexpected,_$description)"
+><b><code lang='und' xml:lang='und'>c_output_isnt($code, $unexpected, $description)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compiles and runs the C code, passing the test if a string comparison of output with the unexpected result is false.</dd><p class="pad"></p>
+
+<dt><a name="example_output_is(_$example_fn,_$expected_)"
+><b><code lang='und' xml:lang='und'>example_output_is( $example_fn, $expected )</b></code></a></dt><p class="pad"></p>
+
+<dd>Determine the language from the extension of <code lang='und' xml:lang='und'>$example_fn</code> and runs language_output_is().</dd><p class="pad"></p>
+
+<dt><a name="skip($why,_$how_many)"
+><b><code lang='und' xml:lang='und'>skip($why, $how_many)</b></code></a></dt><p class="pad"></p>
+
+<dd>Use within a <code lang='und' xml:lang='und'>SKIP: { ... }</code> block to indicate why and how many test are being skipped. Just like in Test::More.</dd><p class="pad"></p>
+
+<dt><a name="run_command($command,_%options)"
+><b><code lang='und' xml:lang='und'>run_command($command, %options)</b></code></a></dt><p class="pad"></p>
+
+<dd>Run the given $command in a cross&#45;platform manner.</dd><p class="pad"></p>
+
+<dd>%options include...</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    STDOUT    filehandle to redirect STDOUT to
+    STDERR    filehandle to redirect STDERR to
+    CD        directory to run the command in</pre>
+
+<dd>For example:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    # equivalent to &#34;cd some_dir &#38;&#38; make test&#34;
+    run_command(&#34;make test&#34;, CD =&#62; &#34;some_dir&#34;);</pre>
+
+<dt><a name="slurp_file($file_name)"
+><b><code lang='und' xml:lang='und'>slurp_file($file_name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Read the whole file $file_name and return the content as a string.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="TODO"
+>TODO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><code lang='und' xml:lang='und'>generate_code</code> should be renamed and be published to everybody who needs to generate files.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="t/harness"
+><em lang='und' xml:lang='und'><a href="../../t/harness.html">t/harness</a></em></a></dt><p class="pad"></p>
+
+<dt><a name="docs/tests.pod"
+><em lang='und' xml:lang='und'><a href="../../docs/tests.pod.html">docs/tests.pod</a></em></a></dt><p class="pad"></p>
+
+<dt><a name="&#34;More&#34;_in_Test"
+><a href='TODO#More'>&#34;More&#34; in Test</a></a></dt><p class="pad"></p>
+
+<dt><a name="&#34;Builder&#34;_in_Test"
+><a href='TODO#Builder'>&#34;Builder&#34; in Test</a></a></dt><p class="pad"></p>
+</dl>
+
+<h1><a name="POD_ERRORS"
+>POD ERRORS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Hey! <b>The above document had some coding errors, which are explained below:</b></p>
+
+<dl>
+<dt><a name="Around_line_154:"
+>Around line 154:</a></dt><p class="pad"></p>
+
+<dd>Unterminated C&#60;...&#62; sequence</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

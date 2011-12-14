@@ -1,0 +1,261 @@
+=head1 NAME
+
+var.ops - Variable Opcodes
+
+=head1 DESCRIPTION
+
+These operations deal with both lexical and global variables,
+as well as the symbol tables that contain them.
+
+
+=cut
+
+=head2 Lexical variable ops
+
+Operations to create, modify and delete lexical variables.
+
+=over 4
+
+
+=cut
+
+=item B<store_lex>(in STR, invar PMC)
+
+Store object $2 as lexical symbol $1. The opcode might succeed
+or throw an exception on unknown lexical names depending on the
+implementation of the LexPad PMC.
+Parrot's LexPad throws an exception for unknown names.
+
+
+
+=cut
+
+=item B<store_dynamic_lex>(in STR, invar PMC)
+
+Search caller lexpads for lexical symbol $1 and store object $2
+there.  Throws an exception if no caller lexpad claims the
+lexical symbol.  (To store a value in the current lexpad,
+use C<store_lex> above.)
+
+
+=cut
+
+=item B<find_lex>(out PMC, in STR)
+
+Find the lexical variable named $2 and store it in $1. This
+opcode either throws an exception or returns a Null PMC for the failure case,
+depending on the implementation of the LexPad PMC. Parrot's
+standard LexPad throws an exception for non-existent names.
+
+
+=cut
+
+=item B<find_dynamic_lex>(out PMC, in STR)
+
+Search through caller lexpads for a lexical variable named $2
+and store it in $1.  Return a Null PMC if the lexical variable
+is not found.  (To search the current lexpad, use C<find_lex>
+above.)
+
+
+=cut
+
+=item B<find_caller_lex>(out PMC, in STR)
+
+Like find_dynamic_lex above, but also searches caller's
+outer scopes in addition to the lexpads.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Namespace opcodes
+
+=over 4
+
+=item B<get_namespace>(out PMC)
+
+Set $1 to the current namespace.
+
+=item B<get_namespace>(out PMC, in PMC)
+
+Set $1 to the namespace denoted by the key constant $2, relative to the
+current namespace.  If the namespace doesn't exist, $1 is set to null.
+
+
+=cut
+
+=item B<get_hll_namespace>(out PMC)
+
+Set $1 to the current HLL root namespace.
+
+=item B<get_hll_namespace>(out PMC, in PMC)
+
+Set $1 to the namespace denoted by the key constant $2, relative to the
+current HLL root namespace.  If the namespace doesn't exist, $1 is set to
+null.
+
+
+=cut
+
+=item B<get_root_namespace>(out PMC)
+
+Set $1 to the true root namespace.
+
+=item B<get_root_namespace>(out PMC, in PMC)
+
+Set $1 to the namespace denoted by the key constant $2, relative to the true
+root namespace.  If the namespace doesn't exist, $1 is set to null.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Global variable 'get' opcodes
+
+=over 4
+
+=item B<get_global>(out PMC, in STR)
+
+Set $1 to the global named $2 in current namespace.  If the global doesn't
+exist, $1 is set to null.
+
+=item B<get_global>(out PMC, in PMC, in STR)
+
+Set $1 to the global named $3 in the namespace denoted by the key constant
+$2, relative to the current namespace.  If the namespace or the global
+doesn't exist, $1 is set to null.
+
+
+=cut
+
+=item B<get_hll_global>(out PMC, in STR)
+
+Set $1 to the global named $2 in the current HLL root namespace.  If the
+global doesn't exist, $1 is set to null.
+
+=item B<get_hll_global>(out PMC, in PMC, in STR)
+
+Set $1 to the global named $3 in the namespace denoted by the key constant
+$2, relative to the current HLL root namespace.  If the namespace or the
+global doesn't exist, $1 is set to null.
+
+
+=cut
+
+=item B<get_root_global>(out PMC, in STR)
+
+Set $1 to the global named $2 in the true root namespace.  If the global
+doesn't exist, $1 is set to null.
+
+=item B<get_root_global>(out PMC, in PMC, in STR)
+
+Set $1 to the global named $3 in the namespace denoted by the key constant
+$2, relative to the true root namespace.  If the namespace or the global
+doesn't exist, $1 is set to null.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Global variable 'set' opcodes
+
+=over 4
+
+=item B<set_global>(in STR, invar PMC)
+
+Set the global named $1 in the current namespace to $2.
+
+=item B<set_global>(in PMC, in STR, invar PMC)
+
+Set the global named $2 in the namespace denoted by the key constant $1,
+relative to the current namespace, to $3.  If the namespace does not exist,
+it is created.
+
+
+=cut
+
+=item B<set_hll_global>(in STR, invar PMC)
+
+Set the global named $1 to $2 in the current HLL root namespace.
+
+=item B<set_hll_global>(in PMC, in STR, invar PMC)
+
+Set the global named $2 in the namespace denoted by the key constant
+$1 (relative to the current HLL namespace) to $3. If the namespace
+does not exist, it is created.
+
+
+=cut
+
+=item B<set_root_global>(in STR, invar PMC)
+
+Set the global named $1 in the true root namespace to $2.
+
+=item B<set_root_global>(in PMC, in STR, invar PMC)
+
+Set the global named $2 in the namespace denoted by the key constant
+$1 (relative to the true root namespace) to $3.  If the namespace does
+not exist, it is created.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Global variable ops
+
+Operations to modify global variables
+
+=over 4
+
+
+=cut
+
+=item B<find_name>(out PMC, in STR)
+
+Find the name $2 in lexical, current, global, or builtin namespace and
+store it in $1. If the name doesn't exist
+either throws an exception or sets $1 to PMCNULL, depending on current
+errors settings. See B<errorson>.
+
+
+=cut
+
+=item B<find_sub_not_null>(out PMC, in STR)
+
+Do the same thing as C<find_name>, but throw an exception if the name isn't
+found.
+
+
+=cut
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (C) 2001-2009, Parrot Foundation.
+
+=head1 LICENSE
+
+This program is free software. It is subject to the same license
+as the Parrot interpreter itself.
+
+
+=cut
+

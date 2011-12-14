@@ -1,0 +1,79 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Test NCI with mysqlclient</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Test NCI with mysqlclient</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/examples.html">Examples</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<p>######################################################################## use v6; use Mysql;</p>
+
+<p>say &#39;mysql client version: &#39;,
+Mysql::get_client_info();</p>
+
+<p>my $mysql = Mysql::new();</p>
+
+<p># host,
+user,
+password,
+database $mysql.connect(&#39;localhost&#39;,
+&#39;parrot&#39;,
+&#39;baDworD&#39;,
+&#39;parrot&#39;);</p>
+
+<p>$mysql.query(&#39;select * from hello;&#39;);</p>
+
+<p>my $r = $mysql.use_result();</p>
+
+<p>my @table_copy;</p>
+
+<p>my $row = $r.fetch_row(); my $elems = $row.elems(); while (defined $row) { my @row_copy; my $i = 0; while ($i &#60; $elems) { print &#34;&#39;&#34;,
+$row[$i],
+&#34;&#39;&#34;; @row_copy.push($row[$i]); ++$i; if ($i &#60; $elems) { print &#34;,
+&#34;; } } say &#39;&#39;; $row := $r.fetch_row(); @table_copy.push(\@row_copy); }</p>
+
+<p>say &#34;&#45;&#45;&#45;&#45;&#45;&#45;&#45;Stored copy&#45;&#45;&#45;&#45;&#45;&#45;&#34;;</p>
+
+<p>$r.free();</p>
+
+<p>for @table_copy &#45;&#62; $rc { my $elems = $rc.elems(); my $i = 0; while ($i &#60; $elems) { print &#34;&#39;&#34;,
+$rc[$i],
+&#34;&#39;&#34;; ++$i; if ($i &#60; $elems) { print &#34;,
+&#34;; } } say &#39;&#39;; }</p>
+
+<p>#End</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

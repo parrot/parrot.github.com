@@ -1,0 +1,195 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>base class for compiler objects</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">base class for compiler objects</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/libs.html">Libraries</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>HLLCompiler &#45; base class for compiler objects</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>This file implements a <code lang='und' xml:lang='und'>HLLCompiler</code> class of objects used for creating HLL compilers.
+It provides the standard methods required for all compilers,
+as well as some standard scaffolding for running compilers from a command line.</p>
+
+<h2><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="attr(string_attrname,_pmc_value,_int_has_value)"
+>attr(string attrname,
+pmc value,
+int has_value)</a></dt><p class="pad"></p>
+
+<dd>Helper method for accessors &#45;&#45; gets/sets an attribute given by <code lang='und' xml:lang='und'>attrname</code> based on <code lang='und' xml:lang='und'>has_value</code>.</dd><p class="pad"></p>
+
+<dt><a name="language(string_name)"
+>language(string name)</a></dt><p class="pad"></p>
+
+<dd>Register this object as the compiler for <code lang='und' xml:lang='und'>name</code> using the <code lang='und' xml:lang='und'>compreg</code> opcode.</dd><p class="pad"></p>
+
+<dt><a name="parsegrammar([string_grammar])"
+>parsegrammar([string grammar])</a></dt><p class="pad"></p>
+
+<dd>Accessor for the <code lang='und' xml:lang='und'>parsegrammar</code> attribute.</dd><p class="pad"></p>
+
+<dt><a name="astgrammar([string_grammar])"
+>astgrammar([string grammar])</a></dt><p class="pad"></p>
+
+<dd>Accessor for the <code lang='und' xml:lang='und'>astgrammar</code> attribute.</dd><p class="pad"></p>
+
+<dt><a name="ostgrammar([string_grammar])"
+>ostgrammar([string grammar])</a></dt><p class="pad"></p>
+
+<dd>Accessor for the &#39;ostgrammar&#39; attribute.</dd><p class="pad"></p>
+
+<dt><a name="removestage(string_stagename)"
+>removestage(string stagename)</a></dt><p class="pad"></p>
+
+<dd>Delete a stage from the compilation process queue.</dd><p class="pad"></p>
+
+<dt><a name="addstage(string_stagename_[,_&#34;option&#34;_=&#62;_value,_..._])"
+>addstage(string stagename [,
+&#34;option&#34; =&#62; value,
+...
+])</a></dt><p class="pad"></p>
+
+<dd>Add a stage to the compilation process queue.
+Takes either a &#34;before&#34; or &#34;after&#34; named argument,
+which gives the relative ordering of the stage to be added.
+If &#34;before&#34; and &#34;after&#34; aren&#39;t specified,
+the new stage is inserted at the end of the queue.</dd><p class="pad"></p>
+
+<dd>It&#39;s possible to add multiple stages of the same name: for example,
+you might repeat a stage like &#34;optimize_tree&#34; or &#34;display_benchmarks&#34; after each transformation.
+If you have multiple stages of the same name,
+and add a new stage before or after that repeated stage,
+the new stage will be added at every instance of the repeated stage.</dd><p class="pad"></p>
+
+<dt><a name="compile(pmc_code_[,_&#34;option&#34;_=&#62;_value,_..._])"
+>compile(pmc code [,
+&#34;option&#34; =&#62; value,
+...
+])</a></dt><p class="pad"></p>
+
+<dd>Compile <code lang='und' xml:lang='und'>source</code> (possibly modified by any provided options).
+If a compsub has been registered for this compiler,
+use it,
+otherwise use the <code lang='und' xml:lang='und'>parsegrammar</code> and <code lang='und' xml:lang='und'>astgrammar</code> attributes to get to an AST and compile it,
+otherwise throw an exception.</dd><p class="pad"></p>
+
+<dt><a name="parse(source_[,_&#34;option&#34;_=&#62;_value,_...])"
+>parse(source [,
+&#34;option&#34; =&#62; value,
+...])</a></dt><p class="pad"></p>
+
+<dd>Parse <code lang='und' xml:lang='und'>source</code> using the compiler&#39;s <code lang='und' xml:lang='und'>parsegrammar</code> according to any options and return the resulting parse tree.</dd><p class="pad"></p>
+
+<dt><a name="ast(source_[,_&#34;option&#34;_=&#62;_value,_...])"
+>ast(source [,
+&#34;option&#34; =&#62; value,
+...])</a></dt><p class="pad"></p>
+
+<dd>Transform <code lang='und' xml:lang='und'>source</code> into an AST using the compiler&#39;s <code lang='und' xml:lang='und'>astgrammar</code> according to any options,
+and return the resulting ast.</dd><p class="pad"></p>
+
+<dt><a name="eval(code_[,_&#34;option&#34;_=&#62;_value,_...])"
+>eval(code [,
+&#34;option&#34; =&#62; value,
+...])</a></dt><p class="pad"></p>
+
+<dd>Compile and execute the given <code lang='und' xml:lang='und'>code</code> taking into account any options provided.</dd><p class="pad"></p>
+
+<dt><a name="interactive([&#34;encoding&#34;_=&#62;_encoding]_[,_&#34;option&#34;_=&#62;_value,_...])"
+>interactive([&#34;encoding&#34; =&#62; encoding] [,
+&#34;option&#34; =&#62; value,
+...])</a></dt><p class="pad"></p>
+
+<dd>Runs an interactive compilation session &#45;&#45; reads lines of input from the standard input and evaluates each.
+The <code lang='und' xml:lang='und'>encoding</code> option specifies the encoding to use for the input (e.g.,
+&#34;utf8&#34;).</dd><p class="pad"></p>
+
+<dt><a name="evalfiles(files_[,_args]_[,_&#34;encoding&#34;_=&#62;_encoding]_[,_&#34;option&#34;_=&#62;_value,_...])"
+>evalfiles(files [,
+args] [,
+&#34;encoding&#34; =&#62; encoding] [,
+&#34;option&#34; =&#62; value,
+...])</a></dt><p class="pad"></p>
+
+<dd>Compile and evaluate a file or files.
+The <code lang='und' xml:lang='und'>files</code> argument may be either a single filename or an array of files to be processed as a single compilation unit.
+The <code lang='und' xml:lang='und'>encoding</code> option specifies the encoding to use when reading the files,
+and any remaining options are passed to the evaluator.</dd><p class="pad"></p>
+
+<dt><a name="command_line(PMC_args)"
+>command_line(PMC args)</a></dt><p class="pad"></p>
+
+<dd>Generic method for compilers invoked from a shell command line.</dd><p class="pad"></p>
+
+<dt><a name="parse_name(string_name)"
+>parse_name(string name)</a></dt><p class="pad"></p>
+
+<dd>Split <code lang='und' xml:lang='und'>name</code> into its component namespace parts,
+as required by pdd21.
+The default is simply to split the name based on double&#45;colon separators.</dd><p class="pad"></p>
+
+<dt><a name="ost(source_[,_adverbs_:slurpy_:named])"
+>ost(source [,
+adverbs :slurpy :named])</a></dt><p class="pad"></p>
+
+<dd>Transform <code lang='und' xml:lang='und'>source</code> using the compiler&#39;s <code lang='und' xml:lang='und'>ostgrammar</code> according to any options given by <code lang='und' xml:lang='und'>adverbs</code>,
+and return the resulting ost.</dd><p class="pad"></p>
+
+<dt><a name="register(string_name,_pmc_compsub)_#_DEPRECATED"
+>register(string name,
+pmc compsub) # DEPRECATED</a></dt><p class="pad"></p>
+
+<dd>(Deprecated.) Registers this compiler object as <code lang='und' xml:lang='und'>name</code> and using <code lang='und' xml:lang='und'>compsub</code> as the subroutine to call for performing compilation.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Patrick R.
+Michaud &#60;pmichaud@pobox.com&#62;</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

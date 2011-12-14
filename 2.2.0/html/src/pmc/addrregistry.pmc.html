@@ -1,0 +1,85 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - A GC Registry PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; A GC Registry PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/addrregistry.pmc &#45; A GC Registry PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>The AddrRegistry class provides the equivalence of reference counts mainly for extenders and embedders of Parrot.
+The hash keys are the addresses of the key PMC,
+values are reference counts,
+i.e.
+the difference of (set_pmc_keyed &#45; delete_pmc_keyed).
+If the reference goes to zero,
+the entry is deleted physically.</p>
+
+<p>Please note that you have to anchor an instance of AddrRegistry yourself with <code>Parrot_register_pmc</code> if it isn&#39;t visible to Parrot.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes the instance.
+<dt><a name="INTVAL_get_integer_keyed(PMC_*key)"
+><b><code>INTVAL get_integer_keyed(PMC *key)</b></code></a></dt>
+Returns the reference count for <code>key</code> or 0 if the key doesn&#39;t exist.
+<dt><a name="INTVAL_elements()"
+><b><code>INTVAL elements()</b></code></a></dt>
+Returns the number of elements in the hash.
+<dt><a name="INTVAL_get_bool()"
+><b><code>INTVAL get_bool()</b></code></a></dt>
+Returns true if the hash size is not zero.
+<dt><a name="void_set_pmc_keyed(PMC_*key,_PMC_*value)"
+><b><code>void set_pmc_keyed(PMC *key, PMC *value)</b></code></a></dt>
+Increment the reference count of <code>key</code>.
+If the entry doesn&#39;t exist create it.
+The <code>value</code> is always ignored.
+<dt><a name="void_set_integer_keyed(PMC_*key,_INTVAL_value)"
+><b><code>void set_integer_keyed(PMC *key, INTVAL value)</b></code></a></dt>
+Set the given value.
+<dt><a name="void_delete_keyed(PMC_*key)"
+><b><code>void delete_keyed(PMC *key)</b></code></a></dt>
+Decrement the reference count of <code>key</code>.
+If the reference count reaches 0,
+delete the entry.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em>src/pmc.c:gc_register_pmc()</em></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

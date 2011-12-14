@@ -1,0 +1,764 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>UTF&#45;8 encoding</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">UTF&#45;8 encoding</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/encodings/utf8.c &#45; UTF&#45;8 encoding</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>UTF&#45;8 (<a href='http://www.utf&#45;8.com/'><a href="http://www.utf&#45;8.com/">http://www.utf&#45;8.com/</a></a>).</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>*/</p>
+
+<p>#include &#34;parrot/parrot.h&#34; #include &#34;../unicode.h&#34; #include &#34;utf8.h&#34;</p>
+
+<p>/* HEADERIZER HFILE: src/encodings/utf8.h */</p>
+
+<p>/* HEADERIZER BEGIN: static */</p>
+
+<p>static void become_encoding( PARROT_INTERP,
+STRING *src ) __attribute__nonnull__(1);</p>
+
+<p>PARROT_PURE_FUNCTION static UINTVAL bytes( SHIM_INTERP,
+NOTNULL(STRING *src) ) __attribute__nonnull__(2);</p>
+
+<p>static UINTVAL codepoints( PARROT_INTERP,
+NOTNULL(STRING *src) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static UINTVAL get_byte( SHIM_INTERP,
+NOTNULL(const STRING *src),
+UINTVAL offset ) __attribute__nonnull__(2);</p>
+
+<p>static STRING * get_bytes( PARROT_INTERP,
+STRING *src,
+UINTVAL offset,
+UINTVAL count ) __attribute__nonnull__(1);</p>
+
+<p>static STRING * get_bytes_inplace( PARROT_INTERP,
+STRING *src,
+UINTVAL offset,
+UINTVAL count,
+STRING *return_string ) __attribute__nonnull__(1);</p>
+
+<p>static UINTVAL get_codepoint( PARROT_INTERP,
+NOTNULL(const STRING *src),
+UINTVAL offset ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static STRING * get_codepoints( PARROT_INTERP,
+STRING *src,
+UINTVAL offset,
+UINTVAL count ) __attribute__nonnull__(1);</p>
+
+<p>static STRING * get_codepoints_inplace( PARROT_INTERP,
+STRING *src,
+UINTVAL offset,
+UINTVAL count,
+STRING *return_string ) __attribute__nonnull__(1);</p>
+
+<p>static void iter_init( SHIM_INTERP,
+const STRING *src,
+NOTNULL(String_iter *iter) ) __attribute__nonnull__(3);</p>
+
+<p>static void set_byte( PARROT_INTERP,
+NOTNULL(const STRING *src),
+UINTVAL offset,
+UINTVAL byte ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void set_bytes( PARROT_INTERP,
+STRING *src,
+UINTVAL offset,
+UINTVAL count,
+STRING *new_bytes ) __attribute__nonnull__(1);</p>
+
+<p>static void set_codepoint( PARROT_INTERP,
+NOTNULL(STRING *src),
+UINTVAL offset,
+UINTVAL codepoint ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void set_codepoints( PARROT_INTERP,
+STRING *src,
+UINTVAL offset,
+UINTVAL count,
+STRING *new_codepoints ) __attribute__nonnull__(1);</p>
+
+<p>static STRING * to_encoding( PARROT_INTERP,
+NOTNULL(STRING *src),
+STRING *dest ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static UINTVAL utf8_characters( PARROT_INTERP,
+NOTNULL(const utf8_t *ptr),
+UINTVAL byte_len ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static UINTVAL utf8_decode( PARROT_INTERP,
+NOTNULL(const utf8_t *ptr) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static UINTVAL utf8_decode_and_advance( PARROT_INTERP,
+NOTNULL(String_iter *i) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void * utf8_encode( PARROT_INTERP,
+NOTNULL(void *ptr),
+UINTVAL c ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void utf8_encode_and_advance( PARROT_INTERP,
+NOTNULL(String_iter *i),
+UINTVAL c ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void utf8_set_position( SHIM_INTERP,
+NOTNULL(String_iter *i),
+UINTVAL pos ) __attribute__nonnull__(2);</p>
+
+<p>static const void * utf8_skip_backward( NOTNULL(const void *ptr),
+UINTVAL n ) __attribute__nonnull__(1);</p>
+
+<p>static const void * utf8_skip_forward( NOTNULL(const void *ptr),
+UINTVAL n ) __attribute__nonnull__(1);</p>
+
+<p>/* HEADERIZER END: static */</p>
+
+<p>#define UNIMPL real_exception(interp,
+NULL,
+UNIMPLEMENTED,
+&#34;unimpl utf8&#34;)</p>
+
+<p>const char Parrot_utf8skip[256] = { 1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+/* ascii */ 1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+/* ascii */ 1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+/* ascii */ 1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+/* ascii */ 1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+/* ascii */ 1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+/* ascii */ 1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+/* ascii */ 1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+/* ascii */ 1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+/* bogus */ 1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+/* bogus */ 1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+/* bogus */ 1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+1,
+/* bogus */ 2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+/* scripts */ 2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+/* scripts */ 3,
+3,
+3,
+3,
+3,
+3,
+3,
+3,
+3,
+3,
+3,
+3,
+3,
+3,
+3,
+3,
+/* cjk etc.
+*/ 4,
+4,
+4,
+4,
+4,
+4,
+4,
+4,
+5,
+5,
+5,
+5,
+6,
+6,
+6,
+6 /* cjk etc.
+*/ };</p>
+
+<p>#if 0 typedef unsigned char utf8_t; #endif</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: utf8_characters</p>
+
+<p>Returns the number of characters in the <code lang='und' xml:lang='und'>byte_len</code> bytes from <code lang='und' xml:lang='und'>*ptr</code>.</p>
+
+<p>*/</p>
+
+<p>static UINTVAL utf8_characters(PARROT_INTERP,
+NOTNULL(const utf8_t *ptr),
+UINTVAL byte_len) { const utf8_t *u8ptr = ptr; const utf8_t *u8end = u8ptr + byte_len; UINTVAL characters = 0;</p>
+
+<pre lang='und' xml:lang='und'>    while (u8ptr &#60; u8end) {
+        u8ptr += UTF8SKIP(u8ptr);
+        characters++;
+    }
+
+    if (u8ptr &#62; u8end) {
+        real_exception(interp, NULL, MALFORMED_UTF8, &#34;Unaligned end in UTF&#45;8 string\n&#34;);
+    }
+
+    return characters;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: utf8_decode</p>
+
+<p>Returns the integer for the UTF&#45;8 character found at <code lang='und' xml:lang='und'>*ptr</code>.</p>
+
+<p>*/</p>
+
+<p>static UINTVAL utf8_decode(PARROT_INTERP, NOTNULL(const utf8_t *ptr)) { const utf8_t *u8ptr = ptr; UINTVAL c = *u8ptr;</p>
+
+<pre lang='und' xml:lang='und'>    if (UTF8_IS_START(c)) {
+        UINTVAL len = UTF8SKIP(u8ptr);
+        UINTVAL count;
+
+        c &#38;= UTF8_START_MASK(len);
+        for (count = 1; count &#60; len; count++) {
+            u8ptr++;
+            if (!UTF8_IS_CONTINUATION(*u8ptr)) {
+                real_exception(interp, NULL, MALFORMED_UTF8, &#34;Malformed UTF&#45;8 string\n&#34;);
+            }
+            c = UTF8_ACCUMULATE(c, *u8ptr);
+        }
+
+        if (UNICODE_IS_SURROGATE(c)) {
+            real_exception(interp, NULL, MALFORMED_UTF8, &#34;Surrogate in UTF&#45;8 string\n&#34;);
+        }
+    }
+    else if (!UNICODE_IS_INVARIANT(c)) {
+        real_exception(interp, NULL, MALFORMED_UTF8, &#34;Malformed UTF&#45;8 string\n&#34;);
+    }
+
+    return c;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: utf8_encode</p>
+
+<p>Returns the UTF&#45;8 encoding of integer <code lang='und' xml:lang='und'>c</code>.</p>
+
+<p>*/</p>
+
+<p>static void * utf8_encode(PARROT_INTERP, NOTNULL(void *ptr), UINTVAL c) { utf8_t *u8ptr = (utf8_t *)ptr; UINTVAL len = UNISKIP(c); utf8_t *u8end = u8ptr + len &#45; 1;</p>
+
+<pre lang='und' xml:lang='und'>    if (c &#62; 0x10FFFF || UNICODE_IS_SURROGATE(c)) {
+        real_exception(interp, NULL, INVALID_CHARACTER,
+                           &#34;Invalid character for UTF&#45;8 encoding\n&#34;);
+    }
+
+    while (u8end &#62; u8ptr) {
+        *u8end&#45;&#45; =
+            (utf8_t)((c &#38; UTF8_CONTINUATION_MASK) | UTF8_CONTINUATION_MARK);
+        c &#62;&#62;= UTF8_ACCUMULATION_SHIFT;
+    }
+    *u8end = (utf8_t)((c &#38; UTF8_START_MASK(len)) | UTF8_START_MARK(len));
+
+    return u8ptr + len;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: utf8_skip_forward</p>
+
+<p>Moves <code lang='und' xml:lang='und'>ptr</code> <code lang='und' xml:lang='und'>n</code> characters forward.</p>
+
+<p>*/</p>
+
+<p>static const void * utf8_skip_forward(NOTNULL(const void *ptr), UINTVAL n) { const utf8_t *u8ptr = (const utf8_t *)ptr;</p>
+
+<pre lang='und' xml:lang='und'>    while (n&#45;&#45; &#62; 0) {
+        u8ptr += UTF8SKIP(u8ptr);
+    }
+
+    return u8ptr;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: utf8_skip_backward</p>
+
+<p>Moves <code lang='und' xml:lang='und'>ptr</code> <code lang='und' xml:lang='und'>n</code> characters back.</p>
+
+<p>*/</p>
+
+<p>static const void * utf8_skip_backward(NOTNULL(const void *ptr), UINTVAL n) { const utf8_t *u8ptr = (const utf8_t *)ptr;</p>
+
+<pre lang='und' xml:lang='und'>    while (n&#45;&#45; &#62; 0) {
+        u8ptr&#45;&#45;;
+        while (UTF8_IS_CONTINUATION(*u8ptr))
+            u8ptr&#45;&#45;;
+    }
+
+    return u8ptr;
+}</pre>
+
+<p>/*</p>
+
+<h2><a name="Iterator_Functions"
+>Iterator Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>FUNCDOC: utf8_decode_and_advance</p>
+
+<p>The UTF&#45;8 implementation of the string iterator&#39;s <code lang='und' xml:lang='und'>get_and_advance</code> function.</p>
+
+<p>FUNCDOC: utf8_encode_and_advance</p>
+
+<p>The UTF&#45;8 implementation of the string iterator&#39;s <code lang='und' xml:lang='und'>set_and_advance</code> function.</p>
+
+<p>*/</p>
+
+<p>static UINTVAL utf8_decode_and_advance(PARROT_INTERP, NOTNULL(String_iter *i)) { const utf8_t *u8ptr = (utf8_t *)((char *)i&#45;&#62;str&#45;&#62;strstart + i&#45;&#62;bytepos); UINTVAL c = *u8ptr;</p>
+
+<pre lang='und' xml:lang='und'>    if (UTF8_IS_START(c)) {
+        UINTVAL len = UTF8SKIP(u8ptr);
+
+        c &#38;= UTF8_START_MASK(len);
+        i&#45;&#62;bytepos += len;
+        for (len&#45;&#45;; len; len&#45;&#45;) {
+            u8ptr++;
+            if (!UTF8_IS_CONTINUATION(*u8ptr)) {
+                real_exception(interp, NULL, MALFORMED_UTF8, &#34;Malformed UTF&#45;8 string\n&#34;);
+            }
+            c = UTF8_ACCUMULATE(c, *u8ptr);
+        }
+
+        if (UNICODE_IS_SURROGATE(c)) {
+            real_exception(interp, NULL, MALFORMED_UTF8, &#34;Surrogate in UTF&#45;8 string\n&#34;);
+        }
+    }
+    else if (!UNICODE_IS_INVARIANT(c)) {
+        real_exception(interp, NULL, MALFORMED_UTF8, &#34;Malformed UTF&#45;8 string\n&#34;);
+    }
+    else {
+        i&#45;&#62;bytepos++;
+    }
+
+    i&#45;&#62;charpos++;
+    return c;
+}</pre>
+
+<p>static void utf8_encode_and_advance(PARROT_INTERP, NOTNULL(String_iter *i), UINTVAL c) { const STRING * const s = i&#45;&#62;str; unsigned char * const pos = (unsigned char *)s&#45;&#62;strstart + i&#45;&#62;bytepos; unsigned char * const new_pos = (unsigned char *)utf8_encode(interp, pos, c);</p>
+
+<pre lang='und' xml:lang='und'>    i&#45;&#62;bytepos += (new_pos &#45; pos);
+    /* XXX possible buffer overrun exception? */
+    assert(i&#45;&#62;bytepos &#60;= PObj_buflen(s));
+    i&#45;&#62;charpos++;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: utf8_set_position</p>
+
+<p>The UTF&#45;8 implementation of the string iterator&#39;s <code lang='und' xml:lang='und'>set_position</code> function.</p>
+
+<p>*/</p>
+
+<p>/* XXX Should use quickest direction */ static void utf8_set_position(SHIM_INTERP, NOTNULL(String_iter *i), UINTVAL pos) { const utf8_t *u8ptr = (const utf8_t *)i&#45;&#62;str&#45;&#62;strstart;</p>
+
+<pre lang='und' xml:lang='und'>    i&#45;&#62;charpos = pos;
+    while (pos&#45;&#45; &#62; 0) {
+        u8ptr += UTF8SKIP(u8ptr);
+    }
+    i&#45;&#62;bytepos = (const char *)u8ptr &#45; (const char *)i&#45;&#62;str&#45;&#62;strstart;
+}</pre>
+
+<p>static STRING * to_encoding(PARROT_INTERP, NOTNULL(STRING *src), STRING *dest) { STRING *result; String_iter src_iter; UINTVAL offs, c, dest_len, dest_pos, src_len; int in_place = dest == NULL; unsigned char *new_pos, *pos, *p;</p>
+
+<pre lang='und' xml:lang='und'>    if (src&#45;&#62;encoding == Parrot_utf8_encoding_ptr)
+        return in_place ? src : string_copy(interp, src);
+    src_len = src&#45;&#62;strlen;
+    if (in_place) {
+        result = src;
+    }
+    else {
+        result = dest;
+    }
+
+    /* init iter before possilby changing encoding */
+    ENCODING_ITER_INIT(interp, src, &#38;src_iter);
+    result&#45;&#62;charset  = Parrot_unicode_charset_ptr;
+    result&#45;&#62;encoding = Parrot_utf8_encoding_ptr;
+    result&#45;&#62;strlen   = src_len;
+
+    if (!src&#45;&#62;strlen)
+        return dest;
+
+    if (in_place) {
+        /* need intermediate memory */
+        p = (unsigned char *)mem_sys_allocate(src_len);
+    }
+    else {
+        Parrot_reallocate_string(interp, dest, src_len);
+        p = (unsigned char *)dest&#45;&#62;strstart;
+    }
+    if (src&#45;&#62;charset == Parrot_ascii_charset_ptr) {
+        for (dest_len = 0; dest_len &#60; src_len; ++dest_len) {
+            p[dest_len] = ((unsigned char*)src&#45;&#62;strstart)[dest_len];
+        }
+        result&#45;&#62;bufused = dest_len;
+    }
+    else {
+        dest_len = src_len;
+        dest_pos = 0;
+        for (offs = 0; offs &#60; src_len; ++offs) {
+            c = src_iter.get_and_advance(interp, &#38;src_iter);
+            if (dest_len &#45; dest_pos &#60; 6) {
+                UINTVAL need = (UINTVAL)((src&#45;&#62;strlen &#45; offs) * 1.5);
+                if (need &#60; 16)
+                    need = 16;
+                dest_len += need;
+                if (in_place)
+                    p = (unsigned char *)mem_sys_realloc(p, dest_len);
+                else {
+                    result&#45;&#62;bufused = dest_pos;
+                    Parrot_reallocate_string(interp, dest, dest_len);
+                    p = (unsigned char *)dest&#45;&#62;strstart;
+                }
+            }
+
+            pos = p + dest_pos;
+            new_pos = (unsigned char *)utf8_encode(interp, pos, c);
+            dest_pos += (new_pos &#45; pos);
+        }
+        result&#45;&#62;bufused = dest_pos;
+    }
+    if (in_place) {
+        Parrot_reallocate_string(interp, src, src&#45;&#62;bufused);
+        memcpy(src&#45;&#62;strstart, p, src&#45;&#62;bufused);
+        mem_sys_free(p);
+    }
+    return result;
+}</pre>
+
+<p>static UINTVAL get_codepoint(PARROT_INTERP, NOTNULL(const STRING *src), UINTVAL offset) { const utf8_t * const start = (const utf8_t *)utf8_skip_forward(src&#45;&#62;strstart, offset); return utf8_decode(interp, start); }</p>
+
+<p>static void set_codepoint(PARROT_INTERP, NOTNULL(STRING *src), UINTVAL offset, UINTVAL codepoint) { const void *start; void *p; DECL_CONST_CAST;</p>
+
+<pre lang='und' xml:lang='und'>    start = utf8_skip_forward(src&#45;&#62;strstart, offset);
+    p = const_cast(start);
+    utf8_encode(interp, p, codepoint);
+}</pre>
+
+<p>static UINTVAL get_byte(SHIM_INTERP, NOTNULL(const STRING *src), UINTVAL offset) { unsigned char *contents = (unsigned char *)src&#45;&#62;strstart; if (offset &#62;= src&#45;&#62;bufused) { /* real_exception(interp, NULL, 0, &#34;get_byte past the end of the buffer (%i of %i)&#34;, offset, src&#45;&#62;bufused);*/ return 0; } return contents[offset]; }</p>
+
+<p>static void set_byte(PARROT_INTERP, NOTNULL(const STRING *src), UINTVAL offset, UINTVAL byte) { unsigned char *contents; if (offset &#62;= src&#45;&#62;bufused) { real_exception(interp, NULL, 0, &#34;set_byte past the end of the buffer&#34;); } contents = (unsigned char *)src&#45;&#62;strstart; contents[offset] = (unsigned char)byte; }</p>
+
+<p>static STRING * get_codepoints(PARROT_INTERP, STRING *src, UINTVAL offset, UINTVAL count) { String_iter iter; UINTVAL start; STRING * const return_string = Parrot_make_COW_reference(interp, src); iter_init(interp, src, &#38;iter); iter.set_position(interp, &#38;iter, offset); start = iter.bytepos; return_string&#45;&#62;strstart = (char *)return_string&#45;&#62;strstart + start ; iter.set_position(interp, &#38;iter, offset + count); return_string&#45;&#62;bufused = iter.bytepos &#45; start; return_string&#45;&#62;strlen = count; return_string&#45;&#62;hashval = 0; return return_string; }</p>
+
+<p>static STRING * get_bytes(PARROT_INTERP, STRING *src, UINTVAL offset, UINTVAL count) { STRING *return_string = Parrot_make_COW_reference(interp, src); return_string&#45;&#62;encoding = src&#45;&#62;encoding; /* XXX */ return_string&#45;&#62;charset = src&#45;&#62;charset;</p>
+
+<pre lang='und' xml:lang='und'>    return_string&#45;&#62;strstart = (char *)return_string&#45;&#62;strstart + offset ;
+    return_string&#45;&#62;bufused = count;
+
+    return_string&#45;&#62;strlen = count;
+    return_string&#45;&#62;hashval = 0;
+
+    return return_string;
+}</pre>
+
+<p>static STRING * get_codepoints_inplace(PARROT_INTERP, STRING *src, UINTVAL offset, UINTVAL count, STRING *return_string) { String_iter iter; UINTVAL start; Parrot_reuse_COW_reference(interp, src, return_string); iter_init(interp, src, &#38;iter); iter.set_position(interp, &#38;iter, offset); start = iter.bytepos; return_string&#45;&#62;strstart = (char *)return_string&#45;&#62;strstart + start ; iter.set_position(interp, &#38;iter, offset + count); return_string&#45;&#62;bufused = iter.bytepos &#45; start; return_string&#45;&#62;strlen = count; return_string&#45;&#62;hashval = 0; return return_string; }</p>
+
+<p>static STRING * get_bytes_inplace(PARROT_INTERP, STRING *src, UINTVAL offset, UINTVAL count, STRING *return_string) { UNIMPL; UNUSED(interp); UNUSED(src); UNUSED(return_string); return NULL; }</p>
+
+<p>static void set_codepoints(PARROT_INTERP, STRING *src, UINTVAL offset, UINTVAL count, STRING *new_codepoints) { UNUSED(interp); UNUSED(src); UNUSED(new_codepoints); UNIMPL; }</p>
+
+<p>static void set_bytes(PARROT_INTERP, STRING *src, UINTVAL offset, UINTVAL count, STRING *new_bytes) { UNUSED(interp); UNUSED(src); UNUSED(new_bytes); UNIMPL; }</p>
+
+<p>/* Unconditionally makes the string be in this encoding, if that&#39;s valid */ static void become_encoding(PARROT_INTERP, STRING *src) { UNUSED(interp); UNUSED(src); UNIMPL; }</p>
+
+<p>static UINTVAL codepoints(PARROT_INTERP, NOTNULL(STRING *src)) { String_iter iter; /* * this is used to initially calculate src&#45;&#62;strlen, * therefore we must scan the whole string */ iter_init(interp, src, &#38;iter); while (iter.bytepos &#60; src&#45;&#62;bufused) iter.get_and_advance(interp, &#38;iter); return iter.charpos; }</p>
+
+<p>PARROT_PURE_FUNCTION static UINTVAL bytes(SHIM_INTERP, NOTNULL(STRING *src)) { return src&#45;&#62;bufused; }</p>
+
+<p>static void iter_init(SHIM_INTERP, const STRING *src, NOTNULL(String_iter *iter)) { iter&#45;&#62;str = src; iter&#45;&#62;bytepos = iter&#45;&#62;charpos = 0; iter&#45;&#62;get_and_advance = utf8_decode_and_advance; iter&#45;&#62;set_and_advance = utf8_encode_and_advance; iter&#45;&#62;set_position = utf8_set_position; }</p>
+
+<p>ENCODING * Parrot_encoding_utf8_init(PARROT_INTERP) { ENCODING * const return_encoding = Parrot_new_encoding(interp);</p>
+
+<pre lang='und' xml:lang='und'>    static const ENCODING base_encoding = {
+        &#34;utf8&#34;,
+        4, /* Max bytes per codepoint 0 .. 0x10ffff */
+        to_encoding,
+        get_codepoint,
+        set_codepoint,
+        get_byte,
+        set_byte,
+        get_codepoints,
+        get_codepoints_inplace,
+        get_bytes,
+        get_bytes_inplace,
+        set_codepoints,
+        set_bytes,
+        become_encoding,
+        codepoints,
+        bytes,
+        iter_init
+    };
+    STRUCT_COPY(return_encoding, &#38;base_encoding);
+    Parrot_register_encoding(interp, &#34;utf8&#34;, return_encoding);
+    return return_encoding;
+}</pre>
+
+<p>/*</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'><a href="fixed_8.c.html">src/encodings/fixed_8.c</a></em>, <em lang='und' xml:lang='und'><a href="../string.c.html">src/string.c</a></em>, <em lang='und' xml:lang='und'>include/parrot/string.h</em>, <em lang='und' xml:lang='und'>docs/string.pod</em>.</p>
+
+<p>*/</p>
+
+<p>/* * Local variables: * c&#45;file&#45;style: &#34;parrot&#34; * End: * vim: expandtab shiftwidth=4: */</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

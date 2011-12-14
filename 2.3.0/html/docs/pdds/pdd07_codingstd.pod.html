@@ -1,0 +1,644 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PDD 7: Conventions and Guidelines for Parrot Source Code</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; PDD 7: Conventions and Guidelines for Parrot Source Code
+                </div>
+
+<h1><a name="PDD_7:_Conventions_and_Guidelines_for_Parrot_Source_Code"
+>PDD 7: Conventions and Guidelines for Parrot Source Code</a></h1>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>This document describes the various rules,
+guidelines and advice for those wishing to contribute to the source code of Parrot,
+in such areas as code structure,
+naming conventions,
+comments etc.</p>
+
+<h2><a name="Synopsis"
+>Synopsis</a></h2>
+
+<p>Not applicable.</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<p>One of the criticisms of Perl 5 is that its source code is impenetrable to newcomers,
+due to such things as inconsistent or obscure variable naming conventions,
+lack of comments in the source code,
+and so on.
+We don&#39;t intend to make the same mistake when writing Parrot.
+Hence this document.</p>
+
+<p>We define three classes of conventions:</p>
+
+<dl>
+<dt><a name="&#34;must&#34;"
+><i>&#34;must&#34;</i></a></dt>
+Items labelled <i>must</i> are mandatory; and code will not be accepted (apart from in exceptional circumstances) unless it obeys them.
+<dt><a name="&#34;should&#34;"
+><i>&#34;should&#34;</i></a></dt>
+Items labelled <i>should</i> are strong guidelines that should normally be followed unless there is a sensible reason to do otherwise.
+<dt><a name="&#34;may&#34;"
+><i>&#34;may&#34;</i></a></dt>
+Items labelled <i>may</i> are tentative suggestions to be used at your discretion.</dl>
+
+<p>Note that since Parrot is substantially implemented in C,
+these rules apply to C language source code unless otherwise specified.</p>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<h3><a name="Language_Standards_and_Portability"
+>Language Standards and Portability</a></h3>
+
+<ul>
+<li>C code must generally depend on only those language and library features specified by the ISO C89 standard.</li>
+
+<p>In addition,
+C code may assume that any pointer value can be coerced to an integral type (no smaller than typedef <code>INTVAL</code> in Parrot),
+then back to its original type,
+without loss.</p>
+
+<p>Also C code may assume that there is a single NULL pointer representation and that it consists of a number,
+usually 4 or 8,
+of &#39;\0&#39; chars in memory.</p>
+
+<p>C code that makes assumptions beyond these must depend on the configuration system,
+either to not compile an entire non&#45;portable source where it will not work,
+or to provide an appropriate #ifdef macro.</p>
+
+<li>Perl code must be written for Perl 5.8.0 and all later versions.</li>
+
+<p>Perl code may use features not available in Perl 5.8.0 only if it is not vital to Parrot,
+and if it uses <code>$^O</code> and <code>$]</code> to degrade or fail gracefully when it is run where the features it depends on are not available.</p>
+</ul>
+
+<h3><a name="Code_Formatting"
+>Code Formatting</a></h3>
+
+<p>The following <i>must</i> apply:</p>
+
+<ul>
+<li>Source line width is limited to 100 characters.
+Exceptions can be made for technical requirements,
+but not for style reasons.
+And please bear in mind that very long lines <i>can</i> be hard to read.</li>
+
+<li>Indentation must consist only of spaces.
+(Tab characters just complicate things.)</li>
+
+<li>C and Perl code must be indented four columns per nesting level.</li>
+
+<li>Preprocessor #directives must be indented two columns per nesting level,
+with two exceptions: neither PARROT_IN_CORE nor the outermost _GUARD #ifdefs cause the level of indenting to increase.</li>
+
+<li>Labels (including case labels) must be outdented two columns relative to the code they label.</li>
+
+<li>Closing braces for control structures must line up vertically with the start of the control structures; e.g.
+<code>}</code> that closes an <code>if</code> must line up with the <code>if</code>.</li>
+
+<li>Long lines,
+when split,
+must use at least one extra level of indentation on the continued line.</li>
+
+<li>Cuddled <code>else</code>s are forbidden: i.e.
+avoid <code>} else {</code> .</li>
+
+<li>C macro parameters must be parenthesized in macro bodies,
+to allow expressions passed as arguments; e.g.:</li>
+
+<pre>    #define POBJ_FLAG(n) ((UINTVAL)1 &#60;&#60; (n))</pre>
+</ul>
+
+<p>The following <i>should</i> apply:</p>
+
+<ul>
+<li>In function definitions, the function name must be on the left margin, with the return type on the previous line.</li>
+
+<li>In function declarations (e.g. in header files), the function name must be on the same line as the return type.</li>
+
+<li>Pointer types should be written with separation between the star and the base type, e.g. <code>Interp *foo</code>, but not <code>Interp* foo</code>.</li>
+
+<li>To distinguish keywords from function calls visually, there should be at least one space between a C keyword and any subsequent open parenthesis, e.g. <code>return (x+y)*2</code>. There should be no space between a function name and the following open parenthesis, e.g. <code>z = foo(x+y)*2</code></li>
+
+<li>Use patterns of formatting to indicate patterns of semantics. Similar items should look similar, as the language permits. Note that some dimensions of similarity are incidental, not worth emphasizing; e.g. &#34;these are all ints&#34;.</li>
+
+<li>Binary operators (except <code>.</code> and <code>&#45;&#62;</code>) should have at least one space on either side; there should be no space between unary operators and their operands; parentheses should not have space immediately after the opening parenthesis nor immediately before the closing parenthesis; commas should have at least one space after, but not before; e.g.:</li>
+
+<pre>        x = (a&#45;&#45; + b) * f(c, d / e.f)</pre>
+
+<li>Use vertical alignment for clarity of parallelism. Compare this (bad):</li>
+
+<pre>     foo = 1 + 100;
+     x = 100 + 1;
+     whatever = 100 + 100;</pre>
+
+<p>... to this (good):</p>
+
+<pre>     foo      =   1 + 100;
+     x        = 100 +   1;
+     whatever = 100 + 100;</pre>
+
+<li>Do not routinely put single statements in statement blocks.</li>
+
+<p>(Note that formatting consistency trumps this rule. For example, a long <code>if</code>/<code>else if</code> chain is easier to read if all (or none) of the conditional code is in blocks.)</p>
+
+<li>Return values should not be parenthesized without need. It may be necessary to parenthesize a long return expression so that a smart editor will properly indent it.</li>
+
+<li>When assigning inside a conditional, use extra parentheses, e.g. <code>if (a &#38;&#38; (b = c)) ...</code> or <code>if ((a = b)) ...</code>.</li>
+
+<li>When splitting a long line at a binary operator (other than comma), the split should be <i>before</i> the operator, so that the continued line looks like one, e.g.:</li>
+
+<pre>    something_long_here = something_very_long + something_else_also_long
+            &#45; something_which_also_could_be_long;</pre>
+
+<li>When splitting a long line inside parentheses (or brackets), the continuation should be indented to the right of the innermost unclosed punctuation, e.g.:</li>
+
+<pre>    z = foo(bar + baz(something_very_long_here
+                       * something_else_very_long),
+            corge);</pre>
+</ul>
+
+<h3><a name="Code_Structure"
+>Code Structure</a></h3>
+
+<p>The following <i>must</i> apply:</p>
+
+<ul>
+<li>C code must use C&#45;style comments only, i.e. <code>/* comment */</code>. (Not all C compilers handle C++&#45;style comments.)</li>
+
+<li>Structure types must have tags.</li>
+
+<li>Functions must have prototypes in scope at the point of use. Prototypes for extern functions must appear only in header files. If static functions are defined before use, their definitions serve as prototypes.</li>
+
+<li>Parameters in function prototypes must be named. These names should match the parameters in the function definition.</li>
+
+<li>Variable names must be included for all function parameters in the function declarations.</li>
+
+<li>Header files must be wrapped with guard macros to prevent header redefinition. The guard macro must begin with <code>PARROT_</code>, followed by unique and descriptive text identifying the header file (usually the directory path and filename), and end with a <code>_GUARD</code> suffix. The matching <code>#endif</code> must have the guard macro name in a comment, to prevent confusion. For example, a file named <em>parrot/foo.h</em> might look like:</li>
+
+<pre>    #ifndef PARROT_FOO_H_GUARD
+    #define PARROT_FOO_H_GUARD
+
+    #include &#34;parrot/config.h&#34;
+    #ifdef PARROT_HAS_FEATURE_FOO
+    #  define FOO_TYPE bar
+    typedef struct foo {
+        ...
+    } foo_t;
+    #endif /* PARROT_HAS_FEATURE_FOO */
+
+    #endif /* PARROT_FOO_H_GUARD */</pre>
+</ul>
+
+<p>The following <i>should</i> apply</p>
+
+<ul>
+<li>Structure types should have typedefs with the same name as their tags, e.g.:</li>
+
+<pre>    typedef struct Foo {
+        ...
+    } Foo;</pre>
+
+<li>Avoid double negatives, e.g. <code>#ifndef NO_FEATURE_FOO</code>.</li>
+
+<li>Do not compare directly against NULL, 0, or FALSE. Instead, write a boolean test, e.g. <code>if (!foo) ...</code>.</li>
+
+<p>However, the sense of the expression being checked must be a boolean. Specifically, <code>strcmp()</code> and its brethren are three&#45;state returns.</p>
+
+<pre>    if ( !strcmp(x,y) )     # BAD, checks for if x and y match, but looks
+                            # like it is checking that they do NOT match.
+    if ( strcmp(x,y) == 0 ) # GOOD, checks proper return value
+    if ( STREQ(x,y) )       # GOOD, uses boolean wrapper macro</pre>
+
+<p>(Note: <code>PMC *</code> values should be checked for nullity with the <code>PMC_IS_NULL</code> macro, unfortunately leading to violations of the double&#45;negative rule.)</p>
+
+<li>Avoid dependency on &#34;FIXME&#34; and &#34;TODO&#34; labels: use the external bug tracking system. If a bug must be fixed soon, use &#34;XXX&#34; <b>and</b> put a ticket in the bug tracking system. This means that each &#34;XXX&#34; should have a Trac ticket number next to it.</li>
+</ul>
+
+<h3><a name="Smart_Editor_Style_Support"
+>Smart Editor Style Support</a></h3>
+
+<p>All developers using Emacs must ensure that their Emacs instances load the elisp source file <em>editor/parrot.el</em> before opening Parrot source files. See <a href='TODO#README.pod'>&#34;README.pod&#34; in editor</a> for instructions.</p>
+
+<p>All source files must end with an editor instruction coda:</p>
+
+<ul>
+<li>C source files, and files largely consisting of C (e.g. yacc, lex, PMC, and opcode source files), must end with this coda:</li>
+
+<pre>   /*
+    * Local variables:
+    *   c&#45;file&#45;style: &#34;parrot&#34;
+    * End:
+    * vim: expandtab shiftwidth=4:
+    */</pre>
+
+<li>Make source files must end with this coda:</li>
+
+<pre>    # Local Variables:
+    #   mode: makefile
+    # End:
+    # vim: ft=make:</pre>
+
+<li>Perl source files must end with this coda:</li>
+
+<pre>    # Local Variables:
+    #   mode: cperl
+    #   cperl&#45;indent&#45;level: 4
+    #   fill&#45;column: 100
+    # End:
+    # vim: expandtab shiftwidth=4:</pre>
+
+<p><b>Exception</b>: Files with <code>__END__</code> or <code>__DATA__</code> blocks do not require the coda. This is at least until there is some consensus as to how solve the issue of using editor hints in files with such blocks.</p>
+
+<li>PIR source files should end with this coda:</li>
+
+<pre>    # Local Variables:
+    #   mode: pir
+    #   fill&#45;column: 100
+    # End:
+    # vim: expandtab shiftwidth=4 ft=pir:</pre>
+</ul>
+
+<p>{{ XXX &#45; Proper formatting and syntax coloring of C code under Emacs requires that Emacs know about typedefs. We should provide a simple script to update a list of typedefs, and parrot.el should read it or contain it. }}</p>
+
+<h3><a name="Portability"
+>Portability</a></h3>
+
+<p>Parrot runs on many, many platforms, and will no doubt be ported to ever more bizarre and obscure ones over time. You should never assume an operating system, processor architecture, endian&#45;ness, size of standard type, or anything else that varies from system to system.</p>
+
+<p>Since most of Parrot&#39;s development uses GNU C, you might accidentally depend on a GNU feature without noticing. To avoid this, know what features of gcc are GNU extensions, and use them only when they&#39;re protected by #ifdefs.</p>
+
+<h3><a name="Defensive_Programming"
+>Defensive Programming</a></h3>
+
+<h4><a name="Use_Parrot_data_structures_instead_of_C_strings_and_arrays"
+>Use Parrot data structures instead of C strings and arrays</a></h4>
+
+<p>C arrays, including strings, are very sharp tools without safety guards, and Parrot is a large program maintained by many people. Therefore:</p>
+
+<p>Don&#39;t use a <code>char *</code> when a Parrot STRING would suffice. Don&#39;t use a C array when a Parrot array PMC would suffice. If you do use a <code>char *</code> or C array, check and recheck your code for even the slightest possibility of buffer overflow or memory leak.</p>
+
+<p>Note that efficiency of some low&#45;level operations may be a reason to break this rule. Be prepared to justify your choices to a jury of your peers.</p>
+
+<h4><a name="Pass_only_unsigned_char_to_isxxx()_and_toxxx()"
+>Pass only <code>unsigned char</code> to <code>isxxx()</code> and <code>toxxx()</code></a></h4>
+
+<p>Pass only values in the range of <code>unsigned char</code> (and the special value &#45;1, a.k.a. <code>EOF</code>) to the isxxx() and toxxx() library functions. Passing signed characters to these functions is a very common error and leads to incorrect behavior at best and crashes at worst. And under most of the compilers Parrot targets, <code>char</code> <i>is</i> signed.</p>
+
+<h4><a name="The_const_keyword_on_arguments"
+>The <code>const</code> keyword on arguments</a></h4>
+
+<p>Use the <code>const</code> keyword as often as possible on pointers. It lets the compiler know when you intend to modify the contents of something. For example, take this definition:</p>
+
+<pre>    int strlen(const char *p);</pre>
+
+<p>The <code>const</code> qualifier tells the compiler that the argument will not be modified. The compiler can then tell you that this is an uninitialized variable:</p>
+
+<pre>    char *p;
+    int n = strlen(p);</pre>
+
+<p>Without the <code>const</code>, the compiler has to assume that <code>strlen()</code> is actually initializing the contents of <code>p</code>.</p>
+
+<h4><a name="The_const_keyword_on_variables"
+>The <code>const</code> keyword on variables</a></h4>
+
+<p>If you&#39;re declaring a temporary pointer, declare it <code>const</code>, with the const to the right of the <code>*</code>, to indicate that the pointer should not be modified.</p>
+
+<pre>    Wango * const w = get_current_wango();
+    w&#45;&#62;min  = 0;
+    w&#45;&#62;max  = 14;
+    w&#45;&#62;name = &#34;Ted&#34;;</pre>
+
+<p>This prevents you from modifying <code>w</code> inadvertently.</p>
+
+<pre>    new_wango = w++; /* Error */</pre>
+
+<p>If you&#39;re not going to modify the target of the pointer, put a <code>const</code> to the left of the type, as in:</p>
+
+<pre>    const Wango * const w = get_current_wango();
+    if (n &#60; wango&#45;&#62;min || n &#62; wango&#45;&#62;max) {
+        /* do something */
+    }</pre>
+
+<h4><a name="Localizing_variables"
+>Localizing variables</a></h4>
+
+<p>Declare variables in the innermost scope possible.</p>
+
+<pre>    if (foo) {
+        int i;
+        for (i = 0; i &#60; n; i++)
+            do_something(i);
+    }</pre>
+
+<p>Don&#39;t reuse unrelated variables. Localize as much as possible, even if the variables happen to have the same names.</p>
+
+<pre>    if (foo) {
+        int i;
+        for (i = 0; i &#60; n; i++)
+            do_something(i);
+    }
+    else {
+        int i;
+        for (i = 14; i &#62; 0; i&#45;&#45;)
+            do_something_else(i * i);
+    }</pre>
+
+<p>You could hoist the <code>int i;</code> outside the test, but then you&#39;d have an <code>i</code> that&#39;s visible after it&#39;s used, which is confusing at best.</p>
+
+<h3><a name="Subversion_Properties"
+>Subversion Properties</a></h3>
+
+<h4><a name="svn:ignore"
+>svn:ignore</a></h4>
+
+<p>Sometimes new files will be created in the configuration and build process of Parrot. These files should not show up when checking the distribution with</p>
+
+<pre>    svn status</pre>
+
+<p>or</p>
+
+<pre>    perl tools/dev/manicheck.pl</pre>
+
+<p>The list of these ignore files can be set up with:</p>
+
+<pre>    svn propedit svn:ignore &#60;PATH&#62;</pre>
+
+<p>In order to keep the two different checks synchronized, the MANIFEST and MANIFEST.SKIP files should be regenerated with:</p>
+
+<pre>    perl tools/dev/mk_manifest_and_skip.pl</pre>
+
+<p>and the files then committed to the Parrot svn repository.</p>
+
+<h4><a name="svn:mime&#45;type"
+>svn:mime&#45;type</a></h4>
+
+<p>The <code>svn:mime&#45;type</code> property must be set to <code>text/plain</code> for all test files, and may be set to <code>text/plain</code> for other source code files in the repository. Using <i>auto&#45;props</i>, Subversion can automatically set this property for you on test files. To enable this option, add the following to your <em>~/.subversion/config</em>:</p>
+
+<pre>    [miscellany]
+    enable&#45;auto&#45;props = yes
+    [auto&#45;props]
+    *.t = svn:mime&#45;type=text/plain</pre>
+
+<p>The <em><a href="../../t/distro/file_metadata.t.html">t/distro/file_metadata.t</a></em> test checks that the files needing this property have it set.</p>
+
+<h4><a name="svn:keywords"
+>svn:keywords</a></h4>
+
+<p>The <code>svn:keywords</code> property should be set to:</p>
+
+<pre>    Author Date Id Revision</pre>
+
+<p>on each file with a mime&#45;type of <code>text/plain</code>. Do this with the command:</p>
+
+<pre>    svn propset svn:keywords &#34;Author Date Id Revision&#34; &#60;filename&#62;</pre>
+
+<p>The <em><a href="../../t/distro/file_metadata.t.html">t/distro/file_metadata.t</a></em> test checks that the files needing this property have it set.</p>
+
+<h4><a name="svn:eol&#45;style"
+>svn:eol&#45;style</a></h4>
+
+<p>The <code>svn:eol&#45;style</code> property makes sure that whenever a file is checked out of subversion it has the correct end&#45;of&#45;line characters appropriate for the given platform. Therefore, most files should have their <code>svn:eol&#45;style</code> property set to <code>native</code>. However, this is not true for all files. Some input files to tests (such as the <code>*.input</code> and <code>*.output</code> files for PIR tests) need to have <code>LF</code> as their <code>svn:eol&#45;style</code> property. The current list of such files is described in <em><a href="../../t/distro/file_metadata.t.html">t/distro/file_metadata.t</a></em>.</p>
+
+<p>Set the <code>svn:eol&#45;style</code> property to <code>native</code> with the command:</p>
+
+<pre>    svn propset svn:eol&#45;style &#34;native&#34; &#60;filename&#62;</pre>
+
+<p>Set the <code>svn:eol&#45;style</code> property to <code>LF</code> with the command:</p>
+
+<pre>    svn propset svn:eol&#45;style &#34;LF&#34; &#60;filename&#62;</pre>
+
+<p>The <em><a href="../../t/distro/file_metadata.t.html">t/distro/file_metadata.t</a></em> test checks that the files needing this property have it set.</p>
+
+<h3><a name="Naming_Conventions"
+>Naming Conventions</a></h3>
+
+<dl>
+<dt><a name="Filenames"
+>Filenames</a></dt>
+Filenames must be assumed to be case&#45;insensitive, in the sense that that you may not have two different files called <em>Foo</em> and <em>foo</em>. Normal source&#45;code filenames should be all lower&#45;case; filenames with upper&#45;case letters in them are reserved for notice&#45;me&#45;first files such as <em>README</em>, and for files which need some sort of pre&#45;processing applied to them or which do the preprocessing &#45; e.g. a script <em>foo.SH</em> might read <em>foo.TEMPLATE</em> and output <em>foo.c</em>.The characters making up filenames must be chosen from the ASCII set A&#45;Z,a&#45;z,0&#45;9 plus .&#45;_An underscore should be used to separate words rather than a hyphen (&#45;). A file should not normally have more than a single &#39;.&#39; in it, and this should be used to denote a suffix of some description. The filename must still be unique if the main part is truncated to 8 characters and any suffix truncated to 3 characters. Ideally, filenames should restricted to 8.3 in the first place, but this is not essential.Each subsystem <i>foo</i> should supply the following files. This arrangement is based on the assumption that each subsystem will &#45;&#45; as far as is practical &#45;&#45; present an opaque interface to all other subsystems within the core, as well as to extensions and embeddings.
+<dl>
+<dt><a name="foo.h"
+><b><code>foo.h</b></code></a></dt>
+This contains all the declarations needed for external users of that API (and nothing more), i.e. it defines the API. It is permissible for the API to include different or extra functionality when used by other parts of the core, compared with its use in extensions and embeddings. In this case, the extra stuff within the file is enabled by testing for the macro <code>PARROT_IN_CORE</code>.
+<dt><a name="foo_private.h"
+><b><code>foo_private.h</b></code></a></dt>
+This contains declarations used internally by that subsystem, and which must only be included within source files associated the subsystem. This file defines the macro <code>PARROT_IN_FOO</code> so that code knows when it is being used within that subsystem. The file will also contain all the &#39;convenience&#39; macros used to define shorter working names for functions without the perl prefix (see below).
+<dt><a name="foo_globals.h"
+><b><code>foo_globals.h</b></code></a></dt>
+This file contains the declaration of a single structure containing the private global variables used by the subsystem (see the section on globals below for more details).
+<dt><a name="foo_bar.[ch]_etc."
+><b><code>foo_bar.[ch]</b></code> etc.</a></dt>
+All other source files associated with the subsystem will have the prefix <code>foo_</code>.</dl>
+
+<dt><a name="Names_of_code_entities"
+>Names of code entities</a></dt>
+Code entities such as variables, functions, macros etc. (apart from strictly local ones) should all follow these general guidelines.
+<ul>
+<li>Multiple words or components should be separated with underscores rather than using tricks such as capitalization, e.g. <code>new_foo_bar</code> rather than <code>NewFooBar</code> or (gasp) <code>newfoobar</code>.</li>
+
+<li>The names of entities should err on the side of verbosity, e.g. <code>create_foo_from_bar()</code> in preference to <code>ct_foo_bar()</code>. Avoid cryptic abbreviations wherever possible.</li>
+
+<li>All entities should be prefixed with the name of the subsystem in which they appear, e.g. <code>pmc_foo()</code>, <code>struct io_bar</code>.</li>
+
+<li>Functions with external visibility should be of the form <code>Parrot_foo</code>, and should only use typedefs with external visibility (or types defined in C89). Generally these functions should not be used inside the core, but this is not a hard and fast rule.</li>
+
+<li>Variables and structure names should be all lower&#45;case, e.g. <code>pmc_foo</code>.</li>
+
+<li>Structure elements should be all lower&#45;case, and the first component of the name should incorporate the structure&#39;s name or an abbreviation of it.</li>
+
+<li>Typedef names should be lower&#45;case except for the first letter, e.g. <code>Foo_bar</code>. The exception to this is when the first component is a short abbreviation, in which case the whole first component may be made uppercase for readability purposes, e.g. <code>IO_foo</code> rather than <code>Io_foo</code>. Structures should generally be typedefed.</li>
+
+<li>Macros should have their first component uppercase, and the majority of the remaining components should be likewise. Where there is a family of macros, the variable part can be indicated in lowercase, e.g. <code>PMC_foo_FLAG</code>, <code>PMC_bar_FLAG</code>, ....</li>
+
+<li>A macro which defines a flag bit should be suffixed with <code>_FLAG</code>, e.g. <code>PMC_readonly_FLAG</code> (although you probably want to use an <code>enum</code> instead.)</li>
+
+<li>A macro which tests a flag bit should be suffixed with <code>_TEST</code>, e.g. <code>if (PMC_readonly_TEST(foo)) ...</code></li>
+
+<li>A macro which sets a flag bit should be suffixed with <code>_SET</code>, e.g. <code>PMC_readonly_SET(foo);</code></li>
+
+<li>A macro which clears a flag bit should be suffixed with <code>_CLEAR</code>, e.g. <code>PMC_readonly_CLEAR(foo);</code></li>
+
+<li>A macro defining a mask of flag bits should be suffixed with <code>_MASK</code>, e.g. <code>foo &#38;= ~PMC_STATUS_MASK</code> (but see notes on extensibility below).</li>
+
+<li>Macros can be defined to cover common flag combinations, in which case they should have <code>_SETALL</code>, <code>_CLEARALL</code>, <code>_TESTALL</code> or <code>_TESTANY</code> suffixes as appropriate, to indicate aggregate bits, e.g. <code>PMC_valid_CLEARALL(foo)</code>.</li>
+
+<li>A macro defining an auto&#45;configuration value should be prefixed with <code>HAS_</code>, e.g. <code>HAS_BROKEN_FLOCK</code>, <code>HAS_EBCDIC</code>.</li>
+
+<li>A macro indicating the compilation &#39;location&#39; should be prefixed with <code>IN_</code>, e.g. <code>PARROT_IN_CORE</code>, <code>PARROT_IN_PMC</code>, <code>PARROT_IN_X2P</code>. Individual include file visitations should be marked with <code>PARROT_IN_FOO_H</code> for file <code>foo.h</code></li>
+
+<li>A macro indicating major compilation switches should be prefixed with <code>USE_</code>, e.g. <code>PARROT_USE_STDIO</code>, <code>USE_MULTIPLICITY</code>.</li>
+
+<li>A macro that may declare stuff and thus needs to be at the start of a block should be prefixed with <code>DECL_</code>, e.g. <code>DECL_SAVE_STACK</code>. Note that macros which implicitly declare and then use variables are strongly discouraged, unless it is essential for portability or extensibility. The following are in decreasing preference style&#45;wise, but increasing preference extensibility&#45;wise.</li>
+
+<pre>    { Stack sp = GETSTACK;  x = POPSTACK(sp) ... /* sp is an auto variable */
+    { DECL_STACK(sp);  x = POPSTACK(sp); ... /* sp may or may not be auto */
+    { DECL_STACK; x = POPSTACK; ... /* anybody&#39;s guess */</pre>
+</ul>
+
+<dt><a name="Global_Variables"
+>Global Variables</a></dt>
+Global variables must never be accessed directly outside the subsystem in which they are used. Some other method, such as accessor functions, must be provided by that subsystem&#39;s API. (For efficiency the &#39;accessor functions&#39; may occasionally actually be macros, but then the rule still applies in spirit at least).All global variables needed for the internal use of a particular subsystem should all be declared within a single struct called <code>foo_globals</code> for subsystem <code>foo</code>. This structure&#39;s declaration is placed in the file <code>foo_globals.h</code>. Then somewhere a single compound structure will be declared which has as members the individual structures from each subsystem. Instances of this structure are then defined as a one&#45;off global variable, or as per&#45;thread instances, or whatever is required.[Actually, three separate structures may be required, for global, per&#45;interpreter and per&#45;thread variables.]Within an individual subsystem, macros are defined for each global variable of the form <code>GLOBAL_foo</code> (the name being deliberately clunky). So we might for example have the following macros:
+<pre>    /* perl_core.h or similar */
+
+    #ifdef HAS_THREADS
+    #  define GLOBALS_BASE (aTHX_&#45;&#62;globals)
+    #else
+    #  define GLOBALS_BASE (Parrot_globals)
+    #endif
+
+    /* pmc_private.h */
+
+    #define GLOBAL_foo   GLOBALS_BASE.pmc.foo
+    #define GLOBAL_bar   GLOBALS_BASE.pmc.bar
+    ... etc ...</pre>
+</dl>
+
+<h3><a name="Code_Comments"
+>Code Comments</a></h3>
+
+<p>The importance of good code documentation cannot be stressed enough. To make your code understandable by others (and indeed by yourself when you come to make changes a year later), the following conventions apply to all source files.</p>
+
+<dl>
+<dt><a name="Developer_files"
+>Developer files</a></dt>
+Each source file (e.g. a <em>foo.c</em>, <em>foo.h</em> pair), should contain inline Pod documentation containing information on the implementation decisions associated with the source file. (Note that this is in contrast to PDDs, which describe design decisions). In addition, more discussive documentation can be placed in <em>*.pod</em> files in the <em>docs/dev</em> directory. This is the place for mini&#45;essays on how to avoid overflows in unsigned arithmetic, or on the pros and cons of differing hash algorithms, and why the current one was chosen, and how it works.In principle, someone coming to a particular source file for the first time should be able to read the inline documentation file and gain an immediate overview of what the source file is for, the algorithms it implements, etc.The Pod documentation should follow the layout:
+<dl>
+<dt><a name="Version"
+>Version</a></dt>
+A SVN id string.
+<dt><a name="Title"
+>Title</a></dt>
+
+<pre>    =head1 Foo</pre>
+
+<dt><a name="Synopsis"
+>Synopsis</a></dt>
+When appropriate, some simple examples of usage.
+<dt><a name="Description"
+>Description</a></dt>
+A description of the contents of the file, how the implementation works, data structures and algorithms, and anything that may be of interest to your successors, e.g. benchmarks of differing hash algorithms, essays on how to do integer arithmetic.
+<dt><a name="See_Also"
+>See Also</a></dt>
+Links to pages and books that may contain useful information relevant to the stuff going on in the code &#45;&#45; e.g. the book you stole the hash function from.</dl>
+Don&#39;t include author information in individual files. Author information can be added to the CREDITS file. (Languages are an exception to this rule, and may follow whatever convention they choose.)Don&#39;t include Pod sections for License or Copyright in individual files.
+<dt><a name="Per&#45;section_comments"
+>Per&#45;section comments</a></dt>
+If there is a collection of functions, structures or whatever which are grouped together and have a common theme or purpose, there should be a general comment at the start of the section briefly explaining their overall purpose. (Detailed essays should be left to the developer file). If there is really only one section, then the top&#45;of&#45;file comment already satisfies this requirement.
+<dt><a name="Per&#45;entity_comments"
+>Per&#45;entity comments</a></dt>
+Every non&#45;local named entity, be it a function, variable, structure, macro or whatever, must have an accompanying comment explaining its purpose. This comment must be in the special format described below, in order to allow automatic extraction by tools &#45; for example, to generate per API man pages, <b>perldoc &#45;f</b> style utilities and so on.Often the comment need only be a single line explaining its purpose, but sometimes more explanation may be needed. For example, &#34;return an Integer Foo to its allocation pool&#34; may be enough to demystify the function <code>del_I_foo()</code>Each comment should be of the form
+<pre>    /*
+
+    =item C&#60;function(arguments)&#62;
+
+    Description.
+
+    =cut
+
+    */</pre>
+This inline Pod documentation is parsed to HTML by running:
+<pre>    $ perl tools/docs/write_docs.pl &#45;&#45;delete</pre>
+or: $ make html
+<dt><a name="Optimizations"
+>Optimizations</a></dt>
+Whenever code has deliberately been written in an odd way for performance reasons, you should point this out &#45; if nothing else, to avoid some poor schmuck trying subsequently to replace it with something &#39;cleaner&#39;.
+<pre>    /* The loop is partially unrolled here as it makes it a lot faster.
+     * See the file in docs/dev for the full details
+     */</pre>
+
+<dt><a name="General_comments"
+>General comments</a></dt>
+While there is no need to go mad commenting every line of code, it is immensely helpful to provide a &#34;running commentary&#34; every 10 lines or so if nothing else, this makes it easy to quickly locate a specific chunk of code. Such comments are particularly useful at the top of each major branch, e.g.
+<pre>    if (FOO_bar_BAZ(**p+*q) &#60;= (r&#45;s[FOZ &#38; FAZ_MASK]) || FLOP_2(z99)) {
+        /* we&#39;re in foo mode: clean up lexicals */
+        ... (20 lines of gibberish) ...
+    }
+    else if (...) {
+        /* we&#39;re in bar mode: clean up globals */
+        ... (20 more lines of gibberish) ...
+    }
+    else {
+        /* we&#39;re in baz mode: self&#45;destruct */
+        ....
+    }</pre>
+
+<dt><a name="Copyright_notice"
+>Copyright notice</a></dt>
+The first line of every file (or the second line if the first line is a <i>shebang</i> line such as <code>#!/usr/bin/perl</code>) should be a copyright notice, in the comment style appropriate to the file type. It should list the first year the file was created and the last year the file was modified. (This isn&#39;t necessarily the current year, the file might not have been modified this year.)
+<pre>    /* Copyright (C) 2001&#45;2008, Parrot Foundation. */</pre>
+For files that were newly added this year, just list the current year.
+<pre>    /* Copyright (C) 2009, Parrot Foundation. */</pre>
+</dl>
+
+<h3><a name="Extensibility"
+>Extensibility</a></h3>
+
+<p>Over the lifetime of Parrot, the source code will undergo many major changes never envisaged by its original authors. To this end, your code should balance out the assumptions that make things possible, fast or small, with the assumptions that make it difficult to change things in future. This is especially important for parts of the code which are exposed through APIs &#45;&#45; the requirements of source or binary compatibility for such things as extensions can make it very hard to change things later on.</p>
+
+<p>For example, if you define suitable macros to set/test flags in a struct, then you can later add a second word of flags to the struct without breaking source compatibility. (Although you might still break binary compatibility if you&#39;re not careful.) Of the following two methods of setting a common combination of flags, the second doesn&#39;t assume that all the flags are contained within a single field:</p>
+
+<pre>    foo&#45;&#62;flags |= (FOO_int_FLAG | FOO_num_FLAG | FOO_str_FLAG);
+    FOO_valid_value_SETALL(foo);</pre>
+
+<p>Similarly, avoid using a <code>char*</code> (or <code>{char*,length}</code>) if it is feasible to later use a <code>PMC *</code> at the same point: c.f. UTF&#45;8 hash keys in Perl 5.</p>
+
+<p>Of course, private code hidden behind an API can play more fast and loose than code which gets exposed.</p>
+
+<h3><a name="Performance"
+>Performance</a></h3>
+
+<p>We want Parrot to be fast. Very fast. But we also want it to be portable and extensible. Based on the 90/10 principle, (or 80/20, or 95/5, depending on who you speak to), most performance is gained or lost in a few small but critical areas of code. Concentrate your optimization efforts there.</p>
+
+<p>Note that the most overwhelmingly important factor in performance is in choosing the correct algorithms and data structures in the first place. Any subsequent tweaking of code is secondary to this. Also, any tweaking that is done should as far as possible be platform independent, or at least likely to cause speed&#45;ups in a wide variety of environments, and do no harm elsewhere.</p>
+
+<p>If you do put an optimization in, time it on as many architectures as you can, and be suspicious of it if it slows down on any of them! Perhaps it will be slow on other architectures too (current and future). Perhaps it wasn&#39;t so clever after all? If the optimization is platform specific, you should probably put it in a platform&#45;specific function in a platform&#45;specific file, rather than cluttering the main source with zillions of #ifdefs.</p>
+
+<p>And remember to document it.</p>
+
+<h2><a name="Exemptions"
+>Exemptions</a></h2>
+
+<p>Not all files can strictly fall under these guidelines as they are automatically generated by other tools, or are external files included in the Parrot repository for convenience. Such files include the C header and source files automatically generated by (f)lex and yacc/bison, and some of the Perl modules under the <em>lib/</em> directory.</p>
+
+<p>To exempt a file (or directory of files) from checking by the coding standards tests, one must edit the appropriate exemption list within <code>lib/Parrot/Distribution.pm</code> (in either of the methods <code>is_c_exemption()</code> or <code>is_perl_exemption()</code>). One can use wildcards in the list to exempt, for example, all files under a given directory.</p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p>None.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

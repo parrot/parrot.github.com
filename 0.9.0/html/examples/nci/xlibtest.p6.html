@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>A test of Xlib.pir usage from rakudo</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">A test of Xlib.pir usage from rakudo</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/examples.html">Examples</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<p>use Xlib;</p>
+
+<p>say &#39;Hello&#39;;</p>
+
+<p>say &#39;Display: &#39;,
+Xlib::DisplayName();</p>
+
+<p>my $display = Xlib::OpenDisplay(&#39;&#39;);</p>
+
+<p>say &#39;Default screen: &#39;,
+$display.DefaultScreen();</p>
+
+<p>$display.hello();</p>
+
+<p>my $white = $display.WhitePixel(0); my $root = $display.RootWindow(); my $window = $display.CreateSimpleWindow($root,
+0,
+0,
+600,
+400,
+0,
+0,
+$white); $window.StoreName(&#34;Hello,
+perl6&#34;); $window.SelectInput(163919); $window.Map();</p>
+
+<p># Get Escape keycode my $keysym = Xlib::StringToKeysym(&#39;Escape&#39;); my $code_escape = $display.KeysymToKeycode($keysym);</p>
+
+<p>my $event = Xlib::newEvent();</p>
+
+<p>my $type = 0;</p>
+
+<p>my $lastx = 0; my $lasty = 0; my $pressed = 0; my @listline; my @line;</p>
+
+<p>while ($type != 17) { $display.NextEvent($event); $type = $event.type(); if ($type == 4) { my $x = $event.x(); my $y = $event.y(); $window.DrawPoint($x,
+$y); $lastx = $x; $lasty = $y; $pressed = 1; } if ($type == 5) { my @newline = @line; @listline.push(\@newline); @line = (); $pressed = 0; } if ($type == 6 &#38;&#38; $pressed) { my $x = $event.x(); my $y = $event.y(); if (($x != $lastx) || ($y != $lasty)) { $window.DrawLine($lastx,
+$lasty,
+$x,
+$y); $lastx = $x; $lasty = $y; @line.push($x,
+$y); } } if ($type == 12) { #say &#39;Exposed.
+Lines: &#39;,
++@listline; for @listline &#45;&#62; $l { #say &#39;Points &#39;,
+$l.elems; if ($l.elems &#62; 0) { my $lx = $l[0]; my $ly = $l[1]; #say $lx,
+&#39; &#39;,
+$ly; $window.DrawPoint($lx,
+$ly);</p>
+
+<pre>                loop (my $i = 2; $i &#60; $l.elems ; $i += 2) {
+                    my $x = $l[$i];
+                    my $y = $l[$i+1]; 
+                    $window.DrawLine($lx, $ly, $x, $y);
+                    $lx = $x;
+                    $ly = $y;
+                    #say $lx, &#39; &#39;, $ly;
+                }
+            }
+        }
+    }
+    if ($type == 2) {
+        my $code = $event.keycode();
+        if ($code == $code_escape) {
+            $window.Unmap();
+            $window.Destroy();
+        }
+    }
+    if ($type == 33) {
+        $window.Unmap();
+        $window.Destroy();
+    }
+}</pre>
+
+<p>$display.Close();</p>
+
+<p>say &#39;Bye&#39;;</p>
+
+<p>#&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45; # Local Variables: # mode: pir # fill&#45;column: 100 # End: # vim: expandtab shiftwidth=4 ft=perl6:</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

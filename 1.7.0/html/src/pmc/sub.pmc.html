@@ -1,0 +1,177 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Subroutine</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Subroutine
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/sub.pmc &#45; Subroutine</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>These are the vtable functions for the Sub (subroutine) base class</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes the subroutine.
+<dt><a name="void_init_pmc()"
+><b><code>void init_pmc()</b></code></a></dt>
+Initializes the &#34;detached&#34; subroutine from passed Hash.
+&#34;Detached&#34; means that surboutine is fully constructed but not attached to interpreter.
+<dt><a name="void_destroy()"
+><b><code>void destroy()</b></code></a></dt>
+Destroys the subroutine.
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+Returns the name of the subroutine.
+<dt><a name="void_set_string_native(STRING_*subname)"
+><b><code>void set_string_native(STRING *subname)</b></code></a></dt>
+Sets the name of the subroutine.
+<dt><a name="void_set_pointer(void_*value)"
+><b><code>void set_pointer(void *value)</b></code></a></dt>
+Sets the pointer to the actual subroutine.*** Don&#39;t use that &#45; use <code>.const &#39;Sub&#39;</code> in PIR instead ***
+<dt><a name="void_*get_pointer()"
+><b><code>void *get_pointer()</b></code></a></dt>
+Returns the address of the actual subroutine.
+<dt><a name="INTVAL_get_integer_keyed(PMC_*key)"
+><b><code>INTVAL get_integer_keyed(PMC *key)</b></code></a></dt>
+<i>This just unconditionally returns the start of bytecode.
+It&#39;s wrong,
+wrong,
+wrong,
+*WRONG*.
+And there&#39;s no other good way,
+so it&#39;s here for now.</i> &#45;DRS
+<dt><a name="INTVAL_defined()"
+><b><code>INTVAL defined()</b></code></a></dt>
+
+<dt><a name="INTVAL_get_bool()"
+><b><code>INTVAL get_bool()</b></code></a></dt>
+Returns True.
+<dt><a name="opcode_t_*invoke(void_*next)"
+><b><code>opcode_t *invoke(void *next)</b></code></a></dt>
+Invokes the subroutine.
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+Creates and returns a clone of the subroutine.
+<dt><a name="void_assign_pmc(PMC_*other)"
+><b><code>void assign_pmc(PMC *other)</b></code></a></dt>
+Set SELF to the data in other.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Marks the sub as live.
+<dt><a name="INTVAL_is_equal(PMC_*value)"
+><b><code>INTVAL is_equal(PMC *value)</b></code></a></dt>
+Returns whether the two subroutines are equal.
+<dt><a name="void_visit(visit_info_*info)"
+><b><code>void visit(visit_info *info)</b></code></a></dt>
+This is used by freeze/thaw to visit the contents of the sub.
+<dt><a name="void_freeze(visit_info_*info)"
+><b><code>void freeze(visit_info *info)</b></code></a></dt>
+Archives the subroutine.
+<dt><a name="void_thaw(visit_info_*info)"
+><b><code>void thaw(visit_info *info)</b></code></a></dt>
+Unarchives the subroutine.
+<dt><a name="PMC_*inspect()"
+><b><code>PMC *inspect()</b></code></a></dt>
+Returns the full set of meta&#45;data about the sub.
+<dt><a name="PMC_*inspect_str(STRING_*what)"
+><b><code>PMC *inspect_str(STRING *what)</b></code></a></dt>
+Returns the specified item of metadata about the sub.
+Allowable values are:
+<dl>
+<dt><a name="pos_required"
+>pos_required</a></dt>
+The number of required positional arguments
+<dt><a name="pos_optional"
+>pos_optional</a></dt>
+The number of optional positional arguments
+<dt><a name="named_required"
+>named_required</a></dt>
+The number of required named arguments
+<dt><a name="named_optional"
+>named_optional</a></dt>
+The number of optional named arguments
+<dt><a name="pos_slurpy"
+>pos_slurpy</a></dt>
+1 if it takes slurpy positional arguments,
+0 if not
+<dt><a name="named_slurpy"
+>named_slurpy</a></dt>
+1 if it takes slurpy named arguments,
+0 if not</dl>
+</dl>
+
+<h2><a name="METHODS"
+>METHODS</a></h2>
+
+<dl>
+<dt><a name="INTVAL_start_offs()"
+><b><code>INTVAL start_offs()</b></code></a></dt>
+Return the start offset of the Sub.
+<dt><a name="INTVAL_end_offs()"
+><b><code>INTVAL end_offs()</b></code></a></dt>
+Return the end offset of the Sub.
+<dt><a name="PMC_*get_namespace()"
+><b><code>PMC *get_namespace()</b></code></a></dt>
+Return the namespace PMC,
+where the Sub is defined.TODO return <code>namespace_stash</code> instead.
+<dt><a name="INTVAL___get_regs_used(char_*kind)"
+><b><code>INTVAL __get_regs_used(char *kind)</b></code></a></dt>
+Return amount of used registers for register kinds &#34;I&#34;,
+&#34;S&#34;,
+&#34;P&#34;,
+&#34;N&#34;.
+<dt><a name="PMC_*get_lexinfo()"
+><b><code>PMC *get_lexinfo()</b></code></a></dt>
+Return the LexInfo PMC,
+if any or a Null PMC.
+<dt><a name="PMC_*get_multisig()"
+><b><code>PMC *get_multisig()</b></code></a></dt>
+Return the MMD signature PMC,
+if any or a Null PMC.
+<dt><a name="PMC_*get_outer()"
+><b><code>PMC *get_outer()</b></code></a></dt>
+Gets the sub that is the outer of this one,
+if any or a Null PMC.
+<dt><a name="void_set_outer(PMC_*outer)"
+><b><code>void set_outer(PMC *outer)</b></code></a></dt>
+Sets the sub that is the outer of this one.
+<dt><a name="INTVAL_arity()"
+><b><code>INTVAL arity()</b></code></a></dt>
+Return the arity of the Sub (the number of arguments,
+excluding optional and slurpy arguments).</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

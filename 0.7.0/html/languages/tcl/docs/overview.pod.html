@@ -1,0 +1,193 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/tcl.html">TCL</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="OVERVIEW"
+>OVERVIEW <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This is a from&#45;scratch implementation,
+based primarily on the Tcl man page(s),
+and the cvs&#45;current test suite for Tcl (8.5.1)</p>
+
+<p>Another interesting project would have been to modify the Tcl source and have it generate Parrot directly.
+Many people smarter than I am have declared this <i>hard</i>,
+so I&#39;m rather happy I&#39;m working on it this way.
+(Apparently Tcl&#39;s bytecode engine is very optimized for Tcl (big surprise).
+So,
+converting the Tcl&#45;specific bytecodes there to Parrot would be a big deal.)</p>
+
+<h1><a name="RUNNING_TCL"
+>RUNNING TCL <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Generated_Files"
+>Generated Files <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>When you make Tcl,
+you&#39;re generating several files:</p>
+
+<dl>
+<dt><a name="tclsh"
+>tclsh</a></dt><p class="pad"></p>
+
+<dd>While not included in the <code lang='und' xml:lang='und'>make all</code> target,
+you can <code lang='und' xml:lang='und'>make tclsh</code> (or whatever the executable would be called on your platform),
+and this will give you a faux&#45;executable; a C binary that loads in all the Parrot bytecode for partcl.
+You can then use this in most places where you see <code lang='und' xml:lang='und'>parrot tcl.pbc</code></dd><p class="pad"></p>
+
+<dt><a name="runtime/tcllib.pbc"
+>runtime/tcllib.pbc</a></dt><p class="pad"></p>
+
+<dd>This file is used to load all the various commands,
+ops,
+etc.
+into the appropriate namespaces,
+as well as declare and register the TCL compiler for the <code lang='und' xml:lang='und'>compile</code> opcode.</dd><p class="pad"></p>
+
+<dd>This file is then included by <em lang='und' xml:lang='und'>tcllib.pir</em> which is compiled to <em lang='und' xml:lang='und'>tcllib.pbc</em>.</dd><p class="pad"></p>
+
+<dt><a name="tcl.pbc"
+>tcl.pbc</a></dt><p class="pad"></p>
+
+<dd>This is roughly equivalent to <code lang='und' xml:lang='und'>tclsh</code> &#45; It takes the command line arguments (currently,
+the name of the file you wish to parse),
+and reads in the file,
+and uses the Tcl library to parse those contents as Tcl.
+You can also specify command line options to be used with this bytecode file.</dd><p class="pad"></p>
+
+<dt><a name="src/grammar/expr/pge2past.pir"
+>src/grammar/expr/pge2past.pir</a></dt><p class="pad"></p>
+
+<dt><a name="src/grammar/expr/past2pir.pir"
+>src/grammar/expr/past2pir.pir</a></dt><p class="pad"></p>
+
+<dt><a name="src/grammar/expr/expression.pir"
+>src/grammar/expr/expression.pir</a></dt><p class="pad"></p>
+
+<dd>This <code lang='und' xml:lang='und'>PIR</code> files are generated from their corresponding <code lang='und' xml:lang='und'>.tg</code> and <code lang='und' xml:lang='und'>.pg</code> files.
+These grammar files allow us to use PGE&#39;s implementation of perl6 rules to more simply specify our parsing rules.
+We use these rules to handle both the general parsing for Tcl itself,
+as well as the sub&#45;&#34;language&#34; used by expressions in [expr] and elsewhere.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="PMCS"
+>PMCS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>The Tcl PMCs (Parrot Magic Cookies) are the user visible data types.
+These live in the <code lang='und' xml:lang='und'>*.pmc</code> files in <em lang='und' xml:lang='und'>src/pmc/</em>.
+They are compiled into a dynamically loadable library which is loaded with the <code lang='und' xml:lang='und'>.HLL</code> directive (HLL stands for High Level Language).
+Most of the functionality associated with these PMCS is derived from the base Parrot classes,
+except as noted below.</p>
+
+<dl>
+<dt><a name="TclString"
+>TclString</a></dt><p class="pad"></p>
+
+<dd>Scalar string,
+with an override for the boolean truth values.</dd><p class="pad"></p>
+
+<dt><a name="TclInt"
+>TclInt</a></dt><p class="pad"></p>
+
+<dd>Scalar integer,
+with an override for various math.
+(For example,
+Parrot Integers automatically promote to float division,
+while Tcl does not.)</dd><p class="pad"></p>
+
+<dt><a name="TclFloat"
+>TclFloat</a></dt><p class="pad"></p>
+
+<dd>Scalar float,
+with an override of the stringification: Tcl floats are somewhat unusual compared to other Parrot HLLs in that integer&#45;valued floats stringify with a trailing <code lang='und' xml:lang='und'>.0</code>.</dd><p class="pad"></p>
+
+<dt><a name="TclList"
+>TclList</a></dt><p class="pad"></p>
+
+<dd>Ordered container,
+corresponding to values generated by the <code lang='und' xml:lang='und'>[list]</code> builtin.
+Overrides the default stringification provided by Parrot Arrays.</dd><p class="pad"></p>
+
+<dt><a name="TclArray"
+>TclArray</a></dt><p class="pad"></p>
+
+<dd>Hash like container,
+corresponding to values created with the <code lang='und' xml:lang='und'>[array]</code> builtin.</dd><p class="pad"></p>
+
+<dt><a name="TclDict"
+>TclDict</a></dt><p class="pad"></p>
+
+<dd>Hash like container,
+corresponding to values created with the <code lang='und' xml:lang='und'>[dict]</code> builtin.
+Unlike arrays,
+dictionaries can nest,
+having dictionaries as values; Also,
+dictionaries act more like TclLists in terms of their conversion to string and back.</dd><p class="pad"></p>
+
+<dt><a name="TclObject"
+>TclObject</a></dt><p class="pad"></p>
+
+<dd>A virtual type,
+which is used to provide some shimmer (aka morph) methods common to all the scalar value types.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="TESTS"
+>TESTS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>To run the test suite,
+<code lang='und' xml:lang='und'>make test</code>.
+If you want to also get output from the TODO tests,
+<code lang='und' xml:lang='und'>make devtest</code> instead.
+This is NOT the Tcl test suite.
+Occasional failures are suspected against svn&#45;head; there should be no failures in a released version,
+however.</p>
+
+<p>To run the Tcl test suite,
+type <code lang='und' xml:lang='und'>make spectest</code>.
+This will checkout the appropriate CVS copy of the tests from the Tcl repository and run them.
+Warning,
+this will be slow.</p>
+
+<h1><a name="EXAMPLES"
+>EXAMPLES <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>There are examples in the <code lang='und' xml:lang='und'>examples</code> directory that are vaguely more interesting.
+Change to that directory and type <code lang='und' xml:lang='und'>make</code> for directions.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

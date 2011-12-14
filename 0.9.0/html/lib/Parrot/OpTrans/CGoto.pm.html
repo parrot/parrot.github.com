@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>CGoto Transform</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">CGoto Transform</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/perl.html">Perl Modules</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Parrot::OpTrans::CGoto &#45; CGoto Transform</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Used to generate C code from Parrot operations.</p>
+
+<p><code>Parrot::OpTrans::CGoto</code> inherits from <code><a href='../OpTrans.pm.html'>Parrot::OpTrans</a></code> to provide a C <code>goto</code> run loop.</p>
+
+<h2><a name="Instance_Methods"
+>Instance Methods <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="suffix()"
+><b><code>suffix()</b></code></a></dt>
+The suffix is <code>&#39;_cg&#39;</code>.
+<dt><a name="core_prefix()"
+><b><code>core_prefix()</b></code></a></dt>
+The core prefix is <code>&#39;cg_&#39;</code>.
+<dt><a name="core_type()"
+><b><code>core_type()</b></code></a></dt>
+The core type is <code>PARROT_CGOTO_CORE</code>.
+<dt><a name="defines()"
+><b><code>defines()</b></code></a></dt>
+Returns the C <code>#define</code> macros required by the ops.
+<dt><a name="pc($pc)"
+><b><code>pc($pc)</b></code></a></dt>
+
+<dt><a name="pc()"
+><b><code>pc()</b></code></a></dt>
+Sets/gets the current position in Parrot code.
+<dt><a name="args(@args)"
+><b><code>args(@args)</b></code></a></dt>
+
+<dt><a name="args()"
+><b><code>args()</b></code></a></dt>
+Sets/gets the transform&#39;s arguments.
+<dt><a name="arg($index)"
+><b><code>arg($index)</b></code></a></dt>
+Returns the argument at <code>$index</code>.
+<dt><a name="goto_address($address)"
+><b><code>goto_address($address)</b></code></a></dt>
+Transforms the <code>goto ADDRESS($address)</code> macro in an ops file into the relevant C code.
+<dt><a name="expr_offset($offset)"
+><b><code>expr_offset($offset)</b></code></a></dt>
+Transforms the <code>OFFSET($offset)</code> macro in an ops file into the relevant C code.
+<dt><a name="goto_offset($offset)"
+><b><code>goto_offset($offset)</b></code></a></dt>
+Transforms the <code>goto OFFSET($offset)</code> macro in an ops file into the relevant C code.
+<dt><a name="goto_pop()"
+><b><code>goto_pop()</b></code></a></dt>
+Transforms the <code>goto POP()</code> macro in an ops file into the relevant C code.
+<dt><a name="access_arg($type,_$num,_$op)"
+><b><code>access_arg($type, $num, $op)</b></code></a></dt>
+Returns the C code for the specified op argument type (see <code><a href='../OpTrans.pm.html'>Parrot::OpTrans</a></code>) and value.
+<code>$op</code> is an instance of <code><a href='../Op.pm.html'>Parrot::Op</a></code>.
+<dt><a name="restart_address($address)"
+><b><code>restart_address($address)</b></code></a></dt>
+Returns the C code for <code>restart ADDRESS($address)</code>.
+<dt><a name="restart_offset($offset)"
+><b><code>restart_offset($offset)</b></code></a></dt>
+Returns the C code for <code>restart OFFSET($offset)</code>.
+<dt><a name="run_core_func_decl($core)"
+><b><code>run_core_func_decl($core)</b></code></a></dt>
+Returns the C code for the run core function declaration.
+<dt><a name="ops_addr_decl($base_suffix)"
+><b><code>ops_addr_decl($base_suffix)</b></code></a></dt>
+Returns the C code for the ops address declaration.
+<dt><a name="run_core_func_start()"
+><b><code>run_core_func_start()</b></code></a></dt>
+Returns the C code prior to the run core function.
+<dt><a name="run_core_after_addr_table($base_suffix)"
+><b><code>run_core_after_addr_table($base_suffix)</b></code></a></dt>
+Returns the run core C code for section after the address table.
+<dt><a name="run_core_finish($base)"
+><b><code>run_core_finish($base)</b></code></a></dt>
+Returns the C code following the run core function.
+<dt><a name="init_func_init1($base)"
+><b><code>init_func_init1($base)</b></code></a></dt>
+Returns the C code for the init function.
+<dt><a name="init_set_dispatch($base_suffix)"
+><b><code>init_set_dispatch($base_suffix)</b></code></a></dt>
+Returns the C code to initialize the dispatch mechanism within the core&#39;s initialization function.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Parrot::OpTrans"
+><b><code><a href='../OpTrans.pm.html'>Parrot::OpTrans</a></b></code></a></dt>
+
+<dt><a name="Parrot::OpTrans::C"
+><b><code><a href='C.pm.html'>Parrot::OpTrans::C</a></b></code></a></dt>
+
+<dt><a name="Parrot::OpTrans::CGP"
+><b><code><a href='CGP.pm.html'>Parrot::OpTrans::CGP</a></b></code></a></dt>
+
+<dt><a name="Parrot::OpTrans::CPrederef"
+><b><code><a href='CPrederef.pm.html'>Parrot::OpTrans::CPrederef</a></b></code></a></dt>
+
+<dt><a name="Parrot::OpTrans::CSwitch"
+><b><code><a href='CSwitch.pm.html'>Parrot::OpTrans::CSwitch</a></b></code></a></dt>
+
+<dt><a name="Parrot::OpTrans::Compiled"
+><b><code><a href='Compiled.pm.html'>Parrot::OpTrans::Compiled</a></b></code></a></dt>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,79 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Testing</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Testing</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/plumhead.html">Plumhead</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Plumhead &#45; Testing</p>
+
+<h1><a name="Testsuite"
+>Testsuite <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>For testing the test&#45;suite from a current PHP release is used.
+For sanity checking there are also very few tests in languages/plumhead/t.
+These are used by &#39;make test&#39;.</p>
+
+<h1><a name="How_to_run_the_PHP_test_suite"
+>How to run the PHP test suite <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>A problem are relative paths used by both the PHP test suite and by the generated PIR.
+Something like this worked for me under Linux.</p>
+
+<pre lang='und' xml:lang='und'>  cd ~/devel/Parrot/trunk
+  perl Configure.pl &#38;&#38; make
+  cd ~/devel/PHP/php&#45;5.2.0
+  ./configure &#38;&#38; make
+  ln &#45;s ../../Parrot/trunk/parrot
+  ln &#45;s ../../Parrot/trunk/languages
+  export PATH=.:$PATH
+  export TEST_PHP_EXECUTABLE=languages/plumhead/plumhead.pl
+  export TEST_PHP_CGI_EXECUTABLE=languages/plumhead/plumhead.pl
+  export PLUMHEAD_VARIANT=phc
+  php run&#45;tests.php &#45;v &#45;&#45;keep&#45;all &#45;r languages/plumhead/t/selection.txt | tee run&#45;tests.log</pre>
+
+<p>Good luck.</p>
+
+<h1><a name="Author"
+>Author <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Bernhard Schmalhofer &#45; &#60;Bernhard.Schmalhofer@gmx.de&#62;</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

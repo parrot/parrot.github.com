@@ -1,0 +1,307 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Lua Auxiliary PIR Library</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Lua Auxiliary PIR Library</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/lua.html">Lua</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>lib/luaaux.pir &#45; Lua Auxiliary PIR Library</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="lua_argerror_(narg,_extramsg,_...)"
+><b><code lang='und' xml:lang='und'>lua_argerror (narg, extramsg, ...)</b></code></a></dt><p class="pad"></p>
+
+<dd>Raises an error with the following message,
+where <code lang='und' xml:lang='und'>func</code> is retrieved from the call stack:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    bad argument #&#60;narg&#62; to &#60;func&#62; (&#60;extramsg&#62;)</pre>
+
+<dd>This function never returns.</dd><p class="pad"></p>
+
+<dd>CAUTION: don&#39;t used it in an exception handler, but lua_x_argerror &#38; rethrow.</dd><p class="pad"></p>
+
+<dt><a name="lua_checkany_(narg,_arg)"
+><b><code lang='und' xml:lang='und'>lua_checkany (narg, arg)</b></code></a></dt><p class="pad"></p>
+
+<dd>Checks whether the function has an argument of any type (including <b>nil</b>) at position <code lang='und' xml:lang='und'>narg</code>.</dd><p class="pad"></p>
+
+<dt><a name="lua_checknumber_(narg,_arg)"
+><b><code lang='und' xml:lang='und'>lua_checknumber (narg, arg)</b></code></a></dt><p class="pad"></p>
+
+<dd>Checks whether the function argument <code lang='und' xml:lang='und'>narg</code> is a number and returns this number.</dd><p class="pad"></p>
+
+<dt><a name="lua_checkoption_(narg,_val,_options)"
+><b><code lang='und' xml:lang='und'>lua_checkoption (narg, val, options)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="lua_checkstring_(narg,_arg)"
+><b><code lang='und' xml:lang='und'>lua_checkstring (narg, arg)</b></code></a></dt><p class="pad"></p>
+
+<dd>Checks whether the function argument <code lang='und' xml:lang='und'>narg</code> is a string and returns this string.</dd><p class="pad"></p>
+
+<dd>This function uses <code lang='und' xml:lang='und'>tostring</code> to get its result, so all conversions and caveats of that function apply here.</dd><p class="pad"></p>
+
+<dt><a name="lua_checktype_(narg,_arg,_t)"
+><b><code lang='und' xml:lang='und'>lua_checktype (narg, arg, t)</b></code></a></dt><p class="pad"></p>
+
+<dd>Checks whether the function argument <code lang='und' xml:lang='und'>narg</code> has type <code lang='und' xml:lang='und'>t</code>.</dd><p class="pad"></p>
+
+<dt><a name="lua_checkudata_(narg,_arg,_tname)"
+><b><code lang='und' xml:lang='und'>lua_checkudata (narg, arg, tname)</b></code></a></dt><p class="pad"></p>
+
+<dd>Checks whether the function argument <code lang='und' xml:lang='und'>narg</code> is a userdata of the type <code lang='und' xml:lang='und'>tname</code>.</dd><p class="pad"></p>
+
+<dt><a name="lua_error_(message,_...)"
+><b><code lang='und' xml:lang='und'>lua_error (message, ...)</b></code></a></dt><p class="pad"></p>
+
+<dd>Raises an error.</dd><p class="pad"></p>
+
+<dd>This function never returns.</dd><p class="pad"></p>
+
+<dd>CAUTION: don&#39;t used it in an exception handler, but lua_x_error &#38; rethrow.</dd><p class="pad"></p>
+
+<dt><a name="lua_findtable_(t,_fname)"
+><b><code lang='und' xml:lang='und'>lua_findtable (t, fname)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="lua_gc_(what,_data)"
+><b><code lang='und' xml:lang='und'>lua_gc (what, data)</b></code></a></dt><p class="pad"></p>
+
+<dd>Controls the garbage collector.</dd><p class="pad"></p>
+
+<dd>This function performs several tasks, according to the value of the parameter <code lang='und' xml:lang='und'>what</code>:</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="&#34;stop&#34;"
+><b>&#34;stop&#34;</b></a></dt><p class="pad"></p>
+
+<dd>stops the garbage collector.</dd><p class="pad"></p>
+
+<dt><a name="&#34;restart&#34;"
+><b>&#34;restart&#34;</b></a></dt><p class="pad"></p>
+
+<dd>restarts the garbage collector.</dd><p class="pad"></p>
+
+<dt><a name="&#34;collect&#34;"
+><b>&#34;collect&#34;</b></a></dt><p class="pad"></p>
+
+<dd>performs a full garbage&#45;collection cycle.</dd><p class="pad"></p>
+
+<dt><a name="&#34;count&#34;"
+><b>&#34;count&#34;</b></a></dt><p class="pad"></p>
+
+<dd>returns the total memory in use by Lua (in Kbytes).</dd><p class="pad"></p>
+
+<dt><a name="&#34;step&#34;"
+><b>&#34;step&#34;</b></a></dt><p class="pad"></p>
+
+<dd>performs an incremental step of garbage collection The step <code lang='und' xml:lang='und'>&#34;size&#34;</code> is controlled by <code lang='und' xml:lang='und'>data</code> (larger values mean more steps) in a non&#45;specified way. If you want to control the step size you must tune experimentally the value of <code lang='und' xml:lang='und'>data</code>. Returns <b>true</b> if the step finished a garbage&#45;collection cycle.</dd><p class="pad"></p>
+
+<dt><a name="&#34;steppause&#34;"
+><b>&#34;steppause&#34;</b></a></dt><p class="pad"></p>
+
+<dd>sets <code lang='und' xml:lang='und'>data</code>/100 as the new value for the <i>pause</i> of the collector. The function returns the previous value of the pause.</dd><p class="pad"></p>
+
+<dt><a name="&#34;setstepmul&#34;"
+><b>&#34;setstepmul&#34;</b></a></dt><p class="pad"></p>
+
+<dd>sets <code lang='und' xml:lang='und'>data</code>/100 as the new value for the <i>step multiplier</i> of the collector. The function returns the previous value of the step multiplier.</dd><p class="pad"></p>
+</dl>
+
+<dd>STILL INCOMPLETE.</dd><p class="pad"></p>
+
+<dt><a name="lua_getfenv_(o)"
+><b><code lang='und' xml:lang='und'>lua_getfenv (o)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the environment table of the argument <code lang='und' xml:lang='und'>o</code>.</dd><p class="pad"></p>
+
+<dt><a name="lua_getmetatable_(tname)"
+><b><code lang='und' xml:lang='und'>lua_getmetatable (tname)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the metatable registered with the name <code lang='und' xml:lang='und'>tname</code>.</dd><p class="pad"></p>
+
+<dt><a name="lua_gsub_(src,_pat,_repl)"
+><b><code lang='und' xml:lang='und'>lua_gsub (src, pat, repl)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a copy of string <code lang='und' xml:lang='und'>src</code> by replacing any occurrence of the string <code lang='und' xml:lang='und'>pat</code> with the string <code lang='und' xml:lang='und'>rep</code>.</dd><p class="pad"></p>
+
+<dt><a name="lua_isboolean_(val)"
+><b><code lang='und' xml:lang='und'>lua_isboolean (val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns 1 if the value has type boolean, and 0 otherwise.</dd><p class="pad"></p>
+
+<dt><a name="lua_isfunction_(val)"
+><b><code lang='und' xml:lang='und'>lua_isfunction (val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns 1 if the value is a function, and 0 otherwise.</dd><p class="pad"></p>
+
+<dt><a name="lua_isnil_(val)"
+><b><code lang='und' xml:lang='und'>lua_isnil (val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns 1 if the value is nil, and 0 otherwise.</dd><p class="pad"></p>
+
+<dt><a name="lua_isnumber_(val)"
+><b><code lang='und' xml:lang='und'>lua_isnumber (val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns 1 if the value is a number or a string convertible to a number, and 0 otherwise.</dd><p class="pad"></p>
+
+<dt><a name="lua_isstring_(val)"
+><b><code lang='und' xml:lang='und'>lua_isstring (val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns 1 if the value is a string or a number (which is always convertible to a string), and 0 otherwise.</dd><p class="pad"></p>
+
+<dt><a name="lua_istable_(val)"
+><b><code lang='und' xml:lang='und'>lua_istable (val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns 1 if the value is a table, and 0 otherwise.</dd><p class="pad"></p>
+
+<dt><a name="lua_isuserdata_(val)"
+><b><code lang='und' xml:lang='und'>lua_isuserdata (val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns 1 if the value is a userdata, and 0 otherwise.</dd><p class="pad"></p>
+
+<dt><a name="lua_load_(data,_name)"
+><b><code lang='und' xml:lang='und'>lua_load (data, name)</b></code></a></dt><p class="pad"></p>
+
+<dd>This function only loads a chunk; it does not run it.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>lua_load</code> automatically detects whether the chunk is text or binary, and loads it accordingly.</dd><p class="pad"></p>
+
+<dd>The <code lang='und' xml:lang='und'>chunkname</code> argument gives a name to the chunk, which is used for error messages and in debug information.</dd><p class="pad"></p>
+
+<dt><a name="lua_loadbuffer_(buff,_name)"
+><b><code lang='und' xml:lang='und'>lua_loadbuffer (buff, name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Loads a buffer as a Lua chunk.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>name</code> is the chunk name, used for debug information and error messages.</dd><p class="pad"></p>
+
+<dt><a name="lua_loadfile_(filename)"
+><b><code lang='und' xml:lang='und'>lua_loadfile (filename)</b></code></a></dt><p class="pad"></p>
+
+<dd>Loads a file as a Lua chunk. If <code lang='und' xml:lang='und'>filename</code> is a empty string, then it loads from the standard input. The first line in the file is ignored if it starts with a #.</dd><p class="pad"></p>
+
+<dd>This function only loads the chunk; it does not run it.</dd><p class="pad"></p>
+
+<dt><a name="lua_newmetatable_(tname)"
+><b><code lang='und' xml:lang='und'>lua_newmetatable (tname)</b></code></a></dt><p class="pad"></p>
+
+<dd>Unless the registry already has the key <code lang='und' xml:lang='und'>tname</code>, creates a new table to be used as a metatable for userdata, adds it to the registry with key <code lang='und' xml:lang='und'>tname</code>.</dd><p class="pad"></p>
+
+<dd>In both cases returns the final value associated with <code lang='und' xml:lang='und'>tname</code> in the registry.</dd><p class="pad"></p>
+
+<dt><a name="lua_newuserdata_(data,_mt)"
+><b><code lang='und' xml:lang='und'>lua_newuserdata (data, mt)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="lua_openlibs_()"
+><b><code lang='und' xml:lang='und'>lua_openlibs ()</b></code></a></dt><p class="pad"></p>
+
+<dd>Opens all standard Lua libraries.</dd><p class="pad"></p>
+
+<dt><a name="lua_optint_(narg,_arg,_def)"
+><b><code lang='und' xml:lang='und'>lua_optint (narg, arg, def)</b></code></a></dt><p class="pad"></p>
+
+<dd>If the function argument <code lang='und' xml:lang='und'>narg</code> is a number, returns this number cast to an <code lang='und' xml:lang='und'>int</code>. If this argument is absent or is <b>nil</b>, returns <code lang='und' xml:lang='und'>def</code>. Otherwise, raises an error.</dd><p class="pad"></p>
+
+<dt><a name="lua_optnumber_(narg,_arg,_def)"
+><b><code lang='und' xml:lang='und'>lua_optnumber (narg, arg, def)</b></code></a></dt><p class="pad"></p>
+
+<dd>If the function argument <code lang='und' xml:lang='und'>narg</code> is a number, returns this number. If this argument is absent or is <b>nil</b>, returns <code lang='und' xml:lang='und'>def</code>. Otherwise, raises an error.</dd><p class="pad"></p>
+
+<dt><a name="lua_optstring_(narg,_arg,_def)"
+><b><code lang='und' xml:lang='und'>lua_optstring (narg, arg, def)</b></code></a></dt><p class="pad"></p>
+
+<dd>If the function argument <code lang='und' xml:lang='und'>narg</code> is a string, returns this string. If this argument is absent or is <b>nil</b>, returns <code lang='und' xml:lang='und'>def</code>. Otherwise, raises an error.</dd><p class="pad"></p>
+
+<dt><a name="lua_register_(libname,_lib,_names,_env)"
+><b><code lang='und' xml:lang='und'>lua_register (libname, lib, names, env)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="lua_setfenv_(o,_table)"
+><b><code lang='und' xml:lang='und'>lua_setfenv (o, table)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the table <code lang='und' xml:lang='und'>table</code> as the new environment for the value <code lang='und' xml:lang='und'>o</code>. If the value <code lang='und' xml:lang='und'>o</code> is neither a function nor a thread nor a userdata, returns 0. Otherwise it returns 1.</dd><p class="pad"></p>
+
+<dt><a name="lua_typerror_(narg,_got,_expec)"
+><b><code lang='und' xml:lang='und'>lua_typerror (narg, got, expec)</b></code></a></dt><p class="pad"></p>
+
+<dd>Generates an error with a message like the following:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    bad argument narg to &#39;func&#39; (tname expected, got rt)</pre>
+
+<dd>This function never returns.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Others_functions"
+>Others functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="argstolua_(env,_args)"
+><b><code lang='und' xml:lang='und'>argstolua (env, args)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="checkforloop_(start,_limit,_step)"
+><b><code lang='und' xml:lang='und'>checkforloop (start, limit, step)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="docall_(f,_arg)"
+><b><code lang='und' xml:lang='und'>docall (f, arg)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="mkarg_(argv)"
+><b><code lang='und' xml:lang='und'>mkarg (argv)</b></code></a></dt><p class="pad"></p>
+
+<dd>Support variable number of arguments function call.</dd><p class="pad"></p>
+
+<dt><a name="not_implemented_()"
+><b><code lang='und' xml:lang='und'>not_implemented ()</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="tconstruct_(table,_index,_argv)"
+><b><code lang='und' xml:lang='und'>tconstruct (table, index, argv)</b></code></a></dt><p class="pad"></p>
+
+<dd>end of table constructor with argv</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="AUTHORS"
+>AUTHORS <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Francois Perrad</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

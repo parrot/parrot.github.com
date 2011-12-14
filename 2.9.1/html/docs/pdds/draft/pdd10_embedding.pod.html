@@ -1,0 +1,264 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - [DRAFT] PDD10: Embedding and Extending</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; <a href="../../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; [DRAFT] PDD10: Embedding and Extending
+                </div>
+
+<h1><a name="[DRAFT]_PDD10:_Embedding_and_Extending"
+>[DRAFT] PDD10: Embedding and Extending</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>What we believe people will do when embedding and extending Parrot,
+why they do it,
+and how.</p>
+
+<p>{{ NOTE: some of this will later move into pdds 11 &#38; 12,
+but for now just want to get the stub checked in.
+}}</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<p>Why embed:</p>
+
+<ul>
+<li>access to special features/libraries/languages Parrot provides</li>
+
+<li>need an interpreter for a DSL or existing language</li>
+
+<li>want to run Parrot on another platform or environment (dedicated hardware,
+in a web server,
+et cetera)</li>
+</ul>
+
+<p>Why extend:</p>
+
+<ul>
+<li>need something NCI doesn&#39;t provide</li>
+
+<li>writing a custom PMC</li>
+</ul>
+
+<p>Philosophical rules:</p>
+
+<ul>
+<li>only ever use opaque pointers</li>
+
+<li>should be able to communicate through PMCs</li>
+
+<li>minimize conversions to and from C data</li>
+
+<ul>
+<li>perhaps macros; Ruby does this fairly well and Perl 5 does this poorly</li>
+
+<li>minimize the number of necessary functions</li>
+
+<li>probably can follow core Parrot code to some extent,
+but beware the Perl 5 problem</li>
+
+<ul>
+<li>do not expose Parrot internals that may change</li>
+
+<ul>
+<li>minimize the number of headers used</li>
+
+<li>minimize the number of Parrot types exposed</li>
+
+<li>follow boundaries similar to those of PIR where possible</li>
+</ul>
+
+<li>probably includes vtable functions on PMCs</li>
+</ul>
+</ul>
+</ul>
+
+<p>Gotchas:</p>
+
+<ul>
+<li>who handles signals?</li>
+
+<li>who owns file descriptors and other Unix resources?</li>
+
+<li>is there an exception boundary?</li>
+
+<li>namespace issues &#45;&#45; especially key related</li>
+
+<li>probably a continuation/control flow boundary</li>
+
+<li>packfiles and subroutines probably too much information for either</li>
+
+<li>do not let MMD and other implementation details escape</li>
+
+<li>okay to require some PBC/PIR/PASM for handling round&#45;trip data</li>
+
+<li>Parrot should not spew errors to STDERR when embedded</li>
+
+<li>who allocates and deallocates resources passed through the boundary level?</li>
+
+<li>should be access to Parrot&#39;s event loop when embedded</li>
+
+<li>passing var args to Parrot subs likely painful</li>
+
+<ul>
+<li>perhaps macros/functions to add parameters to call</li>
+
+<li>build up a call signature somehow?</li>
+
+<li>some abstraction for a call frame?</li>
+</ul>
+
+<li>compiling code from a string should return the PMC Sub entry point (:main)</li>
+
+<li>are there still directory path,
+loading,
+and deployment issues?</li>
+
+<li>how do dynamic oplibs and custom PMCs interact?</li>
+
+<li>what&#39;s the best way to handle character sets and Unicode?</li>
+</ul>
+
+<h2><a name="Definitions"
+>Definitions</a></h2>
+
+<p>Embedding &#45; using libparrot from within another program,
+likely with a C/NCI/FFI interface</p>
+
+<p>Extending &#45; writing Parrot extensions,
+likely through C or another language</p>
+
+<p>In practice,
+there is little difference between the two; mostly in terms of who has control.
+The necessary interfaces should stay the same.</p>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<p>Implementation details.</p>
+
+<p>Simplicity is the main goal; it should be almost trivial to embed Parrot in an existing application.
+It must be trivial to do the right thing; the APIs must make it so much easier to work correctly than to make mistakes.
+This means,
+in particular,
+that:</p>
+
+<ul>
+<li>it should never be possible to crash or corrupt the interpreter when following the interface as documented</li>
+
+<li>each API call or element should have a single purpose</li>
+
+<li>names must be consistent in the API documentation and the examples</li>
+
+<li>it <i>should</i> be possible to embed Parrot <i>within</i> Parrot through NCI,
+as a test both of the sanity of the external interface as well as NCI</li>
+</ul>
+
+<h3><a name="Working_with_Interpreters"
+>Working with Interpreters</a></h3>
+
+<p>It is the external code&#39;s duty to create,
+manage,
+and destroy interpreters.</p>
+
+<p><code>Parrot_new( NULL )</code> returns an opaque pointer to a new interpreter:</p>
+
+<pre>  Parrot_Interp Parrot_new(Parrot_Interp parent);</pre>
+
+<p><code>parent</code> can be NULL for the <i>first</i> interpreter created. All subsequent calls to this function should pass an existing interpreter.</p>
+
+<p><i>Note: it is not clear what happens if you fail to do so; is there a way to detect this in the interface and give a warning?</i></p>
+
+<p><code>Parrot_destroy ( interp )</code> destroys an interpreter and frees its resources.</p>
+
+<pre>  void Parrot_destroy(Parrot_Interp);</pre>
+
+<p><i>Note: It is not clear what happens if this interpreter has active children.</i></p>
+
+<h3><a name="Working_with_Source_Code_and_PBC_Files"
+>Working with Source Code and PBC Files</a></h3>
+
+<p>Perhaps the most common case for working with code is loading it from an external file. This may often be PBC, but it must also be possible to load code with any registered compiler. This <i>must</i> be a single&#45;stage operation:</p>
+
+<pre>  Parrot_PMC Parrot_load_bytecode( Parrot_Interp, const char *filepath );
+
+  Parrot_PMC Parrot_load_hll_code( Parrot_Interp, const char *compiler,
+                                                  const char *filepath );</pre>
+
+<p>The PMC returned will be the Sub PMC representing the entry point into the code. That is, it will be the PMC representing the <code>:main</code> subroutine, if one exists, or the first subroutine in the file.</p>
+
+<p>If there is an error &#45;&#45; such that the file does not exist, the compiler is unknown, or there was a compilation or invalid bytecode error &#45;&#45; the PMC should be an Exception PMC instead.</p>
+
+<p><i>Note: I suppose NULL would work as well; it might be more C&#45;like. Continue considering.</i></p>
+
+<p><i>Note also: the current <code>Parrot_pbc_read()</code> and <code>Parrot_pbc_load()</code> exposes the details of packfiles to the external API and uses two operations to perform a single logical operation.</i></p>
+
+<p><i>Note: it may be worth reconsidering these names, if <code>Parrot_load_bytecode()</code> can load PBC, PIR, and PASM files without having a compiler named explicitly.</i></p>
+
+<p>Compiling source code generated or read from the host application is also possible:</p>
+
+<pre>  Parrot_PMC Parrot_compile_string( Parrot_Interp, Parrot_String compiler,
+                                                   const char *code,
+                                                   Parrot_String error );</pre>
+
+<p>The potential return values are the same as for loading code from disk.</p>
+
+<p><i>Note: this declaration should move from <em>interpreter.h</em> to <em>embed.h</em>.</i></p>
+
+<h3><a name="Working_with_PMCs"
+>Working with PMCs</a></h3>
+
+<p>TBD.</p>
+
+<h3><a name="Calling_Functions"
+>Calling Functions</a></h3>
+
+<p>TBD.</p>
+
+<h3><a name="Calling_Opcodes"
+>Calling Opcodes</a></h3>
+
+<p>TBD.</p>
+
+<h2><a name="Language_Notes"
+>Language Notes</a></h2>
+
+<p>It should be possible to register a compiler for an HLL with an interpreter such that it is possible to load source code written in that language or pass source code to an interpreter successfully.</p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p>None.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

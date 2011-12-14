@@ -1,0 +1,420 @@
+=head1 NAME
+
+cmp.ops - Comparison Opcodes
+
+
+=cut
+
+=head1 DESCRIPTION
+
+Operations that compare two registers against each other.
+Some of these operations affect control flow directly; others
+do not.
+
+When making changes to any ops file, run C<make bootstrap-ops> to regenerate
+all generated ops files.
+
+
+=cut
+
+=head2 Flow control comparison operators
+
+These operators branch based on the relationship between
+their operands.
+
+=over 4
+
+
+=cut
+
+=item B<eq>(in INT, in INT, inconst LABEL)
+
+=item B<eq>(in NUM, in NUM, inconst LABEL)
+
+=item B<eq>(in STR, in STR, inconst LABEL)
+
+=item B<eq>(invar PMC, invar PMC, inconst LABEL)
+
+=item B<eq>(invar PMC, in INT, inconst LABEL)
+
+=item B<eq>(invar PMC, in NUM, inconst LABEL)
+
+=item B<eq>(invar PMC, in STR, inconst LABEL)
+
+=item B<eq_str>(invar PMC, invar PMC, inconst LABEL)
+
+=item B<eq_num>(invar PMC, invar PMC, inconst LABEL)
+
+=item B<eq_addr>(in STR, in STR, inconst LABEL)
+
+=item B<eq_addr>(invar PMC, invar PMC, inconst LABEL)
+
+Branch if $1 is equal to $2. For PMCs this does a generic comparison,
+whatever that is for the involved PMCs. Mixed PMC number/string
+operands do a numeric or string comparison respectively.
+
+B<eq_str> and B<eq_num> enforce string or number comparisons.
+
+B<eq_addr> compares the address of the objects or strings.
+
+
+=cut
+
+=item B<ne>(in INT, in INT, inconst LABEL)
+
+=item B<ne>(in NUM, in NUM, inconst LABEL)
+
+=item B<ne>(in STR, in STR, inconst LABEL)
+
+=item B<ne>(invar PMC, invar PMC, inconst LABEL)
+
+=item B<ne>(invar PMC, in INT, inconst LABEL)
+
+=item B<ne>(invar PMC, in NUM, inconst LABEL)
+
+=item B<ne>(invar PMC, in STR, inconst LABEL)
+
+=item B<ne_str>(invar PMC, invar PMC, inconst LABEL)
+
+=item B<ne_num>(invar PMC, invar PMC, inconst LABEL)
+
+=item B<ne_addr>(in STR, in STR, inconst LABEL)
+
+=item B<ne_addr>(invar PMC, invar PMC, inconst LABEL)
+
+Branch if $1 is not equal to $2.
+
+
+=cut
+
+=item B<lt>(in INT, in INT, inconst LABEL)
+
+=item B<lt>(in NUM, in NUM, inconst LABEL)
+
+=item B<lt>(in STR, in STR, inconst LABEL)
+
+=item B<lt>(invar PMC, invar PMC, inconst LABEL)
+
+=item B<lt>(invar PMC, in INT, inconst LABEL)
+
+=item B<lt>(invar PMC, in NUM, inconst LABEL)
+
+=item B<lt>(invar PMC, in STR, inconst LABEL)
+
+=item B<lt_str>(invar PMC, invar PMC, inconst LABEL)
+
+=item B<lt_num>(invar PMC, invar PMC, inconst LABEL)
+
+Branch if $1 is less than $2.
+
+
+=cut
+
+=item B<le>(in INT, in INT, inconst LABEL)
+
+=item B<le>(in NUM, in NUM, inconst LABEL)
+
+=item B<le>(in STR, in STR, inconst LABEL)
+
+=item B<le>(invar PMC, invar PMC, inconst LABEL)
+
+=item B<le>(invar PMC, in INT, inconst LABEL)
+
+=item B<le>(invar PMC, in NUM, inconst LABEL)
+
+=item B<le>(invar PMC, in STR, inconst LABEL)
+
+=item B<le_str>(invar PMC, invar PMC, inconst LABEL)
+
+=item B<le_num>(invar PMC, invar PMC, inconst LABEL)
+
+Branch if $1 is less than or equal to $2.
+
+
+=cut
+
+=item B<gt>(invar PMC, invar PMC, inconst LABEL)
+
+=item B<gt>(invar PMC, in INT, inconst LABEL)
+
+=item B<gt>(invar PMC, in NUM, inconst LABEL)
+
+=item B<gt>(invar PMC, in STR, inconst LABEL)
+
+=item B<gt_str>(invar PMC, invar PMC, inconst LABEL)
+
+=item B<gt_num>(invar PMC, invar PMC, inconst LABEL)
+
+Branch if $1 is greater than $2.
+
+
+=cut
+
+=item B<ge>(invar PMC, invar PMC, inconst LABEL)
+
+=item B<ge>(invar PMC, in INT, inconst LABEL)
+
+=item B<ge>(invar PMC, in NUM, inconst LABEL)
+
+=item B<ge>(invar PMC, in STR, inconst LABEL)
+
+=item B<ge_str>(invar PMC, invar PMC, inconst LABEL)
+
+=item B<ge_num>(invar PMC, invar PMC, inconst LABEL)
+
+Branch if $1 is greater than or equal to $2.
+
+
+=cut
+
+=item B<if_null>(invar PMC, inconst LABEL)
+
+Branch to $2 if $1 is a NULL PMC.
+
+=item B<if_null>(invar STR, inconst LABEL)
+
+Branch to $2 if $1 is a NULL STRING.
+
+
+=cut
+
+=item B<unless_null>(invar PMC, inconst LABEL)
+
+Branch to $2 if $1 is I<not> a NULL PMC.
+
+=item B<unless_null>(invar STR, inconst LABEL)
+
+Branch to $2 if $1 is I<not> a NULL STRING.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Non-flow control comparison ops
+
+These ops do comparisons and truth testing without doing flow control.
+
+=over 4
+
+=item B<cmp>(out INT, in INT, in INT)
+
+=item B<cmp>(out INT, in NUM, in NUM)
+
+=item B<cmp>(out INT, in STR, in STR)
+
+=item B<cmp>(out INT, invar PMC, invar PMC)
+
+=item B<cmp>(out INT, invar PMC, in INT)
+
+=item B<cmp>(out INT, invar PMC, in NUM)
+
+=item B<cmp>(out INT, invar PMC, in STR)
+
+=item B<cmp_str>(out INT, invar PMC, invar PMC)
+
+=item B<cmp_num>(out INT, invar PMC, invar PMC)
+
+Sets $1 to -1 if $2 < $3, +1 if $2 > $3, and 0 otherwise.
+
+
+=cut
+
+=item B<cmp_pmc>(out PMC, invar PMC, invar PMC)
+
+Does the same thing as the other cmp_* variants, but puts a PMC in $1.  This is
+useful for avoiding the semipredicate problem in HLLs where two aggregate PMCs
+are not always comparable.
+
+
+=cut
+
+=item B<issame>(out INT, invar PMC, invar PMC)
+
+=item B<issame>(out INT, in STR, in STR)
+
+Sets $1 to 1 or 0, depending on the identity of the 2 objects.
+The identity is the PMCs memory address.
+
+=item B<isntsame>(out INT, invar PMC, invar PMC)
+
+=item B<isntsame>(out INT, in STR, in STR)
+
+Sets $1 to 0 or 1, depending on the identity of the 2 objects.
+
+=item B<istrue>(out INT, invar PMC)
+
+Sets $1 to 1 or 0, depending on whether $2 is true or not.
+
+=item B<isfalse>(out INT, invar PMC)
+
+Sets $1 to 1 or 0, depending on whether $2 is false or not.
+
+=item B<isnull>(out INT, in PMC)
+
+Sets $1 to 1 if the object is null, 0 otherwise.
+
+=item B<isnull>(out INT, in STR)
+
+Sets $1 to 1 if the string is null, 0 otherwise.
+
+
+=cut
+
+=item B<isgt>(out INT, in INT, in INT)
+
+=item B<isgt>(out INT, in NUM, in NUM)
+
+=item B<isgt>(out INT, in STR, in STR)
+
+These 3 opcodes are valid, but create as their reverse.
+
+=item B<isgt>(out INT, invar PMC, invar PMC)
+
+Sets $1 to 1 if $2 is greater than $3.
+
+
+=cut
+
+=item B<isge>(out INT, in INT, in INT)
+
+=item B<isge>(out INT, in NUM, in NUM)
+
+=item B<isge>(out INT, in STR, in STR)
+
+These 3 opcodes are valid, but create as their reverse.
+
+=item B<isge>(out INT, invar PMC, invar PMC)
+
+Sets $1 to 1 if $2 is greater than or equal to $3.
+
+
+=cut
+
+=item B<isle>(out INT, in INT, in INT)
+
+=item B<isle>(out INT, in NUM, in NUM)
+
+=item B<isle>(out INT, in STR, in STR)
+
+=item B<isle>(out INT, invar PMC, invar PMC)
+
+Sets $1 to 1 if $2 is less than or equal to $3.
+
+
+=cut
+
+=item B<islt>(out INT, in INT, in INT)
+
+=item B<islt>(out INT, in NUM, in NUM)
+
+=item B<islt>(out INT, in STR, in STR)
+
+=item B<islt>(out INT, invar PMC, invar PMC)
+
+Sets $1 to 1 if $2 is less than $3.
+
+
+=cut
+
+=item B<iseq>(out INT, in INT, in INT)
+
+=item B<iseq>(out INT, in NUM, in NUM)
+
+=item B<iseq>(out INT, in STR, in STR)
+
+=item B<iseq>(out INT, invar PMC, invar PMC)
+
+Sets $1 to 1 if $2 is equal to $3.
+
+
+=cut
+
+=item B<isne>(out INT, in INT, in INT)
+
+=item B<isne>(out INT, in NUM, in NUM)
+
+=item B<isne>(out INT, in STR, in STR)
+
+=item B<isne>(out INT, invar PMC, invar PMC)
+
+Sets $1 to 1 if $2 is not equal to $3.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Logical operations
+
+These operations apply logical functions to their arguments.
+
+=over 4
+
+
+=cut
+
+=item B<and>(out INT, in INT, in INT)
+
+=item B<and>(invar PMC, invar PMC, invar PMC)
+
+Short-circuiting logical and.  Returns $2 if it's false, else returns $3.
+
+
+=cut
+
+=item B<not>(inout INT)
+
+=item B<not>(invar PMC)
+
+Set the boolean state of $1 to the opposite of the boolean state from $1.
+
+=item B<not>(out INT, in INT)
+
+=item B<not>(out PMC, invar PMC)
+
+
+=cut
+
+=item B<or>(out INT, in INT, in INT)
+
+=item B<or>(invar PMC, invar PMC, invar PMC)
+
+Short-circuiting logical or.  Returns $2 if it's true, else returns $3.
+
+
+=cut
+
+=item B<xor>(out INT, in INT, in INT)
+
+=item B<xor>(invar PMC, invar PMC, invar PMC)
+
+Logical xor.  Returns $2 if it's true and $3 isn't,
+returns $3 if it's true and $2 isn't, else returns false.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head1 COPYRIGHT
+
+Copyright (C) 2001-2010, Parrot Foundation.
+
+=head1 LICENSE
+
+This program is free software. It is subject to the same license
+as the Parrot interpreter itself.
+
+
+=cut
+

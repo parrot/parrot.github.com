@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>a base class for syntax tree nodes</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">a base class for syntax tree nodes</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Node &#45; a base class for syntax tree nodes</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>All PAST and POST nodes subclass from this base type.</p>
+
+<h1><a name="Accessor_Methods"
+>Accessor Methods <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>These methods define the external interface of node objects.</p>
+
+<h2><a name="source"
+>source <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Sets or gets the source code string that a particular node was parsed from.
+(Useful for debugging output.)</p>
+
+<pre lang='und' xml:lang='und'>    node.&#39;source&#39;($S1)
+    $S2 = node.&#39;source&#39;()</pre>
+
+<h2><a name="pos"
+>pos <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Sets or gets the position offset in the original source code file that a particular node was parsed from. (Useful for debugging output.)</p>
+
+<pre lang='und' xml:lang='und'>    node.&#39;pos&#39;($I1)
+    $S2 = node.&#39;pos&#39;()</pre>
+
+<h2><a name="children"
+>children <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Returns a simple array of the children of a particular node.</p>
+
+<pre lang='und' xml:lang='und'>    $P1 = node.&#39;children&#39;()</pre>
+
+<h2><a name="child_iter"
+>child_iter <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Returns an iterator for the children of a node.</p>
+
+<pre lang='und' xml:lang='und'>    iter = node.&#39;child_iter&#39;()</pre>
+
+<h2><a name="add_child"
+>add_child <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Adds one child to the node&#39;s list of children. If the list doesn&#39;t exist yet, it creates it.</p>
+
+<pre lang='und' xml:lang='und'>    node.&#39;add_child&#39;($P1)</pre>
+
+<h2><a name="elements"
+>elements <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Check how many elements a node has by calling the <code lang='und' xml:lang='und'>elements</code> opcode on it:</p>
+
+<pre lang='und' xml:lang='und'>    $I1 = elements node</pre>
+
+<h2><a name="Array_interface"
+>Array interface <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The children of a node can be directly accessed using array indexes on the node object.</p>
+
+<pre lang='und' xml:lang='und'>    $P2 = node[5]
+    node[0] = $P1</pre>
+
+<h2><a name="clone"
+>clone <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>This method captures a few key elements from an existing node to populate a new node.</p>
+
+<pre lang='und' xml:lang='und'>    newnode.&#39;clone&#39;(oldnode)</pre>
+
+<h2><a name="dump"
+>dump <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Recursively prints a formatted display of the contents of a node.</p>
+
+<pre lang='und' xml:lang='und'>    node.&#39;dump&#39;()</pre>
+
+<h1><a name="Utility_Methods"
+>Utility Methods <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>These methods provide functionality for the Node class and its subclasses, but aren&#39;t part of the external interface for the class.</p>
+
+<h2><a name="DUMPABLE"
+>DUMPABLE <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>This method returns a list of attributes that should be displayed in a &#39;dump&#39; operation. Subclasses can override it to return a different list.</p>
+
+<h2><a name="accessor"
+>accessor <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Provides a generic accessor method that can be used by any subclass. It takes three arguments: the name of the attribute to access, a value for the attribute, and a binary flag that says whether to set the attribute.</p>
+
+<pre lang='und' xml:lang='und'>    self.&#39;accessor&#39;(&#39;attrname&#39;, value, setflag)</pre>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

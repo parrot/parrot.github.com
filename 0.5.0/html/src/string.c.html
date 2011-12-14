@@ -1,0 +1,523 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Strings</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Strings</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/string.c &#45; Parrot Strings</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>This file implements the non&#45;ICU parts of the Parrot string subsystem.</p>
+
+<p>Note that <code lang='und' xml:lang='und'>bufstart</code> and <code lang='und' xml:lang='und'>buflen</code> are used by the memory subsystem.
+The string functions may only use <code lang='und' xml:lang='und'>buflen</code> to determine,
+if there is some space left beyond <code lang='und' xml:lang='und'>bufused</code>.
+This is the <i>only</i> valid usage of these two data members,
+beside setting <code lang='und' xml:lang='und'>bufstart</code>/<code lang='und' xml:lang='und'>buflen</code> for external strings.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="PARROT_API_void_Parrot_unmake_COW(PARROT_INTERP,_NOTNULL(STRING_*s))"
+><b><code lang='und' xml:lang='und'>PARROT_API void Parrot_unmake_COW(PARROT_INTERP, NOTNULL(STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>If the specified Parrot string is copy&#45;on&#45;write then the memory is copied over and the copy&#45;on&#45;write flag is cleared.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL PARROT_WARN_UNUSED_RESULT STRING *Parrot_make_COW_reference(PARROT_INTERP, NOTNULL(STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates a copy&#45;on&#45;write string by cloning a string header without allocating a new buffer.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL STRING *Parrot_reuse_COW_reference(SHIM_INTERP, NOTNULL(STRING *s), NOTNULL(STRING *d))</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates a copy&#45;on&#45;write string by cloning a string header without allocating a new buffer.
+Doesn&#39;t allocate a new string header,
+instead using the one passed in and returns it.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL STRING *string_set(PARROT_INTERP, NULLOK(STRING *dest), NOTNULL(STRING *src))</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes the contents of first Parrot string a copy of the contents of second.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Basic_String_Functions"
+>Basic String Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Creation,
+enlargement,
+etc.</p>
+
+<dl>
+<dt><a name="PARROT_API_void_string_init(PARROT_INTERP)"
+><b><code lang='und' xml:lang='und'>PARROT_API void string_init(PARROT_INTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>Initializes the Parrot string subsystem.</dd><p class="pad"></p>
+
+<dt><a name="PARROT_API_void_string_deinit(PARROT_INTERP)"
+><b><code lang='und' xml:lang='und'>PARROT_API void string_deinit(PARROT_INTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>De&#45;Initializes the Parrot string subsystem.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_PURE_FUNCTION UINTVAL string_capacity(SHIM_INTERP, NOTNULL(const STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the capacity of the specified Parrot string in bytes,
+that is how many bytes can be appended onto strstart.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL STRING *string_make_empty(PARROT_INTERP, parrot_string_representation_t representation, UINTVAL capacity)</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates and returns an empty Parrot string.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL const CHARSET *string_rep_compatible(SHIM_INTERP, NOTNULL(const STRING *a), NOTNULL(const STRING *b), ARGOUT(const ENCODING **e))</b></code></a></dt><p class="pad"></p>
+
+<dd>Find the &#34;lowest&#34; possible charset and encoding for the given string.
+E.g.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  ascii &#60;op&#62; utf8 =&#62; utf8
+                  =&#62; ascii, B&#60;if&#62; C&#60;STRING *b&#62; has ascii chars only.</pre>
+
+<dd>Returs NULL, if no compatible string representation can be found.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL STRING *string_append(PARROT_INTERP, NULLOK(STRING *a), NULLOK(STRING *b))</b></code></a></dt><p class="pad"></p>
+
+<dd>Take in two Parrot strings and append the second to the first. NOTE THAT RETURN VALUE MAY NOT BE THE FIRST STRING, if the first string is COW&#39;d or read&#45;only. So make sure to _use_ the return value.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_MALLOC PARROT_CANNOT_RETURN_NULL STRING *string_from_cstring(PARROT_INTERP, NULLOK(const char *const buffer), const UINTVAL len)</b></code></a></dt><p class="pad"></p>
+
+<dd>Make a Parrot string from a specified C string.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL const char *string_primary_encoding_for_representation(PARROT_INTERP, parrot_string_representation_t representation)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the primary encoding for the specified representation.</dd><p class="pad"></p>
+
+<dd>This is needed for packfile unpacking, unless we just always use UTF&#45;8 or BOCU.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL STRING *const_string(PARROT_INTERP, NOTNULL(const char *buffer))</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates and returns a constant Parrot string.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL STRING *string_make(PARROT_INTERP, NULLOK(const char *buffer), UINTVAL len, NULLOK(const char *charset_name), UINTVAL flags)</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates and returns a new Parrot string using <code lang='und' xml:lang='und'>len</code> bytes of string data read from <code lang='und' xml:lang='und'>buffer</code>.</dd><p class="pad"></p>
+
+<dd>The value of <code lang='und' xml:lang='und'>charset_name</code> specifies the string&#39;s representation. The currently recognised values are:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    &#39;iso&#45;8859&#45;1&#39;
+    &#39;ascii&#39;
+    &#39;binary&#39;
+    &#39;unicode&#39;</pre>
+
+<dd>The encoding is implicitly guessed; <code lang='und' xml:lang='und'>unicode</code> implies the <code lang='und' xml:lang='und'>utf&#45;8</code> encoding, and the other three assume <code lang='und' xml:lang='und'>fixed&#45;8</code> encoding.</dd><p class="pad"></p>
+
+<dd>If <code lang='und' xml:lang='und'>charset</code> is unspecified the default charset &#39;ascii&#39; will be used.</dd><p class="pad"></p>
+
+<dd>The value of <code lang='und' xml:lang='und'>flags</code> is optionally one or more <code lang='und' xml:lang='und'>PObj_*</code> flags <code lang='und' xml:lang='und'>OR</code>&#45;ed together.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL STRING *string_make_direct(PARROT_INTERP, NULLOK(const char *buffer), UINTVAL len, NOTNULL(const ENCODING *encoding), NOTNULL(const CHARSET *charset), UINTVAL flags)</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL STRING *string_grow(PARROT_INTERP, NOTNULL(STRING *s), INTVAL addlen)</b></code></a></dt><p class="pad"></p>
+
+<dd>Grows the Parrot string&#39;s buffer by the specified number of characters.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Ordinary_user&#45;visible_string_operations"
+>Ordinary user&#45;visible string operations <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_PURE_FUNCTION UINTVAL string_length(SHIM_INTERP, NOTNULL(const STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the number of characters in the specified Parrot string.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT INTVAL string_index(PARROT_INTERP, NOTNULL(const STRING *s), UINTVAL idx)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the character (or glyph, depending upon the string&#39;s encoding) This is to abstract the process of finding the Nth character in a (possibly unicode or JIS&#45;encoded) string, the idea being that once the encoding functions are fleshed out, this function can do the right thing.</dd><p class="pad"></p>
+
+<dd>Note that this is not range&#45;checked.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT INTVAL string_str_index(PARROT_INTERP, NOTNULL(const STRING *s), NOTNULL(const STRING *s2), INTVAL start)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the character position of the second Parrot string in the first at or after <code lang='und' xml:lang='und'>start</code>. The return value is a (0 based) offset in characters, not bytes. If second string is not specified, then return &#45;1.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT INTVAL string_ord(PARROT_INTERP, NOTNULL(const STRING *s), INTVAL idx)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the codepoint at a given index into a string. Negative indexes are treated as counting from the end of the string.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL PARROT_WARN_UNUSED_RESULT STRING *string_chr(PARROT_INTERP, UINTVAL character)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a single character Parrot string.</dd><p class="pad"></p>
+
+<dd>TODO &#45; Allow this to take an array of characters?</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL PARROT_WARN_UNUSED_RESULT STRING *string_copy(PARROT_INTERP, NOTNULL(STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates and returns a copy of the specified Parrot string.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Vtable_Dispatch_Functions"
+>Vtable Dispatch Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_IGNORABLE_RESULT INTVAL string_compute_strlen(PARROT_INTERP, NOTNULL(STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Calculates and returns the number of characters in the specified Parrot string.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT INTVAL string_max_bytes(SHIM_INTERP, NOTNULL(const STRING *s), INTVAL nchars)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the number of bytes required to safely contain the specified number of characters in the specified Parrot string&#39;s representation.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL STRING *string_concat(PARROT_INTERP, NULLOK(STRING *a), NULLOK(STRING *b), UINTVAL Uflags)</b></code></a></dt><p class="pad"></p>
+
+<dd>Concatenates two Parrot strings. If necessary, converts the second string&#39;s encoding and/or type to match those of the first string. If either string is <code lang='und' xml:lang='und'>NULL</code>, then a copy of the non&#45;<code lang='und' xml:lang='und'>NULL</code> string is returned. If both strings are <code lang='und' xml:lang='und'>NULL</code>, then a new zero&#45;length string is created and returned.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL STRING *string_repeat(PARROT_INTERP, NOTNULL(const STRING *s), UINTVAL num, ARGOUT_NULLOK(STRING **d))</b></code></a></dt><p class="pad"></p>
+
+<dd>Repeats the specified Parrot string <i>num</i> times and stores the result in the second string, and returns it. The second string is created if necessary.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL PARROT_WARN_UNUSED_RESULT STRING *string_substr(PARROT_INTERP, NOTNULL(STRING *src), INTVAL offset, INTVAL length, ARGOUT_NULLOK(STRING **d), int replace_dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Copies the substring of length <code lang='und' xml:lang='und'>length</code> from <code lang='und' xml:lang='und'>offset</code> from the specified Parrot string and stores it in <code lang='und' xml:lang='und'>**d</code>, allocating memory if necessary. The substring is also returned.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CAN_RETURN_NULL STRING *string_replace(PARROT_INTERP, NOTNULL(STRING *src), INTVAL offset, INTVAL length, NOTNULL(STRING *rep), ARGOUT_NULLOK(STRING **d))</b></code></a></dt><p class="pad"></p>
+
+<dd>This should follow the Perl semantics for:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    substr EXPR, OFFSET, LENGTH, REPLACEMENT</pre>
+
+<dd>Replaces a sequence of <code lang='und' xml:lang='und'>length</code> characters from <code lang='und' xml:lang='und'>offset</code> in the first Parrot string with the second Parrot string, returning what was replaced.</dd><p class="pad"></p>
+
+<dd>Replacing a sequence of characters with a longer string grows the string; a shorter string shrinks it.</dd><p class="pad"></p>
+
+<dd>Replacing 2 past the end of the string is undefined. However replacing 1 past the end of the string concatenates the two strings.</dd><p class="pad"></p>
+
+<dd>A negative offset is allowed to replace from the end.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL STRING *string_chopn(PARROT_INTERP, NOTNULL(STRING *s), INTVAL n)</b></code></a></dt><p class="pad"></p>
+
+<dd>Chops off the last <code lang='und' xml:lang='und'>n</code> characters of the specified Parrot string. If <code lang='und' xml:lang='und'>n</code> is negative, cuts the string after <code lang='und' xml:lang='und'>+n</code> characters. The returned string is a copy of the one passed in.</dd><p class="pad"></p>
+
+<dt><a name="PARROT_API_void_string_chopn_inplace(PARROT_INTERP,_NOTNULL(STRING_*s),_INTVAL_n)"
+><b><code lang='und' xml:lang='und'>PARROT_API void string_chopn_inplace(PARROT_INTERP, NOTNULL(STRING *s), INTVAL n)</b></code></a></dt><p class="pad"></p>
+
+<dd>Chops off the last <code lang='und' xml:lang='und'>n</code> characters of the specified Parrot string. If <code lang='und' xml:lang='und'>n</code> is negative, cuts the string after <code lang='und' xml:lang='und'>+n</code> characters. The string passed in is modified and returned.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT INTVAL string_compare(PARROT_INTERP, NULLOK(const STRING *s1), NULLOK(const STRING *s2))</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT INTVAL string_equal(PARROT_INTERP, NULLOK(const STRING *s1), NULLOK(const STRING *s2))</b></code></a></dt><p class="pad"></p>
+
+<dd>Compares two Parrot strings, performing type and encoding conversions if necessary.</dd><p class="pad"></p>
+
+<dd>Note that this function returns 0 if the strings are equal and 1 otherwise.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void make_writable(PARROT_INTERP, ARGINOUT(STRING **s), const size_t len, parrot_string_representation_t representation)</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes the specified Parrot string writable with minimum length <code lang='und' xml:lang='und'>len</code>. The <code lang='und' xml:lang='und'>representation</code> argument is required in case a new Parrot string has to be created.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL STRING *string_bitwise_and(PARROT_INTERP, NULLOK(STRING *s1), NULLOK(STRING *s2), ARGOUT_NULLOK(STRING **dest))</b></code></a></dt><p class="pad"></p>
+
+<dd>Performs a bitwise <code lang='und' xml:lang='und'>AND</code> on two Parrot string, performing type and encoding conversions if necessary. If the second string is not <code lang='und' xml:lang='und'>NULL</code> then it is reused, otherwise a new Parrot string is created.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL STRING *string_bitwise_or(PARROT_INTERP, NULLOK(STRING *s1), NULLOK(STRING *s2), ARGOUT_NULLOK(STRING **dest))</b></code></a></dt><p class="pad"></p>
+
+<dd>Performs a bitwise <code lang='und' xml:lang='und'>OR</code> on two Parrot strings, performing type and encoding conversions if necessary. If the third string is not <code lang='und' xml:lang='und'>NULL</code> then it is reused, otherwise a new Parrot string is created.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL STRING *string_bitwise_xor(PARROT_INTERP, NULLOK(STRING *s1), NULLOK(STRING *s2), ARGOUT_NULLOK(STRING **dest))</b></code></a></dt><p class="pad"></p>
+
+<dd>Performs a bitwise <code lang='und' xml:lang='und'>XOR</code> on two Parrot strings, performing type and encoding conversions if necessary. If the second string is not <code lang='und' xml:lang='und'>NULL</code> then it is reused, otherwise a new Parrot string is created.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL STRING *string_bitwise_not(PARROT_INTERP, NULLOK(STRING *s), ARGOUT_NULLOK(STRING **dest))</b></code></a></dt><p class="pad"></p>
+
+<dd>Performs a bitwise <code lang='und' xml:lang='und'>NOT</code> on a Parrot string. If the second string is not <code lang='und' xml:lang='und'>NULL</code> then it is reused, otherwise a new Parrot string is created.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT INTVAL string_bool(PARROT_INTERP, NOTNULL(const STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns whether the specified Parrot string is true. A string is true if it is equal to anything other than <code lang='und' xml:lang='und'>0</code>, <code lang='und' xml:lang='und'>&#34;&#34;</code> or <code lang='und' xml:lang='und'>&#34;0&#34;</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL STRING *string_nprintf(PARROT_INTERP, NULLOK(STRING *dest), INTVAL bytelen, NOTNULL(const char *format), ...)</b></code></a></dt><p class="pad"></p>
+
+<dd>This is like <code lang='und' xml:lang='und'>Parrot_snprintf()</code> except that it writes to and returns a Parrot string.</dd><p class="pad"></p>
+
+<dd>Note that <code lang='und' xml:lang='und'>bytelen</code> does <i>not</i> include space for a (non&#45;existent) trailing <code lang='und' xml:lang='und'>&#39;\0&#39;</code>. <code lang='und' xml:lang='und'>dest</code> may be a <code lang='und' xml:lang='und'>NULL</code> pointer, in which case a new native string will be created. If <code lang='und' xml:lang='und'>bytelen</code> is 0, the behaviour becomes more <code lang='und' xml:lang='und'>sprintf</code>&#45;ish than <code lang='und' xml:lang='und'>snprintf</code>&#45;like. <code lang='und' xml:lang='und'>bytelen</code> is measured in the encoding of <code lang='und' xml:lang='und'>*dest</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL STRING *string_printf(PARROT_INTERP, NOTNULL(const char *format), ...)</b></code></a></dt><p class="pad"></p>
+
+<dd>Writes and returns a Parrot string.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT INTVAL string_to_int(SHIM_INTERP, NOTNULL(const STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts a numeric Parrot string to an integer value.</dd><p class="pad"></p>
+
+<dd>A number is such that:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    sign            =  &#39;+&#39; | &#39;&#45;&#39;
+    digit           =  &#34;Any code point considered a digit by the chartype&#34;
+    indicator       =  &#39;e&#39; | &#39;E&#39;
+    digits          =  digit [digit]...
+    decimal&#45;part    =  digits &#39;.&#39; [digits] | [&#39;.&#39;] digits
+    exponent&#45;part   =  indicator [sign] digits
+    numeric&#45;string  =  [sign] decimal&#45;part [exponent&#45;part]</pre>
+
+<dd>The integer value is the appropriate integer representation of such a number, rounding towards zero.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT FLOATVAL string_to_num(PARROT_INTERP, NOTNULL(const STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Same as <code lang='und' xml:lang='und'>string_to_int()</code> except that a floating&#45;point value is returned.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL STRING *string_from_int(PARROT_INTERP, INTVAL i)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a Parrot string representation of the specified integer value.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL STRING *string_from_num(PARROT_INTERP, FLOATVAL f)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a Parrot string representation of the specified floating&#45;point value.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_MALLOC PARROT_CANNOT_RETURN_NULL char *string_to_cstring(SHIM_INTERP, NOTNULL(const STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a C string for the specified Parrot string. Use <code lang='und' xml:lang='und'>string_cstring_free()</code> to free the string. Failure to do this will result in a memory leak.</dd><p class="pad"></p>
+
+<dt><a name="PARROT_API_void_string_cstring_free(NULLOK(char_*p))"
+><b><code lang='und' xml:lang='und'>PARROT_API void string_cstring_free(NULLOK(char *p))</b></code></a></dt><p class="pad"></p>
+
+<dd>Free a string created by <code lang='und' xml:lang='und'>string_to_cstring()</code>.</dd><p class="pad"></p>
+
+<dd>TODO &#45; Hopefully this can go away at some point, as it&#39;s got all sorts of leak potential otherwise.</dd><p class="pad"></p>
+
+<dt><a name="PARROT_API_void_string_pin(PARROT_INTERP,_NOTNULL(STRING_*s))"
+><b><code lang='und' xml:lang='und'>PARROT_API void string_pin(PARROT_INTERP, NOTNULL(STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Replace the specified Parrot string&#39;s managed buffer memory by system memory.</dd><p class="pad"></p>
+
+<dt><a name="PARROT_API_void_string_unpin(PARROT_INTERP,_NOTNULL(STRING_*s))"
+><b><code lang='und' xml:lang='und'>PARROT_API void string_unpin(PARROT_INTERP, NOTNULL(STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Undo a <code lang='und' xml:lang='und'>string_pin()</code> so that the string once again uses managed memory.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT size_t string_hash(PARROT_INTERP, NULLOK(STRING *s), size_t seed)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the hash value for the specified Parrot string, caching it in <code lang='und' xml:lang='und'>s&#45;&#62;hashval</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CAN_RETURN_NULL STRING *string_escape_string(PARROT_INTERP, NULLOK(const STRING *src))</b></code></a></dt><p class="pad"></p>
+
+<dd>Escape all non&#45;ascii chars to backslash sequences. Control chars that <code lang='und' xml:lang='und'>string_unescape_cstring</code> can handle are esacped as <i>\x</i>, as well as a double quote character. Other control chars and codepoints &#60; 0x100 are escaped as <i>\xhh</i>, codepoints up to 0xffff, as <i>\uhhhh</i>, and codepoints greater than this as <i>\x{hh...hh}</i>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CAN_RETURN_NULL STRING *string_escape_string_delimited(PARROT_INTERP, NULLOK(const STRING *src), UINTVAL limit)</b></code></a></dt><p class="pad"></p>
+
+<dd>Like above but limit output to len chars (used for trace output of strings).</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL STRING *string_unescape_cstring(PARROT_INTERP, NOTNULL(const char *cstring), char delimiter, NULLOK(const char *enc_char))</b></code></a></dt><p class="pad"></p>
+
+<dd>Unescapes the specified C string. These sequences are covered:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  \xhh        1..2 hex digits
+  \ooo        1..3 oct digits
+  \cX         control char X
+  \x{h..h}    1..8 hex digits
+  \uhhhh      4 hex digits
+  \Uhhhhhhhh  8 hex digits
+  \a, \b, \t, \n, \v, \f, \r, \e</pre>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL PARROT_MALLOC STRING *string_upcase(PARROT_INTERP, NOTNULL(const STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a copy of the specified Parrot string converted to upper case. Non&#45;caseable characters are left unchanged.</dd><p class="pad"></p>
+
+<dd>TODO &#45; implemented only for ASCII.</dd><p class="pad"></p>
+
+<dt><a name="PARROT_API_void_string_upcase_inplace(PARROT_INTERP,_NOTNULL(STRING_*s))"
+><b><code lang='und' xml:lang='und'>PARROT_API void string_upcase_inplace(PARROT_INTERP, NOTNULL(STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts the specified Parrot string to upper case.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL PARROT_MALLOC STRING *string_downcase(PARROT_INTERP, NOTNULL(const STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a copy of the specified Parrot string converted to lower case. Non&#45;caseable characters are left unchanged.</dd><p class="pad"></p>
+
+<dt><a name="PARROT_API_void_string_downcase_inplace(PARROT_INTERP,_NOTNULL(STRING_*s))"
+><b><code lang='und' xml:lang='und'>PARROT_API void string_downcase_inplace(PARROT_INTERP, NOTNULL(STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts the specified Parrot string to lower case.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL PARROT_MALLOC STRING *string_titlecase(PARROT_INTERP, NOTNULL(const STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a copy of the specified Parrot string converted to title case. Non&#45;caseable characters are left unchanged.</dd><p class="pad"></p>
+
+<dt><a name="PARROT_API_void_string_titlecase_inplace(PARROT_INTERP,_NOTNULL(STRING_*s))"
+><b><code lang='und' xml:lang='und'>PARROT_API void string_titlecase_inplace(PARROT_INTERP, NOTNULL(STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts the specified Parrot string to title case.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL PARROT_WARN_UNUSED_RESULT STRING *string_increment(PARROT_INTERP, NOTNULL(const STRING *s))</b></code></a></dt><p class="pad"></p>
+
+<dd>Perl5ish increment the string. Currently single char only.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_PURE_FUNCTION PARROT_CANNOT_RETURN_NULL const char *Parrot_string_cstring(SHIM_INTERP, NOTNULL(const STRING *str))</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a C string from a Parrot string. Both sides are treated as constants &#45;&#45; i.e. do not resize the result.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT INTVAL Parrot_string_is_cclass(PARROT_INTERP, INTVAL flags, NOTNULL(STRING *s), UINTVAL offset)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns 1 if the codepoint of string <code lang='und' xml:lang='und'>s</code> at given offset is in the given character class <code lang='und' xml:lang='und'>flags</code>. See also <em lang='und' xml:lang='und'>include/parrot/cclass.h</em> for possible character classes. Returns 0 otherwise, or if the string is empty or NULL.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT INTVAL Parrot_string_find_cclass(PARROT_INTERP, INTVAL flags, NOTNULL(STRING *s), UINTVAL offset, UINTVAL count)</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT INTVAL Parrot_string_find_not_cclass(PARROT_INTERP, INTVAL flags, NULLOK(STRING *s), UINTVAL offset, UINTVAL count)</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL STRING *Parrot_string_trans_charset(PARROT_INTERP, NULLOK(STRING *src), INTVAL charset_nr, NULLOK(STRING *dest))</b></code></a></dt><p class="pad"></p>
+
+<dd>If <code lang='und' xml:lang='und'>dest</code> == NULL, converts <code lang='und' xml:lang='und'>src</code> to the given charset or encoding inplace, else returns a copy of <code lang='und' xml:lang='und'>src</code> with the charset/encoding in dest.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL STRING *Parrot_string_trans_encoding(PARROT_INTERP, NULLOK(STRING *src), INTVAL encoding_nr, NULLOK(STRING *dest))</b></code></a></dt><p class="pad"></p>
+
+<dd>If <code lang='und' xml:lang='und'>dest</code> == NULL, converts <code lang='und' xml:lang='und'>src</code> to the given charset or encoding inplace, else returns a copy of <code lang='und' xml:lang='und'>src</code> with the charset/encoding in dest.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL STRING *string_compose(PARROT_INTERP, NULLOK(STRING *src))</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL STRING *string_join(PARROT_INTERP, NULLOK(STRING *j), NOTNULL(PMC *ar))</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL PMC *string_split(PARROT_INTERP, NOTNULL(STRING *delim), NOTNULL(STRING *str))</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL STRING *uint_to_str(PARROT_INTERP, NOTNULL(char *tc), UHUGEINTVAL num, char base, int minus)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns <code lang='und' xml:lang='und'>num</code> converted to a Parrot <code lang='und' xml:lang='und'>STRING</code>.</dd><p class="pad"></p>
+
+<dd>Note that <code lang='und' xml:lang='und'>base</code> must be defined, a default of 10 is not assumed. The caller has to verify that <code lang='und' xml:lang='und'>base &#62;= 2 &#38;&#38; base &#60;= 36</code> The buffer <code lang='und' xml:lang='und'>tc</code> must be at least <code lang='und' xml:lang='und'>sizeof (UHUGEINTVAL)*8 + 1</code> chars big.</dd><p class="pad"></p>
+
+<dd>If <code lang='und' xml:lang='und'>minus</code> is true then <code lang='und' xml:lang='und'>&#45;</code> is prepended to the string representation.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL STRING *int_to_str(PARROT_INTERP, NOTNULL(char *tc), HUGEINTVAL num, char base)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns <code lang='und' xml:lang='und'>num</code> converted to a Parrot <code lang='und' xml:lang='und'>STRING</code>.</dd><p class="pad"></p>
+
+<dd>Note that <code lang='und' xml:lang='und'>base</code> must be defined, a default of 10 is not assumed.</dd><p class="pad"></p>
+
+<dd>If <code lang='und' xml:lang='und'>num &#60; 0</code> then <code lang='und' xml:lang='und'>&#45;</code> is prepended to the string representation.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="src/string_primitives.c"
+><em lang='und' xml:lang='und'><a href="string_primitives.c.html">src/string_primitives.c</a></em></a></dt><p class="pad"></p>
+
+<dt><a name="include/parrot/string.h"
+><em lang='und' xml:lang='und'>include/parrot/string.h</em></a></dt><p class="pad"></p>
+
+<dt><a name="include/parrot/string_funcs.h"
+><em lang='und' xml:lang='und'>include/parrot/string_funcs.h</em></a></dt><p class="pad"></p>
+
+<dt><a name="docs/strings.pod"
+><em lang='und' xml:lang='und'><a href="../docs/strings.pod.html">docs/strings.pod</a></em></a></dt><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

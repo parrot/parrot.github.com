@@ -1,0 +1,151 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Display symbol table information</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/tools.html">Tools</a> &raquo; Display symbol table information
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>tools/dev/nm.pl &#45; Display symbol table information</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    % perl tools/dev/nm.pl [options] file</pre>
+
+<p>To list all the symbols in Parrot:</p>
+
+<pre>    % perl tools/dev/nm.pl parrot</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Portable frontend for <code>nm(1)</code>; by default lists all the code and data symbols in the object or archive files.</p>
+
+<h2><a name="Command&#45;Line_Options"
+>Command&#45;Line Options</a></h2>
+
+<p>The following options can be used to limit the symbols:</p>
+
+<dl>
+<dt><a name="&#45;&#45;code"
+><b><code>&#45;&#45;code</b></code></a></dt>
+
+<dt><a name="&#45;c"
+><b><code>&#45;c</b></code></a></dt>
+List the code/text symbols.
+<dt><a name="&#45;&#45;data"
+><b><code>&#45;&#45;data</b></code></a></dt>
+
+<dt><a name="&#45;d"
+><b><code>&#45;d</b></code></a></dt>
+List the data symbols.
+<dt><a name="&#45;&#45;init"
+><b><code>&#45;&#45;init</b></code></a></dt>
+
+<dt><a name="&#45;i"
+><b><code>&#45;i</b></code></a></dt>
+List the initialised data symbols.
+<dt><a name="&#45;&#45;uninit"
+><b><code>&#45;&#45;uninit</b></code></a></dt>
+
+<dt><a name="&#45;u"
+><b><code>&#45;u</b></code></a></dt>
+List the uninitialised data symbols.
+<dt><a name="&#45;&#45;const"
+><b><code>&#45;&#45;const</b></code></a></dt>
+
+<dt><a name="&#45;C"
+><b><code>&#45;C</b></code></a></dt>
+List the constant (read&#45;only) data symbols.Not all platforms support this, a warning will be given if not. You can try GNU <code>nm</code> if you want this feature.
+<dt><a name="&#45;&#45;undef"
+><b><code>&#45;&#45;undef</b></code></a></dt>
+
+<dt><a name="&#45;U"
+><b><code>&#45;U</b></code></a></dt>
+List the undefined symbols.
+<dt><a name="&#45;&#45;def"
+><b><code>&#45;&#45;def</b></code></a></dt>
+
+<dt><a name="&#45;D"
+><b><code>&#45;D</b></code></a></dt>
+List the defined symbols.
+<dt><a name="&#45;&#45;file"
+><b><code>&#45;&#45;file</b></code></a></dt>
+
+<dt><a name="&#45;f"
+><b><code>&#45;f</b></code></a></dt>
+List the file(name) symbols.</dl>
+
+<p>If more than one of all the above options are given, they are <code>AND</code>ed. They can also be negated with a &#34;no&#34;, for example <code>&#45;&#45;noconst</code>.</p>
+
+<dl>
+<dt><a name="&#45;&#45;objectname"
+><b><code>&#45;&#45;objectname</b></code></a></dt>
+
+<dt><a name="&#45;o"
+><b><code>&#45;o</b></code></a></dt>
+Prepend the object name before the symbol name.
+<dt><a name="&#45;&#45;t"
+><b><code>&#45;&#45;t</b></code></a></dt>
+Append the short BSD&#45;style type to the symbol name.
+<pre>    B &#45; uninitialised data symbol
+    D &#45; initialised data symbol
+    F &#45; file name symbol
+    R &#45; read&#45;only data symbol
+    T &#45; code/text symbol
+    U &#45; undefined symbol</pre>
+Uppercase indicates that the symbol is global; lowercase indicates that it is local.
+<dt><a name="&#45;&#45;type=bsd"
+><b><code>&#45;&#45;type=bsd</b></code></a></dt>
+
+<dt><a name="&#45;B"
+><b><code>&#45;B</b></code></a></dt>
+The same as <code>&#45;&#45;t</code>.
+<dt><a name="&#45;&#45;type=long"
+><b><code>&#45;&#45;type=long</b></code></a></dt>
+
+<dt><a name="&#45;L"
+><b><code>&#45;L</b></code></a></dt>
+Append a long type (e.g. &#34;global_const_init_data&#34; versus &#34;R&#34;) to the symbol name.
+<dt><a name="&#45;&#45;help"
+><b><code>&#45;&#45;help</b></code></a></dt>
+Show the help.
+<dt><a name="&#45;&#45;version"
+><b><code>&#45;&#45;version</b></code></a></dt>
+Show the version number.</dl>
+
+<p>All the options can be shortened to their unique prefixes, and one leading dash (&#34;&#45;&#34;) can be used instead of two (&#34;&#45;&#45;&#34;).</p>
+
+<h1><a name="HISTORY"
+>HISTORY</a></h1>
+
+<p>Author: Jarkko Hietaniemi.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

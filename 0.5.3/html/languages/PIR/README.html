@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>This is the README file for a PIR implementation in PGE.</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">This is the README file for a PIR implementation in PGE.</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/languages.html">Language Implementations</a> | <a href="../../../html/pir.html">PIR</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>README &#45; This is the README file for a PIR implementation in PGE.</p>
+
+<h1><a name="INTRODUCTION"
+>INTRODUCTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>A good test&#45;case for the compiler tool suite of Parrot is to compile its own assembler.
+This project aims to bring a full PIR implementation using the Parrot compiler tools.</p>
+
+<h1><a name="STATUS"
+>STATUS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Currently,
+only work is done on the parser.
+Only when the parser is completed should work be done on the further transformations (using TGE in the Parrot compiler tools).
+When the parser is changed,
+the generated parse tree will probably be different as well,
+so any work on the later transformation phases should be redone,
+which is a pain.</p>
+
+<p>The following is an overview of what is parsed (mostly) correctly:</p>
+
+<pre lang='und' xml:lang='und'>    * most PIR constructs
+    * recognizes (almost) all Parrot instructions
+        (but doesn&#39;t handle their arguments yet)</pre>
+
+<p>See the TODO file for current issues.</p>
+
+<p>The grammar files are split up into several .pg files. This makes the edit&#45;compile&#45;test cycle faster.</p>
+
+<p>Instead of .include&#45;ing the generated files in the main file (pirc.pir), the generated .pir files are compiled to bytecode (.pbc) and loaded in pirc.pir. This prevends compiling all the included files when compiling pirc.pir (which would really be s l o w).</p>
+
+<h1><a name="INSTRUCTIONS"
+>INSTRUCTIONS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Type</p>
+
+<pre lang='und' xml:lang='und'>    $ make</pre>
+
+<p>Easy huh? Please note that compiling may take a while. The compiler is called &#39;pir.pbc&#39;, but the main source file is called pirc.pir, otherwise it would be &#34;pir.pir&#34;, which is kinda strange.</p>
+
+<p>After that, you can run the test suite:</p>
+
+<pre lang='und' xml:lang='und'>  $ make test</pre>
+
+<p>which will run a little perl script that runs all files in the examples directory.</p>
+
+<p>The &#39;examples&#39; directory contains a number of test files that are working. Running these can be done by typing:</p>
+
+<pre lang='und' xml:lang='und'>    $ ../../parrot pir.pbc examples/hello.pir</pre>
+
+<h1><a name="ACKNOWLEDGEMENTS"
+>ACKNOWLEDGEMENTS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>I stole the Makefile from Punie. The compiler driver (main file) is assembled from code from Punie, ABC and Pheme (although I changed a lot, so some things taken might be gone already).</p>
+
+<p>Thanks to Jerry &#34;particle&#34; Gay for fixing numerous platform issues. Thanks to Will &#34;Coke&#34; Coleda for helping setting up the test harness stuff.</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Klaas&#45;Jan Stol &#60;parrotcode@gmail.com&#62;</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

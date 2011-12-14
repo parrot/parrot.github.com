@@ -1,0 +1,243 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Testing Parrot</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Home</a> &raquo; <a href="../../html/tools.html">Tools</a> &raquo; Testing Parrot
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/tests.pod &#45; Testing Parrot</p>
+
+<h1><a name="A_basic_guide_to_writing_and_running_tests_for_Parrot"
+>A basic guide to writing and running tests for Parrot</a></h1>
+
+<p>This is quick and dirty primer on to how the Parrot test suite is executed and to how new tests for Parrot should be written.
+The testing system is liable to change in the future,
+but tests written following the guidelines below should be easy to port into a new test suite.</p>
+
+<h1><a name="How_to_test_parrot"
+>How to test parrot</a></h1>
+
+<p>The easy way to test parrot is running <code>make test</code>.
+If you have updated your code recently and tests began failing,
+go for a <code>make realclean</code> and recompile parrot before complaining.</p>
+
+<p><code>make languages&#45;test</code> runs the test suite for most language implementations in the languages directory.</p>
+
+<h2><a name="Submitting_smolder_test_results"
+>Submitting smolder test results</a></h2>
+
+<p>Parrot has a status page with smoke test results at <a href='http://smolder.parrot.org/app/projects/smoke_reports/1'><a href="http://smolder.parrot.org/app/projects/smoke_reports/1">http://smolder.parrot.org/app/projects/smoke_reports/1</a></a>.</p>
+
+<p>You can supply new tests results by just running <code>make smoke</code>.
+It will run the same tests as <code>make test</code> would,
+but will upload the test results to the website.</p>
+
+<h1><a name="Location_of_the_test_files"
+>Location of the test files</a></h1>
+
+<p>The parrot test files,
+the <em>*.t</em> files,
+can be found in the <em>t</em> directory.
+A quick overview over the subdirs in <em>t</em> can be found in <em>t/README</em>.</p>
+
+<p>The language implementations usually have their test files in <em>languages/*/t</em>.</p>
+
+<p>New tests should be added to an existing <em>*.t</em> file.
+If a previously untested feature is tested,
+it might also make sense to create a new <em>*.t</em> file.
+You may also see tests named like foo&#45;old.t,
+which are Perl tests that are in the process of being translated to PIR.</p>
+
+<h1><a name="How_to_write_a_test"
+>How to write a test</a></h1>
+
+<p>Test scripts must emit text that conforms to the <code>Test Anything Protocol</code>.
+Test scripts are currently usually written in PIR or Perl 5.
+The Perl 5 module <code><a href='../lib/Parrot/Test.pm.html'>Parrot::Test</a></code> and the PIR module <code>Test;More</code> help with writing tests.
+Writing tests in PIR is preferred,
+but there are some cases where the proper framework is not available.
+If you can,
+write your tests in PIR.</p>
+
+<p>The testing framework needs to know how many tests it should expect.
+So the number of planned tests needs to be incremented when adding a new test.
+This is done near the top of a test file,
+in a line that looks like:</p>
+
+<pre>  plan(42)</pre>
+
+<p>in PIR tests and</p>
+
+<pre>  use Parrot::Test tests =&#62; 8;</pre>
+
+<p>for Perl 5 test scripts.</p>
+
+<h2><a name="Testing_Parrot_Assembler"
+>Testing Parrot Assembler</a></h2>
+
+<p>PASM tests are mostly used for testing ops. Appropriate test files for basic ops are <em>t/op/*.t</em>. Polymorphic Containers are tested in <em>t/pmc/*.t</em>. Add the new test like this:</p>
+
+<pre>    pasm_output_is(&#60;&#60;&#39;CODE&#39;, &#60;&#60;&#39;OUTPUT&#39;, &#34;name for test&#34;);
+        *** a big chunk of assembler, eg:
+        print   1
+        print   &#34;\n&#34; # you can even comment it if it&#39;s obscure
+        end          # don&#39;t forget this...!
+    CODE
+    *** what you expect the output of the chunk to be, eg.
+    1
+    OUTPUT</pre>
+
+<h2><a name="Testing_Parrot_Intermediate_Representation"
+>Testing Parrot Intermediate Representation</a></h2>
+
+<p>Writing tests in <b>PIR</b> is more convenient. This is done with <code>pir_output_is</code> and friends.</p>
+
+<pre>    pir_output_is(&#60;&#60;&#39;CODE&#39;,&#60;&#60;&#39;OUT&#39;,&#39;nothing useful&#39;);
+        .sub main :main
+            print &#34;hi\n&#34;
+        .end
+    CODE
+    hi
+    OUT</pre>
+
+<h2><a name="Testing_C_source"
+>Testing C source</a></h2>
+
+<p>C source tests are usually located in <em>t/src/*.t</em>. A simple test looks like:</p>
+
+<pre>    c_output_is(&#60;&#60;&#39;CODE&#39;, &#60;&#60;&#39;OUTPUT&#39;, &#34;name for test&#34;);
+    #include &#60;stdio.h&#62;
+    #include &#34;parrot/parrot.h&#34;
+    #include &#34;parrot/embed.h&#34;
+
+    static opcode_t *the_test(Parrot_Interp, opcode_t *, opcode_t *);
+
+    int main(int argc, char* argv[]) {
+        Parrot_Interp interp;
+        interpreter = Parrot_new(NULL);
+
+        if (!interpreter)
+            return 1;
+
+        Parrot_run_native(interp, the_test);
+        printf(&#34;done\n&#34;);
+        fflush(stdout);
+        return 0;
+    }
+
+    static opcode_t*
+    the_test(PARROT_INTERP,
+        opcode_t *cur_op, opcode_t *start)
+    {
+        /* Your test goes here. */
+
+        return NULL;  /* always return NULL */
+    }
+    CODE
+    # Anything that might be output prior to &#34;done&#34;.
+    done
+    OUTPUT</pre>
+
+<p>Note that it&#39;s always a good idea to output &#34;done&#34; to confirm that the compiled code executed completely. When mixing <code>printf</code> and <code>Parrot_io_printf</code> always append a <code>fflush(stdout);</code> after the former.</p>
+
+<h2><a name="Testing_Perl5_components"
+>Testing Perl5 components</a></h2>
+
+<p>At the present time most, if not all, of the programs used to configure, build and install Parrot are written in Perl 5. These programs take the form of program files (<em>*.pl</em>) and Perl modules (<em>*.pm</em>) holding subroutines and other variables imported into the program files. Examples of such program files can be found under <em>tools/</em>; examples of such Perl modules can be found under <em>lib/Parrot/</em>.</p>
+
+<p>All of these Perl 5 components ought to be tested. Fortunately, over the last decade, under the leadership of Michael Schwern, chromatic, Andy Lester and many others, the Perl 5 community has developed a rigorous approach to testing in which:</p>
+
+<dl>
+<dt><a name="a"
+>a</a></dt>
+Subroutines found in <em>*.pl</em> files are extracted and placed in <em>*.pm</em> modules.
+<dt><a name="b"
+>b</a></dt>
+Those subroutines are then imported back into the program file.
+<dt><a name="c"
+>c</a></dt>
+Those subroutines are also imported into test files (<em>*.t</em>) where are tests are run by Test::Builder&#45;based modules such as Test::Simple and Test::More.
+<dt><a name="d"
+>d</a></dt>
+Those test files are run by Test::Harness&#45;based functionality such as ExtUtils::MakeMaker&#39;s <em>make test</em>, Module::Build&#39;s <em>build test</em>, or Test::Harness&#39;s <em>prove</em>.
+<dt><a name="e"
+>e</a></dt>
+The extent to which the test files exercise all statements in the Perl modules being tested is measured in coverage analysis using CPAN module Devel::Cover.
+<dt><a name="f"
+>f</a></dt>
+The underlying code is refactored and improved on the basis of the results of tests and coverage analysis.</dl>
+
+<p>Tests reflecting this approach can be found in <em>t/configure/</em>, <em>t/postconfigure/</em>, <em>t/tools/</em>, and so on.</p>
+
+<p>It is our objective to test all Perl 5 components of the Parrot distribution using the methodology above.</p>
+
+<h3><a name="Build_Tools_Tests"
+>Build Tools Tests</a></h3>
+
+<p>The files in <em>t/postconfigure</em> are tests for build system. The build tools tests are intended to be run after someone has made changes in modules such as <em>lib/Parrot/Pmc2cUtils/</em>. They&#39;re set up to be run after <em><a href="../Configure.pl.html">Configure.pl</a></em> has completed but before make has been invoked. (In fact, they will generate errors if make has completed.) You can run them with any of the following:</p>
+
+<pre>     perl Configure.pl &#45;&#45;test
+     perl Configure.pl &#45;&#45;test=build
+     make buildtools_tests  (following Configure.pl)</pre>
+
+<h2><a name="Testing_language_implementations"
+>Testing language implementations</a></h2>
+
+<p>Language implementations are usually tested with <code>language_output_is</code> and friends.</p>
+
+<h1><a name="Ideal_tests:"
+>Ideal tests:</a></h1>
+
+<ul>
+<li>Probe the boundaries (including edge cases, errors thrown etc.) of whatever code they&#39;re testing. These should include potentially out of band input unless we decide that compilers should check for this themselves.</li>
+
+<li>Are small and self contained, so that if the tested feature breaks we can identify where and why quickly.</li>
+
+<li>Are valid. Essentially, they should conform to the additional documentation that accompanies the feature (if any). [If there isn&#39;t any documentation, then feel free to add some and/or complain to the mailing list].</li>
+
+<li>Are a chunk of assembler and a chunk of expected output.</li>
+</ul>
+
+<h1><a name="TODO_tests"
+>TODO tests</a></h1>
+
+<p>In test driven development, tests are implemented first. So the tests are initially expected to fail. This can be expressed by marking the tests as TODO. See <a href='TODO'>Test::More</a> on how to do that.</p>
+
+<h1><a name="SKIP_tests"
+>SKIP tests</a></h1>
+
+<p>TODO test actually executed, so that unexpected success can be detected. In the case of missing requirements and in the case of serious breakdowns the execution of tests can be skipped. See <a href='TODO'>Test::More</a> on how to do that.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><a href='http://qa.perl.org/'><a href="http://qa.perl.org/">http://qa.perl.org/</a></a> <a href='http://testanything.org/'><a href="http://testanything.org/">http://testanything.org/</a></a> <a href='http://en.wikipedia.org/wiki/Test_Anything_Protocol'><a href="http://en.wikipedia.org/wiki/Test_Anything_Protocol">http://en.wikipedia.org/wiki/Test_Anything_Protocol</a></a> <em>t/TESTS.STATUS.pod</em> <em>t/README</em></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

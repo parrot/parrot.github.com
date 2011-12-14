@@ -1,0 +1,101 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>subroutines used in F&#60;t/configure/*&#62; tests</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Contents</a> &raquo; <a href="../../../../html/perl.html">Perl Modules</a> &raquo; subroutines used in F&#60;t/configure/*&#62; tests
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>Parrot::Configure::Test &#45; subroutines used in <em>t/configure/*</em> tests</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    use lib qw( lib );
+    use Parrot::Configure::Test qw( test_step_thru_runstep );</pre>
+
+<p>Set&#45;up for <code>test_step_thru_runstep()</code>:</p>
+
+<pre>    $parrot_version = Parrot::BuildUtil::parrot_version();
+    $args = process_options( {
+    argv            =&#62; [ ],
+    script          =&#62; $0,
+    parrot_version  =&#62; $parrot_version,
+    svnid           =&#62; &#39;$Id$&#39;,
+} );
+
+    $conf = Parrot::Configure&#45;&#62;new;
+    test_step_thru_runstep($conf, q{init::defaults}, $args);</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>The subroutines in this package are used to simplify tests found in <em>t/configure/</em>. Any subroutine in this package should be functional (<code>i.e.</code>, not object&#45;oriented), be exported only on demand and have all its arguments explicitly passed as arguments.</p>
+
+<h1><a name="FUNCTIONS"
+>FUNCTIONS</a></h1>
+
+<h2><a name="test_step_thru_runstep()"
+><code>test_step_thru_runstep()</code></a></h2>
+
+<ul>
+<li>Purpose</li>
+
+<p>Reduce code repeated in many test files in the <em>t/configure/101+</em> series. Execution of certain configuration steps depends upon successful execution of some (though not necessarily all) of the preceding configuration steps. Hence, unit tests of the packages generating certain steps may require execution of preceding steps in the test file. Once you determine that you need to execute one step as a prerequisite to another, you can provide that step as an argument to <code>test_step_thru_runstep()</code> and not worry about it further.</p>
+
+<li>Arguments</li>
+
+<p>List of three arguments:</p>
+
+<ul>
+<li>Parrot::Configure object</li>
+
+<li>string holding the name of the step to be run</li>
+
+<li>hash reference which is the output of <code>Parrot::Configure::Options::process_options()</code>.</li>
+</ul>
+
+<li>Return Value</li>
+
+<p>Returns the step number, but currently this is not used and needs further exploration.</p>
+
+<li>Comment</li>
+
+<p>Each invocation of <code>test_step_thru_runstep()</code> runs 4 Test::More tests.</p>
+</ul>
+
+<h1><a name="AUTHORS"
+>AUTHORS</a></h1>
+
+<p>David H Adler and James E Keenan</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em><a href="../../../Configure.pl.html">Configure.pl</a></em>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

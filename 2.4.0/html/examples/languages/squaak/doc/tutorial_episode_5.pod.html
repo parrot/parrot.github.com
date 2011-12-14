@@ -1,0 +1,289 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Episode 5: Variable Declaration and Scope</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Home</a> &raquo; <a href="../../../../../html/PCT_Tutorial.html">PCT Tutorial</a> &raquo; Episode 5: Variable Declaration and Scope
+                </div>
+
+<h1><a name="Episode_5:_Variable_Declaration_and_Scope"
+>Episode 5: Variable Declaration and Scope</a></h1>
+
+<p>Episode 4 discussed the implementation of some statement types,
+such as the if&#45;statement.
+In this episode we&#39;ll talk about variable declarations and scope handling.
+It&#39;s going to be a long story,
+so take your time to read this episode.</p>
+
+<h2><a name="Globals,_locals_and_default_values"
+>Globals,
+locals and default values</a></h2>
+
+<p>Squaak variables have one of two scopes: either they&#39;re global,
+or they&#39;re local.
+In order to create a global variable,
+you just assign some expression to an identifier (which hasn&#39;t been declared as a local).
+Local variables,
+on the other hand,
+must be declared using the &#34;var&#34; keyword.
+In other words,
+at any given point during the parsing phase,
+we have a list of variables that are known to be local variables.
+When an identifier is parsed,
+it is looked up and if found,
+its scope is set to local.
+If not,
+its scope is assumed to be global.
+When using an uninitialized variable,
+its value is set to an object called <code>&#34;Undef&#34;</code>.
+Some examples are shown below.</p>
+
+<pre> x = 42             # x was not declared, so it is global
+ var k = 10         # k is local and initialized to 10
+ a + b              # neither a nor b was declared;
+                    # both default to the value &#34;Undef&#34;Scoping and Symbol Tables</pre>
+
+<p>Earlier we mentioned the need to store declared local variables. In compiler jargon, such a data structure to store declarations is called a <i>symbol table</i>. For each individual scope, there&#39;s a separate symbol table.</p>
+
+<p>Squaak has a so&#45;called do&#45;block statement, that is defined below.</p>
+
+<pre> rule do_block {
+     &#39;do&#39; &#60;block&#62; &#39;end&#39;
+     {*}
+ }</pre>
+
+<p>Each do&#45;block defines a new scope; local variables declared between the <code>do</code> and <code>end</code> keywords are local to that block. An example to clarify this is shown below:</p>
+
+<pre> do  var x = 1
+     print(x)      # prints 1
+     do
+         var x = 2
+         print(x)    # prints 2
+     end
+     print(x)      # prints 1
+ end</pre>
+
+<p>So, each do/end pair defines a new scope, in which any declared variables hide variables with the same name in outer scopes. This behavior is common in many programming languages.</p>
+
+<p>The PCT has built&#45;in support for symbol tables; a <code>PAST::Block</code> object has a method symbol that can be used to enter new symbols and query the table for existing ones. In PCT, a <code>PAST::Block</code> object represents a scope. There are two blocktypes: <code>immediate</code> and <code>declaration</code>. An &#34;immediate&#34; block can be used to represent the blocks of statements in an do&#45;block statement, for instance:</p>
+
+<pre> do
+     &#60;block&#62;
+ end</pre>
+
+<p>When executing this statement, block is executed immediately. A &#34;declaration&#34; block, on the other hand, represents a block of statements that can be invoked at a later point, typically these are subroutines. So, in this example:</p>
+
+<pre> sub foo(x)
+     print(x)
+ end</pre>
+
+<p>a <code>PAST::Block</code> object is created for the subroutine &#34;foo&#34;. The blocktype is set to &#34;declaration&#34;, as the subroutine is defined, not executed (immediately). For now you can forget about the blocktype, but now that I&#39;ve told you, you&#39;ll recognize it when you see it. We&#39;ll come back to it in a later episode.</p>
+
+<h2><a name="Implementing_Scope"
+>Implementing Scope</a></h2>
+
+<p>So, we know how to use global variables, declare local variables, and about <code>PAST::Block</code> objects representing scopes. How do we make our compiler to generate the right PIR instructions? After all, when handling a global variable, Parrot must handle this differently from handling a local variable. When creating <code>PAST::Var</code> nodes to represent the variables, we must know whether the variable is a local or a global variable. So, when handling variable declarations (of local variables; globals are not declared), we need to register the identifier as a local in the current block&#39;s symbol table. First, we&#39;ll take a look at the implementation of variable declarations.</p>
+
+<h2><a name="Variable_declaration"
+>Variable declaration</a></h2>
+
+<p>The following is the grammar rule for variable declarations. This is a type of statement, so I assume you know how to extend the statement rule to allow for variable declarations.</p>
+
+<pre> rule variable_declaration {
+     &#39;var&#39; &#60;identifier&#62; [&#39;=&#39; &#60;expression&#62;]?
+     {*}
+ }</pre>
+
+<p>A local variable is declared using the <code>var</code> keyword, and has an optional initialization expression. If the latter is missing, the variable&#39;s value defaults to the undefined value called &#34;Undef&#34;. Let&#39;s see what the parse action looks like:</p>
+
+<pre> method variable_declaration($/) {
+     # get the PAST for the identifier
+     my $past := $( $&#60;identifier&#62; );
+
+     # this is a local (it&#39;s being defined)
+     $past.scope(&#39;lexical&#39;);
+
+     # set a declaration flag
+     $past.isdecl(1);
+
+     # check for the initialization expression
+     if $&#60;expression&#62; {
+         # use the viviself clause to add a
+         # an initialization expression
+         $past.viviself( $( $&#60;expression&#62;[0] );
+     }
+     else { # no initialization, default to &#34;Undef&#34;
+         $past.viviself(&#39;Undef&#39;);
+     }
+
+     make $past;
+ }</pre>
+
+<p>Well, that wasn&#39;t too hard, was it? Let&#39;s analyze what we just did. First we retrieved the PAST node for the identifier, which we then decorated by setting its scope to &#34;lexical&#34; (a local variable is said to be lexically scoped, hence &#34;lexical&#34;), and setting a flag indicating this node represents a declaration (<code>isdecl</code>). So, besides representing variables in other statements (for instance, assignments), a <code>PAST::Var</code> node is also used as a declaration statement.</p>
+
+<p>Earlier in this episode we mentioned the need to register local variables in the current scope block when they are declared. So, when executing the parse action for variable&#45;declaration, there should already be a <code>PAST::Block</code> node around, that can be used to register the symbol being declared. As we learned in Episode 4, PAST nodes are created in a depth&#45;first fashion; the leafs are created first, and then the nodes &#34;higher&#34; in the parse tree. This implies that a <code>PAST::Block</code> node is created after the statement nodes (which <code>variable_declaration</code> is) that will be the children of the block. In the next section we&#39;ll see how to solve this problem.</p>
+
+<h2><a name="Implementing_a_scope_stack"
+>Implementing a scope stack</a></h2>
+
+<p>In order to make sure that a PAST::Block node is created before any statements are parsed (and their parse actions are executed &#45;&#45; these might need to enter symbols in the block&#39;s symbol table), we add a few extra parse actions. Let&#39;s take a look at them.</p>
+
+<pre> rule TOP {
+     {*}                              #= open
+     &#60;statement&#62;*
+     [ $ || &#60;.panic: syntax error&#62; ]
+     {*}                              #= close
+ }</pre>
+
+<p>We now have two parse actions for TOP, which are differentiated by an additional key parameter. The first parse action is executed before any input is parsed, which is particularly suitable for any initialization actions you might need. The second action (which was already there) is executed after the whole input string is parsed. Now we can create a <code>PAST::Block</code> node before any statements are parsed, so that when we need the current block, it&#39;s there (somewhere, later we&#39;ll see where exactly). Let&#39;s take a look at the parse action for TOP.</p>
+
+<pre> method TOP($/, $key) {
+     our $?BLOCK;
+     our @?BLOCK;
+
+     if $key eq &#39;open&#39; {
+         $?BLOCK := PAST::Block.new( :blocktype(&#39;declaration&#39;),
+                                     :node($/) );
+
+         @?BLOCK.unshift($?BLOCK);
+     }
+     else { # key is &#39;close&#39;
+         my $past := @?BLOCK.shift();
+
+         for $&#60;statement&#62; {
+             $past.push( $( $_ ) );
+         }
+
+         make $past;
+     }
+ }</pre>
+
+<p>Let&#39;s see what&#39;s happening here. When the parse action is invoked for the first time (when <code>$key</code> equals &#34;open&#34;), a new <code>PAST::Block</code> node is created and assigned to a strange&#45;looking (if you don&#39;t know Perl, like me. Oh wait, this is Perl. Never mind..) variable called <code>$?BLOCK</code>. This variable is declared as &#34;our&#34;, which means that it is a package variable. This means that the variable is shared by all methods in the same package (or class), and, equally important, the variable is still around after the parse action is done. Please refer to the Perl 6 specification for more semantics on &#34;our&#34;. The variable <code>$?BLOCK</code> holds the current block.</p>
+
+<p>After that, this block is unshifted onto another funny&#45;looking variable, called <code>@?BLOCK</code>. This variable has a &#34;@&#34; sigil, meaning this is an array. The unshift method puts its argument on the front of the list. In a sense, you could think of the front of this list as the top of a stack. Later we&#39;ll see why this stack is necessary.</p>
+
+<p>This <code>@?BLOCK</code> variable is also declared with &#34;our&#34;, meaning it&#39;s also package&#45;scoped. However, as we call a method on this variable, it should have been already created; otherwise you&#39;d invoke the method on an undefined (&#34;Undef&#34;) variable. So, this variable should have been created before the parsing starts. We can do this in the compiler&#39;s main program, squaak.pir. Before doing so, let&#39;s take a quick look at the &#34;else&#34; part of the parse action for TOP, which is executed after the whole input string is parsed. The <code>PAST::Block</code> node is retrieved from <code>@?BLOCK</code>, which makes sense, as it was created in the first part of the method and unshifted on <code>@?BLOCK</code>. Now this node can be used as the final result object of TOP. So, now we&#39;ve seen how to use the scope stack, let&#39;s have a look at its implementation.</p>
+
+<h2><a name="A_List_Class"
+>A List Class</a></h2>
+
+<p>We&#39;ll implement the scope stack as a <code>ResizablePMCArray</code> object. This is a built&#45;in PMC type. However, this built&#45;in PMC does not have any methods; in PIR it can only be used as an operand of the built&#45;in shift and unshift instructions. In order to allow us to write this as method calls, we create a new subclass of ResizablePMCArray. The code below creates the new class and defines the methods we need.</p>
+
+<pre> 1 .namespace []
+
+ 2 .sub &#39;initlist&#39; :anon :init :load
+ 3   subclass $P0, &#39;ResizablePMCArray&#39;, &#39;List&#39;
+ 4   new $P1, &#39;List&#39;
+ 5   set_hll_global [&#39;Squaak&#39;;&#39;Grammar&#39;;&#39;Actions&#39;], &#39;@?BLOCK&#39;, $P1
+ 6 .end
+
+ 7 .namespace [&#39;List&#39;]
+
+ 8 .sub &#39;unshift&#39; :method
+ 9   .param pmc obj
+ 10   unshift self, obj
+ 11 .end
+
+ 12 .sub &#39;shift&#39; :method
+ 13   shift $P0, self
+ 14   .return ($P0)
+ 15 .end</pre>
+
+<p>Well, here you have it: part of the small amount of PIR code you need to write for the Squaak compiler (there&#39;s some more for some built&#45;in subroutines, more on that later). Let&#39;s discuss this code snippet in more detail (if you know PIR, you could skip this section). Line 1 resets the namespace to the root namespace in Parrot, so that the sub <code>initlist</code> is stored in that namespace. The sub &#39;initlist&#39; defined in lines 2&#45;6 has some flags: <code>:anon</code> means that the sub is not stored by name in the namespace, implying it cannot be looked up by name. The :init flag means that the sub is executed before the main program (the &#34;main&#34; sub) is executed. The <code>:load</code> flag makes sure that the sub is executed if this file was compiled and loaded by another file through the load_bytecode instruction. If you don&#39;t understand this, no worries. You can forget about it now. In any case, we know for sure there&#39;s a List class when we need it, because the class creation is done before running the actual compiler code. Line 3 creates a new subclass of ResizablePMCArray, called &#34;List&#34;. This results in a new class object, which is left in register $P0, but it&#39;s not used after that. Line 4 creates a new List object, and stores it in register $P1. Line 5, stores this List object by name of <code>@?BLOCK</code> (that name should ring a bell now...) in the namespace of the Actions class. The semicolons in between the several key strings indicate nested namespaces. So, lines 4 and 5 are important, because the create the @?BLOCK variable and store it in a place that can be accessed from the action methods in the Actions class. Lines 7&#45;11 define the unshift method, which is a method in the &#34;List&#34; namespace. This means that it can be invoked as a method on a List object. As the sub is marked with the :method flag, the sub has an implicit first parameter called &#34;self&#34;, which refers to the invocant object. The unshift method invokes Parrot&#39;s unshift instruction on self, passing the obj argument as the second operand. So, obj is unshifted onto self, which is the List object itself. Finally, lines 12&#45;15 define the &#34;shift&#34; method, which does the opposite of &#34;unshift&#34;, removing the first element and returning it to its caller.</p>
+
+<h2><a name="Storing_Symbols"
+>Storing Symbols</a></h2>
+
+<p>Now, we set up the necessary infrastructure to store the current scope block, and we created a datastructure that acts as a scope stack, which we will need later. We&#39;ll now go back to the parse action for variable_declaration, because we didn&#39;t enter the declared variable into the current block&#39;s symbol table yet. We&#39;ll see how to do that now. First, we need to make the current block accessible from the method variable_declaration. We&#39;ve already seen how to do that, using the &#34;our&#34; keyword. It doesn&#39;t really matter where in the action method we enter the symbol&#39;s name into the symbol table, but let&#39;s do it at the end, after the initialization stuff. Naturally, we&#39;re only going to enter the symbol if it&#39;s not there already; duplicate variable declarations (in the same scope) should result in an error message (using the panic method of the match object). The code to be added to the method variable_declaration looks then like this:</p>
+
+<pre> method variable_declaration($/) {
+     our $?BLOCK;
+     # get the PAST node for identifier
+     # set the scope and declaration flag
+     # do the initialization stuff
+     # cache the name into a local variable
+     my $name := $past.name();
+
+     if $?BLOCK.symbol( $name ) {
+         # symbol is already present
+         $/.panic(&#34;Error: symbol &#34; ~ $name ~ &#34; was already defined.\n&#34;);
+     }
+     else {
+         $?BLOCK.symbol( $name, :scope(&#39;lexical&#39;) );
+     }
+     make $past;
+ }</pre>
+
+<h2><a name="What&#39;s_Next?"
+>What&#39;s Next?</a></h2>
+
+<p>With this code in place, variable declarations are handled correctly. However, we didn&#39;t update the parse action for identifier, which creates the <code>PAST::Var</code> node and sets its scope; currently all identifiers&#39; scope is set to <code>package</code> (which means it&#39;s a global variable). As we already covered a lot of material in this episode, we&#39;ll leave this for the next episode. In the next episode, we&#39;ll also cover subroutines, which is another important aspect of any programming language. Hope to catch you later!</p>
+
+<h2><a name="Exercises"
+>Exercises</a></h2>
+
+<ul>
+<li>In this episode, we changed the action method for the <code>TOP</code> rule; it is now invoked twice, once at the beginning of the parse, once at the end of the parse. The block rule, which defines a block to be a series of statements, represents a new scope. This rule is used in for instance if&#45;statement (the then&#45;part and else&#45;part), while&#45;statement (the loop body) and others. Update the parse action for block so it is invoked twice; once before parsing the statements, during which a new <code>PAST::Block</code> is created and stored onto the scope stack, and once after parsing the statements, during which this PAST node is set as the result object. Make sure <code>$?BLOCK</code> is always pointing to the current block. In order to do this exercise correctly, you should understand well what the shift and unshift methods do, and why we didn&#39;t implement methods to push and pop, which are more appropriate words in the context of a (scope) stack.</li>
+</ul>
+
+<h2><a name="Solution_to_the_exercise"
+>Solution to the exercise</a></h2>
+
+<h3><a name="Keeping_the_Current_block_up_to_date"
+>Keeping the Current block up to date</a></h3>
+
+<p>Sometimes we need to access the current block&#39;s symbol table. In order to be able to do so, we need a reference to the &#34;current block&#34;. We do this by declaring a package variable called <code>$?BLOCK</code>, declared with &#34;our&#34; (as opposed with &#34;my&#34;). This variable will always point to the &#34;current&#34; block. As blocks can nest, we use a &#34;stack&#34;, on which newly created blocks are stored. Whenever a new block is created, we assign this to <code>$?BLOCK</code>, and store it onto the stack, so that the next time a new block is created, the &#34;old&#34; current block isn&#39;t lost. Whenever a scope is closed, we pop off the current block from the stack, and restore the previous &#34;current&#34; block.</p>
+
+<h3><a name="Why_unshift/shift_and_not_push/pop?"
+>Why unshift/shift and not push/pop?</a></h3>
+
+<p>When we&#39;re talking about stacks, it would seem logical to talk about stack operations such as &#34;push&#34; and &#34;pop&#34;. Instead, we use the operations &#34;unshift&#34; and &#34;shift&#34;. If you&#39;re not a Perl programmer (such as myself), these names might not make sense. However, it&#39;s pretty easy. Instead of pushing a new object onto the &#34;top&#34; of the stack, you unshift objects onto this stack. Just see it as an old school bus, with only one entrance (at the front of the bus). Pushing a new person means taking the first free seat when entering, while unshifting a new person means everybody moves (shifts) one place to the back, so the new person can sit in the front seat. You might think this is not as efficient (more stuff is moved around), but that&#39;s not really true (actually: I guess (and certainly hope) the shift and unshift operations are implemented more effectively than the bus metaphor; I don&#39;t know how it is implemented).</p>
+
+<p>So why unshift/shift, and not push/pop? When restoring the previous &#34;current block&#34;, we need to know exactly where it is (what position). It would be nice to be able to always refer to the &#34;first passenger on the bus&#34;, instead of the last person. We know how to reference the first passenger (it&#39;s on seat no. 0 (it was designed by an IT guy)); we don&#39;t really know what is the seat no. of the last person: s/he might sit in the middle, or at the back.</p>
+
+<p>I hope it&#39;s clear what I mean here... otherwise, have a look at the code, and try to figure out what&#39;s happening:</p>
+
+<pre>    method block($/, $key) {
+      our $?BLOCK;
+      our @?BLOCK;
+      if $key eq &#39;open&#39; {
+            $?BLOCK := PAST::Block.new(
+                        :blocktype(&#39;immediate&#39;),
+                          :node($/) );
+           @?BLOCK.unshift($?BLOCK);
+        }
+        else {
+            my $past := @?BLOCK.shift();
+            $?BLOCK  := @?BLOCK[0];
+
+            for $&#60;statement&#62; {
+                $past.push( $( $_ ) );
+            }
+            make $past;
+        }
+    }</pre>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/pipp.html">Pipp</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<p>class Pipp::Grammar::Actions;</p>
+
+<p>method TOP($/) { my $past := PAST::Stmts.new( :node($/) ); for $&#60;sea_or_code&#62; { $past.push( $($_) ); }</p>
+
+<pre lang='und' xml:lang='und'>    make $past;
+}</pre>
+
+<p>method sea_or_code($/,$key) { make $( $/{$key} ); }</p>
+
+<p># The sea, HTML, surrounding the island, code, is printed out method SEA($/) { make PAST::Op.new( PAST::Val.new( :value(~$/), :returns(&#39;PhpString&#39;) ), :name(&#39;echo&#39;), :node($/) ); }</p>
+
+<p>method code_tp1($/) { my $past := PAST::Stmts.new( :node($/) ); for $&#60;statement&#62; { $past.push( $($_) ); }</p>
+
+<pre lang='und' xml:lang='und'>    make $past;
+}</pre>
+
+<p>method code_tp2($/) { my $past := PAST::Stmts.new( :node($/) ); for $&#60;statement&#62; { $past.push( $($_) ); }</p>
+
+<pre lang='und' xml:lang='und'>    make $past;
+}</pre>
+
+<p>method block($/) { my $past := PAST::Stmts.new( :node($/) ); for $&#60;statement&#62; { $past.push( $($_) ); }</p>
+
+<pre lang='und' xml:lang='und'>    make $past;
+}</pre>
+
+<p>method statement($/,$key) { make $( $/{$key} ); }</p>
+
+<p>method inline_sea_tp1($/) { make PAST::Op.new( PAST::Val.new( :value(~$&#60;SEA_empty_allowed&#62;), :returns(&#39;PhpString&#39;) ), :name(&#39;echo&#39;), :node($/) ); }</p>
+
+<p>method echo_statement($/) { my $past := $( $&#60;arguments&#62; ); $past.name( &#39;echo&#39; );</p>
+
+<pre lang='und' xml:lang='und'>    make $past;
+}</pre>
+
+<p>method expression_statement($/) { make $( $&#60;expression&#62; ); }</p>
+
+<p>method function_call($/) { my $past := $( $&#60;arguments&#62; ); $past.name( ~$&#60;FUNCTION_NAME&#62; );</p>
+
+<pre lang='und' xml:lang='und'>    make $past;
+}</pre>
+
+<p>method method_call($/) { my $past := PAST::Op.new( :name( ~$&#60;METHOD_NAME&#62; ), :pasttype( &#39;callmethod&#39; ), :name( ~$&#60;METHOD_NAME&#62; ), $( $&#60;var&#62; ) );</p>
+
+<pre lang='und' xml:lang='und'>    make $past;
+}</pre>
+
+<p>method constructor_call($/) { my $past := PAST::Op.new( :name( &#39;new&#39; ), :pasttype( &#39;callmethod&#39; ), PAST::Var.new( :name( ~$&#60;CLASS_NAME&#62; ), :scope( &#39;package&#39; ), ) );</p>
+
+<pre lang='und' xml:lang='und'>    make $past;
+}</pre>
+
+<p>method constant($/) { make PAST::Op.new( :name(&#39;constant&#39;), PAST::Val.new( :returns(&#39;PhpString&#39;), :value( ~$&#60;CONSTANT_NAME&#62; ), ) ); }</p>
+
+<p>method arguments($/) { my $past := PAST::Op.new( :pasttype(&#39;call&#39;), :node($/) ); for $&#60;expression&#62; { $past.push($($_)); }</p>
+
+<pre lang='und' xml:lang='und'>    make $past;
+}</pre>
+
+<p>method if_statement($/) { my $past := PAST::Op.new( $( $&#60;expression&#62; ), $( $&#60;block&#62; ), :pasttype(&#39;if&#39;), :node($/) ); for $&#60;else_clause&#62; { $past.push( $( $_ ) ); }</p>
+
+<pre lang='und' xml:lang='und'>    make $past;
+}</pre>
+
+<p>method var_assign($/) { make PAST::Op.new( $( $&#60;var&#62; ), $( $&#60;expression&#62; ), :pasttype(&#39;bind&#39;), ); }</p>
+
+<p>method array_elem($/) { my $past_var_name := $( $&#60;VAR_NAME&#62; ); $past_var_name.scope(&#39;package&#39;); $past_var_name.viviself(&#39;PhpArray&#39;);</p>
+
+<pre lang='und' xml:lang='und'>    make PAST::Var.new(
+             $past_var_name,
+             $( $&#60;expression&#62; ),
+             :scope(&#39;keyed&#39;),
+             :viviself(&#39;Undef&#39;),
+             :lvalue(1)
+         );
+}</pre>
+
+<p>method var($/,$key) { make $( $/{$key} ); }</p>
+
+<p>method VAR_NAME($/) { make PAST::Var.new( :scope(&#39;package&#39;), :name(~$/), :viviself(&#39;Undef&#39;), :lvalue(1) ); }</p>
+
+<p>method this($/) { make PAST::Op.new( :inline( &#34;%r = self&#34; ) ); }</p>
+
+<p>method else_clause($/) { make $( $&#60;block&#62; ); }</p>
+
+<p>method while_statement($/) { my $cond := $( $&#60;expression&#62; ); my $block := $( $&#60;block&#62; );</p>
+
+<pre lang='und' xml:lang='und'>    make PAST::Op.new( $cond,
+                       $block,
+                       :pasttype(&#39;while&#39;),
+                       :node($/) );
+}</pre>
+
+<p>method for_statement($/) { my $init := $( $&#60;var_assign&#62; ); my $cond := $( $&#60;expression&#62;[0] ); my $work := PAST::Stmts.new( $( $&#60;block&#62; ), $( $&#60;expression&#62;[1] ) );</p>
+
+<pre lang='und' xml:lang='und'>    my $while := PAST::Op.new(
+                       $cond,
+                       $work,
+                       :pasttype(&#39;while&#39;),
+                 );
+
+    make PAST::Stmts.new( $init, $while );
+}</pre>
+
+<p># Handle the operator precedence table. method expression($/, $key) { if ($key eq &#39;end&#39;) { make $($&#60;expr&#62;); } else { my $past := PAST::Op.new( :name($&#60;type&#62;), :pasttype($&#60;top&#62;&#60;pasttype&#62;), :pirop($&#60;top&#62;&#60;pirop&#62;), :lvalue($&#60;top&#62;&#60;lvalue&#62;), :node($/) ); for @($/) { $past.push( $($_) ); } make $past; } }</p>
+
+<p>method term($/,$key) { make $( $/{$key} ); }</p>
+
+<p>method literal($/,$key) { make $( $/{$key} ); }</p>
+
+<p>method TRUE($/) { make PAST::Val.new( :value( 1 ), :returns(&#39;PhpBoolean&#39;), :node($/) ); }</p>
+
+<p>method FALSE($/) { make PAST::Val.new( :value( 0 ), :returns(&#39;PhpBoolean&#39;), :node($/) ); }</p>
+
+<p>method NULL($/) { make PAST::Val.new( :value( 0 ), :returns(&#39;PhpUndef&#39;), :node($/) ); }</p>
+
+<p>method INTEGER($/) { make PAST::Val.new( :value( ~$/ ), :returns(&#39;PhpInteger&#39;), :node($/) ); }</p>
+
+<p>method NUMBER($/) { make PAST::Val.new( :value( +$/ ), :returns(&#39;PhpFloat&#39;), :node($/) ); }</p>
+
+<p>method function_definition($/) {</p>
+
+<pre lang='und' xml:lang='und'>    # note that $&#60;param_list&#62; creates a new PAST::Block.
+    my $past := $( $&#60;param_list&#62; );
+
+    $past.name( ~$&#60;FUNCTION_NAME&#62; );
+    $past.control(&#39;return_pir&#39;);
+    $past.push( $( $&#60;block&#62; ) );
+
+    make $past;
+}</pre>
+
+<p>method method_definition($/) {</p>
+
+<pre lang='und' xml:lang='und'>    # note that $&#60;param_list&#62; creates a new PAST::Block.
+    my $past := $( $&#60;param_list&#62; );
+
+    $past.name( ~$&#60;METHOD_NAME&#62; );
+    $past.blocktype( &#39;method&#39; );
+    $past.control(&#39;return_pir&#39;);
+    $past.push( $( $&#60;block&#62; ) );
+
+    make $past;
+}</pre>
+
+<p>method param_list($/) {</p>
+
+<pre lang='und' xml:lang='und'>    my $past := PAST::Block.new(
+                    :blocktype(&#39;declaration&#39;),
+                    :node($/)
+                );
+    for $&#60;VAR_NAME&#62; {
+        my $param := $( $_ );
+        $param.scope(&#39;parameter&#39;);
+        $past.push($param);
+
+        # enter the parameter as a lexical into the block&#39;s symbol table
+        $past.symbol(
+             :scope(&#39;lexical&#39;),
+             $param.name()
+        );
+    }
+
+    make $past;
+}</pre>
+
+<p>method class_definition($/) { my $past := PAST::Block.new( :node($/), :namespace( $&#60;CLASS_NAME&#62;&#60;ident&#62; ), :blocktype(&#39;declaration&#39;), :pirflags( &#39;:init :load&#39; ), PAST::Stmts.new( PAST::Op.new( :inline( &#34;$P0 = get_hll_global &#39;P6metaclass&#39;\n&#34; ~ &#34;$P2 = $P0.&#39;new_class&#39;(&#39;&#34; ~ $&#60;CLASS_NAME&#62; ~ &#34;&#39;)\n&#34; ), :pasttype( &#39;inline&#39; ) ) ) ); my $methods_block := PAST::Block.new( :blocktype(&#39;immediate&#39;), ); for $&#60;member_definition&#62; { $methods_block.symbol( ~$_&#60;VAR_NAME&#62;&#60;ident&#62;, :scope(&#39;attribute&#39;) ); } for $&#60;method_definition&#62; { $methods_block.push( $($_) ); } $past.push( $methods_block );</p>
+
+<pre lang='und' xml:lang='und'>    make $past;
+}</pre>
+
+<p>method quote($/) { make $( $&#60;quote_expression&#62; ); }</p>
+
+<p>method quote_expression($/, $key) { my $past; if $key eq &#39;quote_regex&#39; { our $?NS; $past := PAST::Block.new( $&#60;quote_regex&#62;, :compiler(&#39;PGE::Perl6Regex&#39;), :namespace($?NS), :blocktype(&#39;declaration&#39;), :node( $/ ) ); } elsif $key eq &#39;quote_concat&#39; { if +$&#60;quote_concat&#62; == 1 { $past := $( $&#60;quote_concat&#62;[0] ); } else { $past := PAST::Op.new( :name(&#39;list&#39;), :pasttype(&#39;call&#39;), :node( $/ ) ); for $&#60;quote_concat&#62; { $past.push( $($_) ); } } } make $past; }</p>
+
+<p>method quote_concat($/) { my $terms := +$&#60;quote_term&#62;; my $count := 1; my $past := $( $&#60;quote_term&#62;[0] ); while ($count != $terms) { $past := PAST::Op.new( $past, $( $&#60;quote_term&#62;[$count] ), :pirop(&#39;concat&#39;), :pasttype(&#39;pirop&#39;) ); $count := $count + 1; } make $past; }</p>
+
+<p>method quote_term($/, $key) { my $past; if ($key eq &#39;literal&#39;) { $past := PAST::Val.new( :value( ~$&#60;quote_literal&#62; ), :returns(&#39;PhpString&#39;), :node($/) ); } else { $past := $( $/{ $key } ); }</p>
+
+<pre lang='und' xml:lang='und'>    make $past;
+}</pre>
+
+<p>method curly_interpolation($/) { make $( $&#60;var&#62; ); }</p>
+
+<p># Local Variables: # mode: cperl # cperl&#45;indent&#45;level: 4 # fill&#45;column: 100 # End: # vim: expandtab shiftwidth=4:</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

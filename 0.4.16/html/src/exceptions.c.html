@@ -1,0 +1,658 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Exceptions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Exceptions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/exceptions.c &#45; Exceptions</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Define the internal interpreter exceptions.</p>
+
+<ul>
+<li>This is experimental code.</li><p class="pad"></p>
+
+<li>The <code lang='und' xml:lang='und'>enum_class</code> of the Exception isn&#39;t fixed.</li><p class="pad"></p>
+
+<li>The interface isn&#39;t fixed.</li><p class="pad"></p>
+
+<li>Much of this may change in the future.</li><p class="pad"></p>
+</ul>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>*/</p>
+
+<p>#include &#34;parrot/parrot.h&#34; #include &#34;parrot/exceptions.h&#34;</p>
+
+<p>#ifdef PARROT_HAS_GLIBC_BACKTRACE # include &#60;execinfo.h&#62; #endif</p>
+
+<p>/* HEADERIZER HFILE: include/parrot/exceptions.h */</p>
+
+<p>/* HEADERIZER BEGIN: static */</p>
+
+<p>PARROT_WARN_UNUSED_RESULT static opcode_t * create_exception( PARROT_INTERP ) __attribute__nonnull__(1);</p>
+
+<p>PARROT_WARN_UNUSED_RESULT static size_t dest2offset( PARROT_INTERP,
+NOTNULL(const opcode_t *dest) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL static PMC * find_exception_handler( PARROT_INTERP,
+NOTNULL(PMC *exception) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void run_cleanup_action( PARROT_INTERP,
+NOTNULL(Stack_Entry_t *e) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>/* HEADERIZER END: static */</p>
+
+<p>#include &#60;stdarg.h&#62;</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: internal_exception</p>
+
+<p>Signal a fatal exception.
+This involves printing an error message to stderr,
+and calling <code lang='und' xml:lang='und'>Parrot_exit</code> to invoke exit handlers and exit the process with the given exitcode.
+No error handlers are used,
+so it is not possible for Parrot bytecode to intercept a fatal error (cf.
+<code lang='und' xml:lang='und'>real_exception</code>).
+Furthermore,
+no stack unwinding is done,
+so the exit handlers run in the current dynamic environment.</p>
+
+<p>*/</p>
+
+<p>PARROT_API PARROT_DOES_NOT_RETURN void internal_exception(int exitcode,
+NOTNULL(const char *format),
+...) { va_list arglist; va_start(arglist,
+format); vfprintf(stderr,
+format,
+arglist); fprintf(stderr,
+&#34;\n&#34;); /* caution against output swap (with PDB_backtrace) */ fflush(stderr); va_end(arglist); /* * XXX TODO get rid of all the internal_exceptions or call them * with an interpreter arg Parrot_exit(interp,
+exitcode); */ exit(exitcode); }</p>
+
+<p>/* Panic handler */</p>
+
+<p>#ifndef dumpcore # define dumpcore() \ fprintf(stderr,
+&#34;Sorry,
+coredump is not yet implemented &#34; \ &#34;for this platform.\n\n&#34;); \ exit(EXIT_FAILURE); #endif</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: do_panic</p>
+
+<p>Panic handler.</p>
+
+<p>*/</p>
+
+<p>PARROT_DOES_NOT_RETURN void do_panic(NULLOK_INTERP,
+NULLOK(const char *message),
+NULLOK(const char *file),
+unsigned int line) { /* Note: we can&#39;t format any floats in here&#45;&#45;Parrot_sprintf ** may panic because of floats.
+** and we don&#39;t use Parrot_sprintf or such,
+because we are ** already in panic &#45;&#45;leo */ fprintf(stderr,
+&#34;Parrot VM: PANIC: %s!\n&#34;,
+message ?
+message : &#34;(no message available)&#34;);</p>
+
+<pre lang='und' xml:lang='und'>    fprintf(stderr, &#34;C file %s, line %ud\n&#34;,
+               file ? file : &#34;(not available)&#34;, line);
+
+    fprintf(stderr, &#34;Parrot file (not available), &#34;);
+    fprintf(stderr, &#34;line (not available)\n&#34;);
+
+    fprintf(stderr, &#34;\n\
+We highly suggest you notify the Parrot team if you have not been working on\n\
+Parrot.  Use parrotbug (located in parrot&#39;s root directory) or send an\n\
+e&#45;mail to parrot&#45;porters@perl.org.\n\
+Include the entire text of this error message and the text of the script that\n\
+generated the error.  If you&#39;ve made any modifications to Parrot, please\n\
+describe them as well.\n\n&#34;);
+
+    fprintf(stderr, &#34;Version     : %s\n&#34;, PARROT_VERSION);
+    fprintf(stderr, &#34;Configured  : %s\n&#34;, PARROT_CONFIG_DATE);
+    fprintf(stderr, &#34;Architecture: %s\n&#34;, PARROT_ARCHNAME);
+    fprintf(stderr, &#34;JIT Capable : %s\n&#34;, JIT_CAPABLE ? &#34;Yes&#34; : &#34;No&#34;);
+    if (interp)
+        fprintf(stderr, &#34;Interp Flags: %#x\n&#34;, (unsigned int)interp&#45;&#62;flags);
+    else
+        fprintf(stderr, &#34;Interp Flags: (no interpreter)\n&#34;);
+    fprintf(stderr, &#34;Exceptions  : %s\n&#34;, &#34;(missing from core)&#34;);
+    fprintf(stderr, &#34;\nDumping Core...\n&#34;);
+
+    dumpcore();
+    exit(EXIT_FAILURE);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: push_exception</p>
+
+<p>Add the exception handler on the stack.</p>
+
+<p>FUNCDOC: Parrot_push_action</p>
+
+<p>Push an action handler onto the dynamic environment.</p>
+
+<p>FUNCDOC: Parrot_push_mark</p>
+
+<p>Push a cleanup mark onto the dynamic environment.</p>
+
+<p>FUNCDOC: Parrot_pop_mark</p>
+
+<p>Pop items off the dynamic environment up to the mark.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void push_exception(PARROT_INTERP, NOTNULL(PMC *handler)) { if (handler&#45;&#62;vtable&#45;&#62;base_type != enum_class_Exception_Handler) PANIC(interp, &#34;Tried to set_eh a non Exception_Handler&#34;); stack_push(interp, &#38;interp&#45;&#62;dynamic_env, handler, STACK_ENTRY_PMC, STACK_CLEANUP_NULL); }</p>
+
+<p>static void run_cleanup_action(PARROT_INTERP, NOTNULL(Stack_Entry_t *e)) { /* * this is called during normal stack_pop of the control * stack &#45; run the action subroutine with an INTVAL arg of 0 */ PMC * const sub = UVal_pmc(e&#45;&#62;entry); Parrot_runops_fromc_args(interp, sub, &#34;vI&#34;, 0); }</p>
+
+<p>PARROT_API void Parrot_push_action(PARROT_INTERP, PMC *sub) { if (!VTABLE_isa(interp, sub, const_string(interp, &#34;Sub&#34;))) { real_exception(interp, NULL, 1, &#34;Tried to push a non Sub PMC action&#34;); } stack_push(interp, &#38;interp&#45;&#62;dynamic_env, sub, STACK_ENTRY_ACTION, run_cleanup_action); }</p>
+
+<p>PARROT_API void Parrot_push_mark(PARROT_INTERP, INTVAL mark) { stack_push(interp, &#38;interp&#45;&#62;dynamic_env, &#38;mark, STACK_ENTRY_MARK, STACK_CLEANUP_NULL); }</p>
+
+<p>PARROT_API void Parrot_pop_mark(PARROT_INTERP, INTVAL mark) { do { const Stack_Entry_t * const e = stack_entry(interp, interp&#45;&#62;dynamic_env, 0); if (!e) real_exception(interp, NULL, 1, &#34;Mark %ld not found.&#34;, (long)mark); (void)stack_pop(interp, &#38;interp&#45;&#62;dynamic_env, NULL, e&#45;&#62;entry_type); if (e&#45;&#62;entry_type == STACK_ENTRY_MARK) { if (UVal_int(e&#45;&#62;entry) == mark) return; } } while (1); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: find_exception_handler</p>
+
+<p>Find the exception handler for <code lang='und' xml:lang='und'>exception</code>.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL static PMC * find_exception_handler(PARROT_INTERP, NOTNULL(PMC *exception)) { char *m; int exit_status, print_location; int depth = 0; Stack_Entry_t *e;</p>
+
+<pre lang='und' xml:lang='und'>    /* for now, we don&#39;t check the exception class and we don&#39;t
+     * look for matching handlers.  [this is being redesigned anyway.]
+     */
+    STRING * const message = VTABLE_get_string_keyed_int(interp, exception, 0);
+
+    /* [TODO: replace quadratic search with something linear, hopefully without
+       trashing abstraction layers.  &#45;&#45; rgr, 17&#45;Sep&#45;06.] */
+    while ((e = stack_entry(interp, interp&#45;&#62;dynamic_env, depth)) != NULL) {
+        if (e&#45;&#62;entry_type == STACK_ENTRY_PMC) {
+            PMC * const handler = UVal_pmc(e&#45;&#62;entry);
+            if (handler &#38;&#38; handler&#45;&#62;vtable&#45;&#62;base_type ==
+                    enum_class_Exception_Handler) {
+                return handler;
+            }
+        }
+        depth++;
+    }
+
+    /* flush interpreter output to get things printed in order */
+    PIO_flush(interp, PIO_STDOUT(interp));
+    PIO_flush(interp, PIO_STDERR(interp));
+    if (interp&#45;&#62;debugger) {
+        PIO_flush(interp&#45;&#62;debugger, PIO_STDOUT(interp&#45;&#62;debugger));
+        PIO_flush(interp&#45;&#62;debugger, PIO_STDERR(interp&#45;&#62;debugger));
+    }
+
+    m = string_to_cstring(interp, message);
+    exit_status = print_location = 1;
+    if (m &#38;&#38; *m) {
+        fputs(m, stderr);
+        if (m[strlen(m)&#45;1] != &#39;\n&#39;)
+            fprintf(stderr, &#34;%c&#34;, &#39;\n&#39;);
+        string_cstring_free(m);
+    }
+    else {
+        if (m)
+            string_cstring_free(m); /* coverity fix, m was allocated but was &#34;\0&#34; */
+        /* new block for const assignment */
+        {
+            const INTVAL severity = VTABLE_get_integer_keyed_int(interp, exception, 2);
+            if (severity == EXCEPT_exit) {
+                print_location = 0;
+                exit_status =
+                    (int)VTABLE_get_integer_keyed_int(interp, exception, 1);
+            }
+            else
+                fprintf(stderr, &#34;No exception handler and no message\n&#34;);
+        }
+    }
+    /* caution against output swap (with PDB_backtrace) */
+    fflush(stderr);
+    if (print_location)
+        PDB_backtrace(interp);
+    /*
+     * returning NULL from here returns resume address NULL to the
+     * runloop, which will terminate the thread function finally
+     *
+     * XXX this check should better be in Parrot_exit
+     */
+    if (interp&#45;&#62;thread_data &#38;&#38; interp&#45;&#62;thread_data&#45;&#62;tid) {
+        /*
+         * we should probably detach the thread here
+         */
+        return NULL;
+    }
+    /*
+     * only main should run the destroy functions &#45; exit handler chain
+     * is freed during Parrot_exit
+     */
+    Parrot_exit(interp, exit_status);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: pop_exception</p>
+
+<p>Pops the topmost exception handler off the stack.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void pop_exception(PARROT_INTERP) { Stack_entry_type type; Parrot_cont *cc;</p>
+
+<pre lang='und' xml:lang='und'>    PMC * const handler
+        = (PMC *)stack_peek(interp, interp&#45;&#62;dynamic_env, &#38;type);
+
+    if (! handler
+            || type != STACK_ENTRY_PMC
+            || handler&#45;&#62;vtable&#45;&#62;base_type != enum_class_Exception_Handler) {
+        real_exception(interp, NULL, E_RuntimeError,
+                &#34;No exception to pop.&#34;);
+    }
+    cc = PMC_cont(handler);
+    if (cc&#45;&#62;to_ctx != CONTEXT(interp&#45;&#62;ctx)) {
+        real_exception(interp, NULL, E_RuntimeError,
+                &#34;No exception to pop.&#34;);
+    }
+    (void)stack_pop(interp, &#38;interp&#45;&#62;dynamic_env,
+                    NULL, STACK_ENTRY_PMC);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: new_c_exception_handler</p>
+
+<p>Generate an exception handler, that catches PASM level exceptions inside a C function. This could be a separate class too, for now just a private flag bit is set.</p>
+
+<p>*/</p>
+
+<p>PARROT_API PARROT_WARN_UNUSED_RESULT PMC* new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb) { PMC * const handler = pmc_new(interp, enum_class_Exception_Handler); /* * this flag denotes a C exception handler */ PObj_get_FLAGS(handler) |= SUB_FLAG_C_HANDLER; VTABLE_set_pointer(interp, handler, jb); return handler; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: push_new_c_exception_handler</p>
+
+<p>Pushes an new C exception handler onto the stack.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void push_new_c_exception_handler(PARROT_INTERP, Parrot_exception *jb) { push_exception(interp, new_c_exception_handler(interp, jb)); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: throw_exception</p>
+
+<p>Throw the exception.</p>
+
+<p>*/</p>
+
+<p>PARROT_API PARROT_CAN_RETURN_NULL opcode_t * throw_exception(PARROT_INTERP, PMC *exception, SHIM(void *dest)) { opcode_t *address; PMC * const handler = find_exception_handler(interp, exception);</p>
+
+<pre lang='und' xml:lang='und'>    if (!handler)
+        return NULL;
+    /* put the handler aka continuation ctx in the interpreter */
+    address = VTABLE_invoke(interp, handler, exception);
+    /* address = VTABLE_get_pointer(interp, handler); */
+    if (PObj_get_FLAGS(handler) &#38; SUB_FLAG_C_HANDLER) {
+        /* its a C exception handler */
+        Parrot_exception * const jb = (Parrot_exception *) address;
+        longjmp(jb&#45;&#62;destination, 1);
+    }
+    /* return the address of the handler */
+    return address;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: rethrow_exception</p>
+
+<p>Rethrow the exception.</p>
+
+<p>*/</p>
+
+<p>PARROT_API PARROT_WARN_UNUSED_RESULT opcode_t * rethrow_exception(PARROT_INTERP, NOTNULL(PMC *exception)) { PMC *handler; opcode_t *address;</p>
+
+<pre lang='und' xml:lang='und'>    if (exception&#45;&#62;vtable&#45;&#62;base_type != enum_class_Exception)
+        PANIC(interp, &#34;Illegal rethrow&#34;);
+    handler = find_exception_handler(interp, exception);
+    address = VTABLE_invoke(interp, handler, exception);
+    /* return the address of the handler */
+    return address;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: rethrow_c_exception</p>
+
+<p>Return back to runloop, assumes exception is still in <code lang='und' xml:lang='und'>TODO</code> and that this is called from within a handler setup with <code lang='und' xml:lang='und'>new_c_exception</code>.</p>
+
+<p>*/</p>
+
+<p>PARROT_DOES_NOT_RETURN void rethrow_c_exception(PARROT_INTERP) { Parrot_exception * const the_exception = interp&#45;&#62;exceptions;</p>
+
+<pre lang='und' xml:lang='und'>    PMC * const exception = PMCNULL;   /* TODO */
+    PMC * const handler   = find_exception_handler(interp, exception);
+
+    /* XXX we should only peek for the next handler */
+    push_exception(interp, handler);
+    /*
+     * if there was no user handler, interpreter is already shutdown
+     */
+    the_exception&#45;&#62;resume = VTABLE_get_pointer(interp, handler);
+    the_exception&#45;&#62;error = VTABLE_get_integer_keyed_int(interp,
+            exception, 1);
+    the_exception&#45;&#62;severity = VTABLE_get_integer_keyed_int(interp,
+            exception, 2);
+    the_exception&#45;&#62;msg = VTABLE_get_string_keyed_int(interp, exception, 0);
+    longjmp(the_exception&#45;&#62;destination, 1);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: dest2offset</p>
+
+<p>Translate an absolute bytecode location to an offset used for resuming after an exception had occurred.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT static size_t dest2offset(PARROT_INTERP, NOTNULL(const opcode_t *dest)) { size_t offset; /* translate an absolute location in byte_code to an offset * used for resuming after an exception had occurred */ switch (interp&#45;&#62;run_core) { case PARROT_SWITCH_CORE: case PARROT_SWITCH_JIT_CORE: case PARROT_CGP_CORE: case PARROT_CGP_JIT_CORE: offset = dest &#45; (const opcode_t *)interp&#45;&#62;code&#45;&#62;prederef.code; default: offset = dest &#45; interp&#45;&#62;code&#45;&#62;base.data; } return offset; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: create_exception</p>
+
+<p>Create an exception.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT static opcode_t * create_exception(PARROT_INTERP) { PMC *exception; /* exception object */ opcode_t *dest; /* absolute address of handler */ Parrot_exception * const the_exception = interp&#45;&#62;exceptions;</p>
+
+<pre lang='und' xml:lang='und'>    /*
+     * if the exception number is in the range of our known exceptions
+     * use the precreated exception
+     */
+    if (the_exception&#45;&#62;error &#60;= E_LAST_PYTHON_E &#38;&#38;
+            the_exception&#45;&#62;error &#62;= 0) {
+        exception = interp&#45;&#62;exception_list[the_exception&#45;&#62;error];
+    }
+    else {
+        /* create an exception object */
+        exception = pmc_new(interp, enum_class_Exception);
+        /* exception type */
+        VTABLE_set_integer_keyed_int(interp, exception, 1,
+                the_exception&#45;&#62;error);
+    }
+    /* exception severity */
+    VTABLE_set_integer_keyed_int(interp, exception, 2,
+            (INTVAL)the_exception&#45;&#62;severity);
+    if (the_exception&#45;&#62;msg) {
+        VTABLE_set_string_keyed_int(interp, exception, 0,
+                the_exception&#45;&#62;msg);
+    }
+    /* now fill rest of exception, locate handler and get
+     * destination of handler
+     */
+    dest = throw_exception(interp, exception, the_exception&#45;&#62;resume);
+    return dest;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: handle_exception</p>
+
+<p>Handle an exception.</p>
+
+<p>*/</p>
+
+<p>PARROT_API size_t handle_exception(PARROT_INTERP) { /* absolute address of handler */ const opcode_t * const dest = create_exception(interp);</p>
+
+<pre lang='und' xml:lang='und'>    return dest2offset(interp, dest);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: new_internal_exception</p>
+
+<p>Create a new internal exception buffer, either by allocating it or by getting one from the free list.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void new_internal_exception(PARROT_INTERP) { Parrot_exception *the_exception;</p>
+
+<pre lang='und' xml:lang='und'>    if (interp&#45;&#62;exc_free_list) {
+        the_exception = interp&#45;&#62;exc_free_list;
+        interp&#45;&#62;exc_free_list = the_exception&#45;&#62;prev;
+    }
+    else
+        the_exception = mem_allocate_typed(Parrot_exception);
+    the_exception&#45;&#62;prev = interp&#45;&#62;exceptions;
+    the_exception&#45;&#62;resume = NULL;
+    the_exception&#45;&#62;msg = NULL;
+    interp&#45;&#62;exceptions = the_exception;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: free_internal_exception</p>
+
+<p>Place internal exception buffer back on the free list.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void free_internal_exception(PARROT_INTERP) { Parrot_exception * const e = interp&#45;&#62;exceptions; interp&#45;&#62;exceptions = e&#45;&#62;prev; e&#45;&#62;prev = interp&#45;&#62;exc_free_list; interp&#45;&#62;exc_free_list = e; }</p>
+
+<p>void destroy_exception_list(PARROT_INTERP) { really_destroy_exception_list(interp&#45;&#62;exceptions); really_destroy_exception_list(interp&#45;&#62;exc_free_list); }</p>
+
+<p>void really_destroy_exception_list(NULLOK(Parrot_exception *e)) { while (e != NULL) { Parrot_exception * const prev = e&#45;&#62;prev; mem_sys_free(e); e = prev; } }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: do_exception</p>
+
+<p>Called from interrupt code. Does a <code lang='und' xml:lang='und'>longjmp</code> in front of the runloop, which calls <code lang='und' xml:lang='und'>handle_exception()</code>, returning the handler address where execution then resumes.</p>
+
+<p>*/</p>
+
+<p>PARROT_API PARROT_DOES_NOT_RETURN void do_exception(PARROT_INTERP, INTVAL severity, long error) { Parrot_exception * const the_exception = interp&#45;&#62;exceptions;</p>
+
+<pre lang='und' xml:lang='und'>    the_exception&#45;&#62;error = error;
+    the_exception&#45;&#62;severity = severity;
+    the_exception&#45;&#62;msg = NULL;
+    the_exception&#45;&#62;resume = NULL;
+    longjmp(the_exception&#45;&#62;destination, 1);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: real_exception</p>
+
+<p>Throws a real exception, with an error message constructed from the format string and arguments. <code lang='und' xml:lang='und'>ret_addr</code> is the address from which to resume, if some handler decides that is appropriate, or zero to make the error non&#45;resumable. <code lang='und' xml:lang='und'>exitcode</code> is a <code lang='und' xml:lang='und'>exception_type_enum</code> value.</p>
+
+<p>See also <code lang='und' xml:lang='und'>internal_exception()</code>, which signals fatal errors, and <code lang='und' xml:lang='und'>throw_exception</code>, which calls the handler.</p>
+
+<p>*/</p>
+
+<p>PARROT_API PARROT_DOES_NOT_RETURN void real_exception(PARROT_INTERP, NULLOK(void *ret_addr), int exitcode, NOTNULL(const char *format), ...) { STRING *msg; Parrot_exception * const the_exception = interp&#45;&#62;exceptions;</p>
+
+<pre lang='und' xml:lang='und'>    /*
+     * if profiling remember end time of lastop and
+     * generate entry for exception
+     */
+    RunProfile * const profile = interp&#45;&#62;profile;
+    if (profile &#38;&#38; Interp_flags_TEST(interp, PARROT_PROFILE_FLAG)) {
+        const FLOATVAL now = Parrot_floatval_time();
+
+        profile&#45;&#62;data[profile&#45;&#62;cur_op].time += now &#45; profile&#45;&#62;starttime;
+        profile&#45;&#62;cur_op = PARROT_PROF_EXCEPTION;
+        profile&#45;&#62;starttime = now;
+        profile&#45;&#62;data[PARROT_PROF_EXCEPTION].numcalls++;
+    }
+
+    /*
+     * make exception message
+     */
+    if (strchr(format, &#39;%&#39;)) {
+        va_list arglist;
+        va_start(arglist, format);
+        msg = Parrot_vsprintf_c(interp, format, arglist);
+        va_end(arglist);
+    }
+    else
+        msg = string_make(interp, format, strlen(format),
+                NULL, PObj_external_FLAG);
+    /* string_from_cstring(interp, format, strlen(format)); */
+    /*
+     * FIXME classify errors
+     */
+    if (!the_exception) {
+        PIO_eprintf(interp,
+                &#34;real_exception (severity:%d error:%d): %Ss\n&#34;
+                &#34;likely reason: argument count mismatch in main &#34;
+                &#34;(more than 1 param)\n&#34;,
+                EXCEPT_error, exitcode, msg);
+        /* [what if exitcode is a multiple of 256?] */
+        exit(exitcode);
+    }
+    the_exception&#45;&#62;severity = EXCEPT_error;
+    the_exception&#45;&#62;error = exitcode;
+    the_exception&#45;&#62;msg = msg;
+    the_exception&#45;&#62;resume = ret_addr;
+    if (Interp_debug_TEST(interp, PARROT_BACKTRACE_DEBUG_FLAG)) {
+        PIO_eprintf(interp, &#34;real_exception (severity:%d error:%d): %Ss\n&#34;,
+            EXCEPT_error, exitcode, msg);
+        PDB_backtrace(interp);
+    }
+    /*
+     * reenter runloop
+     */
+    longjmp(the_exception&#45;&#62;destination, 1);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_init_exceptions</p>
+
+<p>Create exception objects.</p>
+
+<p>*/</p>
+
+<p>void Parrot_init_exceptions(PARROT_INTERP) { int i;</p>
+
+<pre lang='und' xml:lang='und'>    interp&#45;&#62;exception_list = (PMC **)mem_sys_allocate(
+            sizeof (PMC*) * (E_LAST_PYTHON_E + 1));
+    for (i = 0; i &#60;= E_LAST_PYTHON_E; ++i) {
+        PMC * const ex = pmc_new(interp, enum_class_Exception);
+        interp&#45;&#62;exception_list[i] = ex;
+        VTABLE_set_integer_keyed_int(interp, ex, 1, i);
+    }
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_confess</p>
+
+<p>A better version of assert() that gives a backtrace if possible.</p>
+
+<p>*/</p>
+
+<p>PARROT_API PARROT_DOES_NOT_RETURN void Parrot_confess(NOTNULL(const char *cond), NOTNULL(const char *file), unsigned int line) { fprintf(stderr, &#34;%s:%u: failed assertion &#39;%s&#39;\n&#34;, file, line, cond); Parrot_print_backtrace(); abort(); }</p>
+
+<p>void Parrot_print_backtrace(void) { #ifdef PARROT_HAS_GLIBC_BACKTRACE # define BACKTRACE_DEPTH 32 /*# define BACKTRACE_VERBOSE */ /* stolen from <a href="http://www.delorie.com/gnu/docs/glibc/libc_665.html">http://www.delorie.com/gnu/docs/glibc/libc_665.html</a> */ void *array[BACKTRACE_DEPTH]; size_t i; # ifndef BACKTRACE_VERBOSE int ident; char *caller; size_t callerLength; size_t j; # endif</p>
+
+<pre lang='und' xml:lang='und'>    const size_t size = backtrace (array, BACKTRACE_DEPTH);
+    char ** const strings = backtrace_symbols (array, size);
+
+    fprintf (stderr, &#34;Backtrace &#45; Obtained %zd stack frames (max trace depth is %d).\n&#34;, size, BACKTRACE_DEPTH);
+#  ifndef BACKTRACE_VERBOSE
+    for (i = 0; i &#60; size; i++) {
+        /* always ident */
+        ident = 2;  /* initial indent */
+        ident += 2 * i; /* nesting depth */
+        fprintf(stderr, &#34;%*s&#34;, ident, &#34;&#34;);
+
+        /* if the caller was an anon function then strchr won&#39;t
+        find a &#39;(&#39; in the string and will return NULL */
+        caller = strchr(strings[i], &#39;(&#39;);
+        if (caller) {
+            /* skip over the &#39;(&#39; */
+            caller++;
+            /* find the end of the symbol name */
+            callerLength = abs(strchr(caller, &#39;+&#39;) &#45; caller);
+            /* print just the symbol name */
+            for (j = 0; j &#60; callerLength; j++) {
+                fputc(caller[j], stderr);
+            }
+            fprintf(stderr, &#34;\n&#34;);
+        }
+        else {
+            fprintf(stderr, &#34;(unknown)\n&#34;);
+        }
+    }
+#  else
+    for (i = 0; i &#60; size; i++)
+        fprintf (stderr, &#34;%s\n&#34;, strings[i]);
+#  endif
+
+    free (strings);</pre>
+
+<p># undef BACKTRACE_DEPTH #endif /* ifdef PARROT_HAS_GLIBC_BACKTRACE */ }</p>
+
+<p>/*</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/exceptions.h</em>.</p>
+
+<p>*/</p>
+
+<p>/* * Local variables: * c&#45;file&#45;style: &#34;parrot&#34; * End: * vim: expandtab shiftwidth=4: */</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

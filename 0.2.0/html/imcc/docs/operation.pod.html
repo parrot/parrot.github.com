@@ -1,0 +1,306 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>operation</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">operation</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/imcc.html">IMCC</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>IMCC &#45; operation</p>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="0.1_initial"
+>0.1 initial</a></dt><p class="pad"></p>
+
+<dt><a name="0.2_uninitialized_warning;_optimizations"
+>0.2 uninitialized warning; optimizations</a></dt><p class="pad"></p>
+</dl>
+
+<h1><a name="OVERVIEW"
+>OVERVIEW <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This document describes the principles of IMCC operation.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The main features of imcc are:</p>
+
+<dl>
+<dt><a name="Source_file_parsing"
+>Source file parsing</a></dt><p class="pad"></p>
+
+<dt><a name="Register_allocation"
+>Register allocation</a></dt><p class="pad"></p>
+
+<dt><a name="Optimization"
+>Optimization</a></dt><p class="pad"></p>
+
+<dt><a name="Code_generation"
+>Code generation</a></dt><p class="pad"></p>
+
+<dt><a name="Running_the_code"
+>Running the code</a></dt><p class="pad"></p>
+</dl>
+
+<h1><a name="Source_file_parsing"
+>Source file parsing <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>See <em lang='und' xml:lang='und'>parsing.pod</em>,
+<em lang='und' xml:lang='und'>macros.pod</em> and <em lang='und' xml:lang='und'>syntax.pod</em> for more.</p>
+
+<h1><a name="Register_allocation"
+>Register allocation <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Register allocation is done per <i>compilation unit</i>.</p>
+
+<p>IMCC <i>identifiers</i> and <i>temporary variables</i> e.g.
+$I0 are assigned a physical parrot register depending on the life range of these variables.
+If the life range of one variable doesn&#39;t overlap the range of another variable,
+they might get the same parrot register.
+For instance:</p>
+
+<pre lang='und' xml:lang='und'>   $I0 = 10
+   $I1 = 20</pre>
+
+<p>will translate to</p>
+
+<pre lang='und' xml:lang='und'>   set I0, 10
+   set I0, 20</pre>
+
+<p>provided that $I0 is not used after these lines. In this case, the assignment to $I0 is redundant and will be optimized away if imcc is run with optimization level <b>&#45;O2</b>.</p>
+
+<p><i>PASM registers</i> keep their register. During the usage of a <i>PASM register</i> this register will be not get assigned to. Therefore, they should be used only when absolutely necessary, and you should try to avoid using them within long pieces of code.</p>
+
+<h2><a name="Basic_blocks"
+>Basic blocks <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>To determine the life range of variables, the code gets separated into pieces, called <b>basic block</b>s. A <b>basic block</b> starts at a label, which can get jumped to, and ends at a branch instruction.</p>
+
+<h2><a name="Special_case:_subroutine_calls_(bsr)"
+>Special case: subroutine calls (bsr) <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Currently, imcc assumes that a subroutine saves all registers on entry, as P6C does per <b>saveall</b>, and thus a <b>bsr</b> doesn&#39;t count as a branch.</p>
+
+<p>But there is one exception to this rule: when the target of the subroutine is known (the label is in the same compilation unit), and when no <b>saveall</b> instruction is found in the first 5 instructions after the label, then the control flow from the <b>bsr</b> call to the label and from the <b>ret</b> to the next basic block is calculated.</p>
+
+<h2><a name="Call_graph"
+>Call graph <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>All connections between the <b>basic block</b>s are calculated. This allows for:</p>
+
+<h2><a name="Loop_detection"
+>Loop detection <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>where the range and depth of loops is calculated.</p>
+
+<h2><a name="Life_analysis"
+>Life analysis <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Whenever an operand is marked as an <b>OUT</b> argument, this operand starts with a new value. This means that at this point the life range of the symbol ends and a new life range is started, which allows the allocation of a different register to the same variable or the same register to a different variable.</p>
+
+<p>Variables used as <b>IN</b> parameters must keep their parrot register over their usage range.</p>
+
+<p>When <code lang='und' xml:lang='und'>imcc</code> detects a register usage, where the first operation is using (reading) a register (and warnings are enabled), <code lang='und' xml:lang='und'>imcc</code> emits an appropriate message.</p>
+
+<p>Consider these two code snippets (block numbers are attached):</p>
+
+<pre lang='und' xml:lang='und'>  .sub main @MAIN
+ 0      $I0 = 0         # initialized
+ 0      if $I0 goto l1
+ 1      $I1 = 1         # init in block 1
+ 1      goto l2
+ 2  l1:
+ 2      $I1 = 2         # init in block 2
+ 3  l2:
+ 3      print $I0
+ 3      print $I1       # all paths leading here do init
+ 3      print &#34;\n&#34;
+ 3      end
+  .end</pre>
+
+<p>and:</p>
+
+<pre lang='und' xml:lang='und'>  .sub main @MAIN 
+ 0      $I0 = 0         # initialized
+ 0      if $I0 goto l1  # branch to bb 1 or 2
+ 1      $I1 = 1         # init only in block 1
+ 2  l1:
+ 2      print $I0
+ 2      print $I1       # no init in code path from block 0
+ 2      print &#34;\n&#34;
+ 2      end
+  .end</pre>
+
+<p>The latter of these emits the warning:</p>
+
+<pre lang='und' xml:lang='und'>  warning:imcc:propagate_need: &#39;$I1&#39; might be used \
+  uninitialized in _main:7</pre>
+
+<h2><a name="Interference_graph"
+>Interference graph <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Once the above information is calculated, the next step is to look at which variables interfere with which others. Non&#45;interfering variables can be given the same parrot register.</p>
+
+<h2><a name="Register_allocation"
+>Register allocation <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p><code lang='und' xml:lang='und'>imcc</code> then starts allocating registers according to a variable&#39;s score. Variables deeply nested inside loops have the highest score and get a parrot register first. Variables with a long life range (i.e. with many interferences) get allocated last.</p>
+
+<h2><a name="Spilling"
+>Spilling <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>When there are too many interferences, so that not all variables can be allocated to a parrot register, variables with lowest score are spilled, or stored in a <b>PerlArray</b> when they are not used.</p>
+
+<pre lang='und' xml:lang='und'>  set $I1,1
+  set $I2,2
+  ...
+  set $I33, 33
+  ...
+  print $I1
+  ...
+  print $I33</pre>
+
+<p>The usage of all these variables makes it necessary to spill.</p>
+
+<pre lang='und' xml:lang='und'>  new P31, .PerlArray
+  ...
+  set I0, 1
+  set P31[0], I0        # store $I1
+  set I0, 2
+  set P31[1], I0        # store $I2
+  ...
+  set I0, P31[0]        # fetch $I1
+  print I0</pre>
+
+<p>When $I1 or $I2 are accessed, then code is generated to fetch the value from the spill array. The life range of such a spilled variable is then only one fetch and/or store operation and the actual usage. Therefore the variable has minimal interferences with other variables.</p>
+
+<h1><a name="Optimization"
+>Optimization <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Optimizations are only done when enabled with the <b>&#45;O</b> switch. Please consult <em lang='und' xml:lang='und'>t/imcpasm/*.t</em> for examples. They occur between various stages and may be repeatedly done: e.g. after converting a conditional branch to an absolute one, unreachable code will be removed then, which might cause unused labels ...</p>
+
+<h1><a name="Optimizations_with_&#45;O1"
+>Optimizations with &#45;O1 <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Constant_substitution"
+>Constant substitution <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Constant arguments to many ops are evaluated. Conditional branches with constant conditions are converted to unconditional branches. Integer arguments to float operations are converted to float operands.</p>
+
+<h2><a name="If&#45;branch_optimization"
+>If&#45;branch optimization <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>A sequence of code:</p>
+
+<pre lang='und' xml:lang='und'>    if cond, L1
+    branch L2
+ L1:
+ ...
+ L2:</pre>
+
+<p>will be converted to</p>
+
+<pre lang='und' xml:lang='und'>    unless cond, L2
+    ...
+ L2:</pre>
+
+<p>The same is done for other conditional branches <b>gt</b>, <b>ge</b>, <b>eq</b> and their reverse meanings.</p>
+
+<h2><a name="Branches_to_branches"
+>Branches to branches <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Unconditional branch sequences get optimized to jumps to the final label.</p>
+
+<h2><a name="Unused_labels"
+>Unused labels <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Unreferenced labels are deleted.</p>
+
+<h2><a name="Dead_code_removal"
+>Dead code removal <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Code not reachable after an unconditional branch instruction and basic blocks that are not entered from somewhere get removed.</p>
+
+<h1><a name="Optimizations_with_&#45;O2"
+>Optimizations with &#45;O2 <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Note: These are currently experimental and might not do the Right Thing.</p>
+
+<h2><a name="Used_LHS_once"
+>Used LHS once <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>For a sequence of code</p>
+
+<pre lang='und' xml:lang='und'>   $I0 = 10
+   $I1 = 20</pre>
+
+<p>where <b>$I0</b> is not used again, the first assignment will be tossed, resulting in code like:</p>
+
+<pre lang='und' xml:lang='und'>   set I0, 20</pre>
+
+<h2><a name="Loop_optimization"
+>Loop optimization <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Instructions which are invariant to a loop are pulled out of the loop and inserted in front of the loop entry.</p>
+
+<h1><a name="Code_generation"
+>Code generation <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><code lang='und' xml:lang='und'>imcc</code> either generates PASM or else directly generates a PBC file for running with parrot.</p>
+
+<h1><a name="Running_code"
+>Running code <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Additionally the generated code can be run immediately inside imcc. All parrot runtime options like <b>&#45;j</b> or <b>&#45;t</b> are available.</p>
+
+<h1><a name="FILES"
+>FILES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>imc.c</em>, <em lang='und' xml:lang='und'>cfg.c</em>, <em lang='und' xml:lang='und'>optimizer.c</em>, <em lang='und' xml:lang='und'>pbc.c</em></p>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Leopold Toetsch &#60;lt@toetsch.at&#62;</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

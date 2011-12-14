@@ -1,0 +1,98 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Benchmark one or more opcodes</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/tools.html">Tools</a> &raquo; Benchmark one or more opcodes
+                </div>
+
+<h1><a name="TITLE"
+>TITLE</a></h1>
+
+<p>bench_op &#45; Benchmark one or more opcodes</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>  parrot bench_op.pir &#39;add $I0, $I1, $I2&#39;
+  parrot bench_op.pir &#45;&#45;preops=&#39;newclass $P0, &#34;Foo&#34;&#39; file_w_ops.pir
+  parrot bench_op.pir &#45;&#45;help</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>The given opcode(s) are compiled into a sequence:</p>
+
+<pre>  .sub _entry0
+    .param int N
+    .local int i
+    #
+    # preops go here
+    #
+    null i
+  loop:
+    #
+    # ops go here
+    #
+    inc i
+    lt i, N, loop
+  .end</pre>
+
+<p>so they should conform to Parrot Calling Conventions. The code gets executed with the PIR compiler &#45; using symbolic variables is always ok.</p>
+
+<p>Output is the time in seconds for 1.000.000 instruction(s).</p>
+
+<h1><a name="OPTIONS"
+>OPTIONS</a></h1>
+
+<dl>
+<dt><a name="&#45;&#45;times=N"
+><i>&#45;&#45;times=N</i></a></dt>
+Run the given opcode(s) in a loop <i>N</i> time. If no <i>&#45;&#45;times</i> options is given 100.000 is used.
+<dt><a name="&#45;&#45;verbose=i"
+><i>&#45;&#45;verbose=i</i></a></dt>
+Set <i>&#45;&#45;verbose</i> to 1 to see the total time. Set <i>&#45;&#45;verbose</i> to 2 to see the compiled programs.
+<dt><a name="&#45;&#45;preops=&#39;opcode(s)&#39;"
+><i>&#45;&#45;preops=&#39;opcode(s)&#39;</i></a></dt>
+Execute the given opcodes in front of the loop. This is needed for ops, that have side effects like <b>newclass</b>.
+<dt><a name="&#45;&#45;help"
+><i>&#45;&#45;help</i></a></dt>
+Print a short description and exit.
+<dt><a name="&#45;&#45;version"
+><i>&#45;&#45;version</i></a></dt>
+Print program version and exit.</dl>
+
+<h1><a name="BUGS"
+>BUGS</a></h1>
+
+<p>You can&#39;t use the variables <i>i</i> and <i>N</i> nor the labels <i>loop:</i> and <i>_entry\d</i> in your opcodes.</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Leopold Toetsch &#60;lt@toetsch.at&#62;</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

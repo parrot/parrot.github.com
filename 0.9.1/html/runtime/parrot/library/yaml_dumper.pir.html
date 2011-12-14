@@ -1,0 +1,111 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>PIR version of a YAML dumper, ala Data::Dumper</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Contents</a> &raquo; <a href="../../../../html/libs.html">Libraries</a> &raquo; PIR version of a YAML dumper, ala Data::Dumper
+                </div>
+
+<h1><a name="TITLE"
+>TITLE</a></h1>
+
+<p>yaml_dumper.pir &#45; PIR version of a YAML dumper,
+ala Data::Dumper</p>
+
+<h1><a name="VERSION"
+>VERSION</a></h1>
+
+<p>version 0.1</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    ...
+    # dump the P0 register
+    yaml( P0 )
+
+    # dump the P0 register, with &#34;name&#34;
+    yaml( P0, &#34;name&#34; )
+    ...
+
+    END
+    .include &#34;library/yaml_dumper.pir&#34;</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<pre>    PIR implementation of Perl 5&#39;s Data::Dumper module to dump YAML format.</pre>
+
+<h1><a name="FUNCTIONS"
+>FUNCTIONS</a></h1>
+
+<p>This library provides the following functions:</p>
+
+<dl>
+<dt><a name="yaml(_pmc,_?name,_?indent]_)"
+>yaml( pmc, ?name, ?indent] )</a></dt>
+This is the public (non object) interface to the yaml dumper library.
+<dl>
+<dt><a name="pmc"
+>pmc</a></dt>
+Required. The PMC to dump.
+<dt><a name="name"
+>name</a></dt>
+Optional. The name of the PMC.
+<dt><a name="indent"
+>indent</a></dt>
+Optional. The indent used at the start of each line printed.</dl>
+<b>Note:</b> This function currently returns nothing. It should return the dumped data as a string, like Perl&#39;s Data::Dumper. Instead, everything is printed out using <code>print</code>.<b>Note: #2</b> Hash keys are now sorted using <code>_sort()</code> (library/sort.pir)
+<dt><a name="_register_dumper(_id,_sub_)"
+>_register_dumper( id, sub )</a></dt>
+Registers a dumper for new PMC type. <b>EXCEPTION_UNIMPLEMENTED</b> But see <b>method __dump</b> below.
+<dl>
+<dt><a name="id"
+>id</a></dt>
+the PMC id, as returned by the <code>typeof</code> op.
+<dt><a name="sub"
+>sub</a></dt>
+a Sub pmc, that gets called in order to dump the content of the given PMC</dl>
+For example:
+<pre>    sub = find_name &#34;_dump_PerlArray&#34;
+    _register_dumper( .PerlArray, sub )</pre>
+This function returns nothing.
+<dt><a name="__dump(pmc_yaml,_str_label)_method"
+>__dump(pmc yaml, str label) method</a></dt>
+If a method <code>__dump</code> exists in the namespace of the class, it will be called with the current dumper object and the label of the PMC.
+<dt><a name="yaml_=_global_dumper()_(internal)"
+>yaml =_global_dumper() <b>(internal)</b></a></dt>
+Internal helper function.Returns the global dumper instance used by the non object interface.</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Jens Rieks &#60;parrot at jensbeimsurfen dot de&#62; is the author and maintainer. Please send patches and suggestions to the Perl 6 Internals mailing list.</p>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT</a></h1>
+
+<p>Copyright (C) 2004&#45;2008, Parrot Foundation.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

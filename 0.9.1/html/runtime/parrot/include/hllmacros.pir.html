@@ -1,0 +1,196 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Untitled</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Contents</a> &raquo; <a href="../../../../html/dynapmc.html">Dynamic PMCs</a> &raquo; Untitled
+                </div>
+
+<h1><a name="High_Level_Language_Macros"
+>High Level Language Macros</a></h1>
+
+<p>These macros are to make it easier to write readable and maintainable PIR by preprocessing common HLL forms into their low level PIR forms.
+These are <b>not</b> actually high level constructs,
+but merely preprocessor directives.</p>
+
+<h2><a name="Conditionals"
+>Conditionals</a></h2>
+
+<p>When a conditional is labeled as a parameter,
+the valid syntax is limited.
+Only code snippets such as <code>$P0</code>,
+<code>$I0 &#60;= 42</code>,
+<code>null $P0</code>,
+are allowed.
+Groupings such as <code>$I0 &#60;= 42 || $I0 &#62; 142</code> are not allowed,
+although it is possible to write a macro that contains two parameters representing conditionals.
+It&#39;s important to avoid the { } delimiter on the conditionals since a newline in the conditional renders the generated PIR invalid.</p>
+
+<h2><a name="Code_blocks"
+>Code blocks</a></h2>
+
+<p>The macro preprocessor is very simple.
+But it allows using braces to delimit code that contains commas or right parenthesis,
+<code>)</code>,
+without causing an error.
+This allows for nesting macros to near infinite depths.
+And macro parameter that uses a comma or right parenthesis must be enclosed in braces.</p>
+
+<h1><a name="Macros"
+>Macros</a></h1>
+
+<dl>
+<dt><a name=".NL()"
+><b><code>.NL()</b></code></a></dt>
+This is the most simple of macros.
+Because PIR statements are delimited by newlines,
+putting multiple statements,
+no matter how simple or short,
+is not allowed.
+Sometimes for readability you wish to have two on the same line.
+Using <code>.NL()</code> in a line will insert a linebreak.
+<dt><a name=".If(conditional,_code)"
+><b><code>.If(conditional, code)</b></code></a></dt>
+Runs the code in <code>code</code> if <code>conditional</code> is true.
+<dt><a name=".Unless(conditional,_code)"
+><b><code>.Unless(conditional, code)</b></code></a></dt>
+Runs the code in <code>code</code> if <code>conditional</code> is false.
+<dt><a name=".IfElse(conditional,_true,_false)"
+><b><code>.IfElse(conditional, true, false)</b></code></a></dt>
+Runs the code in <code>true</code> if <code>conditional</code> is true,
+otherwise runs the code in <code>false</code>.
+<dt><a name=".While(conditional,_code)"
+><b><code>.While(conditional, code)</b></code></a></dt>
+Runs the code in <code>code</code> as long as <code>conditional</code> is true.
+<dt><a name=".DoWhile(code,_conditional)"
+><b><code>.DoWhile(code, conditional)</b></code></a></dt>
+Runs the code in <code>code</code> once,
+and then as long as <code>conditional</code> is true.
+<dt><a name=".Loop(code)"
+><b><code>.Loop(code)</b></code></a></dt>
+Runs the code in <code>code</code> forever.
+<dt><a name=".For(start,_conditional,_continue,_code)"
+><b><code>.For(start, conditional, continue, code)</b></code></a></dt>
+First <code>start</code> is executed,
+such as <code>i = 0</code>,
+and then if the <code>conditional</code> is true,
+runs <code>code</code>,
+and then the <code>continue</code> code,
+such as <code>inc i</code>.
+<dt><a name=".Foreach(name,_array,_code)"
+><b><code>.Foreach(name, array, code)</b></code></a></dt>
+A simple foreach loop.
+Given the aggregate <code>array</code>,
+which <b>must</b> be a register,
+it iterates through the array,
+putting each value into <code>name</code> to work with in <code>code</code>.</dl>
+
+<h1><a name="Examples"
+>Examples</a></h1>
+
+<h2><a name="Good_morning!"
+>Good morning!</a></h2>
+
+<p>&#34;Hello,
+world!&#34; is so mundane,
+make it more fun.</p>
+
+<pre>    .include &#34;tm.pasm&#34;
+    .include &#34;hllmacros.pir&#34;
+    .sub main :main
+        $I0 = time
+        $P0 = decodelocaltime $I0
+        $I0 = $P0[.TM_HOUR]
+        .IfElse($I0 &#60; 12,{
+            print &#34;Good morning!\n&#34;
+        },{
+            .IfElse($I0 &#62; 18,{
+                print &#34;Good night!\n&#34;
+            },{
+                print &#34;Good evening!\n&#34;
+            })
+        })
+    .end</pre>
+
+<h2><a name="Simple_looping"
+>Simple looping</a></h2>
+
+<p>A simple demonstration of the For loop.</p>
+
+<pre>    .include &#34;hllmacros.pir&#34;
+    .sub main :main
+        print &#34;For\n&#34;
+        .For(i = 0 , i &#60; 5, inc i,
+            print &#34;\t&#34;
+            print i
+            print &#34;\n&#34;
+        )
+    .end</pre>
+
+<p>A simple demonstration of the Foreach loop.</p>
+
+<pre>    .include &#34;hllmacros.pir&#34;
+    .sub main :main
+        print &#34;Foreach\n&#34;
+        .local pmc array, letter
+        array = new &#39;ResizablePMCArray&#39;
+        push array, &#34;a&#34;
+        push array, &#34;b&#34;
+        push array, &#34;c&#34;
+        .Foreach(letter, array, {
+            print &#34;\t&#34;
+            print letter
+            print &#34; &#34;
+            .IfElse(letter == &#39;b&#39;,
+                print &#34;is b\n&#34;
+            ,
+                print &#34;isn&#39;t b\n&#34;
+            )
+        })
+    .end</pre>
+
+<p>Using <code>.NL()</code></p>
+
+<pre>    .local int i, j
+    .For({i = 0 .NL() j = 11}, i &#60; j, {inc i .NL() dec j }, {
+        print i
+        print &#34;\t&#34;
+        print j
+        print &#34;\n&#34;
+    })</pre>
+
+<h1><a name="Caveats"
+>Caveats</a></h1>
+
+<p>The .Foreach macro is not nestable within itself currently. You can use other macros inside a .Foreach loop, and the .Foreach loop can be nested inside other macros.</p>
+
+<pre>    .Foreach(foo, bar, {
+        .Foreach(foobar, foo, {
+            print foobar
+        })
+    })</pre>
+
+<p>Will not run as you would expect.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,377 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Episode 4: PAST Nodes and More Statements</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Home</a> &raquo; <a href="../../../../../html/PCT_Tutorial.html">PCT Tutorial</a> &raquo; Episode 4: PAST Nodes and More Statements
+                </div>
+
+<h1><a name="Episode_4:_PAST_Nodes_and_More_Statements"
+>Episode 4: PAST Nodes and More Statements</a></h1>
+
+<h2><a name="Introduction"
+>Introduction</a></h2>
+
+<p>The previous episode introduced the full grammar specification of Squaak,
+and we finally started working on the implementation.
+If you&#39;re doing the exercises,
+you currently have basic assignments working; strings and integers can be assigned to (global) variables.
+This episode will focus on implementation of some statement types and explain a few bits about the different PAST node types.</p>
+
+<h2><a name="Parrot_Abstract_Syntax_Tree"
+>Parrot Abstract Syntax Tree</a></h2>
+
+<p>A Parrot Abstract Syntax Tree (PAST) represents a program written in Squaak (or any other Parrot&#45;ported language),
+and consists of nodes.
+In the previous episode,
+we already saw nodes to represent string and integer literals,
+identifiers and &#34;operator&#34; nodes (PAST::Op),
+in our case assignment.
+Other operators represent other high&#45;level language constructs such as conditional statements,
+loops,
+and subroutine invocation.
+Depending on the node type,
+a PAST node can take child nodes.
+For instance,
+a PAST node to represent an if&#45;statement can have up to three child nodes.
+The first child node represents the condition; if true,
+the second child node is evaluated.
+If the condition evaluates to false,
+and there&#39;s a third child node,
+this third child node is evaluated (the else part).
+If the PAST represents a subroutine invocation,
+the child nodes are evaluated in a different way.
+In that case,
+the first child node represents the subroutine that is to be invoked (unless the :name attribute was set on this node,
+but more on that in a later episode),
+and all other child nodes are passed to that subroutine as arguments.
+It generally doesn&#39;t matter of which PAST node type the children are.
+For instance,
+consider a language in which a simple expression is a statement:</p>
+
+<pre>    42</pre>
+
+<p>You might wonder what kind of code is generated for this. Well, it&#39;s really very simple: a new <code>PAST::Val</code> node is created (of a certain type, for this example that would be <code>Integer</code>), and the value is assigned to this node. It might seem a bit confusing to write something like this, as it doesn&#39;t really do anything (note that this is not valid Squaak input):</p>
+
+<pre>    if 42 then &#34;hi&#34; else &#34;bye&#34; end</pre>
+
+<p>But again, this works out correctly; the &#34;then&#34; and &#34;else&#34; blocks are compiled to instructions that load that particular literal into a <code>PAST::Val</code> node and leave it there. That&#39;s fine, if your language allows such statements. The point I&#39;m trying to make is, that all PAST nodes are equal. You don&#39;t need to think about the node types if you set a node as a child of some other parent node. Each PAST node is compiled into a number of PIR instructions.</p>
+
+<h2><a name="Go_with_the_control&#45;flow"
+>Go with the control&#45;flow</a></h2>
+
+<p>Now you know a bit more on PAST nodes, let&#39;s get our hands dirty and implement some more statement types. In the rest of this episode, we&#39;ll handle if&#45;statements and throw&#45;statements.</p>
+
+<h2><a name="If&#45;then&#45;else"
+>If&#45;then&#45;else</a></h2>
+
+<p>The first statement we&#39;re going to implement now is the if&#45;statement. An if&#45;statement has typically three parts (but this of course depends on the programming language): a conditional expression, a &#34;then&#34; part and an &#34;else&#34; part. Implementing this in Perl 6 rules and PAST is almost trivial:</p>
+
+<pre>    rule if_statement {
+        &#39;if&#39; &#60;expression&#62; &#39;then&#39; &#60;block&#62;
+        [&#39;else&#39; $&#60;else&#62;=&#60;block&#62; ]?
+        &#39;end&#39;
+        {*}
+    }
+
+    rule block {
+        &#60;statement&#62;*
+        {*}
+    }
+
+    rule statement {
+        | &#60;assignment&#62; {*}          #= assignment
+        | &#60;if_statement&#62; {*}        #= if_statement
+    }</pre>
+
+<p>Note that the optional else block is stored in the match object&#39;s &#34;else&#34; field. If we hadn&#39;t written this $&#60;else&#62;= part, then &#60;block&#62; would have been an array, with block[0] the &#34;then&#34; part, and block[1] the optional else part. Assigning the optional else block to a different field, makes the action method slightly easier to read. Also note that the statement rule has been updated; a statement is now either an assignment or an if&#45;statement. As a result, the action method statement now takes a key argument. The relevant action methods are shown below:</p>
+
+<pre>    method statement($/, $key) {
+        # get the field stored in $key from the $/ object,
+        # and retrieve the result object from that field.
+        make $( $/{$key} );
+    }
+
+    method block($/) {
+        # create a new block, set its type to &#39;immediate&#39;,
+        # meaning it is potentially executed immediately
+        # (as opposed to a declaration, such as a
+        # subroutine definition).
+        my $past := PAST::Block.new( :blocktype(&#39;immediate&#39;),
+                                     :node($/) );
+
+        # for each statement, add the result
+        # object to the block
+        for $&#60;statement&#62; {
+            $past.push( $( $_ ) );
+        }
+        make $past;
+    }
+
+    method if_statement($/) {
+        my $cond := $( $&#60;expression&#62; );
+        my $then := $( $&#60;block&#62; );
+        my $past := PAST::Op.new( $cond, $then,
+                                  :pasttype(&#39;if&#39;),
+                                  :node($/) );
+        if $&#60;else&#62; {
+            $past.push( $( $&#60;else&#62;[0] ) );
+        }
+        make $past;
+    }</pre>
+
+<p>That&#39;s, easy, huh? First, we get the result objects for the conditional expression and the then part. Then, a new <code>PAST::Op</code> node is created, and the <code>:pasttype</code> is set to <code>if</code>, meaning this node represents an if&#45;statement. Then, if there is an &#34;else&#34; block, this block&#39;s result object is retrieved and added as the third child of the PAST node. Finally, the result object is set with the make function.</p>
+
+<h2><a name="Result_objects"
+>Result objects</a></h2>
+
+<p>At this point it&#39;s wise to spend a few words on the make function, the parse actions and how the whole PAST is created by the individual parse actions. Have another look at the action method if_statement. In the first two lines, we request the result objects for the conditional expression and the &#34;then&#34; block. When were these result objects created? How can we be sure they&#39;re there? The answer lies in the order in which the parse actions are executed. The special &#34;{*}&#34; symbol that triggers a parse action invocation, is usually placed at the end of the rule. For this input string: &#34;if 42 then x = 1 end&#34; this implies the following order:</p>
+
+<dl>
+<dt><a name="1._parse_TOP"
+>1. parse TOP</a></dt>
+
+<dt><a name="2._parse_statement"
+>2. parse statement</a></dt>
+
+<dt><a name="3._parse_if_statement"
+>3. parse if_statement</a></dt>
+
+<dt><a name="4._parse_expression"
+>4. parse expression</a></dt>
+
+<dt><a name="5._parse_integer"
+>5. parse integer</a></dt>
+
+<dt><a name="6._create_PAST::Val(_:value(42)_)"
+>6. create PAST::Val( :value(42) )</a></dt>
+
+<dt><a name="7._parse_block"
+>7. parse block</a></dt>
+
+<dt><a name="8._parse_statement"
+>8. parse statement</a></dt>
+
+<dt><a name="9._parse_assignment"
+>9. parse assignment</a></dt>
+
+<dt><a name="10._parse_identifier"
+>10. parse identifier</a></dt>
+
+<dt><a name="11._create_PAST::Var(_:name(&#39;x&#39;))"
+>11. create PAST::Var( :name(&#39;x&#39;))</a></dt>
+
+<dt><a name="12._parse_integer"
+>12. parse integer</a></dt>
+
+<dt><a name="13._create_PAST::Val(_:value(1)_)"
+>13. create PAST::Val( :value(1) )</a></dt>
+
+<dt><a name="14._create_PAST::Op(_:pasttype(&#39;bind&#39;)_)"
+>14. create PAST::Op( :pasttype(&#39;bind&#39;) )</a></dt>
+
+<dt><a name="15._create_PAST::Block_(in_action_method_block)"
+>15. create PAST::Block (in action method block)</a></dt>
+
+<dt><a name="16._create_PAST::Op(_:pasttype(&#39;if&#39;)_)"
+>16. create PAST::Op( :pasttype(&#39;if&#39;) )</a></dt>
+
+<dt><a name="17._create_PAST::Block_(in_action_method_TOP)"
+>17. create PAST::Block (in action method TOP)</a></dt>
+</dl>
+
+<p>As you can see, PAST nodes are created in the leafs of the parse tree first, so that later, action methods higher in the parse tree can retrieve them.</p>
+
+<h2><a name="Throwing_Exceptions"
+>Throwing Exceptions</a></h2>
+
+<p>The grammar rule for the &#34;throw&#34; statement is really quite easy, but it&#39;s useful to discuss the parse action, as it shows the use of generating custom PIR instructions. First the grammar rule:</p>
+
+<pre>    rule throw_statement {
+        &#39;throw&#39; &#60;expression&#62;
+        {*}
+    }</pre>
+
+<p>I assume you know how to update the &#34;statement&#34; rule by now. The throw statement will compile down to Parrot&#39;s &#34;throw&#34; instruction, which takes one argument. In order to generate a custom Parrot instruction, the instruction can be specified in the <code>:pirop</code> attribute when creating a <code>PAST::Op</code> node. Any child nodes are passed as arguments to this instruction, so we need to pass the result object of the expression being thrown as a child of the <code>PAST::Op</code> node representing the &#34;throw&#34; instruction.</p>
+
+<pre>    method throw_statement($/) {
+        make PAST::Op.new( $( $&#60;expression&#62; ),
+                           :pirop(&#39;throw&#39;),
+                           :node($/) );
+    }</pre>
+
+<h2><a name="What&#39;s_Next?"
+>What&#39;s Next?</a></h2>
+
+<p>In this episode we implemented two more statement types of Squaak. You should get a general idea of how and when PAST nodes are created, and how they can be retrieved as sub (parse) trees. In the next episode we&#39;ll take a closer look at variable scope and subroutines.</p>
+
+<p>In the mean time, I can imagine some things are not too clear. In case you&#39;re lost, don&#39;t hesitate to leave comment, and I&#39;ll try to answer (as far as my knowledge goes).</p>
+
+<h2><a name="Exercises"
+>Exercises</a></h2>
+
+<ol>
+<li>We showed how the if&#45;statement was implemented. The while&#45;statement and try&#45;statement are very similar. Implement these. Check out pdd26 to see what <code>PAST::Op</code> nodes you should create.</li>
+
+<li>Start Squaak in interactive mode, and specify the target option to show the generated PIR instructions. Check out what instructions and labels are generated, and see if you can recognize which instructions make up the conditional expression, which represent the &#34;then&#34; block, and which represent the &#34;else&#34; block (if any).</li>
+</ol>
+
+<h2><a name="References"
+>References</a></h2>
+
+<ul>
+<li>PDD26: AST</li>
+
+<li>docs/art/*.pod for good introductions to PIR</li>
+</ul>
+
+<h2><a name="Solutions_to_the_exercises"
+>Solutions to the exercises</a></h2>
+
+<p>These are the solutions to the exercises in Episode 4 of the Parrot Compiler Tools tutorial.</p>
+
+<ol>
+<li>We showed how the if&#45;statement was implemented. The while&#45;statement and try&#45;statement are very similar. Implement these. Check out pdd26 to see what <code>PAST::Op</code> nodes you should create.</li>
+
+<p>The while&#45;statement is straightforward:</p>
+
+<pre> method while_statement($/) {
+     my $cond := $( $&#60;expression&#62; );
+     my $body := $( $&#60;block&#62; );
+     make PAST::Op.new( $cond, $body, :pasttype(&#39;while&#39;), :node($/) );
+ }</pre>
+
+<p>The try&#45;statement is a bit more complex. Here are the grammar rules and action methods.</p>
+
+<pre> rule try_statement {
+     &#39;try&#39; $&#60;try&#62;=&#60;block&#62;
+     &#39;catch&#39; &#60;exception&#62;
+     $&#60;catch&#62;=&#60;block&#62;
+     &#39;end&#39;
+     {*}
+ }
+
+ rule exception {
+     &#60;identifier&#62;
+     {*}
+ }
+
+ method try_statement($/) {
+     ## get the try block
+     my $try := $( $&#60;try&#62; );
+
+     ## create a new PAST::Stmts node for
+     ## the catch block; note that no
+     ## PAST::Block is created, as this
+     ## currently has problems with the
+     ## exception object. For now this will
+     ## do.
+     my $catch := PAST::Stmts.new( :node($/) );
+     $catch.push( $( $&#60;catch&#62; ) );
+
+     ## get the exception identifier;
+     ## set a declaration flag, the scope,
+     ## and clear the viviself attribute.
+     my $exc := $( $&#60;exception&#62; );
+     $exc.isdecl(1);
+     $exc.scope(&#39;lexical&#39;);
+     $exc.viviself(0);
+     ## generate instruction to retrieve the exception object (and the
+     ## exception message, that is passed automatically in PIR, this is stored
+     ## into $S0 (but not used).
+     my $pir := &#34;    .get_results (%r, $S0)\n&#34;
+              ~ &#34;    store_lex &#39;&#34; ~ $exc.name()
+              ~ &#34;&#39;, %r&#34;;
+
+     $catch.unshift( PAST::Op.new( :inline($pir), :node($/) ) );
+
+     ## do the declaration of the exception object as a lexical here:
+     $catch.unshift( $exc );
+     make PAST::Op.new( $try, $catch, :pasttype(&#39;try&#39;), :node($/) );
+ }
+
+ method exception($/) {
+     our $?BLOCK;
+     my $past := $( $&#60;identifier&#62; );
+     $?BLOCK.symbol( $past.name(), :scope(&#39;lexical&#39;) );
+     make $past;
+ }</pre>
+
+<p>Instead of putting &#34;identifier&#34; after the &#34;catch&#34; keyword, we made it a separate rule, with its own action method. This allows us to insert the identifier into the symbol table of the current block (the try&#45;block), before the catch block is parsed.</p>
+
+<p>First the PAST node for the try block is retrieved. Then, the catch block is retrieved, and stored into a <code>PAST::Stmts</code> node. This is needed, so that we can make sure that the instructions that retrieve the exception object come first in the exception handler.</p>
+
+<p>Then, we retrieve the PAST node for the exception identifier. We&#39;re setting its scope, a flag telling the PAST compiler this is a declaration, and we clear the viviself attribute. The viviself attribute is discussed in a later episode; if you didn&#39;t read that yet, just keep in mind the viviself attribute (if set) will make sure all declared variables are initialized. We must clear this attribute here, to make sure that this exception object is not initialized, because that will be done by the instruction that retrieves the thrown exception object, discussed next.</p>
+
+<p>In PIR, we can use the <code>.get_results</code> directive to retrieve a thrown exception. You could also generate the <code>get_results</code> instruction (note the missing dot), but this is much easier. Currently, in PIR, when retrieving the exception object, you must always specify both a variable (or register) for the exception object, and a string variable (or register) to store the exception message. The exception message is actually stored within the exception object. We use <code>$S0</code> to store the exception message, and we&#39;ll ignore it after that. Just remember for now that if you want to retrieve the exception object, you must also specify a place to store the exception message.</p>
+
+<p>There is no special PAST node to generate these instructions, so we use a so&#45;called inline <code>PAST::Op</code> node. We store the instructions to be generated into a string and store that in the inline attribute of a <code>PAST::Op</code> node.</p>
+
+<p>Once created, this node is unshifted onto the <code>PAST::Stmts</code> node representing the exception handler. After that, the declaration is stored in that <code>PAST::Stmts</code> node, so that this declaration comes first.</p>
+
+<p>Finally, we have the block representing the try block, and a <code>PAST::Stmts</code> node representing the exception handler. Both are used to create a <code>PAST::Op</code> node whose pasttype is set to the built&#45;in &#34;try&#34; type.</p>
+
+<li>Start Squaak in interactive mode, and specify the target option to show the generated PIR instructions. Check out what instructions and labels are generated, and see if you can recognize which instructions make up the conditional expression, which represent the &#34;then&#34; block, and which represent the &#34;else&#34; block (if any).</li>
+
+<pre>  &#62; if 1 then else end
+
+  .namespace []
+  .sub &#34;_block16&#34;
+    new $P18, &#34;Integer&#34;
+    assign $P18, 1
+
+    ## this is the condition:
+    if $P18, if_17
+
+    ## this is invoking the else&#45;block:
+    get_global $P21, &#34;_block19&#34;
+    newclosure $P21, $P21
+    $P20 = $P21()
+    set $P18, $P20
+    goto if_17_end
+
+    ## this is invoking the then&#45;block:
+    if_17:
+    get_global $P24, &#34;_block22&#34;
+    newclosure $P24, $P24
+    $P23 = $P24()
+    set $P18, $P23
+    if_17_end:
+    .return ($P18)
+  .end
+
+  .namespace []
+  .sub &#34;_block22&#34; :outer(&#34;_block16&#34;)
+    .return ()
+  .end
+
+  .namespace []
+  .sub &#34;_block19&#34; :outer(&#34;_block16&#34;)
+    .return ()
+  .end</pre>
+</ol>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

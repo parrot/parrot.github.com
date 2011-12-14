@@ -1,0 +1,168 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - NameSpace PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; NameSpace PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/namespace.pmc &#45; NameSpace PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>These are the vtable functions for the namespace PMC.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initialize a <code>NameSpace</code> PMC.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Marks the namespace as live.
+<dt><a name="PMC_*get_class()"
+><b><code>PMC *get_class()</b></code></a></dt>
+Returns the class or role PMC that is associated with this namespace.
+<dt><a name="void_set_pmc_keyed_str(STRING_*key,_PMC_*value)"
+><b><code>void set_pmc_keyed_str(STRING *key, PMC *value)</b></code></a></dt>
+Sets <code>*value</code> as the namespace item for <code>*key</code>.
+This is part of the raw interface.
+If the PMC <code>value</code> is exactly a NameSpace,
+<code>SELF</code> will be set as the parent of that namespace and the name <code>key</code> of <code>value</code> is stored too.
+<dt><a name="void_set_pmc_keyed(PMC_*key,_PMC_*value)"
+><b><code>void set_pmc_keyed(PMC *key, PMC *value)</b></code></a></dt>
+If <code>key</code> is a simple key,
+it works like above.
+If <code>key</code> is an array of strings or a chained key,
+add all components to the namespace.
+<dt><a name="PMC_*get_pmc_keyed(PMC_*key)"
+><b><code>PMC *get_pmc_keyed(PMC *key)</b></code></a></dt>
+Return the given namespace or PMCNULL.
+<code>key</code> is either an array of strings,
+or a possibly nested key.
+<dt><a name="PMC_*get_pmc_keyed_str(STRING_*key)"
+><b><code>PMC *get_pmc_keyed_str(STRING *key)</b></code></a></dt>
+Return the given namespace item or PMCNULL.
+If the named item is either a NameSpace or a var,
+the NameSpace is returned.
+<dt><a name="PMC_*get_pmc_keyed_int(INTVAL_key)"
+><b><code>PMC *get_pmc_keyed_int(INTVAL key)</b></code></a></dt>
+Return a Sub representing an overridden vtable entry or PMCNULL.
+This is not really a public API.
+<dt><a name="void_*get_pointer_keyed_str(STRING_*key)"
+><b><code>void *get_pointer_keyed_str(STRING *key)</b></code></a></dt>
+
+<dt><a name="void_*get_pointer_keyed(PMC_*key)"
+><b><code>void *get_pointer_keyed(PMC *key)</b></code></a></dt>
+Return the given namespace item or PMCNULL.
+If the named item is either a NameSpace or a var,
+the var is returned.TT #1472 TOTAL KLUDGE.
+ON THE CHOPPING BLOCK.
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+Return the name of this namespace part.</dl>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="METHOD_make_namespace(PMC*_key)"
+><b><code>METHOD make_namespace(PMC* key)</b></code></a></dt>
+Create and retrieve the namespace given by <code>key</code>.
+If the namespace already exists,
+only retrieve it.
+<dt><a name="METHOD_add_namespace(STRING_*name,_PMC_*namespace)"
+><b><code>METHOD add_namespace(STRING *name, PMC *namespace)</b></code></a></dt>
+Stores the given namespace under this namespace,
+with the given name.
+Throws an invalid type exception if <code>namespace</code> is not a NameSpace PMC or subclass.
+<dt><a name="METHOD_add_sub(STRING_*name,_PMC_*sub)"
+><b><code>METHOD add_sub(STRING *name, PMC *sub)</b></code></a></dt>
+Stores the given sub under this namespace,
+with the given name.
+Throws an invalid type exception if <code>sub</code> is not a Sub PMC or subclass.
+<dt><a name="METHOD_add_var(STRING_*name,_PMC_*var)"
+><b><code>METHOD add_var(STRING *name, PMC *var)</b></code></a></dt>
+Stores the given variable under this namespace,
+with the given name.
+<dt><a name="METHOD_get_name()"
+><b><code>METHOD get_name()</b></code></a></dt>
+Returns the name of the namespace as an array of strings.
+<pre>  $P2 = $P3.&#39;get_name&#39;()
+  $S0 = join &#39;::&#39;, $P2            # &#39;::Foo::Bar&#39;</pre>
+
+<dt><a name="METHOD_find_namespace(STRING_*name)"
+><b><code>METHOD find_namespace(STRING *name)</b></code></a></dt>
+Return the namespace with the given name.
+<dt><a name="METHOD_find_sub(STRING_*name)"
+><b><code>METHOD find_sub(STRING *name)</b></code></a></dt>
+Return the Sub PMC with the given name.
+<dt><a name="METHOD_find_var(STRING_*name)"
+><b><code>METHOD find_var(STRING *name)</b></code></a></dt>
+Return the PMC with the given name.
+<dt><a name="METHOD_del_namespace(STRING_*name)"
+><b><code>METHOD del_namespace(STRING *name)</b></code></a></dt>
+Deletes the contained NameSpace PMC with the given name. Throws an invalid type exception if the item to delete is not a NameSpace PMC or subclass, and does not delete the PMC.
+<dt><a name="METHOD_del_sub(STRING_*name)"
+><b><code>METHOD del_sub(STRING *name)</b></code></a></dt>
+Deletes the contained Sub PMC with the given name. Throws an invalid type exception if the item to delete is not a Sub PMC or subclass, and does not delete the PMC.
+<dt><a name="METHOD_del_var(STRING_*name)"
+><b><code>METHOD del_var(STRING *name)</b></code></a></dt>
+Deletes the contained variable&#45;like PMC with the given name.
+<dt><a name="METHOD_get_sym(STRING_*name)"
+><b><code>METHOD get_sym(STRING *name)</b></code></a></dt>
+Return the symbol (var or sub) with the given name. This can be used to retrieve symbols, if a NameSpace with the same name exists.
+<dt><a name="METHOD_export_to(PMC_*dest,_PMC_*what)"
+><b><code>METHOD export_to(PMC *dest, PMC *what)</b></code></a></dt>
+Export items from this NameSpace into the <code>dest</code> NameSpace. The items to export are named in <code>what</code>, which may be an array of strings, a hash, or null. If <code>what</code> is an array of strings, interpretation of items in an array follows the conventions of the source (exporting) namespace. If <code>what</code> is a hash, the keys correspond to the names in the source namespace, and the values correspond to the names in the destination namespace. if a hash value is null or an empty string, the name in the hash key is used. A null <code>what</code> requests the &#39;default&#39; set of items. Any other type passed in <code>what</code> throws an exception.NOTE: exporting &#39;default&#39; set of items is not yet implemented.
+<dt><a name="METHOD_get_parent()"
+><b><code>METHOD get_parent()</b></code></a></dt>
+Return the parent NameSpace or PMCNULL, if none.
+<dt><a name="METHOD_get_class()"
+><b><code>METHOD get_class()</b></code></a></dt>
+Returns the class or role PMC that is associated with this namespace.
+<dt><a name="METHOD_set_class(PMC_*class_or_role)"
+><b><code>METHOD set_class(PMC *class_or_role)</b></code></a></dt>
+Sets the class or role PMC that is associated with this namespace.
+<dt><a name="METHOD_get_associated_methods()"
+><b><code>METHOD get_associated_methods()</b></code></a></dt>
+Gets the Hash of methods associated with this namespace and removes it from the namespace.
+<dt><a name="METHOD_get_associated_vtable_methods()"
+><b><code>METHOD get_associated_vtable_methods()</b></code></a></dt>
+Gets the Hash of vtables associated with this namespace and removes it from the namespace.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em><a href="../../docs/pdds/pdd21_namespaces.pod.html">docs/pdds/pdd21_namespaces.pod</a></em></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

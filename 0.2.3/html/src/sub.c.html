@@ -1,0 +1,183 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Subroutines</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Subroutines</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/sub.c &#45; Subroutines</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Subroutines,
+continuations,
+co&#45;routines and other fun stuff...</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_save_context(Interp_*interp,_struct_Parrot_Context_*ctx)"
+><b><code lang='und' xml:lang='und'>void save_context(Interp *interp, struct Parrot_Context *ctx)</b></code></a></dt><p class="pad"></p>
+
+<dd>Save the current &#34;context&#34; of interpreter.</dd><p class="pad"></p>
+
+<dt><a name="void_restore_context(Interp_*interp,_struct_Parrot_Context_*ctx)"
+><b><code lang='und' xml:lang='und'>void restore_context(Interp *interp, struct Parrot_Context *ctx)</b></code></a></dt><p class="pad"></p>
+
+<dd>Set context of interpreter from a context buffer.</dd><p class="pad"></p>
+
+<dt><a name="void_mark_context(Interp*_interpreter,_struct_Parrot_Context*_ctx)"
+><b><code lang='und' xml:lang='und'>void mark_context(Interp *interpreter, struct Parrot_Context *ctx)</b></code></a></dt><p class="pad"></p>
+
+<dd>Marks the context <code lang='und' xml:lang='und'>*ctx</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void prepend_stack( struct Stack_Chunk **interp_stack, struct Stack_Chunk **ctx_stack, struct Stack_Chunk *saved_stack, struct Stack_Chunk *saved_base)</b></code></a></dt><p class="pad"></p>
+
+<dd>The final <code lang='und' xml:lang='und'>ctx_stack</code> = <code lang='und' xml:lang='und'>interp_stack</code> + <code lang='und' xml:lang='und'>saved_stack</code>.
+<code lang='und' xml:lang='und'>interp_stack</code> and <code lang='und' xml:lang='und'>ctx_stack</code> are already swapped here.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void restore_stack( struct Stack_Chunk **interp_stack, struct Stack_Chunk **ctx_stack, struct Stack_Chunk **saved_stack, struct Stack_Chunk *saved_base)</b></code></a></dt><p class="pad"></p>
+
+<dd>Undo <code lang='und' xml:lang='und'>prepend_stack()</code>.
+<code lang='und' xml:lang='und'>interp_stack</code> and <code lang='und' xml:lang='und'>ctx_stack</code> are already swapped here.</dd><p class="pad"></p>
+
+<dt><a name="void_swap_context(Interp_*interp,_struct_PMC_*sub)"
+><b><code lang='und' xml:lang='und'>void swap_context(Interp *interp, struct PMC *sub)</b></code></a></dt><p class="pad"></p>
+
+<dd>Swaps the context.</dd><p class="pad"></p>
+
+<dt><a name="struct_Parrot_sub_*_new_sub(Interp_*interp)"
+><b><code lang='und' xml:lang='und'>struct Parrot_sub *new_sub(Interp *interp)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new <code lang='und' xml:lang='und'>Parrot_sub</code>.</dd><p class="pad"></p>
+
+<dt><a name="struct_Parrot_sub_*_new_closure(Interp_*interp)"
+><b><code lang='und' xml:lang='und'>struct Parrot_sub *new_closure(Interp *interp)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new <code lang='und' xml:lang='und'>Parrot_sub</code> with its own sctatchpad.</dd><p class="pad"></p>
+
+<dd>XXX: Need to document semantics in detail.</dd><p class="pad"></p>
+
+<dt><a name="struct_Parrot_cont_*_new_continuation(Interp_*interp)"
+><b><code lang='und' xml:lang='und'>struct Parrot_cont *new_continuation(Interp *interp)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new <code lang='und' xml:lang='und'>Parrot_cont</code> with its own copy of the current context.</dd><p class="pad"></p>
+
+<dt><a name="struct_Parrot_cont_*_new_ret_continuation(Interp_*interp)"
+><b><code lang='und' xml:lang='und'>struct Parrot_cont *new_ret_continuation(Interp *interp)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new <code lang='und' xml:lang='und'>Parrot_cont</code> with its own copy of the current context.</dd><p class="pad"></p>
+
+<dt><a name="struct_Parrot_coro_*_new_coroutine(Interp_*interp)"
+><b><code lang='und' xml:lang='und'>struct Parrot_coro *new_coroutine(Interp *interp)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new <code lang='und' xml:lang='und'>Parrot_coro</code>.</dd><p class="pad"></p>
+
+<dd>XXX: Need to document semantics in detail.</dd><p class="pad"></p>
+
+<dt><a name="void_mark_retc_cache(Interp_*)"
+><b><code lang='und' xml:lang='und'>void mark_retc_cache(Interp *)</b></code></a></dt><p class="pad"></p>
+
+<dd>Mark the objects in the return continuation cache being alive.</dd><p class="pad"></p>
+
+<dt><a name="void_add_to_retc_cache(Interp_*interpreter,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>void add_to_retc_cache(Interp *interpreter, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Add the return continuation <code lang='und' xml:lang='und'>pmc</code> to the cache and turn off custom marking,
+so that its context isn&#39;t marked.</dd><p class="pad"></p>
+
+<dd>Note: the context structure in <code lang='und' xml:lang='und'>PMC_cont(pmc)</code> remains allocated.</dd><p class="pad"></p>
+
+<dd>*/ void mark_retc_cache(Interp *interpreter) { PMC *pmc = interpreter&#45;&#62;caches&#45;&#62;retc_cache;</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    while (pmc) {
+        pobject_lives(interpreter, (PObj*)pmc);
+        pmc = PREV_RETC(pmc);
+    }
+}</pre>
+
+<dd>void add_to_retc_cache(Interp *interpreter, PMC *pmc) { Caches *mc = interpreter&#45;&#62;caches;</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    if (mc&#45;&#62;retc_cache)
+        PREV_RETC(mc&#45;&#62;retc_cache) = mc&#45;&#62;retc_cache;
+    PREV_RETC(pmc) = NULL;
+    mc&#45;&#62;retc_cache = pmc;
+    /* XXX expensive w. ARENA_DOD_FLAGS */
+    PObj_custom_mark_CLEAR(pmc);
+}</pre>
+
+<dd>/*</dd><p class="pad"></p>
+
+<dt><a name="PMC_*_new_ret_continuation_pmc(Interp_*_interp,_opcode_t_*_address)"
+><b><code lang='und' xml:lang='und'>PMC *new_ret_continuation_pmc(Interp *interp, opcode_t *address)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new <code lang='und' xml:lang='und'>RetContinuation</code> PMC. Uses one from the cache, if possible; otherwise, creates a new one.</dd><p class="pad"></p>
+
+<dt><a name="void_copy_regs(Interp_*,_struct_parrot_regs_t_*caller_regs)"
+><b><code lang='und' xml:lang='und'>void copy_regs(Interp *, struct parrot_regs_t *caller_regs)</b></code></a></dt><p class="pad"></p>
+
+<dd>Copy function arguments or return values from <code lang='und' xml:lang='und'>caller_regs</code> to interpreter.</dd><p class="pad"></p>
+
+<dt><a name="_void_invalidate_retc_context(Interp_*,_struct_Parrot_Context_*ctx)"
+><b><code lang='und' xml:lang='und'> void invalidate_retc_context(Interp *, struct Parrot_Context *ctx)</b></code></a></dt><p class="pad"></p>
+
+<dd>Make true Continuation from all RetContinuations up the call chain.</dd><p class="pad"></p>
+
+<dt><a name="Parrot_full_sub_name"
+><b><code lang='und' xml:lang='und'>Parrot_full_sub_name</b></code></a></dt><p class="pad"></p>
+
+<dd>Print name and location of subroutine, This should finally use the label name of the frozen <code lang='und' xml:lang='und'>Sub</code> PMC image for now locate the <code lang='und' xml:lang='und'>Sub</code> name in the globals.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/sub.h</em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Initial version by Melvin on 2002/06/6.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

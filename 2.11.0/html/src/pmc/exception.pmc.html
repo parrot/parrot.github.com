@@ -1,0 +1,186 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Exception PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Exception PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/exception.pmc &#45; Exception PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This is the exception base class.
+An exception object has the following attributes:</p>
+
+<dl>
+<dt><a name="message"
+><b><code>message</b></code></a></dt>
+Textual representation of the exception.
+<dt><a name="severity"
+><b><code>severity</b></code></a></dt>
+The severity of the exception,
+(see <em>include/parrot/exceptions.h</em>,
+<em>except_severity.pasm</em>).
+<dt><a name="type"
+><b><code>type</b></code></a></dt>
+The type of the exception.
+<dt><a name="exit_code"
+><b><code>exit_code</b></code></a></dt>
+The exit code of the exception.
+(Added temporarily,
+to be removed.)
+<dt><a name="handled"
+><b><code>handled</b></code></a></dt>
+Whether the exception has been handled.
+Defaults to 0,
+1 for handled,
+&#45;1 for a rethrown exception.
+<dt><a name="payload"
+><b><code>payload</b></code></a></dt>
+Additional data for the exception.</dl>
+
+<p>When an exception handler is called,
+the exception object is passed as as the first argument,
+the message as the second argument of the call.
+These arguments can be retrieved with the <code>get_results</code> opcode.</p>
+
+<h2><a name="Vtable_Functions"
+>Vtable Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes the exception with default values.
+<dt><a name="void_init_int()"
+><b><code>void init_int()</b></code></a></dt>
+Initializes the exception with default values and the specified type.
+<dt><a name="void_init_pmc()"
+><b><code>void init_pmc()</b></code></a></dt>
+Initializes the exception with supplied values.
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+Create a copy of the Exception.Copy only the user supplied values,
+not the throwing and handling information.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Mark any active exception data as live.
+<dt><a name="INTVAL_get_bool()"
+><b><code>INTVAL get_bool()</b></code></a></dt>
+Return true.
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+Return the exception message.
+<dt><a name="INTVAL_get_integer()"
+><b><code>INTVAL get_integer()</b></code></a></dt>
+Returns the id of the exception.
+<dt><a name="STRING_*get_string_keyed(PMC_*key)"
+><b><code>STRING *get_string_keyed(PMC *key)</b></code></a></dt>
+Returns the Parrot string value for <code>*key</code>.
+The only current recognized <code>key</code> is &#34;message&#34;.
+<dt><a name="INTVAL_get_integer_keyed_str(STRING_*key)"
+><b><code>INTVAL get_integer_keyed_str(STRING *key)</b></code></a></dt>
+Returns the integer value for <code>*key</code>.
+<dt><a name="INTVAL_get_integer_keyed(PMC_*key)"
+><b><code>INTVAL get_integer_keyed(PMC *key)</b></code></a></dt>
+Returns the integer value for <code>*key</code>.
+<dt><a name="PMC_*get_pmc_keyed(PMC_*key)"
+><b><code>PMC *get_pmc_keyed(PMC *key)</b></code></a></dt>
+Returns the PMC value for <code>*key</code>.
+<dt><a name="void_set_string_native(STRING_*value)"
+><b><code>void set_string_native(STRING *value)</b></code></a></dt>
+Sets the <code>message</code> of the Exception.
+<dt><a name="void_set_integer_native(INTVAL_*value)"
+><b><code>void set_integer_native(INTVAL *value)</b></code></a></dt>
+Sets the <code>id</code> of the Exception.
+<dt><a name="void_set_number_native(FLOATVAL_value)"
+><b><code>void set_number_native(FLOATVAL value)</b></code></a></dt>
+Sets the birthtime of the exception.
+<dt><a name="void_set_string_keyed(PMC_*key,_STRING_*value)"
+><b><code>void set_string_keyed(PMC *key, STRING *value)</b></code></a></dt>
+Sets the Parrot string value for <code>*key</code>.
+<dt><a name="void_set_integer_keyed_str(STRING_*key,_INTVAL_value)_"
+><b><code>void set_integer_keyed_str(STRING *key, INTVAL value) </b></code></a></dt>
+Sets the integer value for <code>*key</code>.
+<dt><a name="void_set_integer_keyed(PMC_*key,_INTVAL_value)"
+><b><code>void set_integer_keyed(PMC *key, INTVAL value)</b></code></a></dt>
+Sets the integer value for <code>*key</code>.
+<dt><a name="void_set_pmc_keyed(PMC_*key,_PMC_*value)"
+><b><code>void set_pmc_keyed(PMC *key, PMC *value)</b></code></a></dt>
+Sets the PMC value for <code>*key</code>.
+<dt><a name="void_set_pointer(void_*context)"
+><b><code>void set_pointer(void *context)</b></code></a></dt>
+Store a context for the handler iterator.
+<dt><a name="void_*get_pointer()"
+><b><code>void *get_pointer()</b></code></a></dt>
+Retrieve a context stored for the handler iterator.
+<dt><a name="INTVAL_is_equal(PMC_*value)"
+><b><code>INTVAL is_equal(PMC *value)</b></code></a></dt>
+Compare the passed in Exception with <code>SELF</code>.
+Returns true if <code>SELF</code> and <code>value</code> are the same type,
+and have the same values for type,
+severity,
+and exit_code.
+<dt><a name="get_attr_str"
+><b><code>get_attr_str</b></code></a></dt>
+Retrieve an attribute value for the exception object.
+<dt><a name="set_attr_str"
+><b><code>set_attr_str</b></code></a></dt>
+Set an attribute value for the exception object.
+<dt><a name="PMC_*share_ro()"
+><b><code>PMC *share_ro()</b></code></a></dt>
+Set this PMC as shared.
+<dt><a name="PMC_*annotations"
+><b><code>PMC *annotations</b></code></a></dt>
+Gets any bytecode annotations in force at the point where the exception was thrown.
+If the optional name of an annotation is specified,
+gets just that annotation.
+If not,
+returns a Hash of all of them.
+<dt><a name="PMC_*backtrace"
+><b><code>PMC *backtrace</b></code></a></dt>
+Gets a representation of the backtrace at the point that this exception was thrown.
+Returns an array of hashes.
+Each array element represents a caller in the backtrace,
+the most recent caller first.
+The hash has two keys: <code>sub</code>,
+which holds the PMC representing the sub,
+and <code>annotations</code> which is a hash of the annotations at the point where the exception was thrown for the current sub,
+or for the point of the call a level deeper for the rest.</dl>
+
+<h2><a name="Auxliary_functions"
+>Auxliary functions</a></h2>
+
+<dl>
+<dt><a name="static_AttrEnum_getAttrEnum(PARROT_INTERP,_const_STRING_*name)"
+><b><code>static AttrEnum getAttrEnum(PARROT_INTERP, const STRING *name)</b></code></a></dt>
+Gets an enumerated value corresponding to the attribute with that name.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

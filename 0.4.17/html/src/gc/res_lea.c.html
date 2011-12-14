@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Resource allocation using malloc</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Resource allocation using malloc</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/gc/res_lea.c &#45; Resource allocation using malloc</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This file provides alternative implementations of memory allocation function found in <em lang='und' xml:lang='und'>src/resources.c</em>.
+It is used if <em lang='und' xml:lang='und'><a href="../../Configure.pl.html">Configure.pl</a></em> is passed the <code lang='und' xml:lang='und'>&#45;&#45;gc=malloc</code> or <code lang='und' xml:lang='und'>&#45;&#45;gc=malloc&#45;trace</code> options.</p>
+
+<p>The &#34;lea&#34; in the file name refers to Doug Lea,
+who wrote malloc implementation found in <em lang='und' xml:lang='und'>src/malloc.c</em>.</p>
+
+<p>As of May 14,
+2007,
+it doesn&#39;t work (and hasn&#39;t worked for some time.) The problem appears to be related to strings,
+but actually could be somewhere else.
+This allocator does not support any of Parrot&#39;s Copy&#45;on&#45;Write schemes.
+Nor does the string allocator handle &#34;external&#34; strings.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_Parrot_go_collect(PARROT_INTERP)"
+><b><code lang='und' xml:lang='und'>void Parrot_go_collect(PARROT_INTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>Does nothing other than increment the interpreter&#39;s <code lang='und' xml:lang='und'>collect_runs</code> count.</dd><p class="pad"></p>
+
+<dt><a name="static_PARROT_INLINE_void*_xmalloc(size_t_size)"
+><b><code lang='und' xml:lang='und'>static PARROT_INLINE void *xmalloc(size_t size)</b></code></a></dt><p class="pad"></p>
+
+<dd>Obtains the memory from <code lang='und' xml:lang='und'>malloc()</code> and returns it.
+Panics if there is no memory available.</dd><p class="pad"></p>
+
+<dt><a name="static_PARROT_INLINE_void*_xcalloc(size_t_n,_size_t_size)"
+><b><code lang='und' xml:lang='und'>static PARROT_INLINE void *xcalloc(size_t n, size_t size)</b></code></a></dt><p class="pad"></p>
+
+<dd>Obtains the memory from <code lang='und' xml:lang='und'>calloc()</code> and returns it.
+Panics if there is no memory available.</dd><p class="pad"></p>
+
+<dt><a name="static_PARROT_INLINE_void*_xrealloc(void_*p,_size_t_size)"
+><b><code lang='und' xml:lang='und'>static PARROT_INLINE void *xrealloc(void *p, size_t size)</b></code></a></dt><p class="pad"></p>
+
+<dd>Reallocates the memory with <code lang='und' xml:lang='und'>realloc()</code> and returns it.
+Panics if there is no memory available.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_reallocate(PARROT_INTERP,_Buffer_*from,_size_t_tosize)"
+><b><code lang='und' xml:lang='und'>void Parrot_reallocate(PARROT_INTERP, Buffer *from, size_t tosize)</b></code></a></dt><p class="pad"></p>
+
+<dd>COWable objects (strings or Buffers) use an INTVAL before <code lang='und' xml:lang='und'>bufstart</code> for refcounting in DOD.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_allocate(PARROT_INTERP,_Buffer_*buffer,_size_t_size)"
+><b><code lang='und' xml:lang='und'>void Parrot_allocate(PARROT_INTERP, Buffer *buffer, size_t size)</b></code></a></dt><p class="pad"></p>
+
+<dd>Allocate buffer memory for the given Buffer pointer.
+The <code lang='und' xml:lang='und'>size</code> has to be a multiple of the word size.
+<code lang='und' xml:lang='und'>PObj_buflen</code> will be set to exactly the given <code lang='und' xml:lang='und'>size</code>.
+See the comments and diagram in resources.c.</dd><p class="pad"></p>
+
+<dd>This was never called anyway,
+so it isn&#39;t implemented here.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_allocate_aligned(PARROT_INTERP,_Buffer_*buffer,_size_t_size)"
+><b><code lang='und' xml:lang='und'>void Parrot_allocate_aligned(PARROT_INTERP, Buffer *buffer, size_t size)</b></code></a></dt><p class="pad"></p>
+
+<dd>Like above,
+except the address of the buffer is guaranteed to be suitably aligned for holding anything contained in UnionVal (such as FLOATVAL).</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_reallocate_string(PARROT_INTERP,_STRING_*str,_size_t_tosize)"
+><b><code lang='und' xml:lang='und'>void Parrot_reallocate_string(PARROT_INTERP, STRING *str, size_t tosize)</b></code></a></dt><p class="pad"></p>
+
+<dd>Reallocates the string buffer in <code lang='und' xml:lang='und'>*str</code> and returns it.
+<code lang='und' xml:lang='und'>tosize</code> is the number of bytes memory required.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_allocate_string(PARROT_INTERP,_STRING_*str,_size_t_size)"
+><b><code lang='und' xml:lang='und'>void Parrot_allocate_string(PARROT_INTERP, STRING *str, size_t size)</b></code></a></dt><p class="pad"></p>
+
+<dd>Allocates the string buffer in <code lang='und' xml:lang='und'>*str</code> and returns it.
+<code lang='und' xml:lang='und'>size</code> is the number bytes of memory required.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_initialize_memory_pools(PARROT_INTERP)"
+><b><code lang='und' xml:lang='und'>void Parrot_initialize_memory_pools(PARROT_INTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>Does nothing.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_merge_memory_pools(Interp_*dest,_Interp_*source)"
+><b><code lang='und' xml:lang='und'>void Parrot_merge_memory_pools(Interp *dest, Interp *source)</b></code></a></dt><p class="pad"></p>
+
+<dd>Does nothing.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_destroy_memory_pools(PARROT_INTERP)"
+><b><code lang='und' xml:lang='und'>void Parrot_destroy_memory_pools(PARROT_INTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>Does nothing.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>config/auto/gc.pl</em>,
+<em lang='und' xml:lang='und'>src/malloc.c</em>,
+<em lang='und' xml:lang='und'>include/parrot/resources.h</em>.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

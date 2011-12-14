@@ -1,0 +1,102 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - StringBuilder PMC Class</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; StringBuilder PMC Class
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/stringbuilder.pmc &#45; StringBuilder PMC Class</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>TODO: Add description here.</p>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes the StringBuilder.
+<dt><a name="void_init_int()"
+><b><code>void init_int()</b></code></a></dt>
+Initializes the StringBuilder with initial size of buffer.
+<dt><a name="void_destroy()"
+><b><code>void destroy()</b></code></a></dt>
+Free the buffer on destruction.
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+Returns created string.
+<dt><a name="STRING_*push_string()"
+><b><code>STRING *push_string()</b></code></a></dt>
+Append string to current buffer.
+<dt><a name="VTABLE_i_concatenate_str()"
+><b><code>VTABLE i_concatenate_str()</b></code></a></dt>
+
+<dt><a name="VTABLE_i_concatenate()"
+><b><code>VTABLE i_concatenate()</b></code></a></dt>
+Append string.
+Synonym for push_string
+<dt><a name="VTABLE_set_string_native(STRING)"
+><b><code>VTABLE set_string_native(STRING)</b></code></a></dt>
+
+<dt><a name="VTABLE_set_pmc(PMC)"
+><b><code>VTABLE set_pmc(PMC)</b></code></a></dt>
+Set content of buffer to passed string or PMC
+<dt><a name="VTABLE_get_integer()"
+><b><code>VTABLE get_integer()</b></code></a></dt>
+Returns current capacity of allocated buffer.For testing purpose only?
+<dt><a name="VTABLE_substr_str()"
+><b><code>VTABLE substr_str()</b></code></a></dt>
+
+<dt><a name="append_format(string_fmt_[,_pmc_args_]_[,_pmc_hash_])"
+><b><code>append_format(string fmt [, pmc args ] [, pmc hash ])</b></code></a></dt>
+Add a line to a <code>StringBuilder</code> object according to <code>fmt</code>.
+The <code>fmt</code> string can contain any number of &#34;%&#45;replacements&#34; which are replaced by the corresponding values from <code>args</code> or <code>hash</code> prior to being appended to the string.
+(Here <code>args</code> is a slurpy array,
+and <code>hash</code> is a slurpy hash.)The currently defined replacements include:
+<pre>    %0 %1 ... %9     the value from the args array at index 0..9
+    %,               the values of the args array separated by commas
+    %%               a percent sign</pre>
+A percent&#45;sign followed by any other character that is a hash key receives the value of the hash element.
+<dt><a name="INTVAL_get_string_length()"
+><b><code>INTVAL get_string_length()</b></code></a></dt>
+Returns length of currently built string.</dl>
+
+<h2><a name="Helper_functions."
+>Helper functions.</a></h2>
+
+<dl>
+<dt><a name="static_size_t_calculate_capacity(PARROT_INTERP,_size_t_current,_size_t_additional)"
+><b><code>static size_t calculate_capacity(PARROT_INTERP, size_t current, size_t additional)</b></code></a></dt>
+Calculate capacity for string. Usually StringBuilders used for &#34;large&#34; strings. So capacity rounded up by next algorithm: &#45; By 128 bytes if total capacity less then 1KB &#45; By 1KB if total less than 4KB &#45; By 4KB if total less than 1MB &#45; By 1MB otherwise.This function is subject for tuning on real&#45;world usage scenarios.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

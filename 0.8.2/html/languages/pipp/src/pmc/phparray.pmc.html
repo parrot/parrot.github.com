@@ -1,0 +1,533 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>PHP Array</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">PHP Array</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/pipp.html">Pipp</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>src/pmc/phparray.pmc &#45; PHP Array</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="VTABLE_Functions"
+>VTABLE Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code lang='und' xml:lang='und'>void init()</b></code></a></dt><p class="pad"></p>
+
+<dd>Intialize this PHPArray.</dd><p class="pad"></p>
+
+<dt><a name="void_init_pmc(PMC_*p)"
+><b><code lang='und' xml:lang='und'>void init_pmc(PMC *p)</b></code></a></dt><p class="pad"></p>
+
+<dd>Initialize this PHPArray with the passed&#45;in PMC <code lang='und' xml:lang='und'>p</code>.
+If <code lang='und' xml:lang='und'>p</code> is a PHPArray,
+its contents are copied directly.
+If <code lang='und' xml:lang='und'>p</code> is a PMC that provides a hash or array interface,
+its contents are copied via the appropriate VTABLE functions.
+In any other case,
+an exception will be thrown.</dd><p class="pad"></p>
+
+<dt><a name="void_destroy()"
+><b><code lang='und' xml:lang='und'>void destroy()</b></code></a></dt><p class="pad"></p>
+
+<dd>Non&#45;recursively free all memory used by this PHPArray.</dd><p class="pad"></p>
+
+<dt><a name="void_mark()"
+><b><code lang='und' xml:lang='und'>void mark()</b></code></a></dt><p class="pad"></p>
+
+<dd>Recursively mark this PHPArray and all its contents as live.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_elements()"
+><b><code lang='und' xml:lang='und'>INTVAL elements()</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the number of elements in this PHPArray.</dd><p class="pad"></p>
+
+<dt><a name="void_set_integer_keyed(PMC_*key,_INTVAL_i_val)"
+><b><code lang='und' xml:lang='und'>void set_integer_keyed(PMC *key, INTVAL i_val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Store <code lang='und' xml:lang='und'>i_val</code> in this PHPArray,
+indexed by the Key PMC <code lang='und' xml:lang='und'>key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_integer_keyed_str_(STRING_*s_key,_INTVAL_i_val)"
+><b><code lang='und' xml:lang='und'>void set_integer_keyed_str (STRING *s_key, INTVAL i_val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Store <code lang='und' xml:lang='und'>i_val</code> in this PHPArray,
+indexed by the STRING <code lang='und' xml:lang='und'>s_key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_integer_keyed_int_(INTVAL_i_key,_INTVAL_i_val)"
+><b><code lang='und' xml:lang='und'>void set_integer_keyed_int (INTVAL i_key, INTVAL i_val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Store <code lang='und' xml:lang='und'>i_val</code> in this PHPArray,
+indexed by the INTVAL <code lang='und' xml:lang='und'>i_key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_pmc_keyed(PMC_*key,_PMC_*p_val)"
+><b><code lang='und' xml:lang='und'>void set_pmc_keyed(PMC *key, PMC *p_val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Store <code lang='und' xml:lang='und'>val</code> in this PHPArray,
+indexed by the Key PMC <code lang='und' xml:lang='und'>key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_pmc_keyed_str(STRING_*s_key,_PMC_*val)"
+><b><code lang='und' xml:lang='und'>void set_pmc_keyed_str(STRING *s_key, PMC *val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Store <code lang='und' xml:lang='und'>val</code> in this PHPArray,
+indexed by the STRING <code lang='und' xml:lang='und'>s_key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_pmc_keyed_int(INTVAL_i_key,_PMC_*val)"
+><b><code lang='und' xml:lang='und'>void set_pmc_keyed_int(INTVAL i_key, PMC *val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Store <code lang='und' xml:lang='und'>val</code> in this PHPArray,
+indexed by the INTVAL <code lang='und' xml:lang='und'>i_key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_string_keyed(PMC_*key,_STRING_*s_val)"
+><b><code lang='und' xml:lang='und'>void set_string_keyed(PMC *key, STRING *s_val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Store <code lang='und' xml:lang='und'>s_val</code> in this PHPArray,
+indexed by the Key PMC <code lang='und' xml:lang='und'>key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_string_keyed_str(STRING_*s_key,_STRING_*s_val)"
+><b><code lang='und' xml:lang='und'>void set_string_keyed_str(STRING *s_key, STRING *s_val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Store <code lang='und' xml:lang='und'>s_val</code> in this PHPArray,
+indexed by the STRING <code lang='und' xml:lang='und'>s_key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_string_keyed_int(INTVAL_i_key,_STRING_*s_val)"
+><b><code lang='und' xml:lang='und'>void set_string_keyed_int(INTVAL i_key, STRING *s_val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Store <code lang='und' xml:lang='und'>s_val</code> in this PHPArray,
+indexed by the INTVAL <code lang='und' xml:lang='und'>i_key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_number_keyed(PMC_*key,_FLOATVAL_f_val)"
+><b><code lang='und' xml:lang='und'>void set_number_keyed(PMC *key, FLOATVAL f_val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Store <code lang='und' xml:lang='und'>f_val</code> in this PHPArray,
+indexed by the Key PMC <code lang='und' xml:lang='und'>key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_number_keyed_str(STRING_*s_key,_FLOATVAL_f_val)"
+><b><code lang='und' xml:lang='und'>void set_number_keyed_str(STRING *s_key, FLOATVAL f_val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Store <code lang='und' xml:lang='und'>f_val</code> in this PHPArray,
+indexed by the STRING <code lang='und' xml:lang='und'>s_key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_number_keyed_int(INTVAL_i_key,_FLOATVAL_f_val)"
+><b><code lang='und' xml:lang='und'>void set_number_keyed_int(INTVAL i_key, FLOATVAL f_val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Store <code lang='und' xml:lang='und'>f_val</code> in this PHPArray,
+indexed by the INTVAL <code lang='und' xml:lang='und'>i_key</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_integer_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>INTVAL get_integer_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieve the value from this PHPArray which is associated with the Key PMC <code lang='und' xml:lang='und'>key</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_integer_keyed_str(STRING_*s_key)"
+><b><code lang='und' xml:lang='und'>INTVAL get_integer_keyed_str(STRING *s_key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieve the value from this PHPArray which is associated with the STRING <code lang='und' xml:lang='und'>s_key</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_integer_keyed_int(INTVAL_i_key)"
+><b><code lang='und' xml:lang='und'>INTVAL get_integer_keyed_int(INTVAL i_key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieve the value from this PHPArray which is associated with the INTVAL <code lang='und' xml:lang='und'>i_key</code>.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_pmc_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>PMC *get_pmc_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieve the value from this PHPArray which is associated with the Key PMC <code lang='und' xml:lang='und'>key</code>.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_pmc_keyed_str(STRING_*s_key)"
+><b><code lang='und' xml:lang='und'>PMC *get_pmc_keyed_str(STRING *s_key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieve the value from this PHPArray which is associated with the STRING <code lang='und' xml:lang='und'>s_key</code>.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_pmc_keyed_int(INTVAL_i_key)"
+><b><code lang='und' xml:lang='und'>PMC *get_pmc_keyed_int(INTVAL i_key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieve the value from this PHPArray which is associated with the INTVAL <code lang='und' xml:lang='und'>i_key</code>.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*get_string_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>STRING *get_string_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieve the value from this PHPArray which is associated with the Key PMC <code lang='und' xml:lang='und'>key</code>.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*get_string_keyed_str(STRING_*s_key)"
+><b><code lang='und' xml:lang='und'>STRING *get_string_keyed_str(STRING *s_key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieve the value from this PHPArray which is associated with the STRING <code lang='und' xml:lang='und'>s_key</code>.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*get_string_keyed_int(INTVAL_i_key)"
+><b><code lang='und' xml:lang='und'>STRING *get_string_keyed_int(INTVAL i_key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieve the value from this PHPArray which is associated with the INTVAL <code lang='und' xml:lang='und'>i_key</code>.</dd><p class="pad"></p>
+
+<dt><a name="FLOATVAL_get_number_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>FLOATVAL get_number_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieve the value from this PHPArray which is associated with the Key PMC <code lang='und' xml:lang='und'>key</code>.</dd><p class="pad"></p>
+
+<dt><a name="FLOATVAL_get_number_keyed_str(STRING_*s_key)"
+><b><code lang='und' xml:lang='und'>FLOATVAL get_number_keyed_str(STRING *s_key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieve the value from this PHPArray which is associated with the STRING <code lang='und' xml:lang='und'>s_key</code>.</dd><p class="pad"></p>
+
+<dt><a name="FLOATVAL_get_number_keyed_int(INTVAL_i_key)"
+><b><code lang='und' xml:lang='und'>FLOATVAL get_number_keyed_int(INTVAL i_key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieve the value from this PHPArray which is associated with the INTVAL <code lang='und' xml:lang='und'>i_key</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_exists_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>INTVAL exists_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return non&#45;zero if an element keyed by <code lang='und' xml:lang='und'>key</code> exists.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_exists_keyed_str(STRING_*s_key)"
+><b><code lang='und' xml:lang='und'>INTVAL exists_keyed_str(STRING *s_key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return non&#45;zero if an element keyed by <code lang='und' xml:lang='und'>s_key</code> exists.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_exists_keyed_int(INTVAL_i_key)"
+><b><code lang='und' xml:lang='und'>INTVAL exists_keyed_int(INTVAL i_key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return non&#45;zero if an element keyed by <code lang='und' xml:lang='und'>i_key</code> exists.</dd><p class="pad"></p>
+
+<dt><a name="void_delete_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>void delete_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>If an element in this PHPArray is keyed by <code lang='und' xml:lang='und'>key</code>,
+delete it.
+Otherwise do nothing.</dd><p class="pad"></p>
+
+<dt><a name="void_delete_keyed_str(STRING_*s_key)"
+><b><code lang='und' xml:lang='und'>void delete_keyed_str(STRING *s_key)</b></code></a></dt><p class="pad"></p>
+
+<dd>If an element in this PHPArray is keyed by <code lang='und' xml:lang='und'>key</code>,
+delete it.
+Otherwise do nothing.</dd><p class="pad"></p>
+
+<dt><a name="void_delete_keyed_int(INTVAL_i_key)"
+><b><code lang='und' xml:lang='und'>void delete_keyed_int(INTVAL i_key)</b></code></a></dt><p class="pad"></p>
+
+<dd>If an element in this PHPArray is keyed by <code lang='und' xml:lang='und'>key</code>,
+delete it.
+Otherwise do nothing.</dd><p class="pad"></p>
+
+<dt><a name="void_push_integer(INTVAL_i)"
+><b><code lang='und' xml:lang='und'>void push_integer(INTVAL i)</b></code></a></dt><p class="pad"></p>
+
+<dd>Add an integer with the value <code lang='und' xml:lang='und'>i</code> to the end of this PHPArray.</dd><p class="pad"></p>
+
+<dt><a name="void_push_pmc(PMC_*p_val)"
+><b><code lang='und' xml:lang='und'>void push_pmc(PMC *p_val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Add a PMC with the value <code lang='und' xml:lang='und'>p_val</code> to the end of this PHPArray.</dd><p class="pad"></p>
+
+<dt><a name="void_push_string(STRING_*s_val)"
+><b><code lang='und' xml:lang='und'>void push_string(STRING *s_val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Add a STRING with the value <code lang='und' xml:lang='und'>s_val</code> to the end of this PHPArray.</dd><p class="pad"></p>
+
+<dt><a name="void_push_float(FLOATVAL_f_val)"
+><b><code lang='und' xml:lang='und'>void push_float(FLOATVAL f_val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Add a FLOATVAL with the value <code lang='und' xml:lang='und'>f_val</code> to the end of this PHPArray.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_pop_integer()"
+><b><code lang='und' xml:lang='und'>INTVAL pop_integer()</b></code></a></dt><p class="pad"></p>
+
+<dd>Delete the element at the end of this PHPArray,
+returning its value as an INTVAL.</dd><p class="pad"></p>
+
+<dt><a name="PMC*_pop_pmc()"
+><b><code lang='und' xml:lang='und'>PMC *pop_pmc()</b></code></a></dt><p class="pad"></p>
+
+<dd>Delete the element at the end of this PHPArray,
+returning its value as a PMC.</dd><p class="pad"></p>
+
+<dt><a name="STRING*_pop_string()"
+><b><code lang='und' xml:lang='und'>STRING *pop_string()</b></code></a></dt><p class="pad"></p>
+
+<dd>Delete the element at the end of this PHPArray,
+returning its value as a STRING.</dd><p class="pad"></p>
+
+<dt><a name="FLOATVAL_pop_float()"
+><b><code lang='und' xml:lang='und'>FLOATVAL pop_float()</b></code></a></dt><p class="pad"></p>
+
+<dd>Delete the element at the end of this PHPArray,
+returning its value as a FLOATVAL.</dd><p class="pad"></p>
+
+<dt><a name="void_unshift_integer(INTVAL_i_val)"
+><b><code lang='und' xml:lang='und'>void unshift_integer(INTVAL i_val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Add an integer with the value <code lang='und' xml:lang='und'>i_val</code> to the beginning of this PHPArray.
+<code lang='und' xml:lang='und'>i_val</code> will be keyed by the INTVAL 0 and all other numerically indexed elements will be renumbered according to insertion order.</dd><p class="pad"></p>
+
+<dt><a name="void_unshift_pmc(PMC_*p_val)"
+><b><code lang='und' xml:lang='und'>void unshift_pmc(PMC *p_val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Add a PMC with the value <code lang='und' xml:lang='und'>p_val</code> to the beginning of this PHPArray.
+<code lang='und' xml:lang='und'>p_val</code> will be keyed by the INTVAL 0 and all other numerically indexed elements will be renumbered according to insertion order.</dd><p class="pad"></p>
+
+<dt><a name="void_unshift_string(STRING_*s_val)"
+><b><code lang='und' xml:lang='und'>void unshift_string(STRING *s_val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Add a STRING with the value <code lang='und' xml:lang='und'>s_val</code> to the beginning of this PHPArray.
+<code lang='und' xml:lang='und'>s_val</code> will be keyed by the INTVAL 0 and all other numerically indexed elements will be renumbered according to insertion order.</dd><p class="pad"></p>
+
+<dt><a name="void_unshift_float(FLOATVAL_f_val)"
+><b><code lang='und' xml:lang='und'>void unshift_float(FLOATVAL f_val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Add a FLOATVAL with the value <code lang='und' xml:lang='und'>f_val</code> to the beginning of this PHPArray.
+<code lang='und' xml:lang='und'>f_val</code> will be keyed by the INTVAL 0 and all other numerically indexed elements will be renumbered according to insertion order.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_shift_integer()"
+><b><code lang='und' xml:lang='und'>INTVAL shift_integer()</b></code></a></dt><p class="pad"></p>
+
+<dd>Delete the element at the beginning of this PHPArray,
+returning its value as an INTVAL.</dd><p class="pad"></p>
+
+<dt><a name="PMC*_shift_pmc()"
+><b><code lang='und' xml:lang='und'>PMC *shift_pmc()</b></code></a></dt><p class="pad"></p>
+
+<dd>Delete the element at the beginning of this PHPArray,
+returning its value as a PMC.</dd><p class="pad"></p>
+
+<dt><a name="STRING*_shift_string()"
+><b><code lang='und' xml:lang='und'>STRING *shift_string()</b></code></a></dt><p class="pad"></p>
+
+<dd>Delete the element at the beginning of this PHPArray,
+returning its value as a STRING.</dd><p class="pad"></p>
+
+<dt><a name="FLOATVAL_shift_float()"
+><b><code lang='und' xml:lang='und'>FLOATVAL shift_float()</b></code></a></dt><p class="pad"></p>
+
+<dd>Delete the element at the beginning of this PHPArray,
+returning its value as a FLOATVAL.</dd><p class="pad"></p>
+
+<dt><a name="STRING*_name()"
+><b><code lang='und' xml:lang='und'>STRING *name()</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the string &#39;array&#39;.</dd><p class="pad"></p>
+
+<dt><a name="STRING*_get_string()"
+><b><code lang='und' xml:lang='und'>STRING *get_string()</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the string &#39;Array&#39;.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_bool()"
+><b><code lang='und' xml:lang='und'>INTVAL get_bool()</b></code></a></dt><p class="pad"></p>
+
+<dd>Return 1 if this PHPArray has 1 or more elements.</dd><p class="pad"></p>
+
+<dt><a name="void_visit(visit_info_*info()"
+><b><code lang='und' xml:lang='und'>void visit(visit_info *info()</b></code></a></dt><p class="pad"></p>
+
+<dd>Freeze or thaw the contents of this PHPArray.</dd><p class="pad"></p>
+
+<dt><a name="void_freeze(visit_info_*info()"
+><b><code lang='und' xml:lang='und'>void freeze(visit_info *info()</b></code></a></dt><p class="pad"></p>
+
+<dd>After <code lang='und' xml:lang='und'>visit()</code> has been called during the freeze process,
+this VTABLE function is used to add additional information about the PHPArray to the visit_info struct.</dd><p class="pad"></p>
+
+<dt><a name="void_thaw(visit_info_*info()"
+><b><code lang='und' xml:lang='und'>void thaw(visit_info *info()</b></code></a></dt><p class="pad"></p>
+
+<dd>Before <code lang='und' xml:lang='und'>visit()</code> is called during the thaw process,
+this VTABLE function is used to initialize the empty PHPArray.</dd><p class="pad"></p>
+
+<dt><a name="void_thawfinish(visit_info_*info()"
+><b><code lang='und' xml:lang='und'>void thawfinish(visit_info *info()</b></code></a></dt><p class="pad"></p>
+
+<dd>After <code lang='und' xml:lang='und'>visit()</code> is called during the thaw process,
+this VTABLE function is used to make any changes to the newly thawed PHPArray which could not be made during the thaw process.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_iter()"
+><b><code lang='und' xml:lang='und'>PMC *get_iter()</b></code></a></dt><p class="pad"></p>
+
+<dd>Return an Iterator over this PHPArray.
+When using an Iterator over PHPArrays,
+it is a very good idea to use the <code lang='und' xml:lang='und'>iter</code> opcode as follows:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> $P0 = new &#39;PhpArray&#39;
+ $P1 = iter $P0</pre>
+
+<dd>This ensures that the Iterator and the PHPArray&#39;s internal pointer stay in sync. Using an Iterator and a PHPArray any other way may lead to mysterious failures.</dd><p class="pad"></p>
+
+<dt><a name="PMC*_clone()"
+><b><code lang='und' xml:lang='und'>PMC *clone()</b></code></a></dt><p class="pad"></p>
+
+<dd>Return a deep clone of this PHPArray.</dd><p class="pad"></p>
+
+<dt><a name="void_assign_pmc(PMC_*src)"
+><b><code lang='und' xml:lang='und'>void assign_pmc(PMC *src)</b></code></a></dt><p class="pad"></p>
+
+<dd>If <code lang='und' xml:lang='und'>src</code> is an aggregate PMC (i.e. one that does hash and/or array), use an Iterator to copy each key/value pair into this PHPArray. If <code lang='und' xml:lang='und'>src</code> is a PHPArray, just make a clone.</dd><p class="pad"></p>
+
+<dt><a name="PMC*_add(PMC_*src,_PMC_*dest)"
+><b><code lang='und' xml:lang='und'>PMC *add(PMC *src, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Copy all key/value pairs in <code lang='und' xml:lang='und'>SELF</code> and <code lang='und' xml:lang='und'>src</code> into <code lang='und' xml:lang='und'>dest</code>. All values in <code lang='und' xml:lang='und'>dest</code> are deleted. If the same key is in both <code lang='und' xml:lang='und'>src</code> and <code lang='und' xml:lang='und'>SELF</code>, the value from <code lang='und' xml:lang='und'>SELF</code> will be used.</dd><p class="pad"></p>
+
+<dt><a name="PMC*_i_add(PMC_*src)"
+><b><code lang='und' xml:lang='und'>PMC *i_add(PMC *src)</b></code></a></dt><p class="pad"></p>
+
+<dd>Copy all key/value pairs from <code lang='und' xml:lang='und'>src</code> into <code lang='und' xml:lang='und'>SELF</code>. If the same key is in both <code lang='und' xml:lang='und'>src</code> and <code lang='und' xml:lang='und'>SELF</code>, the value from <code lang='und' xml:lang='und'>SELF</code> will be used.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_is_equal(PMC_*other)"
+><b><code lang='und' xml:lang='und'>INTVAL is_equal(PMC *other)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return true if <code lang='und' xml:lang='und'>SELF</code> and <code lang='und' xml:lang='und'>other</code> contain the same key/value pairs and have the same number of elements. Order is not important.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_is_equal_num(PMC_*other)"
+><b><code lang='und' xml:lang='und'>INTVAL is_equal_num(PMC *other)</b></code></a></dt><p class="pad"></p>
+
+<dd>Determine equality between a PHPArray and a number. PHP&#39;s documentation says that an array is always greater than a number, so this function returns 0. See <a href="http://us.php.net/manual/en/language.operators.comparison.php">http://us.php.net/manual/en/language.operators.comparison.php</a> .</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_is_equal_string(PMC_*other)"
+><b><code lang='und' xml:lang='und'>INTVAL is_equal_string(PMC *other)</b></code></a></dt><p class="pad"></p>
+
+<dd>Determine equality between a PHPArray and a string. PHP&#39;s documentation says that an array is always greater than a string, so this function returns 0. See <a href="http://us.php.net/manual/en/language.operators.comparison.php">http://us.php.net/manual/en/language.operators.comparison.php</a> .</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_is_same(PMC_*other)"
+><b><code lang='und' xml:lang='und'>INTVAL is_same(PMC *other)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return true if <code lang='und' xml:lang='und'>SELF</code> and <code lang='und' xml:lang='und'>other</code> point to the same place in memory.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_cmp(PMC_*other)"
+><b><code lang='und' xml:lang='und'>INTVAL cmp(PMC *other)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compare <code lang='und' xml:lang='und'>SELF</code> to <code lang='und' xml:lang='und'>other</code>. A PHPArray with fewer elements is always considered to be less than one with more elements. Two PHPArrays of the same size are comparable if they have the same keys. In this case, <code lang='und' xml:lang='und'>a</code> &#62; <code lang='und' xml:lang='und'>b</code> if the first unequal value of <code lang='und' xml:lang='und'>a</code> is greater, according to the internal ordering of <code lang='und' xml:lang='und'>a</code>. This means it&#39;s possible for both <code lang='und' xml:lang='und'>a</code> &#62; <code lang='und' xml:lang='und'>b</code> and <code lang='und' xml:lang='und'>b</code> &#62; <code lang='und' xml:lang='und'>a</code> to be true.</dd><p class="pad"></p>
+
+<dd>If the arrays are comparable and <code lang='und' xml:lang='und'>SELF</code> is larger, cmp returns 1. If they&#39;re equal, cmp returns 0. If <code lang='und' xml:lang='und'>other</code> is larger, cmp returns &#45;1.</dd><p class="pad"></p>
+
+<dd>If <code lang='und' xml:lang='und'>SELF</code> and the other PMC are not comparable, an exception is thrown. This is to allow the PHP implementation to return null for a comparison between two non&#45;comparable PHPArrays.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_cmp_num(PMC_*other)"
+><b><code lang='und' xml:lang='und'>INTVAL cmp_num(PMC *other)</b></code></a></dt><p class="pad"></p>
+
+<dd>In PHP, arrays are always greater than numeric types. This function always returns 1.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_cmp_string(PMC_*other)"
+><b><code lang='und' xml:lang='und'>INTVAL cmp_string(PMC *other)</b></code></a></dt><p class="pad"></p>
+
+<dd>In PHP, arrays are always greater than strings. This function always returns 1.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*get_repr()"
+><b><code lang='und' xml:lang='und'>STRING *get_repr()</b></code></a></dt><p class="pad"></p>
+
+<dd>Return a string representation of the contents of this PhpArray. The format of this string is the same as a Parrot Hash&#39;s <code lang='und' xml:lang='und'>get_repr()</code>:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> {0: 4, 4: 323, &#39;foo&#39;: 9999999}</pre>
+</dl>
+
+<h2><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="METHOD_void_next()"
+><b><code lang='und' xml:lang='und'>METHOD void next()</b></code></a></dt><p class="pad"></p>
+
+<dd>Advance the internal pointer to the next element. This method emulates the behavior of PHP&#39;s <code lang='und' xml:lang='und'>next()</code> function.</dd><p class="pad"></p>
+
+<dt><a name="METHOD_void_prev()"
+><b><code lang='und' xml:lang='und'>METHOD void prev()</b></code></a></dt><p class="pad"></p>
+
+<dd>Move the internal pointer to the previous element. This method emulates the behavior of PHP&#39;s <code lang='und' xml:lang='und'>prev()</code> function.</dd><p class="pad"></p>
+
+<dt><a name="METHOD_void_reset()"
+><b><code lang='und' xml:lang='und'>METHOD void reset()</b></code></a></dt><p class="pad"></p>
+
+<dd>Move the internal pointer to the first element of this PhpArray, according to insertion order. This method emulates the behavior of PHP&#39;s <code lang='und' xml:lang='und'>reset()</code> function.</dd><p class="pad"></p>
+
+<dt><a name="METHOD_void_end()"
+><b><code lang='und' xml:lang='und'>METHOD void end()</b></code></a></dt><p class="pad"></p>
+
+<dd>Move the internal pointer to the last element of this PhpArray, according to insertion order. This method emulates the behavior of PHP&#39;s <code lang='und' xml:lang='und'>end()</code> function.</dd><p class="pad"></p>
+
+<dt><a name="METHOD_STRING*_key()"
+><b><code lang='und' xml:lang='und'>METHOD STRING *key()</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the key of the element pointed to by the internal pointer. If the internal pointer does not point at a valid element, the empty string is returned. This method has no side&#45;effects and does not modify the internal pointer.</dd><p class="pad"></p>
+
+<dt><a name="METHOD_PMC*_current()"
+><b><code lang='und' xml:lang='und'>METHOD PMC *current()</b></code></a></dt><p class="pad"></p>
+
+<dd>Return a clone of value of the element pointed to by the internal pointer. If the internal pointer does not point at a valid element, PMCNULL is returned. This method has no side&#45;effects and does not modify the internal pointer.</dd><p class="pad"></p>
+
+<dt><a name="METHOD_PMC*_each()"
+><b><code lang='und' xml:lang='und'>METHOD PMC *each()</b></code></a></dt><p class="pad"></p>
+
+<dd>Return a PhpArray containing the key/value pair pointed to by the internal pointer, then advance the internal pointer to the next pair. The returned PhpArray has the following key/value pairs, in this order:</dd><p class="pad"></p>
+
+<ul>
+<li>1 =&#62; value</li><p class="pad"></p>
+
+<li>&#34;value&#34; =&#62; value</li><p class="pad"></p>
+
+<li>0 =&#62; key</li><p class="pad"></p>
+
+<li>&#34;key&#34; =&#62; key</li><p class="pad"></p>
+</ul>
+
+<dd>where <code lang='und' xml:lang='und'>key</code> and <code lang='und' xml:lang='und'>value</code> are the key and value from this PhpArray. If the internal pointer does not point to a valid element, a PhpBoolean <code lang='und' xml:lang='und'>false</code> will be returned.</dd><p class="pad"></p>
+
+<dt><a name="PMC*_to_number()"
+><b><code lang='und' xml:lang='und'>PMC *to_number()</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="METHOD_void_sanity_check()"
+><b><code lang='und' xml:lang='und'>METHOD void sanity_check()</b></code></a></dt><p class="pad"></p>
+
+<dd>Check if everything about the PippHashTable looks sane. If anything looks broken, the code will throw an exception.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="AUTHORS"
+>AUTHORS <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Christoph_Otto"
+>Christoph Otto</a></dt><p class="pad"></p>
+
+<dt><a name="Francois_Perrad"
+>Francois Perrad</a></dt><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

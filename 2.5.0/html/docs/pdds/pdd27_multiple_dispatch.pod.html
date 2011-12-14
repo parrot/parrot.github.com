@@ -1,0 +1,270 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PDD 27: Multiple Dispatch</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; PDD 27: Multiple Dispatch
+                </div>
+
+<h1><a name="PDD_27:_Multiple_Dispatch"
+>PDD 27: Multiple Dispatch</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>This PDD defines Parrot&#39;s multiple dispatch system.</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Definitions"
+>Definitions</a></h2>
+
+<p>Multiple dispatch allows a single function name to be associated with several alternate implementations.
+It selects the alternate to execute for a particular call at runtime,
+based on the types of the arguments passed into the call.
+The selection process compares the arguments of the call and the types declared in the signatures of the alternates,
+as well as their inherited or composed parents,
+to find the best match.</p>
+
+<p>A similar selection of alternates based on types at compile time is generally called overloading.</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<dl>
+<dt><a name="&#45;_Parrot_supports_multiple_dispatch_in_opcodes_and_user&#45;defined_routines."
+>&#45; Parrot supports multiple dispatch in opcodes and user&#45;defined routines.</a></dt>
+
+<dt><a name="&#45;_A_single_dispatch_system_supports_MMD_in_both_contexts."
+>&#45; A single dispatch system supports MMD in both contexts.</a></dt>
+
+<dt><a
+>&#45; For user&#45;defined subroutines and methods,
+the dispatch system is pluggable,
+allowing users to swap in their own type&#45;matching algorithms.</a></dt>
+
+<dt><a name="&#45;_For_opcodes,_the_dispatch_system_is_merely_extensible,_allowing_users_to_define_alternates_with_their_own_types."
+>&#45; For opcodes,
+the dispatch system is merely extensible,
+allowing users to define alternates with their own types.</a></dt>
+
+<dt><a
+>&#45; Dispatch considers both low&#45;level (register) types and high&#45;level (PMC) types,
+as well as inherited and composed types.</a></dt>
+
+<dt><a
+>&#45; Dispatch does not consider argument values.
+HLLs with dispatch systems that do consider argument values will implement their own pluggable matching.</a></dt>
+</dl>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<p>The aim of Parrot&#39;s multiple dispatch system is not to be an exact match to any one HLL,
+but to provide the features and tools needed to support multiple dispatch in a number of different HLLs.</p>
+
+<p>Parrot has a single multiple dispatch system,
+used at the HLL level and internally.
+{{NOTE: I appreciate the history that led us to have two largely independent MMD systems,
+but it will cause problems down the road,
+if we don&#39;t fix it now.}}</p>
+
+<p>The heart of the system is the MultiSub PMC.
+All multiple dispatch routines are MultiSub PMCs,
+subclasses of MultiSub,
+or polymorphic equivalents of MultiSub.
+Calls to multiple dispatch routines use the Parrot calling conventions.</p>
+
+<h3><a name="MultiSub_PMC_API"
+>MultiSub PMC API</a></h3>
+
+<p>A MultiSub stores a list of subroutines.
+When a MultiSub is invoked,
+it calls an MMD sorting routine to select the best candidate for the current arguments,
+and invokes that candidate.</p>
+
+<p>A MultiSub can be used anywhere a Sub can be used.
+It can be stored in a namespace or as a method or vtable override in a class.</p>
+
+<p>An alternate multiple dispatch matching algorithm may be plugged in by subclassing MultiSub and overriding <code>invoke</code>.</p>
+
+<h4><a name="Vtable_Functions"
+>Vtable Functions</a></h4>
+
+<p>MultiSub defines the following vtable functions in addition to the ones inherited from ResizablePMCArray.</p>
+
+<dl>
+<dt><a name="push_pmc"
+>push_pmc</a></dt>
+Add a Sub or NCI sub to the list of candidates.
+Throw an exception if the value passed in is anything other than a Sub or NCI sub.
+<dt><a name="set_pmc_keyed_int_[deprecated]"
+>set_pmc_keyed_int [deprecated]</a></dt>
+Add a Sub or NCI sub to the list of candidates at a particular position in the list.
+Throw an exception if the value passed in is anything other than a Sub or NCI sub.{{ NOTE: deprecated because MultiSub is no longer an array.
+}}
+<dt><a name="get_pmc"
+>get_pmc</a></dt>
+Return an array of matching candidates,
+sorted from best matching to worst matching,
+for the current call arguments.
+<dt><a name="get_pmc_keyed"
+>get_pmc_keyed</a></dt>
+Return an array of matching candidates,
+sorted from best matching to worst matching,
+for a passed in signature.
+The signature passed in is an array of PMCs,
+and the types are extracted from the types of the array elements.
+<dt><a name="get_pmc_keyed_str"
+>get_pmc_keyed_str</a></dt>
+Return an array of matching candidates,
+sorted from best matching to worst matching,
+for a passed in signature.
+The signature passed in is a simple type string for the signature (&#39;P&#39; for PMC,
+&#39;I&#39; for integer,
+&#39;N&#39; for number,
+and &#39;S&#39; for string).
+<dt><a name="get_iter"
+>get_iter</a></dt>
+Return an iterator object of matching candidates,
+sorted from best matching to worst matching,
+for the current call arguments.
+<dt><a name="invoke"
+>invoke</a></dt>
+Return a function pointer to the best matching candidate for the current call arguments,
+and set up the interpreter preparing for invocation.
+This vtable function calls <code>Parrot_mmd_sort_manhattan</code> from the public MMD API,
+but may be changed to call <code>Parrot_mmd_invoke</code>.
+<dt><a name="set_integer_keyed_int,_set_number_keyed_int,_set_string_keyed_int_[deprecated]"
+>set_integer_keyed_int,
+set_number_keyed_int,
+set_string_keyed_int [deprecated]</a></dt>
+Throw an exception,
+as an integer,
+float,
+or string value is not a Sub or NCI sub.
+(Masks the vtable functions inherited from ResizablePMCArray.){{NOTE: no longer needed,
+since not inheriting from ResizablePMCArray.}}</dl>
+
+<h4><a name="Methods"
+>Methods</a></h4>
+
+<dl>
+<dt><a name="get_iter"
+>get_iter</a></dt>
+Return an array of matching candidates,
+sorted from best matching to worst matching,
+for a passed in signature.
+If the signature passed in is an array of PMCs,
+the types are extracted from the types of the array elements.
+If the signature passed in is a simple type string for the signature (&#39;P&#39; for PMC,
+&#39;I&#39; for integer,
+&#39;N&#39; for number,
+and &#39;S&#39; for string),
+the types are matched as simple types.</dl>
+
+<h4><a name="PIR_subroutine_attributes"
+>PIR subroutine attributes</a></h4>
+
+<p>The following attributes are used when declaring a MultiSub in PIR.</p>
+
+<dl>
+<dt><a name=":multi"
+>:multi</a></dt>
+<pre>  .sub mymultisub :multi(Integer, Integer)
+    # ...
+  .end
+</pre>The <code>:multi</code> attribute marks a subroutine or method as participating in multiple dispatch.
+<dt><a name=":invocant"
+>:invocant</a></dt>
+<pre>  .sub mymultisub
+  .param pmc first :invocant
+  .end
+</pre>Not all elements of a multi&#45;sub&#39;s signature are relevant for the purposes of multiple dispatch.
+The subroutine parameters that participate in dispatch are marked with the attribute <code>:invocant</code>,
+and must be contiguous.
+Subs that are not marked with <code>:multi</code> may not mark parameters with <code>:invocant</code>.{{NOTE: I&#39;m open to other names for the attribute.
+An English form of the Latin <i>invocare</i>,
+&#34;to call upon&#34;,
+is pretty appropriate to the act of using an argument as a selector for multiple dispatch.}}</dl>
+
+<h3><a name="C_Multiple_Dispatch_API"
+>C Multiple Dispatch API</a></h3>
+
+<p>These functions are the public interface to common multiple dispatch operations,
+and may be called from opcodes,
+vtable functions,
+or other C functions.</p>
+
+<dl>
+<dt><a name="Parrot_mmd_sort_manhattan"
+>Parrot_mmd_sort_manhattan</a></dt>
+Performs a multiple dispatch lookup on an array of subroutines.
+The call signature to match is pulled from the current interpreter,
+following the Parrot calling conventions.
+Returns a sorted array of candidates that match the call signature,
+with the best matching candidate as the 0th element.
+<dt><a name="Parrot_mmd_invoke"
+>Parrot_mmd_invoke</a></dt>
+Make a multiple dispatch call.
+Similar in syntax to <code>Parrot_PCCINVOKE</code>,
+but doesn&#39;t separate out the invocant before the signature since the call can have multiple invocants.
+A significant part of the code from <code>Parrot_PCCINVOKE</code> can be factored out to helper routines used by both <code>Parrot_PCCINVOKE</code> and <code>Parrot_mmd_invoke</code>.
+<pre>  void
+  Parrot_mmd_invoke(PARROT_INTERP, NOTNULL(STRING *sub_name),
+        ARGIN(const char *signature), ...)&#62;</pre>
+
+<dt><a name="mmd_dispatch*_[deprecated]"
+>mmd_dispatch* [deprecated]</a></dt>
+Dispatch a routine with a fixed low&#45;level (register) type signature, with multiple dispatch on the high&#45;level (PMC) types. The low&#45;level call and return types are specified in the name of the function: &#39;i&#39; for integer, &#39;n&#39; for float, &#39;s&#39; for string, &#39;p&#39; for PMC, and &#39;v&#39; for void. So, a dispatch of one PMC and one integer argument that returns void is a call to <code>mmd_dispatch_v_pi()</code>.</dl>
+
+<h3><a name="Opcode_Multiple_Dispatch"
+>Opcode Multiple Dispatch</a></h3>
+
+<p>Parrot&#39;s basic opcodes are not multiple dispatch. They appear to be so, since a single opcode name may have multiple signatures. But, behind the scenes, this is essentially compile&#45;time overloading. (Each different signature is actually a different opcode number, hidden behind the abstraction of a single name.)</p>
+
+<p>Multiple dispatch is only used by a limited set of opcodes. These opcodes directly correspond to standard vtable functions. Multiple dispatch opcodes may take PMC, integer, float, or string arguments and return a PMC, integer, float, or string result.</p>
+
+<p>Multiple dispatch opcodes are standard opcodes that internally call the <code>Parrot_mmd_invoke</code> routine from the public MMD API.</p>
+
+<p>{{NOTE: It is no longer necessary to name multisubs used for opcode dispatch using the &#34;__&#34; names.}}</p>
+
+<h3><a name="Vtable_Multiple_Dispatch"
+>Vtable Multiple Dispatch</a></h3>
+
+<p>Some PMCs call multiple dispatch routines from their vtable functions. ResizablePMCArray, for example, calls the multiple dispatch equality operation on each element of two arrays from the &#39;is_equal&#39; vtable function.</p>
+
+<p>Multiple dispatch calls from within vtable functions call the <code>Parrot_mmd_invoke</code> routine from the public MMD API.</p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p><em>docs/mmd.pod</em>, <em><a href="../../src/multidispatch.c.html">src/multidispatch.c</a></em>, <em><a href="../../src/pmc/multisub.pmc.html">src/pmc/multisub.pmc</a></em></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

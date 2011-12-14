@@ -1,0 +1,1282 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PDD 15: Objects and Classes</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; PDD 15: Objects and Classes
+                </div>
+
+<h1><a name="PDD_15:_Objects_and_Classes"
+>PDD 15: Objects and Classes</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>This PDD describes the semantics of Parrot&#39;s object and class systems.</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Definitions"
+>Definitions</a></h2>
+
+<h3><a name="Object"
+>Object</a></h3>
+
+<p>An object is a value that incorporates both data and behavior related to that data.</p>
+
+<h3><a name="Class"
+>Class</a></h3>
+
+<p>A class defines a pattern of characteristics and behaviors from which objects are constructed.</p>
+
+<h3><a name="Attribute"
+>Attribute</a></h3>
+
+<p>An attribute is a slot in an object that contains a value,
+generally a PMC.
+Attributes are referenced by class name/attribute name pairs.</p>
+
+<p>Attributes are set on a class&#45;wide basis,
+and all the objects of a class will have the same set of attributes.
+Most OO languages don&#39;t allow attribute changes to existing classes,
+but Parrot&#39;s base attribute system does allow it (only before the first object is instantiated from the class).</p>
+
+<h3><a name="Method"
+>Method</a></h3>
+
+<p>A method is a piece of code that you invoke by name through an object.
+Methods implement the behaviour of an object.</p>
+
+<h3><a name="Parent_class"
+>Parent class</a></h3>
+
+<p>Also called the super&#45;class.
+The parent class is,
+in an inheritance situation,
+the class being derived from.
+If A derives from B,
+B is the parent class of A.</p>
+
+<h3><a name="Child_class"
+>Child class</a></h3>
+
+<p>Also called the sub&#45;class.
+The child class is,
+in an inheritance situation,
+the class doing the deriving.
+If A derives from B,
+A is the child class.</p>
+
+<h3><a name="Role"
+>Role</a></h3>
+
+<p>A role adds attributes and methods into a class without inheritance.
+The composed class retains a list of roles applied to it (so they can be checked with <code>does</code>),
+but otherwise maintains no distinction between composed attributes and methods and those defined in the class.</p>
+
+<h3><a name="Delegate"
+>Delegate</a></h3>
+
+<p>An object that is transparently (to the user) embedded in another object.
+Delegate objects are used in those cases where we can&#39;t inherit from a class because the class is from a different object universe.</p>
+
+<h3><a name="Property"
+>Property</a></h3>
+
+<p>A property is a role that only adds attributes and accessors.</p>
+
+<p>Properties are generally assigned at runtime,
+and a particular property may or may not exist on a PMC at any particular time.
+Properties are not restricted to objects as such&#45;&#45;any PMC may have a property attached to it.</p>
+
+<h3><a name="Interface"
+>Interface</a></h3>
+
+<p>An interface is a role that only adds methods.</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<dl>
+<dt><a
+>&#45; The object and class system provides the flexibility to implement a core set of dynamic languages (Perl 6,
+Ruby,
+Python,
+etc).
+Other class systems may be implemented later to support other languages.</a></dt>
+
+<dt><a name="&#45;_Classes_may_have_an_associated_namespace._(Anonymous_classes_are_not_associated_with_a_namespace.)"
+>&#45; Classes may have an associated namespace.
+(Anonymous classes are not associated with a namespace.)</a></dt>
+
+<dt><a name="&#45;_Classes_may_have_one_or_more_immediate_parent_classes"
+>&#45; Classes may have one or more immediate parent classes</a></dt>
+
+<dt><a name="&#45;_Classes_may_have_a_catalog_of_attribute_names."
+>&#45; Classes may have a catalog of attribute names.</a></dt>
+
+<dt><a name="&#45;_Classes_may_have_a_list_of_roles_they_implement"
+>&#45; Classes may have a list of roles they implement</a></dt>
+
+<dt><a name="&#45;_Classes_can_instantiate_an_object_of_their_class"
+>&#45; Classes can instantiate an object of their class</a></dt>
+
+<dt><a name="&#45;_Classes_can_add_and_remove_parent_classes"
+>&#45; Classes can add and remove parent classes</a></dt>
+
+<dt><a name="&#45;_Classes_can_add_and_remove_attributes"
+>&#45; Classes can add and remove attributes</a></dt>
+
+<dt><a name="&#45;_Classes_can_add_(but_not_remove)_roles"
+>&#45; Classes can add (but not remove) roles</a></dt>
+
+<dt><a name="&#45;_Classes_are_instances_of_a_meta&#45;class_and_have_their_own_sets_of_class_methods_and_class_attributes"
+>&#45; Classes are instances of a meta&#45;class and have their own sets of class methods and class attributes</a></dt>
+
+<dt><a name="&#45;_Classes_can_be_subclassed"
+>&#45; Classes can be subclassed</a></dt>
+
+<dt><a name="&#45;_High&#45;level_classes_can_subclass_low&#45;level_PMCs"
+>&#45; High&#45;level classes can subclass low&#45;level PMCs</a></dt>
+
+<dt><a name="&#45;_Objects_have_a_collection_(0_or_more)_of_attributes._Attribute_values_may_be_PMCs_or_a_low&#45;level_type."
+>&#45; Objects have a collection (0 or more) of attributes.
+Attribute values may be PMCs or a low&#45;level type.</a></dt>
+
+<dt><a name="&#45;_Objects_have_an_associated_class."
+>&#45; Objects have an associated class.</a></dt>
+
+<dt><a name="&#45;_Objects_may_have_a_custom_vtable_or_use_a_class&#45;wide_vtable."
+>&#45; Objects may have a custom vtable or use a class&#45;wide vtable.</a></dt>
+
+<dt><a name="&#45;_Objects_can_call_a_method"
+>&#45; Objects can call a method</a></dt>
+
+<dt><a name="&#45;_Objects_can_retrieve_a_method_PMC_for_a_method_(for_deferred_method_calls)"
+>&#45; Objects can retrieve a method PMC for a method (for deferred method calls)</a></dt>
+
+<dt><a name="&#45;_Objects_can_fetch_their_class"
+>&#45; Objects can fetch their class</a></dt>
+
+<dt><a name="&#45;_Objects_can_get_an_attribute_by_name"
+>&#45; Objects can get an attribute by name</a></dt>
+
+<dt><a name="&#45;_Objects_can_set_an_attribute_by_name"
+>&#45; Objects can set an attribute by name</a></dt>
+</dl>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<p>There are four pieces to the object implementation.
+There are the PMCs for the classes,
+roles,
+and objects,
+the opcodes the engine uses to do objecty things,
+specific vtable functions used to perform some of those objecty things,
+and the supporting code provided by the interpreter engine to do the heavy lifting.</p>
+
+<p>Parrot,
+in general,
+doesn&#39;t restrict operations on objects and classes.
+If a language has restrictions on what can be done with them,
+the language is responsible for making sure that disallowed things do not happen.
+For example,
+Parrot permits multiple inheritance,
+and will not stop code that adds a new parent to an existing class.
+If a language doesn&#39;t allow for multiple inheritance it must not emit code which would add multiple parents to a class.
+(Parrot may,
+at some point,
+allow imposition of runtime restrictions on a class,
+but currently it doesn&#39;t.)</p>
+
+<h3><a name="Class_PMC_API"
+>Class PMC API</a></h3>
+
+<p>There are two PMC classes,
+<code>Class</code> and <code>Object</code>.
+Class PMCs hold all the class&#45;specific information.
+Instantiating a new high&#45;level class creates a new Class PMC,
+and enters the new high&#45;level class into Parrot&#39;s PMC class table,
+at which point it is indistinguishable from any other PMC class.</p>
+
+<p>It&#39;s important to note that &#39;standard&#39; classes are Class PMC instances,
+or instances of a subclass of the Class PMC,
+and &#39;standard&#39; objects are Object PMCs.
+It isn&#39;t necessary to create a brand new low&#45;level PMC class for each high&#45;level class,
+and they all share the Class PMC vtable functions.</p>
+
+<p>An instance of the Class PMC has eleven core internal attributes,
+which are:</p>
+
+<ol>
+<li>The class name</li>
+
+<li>A link to the class&#39;s associated namespace</li>
+
+<li>A &#34;have I been instantiated since I was last modified&#34; flag</li>
+
+<li>An array PMC of the immediate parent classes</li>
+
+<li>A cached array of all parent PMCs,
+in search order (this is an optional optimization,
+and can be calculated from the class&#39;s rules of inheritance,
+the list of immediate parent classes,
+and the parent classes&#39; rules of inheritance)</li>
+
+<li>An array PMC of the composed roles (these are Role PMCs,
+not string names of roles).</li>
+
+<li>A hash PMC of the methods defined in the class or composed into the class</li>
+
+<li>A hash PMC of the overloaded PMC vtable entries for the class.</li>
+
+<li>The class attribute metadata hash.
+Keys are the attribute names and the values are a hash of attribute characteristics,
+including name,
+type,
+the class they&#39;re associated with and any flags (for example,
+private).
+Note that this only stores metadata for the attributes defined in this class,
+and not for attributes inherited from its parents.</li>
+
+<li>The full attribute lookup table.
+This associates attribute names with an index into the object&#39;s attribute storage (an array).
+It includes all attributes defined in the current class and every other class that it inherits from either directly or indirectly.
+The table is keyed on the name of the class where the attribute is defined,
+along with the attribute name.
+The value is an index into the per&#45;object attribute store.</li>
+
+<li>The attribute cache.
+While the attribute lookup table defines every attribute,
+whether it is visible or not with the current method resolution order (MRO),
+the cache maps the names of the visible attributes directly to an index in the per&#45; object attribute store.
+That saves a more costly lookup in the full attribute lookup table.</li>
+</ol>
+
+<p>The attribute catalog holds only the attributes defined in a particular class.
+When instantiating an object,
+the object data store is created as a ResizablePMCArray,
+so doesn&#39;t need any specific details of the class&#39;s attribute structure.
+As attributes are set in the object (based on the index in the lookup table),
+the Array expands to accommodate the attribute indexes that are actually used.
+In the common case,
+a relatively small set near the lower index range is all that will be used.</p>
+
+<p>When setting the attribute cache it is necessary to scan all parent classes as well as the instantiated class for attributes defined there.
+The inheritance rules (MRO) for a particular HLL will determine which child class attributes override which parent class attributes.
+The cache is only set on individual accesses to a particular attribute.</p>
+
+<p>Class PMCs also have the &#34;I am a class&#34; flag set on them.</p>
+
+<h4><a name="Classes,_Namespaces,_and_the_Class_Registry"
+>Classes,
+Namespaces,
+and the Class Registry</a></h4>
+
+<p>If a class hasn&#39;t been instantiated,
+adding a method or attribute modifies the existing class object.
+Extending a class that has been instantiated is not allowed.</p>
+
+<p>The class registry has a much diminished role in this implementation.
+Its only responsibility is maintaining a mapping of unique IDs to class objects throughout the system.
+It should not be used for looking up classes by name.</p>
+
+<p>The class registry may need to have names removed (since it doesn&#39;t care about names anymore).
+We plan to eventually eliminate the registry of class IDs altogether.
+Low&#45;level PMC types also have entries in the namespace hierarchy via PMCProxy objects.</p>
+
+<p>A class can be garbage collected when it has no instantiated objects and no Namespace object referencing it (to mark it as live).
+When a class is garbage collected,
+it should remove itself from the registry.</p>
+
+<h4><a name="Class_Vtable_Entries"
+>Class Vtable Entries</a></h4>
+
+<p>To make this work all Classes need the following vtable entries.</p>
+
+<dl>
+<dt><a name="instantiate()"
+>instantiate()</a></dt>
+Instantiate a new object from the class.
+Set the instantiated flag on the class.
+<dt><a name="clone()"
+>clone()</a></dt>
+Create an (anonymous) clone of the class.
+Unset the instantiated flag on the new class.
+<dt><a name="name(string_*)"
+>name(string *)</a></dt>
+Returns a simple string name for the class.
+<dt><a name="add_method(string_*,_method_*)"
+>add_method(string *,
+method *)</a></dt>
+Add a method to the class.
+<dt><a name="add_vtable_override(string_*,_vtable_sub_*)"
+>add_vtable_override(string *,
+vtable_sub *)</a></dt>
+Add a vtable override to the class.
+<dt><a name="add_attribute(string_*,_key_*)"
+>add_attribute(string *,
+key *)</a></dt>
+Add an attribute to the class.
+<dt><a name="add_parent(class_*)"
+>add_parent(class *)</a></dt>
+Add a parent to the class.
+<dt><a name="add_role(role_*)"
+>add_role(role *)</a></dt>
+Add a role to the class.
+<dt><a name="find_method(string_*)"
+>find_method(string *)</a></dt>
+Returns the PMC for the named method.
+If no method of this name exists,
+nor can be constructed,
+returns a Null PMC.A class object reports on class methods,
+not on instance methods.
+<dt><a name="isa(pmc_*)"
+>isa(pmc *)</a></dt>
+Returns true or false if the class object,
+namespace object,
+key,
+or string name PMC passed in as a parameter is a class in the inheritance hierarchy of the object.
+<dt><a name="isa_str(string_*)"
+>isa_str(string *)</a></dt>
+Returns true or false if the string passed in as a parameter is a class in the inheritance hierarchy of the object.
+<dt><a name="can(string_*)"
+>can(string *)</a></dt>
+Returns true or false if the class can perform the requested method.
+(Class systems that implement default fallback methods should report that they &#39;can&#39; perform any method.)A class object reports on class methods,
+not on instance methods.
+<dt><a name="does(class_*)"
+>does(class *)</a></dt>
+Returns true or false to note whether the class in question implements the interface passed in.A class object only reports on interfaces of the class (i.e.
+roles composed into the metaclass),
+it doesn&#39;t report on which interfaces will be added to an instance of that class.
+<dt><a name="inspect()"
+>inspect()</a></dt>
+Return a data structure of all information relevant to introspection on the class.
+<dt><a name="inspect_str(string_*)"
+>inspect_str(string *)</a></dt>
+Return a PMC Hash,
+Array,
+String,
+Integer,
+or Number value with introspection information corresponding to the requested string name.
+This may be overridden to report information about the internals of a class that aren&#39;t actually true (useful for mocking).
+It can also be used for straight introspection capabilities even when a particular class is using keyed access to act like a hash or array or attribute access to act as an object.
+<dt><a name="remove_attribute(string_*)"
+>remove_attribute(string *)</a></dt>
+Remove an attribute from the class.
+<dt><a name="remove_method(string_*)"
+>remove_method(string *)</a></dt>
+Remove a method from the class.
+<dt><a name="remove_parent(string_*)"
+>remove_parent(string *)</a></dt>
+Remove a parent from the class.</dl>
+
+<p>Parrot only supports mutating class metainformation for Class classes.
+This restriction may be lifted at some point.</p>
+
+<h4><a name="Class_Methods"
+>Class Methods</a></h4>
+
+<p>These methods are just syntactic sugar for the vtable functions.</p>
+
+<dl>
+<dt><a name="name"
+>name</a></dt>
+<pre>    $P1 = $P2.'name'( $S3 )
+</pre>The accessor for the name attribute.
+With no argument,
+it simply returns the current value for name.
+When passed an argument,
+it sets the name of the class,
+and also sets the association with a namespace.
+With no argument it only returns the current value of the name attribute.
+<dt><a name="get_namespace"
+>get_namespace</a></dt>
+<pre>    $P1 = $P2.'get_namespace'()
+</pre>Retrieve the namespace object associated with the class.
+<dt><a name="new"
+>new</a></dt>
+<pre>    $P1 = $P2.'new'( 'myattrib' => "Foo" )
+</pre>Create a new instance object from the class object.
+It takes an optional,
+slurpy,
+named list of attributes and values to initialize the object.
+Passing attribute names that weren&#39;t declared in the class is an error.
+<dt><a name="add_attribute"
+>add_attribute</a></dt>
+<pre>  $P1.'add_attribute'($S2)
+  $P1.'add_attribute'($S2, $S3)
+  $P1.'add_attribute'($S2, $P3)
+</pre>Adds a single attribute to the class.
+It takes a simple string name and,
+optionally,
+a simple string value or key specifying a type name.
+(Types are not currently checked by Parrot,
+and only provided for introspection.)If the class has already been instantiated,
+adding a new attribute throws an exception.
+<dt><a name="attributes"
+>attributes</a></dt>
+<pre>  $P1 = $P2.'attributes'()
+</pre>An accessor for the attributes of the class.
+It returns the a Hash of all attributes,
+with a key of the attribute name and a value of a Hash containing the attribute&#39;s metadata.
+The accessor is read&#45;only.
+<dt><a name="add_method"
+>add_method</a></dt>
+<pre>  $P1.'add_method'($S2, $P3)
+</pre>Adds a method to the class.
+It takes a simple string name and a method PMC.
+If the method already exists it will throw an exception.
+<dt><a name="methods"
+>methods</a></dt>
+<pre>  $P1 = $P2.'methods'()
+</pre>An accessor for the methods of the class.
+It returns a Hash of all methods,
+with a key of the method name and a value of an invokable PMC.
+Note that the methods list includes any methods that were composed into the class from roles.
+<dt><a name="add_vtable_override"
+>add_vtable_override</a></dt>
+<pre>  $P1.'add_vtable_override'($S2, $P3)
+</pre>Adds a vtable override to the class.
+It takes a simple string name and a sub/method PMC.
+If the vtable override already exists it will throw an exception (attempting to add the same sub/method object a second time will be silently ignored).
+<dt><a name="add_parent"
+>add_parent</a></dt>
+<pre>  $P1.'add_parent'($P3)
+</pre>Adds a single parent to the class.
+It takes a Class PMC argument (the parent to add).
+<dt><a name="parents"
+>parents</a></dt>
+<pre>  $P1 = $P2.'parents'()
+</pre>An accessor for the parents of the class.
+It returns an array of all parents.
+The accessor is read&#45;only.
+<dt><a name="roles"
+>roles</a></dt>
+<pre>  $P1 = $P2.'roles'()
+</pre>An accessor for the roles of the class.
+It returns an array of all roles.
+The accessor is read&#45;only.
+<dt><a name="add_role"
+>add_role</a></dt>
+<pre>  $P1.'add_role'($P2, [named])
+</pre>Adds a single role to the class.
+It takes an instance of the Role PMC as a required positional parameter,
+and the optional named parameters <code>exclude</code> and <code>alias</code>; see <a href='#Role_Conflict_Resolution'>&#34;Role Conflict Resolution&#34;</a> for more details.
+<dt><a name="subclass"
+>subclass</a></dt>
+<pre>  $P1 = $P2.'subclass'($S3)
+</pre>Create a subclass of $P2 with name $S3 and return it in $P1.
+<dt><a name="isa"
+>isa</a></dt>
+<pre>  $I1 = $P2.'isa'($S3)
+</pre>Returns true if the class name passed in as a parameter is in the inheritance hierarchy of the class,
+false otherwise.
+<dt><a name="can"
+>can</a></dt>
+<pre>  $I1 = $P2.'can'($S3)
+</pre>Returns true if the class object can perform the requested method,
+false otherwise.
+<dt><a name="does"
+>does</a></dt>
+<pre>  $I1 = $P2.'does'($S3)
+</pre>Returns true if the object in question implements the role,
+class,
+type,
+or behavior passed in,
+false otherwise.A class object only reports on interfaces of the class (i.e.
+roles composed into the metaclass),
+while an instance object only reports on interfaces of the instance (i.e.
+roles composed into the class).
+<dt><a name="inspect"
+>inspect</a></dt>
+<pre>  $P1 = $P2.'inspect'()
+  $P1 = $P2.'inspect'($S3)
+</pre>Return introspection information for the class.</dl>
+
+<h3><a name="Object_PMC_API"
+>Object PMC API</a></h3>
+
+<p><code>Object</code> PMCs are the actual objects,
+and hold all the per&#45;object instance data.</p>
+
+<p>An instance of the Object PMC has two core internal attributes,
+which are:</p>
+
+<ol>
+<li>The class PMC</li>
+
+<li>The object attribute store.
+This is simply an array of PMCs that provide the values for the attributes.
+It may be a resizable PMC array to provide lazy growth rather than allocating all needed memory for all attributes.
+The attribute cache and lookup table in the class store the indexes into this array,
+linking the attribute name and meta&#45;information with the storage position.</li>
+</ol>
+
+<p>A list of the object&#39;s attributes is accessible from the class.
+The attribute cache is the most straightforward way to retrieve a complete list of attributes visible to the object,
+but the first time you introspect for a complete list the class may have to calculate the list by traversing the inheritance hierarchy.</p>
+
+<p>Object PMCs have the &#34;I am an object&#34; flag set on them.</p>
+
+<p>Object PMCs have no methods aside from those defined in their associated class.
+They do have vtable functions providing access to certain low&#45;level information about the object,
+method call functionality,
+etc.
+See the sections below on <a href='TODO'>Objects</a> and <a href='TODO'>Vtables</a>.</p>
+
+<h4><a name="Object_Vtable_Entries"
+>Object Vtable Entries</a></h4>
+
+<p>All Objects need the following vtable entries.</p>
+
+<dl>
+<dt><a name="find_method(string_*)"
+>find_method(string *)</a></dt>
+Returns the PMC for the named method.
+If no method of this name exists,
+nor can be constructed,
+returns a Null PMC.Note that for languages which support default fallback methods (such as Perl 5&#39;s AUTOLOAD) this would be the place to return it if a normal lookup fails.Since the method list and vtable override list are stored in the class PMC,
+method finding is a lookup on the class object and not a lookup in the namespace.
+Just adding a sub to a namespace will not automatically make it a method of the class,
+you have to call add_method too.An instance object reports on instance methods,
+not on class methods.
+<dt><a name="isa(class_*)"
+>isa(class *)</a></dt>
+Returns true or false if the class passed in as a parameter is in the inheritance hierarchy of the object.
+<dt><a name="can(string_*)"
+>can(string *)</a></dt>
+Returns true or false if the object can perform the requested method.
+(Class systems that implement default fallback methods should report that they &#39;can&#39; perform any method.)An instance object only reports on instance methods,
+not on class methods.
+<dt><a name="does(class_*)"
+>does(class *)</a></dt>
+Returns true or false to note whether the object in question implements the interface passed in.An instance object only reports on interfaces of the instance (i.e.
+roles composed into the class).
+<dt><a name="get_attr(STRING*)"
+>get_attr(STRING*)</a></dt>
+Returns the attribute with the string name for the object.
+<dt><a name="get_attr_keyed(PMC*,_STRING*)"
+>get_attr_keyed(PMC*,
+STRING*)</a></dt>
+Returns the attribute with the string name for the object.
+Lookup is on the attribute store of a particular parent of the object&#39;s class,
+identified by a classname,
+namespace,
+or key PMC.
+<dt><a name="set_attr(STRING*,_PMC*)"
+>set_attr(STRING*,
+PMC*)</a></dt>
+Set the attribute with the string name for the object.
+<dt><a name="set_attr_keyed(PMC*,_STRING*,_PMC*)"
+>set_attr_keyed(PMC*,
+STRING*,
+PMC*)</a></dt>
+Set the attribute with the string name for the object.
+The value is set in the attribute store of a particular parent of the object&#39;s class,
+identified by a classname,
+namespace,
+or key PMC.
+<dt><a name="get_class"
+>get_class</a></dt>
+Returns the class PMC for the object.
+<dt><a name="clone"
+>clone</a></dt>
+Create a clone of the object.
+<dt><a name="inspect()"
+>inspect()</a></dt>
+Return a data structure of all information relevant to introspection on the object.
+<dt><a name="inspect_str(string_*)"
+>inspect_str(string *)</a></dt>
+Return a PMC Hash,
+Array,
+String,
+Integer,
+or Number value of introspection information corresponding to the requested string name (such as &#39;parents&#39;).
+This may be overridden to report information about the internals of an object that aren&#39;t actually true (useful for mocking).
+It can also be used for straight introspection capabilities even when a particular object is using keyed access (to act like a hash or array) or attribute access.</dl>
+
+<h3><a name="Role_PMC_API"
+>Role PMC API</a></h3>
+
+<p>An instance of the Role PMC has five core attributes,
+which are:</p>
+
+<ol>
+<li>The role name</li>
+
+<li>A link to the role&#39;s associated namespace</li>
+
+<li>An array PMC of composed roles</li>
+
+<li>An array PMC of the methods defined in the role or composed into the role</li>
+
+<li>The role attribute hash,
+where each key is an attribute name and the corresponding value is a hash of attribute characteristics,
+including name,
+type,
+and the role they&#39;re associated with.</li>
+</ol>
+
+<h4><a name="Role_Vtable_Entries"
+>Role Vtable Entries</a></h4>
+
+<p>All Roles need the following vtable entries.</p>
+
+<dl>
+<dt><a name="add_method(string_*,_method_*)"
+>add_method(string *,
+method *)</a></dt>
+Add a method to the role.
+<dt><a name="add_vtable_override(string_*,_vtable_sub_*)"
+>add_vtable_override(string *,
+vtable_sub *)</a></dt>
+Add a vtable override to the role.
+<dt><a name="add_attribute(string_*,_key_*)"
+>add_attribute(string *,
+key *)</a></dt>
+Add an attribute to the role.
+<dt><a name="add_role(role_*)"
+>add_role(role *)</a></dt>
+Add a role to the role.
+<dt><a name="find_method(string_*)"
+>find_method(string *)</a></dt>
+Returns the PMC for the named method.
+If no method of this name exists,
+nor can be constructed,
+returns a Null PMC.A role object reports on class methods (methods of the metarole),
+not on instance methods.
+<dt><a name="can(string_*)"
+>can(string *)</a></dt>
+Returns true or false if the role can perform the requested method.
+(Class systems that implement default fallback methods should report that they &#39;can&#39; perform any method.)A role object reports on class methods (methods of the metarole),
+not on instance methods.
+<dt><a name="does(class_*)"
+>does(class *)</a></dt>
+Returns true or false to note whether the role in question implements the interface passed in.A role object only reports on interfaces of the role (i.e.
+roles composed into the metarole),
+it doesn&#39;t report on which interfaces will be added to an object instantiated from a class that composes the role.
+<dt><a name="clone"
+>clone</a></dt>
+Create an (anonymous) clone of the role.
+<dt><a name="inspect()"
+>inspect()</a></dt>
+Return a data structure of all information relevant to introspection on the role.
+<dt><a name="inspect_str(string_*)"
+>inspect_str(string *)</a></dt>
+Return a PMC Hash,
+Array,
+String,
+Integer,
+or Number value of introspection information corresponding to the requested string name (such as &#39;parents&#39;).
+<dt><a name="remove_attribute(string_*)"
+>remove_attribute(string *)</a></dt>
+Remove an attribute from the role.
+<dt><a name="remove_method(string_*)"
+>remove_method(string *)</a></dt>
+Remove a method from the role.</dl>
+
+<h4><a name="Role_Methods"
+>Role Methods</a></h4>
+
+<p>These methods are just syntactic sugar for the vtable functions.</p>
+
+<dl>
+<dt><a name="name"
+>name</a></dt>
+<pre>    $P1 = $P2.'name'( $S3 )
+</pre>The accessor for the name attribute.
+With no argument,
+it simply returns the current value for name.
+When passed an argument,
+it sets the name of the role,
+and also sets the association with a namespace.
+<dt><a name="get_namespace"
+>get_namespace</a></dt>
+<pre>    $P1 = $P2.'get_namespace'()
+</pre>Retrieve the namespace object associated with the role.
+<dt><a name="attributes"
+>attributes</a></dt>
+<pre>  $P1 = $P2.'attributes'()
+</pre>An accessor for the attributes of the role.
+It returns the Hash of all attributes,
+with a key of the attribute name,
+and a value of the attribute&#39;s metadata (a Hash).
+The accessor is read&#45;only.
+<dt><a name="add_attribute"
+>add_attribute</a></dt>
+<pre>  $P1.'add_attribute'($S2)
+  $P1.'add_attribute'($S2, $S3)
+  $P1.'add_attribute'($S2, $P3)
+</pre>Adds a single attribute to the role.
+It takes a simple string name,
+and optionally,
+a simple string value or key specifying a type name.
+(A type name just checks <code>does</code>,
+and doesn&#39;t necessarily correspond to a class or role namespace.)
+<dt><a name="add_role"
+>add_role</a></dt>
+<pre>  $P1.'add_role'($P2, [named])
+</pre>Adds a single role to the role.
+It takes an instance of the Role PMC as a required positional parameter,
+and the optional named parameters <code>exclude</code> and <code>alias</code>; see <a href='#Role_Conflict_Resolution'>&#34;Role Conflict Resolution&#34;</a> for more details.
+<dt><a name="roles"
+>roles</a></dt>
+<pre>  $P1 = $P2.'roles'()
+</pre>An accessor for the roles composed into the role.
+It returns an Array of all roles as PMC objects.
+If any roles that were composed into this one were themselves made up of a composition of other roles,
+the roles they were made up of will also be included in the value returned by this accessor.
+However,
+no role will be mentioned more than once.
+The accessor is read&#45;only.
+<dt><a name="add_method"
+>add_method</a></dt>
+<pre>  $P1.'add_method'($S2, $P3)
+</pre>Adds a method to the role.
+It takes a simple string name and a method PMC.
+If the method already exists it will throw an exception.
+<dt><a name="add_vtable_override"
+>add_vtable_override</a></dt>
+<pre>  $P1.'add_vtable_override'($S2, $P3)
+</pre>Adds a vtable override to the role.
+It takes a simple string name and a sub/method PMC.
+If the vtable override already exists it will throw an exception.
+<dt><a name="methods"
+>methods</a></dt>
+<pre>  $P1 = $P2.'methods'()
+</pre>An accessor for the methods of the role.
+It returns a Hash of all methods,
+with a key of the method name and a value of an invokable PMC.
+The list will include methods added through composing other roles into this role.
+The accessor is read&#45;only.
+<dt><a name="inspect"
+>inspect</a></dt>
+<pre>  $P1 = $P2.'inspect'()
+  $P1 = $P2.'inspect'($S3)
+</pre>Return introspection information for the role.</dl>
+
+<h4><a name="Role_Conflict_Resolution"
+>Role Conflict Resolution</a></h4>
+
+<p>When a role is added to a class,
+we try to compose it right away,
+and throw an exception on any conflicts that are detected.
+A conflict occurs if two roles try to supply a method of the same name (but see the note on multi&#45;methods below).
+High level languages will provide varying facilities to deal with this,
+and Parrot provides the primitives to implement them.</p>
+
+<p>When declaring a composed class,
+you can optionally supply an array of method names that will be defined by the class to resolve a conflict in its roles.
+This is done using the named parameter <code>resolve</code>.
+This feature supports composition conflict resolution.</p>
+
+<p>When adding a role to a class,
+you can optionally supply an array of method names from the role to exclude from the composition process.
+This is done using the named parameter <code>exclude</code>.
+It is not an error to list a method name in this array that the role does not have.
+This makes it possible to implement languages that provide for explicit exclusions on a role&#45;by&#45;role basis.</p>
+
+<p>When adding a role to a class,
+you can optionally specify that specific methods are to be aliased to different names within the class.
+This is done with the optional <code>alias</code> named parameter.
+The parameter takes hash of strings,
+where the key is a method name in the role,
+and the value is the name it will have in to the class.
+(This is also sometimes used for conflict resolution.)</p>
+
+<p>If you <code>alias</code> a method,
+it won&#39;t automatically <code>exclude</code> the original name from the role.
+You can also explicitly <code>exclude</code> the method name,
+if you want a proper renaming of the method.
+A <code>resolve</code> at the class level will automatically <code>exclude</code> all methods of that name from any role composed into the class.
+You can <code>alias</code> the method if you want to call it from the composed class.
+(You might use this if you want the resolving method to be able to call either of the conflicting methods from two composed roles.)</p>
+
+<h3><a name="Opcodes"
+>Opcodes</a></h3>
+
+<p>The following ops are provided to deal with objects.
+Please note that method calls are governed by Parrot&#39;s calling conventions,
+and as such objects,
+method PMCs,
+return continuations,
+and parameters must be in the right places,
+though some ops will put parameters where they need to go.</p>
+
+<dl>
+<dt><a name="getattribute"
+>getattribute</a></dt>
+<pre>  $P1 = getattribute $P2, $S3
+  $P1 = getattribute $P2, $P3, $S4
+</pre>Get the attribute with the fully qualified name $S3 from object $P2 and put it in $P1.
+To get an attribute for a parent class that has the same name as an attribute in the child class,
+pass an optional class object or namespace key $P3 for the parent class.If the attribute doesn&#39;t exist,
+it will throw an exception.
+If the attribute exists,
+but the value hasn&#39;t been set,
+it will return a null PMC.
+<dt><a name="setattribute"
+>setattribute</a></dt>
+<pre>  setattribute $P1, $S2, $P3
+  setattribute $P1, $P2, $S3, $P4
+</pre>Set the attribute of object $P1 with the attribute name $S2 to $P3.
+To set an attribute for a parent class that has the same name as an attribute in the child class,
+pass an optional class object or namespace key $P2 for the parent class.If the attribute doesn&#39;t exist,
+it will throw an exception.
+<dt><a name="callmethod"
+>callmethod</a></dt>
+<pre>  callmethod $P1, $S1, $P2
+</pre>Call the method specified in the string name $S1 using $P1 as the invocant and using the continuation passed in $P2.
+If you need to create a new continuation use <code>callmethodcc</code>.<pre>  callmethod $P1, $P2, $P3
+</pre>Call the method specified in the Sub object $P2 using $P1 as the invocant and using the continuation passed in $P3.
+If you need to create a new continuation use <code>callmethodcc</code>.
+<dt><a name="callmethodcc"
+>callmethodcc</a></dt>
+<pre>  callmethodcc $P1, $S1
+  callmethodcc $P1, $P2
+</pre>Call the method specified in the string name $S1,
+or in the Sub object $P2,
+using $P1 as the invocant for method lookup and generate a new return continuation.Throws an exception for a non&#45;existent method.
+<dt><a name="callmethodsupercc_[hypothetical,_2.0_or_later]"
+>callmethodsupercc [hypothetical,
+2.0 or later]</a></dt>
+Call the method specified in the string name $S1,
+or in the Sub object $P2,
+using $P1 as the invocant for method lookup and generate a new return continuation.
+This is a variant of <code>callmethodcc</code> that skips over the current class when searching for the method,
+and only looks in the parent classes.
+PIR may provide some syntactic sugar for this.
+<dt><a name="callmethodnextcc_[hypothetical,_2.0_or_later]"
+>callmethodnextcc [hypothetical,
+2.0 or later]</a></dt>
+Call the method specified in the string name $S1,
+or in the Sub object $P2,
+using $P1 as the invocant for method lookup and generate a new return continuation.
+A variant of <code>callmethodcc</code> that picks up an existing <code>find_method</code> search where it left off for the current call.
+{{ Note: this depends on find_method being resumable,
+and on the context of a particular method including a pointer to the find_method call that found it.
+Neither may be feasible.
+}} PIR may provide some syntactic sugar for this.
+<dt><a name="newclass"
+>newclass</a></dt>
+<pre>  $P1 = newclass $S2
+  $P1 = newclass $S2, $P3
+</pre>Create a new base class named $S2,
+and put the PMC for it in $P1.
+You may optionally pass a hash of initialization parameters for the class in $P3.
+<dt><a name="subclass"
+>subclass</a></dt>
+<pre>  $P1 = subclass $S2
+  $P1 = subclass $P2
+  $P1 = subclass $S2, $S3
+  $P1 = subclass $P2, $S3
+  $P1 = subclass $S2, $P3
+  $P1 = subclass $P2, $P3
+</pre>Create a new class,
+named $S3,
+which has $P2 as its immediate parent.
+$P2 may be either another high&#45;level class based on the Class PMC,
+or it may be a low&#45;level PMC such as <code>Integer</code> or <code>ResizablePMCArray</code>.
+<dt><a name="get_class"
+>get_class</a></dt>
+<pre>  $P1 = get_class $S2
+  $P1 = get_class $P2
+</pre>Retrieve a class object for the class identified by the string name in $S2,
+or by the PMC key or namespace object in $P2.A string name looks for the class in a namespace with that name nested in the currently selected namespace.
+Passing in a namespace object looks for the class in that namespace object.
+A key looks for the class in the namespace identified by the multilevel key relative to the currently selected HLL.If the class doesn&#39;t exist,
+it returns a null PMC.
+<dt><a name="typeof"
+>typeof</a></dt>
+<pre>  $S1 = typeof $P2
+  $P1 = typeof $P2
+</pre>Lookup the type of the instance object in $P2.
+Return the string name if the destination is a string register or variable.
+If the destination is a PMC register or variable,
+return the class object for an instance of a high&#45;level class,
+or the class proxy object for an instance of a low&#45;level PMC.
+<dt><a name="new"
+>new</a></dt>
+<pre>  $P1 = new $S2
+  $P1 = new $S2, $P3
+  $P1 = new $P2
+  $P1 = new $P2, $P3
+</pre>Create a new object from the class named by $S2 or $P2 (a string PMC,
+namespace key,
+or class object),
+and put the PMC for it in $P1.
+You may optionally pass a hash of initialization parameters for the class in $P3.
+<dt><a name="addparent"
+>addparent</a></dt>
+<pre>  addparent $P1, $P2
+</pre>Add class $P2 to the end of the list of immediate parents of class $P1.
+Adds any attributes of $P2 (and its parent classes) that aren&#39;t already in $P1.
+<dt><a name="removeparent"
+>removeparent</a></dt>
+<pre>  removeparent $P1, $P2
+</pre>Remove class $P2 from the parent list of $P1.
+All parent classes of $P2 which aren&#39;t parent classes of what remains of $P1&#39;s parent list are removed,
+as are their attributes.
+<dt><a name="addattribute"
+>addattribute</a></dt>
+<pre>  addattribute $P1, $S2
+  addattribute $P1, $S2, $S3
+  addattribute $P1, $S2, $P3
+</pre>Add attribute $S2 to class or role $P1.
+This will add the attribute slot to all objects of class $P1,
+classes that inherit from class $P1,
+or classes that compose the role $P1,
+with a default value of <code>Null</code>.
+It optionally takes a simple string value or key specifying a type of the attribute.
+<dt><a name="removeattribute"
+>removeattribute</a></dt>
+<pre>  removeattribute $P1, $S2
+</pre>Remove the attribute $S2 from class or role $P1.
+This will not remove the attribute from any objects that have already been instantiated,
+but it will be absent from all future objects of class $P1,
+of classes that inherit from class $P1,
+or of classes that compose the role $P1.
+<dt><a name="addrole"
+>addrole</a></dt>
+<pre>  addrole $P1, $P2
+</pre>Add role $P2 to the end of the list of roles of class or role $P1.
+Adds any methods and attributes of $P2 that aren&#39;t already in $P1.
+<dt><a name="inspect"
+>inspect</a></dt>
+<pre>  $P1 = inspect $P2
+  $P1 = inspect $P2, $S3
+</pre>Return introspection information for the PMC.
+Without the optional string argument,
+return a data structure of all information relevant to introspection.
+With the optional string argument,
+return a PMC Hash,
+Array,
+String,
+Integer,
+or Number value with introspection information corresponding to the requested string name.</dl>
+
+<h3><a name="PIR_Class_Definitions"
+>PIR Class Definitions</a></h3>
+
+<p>PIR provides some syntactic sugar for declaring classes.</p>
+
+<dl>
+<dt><a name=":method"
+>:method</a></dt>
+<pre>  .sub custom_method :method
+    # ...
+  .end
+</pre>Flags the code entity as a method.
+<dt><a name=":vtable"
+>:vtable</a></dt>
+<pre>  .sub get_integer :vtable
+    # ...
+  .end
+</pre>Flags the code entity as a vtable override.</dl>
+
+<p>:method and :vtable can be combined to indicate that a particular code entity is callable both as a method and as a vtable override.</p>
+
+<p>If the class object has not yet been created at the point when the PIR subs are compiled,
+the methods and vtable overrides are temporarily stored in the associated namespace.</p>
+
+<h3><a name="Vtable_Overriding"
+>Vtable Overriding</a></h3>
+
+<p>Classes can override vtable functions from PIR,
+allowing control over the low&#45;level behavior of objects similar to PMCs defined in C.
+The vtable functions all take a single fixed argument list,
+and return at most a single value.
+Calling the overrides directly requires some knowledge of the way Parrot works,
+so higher&#45;level languages will generally provide easier&#45;to&#45;use wrappers.</p>
+
+<p>To override a vtable function,
+either add the :vtable pragma to the declaration of the method,
+or pass a named parameter &#34;vtable&#34; into the <code>add_method</code> method on a class or role.</p>
+
+<h2><a name="Examples"
+>Examples</a></h2>
+
+<p>The following examples all assume we&#39;re working with basic Object objects and Class classes.</p>
+
+<h3><a name="Creating_a_new_class"
+>Creating a new class</a></h3>
+
+<p>To create a new class <code>Foo</code> which has no parent classes:</p>
+<pre>   $P0 = newclass "Foo"
+</pre>
+<h3><a name="Creating_a_new_class_with_multiple_parents"
+>Creating a new class with multiple parents</a></h3>
+
+<p>To create a class <code>Foo</code> with the parents <code>A</code> and <code>B</code>,
+the code would be:</p>
+<pre>   $P0 = get_class "A"
+   $P1 = get_class "B"
+   $P2 = subclass $P0, "Foo"
+   addparent $P2, $P1
+</pre>
+<h3><a name="Creating_a_new_class_with_attributes"
+>Creating a new class with attributes</a></h3>
+
+<p>Adding the attributes <code>a</code> and <code>b</code> to the new class <code>Foo</code>:</p>
+<pre>  $P0 = newclass "Foo"
+  addattribute $P0, "a"
+  addattribute $P0, "b"
+</pre>
+<h3><a name="Instantiating_an_object"
+>Instantiating an object</a></h3>
+
+<p>Assuming we want an object of class <code>Foo</code>:</p>
+<pre>  .local pmc FooClass
+  .local pmc MyObject
+  FooClass = get_class "Foo"
+  MyObject = FooClass.'new'()
+</pre>
+<h3><a name="Calling_a_method_on_an_object"
+>Calling a method on an object</a></h3>
+
+<p>Calling the method <code>Xyzzy</code> on an object,
+assuming the PDD03 calling conventions are respected:</p>
+
+<p>Or,
+if a return continuation needs constructing:</p>
+
+<p>Or,
+calling a method in PIR,
+where the calling conventions are handled automatically.</p>
+<pre>  $P0.'Xyzzy'($P1)
+</pre>
+<h3><a name="Accessing_attributes_from_within_a_class"
+>Accessing attributes from within a class</a></h3>
+
+<p>With named access:</p>
+<pre>  $P1 = getattribute $P0, "b"
+</pre>
+<h2><a name="Explanations"
+>Explanations</a></h2>
+
+<p>To get a new class,
+you can do a <code>newclass</code>,
+which creates a new class with no parents besides Parrot&#39;s default super&#45;ish parent class.</p>
+
+<p>To get a new child class,
+you have two potential options:</p>
+
+<dl>
+<dt><a name="Subclass_the_parent"
+>Subclass the parent</a></dt>
+
+<dt><a name="Create_a_new_standalone_class_and_add_a_parent"
+>Create a new standalone class and add a parent</a></dt>
+</dl>
+
+<p>Both ways work.
+It is,
+however,
+more efficient to use the first method,
+and just subclass the immediate parent class of your new class.</p>
+
+<p>When adding in extra parents in a multiple&#45;inheritance scenario,
+subclass the first class in the immediate parent list then use the <code>addparent</code> op to add in the rest of the immediate parents.</p>
+
+<h2><a name="Language_Notes"
+>Language Notes</a></h2>
+
+<p>Notes on some of the OO&#45;related needs of various languages.</p>
+
+<h3><a name="PMCs"
+>PMCs</a></h3>
+
+<p>Ruby: Just like Smalltalk,
+everything is an object.
+Core Ruby classes (String,
+Array,
+Hash,
+Module,
+etc) might be implemented something like this:</p>
+
+<pre> ParrotClass
+    |
+ RubyClass   String
+    |         |
+     \      /
+    RubyString</pre>
+
+<h3><a name="Objectspace"
+>Objectspace</a></h3>
+
+<p>Ruby: Objectspace in Ruby allows the programmer to iterate through every live object in the system. There is some debate about how to make this play nice with different garbage collection schemes.</p>
+
+<h3><a name="Classes"
+>Classes</a></h3>
+
+<p>A class is a collection of methods and attributes. It would be desirable, for those classes whose definition is fully known at compile time, to have a convenient way to have the class along with its attributes and methods stored into a PBC file rather than created at runtime. However, creation of new classes at runtime will be needed too.</p>
+
+<h3><a name="Meta&#45;classes"
+>Meta&#45;classes</a></h3>
+
+<p>Ruby: Ruby has meta&#45;classes. It would be nice if classes were objects in Parrot&#39;s OO model.</p>
+
+<h3><a name="Attributes"
+>Attributes</a></h3>
+
+<p>Attributes are instance data associated with a class (or role, however those are supported). They may not always be of a type specified by a PMC, though boxing/unboxing is of course an option.</p>
+
+<p>Perl 6: All attributes are opaque (not externally visible, even to any subclasses).</p>
+
+<p>.Net: Attributes may be private (not externally visible), public (always externally visible), protected (only visible to subclasses) and internal (only visible inside the current assembly &#45; the closest correspondence in Parrot is perhaps only visible inside the same PBC file). Additionally, it is allowable for a subclass to introduce an attribute of the same name as the a parent class has, and they both exist depending on what type an instance of the class is currently viewed as being (read: there is a difference between the type of the reference and the type of the value).</p>
+
+<p>Ruby: Attributes can be dynamically added and removed at runtime.</p>
+
+<h3><a name="Methods"
+>Methods</a></h3>
+
+<p>Perl 6: Methods may be public (anyone can invoke them) or private (only invokable by the class they are defined in). Additionally, submethods are methods that do not get inherited.</p>
+
+<p>.Net: Like attributes, methods may be public, private, protected or internal.</p>
+
+<p>Ruby: has a method_missing that gets called when method resolution fails to find a method. Methods can be dynamically added and removed at runtime.</p>
+
+<h3><a name="Constructors"
+>Constructors</a></h3>
+
+<p>A constructor is run when an object is instantiated.</p>
+
+<p>.Net: There may be many constructors for an object (provided they all have different signatures), and the correct one is called based upon the passed parameters.</p>
+
+<h3><a name="Inheritance"
+>Inheritance</a></h3>
+
+<p>Perl 6: Multiple inheritance.</p>
+
+<p>.Net: Single inheritance.</p>
+
+<p>Ruby: Single inheritance but support for mixins of Ruby modules.</p>
+
+<h3><a name="Interfaces"
+>Interfaces</a></h3>
+
+<p>An interface specifies a set of methods that must be implemented by a class that inherits (or implements) the interface, but does not provide any form of implementation for them.</p>
+
+<p>.Net: Interfaces are pretty much what was just describe above. XXX Need to check behavior of you implement two interfaces with methods of the same name.</p>
+
+<h3><a name="Roles"
+>Roles</a></h3>
+
+<p>A role consists of a set of methods and attributes. It cannot be instantiated on its own, but must be composed into a class. When this happens its methods and attributes become of that classes methods and attributes. This may happen at compile time or runtime, however when a role is composed into a class at runtime then what really happens is that a new anonymous class is created with the role composed into it and then the namespace entry for the existing class is updated to refer to the new one. Note that this means classes must be garbage collectable, with all those referred to by a namespace or with objects of that class existing being marked live.</p>
+
+<p>Perl 6: Roles pretty much are a Perl 6 thing, so the definition above contains all that is needed. An open question is whether Parrot worry about collision detection? For compile time composition that&#39;s easy to punt to the compiler; for runtime composition, that&#39;s not so easy though.</p>
+
+<h3><a name="Introspection_(aka_Reflection)"
+>Introspection (aka Reflection)</a></h3>
+
+<p>Perl 6: Reflection provides access to a list of methods that a class has, its parent classes and the roles it does, as well as the name of the class and its memory address. For methods, their name, signature, return type and whether the method is declared multi are available.</p>
+
+<p>.Net: Reflection provides access to a list of attributes and methods as well as the name of the class and its parent. The types of attributes and signatures of methods are also available.</p>
+
+<h3><a name="Inner_Classes"
+>Inner Classes</a></h3>
+
+<p>An inner class is essentially a class defined within a class. Therefore it has access to things private to its outer class.</p>
+
+<p>Perl 6: Inner classes are allowed, and may also be private.</p>
+
+<p>.Net: Inner classes are allowed and may be private, public, protected or internal.</p>
+
+<h3><a name="Delegation"
+>Delegation</a></h3>
+
+<p>Delegation is where a method call is &#34;forwarded&#34; to another class. Parrot may provide support for simple cases of it directly, or could just provide a &#34;no method matched&#34; fallback method that the compiler fills out to implement the delegation.</p>
+
+<p>Perl 6: Delegation support is highly flexible, even allowing a regex to match method names that should be delegated to a particular object.</p>
+
+<h3><a name="Prototype&#45;based_OO"
+>Prototype&#45;based OO</a></h3>
+
+<p>Prototype&#45;based OO has no classes. All objects are cloned from existing objects and modified. Requires lightweight singleton creation, without needing a separate class for every instance object. (Self, JavaScript, and Io are examples of prototype&#45;based 00.) An example from Io:</p>
+
+<pre>  Dog := Object clone # The Dog object is a clone of Object
+  Dog tail := &#34;long&#34;  # it has an attribute &#39;tail&#39; with the value &#39;long&#39;
+  Dog bark := method(&#34;yap&#34; print) # It has a method &#39;bark&#39;
+  Dog bark  # call the method &#39;bark&#39;, printing &#39;yap&#39;</pre>
+
+<h3><a name="Translation"
+>Translation</a></h3>
+
+<p>The following list a set of languages, then within each language what the Parrot term translates to.</p>
+
+<dl>
+<dt><a name="Python"
+>Python</a></dt>
+
+<dl>
+<dt><a name="Attribute"
+>Attribute</a></dt>
+A Python attribute maps to a Parrot property</dl>
+
+<dt><a name=".NET"
+>.NET</a></dt>
+
+<dl>
+<dt><a name="Attribute"
+>Attribute</a></dt>
+What .NET calls an attribute Parrot calls a property
+<dt><a name="Property"
+>Property</a></dt>
+What .NET calls a property we call an attribute</dl>
+
+<dt><a name="Generic_Terminology"
+>Generic Terminology</a></dt>
+
+<dl>
+<dt><a name="Instance_Variable"
+>Instance Variable</a></dt>
+Instance Variables map to what we call attributes</dl>
+</dl>
+
+<h2><a name="Attachments"
+>Attachments</a></h2>
+
+<pre>  docs/pdds/pdd15_object_metamodel.png</pre>
+
+<img src="pdd15_object_metamodel.png">
+
+<h2><a name="Footnotes"
+>Footnotes</a></h2>
+
+<p>None.</p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p>None.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

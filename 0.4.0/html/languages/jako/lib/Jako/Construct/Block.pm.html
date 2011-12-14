@@ -1,0 +1,198 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Abstract superclass for Jako Blocks.</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Abstract superclass for Jako Blocks.</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../../html/index.html">Contents</a> | <a href="../../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../../html/jako.html">Jako</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h1>
+
+<p>Jako::Construct::Block &#45; Abstract superclass for Jako Blocks.</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h1>
+
+<p>TODO</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h1>
+
+<p>A subclass of Jako::Construct.</p>
+
+<p>Maintains a symbol table,
+a referenct to its parent block,
+and a list of content Constructs.</p>
+
+<h2><a name="CLASS&#45;&#62;new(BLOCK,_KIND,_TYPE,_PREFIX)"
+>CLASS&#45;&#62;new(BLOCK,
+KIND,
+TYPE,
+PREFIX) <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h2>
+
+<p>If BLOCK is defined,
+it is the new Block&#39;s parent.</p>
+
+<p>The KIND tells what kind of block we are dealing with (sub,
+while,
+bare,
+etc.).</p>
+
+<p>The TYPE tells the return type of the block.</p>
+
+<p>The PREFIX tells the prefix that will be used for block&#45;related labels.
+For example,
+<b>while</b> loops have labels related to the loop control statements,
+and these are kept distinct by applying the prefix to the labels.
+Of course,
+the prefix could come explicitly from the source code if the loop was labeled.</p>
+
+<p>TODO: Do we really need KIND,
+since we have subclasses?</p>
+
+<h2><a name="BLOCK&#45;&#62;set_symbol(NAME,_VALUE)"
+>BLOCK&#45;&#62;set_symbol(NAME,
+VALUE) <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h2>
+
+<p>Set a symbol in this block&#39;s symbol table.
+If the symbol already exists,
+we throw an error.</p>
+
+<p>TODO: We should generate real compiler errors and warnings instead of using confess() and warn().</p>
+
+<h2><a name="BLOCK&#45;&#62;get_symbol(NAME)"
+>BLOCK&#45;&#62;get_symbol(NAME) <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h2>
+
+<p>Attempt to get a symbol from this block&#39;s symbol table only.
+If there is no locally defined symbol with that name,
+then we return undef.</p>
+
+<p>See also: find_symbol(),
+which will also search (recursively) parent blocks&#39; symbol tables.</p>
+
+<p>TODO: We should generate real compiler errors and warnings instead of using die() and warn().</p>
+
+<h2><a name="BLOCK&#45;&#62;symbol_names()"
+>BLOCK&#45;&#62;symbol_names() <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h2>
+
+<p>Returns the names of the symbols defined locally in this block.</p>
+
+<h2><a name="BLOCK&#45;&#62;dump_symbols()"
+>BLOCK&#45;&#62;dump_symbols() <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h2>
+
+<p>FOR DEBUGGING ONLY.</p>
+
+<p>Dumps the complete list of symbols visible from this block,
+including those from the symbol tables of parent blocks.</p>
+
+<h2><a name="BLOCK&#45;&#62;find_symbol(NAME)"
+>BLOCK&#45;&#62;find_symbol(NAME) <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h2>
+
+<p>Search for a symbol,
+starting with this block,
+but also checking parent blocks recursively until a matching symbol is found or the root block is encountered without a match (in which case we return undef).</p>
+
+<p>See also: get_symbol(),
+which searches only locally.</p>
+
+<h2><a name="BLOCK&#45;&#62;find_block(KIND_[,_LABEL])"
+>BLOCK&#45;&#62;find_block(KIND [,
+LABEL]) <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h2>
+
+<p>Search this block and recursively through parent Blocks for a Block with the specified kind (such as a while loop) and label (if given).</p>
+
+<p>This is used to find the target blocks for loop control statements.</p>
+
+<h2><a name="BLOCK&#45;&#62;type_of_ident(NAME)"
+>BLOCK&#45;&#62;type_of_ident(NAME) <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h2>
+
+<p>This is a shortcut method that uses find_symbol() to locate a matching symbol,
+and then returns that symbol&#39;s type.</p>
+
+<h2><a name="BLOCK&#45;&#62;access_of_ident(NAME)"
+>BLOCK&#45;&#62;access_of_ident(NAME) <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h2>
+
+<p>This is a shortcut method that uses find_symbol() to locate a matching symbol,
+and then returns that symbol&#39;s access (const or not).</p>
+
+<h2><a name="BLOCK&#45;&#62;content()"
+>BLOCK&#45;&#62;content() <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h2>
+
+<p>Return the content list for the Block.</p>
+
+<h2><a name="BLOCK&#45;&#62;push_content(LIST)"
+>BLOCK&#45;&#62;push_content(LIST) <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h2>
+
+<p>Append Constructs to the Block&#39;s content list.</p>
+
+<h2><a name="BLOCK&#45;&#62;compile(COMPILER,_FILTER)"
+>BLOCK&#45;&#62;compile(COMPILER,
+FILTER) <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h2>
+
+<p>Compile the block&#39;s content using COMPILER.
+If FILTER is provided,
+only those Constructs in the content for which FILTER returns a true value will be compiled.</p>
+
+<p>The FILTER feature is used to arrange for two passes over the root block.
+The first pass compiles all subroutine declarations and definitions,
+while the second pass compiles any other content.
+This is how we collect all the non&#45;sub stuff into the main sub at the end of the script&#39;s compiled code.</p>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h1>
+
+<p>$Id$</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h1>
+
+<p>Gregor N.
+Purdy &#60;gregor@focusresearch.com&#62;</p>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h1>
+
+<p>Copyright: 2002&#45;2005 The Perl Foundation.
+All Rights Reserved.</p>
+
+<h1><a name="LICENSE"
+>LICENSE <a href='#_top'><img alt='^' border=0 src='../../../../../../resources/up.gif'></a></a></h1>
+
+<p>THIS PROGRAM IS FREE SOFTWARE.
+ITS USE IS SUBJECT TO THE SAME LICENSE AS THE PARROT VIRTUAL MACHINE.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

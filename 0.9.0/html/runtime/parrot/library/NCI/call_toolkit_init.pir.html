@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>PIR code to call toolkits that alter argv</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">PIR code to call toolkits that alter argv</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/libs.html">Libraries</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="TITLE"
+>TITLE <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>call_toolkit_init.pir &#45; PIR code to call toolkits that alter argv</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<pre>    .sub main :main
+        .param pmc argv
+
+        # Load this library and the NCI wrapper for the toolkit
+        load_bytecode &#39;library/NCI/call_toolkit_init.pbc&#39;
+        load_bytecode &#39;library/FooTK.pbc&#39;
+
+        # Find Subs for toolkit&#39;s init function, and this helper routine
+        .local pmc fooInit, call_toolkit_init
+        fooInit           = get_global [&#39;FooTK&#39;], &#39;fooInit&#39;
+        call_toolkit_init = get_global [&#39;NCI&#39;],   &#39;call_toolkit_init&#39;
+
+        # Call toolkit&#39;s init function, overwriting argv with mangled copy
+        argv = call_toolkit_init(fooInit, argv)
+
+        # Alternately, you can save both the original argv and mangled copy
+        .local pmc mangled_argv
+        mangled_argv = call_toolkit_init(fooInit, argv)
+
+        # ...
+    .end</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Calling an NCI toolkit init function that expects to parse and mangle argv is a relatively grotty bit of code that no one should have to write twice. Hence this library, which provides just one routine:</p>
+
+<dl>
+<dt><a name="new_argv_=_call_toolkit_init(pmc_init_func,_pmc_orig_argv)"
+>new_argv = call_toolkit_init(pmc init_func, pmc orig_argv)</a></dt>
+Call an NCI void function with params <code>(&#38;argc, argv)</code> (and thus having Parrot signature <code>&#39;v3p&#39;</code>). This is a very common signature for toolkit (AKA framework) init functions that want to filter out command line options that the toolkit itself should process. Since it is expected that the init call will remove some arguments, <code>call_toolkit_init</code> returns an updated argv. <code>orig_argv</code> is never changed; the NCI call is performed using a copy.</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

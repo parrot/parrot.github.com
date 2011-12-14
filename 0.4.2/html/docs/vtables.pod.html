@@ -1,0 +1,283 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Vtables</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Vtables</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>docs/vtables.pod &#45; Parrot Vtables</p>
+
+<h1><a name="Implementing_Variable_Types_with_Vtables"
+>Implementing Variable Types with Vtables <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>This is a guide to creating your own PMC (Parrot Magic Cookie) classes.
+It tells you what you need to write in order to add new variable types to Parrot.</p>
+
+<h2><a name="Overview"
+>Overview <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>The guts of the Parrot interpreter are by design ignorant (or,
+if you want to be less disparaging,
+agnostic) of the intricacies of variable type behavior.
+The standard example is the difference between Perl scalars and Python scalars.
+In Perl,
+if you have</p>
+
+<pre lang='und' xml:lang='und'>    $a = &#34;a9&#34;;
+    $a++;</pre>
+
+<p>you end up with <code lang='und' xml:lang='und'>$a</code> being <code lang='und' xml:lang='und'>b0</code>. This is because of the magic of the Perl increment operator. In Python, on the other hand, you&#39;d get a runtime error.</p>
+
+<ul>
+<li>To be perfectly honest, this is a slightly flawed example, since it&#39;s unlikely that there will be a distinct &#34;Python scalar&#34; PMC class. The Python compiler could well type&#45;inference variables such that <code lang='und' xml:lang='und'>a</code> would be a <code lang='und' xml:lang='und'>PythonString</code> and <code lang='und' xml:lang='und'>b</code> would be a <code lang='und' xml:lang='und'>PythonNumber</code>. But the point remains &#45; incrementing a <code lang='und' xml:lang='und'>PythonString</code> is very different from incrementing a <code lang='und' xml:lang='und'>PerlScalar</code>.</li><p class="pad"></p>
+</ul>
+
+<p>Since the behavior is a function of the &#34;type&#34; of the PMC, it&#39;s natural to consider the various different types of PMC as classes in an object&#45;oriented system. The Parrot interpreter calls methods on the individual PMC objects to manipulate them. So the example above would translate to something like:</p>
+
+<ol>
+<li>Construct a new PMC in the PerlScalar class.</li><p class="pad"></p>
+
+<li>Call a method setting its string value to <code lang='und' xml:lang='und'>&#34;a9&#34;</code>.</li><p class="pad"></p>
+
+<li>Call a method to tell it to increment itself.</li><p class="pad"></p>
+</ol>
+
+<p>And if you replace PerlScalar with PythonString, you get different behavior but to the fundamental guts of the interpreter, the instructions are the same. PMCs are an abstract virtual class; the interpreter calls a method, the PMC object does the right thing, and the interpreter shouldn&#39;t have to care particularly what that right thing happens to be.</p>
+
+<p>Hence, adding a new data type to Parrot is a question of providing methods which implement that data type&#39;s expected behavior. Let&#39;s now look at how one is supposed to do this.</p>
+
+<h2><a name="Starting_out"
+>Starting out <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>If you&#39;re adding data types to the core of Parrot, (and you&#39;ve checked with Chip that you&#39;re supposed to be doing so) you should be creating a file in the <em lang='und' xml:lang='und'>src/pmc/</em> subdirectory; this is where all the built&#45;in PMC classes live. (And a good source of examples to plunder even if you&#39;re not writing a core data type.)</p>
+
+<p>You should almost always start by running <em lang='und' xml:lang='und'><a href="../tools/dev/gen_class.pl.html">tools/dev/gen_class.pl</a></em> to generate a skeleton for the class. Let&#39;s generate a number type for the beautifully non&#45;existent Fooby language:</p>
+
+<pre lang='und' xml:lang='und'>    % perl tools/dev/gen_class.pl FoobyNumber &#62; src/pmc/foobynumber.pmc</pre>
+
+<p>This will produce a skeleton C file (to be preprocessed by the <em lang='und' xml:lang='und'><a href="../tools/build/pmc2c.pl.html">tools/build/pmc2c.pl</a></em> program) with stubs for all the methods you need to fill in. The function <code lang='und' xml:lang='und'>init</code> allows you to set up anything you need to set up.</p>
+
+<p>Now you&#39;ll have to do something a little different depending on whether you&#39;re writing a built&#45;in class or an extension class. If you&#39;re writing a built&#45;in class, then you&#39;ll see a reference to <code lang='und' xml:lang='und'>enum_class_FoobyNumber</code> in the <code lang='und' xml:lang='und'>init</code> function. For built&#45;in classes, this is automatically defined in <em lang='und' xml:lang='und'>pmc.h</em> when you run <em lang='und' xml:lang='und'><a href="../Configure.pl.html">Configure.pl</a></em>. If you&#39;re not writing a built&#45;in class, you need to indicate this by using the &#39;extension&#39; keyword after the &#39;pmclass YOURCLASS&#39; declaration in <em lang='und' xml:lang='und'>src/pmc/YOURCLASS.pmc</em>. Then, change the type of the <code lang='und' xml:lang='und'>init</code> function to return <code lang='und' xml:lang='und'>struct _vtable</code>, and then return <code lang='und' xml:lang='und'>temp_base_vtable</code> instead of assigning to the <code lang='und' xml:lang='und'>Parrot_base_vtables</code> array.</p>
+
+<p>To finish up adding a built&#45;in class:</p>
+
+<ol>
+<li>Add src/pmc/YOURCLASS.pmc to the MANIFEST</li><p class="pad"></p>
+
+<li>Rerun <em lang='und' xml:lang='und'><a href="../Configure.pl.html">Configure.pl</a></em> to add your new PMC to the set of built&#45;in PMCs.</li><p class="pad"></p>
+</ol>
+
+<h2><a name="What_You_Can_and_Cannot_Do"
+>What You Can and Cannot Do <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>The usual way to continue from the <em lang='und' xml:lang='und'><a href="../tools/dev/gen_class.pl.html">tools/dev/gen_class.pl</a></em>&#45;generated skeleton is to define a structure that will hook onto the <code lang='und' xml:lang='und'>data</code>, if your data type needs to use that, and then also define some user&#45;defined flags.</p>
+
+<p>Flags are accessed by <code lang='und' xml:lang='und'>pmc&#45;&#62;flags</code>. Most of the bits in the flag word are reserved for use by parrot itself, but a number of them have been assigned for general use by individual classes. These are referred to as <code lang='und' xml:lang='und'>Pobj_private0_FLAG</code> .. <code lang='und' xml:lang='und'>Pobj_private7_FLAG</code>. (The &#39;7&#39; may change during the early development of parrot, but will become pretty fixed at some point.)</p>
+
+<p>Normally, you will want to alias these generic bit names to something more meaningful within your class:</p>
+
+<pre lang='und' xml:lang='und'>    enum {
+        Foobynumber_is_bignum = Pobj_private0_FLAG,
+        Foobynumber_is_bigint = Pobj_private1_FLAG,
+        ....
+    };</pre>
+
+<p>You&#39;re quite at liberty to declare these in a separate header file, but I find it more convenient to keep everything together in <em lang='und' xml:lang='und'>foobynumber.c</em>. To manipulate the flags, use the macros listed in <em lang='und' xml:lang='und'>pobj.h</em>.</p>
+
+<p>You may also use the <code lang='und' xml:lang='und'>cache</code> union in the PMC structure to remove some extraneous dereferences in your code if that would help.</p>
+
+<h2><a name="Multimethods"
+>Multimethods <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>One slightly (potentially) tricky element of implementing vtables is that several of the vtable functions have variant forms depending on the type of data that they&#39;re being called with.</p>
+
+<p>For instance, the <code lang='und' xml:lang='und'>set_integer</code> method has multiple forms; the default <code lang='und' xml:lang='und'>set_integer</code> means that you are being called with a PMC, and you should probably use the <code lang='und' xml:lang='und'>get_integer</code> method of the PMC to find its integer value; <code lang='und' xml:lang='und'>set_integer_native</code> means you&#39;re being passed an <code lang='und' xml:lang='und'>INTVAL</code>. The final form is slightly special; if the interpreter calls <code lang='und' xml:lang='und'>set_integer_same</code>, you know that the PMC that you are being passed is of the same type as you. Hence, you can break the class abstraction to save a couple of dereferences &#45; if you want to.</p>
+
+<p>Similar shortcuts exist for strings, (<code lang='und' xml:lang='und'>native</code> and <code lang='und' xml:lang='und'>same</code>) and floating point numbers.</p>
+
+<h2><a name="Implementing_methods"
+>Implementing methods <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>The master list of vtable methods can be found in <em lang='und' xml:lang='und'>vtable.tbl</em> in the root directory of the Parrot source, with documentation in <em lang='und' xml:lang='und'>docs/pdds/pdd02_vtables.pod</em>. A few of these are very important, for instance:</p>
+
+<dl>
+<dt><a name="type"
+><b><code lang='und' xml:lang='und'>type</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the enumeration value of your class.</dd><p class="pad"></p>
+
+<dt><a name="name"
+><b><code lang='und' xml:lang='und'>name</b></code></a></dt><p class="pad"></p>
+
+<dd>Return a string containing your class name.</dd><p class="pad"></p>
+
+<dt><a name="init"
+><b><code lang='und' xml:lang='und'>init</b></code></a></dt><p class="pad"></p>
+
+<dd>Do any data set&#45;up you need to do.</dd><p class="pad"></p>
+
+<dt><a name="is_equal"
+><b><code lang='und' xml:lang='und'>is_equal</b></code></a></dt><p class="pad"></p>
+
+<dd>True if the passed&#45;in PMC has the same <b>value</b> as you. For instance, a Perl integer and a Python integer could have the same value, but could not be the same thing as defined by <code lang='und' xml:lang='und'>is_same</code>.</dd><p class="pad"></p>
+
+<dt><a name="clone"
+><b><code lang='und' xml:lang='und'>clone</b></code></a></dt><p class="pad"></p>
+
+<dd>Copy your data and state into the passed&#45;in destination PMC.</dd><p class="pad"></p>
+</dl>
+
+<p>Others are methods you may or may not need, depending on your type:</p>
+
+<dl>
+<dt><a name="morph"
+><b><code lang='und' xml:lang='und'>morph</b></code></a></dt><p class="pad"></p>
+
+<dd>Turn yourself into the specified type.</dd><p class="pad"></p>
+
+<dt><a name="destroy"
+><b><code lang='und' xml:lang='und'>destroy</b></code></a></dt><p class="pad"></p>
+
+<dd>Do any data shut&#45;down and finalization you need to do. To have this method called, you must set the <code lang='und' xml:lang='und'>Pobj_active_destroy_FLAG</code>.</dd><p class="pad"></p>
+
+<dt><a name="get_integer"
+><b><code lang='und' xml:lang='und'>get_integer</b></code></a></dt><p class="pad"></p>
+
+<dd>Return an integer representation of yourself.</dd><p class="pad"></p>
+
+<dt><a name="get_number"
+><b><code lang='und' xml:lang='und'>get_number</b></code></a></dt><p class="pad"></p>
+
+<dd>Return a floating&#45;point representation of yourself.</dd><p class="pad"></p>
+
+<dt><a name="get_string"
+><b><code lang='und' xml:lang='und'>get_string</b></code></a></dt><p class="pad"></p>
+
+<dd>Return a string representation of yourself (a STRING* object), this should be a <b>copy</b> of whatever string you are holding, not just a pointer to your own string so that anything that calls this method can happily modify this value without making a mess of your guts.</dd><p class="pad"></p>
+
+<dt><a name="get_bool"
+><b><code lang='und' xml:lang='und'>get_bool</b></code></a></dt><p class="pad"></p>
+
+<dd>Return a boolean representation of yourself.</dd><p class="pad"></p>
+
+<dt><a name="get_value"
+><b><code lang='und' xml:lang='und'>get_value</b></code></a></dt><p class="pad"></p>
+
+<dd>Return your private data as a raw pointer.</dd><p class="pad"></p>
+
+<dt><a name="is_same"
+><b><code lang='und' xml:lang='und'>is_same</b></code></a></dt><p class="pad"></p>
+
+<dd>True if the passed&#45;in PMC refers to exactly the same <b>data</b> as you. (Contrast <code lang='und' xml:lang='und'>is_equal</code>)</dd><p class="pad"></p>
+
+<dt><a name="set_integer"
+><b><code lang='und' xml:lang='und'>set_integer</b></code></a></dt><p class="pad"></p>
+
+<dd>Set yourself to the passed&#45;in integer value. This is an integer multimethod.</dd><p class="pad"></p>
+
+<dt><a name="set_number"
+><b><code lang='und' xml:lang='und'>set_number</b></code></a></dt><p class="pad"></p>
+
+<dd>Set yourself to the passed&#45;in float value. This is a floating&#45;point multimethod.</dd><p class="pad"></p>
+
+<dt><a name="set_string"
+><b><code lang='und' xml:lang='und'>set_string</b></code></a></dt><p class="pad"></p>
+
+<dd>Set yourself to the passed&#45;in string. This is a string multimethod.</dd><p class="pad"></p>
+
+<dt><a name="set_value"
+><b><code lang='und' xml:lang='und'>set_value</b></code></a></dt><p class="pad"></p>
+
+<dd>Set your private data to the raw pointer passed in. This will only be used in exceptional circumstances.</dd><p class="pad"></p>
+
+<dt><a name="add"
+><b><code lang='und' xml:lang='und'>add</b></code></a></dt><p class="pad"></p>
+
+<dd>Fetch the number part of <code lang='und' xml:lang='und'>value</code> and add your numeric value to it, storing the result in <code lang='und' xml:lang='und'>dest</code>. (Probably by calling its <code lang='und' xml:lang='und'>set_integer</code> or <code lang='und' xml:lang='und'>set_number</code> method) This is a numeric multimethod.</dd><p class="pad"></p>
+
+<dt><a name="subtract"
+><b><code lang='und' xml:lang='und'>subtract</b></code></a></dt><p class="pad"></p>
+
+<dd>Fetch the number part of <code lang='und' xml:lang='und'>value</code> and subtract your numeric value from it, storing the result in <code lang='und' xml:lang='und'>dest</code>. (Probably by calling its <code lang='und' xml:lang='und'>set_integer</code> or <code lang='und' xml:lang='und'>set_number</code> method) This is a numeric multimethod.</dd><p class="pad"></p>
+
+<dt><a name="multiply"
+><b><code lang='und' xml:lang='und'>multiply</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="divide"
+><b><code lang='und' xml:lang='und'>divide</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="modulus"
+><b><code lang='und' xml:lang='und'>modulus</b></code></a></dt><p class="pad"></p>
+
+<dd>You get the picture.</dd><p class="pad"></p>
+
+<dt><a name="concatenate"
+><b><code lang='und' xml:lang='und'>concatenate</b></code></a></dt><p class="pad"></p>
+
+<dd>Fetch the string part of <code lang='und' xml:lang='und'>value</code> and concatenate it to yourself, storing the result in <code lang='und' xml:lang='und'>dest</code>. (Probably by calling its <code lang='und' xml:lang='und'>set_string</code> method) This is a string multimethod.</dd><p class="pad"></p>
+
+<dt><a name="logical_or"
+><b><code lang='und' xml:lang='und'>logical_or</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="logical_and"
+><b><code lang='und' xml:lang='und'>logical_and</b></code></a></dt><p class="pad"></p>
+
+<dd>Perform the given short&#45;circuiting logical operations between your boolean value and the value passed in, storing the result in <code lang='und' xml:lang='und'>dest</code>.</dd><p class="pad"></p>
+
+<dt><a name="logical_not"
+><b><code lang='und' xml:lang='und'>logical_not</b></code></a></dt><p class="pad"></p>
+
+<dd>Set yourself to be a logical negation of the value passed in.</dd><p class="pad"></p>
+
+<dt><a name="repeat"
+><b><code lang='und' xml:lang='und'>repeat</b></code></a></dt><p class="pad"></p>
+
+<dd>Repeat your string representation <code lang='und' xml:lang='und'>value</code> times and store the result in <code lang='und' xml:lang='und'>dest</code>.</dd><p class="pad"></p>
+</dl>
+
+<p>If any method doesn&#39;t fit into your class, just don&#39;t implement it and don&#39;t provide an empty function body. The default class, which all classes inherit from, will throw an exception, if this method would be called.</p>
+
+<p>If your class is a modification of an existing class, you may wish to use inheritance. At the beginning of your vtable specification in src/pmc/YOURCLASS.pmc, add the <code lang='und' xml:lang='und'>extends SUPERCLASS</code> phrase. For example:</p>
+
+<pre lang='und' xml:lang='und'>  pmclass PackedArray extends Array { ...</pre>
+
+<p>See the POD documentation in <em lang='und' xml:lang='und'><a href="../tools/build/pmc2c.pl.html">tools/build/pmc2c.pl</a></em> for a list of useful keywords that you may use in the .pmc file. (Run <code lang='und' xml:lang='und'>perldoc &#45;F pmc2c.pl</code> to view the POD.)</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,69 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>PIR implementation for creating protoobjects</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Contents</a> &raquo; <a href="../../../../html/libs.html">Libraries</a> &raquo; PIR implementation for creating protoobjects
+                </div>
+
+<h1><a name="TITLE"
+>TITLE</a></h1>
+
+<p>Protoobject.pir &#45; PIR implementation for creating protoobjects</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    load_bytecode &#39;Protoobject.pbc&#39;
+    .local pmc protomaker, fooclass, fooproto
+
+    # create a protoobject for existing class Foo
+    protomaker = get_hll_global &#39;Protomaker&#39;
+    fooclass = get_class &#39;Foo&#39;
+    fooproto = protomaker.&#39;new_proto&#39;(fooclass)
+
+    # create a subclass &#39;NS::Bar&#39; from &#39;Foo&#39; with attributes
+    .local pmc bclass, bproto
+    fooclass = get_class &#39;Foo&#39;
+    (bclass, bproto) = protomaker.&#39;new_subclass&#39;(fooclass, &#39;NS::Bar&#39;, &#39;$attr&#39;)</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Objects of class <code>Protomaker</code> are used to construct and initialize &#34;protoobjects&#34; for Parrot classes. The concept of protoobjects comes from Perl 6; <i>protoobjects</i> are &#34;empty&#34; instances of a class &#45;&#45; i.e., they are instances that are simply more undefined than a normal instance.</p>
+
+<p>Newly created protoobjects are automatically added as symbols in a corresponding namespace &#45;&#45; for example, the protoobject for <code>Foo::Bar::Baz</code> is automatically entered as the &#39;Baz&#39; symbol in the <code>[&#39;Foo&#39;;&#39;Bar&#39;]</code> namespace.</p>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="new_proto(class)"
+>new_proto(class)</a></dt>
+Create and initialize a new protoobject for <code>class</code>. The newly created protoobject is placed as an entry in the appropriate namespace and returned.
+<dt><a name="new_subclass(baseclass,_name_[,_attr1,_attr2,_...]_)"
+>new_subclass(baseclass, name [, attr1, attr2, ...] )</a></dt>
+Helper method to create subclasses and their corresponding protoobjects as a single method call. This method creates a subclass of <code>baseclass</code> with the given <code>name</code>, adds attributes <code>attr1</code>, <code>attr2</code>, etc. to the subclass, and then creates a corresponding protoobject for the subclass.The <code>name</code> parameter is either an array of strings or a string with namespace identifiers separated by double colons (<code>::</code>).The method returns the subclass object and its corresponding protoobject.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

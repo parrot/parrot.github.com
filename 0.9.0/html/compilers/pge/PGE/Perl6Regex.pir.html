@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>compiler and parser for Perl 6 regex</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">compiler and parser for Perl 6 regex</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="TITLE"
+>TITLE <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Perl6Regex &#45; compiler and parser for Perl 6 regex</p>
+
+<dl>
+<dt><a name="compile_perl6regex(PMC_source,_PMC_adverbs_:slurpy_:named)"
+><b><code>compile_perl6regex(PMC source, PMC adverbs :slurpy :named)</b></code></a></dt>
+Return the result of compiling <code>source</code> according to Perl 6 regex syntax and the associated <code>adverbs</code>.
+Normally this function is obtained using <code>compreg &#39;PGE::Perl6Regex&#39;</code> instead of calling it directly.Returns the compiled regular expression.
+If a <code>target</code> named parameter is supplied,
+then it will return the parse tree (target=&#39;parse&#39;),
+the expression tree (target=&#39;exp&#39;),
+or the resulting PIR code (target=&#39;PIR&#39;).
+<dt><a name="regex(PMC_mob,_PMC_adverbs_:slurpy_:named)"
+><b><code>regex(PMC mob, PMC adverbs :slurpy :named)</b></code></a></dt>
+Parses a regex according to Perl 6 regex syntax,
+and returns the corresponding parse tree.
+<dt><a name="onload()"
+><b><code>onload()</b></code></a></dt>
+Initializes the Perl6Regex parser and other data structures needed for compiling regexes.
+<dt><a name="parse_term(PMC_mob_[,_PMC_adverbs_:slurpy_:named])"
+><b><code>parse_term(PMC mob [, PMC adverbs :slurpy :named])</b></code></a></dt>
+Parses literal strings and whitespace.
+Return a failed match if the stoptoken is found.
+<dt><a name="parse_term_backslash(mob_[,_adverbs_:slurpy_:named])"
+><b><code>parse_term_backslash(mob [, adverbs :slurpy :named])</b></code></a></dt>
+Parses terms beginning with backslash.
+<dt><a name="parse_term_ws(PMC_mob)"
+><b><code>parse_term_ws(PMC mob)</b></code></a></dt>
+Parses a whitespace term.
+<dt><a name="parse_quant(PMC_mob)"
+><b><code>parse_quant(PMC mob)</b></code></a></dt>
+Parses a quantifier,
+such as *,
++,
+?,
+:,
+and all of their wonderous combinations.
+<dt><a name="parse_quant_error(mob)"
+><b><code>parse_quant_error(mob)</b></code></a></dt>
+Throw an exception for quantifiers in term position.
+<dt><a name="parse_dollar(PMC_mob)"
+><b><code>parse_dollar(PMC mob)</b></code></a></dt>
+Parse things that begin with a dollar sign,
+such as scalars,
+anchors,
+and match subscripts.
+<dt><a name="parse_subname(STR_target,_INT_pos)"
+><b><code>parse_subname(STR target, INT pos)</b></code></a></dt>
+Scan <code>target</code> starting at <code>pos</code> looking for a subrule name (following Perl 6&#39;s identifier syntax).
+Returns any subrule name found,
+and the ending position of the name.
+<dt><a name="parse_subrule(PMC_mob)"
+><b><code>parse_subrule(PMC mob)</b></code></a></dt>
+Parses a subrule token.
+<dt><a name="parse_enumcharclass(PMC_mob)"
+><b><code>parse_enumcharclass(PMC mob)</b></code></a></dt>
+Extract an enumerated character list.
+<dt><a name="parse_quoted_literal"
+><b><code>parse_quoted_literal</b></code></a></dt>
+Parses &#39;...&#39; literals.
+<dt><a name="parse_goal"
+><b><code>parse_goal</b></code></a></dt>
+Parse a goal.
+<dt><a name="parse_modifier"
+><b><code>parse_modifier</b></code></a></dt>
+Parse a modifier.</dl>
+
+<h1><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="PIR_closure(string_code)"
+><b><code>PIR_closure(string code)</b></code></a></dt>
+This helper function helps with :lang(PIR) closures in rules by adding a &#34;.sub&#34; wrapper around the code if one isn&#39;t already present.</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

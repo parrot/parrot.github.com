@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Generate Perl module from operation definitions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Generate Perl module from operation definitions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/ops.html">Ops</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>build_tools/ops2pm.pl &#45; Generate Perl module from operation definitions</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'> $ perl build_tools/ops2pm.pl [&#45;&#45;help] [&#45;&#45;no&#45;lines] input.ops [input2.ops ...]
+ $ perl build_tools/ops2pm.pl [&#45;&#45;renum]  input.ops [input2.ops ...]</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Reads the ops files listed on the command line and outputs a <code lang='und' xml:lang='und'>Parrot::OpLib::core</code> module containing information about the ops.</p>
+
+<h2><a name="Options"
+>Options <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="&#45;&#45;help"
+><b><code lang='und' xml:lang='und'>&#45;&#45;help</b></code></a></dt><p class="pad"></p>
+
+<dd>Print synopsis.</dd><p class="pad"></p>
+
+<dt><a name="&#45;&#45;no&#45;lines"
+><b><code lang='und' xml:lang='und'>&#45;&#45;no&#45;lines</b></code></a></dt><p class="pad"></p>
+
+<dd>Do not generate <code lang='und' xml:lang='und'>#line</code> directives in the generated C code.</dd><p class="pad"></p>
+
+<dt><a name="&#45;&#45;renum"
+><b><code lang='und' xml:lang='und'>&#45;&#45;renum</b></code></a></dt><p class="pad"></p>
+
+<dd>Renumber opcodes according to existing ops in ops/num and natural order in the given ops files. See also <em lang='und' xml:lang='und'>tools/dev/ops_renum.mak</em>.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="WARNING"
+>WARNING <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Generating a <code lang='und' xml:lang='und'>Parrot::OpLib::core</code> module for a set of ops files that you do not later turn into C code (see <em lang='und' xml:lang='und'><a href="ops2c.pl.html">build_tools/ops2c.pl</a></em>) with the same op content and order is a recipe for disaster. But as long as you just run these tools in the standard build process via <code lang='und' xml:lang='und'>make</code> there shouldn&#39;t be a problem.</p>
+
+<h1><a name="TODO"
+>TODO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>The original design of the ops processing code was intended to be a read&#45;only representation of what was in a particular ops file. It was not originally intended that it was a mechanism for building a bigger virtual ops file from multiple physical ops files.</p>
+
+<p>This code does half of that job (the other half is getting them to compile together instead of separately in a <em lang='und' xml:lang='und'>*_ops.c</em> file).</p>
+
+<p>You can see evidence of this by the way this code reaches in to the internal <code lang='und' xml:lang='und'>OPS</code> hash key to do its concatenation, and the way it twiddles each op&#39;s <code lang='und' xml:lang='und'>CODE</code> hash key after that.</p>
+
+<p>If the op and oplib Perl modules are going to be used for modifying information read from ops files in addition to reading it, they should be changed to make the above operations explicitly supported.</p>
+
+<p>Otherwise, the Parrot build and interpreter start&#45;up logic should be modified so that it doesn&#39;t need to concatenate separate ops files.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="build_tools/ops2c.pl."
+><em lang='und' xml:lang='und'><a href="ops2c.pl.html">build_tools/ops2c.pl</a></em>.</a></dt><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

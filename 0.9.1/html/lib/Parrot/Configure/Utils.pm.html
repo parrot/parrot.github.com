@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Configuration Step Utilities</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Contents</a> &raquo; <a href="../../../../html/perl.html">Perl Modules</a> &raquo; Configuration Step Utilities
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>Parrot::Configure::Utils &#45; Configuration Step Utilities</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>The <code>Parrot::Configure::Utils</code> module contains utility functions for use by the configuration step classes found under <em>config/</em>.</p>
+
+<p>The subroutines found in this module do <b>not</b> require the Parrot::Configure object as an argument.
+Those subroutines formerly found in this module which <b>do</b> require the Parrot::Configure object as an argument have been moved into Parrot::Configure::Compiler.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="_run_command($command,_$out,_$err)"
+><b><code>_run_command($command, $out, $err)</b></code></a></dt>
+Runs the specified command.
+Output is directed to the file specified by <code>$out</code>,
+warnings and errors are directed to the file specified by <code>$err</code>.
+<dt><a name="_build_compile_command(_$cc,_$ccflags,_$cc_args_)"
+><b><code>_build_compile_command( $cc, $ccflags, $cc_args )</b></code></a></dt>
+Constructs a command&#45;line to do the compile.
+<dt><a name="integrate($orig,_$new)"
+><b><code>integrate($orig, $new)</b></code></a></dt>
+Integrates <code>$new</code> into <code>$orig</code>.
+Returns <code>$orig</code> if <code>$new</code> is undefined.
+<dt><a name="prompt($message,_$value)"
+><b><code>prompt($message, $value)</b></code></a></dt>
+Prints out &#34;message [default] &#34; and waits for the user&#39;s response.
+Returns the response,
+or the default if the user just hit <code>ENTER</code>.
+<dt><a name="file_checksum($filename,_$ignore_pattern)"
+><b><code>file_checksum($filename, $ignore_pattern)</b></code></a></dt>
+Creates a checksum for the specified file.
+This is used to compare files.Any lines matching the regular expression specified by <code>$ignore_pattern</code> are not included in the checksum.
+<dt><a name="copy_if_diff($from,_$to,_$ignore_pattern)"
+><b><code>copy_if_diff($from, $to, $ignore_pattern)</b></code></a></dt>
+Copies the file specified by <code>$from</code> to the location specified by <code>$to</code> if its contents have changed.The regular expression specified by <code>$ignore_pattern</code> is passed to <code>file_checksum()</code> when comparing the files.
+<dt><a name="move_if_diff($from,_$to,_$ignore_pattern)"
+><b><code>move_if_diff($from, $to, $ignore_pattern)</b></code></a></dt>
+Moves the file specified by <code>$from</code> to the location specified by <code>$to</code> if its contents have changed.
+<dt><a name="capture_output($command)"
+><b><code>capture_output($command)</b></code></a></dt>
+Executes the given command.
+The command&#39;s output (both stdout and stderr),
+and its return status is returned as a 3&#45;tuple.
+<b>STDERR</b> is redirected to <em>test.err</em> during the execution,
+and deleted after the command&#39;s run.
+<dt><a name="check_progs([$programs])"
+><b><code>check_progs([$programs])</b></code></a></dt>
+Where <code>$programs</code> may be either a scalar with the name of a single program or an array ref of programs to search the current <code>PATH</code> for.
+The first matching program name is returned or <code>undef</code> on failure.
+Note: this function only returns the name of the program and not its complete path.This function is similar to <code>autoconf</code>&#39;s <code>AC_CHECK_PROGS</code> macro.
+<dt><a name="_slurp($filename)"
+><b><code>_slurp($filename)</b></code></a></dt>
+Slurps <code>$filename</code> into memory and returns it as a string.
+This is just an alias for <code>Parrot::BuildUtil::slurp_file</code>.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<dl>
+<dt><a name="Parrot::Configure::runsteps()"
+><b><code>Parrot::Configure::runsteps()</b></code></a></dt>
+
+<dt><a name="docs/configuration.pod"
+><em><a href="../../../docs/configuration.pod.html">docs/configuration.pod</a></em></a></dt>
+
+<dt><a name="lib/Parrot/Configure/Compiler.pm"
+><em><a href="Compiler.pm.html">lib/Parrot/Configure/Compiler.pm</a></em></a></dt>
+</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

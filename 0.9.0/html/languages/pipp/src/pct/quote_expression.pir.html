@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/pipp.html">Pipp</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<p>PHP 5.3 has four kinds of literal strings.</p>
+
+<dl>
+<dt><a name="single_quoted"
+>single quoted</a></dt>
+Neither variable nor backslash interpolation,
+besides <b>\&#39;</b> and <b>\\</b> is done within single quotes.
+Single quotes need to be escaped with a backslash in order to be not taken for the delimiter.
+A backslash escapes a following backslash.
+A literal backslash needs to be escaped at end of string,
+as otherwise the delimiting single quote would be recognised as a literal single quote.
+In contrast to Perl 5,
+backslashes that preceede any other character are literal.
+<dt><a name="double_quoted"
+>double quoted</a></dt>
+The escape sequences \n,
+\r,
+\t,
+\v,
+\f,
+\\,
+\$,
+\&#34; are recognised.Charactes can alse be written in octal notation,
+\[0&#45;7]{1,3},
+and hexadecimal notation,
+\x[0&#45;9A&#45;Fa&#45;f]{1,2}.
+The octal notation allows to specify values greater 256.
+In theses cases the value is taken as mod 256.
+<dt><a name="heredoc"
+>heredoc</a></dt>
+
+<pre>   $param = &#39;dummy&#39;;
+   $example = &#60;&#60;&#60;EXAMPLE
+   Variables are interpolated.
+   $param
+   EXAMPLE</pre>
+Double quotes are literal. The backslashes before a double quote are literal. Unlike in Perl 5, the newline before the delimiter is not part of the string.
+<dt><a name="nowdoc"
+>nowdoc</a></dt>
+A heredoc with single quotes.
+<pre>   $param = &#39;dummy&#39;;
+   $example = &#60;&#60;&#60;&#39;EXAMPLE&#39;
+   Variables are not interpolated.
+   $param
+   EXAMPLE</pre>
+Single quotes are literal. Backslashes are literal. Unlike in Perl 5, the newline before the delimiter is not part of the string.</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

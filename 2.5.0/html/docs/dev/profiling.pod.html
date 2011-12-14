@@ -1,0 +1,95 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Name</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Name
+                </div>
+
+<h1><a name="Name"
+>Name</a></h1>
+
+<p>docs/dev/profiling.pod &#45; Profiling Parrot</p>
+
+<h1><a name="Description"
+>Description</a></h1>
+
+<p>This file documents the use of Parrot&#39;s profiling runcore.</p>
+
+<h2><a name="Summary"
+>Summary</a></h2>
+
+<p>The profiling runcore is built as part of Parrot and is designed to allow discovery of bottlenecks in PIR code.
+It is also being instrumented to support HLL profiling,
+but this support is currently limited.
+Code can be run under the profiling runcore by passing <code>&#45;Rprofiling</code> or <code>&#45;&#45;runcore profiling</code> to the <code>parrot</code> binary.
+The location and format of the output file are determined by environment variables as documented below.
+If the profiling runcore does not detect any relevant environment variables,
+it will use the defaults described below.</p>
+
+<h2><a name="Environment_Variables"
+>Environment Variables</a></h2>
+
+<dl>
+<dt><a name="PARROT_PROFILING_FILENAME"
+><b><code>PARROT_PROFILING_FILENAME</b></code></a></dt>
+This determines the full name of the file where the output will be written,
+if any.
+Parrot does not check if the filename exists before opening it for writing and will happily overwrite any existing files,
+including previous profiles.If no value is specified,
+Parrot will write to a file named <code>parrot.pprof.X</code>,
+where X is the PID of the Parrot process.
+When the profiling runcore exits,
+it will print a message announcing where the profile was written.This variable can also have the special values <code>stdout</code> and <code>stderr</code>.
+When either of these values are detected (case&#45;insensitively),
+Parrot will print its profiling output the stdout or stderr.
+<dt><a name="PARROT_PROFILING_OUTPUT"
+><b><code>PARROT_PROFILING_OUTPUT</b></code></a></dt>
+This determines the type of output which will contain the profile.
+Current options are <code>pprof</code> and <code>none</code>.
+<code>pprof</code> is the default and is a ascii&#45;based human&#45;readable format.
+It can be post&#45;processed into a Callgrind&#45;compatible format by tools/dev/pprof2cg.pl.
+<code>none</code> writes nothing to the output file.
+It is most useful for testing and optimizing the profiling runcore itself.
+It is expected to be of little interest to users wishing to profile PIR and HLL code.
+<dt><a name="PARROT_PROFILING_ANNOTATIONS"
+><b><code>PARROT_PROFILING_ANNOTATIONS</b></code></a></dt>
+This determines whether PIR annotations will be recorded as part of the profile.
+Annotations are necessary when profiling HLL code,
+but will cause the profiling runcore to run more slowly.
+By default,
+they are disabled.
+Set this value to enable them.
+<dt><a name="PARROT_PROFILING_CANONICAL_OUPUT"
+><b><code>PARROT_PROFILING_CANONICAL_OUPUT</b></code></a></dt>
+When this is set,
+the profiling runcore will record all addresses as a single constant value and all times as 1.
+This options is useful primarily for testing,
+where it&#39;s helpful to have a way to ensure that a given chunk of code will always produce exactly the same profile.
+If you want this feature enabled,
+you also probably want to pass a fixed hash seed to Parrot via <code>&#45;&#45;hash&#45;seed 1324</code> to avoid any non&#45;deterministic behavior that hash seed randomization may cause.This variable is not useful apart from testing the profiling runcore and will most certainly not help you find hotspots in your code.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

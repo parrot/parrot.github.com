@@ -1,0 +1,165 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="Overview"
+>Overview <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This document describes guidelines for writing documentation for PMCs.
+All core PMCs <b>must</b> be documented using the format outlined here.
+We encourage other PMC developers to follow these practices,
+too.</p>
+
+<p>Follow all documentation guidelines in <em lang='und' xml:lang='und'><a href="../pdds/pdd07_codingstd.pod.html">docs/pdds/pdd07_codingstd.pod</a></em>.</p>
+
+<dl>
+<dt><a name="NAME"
+>NAME</a></dt><p class="pad"></p>
+
+<dd>Required.
+Specify the filename relative to the Parrot root,
+followed by a brief description of the PMC&#39;s intent.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> =head1 NAME
+
+ src/pmc/exporter.pmc &#45; Export globals from one namespace to another</pre>
+
+<dt><a name="DESCRIPTION"
+>DESCRIPTION</a></dt><p class="pad"></p>
+
+<dd>Required. A verbose description of the PMC&#39;s intent, mentioning the major use cases. Include links to spec/design documentation or other related files. Describe the interface (what this PMC inherits from, and what interfaces it provides) &#45;&#45; a description of the information contained in the <code lang='und' xml:lang='und'>pmclass</code> declaration.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> =head1 DESCRIPTION
+
+ Exports globals from one namespace to another. Exporter always uses
+ the typed namespace interface, as outlined in
+ F&#60;docs/pdds/pdd21_namespaces.pod&#62;.
+
+ Exporter is not derived from any other PMC, and does not provide any
+ standard interface&#45;&#45;its inteface consists solely of non&#45;vtable methods.</pre>
+
+<dd>The <b>DESCRIPTION</b> section is further broken down as follows:</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="Structure"
+>Structure</a></dt><p class="pad"></p>
+
+<dd>Describe the underlying structure of the PMC. Often this information has been contained in source comments. It should be formalized and made available to others by converting it to POD. Mention initialization and finalization behavior.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> =head2 Structure
+
+ The Exporter PMC structure (C&#60;Parrot_Exporter&#62;) consists of three items:
+
+ =over 4
+
+ =item C&#60;ns_src&#62;
+
+ The source namespace &#45;&#45; a NameSpace PMC.
+ An empty PMC of this type is allocated upon initialization.
+
+ =item C&#60;ns_dest&#62;
+
+ The destination namespace &#45;&#45; a NameSpace PMC.
+ An empty PMC of this type is allocated upon initialization.
+
+ =item C&#60;globals&#62;
+
+ The globals to export &#45;&#45; a ResizableStringArray.
+ A Null PMC is allocated during initialization.</pre>
+
+<dt><a name="Functions"
+>Functions</a></dt><p class="pad"></p>
+
+<dd>Required. Group all PMC functions together in the source, and describe them individually.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> =head2 Functions
+
+ =over 4
+
+ =item C&#60;void init()&#62;
+
+ Instantiates an Exporter.</pre>
+
+<dd>etc.</dd><p class="pad"></p>
+
+<dt><a name="Methods"
+>Methods</a></dt><p class="pad"></p>
+
+<dd>Required. Group all PMC methods together (VTABLE or otherwise,) and describe function, expected parameters, and return values.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> =head2 Methods
+
+ =over 4
+
+ =item C&#60;PCCMETHOD void
+ import(PMC *dest :optional :named[&#34;destination&#34;], int got_dest :opt_flag,
+ PMC *src :optional :named[&#34;source&#34;], int got_src :opt_flag,
+ PMC *globals :optional :named[&#34;globals&#34;], int got_globals :opt_flag)&#62;
+
+ Import C&#60;globals&#62; from the C&#60;src&#62; namespace to the C&#60;dest&#62; namespace.
+ If C&#60;src&#62;, C&#60;dest&#62;, or C&#60;globals&#62; are passed, they will override
+ the current value.
+ C&#60;import&#62; follows the semantics of the C&#60;export_to&#62; method
+ of the C&#60;NameSpace&#62; PMC. in particular, if a NULL value is passed
+ for C&#60;globals&#62;, the default set of items will be imported.
+ Throws an exception upon error.</pre>
+</dl>
+
+<dt><a name="STABILITY"
+>STABILITY</a></dt><p class="pad"></p>
+
+<dd>Required. List the stability of this PMC, as classified in <em lang='und' xml:lang='und'><a href="../stability.pod.html">docs/stability.pod</a></em>.</dd><p class="pad"></p>
+
+<dt><a name="SEE_ALSO"
+>SEE ALSO</a></dt><p class="pad"></p>
+
+<dd>Recommended. List related documentation.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> =head1 SEE ALSO
+
+ F&#60;docs/pdds/pdd17_basic_types.pod&#62;, F&#60;docs/pdds/pdd21_namespaces.pod&#62;.</pre>
+</dl>
+
+<h1><a name="STABILITY"
+>STABILITY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Unstable. This is a draft document, which must be reviewed and accepted by the Project Team.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

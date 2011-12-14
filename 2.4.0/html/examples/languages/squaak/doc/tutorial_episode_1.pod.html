@@ -1,0 +1,303 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PCT Tutorial Episode 1: Introduction</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Home</a> &raquo; <a href="../../../../../html/PCT_Tutorial.html">PCT Tutorial</a> &raquo; PCT Tutorial Episode 1: Introduction
+                </div>
+
+<h1><a name="PCT_Tutorial_Episode_1:_Introduction"
+>PCT Tutorial Episode 1: Introduction</a></h1>
+
+<h2><a name="Introduction"
+>Introduction</a></h2>
+
+<p>This is the first episode in a tutorial series on building a compiler with the Parrot Compiler Tools.
+If you&#39;re interested in virtual machines,
+you&#39;ve probably heard of the Parrot virtual machine.
+Parrot is a generic virtual machine designed for dynamic languages.
+This is in contrast with the Java virtual machine (JVM) and Microsoft&#39;s Common Language Runtime (CLR),
+both of which were designed to run static languages.
+Both the JVM and Microsoft (through the Dynamic Language Runtime &#45;&#45; DLR) are adding support for dynamic languages,
+but their primary focus is still static languages.</p>
+
+<h2><a name="High_Level_Languages"
+>High Level Languages</a></h2>
+
+<p>The main purpose of a virtual machine is to run programs.
+These programs are typically written in some High Level Language (HLL).
+Some well&#45;known dynamic languages (sometimes referred to as scripting languages) are Lua,
+Perl,
+PHP,
+Python,
+Ruby,
+and Tcl.
+Parrot is designed to be able to run all these languages.
+Each language that Parrot hosts,
+needs a compiler to parse the syntax of the language and generate Parrot instructions.</p>
+
+<p>If you&#39;ve never implemented a programming language (and maybe even if you have implemented a language),
+you might consider writing a compiler a bit of a black art.
+I know I did when I became interested.
+And you know what,
+it is.
+Compilers are complex programs,
+and implementing a language can be very difficult.</p>
+
+<p>The Facts: 1) Parrot is suitable for running virtually any dynamic language known,
+but before doing so,
+compilers must be written,
+and 2) writing compilers is rather difficult.</p>
+
+<h2><a name="The_Parrot_Compiler_Toolkit"
+>The Parrot Compiler Toolkit</a></h2>
+
+<p>Enter the Parrot Compiler Toolkit (PCT).
+In order to make Parrot an interesting target for language developers,
+the process of constructing a compiler should be supported by the right tools.
+Just as any construction task becomes much easier if you have the right tools (you wouldn&#39;t build a house using only your bare hands,
+would you?),
+the same is true for constructing a compiler.
+The PCT was designed to do just that: provide powerful tools to make writing a compiler for Parrot childishly easy.</p>
+
+<p>This tutorial will introduce the PCT by demonstrating the ease with which a (simple) language can be implemented for Parrot.
+The case study language is not as complex as a real&#45;world language,
+but this tutorial is written to whet your appetite and show the power of the PCT.
+This tutorial will also present some exercises which you can explore in order to learn more details of the PCT not covered in this tutorial.</p>
+
+<h2><a name="Squaak:_A_Simple_Language"
+>Squaak: A Simple Language</a></h2>
+
+<p>The case study language,
+named Squaak,
+that we will be implementing on Parrot will be a full&#45;fledged compiler that can compile a program from source into Parrot Intermediate Representation (PIR) (or run the PIR immediately).
+It can also be used as a command&#45;line interpreter.
+Squaak demonstrates some common language constructs,
+but at the same time is lacking some other,
+seemingly simple features.
+For instance,
+our language will not have return,
+break or continue statements (or equivalents in your favorite syntax).</p>
+
+<p>Squaak will have the following features:</p>
+
+<ul>
+<li>global and local variables</li>
+
+<li>basic types: integer,
+floating&#45;point and strings</li>
+
+<li>aggregate types: arrays and hash tables</li>
+
+<li>operators: +,
+&#45;,
+/,
+*,
+%,
+&#60;,
+&#60;=,
+&#62;,
+&#62;=,
+==,
+!=,
+..,
+and,
+or,
+not</li>
+
+<li>subroutines and parameters</li>
+
+<li>assignments and various control statements,
+such as &#34;if&#34; and &#34;while&#34;</li>
+</ul>
+
+<p>As you can see,
+a number of common (more advanced) features are missing.
+Most notable are:</p>
+
+<ul>
+<li>classes and objects</li>
+
+<li>control flow statements such as break and return</li>
+
+<li>advanced control statements such as switch</li>
+
+<li>closures (nested subroutines and accessing local variables in an outer scope)</li>
+</ul>
+
+<h2><a name="The_Compiler_Tools"
+>The Compiler Tools</a></h2>
+
+<p>The Parrot Compiler Tools we&#39;ll use to implement Squaak consist of the following parts:</p>
+
+<dl>
+<dt><a name="Parrot_Grammar_Engine_(PGE)."
+>Parrot Grammar Engine (PGE).</a></dt>
+The PGE is an advanced engine for regular expressions.
+Besides regexes as found in Perl 5,
+it can also be used to define language grammars,
+using Perl 6 syntax.
+(Check the references for the specification.)
+<dt><a name="Parrot_Abstract_Syntax_Tree_(PAST)."
+>Parrot Abstract Syntax Tree (PAST).</a></dt>
+The PAST nodes are a set of classes defining generic abstract syntax tree nodes that represent common language constructs.
+<dt><a name="HLLCompiler_class."
+>HLLCompiler class.</a></dt>
+This class is the compiler driver for any PCT&#45;based compiler.
+<dt><a name="Not_Quite_Perl_(6)_(NQP)."
+>Not Quite Perl (6) (NQP).</a></dt>
+NQP is a lightweight language inspired by Perl 6 and can be used to write the methods that must be executed during the parsing phase,
+just as you can write actions in a Yacc/Bison input file.</dl>
+
+<h2><a name="Getting_Started"
+>Getting Started</a></h2>
+
+<p>For this tutorial,
+it is assumed you have successfully compiled parrot (and maybe even run the test suite).
+If you browse through the languages directory in the Parrot source tree,
+you&#39;ll find a number of language implementations.
+Most of them are not complete yet; some are maintained actively and others aren&#39;t.
+If,
+after reading this tutorial,
+you feel like contributing to one of these languages,
+you can check out the mailing list or join IRC (see the references section for details).</p>
+
+<p>The languages subdirectory is the right spot to put our language implementation.
+Parrot comes with a special shell script to generate the necessary files for a language implementation.
+In order to generate these files for our language,
+type (assuming you&#39;re in Parrot&#39;s root directory):</p>
+
+<pre> $ perl tools/dev/mk_language_shell.pl Squaak languages/squaak</pre>
+
+<p>(Note: if you&#39;re on Windows, you should use backslashes.) This will generate the files in a directory languages/squaak, and use the name Squaak as the language&#39;s name. The last config step is to create the Makefile for your new language:</p>
+
+<pre> $  perl Configure.pl &#45;&#45;languages=squaak</pre>
+
+<p>After this, go to the directory languages/squaak and type:</p>
+
+<pre> $ make test</pre>
+
+<p>This will compile the generated files and run the test suite. If you want more information on what files are being generated, please check out the references at the end of this episode.</p>
+
+<p>Note that we didn&#39;t write a single line of code, and already we have the basic infrastructure in place to get us started. Of course, the generated compiler doesn&#39;t even look like the language we will be implementing, but that&#39;s ok for now. Later we&#39;ll adapt the grammar to accept our language.</p>
+
+<p>Now you might want to actually run a simple script with this compiler. Launch your favorite editor, and put in this statement:</p>
+
+<pre> say &#34;Squaak!&#34;;</pre>
+
+<p>Save the file (for instance as test.sq) and type:</p>
+
+<pre> $ ../../parrot squaak.pbc test.sq</pre>
+
+<p>This will run Parrot, specifying squaak.pbc as the file to be run by Parrot, which takes a single argument: the file test.sq. If all went well, you should see the following output:</p>
+
+<pre> $ ../../parrot squaak.pbc test.sq
+ Squaak!</pre>
+
+<p>Instead of running a script file, you can also run the Squaak compiler as an interactive interpreter. Run the Squaak compiler without specifying a script file, and type the same statement as you wrote in the file:</p>
+
+<pre> $ ../../parrot squaak.pbc
+ say &#34;Squaak!&#34;;</pre>
+
+<p>which will print:</p>
+
+<pre> Squaak!</pre>
+
+<h2><a name="What&#39;s_next?"
+>What&#39;s next?</a></h2>
+
+<p>This first episode of this tutorial is mainly an overview of what will be coming. Hopefully you now have a global idea of what the Parrot Compiler Tools are, and how they can be used to build a compiler targeting Parrot. If you want to check out some serious usage of the PCT, check out Rakudo (Perl 6 on Parrot) in languages/perl6 or Pynie (Python on Parrot) in languages/pynie.</p>
+
+<p>The next episodes will focus on the step&#45;by&#45;step implementation of our language, including the following topics:</p>
+
+<dl>
+<dt><a name="structure_of_PCT&#45;based_compilers"
+>structure of PCT&#45;based compilers</a></dt>
+
+<dt><a name="using_PGE_rules_to_define_the_language_grammar"
+>using PGE rules to define the language grammar</a></dt>
+
+<dt><a name="implementing_operator_precedence_using_an_operator_precedence_table"
+>implementing operator precedence using an operator precedence table</a></dt>
+
+<dt><a name="using_NQP_to_write_embedded_parse_actions"
+>using NQP to write embedded parse actions</a></dt>
+
+<dt><a name="implementing_language_library_routines"
+>implementing language library routines</a></dt>
+</dl>
+
+<p>In the mean time, experiment for yourself. You are welcome to join us on IRC (see the References section for details). Any feedback on this tutorial is appreciated.</p>
+
+<h2><a name="Exercises"
+>Exercises</a></h2>
+
+<p>The exercises are provided at the end of each episode of this tutorial. In order to keep the length of this tutorial somewhat acceptable, not everything can be discussed in full detail. The answers and/or solutions to these exercises will be posted several days after the episode.</p>
+
+<h3><a name="Advanced_interactive_mode."
+>Advanced interactive mode.</a></h3>
+
+<p>Launch your favorite editor and look at the file squaak.pir in the directory languages/squaak. This file contains the main function (entry point) of the compiler. The class HLLCcompiler defines methods to set a command&#45;line banner and prompt for your compiler when it is running in interactive mode. For instance, when you run Python in interactive mode, you&#39;ll see:</p>
+
+<pre> Python 2.5.1 (r251:54863, Apr 18 2007, 08:51:08) [MSC v.1310 32 bit (Intel)] on
+ win32 Type &#34;help&#34;, &#34;copyright&#34;, &#34;credits&#34; or &#34;license&#34; for more information.</pre>
+
+<p>or something similar (depending on your Python installation and version). This text is called the command line banner. And while running in interactive mode, each line will start with:</p>
+
+<pre> &#62;&#62;&#62;</pre>
+
+<p>which is called a prompt. For Squaak, we&#39;d like to see the following when running in interactive mode (of course you can change this according to your personal taste):</p>
+
+<pre> $ ../../parrot squaak.pbc
+ Squaak for Parrot VM.
+ &#62;</pre>
+
+<p>Add code to the file squaak.pir to achieve this.</p>
+
+<p>Hint 1: Look in the onload subroutine.</p>
+
+<p>Hint 2: Note that only double&#45;quoted strings in PIR can interpret escape&#45;characters such as &#39;\n&#39;.</p>
+
+<p>Hint 3: The functions to do this are documented in compilers/pct/src/PCT/HLLCompiler.pir.</p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<ul>
+<li>Parrot mailing list: parrot&#45;dev@lists.parrot.org</li>
+
+<li>IRC: join #parrot on irc.parrot.org</li>
+
+<li>Getting started with PCT: docs/pct/gettingstarted.pod</li>
+
+<li>Parrot Abstract Syntax Tree (PAST): docs/pct/past_building_blocks.pod</li>
+
+<li>Operator Precedence Parsing with PCT: docs/pct/pct_optable_guide.pod</li>
+
+<li>Perl 6/PGE rules syntax: Synopsis 5</li>
+</ul>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

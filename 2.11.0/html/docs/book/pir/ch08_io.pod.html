@@ -1,0 +1,372 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - I/O</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; I/O
+                </div>
+
+<h1><a name="I/O"
+>I/O</a></h1>
+
+<p><!--
+	INDEX: FileHandle PMC
+--> Parrot handles all I/O in Parrot with a set of PMCs.
+The <code>FileHandle</code> PMC takes care of reading from and writing to files and file&#45;like streams.
+The <code>Socket</code> PMC takes care of network I/O.</p>
+
+<h2><a name="FileHandle_Opcodes"
+>FileHandle Opcodes</a></h2>
+
+<p>The <code>open</code><!--
+	INDEX: open opcode
+--> opcode opens a new filehandle.
+It takes a string argument,
+which is the path to the file:</p>
+<pre>  .loadlib 'io_ops'
+
+  # ...
+
+  $P0 = open 'my/file/name.txt'
+</pre>
+<p>By default,
+it opens the filehandle as read&#45;only,
+but an optional second string argument can specify the mode for the file.
+The modes are <code>r</code> for read,
+<code>w</code> for write,
+<code>a</code> for append,
+and <code>p</code> for pipe:These are the same as the C language read&#45;modes,
+so may be familiar.</p>
+<pre>  .loadlib 'io_ops'
+
+  # ...
+
+  $P0 = open 'my/file/name.txt', 'a'
+
+  $P0 = open 'myfile.txt', 'r'
+</pre>
+<p>You can combine modes; a handle that can read and write uses the mode string <code>rw</code>.
+A handle that can read and write but will not overwrite the existing contents uses <code>ra</code> instead.</p>
+
+<p>The <code>close</code><!--
+	INDEX: close opcode
+--> opcode closes a filehandle when it&#39;s no longer needed.
+Closing a filehandle doesn&#39;t destroy the object,
+it only makes that filehandle object available for opening a different file.It&#39;s generally not a good idea to manually close the standard input,
+standard output,
+or standard error filehandles,
+though you can recreate them.</p>
+<pre>  .loadlib 'io_ops'
+
+  # ...
+
+  close $P0
+</pre>
+<p>The <code>print</code><!--
+	INDEX: print opcode
+--> opcode prints a string argument or the string form of an integer,
+number,
+or PMC to a filehandle:</p>
+<pre>  print $P0, 'Nobody expects'
+</pre>
+<p>It also has a one&#45;argument variant that always prints to standard output:</p>
+<pre>  print 'the Spanish Inquisition'
+</pre>
+<p>The <code>say</code><!--
+	INDEX: say opcode
+--> opcode also prints to standard output,
+but it appends a trailing newline to whatever it prints.
+Another opcode worth mentioning is the <code>printerr</code><!--
+	INDEX: printerr opcode
+--> opcode,
+which prints an argument to the standard error instead of standard output:</p>
+<pre>  say 'Turnip'
+
+  # ...
+
+  .loadlib 'io_ops'
+
+  # ...
+
+  printerr 'Blancmange'
+</pre>
+<p>The <code>read</code><!--
+	INDEX: read opcode
+--> and <code>readline</code><!--
+	INDEX: readline opcode
+--> opcodes read values from a filehandle.
+<code>read</code> takes an integer value and returns a string with that many characters (if possible).
+<code>readline</code> reads a line of input from a filehandle and returns the string without the trailing newline:</p>
+<pre>  .loadlib 'io_ops'
+
+  $S0 = read $P0, 10
+
+  $S0 = readline $P0
+</pre>
+<p>The <code>read</code> opcode has a one&#45;argument variant that reads from standard input:</p>
+<pre>  .loadlib 'io_ops'
+
+  # ...
+
+  $S0 = read 10
+</pre>
+<p>The <code>getstdin</code><!--
+	INDEX: getstdin opcode
+-->,
+<code>getstdout</code><!--
+	INDEX: getstdout opcode
+-->,
+and <code>getstderr</code><!--
+	INDEX: getstderr opcode
+--> opcodes fetch the filehandle objects for the standard streams: standard input,
+standard output,
+and standard error:</p>
+<pre>  .loadlib 'io_ops'
+
+  # ...
+
+  $P0 = getstdin    # Standard input handle
+  $P1 = getstdout   # Standard output handle
+  $P2 = getstderr   # Standard error handle
+</pre>
+<p>Once you have the filehandle for one of the standard streams,
+you can use it just like any other filehandle object:</p>
+<pre>  .loadlib 'io_ops'
+
+  # ...
+
+  $P0 = getstdout
+  print $P0, 'hello'
+</pre>
+<p>This following example reads data from the file <em>myfile.txt</em> one line at a time using the <code>readline</code> opcode.
+As it loops over the lines of the file,
+it checks the boolean value of the read&#45;only filehandle <code>$P0</code> to test whether the filehandle has reached the end of the file:</p>
+<pre>  .loadlib 'io_ops'
+
+  .sub 'main'
+    $P0 = getstdout
+    $P1 = open 'myfile.txt', 'r'
+    loop_top:
+      $S0 = readline $P1
+      print $P0, $S0
+      if $P1 goto loop_top
+    close $P1
+  .end
+</pre>
+<h2><a name="FileHandle_Methods"
+>FileHandle Methods</a></h2>
+
+<p>The methods available on a filehandle object are mostly duplicates of the opcodes,
+though sometimes they provide more options.
+Behind the scenes many of the opcodes call the filehandle&#39;s methods anyway,
+so the choice between the two is more a matter of style preference than anything else.</p>
+
+<h3><a name="open"
+>open</a></h3>
+
+<p>The <code>open</code><!--
+	INDEX: open method
+--> method opens a stream in an existing filehandle object.
+It takes two optional string arguments: the name of the file to open and the open mode.</p>
+<pre>  $P0 = new 'FileHandle'
+  $P0.'open'('myfile.txt', 'r')
+</pre>
+<p>The <code>open</code> opcode internally creates a new filehandle PMC and calls its <code>open</code> method on it.
+The opcode version is shorter to write,
+but it also creates a new PMC for every call,
+while the method can reopen an existing filehandle PMC with a new file.</p>
+
+<p>When reopening a filehandle,
+Parrot will reuse the previous filename associated with the filehandle unless you provide a different filename.
+The same goes for the mode.</p>
+
+<h3><a name="close"
+>close</a></h3>
+
+<p>The <code>close</code><!--
+	INDEX: close method
+--> method closes the filehandle.
+This does not destroy the filehandle object; you can reopen it with the <code>open</code> method later.</p>
+<pre>  $P0.'close'()
+</pre>
+<h3><a name="is_closed"
+>is_closed</a></h3>
+
+<p>The <code>is_closed</code><!--
+	INDEX: is_closed method
+--> method checks if the filehandle is closed.
+It returns true if the filehandle has been closed or was never opened,
+and false if it is currently open:</p>
+<pre>  $I0 = $P0.'is_closed'()
+</pre>
+<h3><a name="print"
+>print</a></h3>
+
+<p>The <code>print</code><!--
+	INDEX: print method
+--> method prints a given value to the filehandle.
+The argument can be an integer,
+number,
+string,
+or PMC.</p>
+<pre>  $P0.'print'('Hello!')
+</pre>
+<h3><a name="puts"
+>puts</a></h3>
+
+<p>The <code>puts</code><!--
+	INDEX: puts method
+--> method is similar to <code>print</code>,
+but it only takes a string argument.</p>
+<pre>  $P0.'puts'('Hello!')
+</pre>
+<h3><a name="read"
+>read</a></h3>
+
+<p>The <code>read</code><!--
+	INDEX: read method
+--> method reads a specified number of bytes from the filehandle object and returns them in a string.</p>
+<pre>  $S0 = $P0.'read'(10)
+</pre>
+<p>If the remaining bytes in the filehandle are fewer than the requested number of bytes,
+returns a string containing the remaining bytes.</p>
+
+<h3><a name="readline"
+>readline</a></h3>
+
+<p>The <code>readline</code><!--
+	INDEX: readline method
+--> method reads an entire line up to a newline character or the end&#45;of&#45;file mark from the filehandle object and returns it in a string.</p>
+<pre>  $S0 = $P0.'readline'()
+</pre>
+<h3><a name="readline_interactive"
+>readline_interactive</a></h3>
+
+<p>The <code>readline_interactive</code><!--
+	INDEX: readline_interactive method
+--> method is useful for command&#45;line scripts.
+It writes the single argument to the method as a prompt to the screen,
+then reads back a line of input.</p>
+<pre>  $S0 = $P0.'readline_interactive'('Please enter your name:')
+</pre>
+<h3><a name="readall"
+>readall</a></h3>
+
+<p>The <code>readall</code><!--
+	INDEX: readall method
+--> method reads an entire file.
+If the filehandle is closed,
+it will open the file given by the passed in string argument,
+read the entire file,
+and then close the filehandle.</p>
+<pre>  $S0 = $P0.'readall'('myfile.txt')
+</pre>
+<p>If the filehandle is already open,
+<code>readall</code> will read the contents of the file,
+and won&#39;t close the filehandle when it&#39;s finished.
+Don&#39;t pass the name argument when working with a file you&#39;ve already opened.</p>
+<pre>  $S0 = $P0.'readall'()
+</pre>
+<h3><a name="mode"
+>mode</a></h3>
+
+<p>The <code>mode</code><!--
+	INDEX: mode method
+--> method returns the current file access mode for the filehandle object.</p>
+<pre>  $S0 = $P0.'mode'()
+</pre>
+<h3><a name="encoding"
+>encoding</a></h3>
+
+<p>The <code>encoding</code><!--
+	INDEX: encoding method
+--> method sets or retrieves the string encoding behavior of the filehandle.</p>
+<pre> $P0.'encoding'('utf8')
+ $S0 = $P0.'encoding'()
+</pre>
+<p>See <a href='#Encodings_and_Charsets'>&#34;Encodings and Charsets&#34;</a> in Chapter 4 for more details on the encodings supported in Parrot.</p>
+
+<h3><a name="buffer_type"
+>buffer_type</a></h3>
+
+<p>The <code>buffer_type</code><!--
+	INDEX: buffer_type method
+--> method sets or retrieves the buffering behavior of the filehandle object.
+The argument or return value is one of: <code>unbuffered</code> to disable buffering,
+<code>line&#45;buffered</code> to read or write when the filehandle encounters a line ending,
+or <code>full&#45;buffered</code> to read or write bytes when the buffer is full.</p>
+<pre>  $P0.'buffer_type'('full-buffered')
+  $S0 = $P0.'buffer_type'()
+</pre>
+<h3><a name="buffer_size"
+>buffer_size</a></h3>
+
+<p>The <code>buffer_size</code><!--
+	INDEX: buffer_size method
+--> method sets or retrieves the buffer size of the filehandle object.</p>
+<pre>  $P0.'buffer_size'(1024)
+  $I0 = $P0.'buffer_size'()
+</pre>
+<p>The buffer size set on the filehandle is only a suggestion.
+Parrot may allocate a larger buffer,
+but it will never allocate a smaller buffer.</p>
+
+<h3><a name="flush"
+>flush</a></h3>
+
+<p>The <code>flush</code><!--
+	INDEX: flush method
+--> method flushes the buffer if the filehandle object is working in a buffered mode.</p>
+<pre>  $P0.'flush'()
+</pre>
+<h3><a name="eof"
+>eof</a></h3>
+
+<p>The <code>eof</code><!--
+	INDEX: eof method
+--> method checks whether a filehandle object has reached the end of the current file.
+It returns true if the filehandle is at the end of the current file and false otherwise.</p>
+<pre>  $I0 = $P0.'eof'()
+</pre>
+<h3><a name="isatty"
+>isatty</a></h3>
+
+<p>The <code>isatty</code><!--
+	INDEX: isatty method
+--> method returns a boolean value whether the filehandle is a TTY terminal.</p>
+<pre>  $P0.'isatty'()
+</pre>
+<h3><a name="get_fd"
+>get_fd</a></h3>
+
+<p>The <code>get_fd</code><!--
+	INDEX: get_fd method
+--> method returns the integer file descriptor of the current filehandle object.
+Not all operating systems use integer file descriptors.
+Those that don&#39;t simply return <code>&#45;1</code>.</p>
+<pre>  $I0 = $P0.'get_fd'()
+</pre>            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

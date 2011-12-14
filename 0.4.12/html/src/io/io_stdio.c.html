@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>STDIO layer</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">STDIO layer</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/io/io_stdio.c &#45; STDIO layer</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This is the Parrot IO STDIO layer.
+This may provide a subset of full functionality,
+but must compile on any system with the ANSI C standard library.
+Also note that unlike the other low&#45;level IO layers (UNIX,
+Win32),
+this is <i>buffered</i> IO,
+out of necessity.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_const_char_*_flags_to_stdio(INTVAL_flags)"
+><b><code lang='und' xml:lang='und'>static const char *flags_to_stdio(INTVAL flags)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a C string representation of <code lang='und' xml:lang='und'>flags</code> suitable for passing to <code lang='und' xml:lang='und'>fopen()</code> in <code lang='und' xml:lang='und'>PIO_stdio_open()</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_PIO_stdio_init(Interp_*interp,_ParrotIOLayer_*layer)"
+><b><code lang='und' xml:lang='und'>static INTVAL PIO_stdio_init(Interp *interp, ParrotIOLayer *layer)</b></code></a></dt><p class="pad"></p>
+
+<dd>Setup standard streams,
+etc.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static ParrotIO *PIO_stdio_open(Interp *interp, ParrotIOLayer *layer, const char *spath, INTVAL flags)</b></code></a></dt><p class="pad"></p>
+
+<dd>Open modes (read,
+write,
+append,
+etc.) are done in pseudo&#45;Perl style using <code lang='und' xml:lang='und'>&#60;</code>,
+<code lang='und' xml:lang='und'>&#62;</code>,
+etc.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static ParrotIO *PIO_stdio_fdopen(Interp *interp, ParrotIOLayer *layer, PIOHANDLE fptr, INTVAL flags)</b></code></a></dt><p class="pad"></p>
+
+<dd>Desc.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_PIO_stdio_close(Interp_*interp,_ParrotIOLayer_*layer,_ParrotIO_*io)"
+><b><code lang='und' xml:lang='und'>static INTVAL PIO_stdio_close(Interp *interp, ParrotIOLayer *layer, ParrotIO *io)</b></code></a></dt><p class="pad"></p>
+
+<dd>Desc.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_PIO_stdio_isatty(PIOHANDLE_fptr)"
+><b><code lang='und' xml:lang='und'>static INTVAL PIO_stdio_isatty(PIOHANDLE fptr)</b></code></a></dt><p class="pad"></p>
+
+<dd>Desc.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_stdio_getblksize(PIOHANDLE_fptr)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_stdio_getblksize(PIOHANDLE fptr)</b></code></a></dt><p class="pad"></p>
+
+<dd>Desc.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_PIO_stdio_flush(Interp_*interp,_ParrotIOLayer_*layer,_ParrotIO_*io)"
+><b><code lang='und' xml:lang='und'>static INTVAL PIO_stdio_flush(Interp *interp, ParrotIOLayer *layer, ParrotIO *io)</b></code></a></dt><p class="pad"></p>
+
+<dd>Desc.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static size_t PIO_stdio_read(Interp *interp, ParrotIOLayer *layer, ParrotIO *io, STRING **)</b></code></a></dt><p class="pad"></p>
+
+<dd>Desc.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static size_t PIO_stdio_write(Interp *interp, ParrotIOLayer *layer, ParrotIO *io, STRING *s)</b></code></a></dt><p class="pad"></p>
+
+<dd>Desc.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static PIOOFF_T PIO_stdio_seek(Interp *interp, ParrotIOLayer *layer, ParrotIO *io, PIOOFF_T offset, INTVAL whence)</b></code></a></dt><p class="pad"></p>
+
+<dd>Hard seek.</dd><p class="pad"></p>
+
+<dt><a name="static_PIOOFF_T_PIO_stdio_tell(Interp_*interp,_ParrotIOLayer_*layer,_ParrotIO_*io)"
+><b><code lang='und' xml:lang='und'>static PIOOFF_T PIO_stdio_tell(Interp *interp, ParrotIOLayer *layer, ParrotIO *io)</b></code></a></dt><p class="pad"></p>
+
+<dd>Desc.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'><a href="io_buf.c.html">src/io/io_buf.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io_passdown.c.html">src/io/io_passdown.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io_unix.c.html">src/io/io_unix.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io_win32.c.html">src/io/io_win32.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io.c.html">src/io/io.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io_private.h.html">src/io/io_private.h</a></em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Adapted from io_unix.c by Josh Wilmes (josh@hitchhiker.org).</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

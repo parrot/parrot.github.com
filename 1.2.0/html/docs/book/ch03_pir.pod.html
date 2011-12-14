@@ -1,0 +1,2923 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot Intermediate Representation</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; Parrot Intermediate Representation
+                </div>
+
+<h1><a name="Parrot_Intermediate_Representation"
+>Parrot Intermediate Representation</a></h1>
+
+<p></p>
+
+<p><!--
+	INDEX: PIR
+--></p>
+
+<p>Parrot Intermediate Representation (PIR) is Parrot&#39;s native low&#45;level language.Parrot also has a pure native assembly language called PASM,
+described in Chapter 9. PIR is fundamentally an assembly language,
+but it has some higher&#45;level features such as operator syntax,
+syntactic sugar for subroutine and method calls,
+automatic register allocation,
+and more friendly conditional syntax.
+PIR is commonly used to write Parrot libraries &#45;&#45; including some of Parrot&#39;s compilers &#45;&#45; and is the target form when compiling high&#45;level languages to Parrot.
+Even so,
+PIR is more rigid and &#34;close to the machine&#34; then some higher&#45;level languages like C.
+<!--
+	INDEX: .pir files
+--> Files containing PIR code use the <em>.pir</em> extension.</p>
+
+<h2><a name="Basic_Syntax"
+>Basic Syntax</a></h2>
+
+<p>PIR has a relatively simple syntax.
+Every line is a comment,
+a label,
+a statement,
+or a directive.
+There is no end&#45;of&#45;line symbol (such as a semicolon in C),
+the end of the line is the end of the statement or directive.</p>
+
+<h3><a name="Comments"
+>Comments</a></h3>
+
+<p><!--
+	INDEX: PIR (Parrot intermediate representation); comments
+--> <!--
+	INDEX: comments (PIR)
+--> A comment begins with the <code>#</code> symbol,
+and continues until the end of the line.
+Comments can stand alone on a line or follow a statement or directive.</p>
+<pre>    # This is a regular comment. The PIR
+    # interpreter ignores this.
+</pre>
+<p><!--
+	INDEX: Pod documentation
+--> PIR also treats inline documentation in Pod format as a comment.
+An equals sign as the first character of a line marks the start of a Pod block.
+A <code>=cut</code> marker signals the end of a Pod block.</p>
+
+<pre>  =head2
+
+  This is Pod documentation, and is treated like a
+  comment. The PIR interpreter ignores this.
+
+  =cut</pre>
+
+<h3><a name="Labels"
+>Labels</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: PIR (Parrot intermediate representation);labels
+--> <!--
+	INDEX: labels (PIR)
+--> A label attaches a name to a line of code so other statements can refer to it. Labels can contain letters, numbers, and underscores. By convention, labels use all capital letters to stand out from the rest of the source code. It&#39;s fine to put a label on the same line as a statement or directive:</p>
+<pre>    GREET: print "'Allo, 'allo, 'allo."
+</pre>
+<p>Readability is improved by putting labels on separate lines, outdented to stand apart from the ordiary code flow:</p>
+<pre>  GREET:
+    print "'Allo, 'allo, 'allo."
+</pre>
+<h3><a name="Statements"
+>Statements</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: statements (PIR)
+--> <!--
+	INDEX: PIR (Parrot intermediate representation);statements
+--> A statement is either an opcode or syntactic sugar for one or more opcodes. An opcode is a native instruction for the virtual machine; it consists of the name of the instruction followed by zero or more arguments.</p>
+<pre>  print "Norwegian Blue"
+</pre>
+<p>PIR also provides higher&#45;level constructs, including symbol operators:</p>
+<pre>  $I1 = 2 + 5
+</pre>
+<p>Under the hood, these special statement forms are just syntactic sugar for regular opcodes. The <code>+</code> symbol corresponds to the <code>add</code> opcode, the <code>&#45;</code> symbol to the <code>sub</code> opcode, and so on. The previous example is equivalent to:</p>
+<pre>  add $I1, 2, 5
+</pre>
+<h3><a name="Directives"
+>Directives</a></h3>
+
+<p>Directives look similar to opcodes, but they begin with a period (<code>.</code>). Parrot&#39;s parser handles them specially. Some directives specify actions that occur at compile time. Other directives represent complex operations that require the generation of multiple instructions. The <code>.local</code> directive, for example, declares a named variable.</p>
+<pre>  .local string hello
+</pre>
+<h3><a name="Literals"
+>Literals</a></h3>
+
+<p>Integers and floating point numbers are numeric literals. They can be positive or negative.</p>
+<pre>  $I0 = 42       # positive
+  $I1 = -1       # negative
+</pre>
+<p>Integer literals can also be binary or hexadecimal:</p>
+<pre>  $I3 = 0b01010  # binary
+  $I2 = 0xA5     # hexadecimal
+</pre>
+<p>Floating point number literals have a decimal point, and can use scientific notation:</p>
+<pre>  $N0 = 3.14
+  $N2 = -1.2e+4
+</pre>
+<p><!--
+	INDEX: strings;in PIR
+--> String literals are enclosed in single or double&#45;quotes.<a href='TODO'>Strings</a> explains the differences between the quoting types.</p>
+<pre>  $S0 = "This is a valid literal string"
+  $S1 = 'This is also a valid literal string'
+</pre>
+<h3><a name="Variables"
+>Variables</a></h3>
+
+<p>PIR variables can store four different kinds of values&#8212;integers, numbers (floating point), strings, and objects. Parrot&#39;s objects are called PMCs, for &#34;<i>P</i>oly<i>M</i>orphic <i>C</i>ontainer&#34;.</p>
+
+<p>The simplest kind of variable is a register variable. The name of a register variable always starts with a dollar sign (<code>$</code>), followed by a single character which specifies the type of the variable&#8212;integer (<code>I</code>), number (<code>N</code>), string (<code>S</code>), or PMC (<code>P</code>)&#8212;, and end with a unique number. Register variables don&#39;t need to be predeclared:</p>
+<pre>  $S0 = "Who's a pretty boy, then?"
+  print $S0
+</pre>
+<p>PIR also has named variables, which are declared with the <code>.local</code> directive. As with register variables, there are four valid types: <code>int</code>, <code>num</code>, <code>string</code>, and <code>pmc</code>. Named variables have to be declared, but otherwise behave exactly the same as register variables.</p>
+<pre>  .local string hello
+  hello = "'Allo, 'allo, 'allo."
+  print hello
+</pre>
+<h3><a name="Constants"
+>Constants</a></h3>
+
+<p><!--
+	INDEX: PIR (Parrot intermediate representation);constants
+--> <!--
+	INDEX: constants (PIR)
+--></p>
+
+<p>The <code>.const</code> directive declares a named constant. Named constants are similar to named variables, but their values are set in the declaration and can never be changed. Like <code>.local</code>, <code>.const</code> takes a type and a name. It also requires a literal argument to set the value of the constant.</p>
+<pre>  .const int    frog = 4                       # integer constant
+  .const string name = "Superintendent Parrot" # string constant
+  .const num    pi   = 3.14159                 # floating point constant
+</pre>
+<p>Named constants may be used in all the same places as literals, but have to be declared beforehand. The following example declares a named string constant <code>hello</code> and prints the value:</p>
+<pre>  .const string hello = "Hello, Polly."
+  print hello
+</pre>
+<h3><a name="Control_Structures"
+>Control Structures</a></h3>
+
+<p>Rather than providing a pre&#45;packaged set of control structures like <code>if</code> and <code>while</code>, PIR gives you the building blocks to construct your own.PIR has many advanced features, but at heart it <b>is</b> an assembly language. The most basic of these building blocks is <code>goto</code>, which jumps to a named label.This is not your father&#39;s <code>goto</code>. It can only jump inside a subroutine, and only to a named label. In the following code example, the <code>print</code> statement will run immediately after the <code>goto</code> statement:</p>
+<pre>    goto GREET
+    # ... some skipped code ...
+
+  GREET:
+    print "'Allo, 'allo, 'allo."
+</pre>
+<p>Variations on the basic <code>goto</code> check whether a particular condition is true or false before jumping:</p>
+<pre>  if $I0 > 5 goto GREET
+</pre>
+<p>All of the traditional control structures can be constructed from PIR&#39;s control building blocks.</p>
+
+<h3><a name="Subroutines"
+>Subroutines</a></h3>
+
+<p>A PIR subroutine starts with the <code>.sub</code> directive and ends with the <code>.end</code> directive. Parameter declarations use the <code>.param</code> directive, and look a lot like named variable declarations. The following example declares a subroutined named <code>greeting</code>, that takes a single string parameter named <code>hello</code>:</p>
+<pre>  .sub greeting
+      .param string hello
+      print hello
+  .end
+</pre>
+<h3><a name="That&#39;s_All_Folks"
+>That&#39;s All Folks</a></h3>
+
+<p>You now know everything you need to know about PIR. Everything else you read or learn about PIR will use one of these fundamental language structures. The rest is vocabulary.</p>
+
+<h2><a name="Working_with_Variables"
+>Working with Variables</a></h2>
+
+<p>We call the simple <code>$I0</code>&#45;style variables &#34;register variables&#34; for a specific reason: Parrot is a register&#45;based virtual machine. It has 4 typed register sets: integers, floating&#45;point numbers, strings, and objects. When you&#39;re working with register variables or named variables, you&#39;re actually working directly with register storage locations in the virtual machine.</p>
+
+<p>If you&#39;ve ever worked with an assembly language before, you may immediately jump to the conclusion that <code>$I0</code> is the zeroth integer register, but Parrot is a bit smarter than that. The number of a register variable usually does not correspond to the register used internally; Parrot&#39;s compiler maps registers as appropriate for speed and memory considerations. The only guarantee Parrot gives you is that you&#39;ll always get the same storage location when you use <code>$I0</code> in the same subroutine.</p>
+
+<p>The most basic operation on a variable is assignment using the <code>=</code> operator:</p>
+<pre>  $I0 = 42        # set integer variable to the value 42
+  $N3 = 3.14159   # set number variable to an approximation of pi
+  $I1 = $I0       # set $I1 to the value of $I0
+</pre>
+<p>The <code>exchange</code> opcode swaps the contents of two variables of the same type. The following example sets <code>$I0</code> to the value of <code>$I1</code>, and sets <code>$I1</code> to the value of <code>$I0</code>.</p>
+<pre>  exchange $I0, $I1
+</pre>
+<p>The <code>null</code> opcode sets an integer or number variable to a zero value, and undefines a string or object.</p>
+<pre>  null $I0  # 0
+  null $N0  # 0.0
+  null $S0  # NULL
+  null $P0  # PMCNULL
+</pre>
+<h2><a name="Working_with_Numbers"
+>Working with Numbers</a></h2>
+
+<p>PIR has an extensive set of instructions that work with integers, floating&#45;point numbers, and numeric PMCs. Many of these instructions have a variant that modifies the result in place:</p>
+<pre>  $I10 = $I11 + $I2
+  $I0 += $I1
+</pre>
+<p>The first form of <code>+</code> stores the sum of the two arguments in the result variable. The second variant, <code>+=</code>, adds the single argument to the result variable and stores the sum back in the result variable.</p>
+
+<p>The arguments can be Parrot literals, variables, or constants. If the result is an integer type, like <code>$I0</code>, the arguments must also be integers. A number result, like <code>$N0</code>, usually requires number arguments, but many numeric instructions also allow the final argument to be an integer. Instructions with a PMC result may accept an integer, floating&#45;point, or PMC final argument:</p>
+<pre>  $P0 = $P1 * $P2
+  $P0 = $P1 * $I2
+  $P0 = $P1 * $N2
+  $P0 *= $P1
+  $P0 *= $I1
+  $P0 *= $N1
+</pre>
+<p>We won&#39;t list every numeric opcode here, but we&#39;ll list some of the most common ones. You can get a complete list in &#34;PIR Opcodes&#34; in Chapter 11.</p>
+
+<h3><a name="Unary_numeric_opcodes"
+>Unary numeric opcodes</a></h3>
+
+<p>The unary opcodes have a single argument, and either return a result or modify the argument in place. Some of the most common unary numeric opcodes are <code>inc</code> (increment), <code>dec</code> (decrement), <code>abs</code> (absolute value), <code>neg</code> (negate), and <code>fact</code> (factorial):</p>
+<pre>  $N0 = abs -5.0  # the absolute value of -5.0 is 5.0
+  $I1 = fact  5   # the factorial of 5 is 120
+  inc $I1         # 120 incremented by 1 is 121
+</pre>
+<h3><a name="Binary_numeric_opcodes"
+>Binary numeric opcodes</a></h3>
+
+<p>Binary opcodes have two arguments and a result. Parrot provides addition (<code>+</code> or <code>add</code>), subtraction (<code>&#45;</code> or <code>sub</code>), multiplication (<code>*</code> or <code>mul</code>), division (<code>/</code> or <code>div</code>), modulus (<code>%</code> or <code>mod</code>), and exponent (<code>pow</code>) opcodes, as well as <code>gcd</code><!--
+	INDEX: gcd opcode (PIR)
+--> (greatest common divisor) and <code>lcm</code><!--
+	INDEX: lcm opcode (PIR)
+--> (least common multiple).</p>
+<pre>  $I0 = 12 / 5
+  $I0 = 12 % 5
+</pre>
+<h3><a name="Floating&#45;point_operations"
+>Floating&#45;point operations</a></h3>
+
+<p>Although most of the numeric operations work with both numbers and integers, a few require the result to be a number. Among these are <code>ln</code> (natural log), <code>log2</code> (log base 2), <code>log10</code> (log base 10), and <code>exp</code> (<i>e</i>x), as well as a full set of trigonometric opcodes such as <code>sin</code> (sine), <code>cos</code> (cosine), <code>tan</code> (tangent), <code>sec</code> (secant), <code>cosh</code> (hyperbolic cosine), <code>tanh</code> (hyperbolic tangent), <code>sech</code> (hyperbolic secant), <code>asin</code> (arc sine), <code>acos</code> (arc cosine), <code>atan</code> (arc tangent), <code>asec</code> (arc secant), <code>exsec</code> (exsecant), <code>hav</code> (haversine), and <code>vers</code> (versine). All angle arguments for the <!--
+	INDEX: trigonometric functions (PIR)
+--> trigonometric functions are in radians:</p>
+<pre>  $N0 = sin $N1
+  $N0 = exp 2
+</pre>
+<p>The majority of the floating&#45;point operations have a single argument and a single result. Even though the result must be a number, the source can be either an integer or number.</p>
+
+<h3><a name="Logical_and_Bitwise_Operations"
+>Logical and Bitwise Operations</a></h3>
+
+<p>The <!--
+	INDEX: logical opcodes
+--> logical opcodes evaluate the truth of their arguments. They&#39;re often used to make decisions on control flow. Logical operations are implemented for integers and numeric PMCs. Numeric values are false if they&#39;re 0, and true otherwise. Strings are false if they&#39;re the empty string or a single character &#34;0&#34;, and true otherwise. PMCs are true when their <code>get_bool</code><!--
+	INDEX: get_bool vtable method (PIR)
+--> vtable method returns a nonzero value.</p>
+
+<p>The <code>and</code><!--
+	INDEX: and opcode (PIR)
+--> opcode returns the first argument if it&#39;s false and the second argument otherwise:</p>
+<pre>  $I0 = and 0, 1  # returns 0
+  $I0 = and 1, 2  # returns 2
+</pre>
+<p>The <code>or</code><!--
+	INDEX: or opcode (PIR)
+--> opcode returns the first argument if it&#39;s true and the second argument otherwise:</p>
+<pre>  $I0 = or 1, 0  # returns 1
+  $I0 = or 0, 2  # returns 2
+
+  $P0 = or $P1, $P2
+</pre>
+<p>Both <code>and</code> and <code>or</code> are short&#45;circuiting. If they can determine what value to return from the first argument, they&#39;ll never evaluate the third. This is significant only for PMCs, as they might have side effects on evaluation.</p>
+
+<p>The <code>xor</code><!--
+	INDEX: xor opcode (PIR)
+--> opcode returns the first argument if it is the only true value, returns the second argument if it is the only true value, and returns false if both values are true or both are false:</p>
+<pre>  $I0 = xor 1, 0  # returns 1
+  $I0 = xor 0, 1  # returns 1
+  $I0 = xor 1, 1  # returns 0
+  $I0 = xor 0, 0  # returns 0
+</pre>
+<p>The <code>not</code><!--
+	INDEX: not opcode (PIR)
+--> opcode returns a true value when the argument is false, and a false value if the argument is true:</p>
+<pre>  $I0 = not $I1
+  $P0 = not $P1
+</pre>
+<p>The <!--
+	INDEX: bitwise;opcodes (PIR)
+--> bitwise opcodes operate on their values a single bit at a time. <code>band</code><!--
+	INDEX: band opcode (PIR)
+-->, <code>bor</code><!--
+	INDEX: bor opcode (PIR)
+-->, and <code>bxor</code><!--
+	INDEX: bxor opcode (PIR)
+--> return a value that is the logical AND, OR, or XOR of each bit in the source arguments. They each take a two arguments. They also have a variant that modifies the result in place. <code>bnot</code><!--
+	INDEX: bnot opcode (PIR)
+--> is the logical NOT of each bit in a single source argument.</p>
+<pre>  $I0 = bnot $I1
+  $P0 = band $P1
+  $I0 = bor $I1, $I2
+  $P0 = bxor $P1, $I2
+</pre>
+<p>The logical and arithmetic shift operations shift their values by a specified number of bits:</p>
+<pre>  $I0 = shl $I1, $I2        # shift $I1 left by count $I2
+  $I0 = shr $I1, $I2        # arithmetic shift right
+  $P0 = lsr $P1, $P2        # logical shift right
+</pre>
+<h2><a name="Working_with_Strings"
+>Working with Strings</a></h2>
+
+<p>Parrot strings are buffers of variable&#45;sized data. The most common use of strings is to store text data. Strings can also hold binary or other non&#45;textual data, though this is rare.In general, a custom PMC is more useful. Parrot strings are flexible and powerful, to handle the complexity of human&#45;readable (and computer&#45;representable) text data. String operations work with string literals, variables, and constants, and with string&#45;like PMCs.</p>
+
+<h3><a name="Escape_Sequences"
+>Escape Sequences</a></h3>
+
+<p>Strings in double&#45;quotes accept all sorts of escape sequences using backslashes. Strings in single&#45;quotes only allow escapes for nested quotes:</p>
+
+<pre>  $S0 = &#34;This string is \n on two lines&#34;
+  $S0 = &#39;This is a \n one&#45;line string with a slash in it&#39;</pre>
+
+<p>Parrot supports several escape sequences in double&#45;quoted strings:</p>
+
+<h3><a name="Heredocs"
+>Heredocs</a></h3>
+
+<p>If you need more flexibility in defining a string, use a heredoc string literal. The <code>&#60;&#60;</code> operator starts a heredoc. The string terminator immediately follows. All text until the terminator is part of the string. The terminator must appear on its own line, must appear at the beginning of the line, and may not have any trailing whitespace.</p>
+
+<pre>  $S2 = &#60;&#60; &#34;End_Token&#34;
+
+  This is a multi&#45;line string literal. Notice that
+  it doesn&#39;t use quotation marks.
+
+  End_Token</pre>
+
+<h3><a name="Concatenating_strings"
+>Concatenating strings</a></h3>
+
+<p>Use the <code>.</code> operator to concatenate strings. It has a <code>.=</code> variant to modify the result in place.</p>
+<pre>  $S0 = "ab"
+  $S1 = $S0 . "cd"  # concatenates $S0 with "cd"
+  print $S1         # prints "abcd"
+  print "\n"
+
+  $S1 .= "xy"       # appends "xy" to $S1
+  print $S1         # prints "abcdxy"
+  print "\n"
+</pre>
+<p>The first <code>.</code> operation in the example above concatenates the string &#34;cd&#34; onto the string &#34;ab&#34; and stores the result in <code>$S1</code>. The second <code>.=</code> operation appends &#34;xy&#34; onto the string &#34;abcd&#34; in <code>$S1</code>.</p>
+
+<h3><a name="Repeating_strings"
+>Repeating strings</a></h3>
+
+<p>The <code>repeat</code> opcode repeats a string a specified number of times:</p>
+<pre>  $S0 = "a"
+  $S1 = repeat $S0, 5
+  print $S1            # prints "aaaaa"
+  print "\n"
+</pre>
+<p>In this example, <code>repeat</code> generates a new string with &#34;a&#34; repeated five times and stores it in <code>$S1</code>.</p>
+
+<h3><a name="Length_of_a_string"
+>Length of a string</a></h3>
+
+<p>The <code>length</code> opcode returns the length of a string in characters. This won&#39;t be the same as the length in bytes for multibyte encoded strings:</p>
+<pre>  $S0 = "abcd"
+  $I0 = length $S0                # the length is 4
+  print $I0
+  print "\n"
+</pre>
+<p><code>length</code> doesn&#39;t have an equivalent for PMC strings.</p>
+
+<h3><a name="Substrings"
+>Substrings</a></h3>
+
+<p>The simplest version of the <code>substr</code><!--
+	INDEX: substr opcode
+--> opcode takes three arguments: a source string, an offset position, and a length. It returns a substring of the original string, starting from the offset position (0 is the first character) and spanning the length:</p>
+<pre>  $S0 = substr "abcde", 1, 2        # $S0 is "bc"
+</pre>
+<p>This example extracts a two&#45;character string from &#34;abcde&#34; at a one&#45;character offset from the beginning of the string (starting with the second character). It generates a new string, &#34;bc&#34;, in the destination register <code>$S0</code>.</p>
+
+<p>When the offset position is negative, it counts backward from the end of the string. So an offset of &#45;1 starts at the last character of the string.</p>
+
+<p><code>substr</code> also has a four&#45;argument form, where the fourth argument is a string to replace the substring. This variant modifies the source string and returns the removed substring.</p>
+<pre>  $S1 = "abcde"
+  $S0 = substr $S1, 1, 2, "XYZ"
+  print $S0                        # prints "bc"
+  print "\n"
+  print $S1                        # prints "aXYZde"
+  print "\n"
+</pre>
+<p>The example above replaces the substring &#34;bc&#34; in <code>$S1</code> with the string &#34;XYZ&#34;, and returns &#34;bc&#34; in <code>$S0</code>.</p>
+
+<p>When the offset position in a replacing <code>substr</code> is one character beyond the original string length, <code>substr</code> appends the replacement string just like the concatenation operator. If the replacement string is an empty string, the characters are just removed from the original string.</p>
+
+<p>When you don&#39;t need to capture the replaced string, there&#39;s an optimized version of <code>substr</code> that just does a replace without returning the removed substring.</p>
+<pre>  $S1 = "abcde"
+  $S1 = substr 1, 2, "XYZ"
+  print $S1                        # prints "aXYZde"
+  print "\n"
+</pre>
+<h3><a name="Converting_characters"
+>Converting characters</a></h3>
+
+<p>The <code>chr</code><!--
+	INDEX: chr opcode (PIR)
+--> opcode takes an integer value and returns the corresponding character in the ASCII character set as a one&#45;character string. The <code>ord</code><!--
+	INDEX: ord opcode (PIR)
+--> opcode takes a single character string and returns the integer value of the character at the first position in the string. Notice that the integer value of the character will differ depending on the current encoding of the string:</p>
+<pre>  $S0 = chr 65              # $S0 is "A"
+  $I0 = ord $S0             # $I0 is 65, if $S0 is ASCII or UTF-8
+</pre>
+<p><code>ord</code> has a two&#45;argument variant that takes a character offset to select a single character from a multicharacter string. The offset must be within the length of the string:</p>
+<pre>  $I0 = ord "ABC", 2        # $I0 is 67
+</pre>
+<p>A negative offset counts backward from the end of the string, so &#45;1 is the last character.</p>
+<pre>  $I0 = ord "ABC", -1       # $I0 is 67
+</pre>
+<h3><a name="Formatting_strings"
+>Formatting strings</a></h3>
+
+<p>The <code>sprintf</code><!--
+	INDEX: sprintf opcode (PIR)
+--> opcode generates a formatted string from a series of values. It takes two arguments: a string specifying the format, and an array PMC containing the values to be formatted. The format string and the result can be either strings or PMCs:</p>
+<pre>  $S0 = sprintf $S1, $P2
+  $P0 = sprintf $P1, $P2
+</pre>
+<p>The format string is similar to C&#39;s <code>sprintf</code> function, but with extensions for Parrot data types. Each format field in the string starts with a <code>%</code> and ends with a character specifying the output format. The output format characters are listed in Table 3&#45;2.</p>
+
+<p>Each format field can be specified with several options: flags, width, precision, and size. The format flags are listed in Table 3&#45;3.</p>
+
+<p>The width is a number defining the minimum width of the output from a field. The precision is the maximum width for strings or integers, and the number of decimal places for floating&#45;point fields. If either width or precision is an asterisk (<code>*</code>), it takes its value from the next argument in the PMC.</p>
+
+<p>The size modifier defines the type of the argument the field takes. The flags are listed in Table 3&#45;4.</p>
+
+<p>The values in the aggregate PMC must have a type compatible with the specified size.</p>
+
+<p>Here&#39;s a short illustration of string formats:</p>
+<pre>  $P2 = new "Array"
+  $P0 = new "Int"
+  $P0 = 42
+  push $P2, $P0
+  $P1 = new "Num"
+  $P1 = 10
+  push $P2, $P1
+  $S0 = sprintf "int %#Px num %+2.3Pf\n", $P2
+  print $S0     # prints "int 0x2a num +10.000"
+  print "\n"
+</pre>
+<p>The first eight lines create a <code>Array</code> with two elements: a <code>Int</code> and a <code>Num</code>. The format string of the <code>sprintf</code> has two format fields. The first, <code>%#Px</code>, takes a PMC argument from the aggregate (<code>P</code>) and formats it as a hexadecimal integer (<code>x</code>), with a leading 0x (<code>#</code>). The second format field, <code>%+2.3Pf</code>, takes a PMC argument (<code>P</code>) and formats it as a floating&#45;point number (<code>f</code>), with a minimum of two whole digits and a maximum of three decimal places (<code>2.3</code>) and a leading sign (<code>+</code>).</p>
+
+<p>The test files <em><a href="../../t/op/string.t.html">t/op/string.t</a></em> and <em>t/src/sprintf.t</em> have many more examples of format strings.</p>
+
+<h3><a name="Joining_strings"
+>Joining strings</a></h3>
+
+<p>The <code>join</code> opcode joins the elements of an array PMC into a single string. The first argument separates the individual elements of the PMC in the final string result.</p>
+<pre>  $P0 = new "Array"
+  push $P0, "hi"
+  push $P0, 0
+  push $P0, 1
+  push $P0, 0
+  push $P0, "parrot"
+  $S0 = join "__", $P0
+  print $S0              # prints "hi__0__1__0__parrot"
+</pre>
+<p>This example builds a <code>Array</code> in <code>$P0</code> with the values <code>&#34;hi&#34;</code>, <code>0</code>, <code>1</code>, <code>0</code>, and <code>&#34;parrot&#34;</code>. It then joins those values (separated by the string <code>&#34;__&#34;</code>) into a single string, and stores it in <code>$S0</code>.</p>
+
+<h3><a name="Splitting_strings"
+>Splitting strings</a></h3>
+
+<p>Splitting a string yields a new array containing the resulting substrings of the original string.</p>
+<pre>  $P0 = split "", "abc"
+  set $P1, $P0[0]
+  print $P1              # 'a'
+  set $P1, $P0[2]
+  print $P1              # 'c'
+</pre>
+<p>This example splits the string &#34;abc&#34; into individual characters and stores them in an array in <code>$P0</code>. It then prints out the first and third elements of the array.</p>
+
+<h3><a name="Testing_for_substrings"
+>Testing for substrings</a></h3>
+
+<p>The <code>index</code><!--
+	INDEX: index opcode (PIR)
+--> opcode searches for a substring within a string. If it finds the substring, it returns the position where the substring was found as a character offset from the beginning of the string. If it fails to find the substring, it returns &#45;1:</p>
+<pre>  $I0 = index "Beeblebrox", "eb"
+  print $I0                       # prints 2
+  print "\n"
+  $I0 = index "Beeblebrox", "Ford"
+  print $I0                       # prints -1
+  print "\n"
+</pre>
+<p><code>index</code> also has a three&#45;argument version, where the fourth argument defines an offset position for starting the search:</p>
+<pre>  $I0 = index "Beeblebrox", "eb", 3
+  print $I0                         # prints 5
+  print "\n"
+</pre>
+<p>This finds the second &#34;eb&#34; in &#34;Beeblebrox&#34; instead of the first, because the search skips the first three characters in the string.</p>
+
+<h3><a name="Bitwise_Operations"
+>Bitwise Operations</a></h3>
+
+<p>The bitwise opcodes also have string variants for AND, OR, and XOR: <code>bors</code><!--
+	INDEX: bors opcode (PIR)
+-->, <code>bands</code><!--
+	INDEX: bands opcode (PIR)
+-->, and <code>bxors</code><!--
+	INDEX: bxors opcode (PIR)
+-->. These take string or string&#45;like PMC arguments and perform the logical operation on each byte of the strings to produce the result string.</p>
+<pre>  $S0 = bors $S1
+  $P0 = bands $P1
+  $S0 = bors $S1, $S2
+  $P0 = bxors $P1, $S2
+</pre>
+<p>The bitwise string opcodes only have meaningful results when they&#39;re used with simple ASCII strings because the bitwise operation is done per byte.</p>
+
+<h3><a name="Copy&#45;On&#45;Write"
+>Copy&#45;On&#45;Write</a></h3>
+
+<p>Strings use copy&#45;on&#45;write (COW) optimizations. A call to <code>$S1 = $S0</code>, doesn&#39;t immediately make a copy of <code>$S0</code>, it only makes both variables point to the same string. Parrot doesn&#39;t make a copy of the string until one of two strings is modified.</p>
+<pre>  $S0 = "Ford"
+  $S1 = $S0
+  $S1 = "Zaphod"
+  print $S0                # prints "Ford"
+  print $S1                # prints "Zaphod"
+</pre>
+<p>Modifying one of the two variables causes a new string to be created, preserving the old value in <code>$S0</code> and assigning the new value to the new string in <code>$S1</code>. The benefit here is avoiding the cost of copying a string until a copy is actually needed.</p>
+
+<h3><a name="Encodings_and_Charsets"
+>Encodings and Charsets</a></h3>
+
+<p>Every string in Parrot has an associated encoding and character set. The default charset is 8&#45;bit ASCII, which is almost universally supported. Double&#45;quoted string constants can have an optional prefix specifying the string&#39;s encoding and charset.As you might suspect, single&#45;quoted strings do not support this. Parrot maintains these values internally, and automatically converts strings when necessary to preserve the information. String prefixes are specified as <code>encoding:charset:</code> at the front of the string. Here are some examples:</p>
+<pre>  $S0 = utf8:unicode:"Hello UTF8 Unicode World!"
+  $S1 = utf16:unicode:"Hello UTF16 Unicode World!"
+  $S2 = ascii:"This is 8-bit ASCII"
+  $S3 = binary:"This is raw, unformatted binary data"
+</pre>
+<p>The <code>binary:</code> charset treats the string as a buffer of raw unformatted binary data. It isn&#39;t really a string per se, because binary data contains no readable characters. This exists to support libraries which manipulate binary data that doesn&#39;t easily fit into any other primitive data type.</p>
+
+<p>When Parrot operates on two strings (as in concatenation), they must both use the same character set and encoding. Parrot automatically upgrades one or both of the strings to the next highest compatible format as necessary. ASCII strings will automatically upgrade to UTF&#45;8 strings if needed, and UTF&#45;8 will upgrade to UTF&#45;16.</p>
+
+<h2><a name="Working_with_PMCs"
+>Working with PMCs</a></h2>
+
+<p>Polymorphic Containers (PMCs) are the basis for complex data types and object&#45;oriented behavior in Parrot. In PIR, any variable that isn&#39;t a low&#45;level integer, number, or string is a PMC. PMCs act much like integer, number, or string variables, but you have to instantiate a new PMC object before you use it. The <code>new</code> opcode creates a new PMC object of the specified type.</p>
+<pre>  $P0 = new 'String'
+  $P0 = "That's a bollard and not a parrot"
+  print $P0
+</pre>
+<p>This example creates a <code>String</code> object, stores it in the PMC register variable <code>$P0</code>, assigns it the value &#34;That&#39;s a bollard and not a parrot&#34;, and prints it.</p>
+
+<p>Every PMC has a type that indicates what data it can store and what behavior it supports. The <code>typeof</code> opcode reports the type of a PMC. When the result is a string variable, <code>typeof</code> returns the name of the type:</p>
+<pre>  $P0 = new "String"
+  $S0 = typeof $P0               # $S0 is "String"
+  print $S0
+  print "\n"
+</pre>
+<p>When the result is a PMC variable, <code>typeof</code> returns the <code>Class</code> for that object type.</p>
+
+<h3><a name="Scalars"
+>Scalars</a></h3>
+
+<p>In most of the examples we&#39;ve shown so far, PMCs just duplicate the functionality of integers, numbers, and strings. Parrot provides a set of simple PMCs for this exact purpose. <code>Integer</code>, <code>Number</code>, and <code>String</code> are thin overlays on Parrot&#39;s low&#45;level integers, numbers, and strings.</p>
+
+<p>An earlier example showed a string literal assigned to a PMC register of type <code>String</code>. This works for all the low&#45;level types and their PMC equivalents:</p>
+<pre>  $P0 = new 'Integer'
+  $P0 = 5
+
+  $P1 = new 'String'
+  $P1 = "5 birds"
+
+  $P2 = new 'Number'
+  $P2 = 3.14
+</pre>
+<p>Like literals, low&#45;level integer, number, or string variables can be directly assigned to a PMC. The PMC handles the conversion from the low&#45;level type to its own internal storage.This kind of conversion of a simpler type to a more complex type is often called &#34;boxing&#34;.</p>
+<pre>  $I0 = 5
+  $P0 = new 'Integer'
+  $P0 = $I0
+
+  $S1 = "5 birds"
+  $P1 = new 'String'
+  $P1 = $S0
+
+  $N2 = 3.14
+  $P2 = new 'Number'
+  $P2 = $N2
+</pre>
+<p>The <code>box</code> opcode is a handy shortcut to create the appropriate PMC object from an integer, number, or string literal or variable.</p>
+<pre>  $P0 = box 3       # $P0 is an "Integer"
+
+  $P1 = box "hello" # $P1 is a "String"
+
+  $P2 = box 3.14    # $P2 is a "Number"
+</pre>
+<p>In the reverse situation, when assigning a PMC to an integer, number, or string variable, the PMC also has the ability to convert its value to the low&#45;level type.The reverse of &#34;boxing&#34; is &#34;unboxing&#34;.</p>
+<pre>  $P0 = box 5
+  $S0 = $P0           # the string "5"
+  $N0 = $P0           # the number 5.0
+  $I0 = $P0           # the integer 5
+
+  $P1 = box "5 birds"
+  $S1 = $P1           # the string "5 birds"
+  $I1 = $P1           # the integer 5
+  $N1 = $P1           # the number 5.0
+
+  $P2 = box 3.14
+  $S2 = $P2           # the string "3.14"
+  $I2 = $P2           # the integer 3
+  $N2 = $P2           # the number 3.14
+</pre>
+<p>This example creates <code>Integer</code>, <code>Number</code>, and <code>String</code> PMCs, and shows the effect of assigning each one back to a low&#45;level type.</p>
+
+<p>Converting a <code>String</code> to an integer or number only makes sense when the contents of the string are a number. The <code>String</code> PMC will attempt to extract a number from the beginning of the string, but otherwise will simply return a false value.</p>
+
+<h3><a name="Aggregates"
+>Aggregates</a></h3>
+
+<p>PMCs can define complex types that hold multiple values, commonly called aggregates. Two of the most basic aggregate types are ordered arrays and associative arrays. The primary difference between these is that ordered arrays are indexed using integer keys, and while associative arrays are indexed with string keys.</p>
+
+<p>The most important feature added for aggregates is keyed access. Elements within an aggregate PMC can be stored and retrieved by a numeric or string key.</p>
+
+<p>PIR also offers a extensive set of operations for manipulating aggregate data types.</p>
+
+<p>Ordered and associative arrays are not the only types of aggregates available, but they are a good demonstration of using integers and strings as keys in an aggregate.</p>
+
+<h4><a name="Ordered_Arrays"
+>Ordered Arrays</a></h4>
+
+<p>Parrot provides several ordered array PMCs, differentiated by whether the array is intended to store booleans, integers, numbers, strings, or other PMCs, and whether the array should keep a fixed length or dynamically resize for the number of elements it stores.</p>
+
+<p>The all of the ordered array PMCs have zero&#45;based integer keys. The syntax for <!--
+	INDEX: keyed access to PMCs
+--> keyed access to a PMC puts the key in square brackets after the register name:</p>
+<pre>  $P0 = new "Array"    # obtain a new array object
+  $P0 = 2              # set its length
+  set $P0[0], 10       # set first element to 10
+  set $P0[1], $I31     # set second element to $I31
+  set $I0, $P0[0]      # get the first element
+  set $I1, $P0         # get array length
+</pre>
+<p>A key on the destination register of a <code>set</code> operation sets a value for that key in the aggregate. A key on the source register of a <code>set</code> returns the value for that key. If you set <code>P0</code> without a key, you set the length of the array, not one of its values.<code>Array</code> is an autoextending array, so you never need to set its length. Other array types may require the length to be set explicitly. And if you assign the <code>Array</code> to an integer, you get the length of the array.</p>
+
+<p>We mention &#34;other array types&#34; above, not as a vague suggestion that there may be other types of arrays eventually, but as an indication that we actually have several types of array PMCs in Parrot&#39;s core. Parrot comes with <code>FixedPMCArray</code>, <code>ResizablePMCArray</code>, <code>FixedIntegerArray</code>, <code>ResizableIntegerArray</code>, <code>FixedFloatArray</code>, <code>ResizableFloatArray</code>, <code>FixedStringArray</code>, <code>ResizableStringArray</code>, <code>FixedBooleanArray</code>, and <code>ResizableBooleanArray</code> types. These various types of arrays use various packing methods to create higher memory efficiency for their contents then using a single generic array type would be able to. The trade&#45;off for higher memory efficiency is that these array PMCs can only hold a single type of data.</p>
+
+<p>The array PMC types that start with &#34;Fixed&#34; have a fixed size and do not automatically extend themselves if you attempt to add data to a higher index then the array contains. The &#34;Resizable&#34; variants will automatically extend themselves as more data are added, but the cost is in algorithmic complexity of checking array bounds and reallocating array memory.</p>
+
+<p>To retrieve the number of items currently in an array, you can use the <code>elements</code> opcode.</p>
+<pre>  set $P0, 100         # allocate store for 100 elements
+  set $I0, $P0          # obtain current allocation size
+  elements $I0, $P0     # get element count
+</pre>
+<p>Some other useful instructions for working with arrays are <code>push</code>, <code>pop</code>, <code>shift</code>, and <code>unshift</code> (you&#39;ll find them in &#34;PIR Opcodes&#34; in Chapter 11).</p>
+
+<h4><a name="Associative_Arrays"
+>Associative Arrays</a></h4>
+
+<p></p>
+
+<p>Other programming languages might refer to the same concept using different terms such as &#34;dictionary&#34; or &#34;hash table&#34; or &#34;associative array&#34;. <!--
+	INDEX: PMCs (Polymorphic Containers);hashes
+--> The <code>Hash</code><!--
+	INDEX: Hash PMC
+--> PMC is an unordered aggregate which uses string keys to identify elements within it.</p>
+<pre>  new $P1, "Hash"      # generate a new hash object
+  set $P1["key"], 10   # set key and value
+  set $I0, $P1["key"]   # obtain value for key
+  set $I1, $P1          # number of entries in hash
+</pre>
+<p>The <code>exists</code><!--
+	INDEX: exists opcode (PIR)
+--> opcode tests whether a keyed value exists in an aggregate. It returns 1 if it finds the key in the aggregate, and returns 0 if it doesn&#39;t. It doesn&#39;t care if the value itself is true or false, only that the key has been set:</p>
+<pre>  new $P0, "Hash"
+  set $P0["key"], 0
+  exists $I0, $P0["key"] # does a value exist at "key"
+  print $I0             # prints 1
+  print "\n"
+</pre>
+<p>The <code>delete</code><!--
+	INDEX: delete opcode (PIR)
+--> opcode is also useful for working with hashes: it removes a key/value pair.</p>
+
+<h4><a name="Iterators"
+>Iterators</a></h4>
+
+<p>Iterators extract values from an aggregate PMC one at a time and without extracting duplicates. Iterators are most useful in loops where an action needs to be performed on every element in an aggregate. You create an iterator by creating a new <code>Iterator</code> PMC, and passing the aggregate PMC to <code>new</code> as an additional parameter:</p>
+<pre>  new $P1, "Iterator", $P2
+</pre>
+<p>Alternatively, you can use the <code>iter</code> opcode to do the same thing:</p>
+<pre>  iter $P1, $P2     # Same!
+</pre>
+<p>The include file <em>iterator.pasm</em> defines some constants for working with iterators. The <code>.ITERATE_FROM_START</code> and <code>.ITERATE_FROM_END</code> constants are used to select whether an array iterator starts from the beginning or end of the array. Since Hash PMCs are unordered, these two constants do not have any affect on Hash iterators.</p>
+
+<p>A value can be extracted from the iterator using the <code>shift</code> opcode. Evaluating the iterator PMC as a boolean returns whether the iterator has reached the end of the aggregate or not.</p>
+<pre>  .include "iterator.pasm"
+      new $P2, "Array"
+      push $P2, "a"
+      push $P2, "b"
+      push $P2, "c"
+      new $P1, "Iterator", $P2
+      set $P1, .ITERATE_FROM_START
+
+  iter_loop:
+      unless $P1, iter_end
+      shift $P5, $P1
+      print $P5                        # prints "a", "b", "c"
+      branch iter_loop
+  iter_end:
+      # ...
+</pre>
+<p>Hash iterators work similarly to array iterators, but they extract keys only. With the key, you can find it&#39;s value from the original hash PMC. With hashes it&#39;s only meaningful to iterate in one direction since they don&#39;t define any order for their keys.</p>
+<pre>  .include "iterator.pasm"
+      new $P2, "Hash"
+      set $P2["a"], 10
+      set $P2["b"], 20
+      set $P2["c"], 30
+      new $P1, "Iterator", $P2
+      set $P1, .ITERATE_FROM_START_KEYS
+
+  iter_loop:
+      unless $P1, iter_end
+      shift $S5, $P1                    # one of the keys "a", "b", "c"
+      set $I9, $P2[$S5]
+      print $I9                        # prints e.g. 20, 10, 30
+      branch iter_loop
+  iter_end:
+      # ...
+</pre>
+<h4><a name="Multi&#45;level_Keys"
+>Multi&#45;level Keys</a></h4>
+
+<p></p>
+
+<p><!--
+	INDEX: PMCs (Polymorphic Containers);data structures
+--> Arrays and hashes can hold any data type, including other aggregates. Accessing elements deep within nested data structures is a common operation, so PIR provides a way to do it in a single instruction. Complex keys specify a series of nested data structures, with each individual key separated by a semicolon:</p>
+<pre>  $P0 = new "Hash"
+  $P1 = new "Array"
+  $P1[2] = 42
+  $P0["answer"] = $P1
+  $I1 = 2
+  $I0 = $P0["answer";$I1]
+  print $I0
+  print "\n"
+</pre>
+<p>This example builds up a data structure of a hash containing an array. The complex key <code>$P0[&#34;answer&#34;;I1]</code> retrieves an element of the array within the hash. You can also set a value using a complex key:</p>
+<pre>  $P0["answer";0] = 5
+</pre>
+<p>The individual keys are integers or strings, or registers with integer or string values.</p>
+
+<h3><a name="Assignment"
+>Assignment</a></h3>
+
+<p></p>
+
+<p>We mentioned before that <code>set</code> on two <!--
+	INDEX: PMCs (Polymorphic Containers);assignment
+--> PMCs simply aliases them both to the same object, and that <code>clone</code> creates a complete duplicate object. But if you just want to assign the value of one PMC to another PMC, you need the <code>assign</code><!--
+	INDEX: assign opcode (PIR)
+--> opcode:</p>
+<pre>  new $P0, "Int"
+  new $P1, "Int"
+  set $P0, 42
+  set $P2, $P0
+  assign $P1, $P0     # note: $P1 has to exist already
+  inc $P0
+  print $P0          # prints 43
+  print "\n"
+  print $P1          # prints 42
+  print "\n"
+  print $P2          # prints 43
+  print "\n"
+</pre>
+<p>This example creates two <code>Int</code> PMCs: <code>P0</code> and <code>P1</code>. It gives <code>P0</code> a value of 42. It then uses <code>set</code> to give the same value to <code>P2</code>, but uses <code>assign</code> to give the value to <code>P1</code>. When <code>P0</code> is incremented, <code>P2</code> also changes, but <code>P1</code> doesn&#39;t. The destination register for <code>assign</code> must have an existing object of the right type in it, since <code>assign</code> doesn&#39;t create a new object (as with <code>clone</code>) or reuse the source object (as with <code>set</code>).</p>
+
+<h4><a name="Assignment"
+>Assignment</a></h4>
+
+<p>PMC registers contain references to PMC structures internally. So, the set opcode doesn&#39;t copy the entire PMC, it only copies the reference to the PMC data. Here&#39;s an example that shows a side effect of this operation:</p>
+<pre>  $P0 = new "String"
+  $P0 = "Ford"
+  $P1 = $P0
+  $P1 = "Zaphod"
+  print $P0                # prints "Zaphod"
+  print $P1                # prints "Zaphod"
+</pre>
+<p>In this example, <code>$P0</code> and <code>$P1</code> are both references to the same internal data structure, so when we set <code>$P1</code> to the string literal <code>&#34;Zaphod&#34;</code>, it overwrites the previous value <code>&#34;Ford&#34;</code>. Now, both <code>$P0</code> and <code>$P1</code> point to the String PMC <code>&#34;Zaphod&#34;</code>, even though it appears that we only set one of those two registers to that value.</p>
+
+<h4><a name="Copying_and_Cloning"
+>Copying and Cloning</a></h4>
+
+<p><!--
+	INDEX: PIR (Parrot assembly language);string operations;copying
+--> The <code>clone</code> <!--
+	INDEX: clone opcode (PIR)
+--> opcode makes a deep copy of a string or PMC. Earlier in this chapter we saw that PMC and String values used with the <code>set</code> opcode didn&#39;t create a copy of the underlying data structure, it only created a copy of the reference to that structure. With strings, this doesn&#39;t cause a problem because strings use Copy On Write (COW) semantics to automatically create a copy of the string when one reference is modified. However, as we saw, PMCs don&#39;t have this same behavior and so making a change to one PMC reference would modify the data that all the other references to that same PMC pointed to.</p>
+
+<p>Instead of just copying the pointer like <code>set</code> would do, we can use the <code>clone</code> opcode to create a <i>deep copy</i> of the PMC, not just a <i>shallow copy</i> of the reference.</p>
+<pre>  $P0 = new "String"
+  $P0 = "Ford"
+  $P1 = clone $P0
+  $P0 = "Zaphod"
+  print $P0        # prints "Zaphod"
+  print $P1        # prints "Ford"
+</pre>
+<p>This example creates an identical, independent clone of the PMC in <code>P0</code> and puts a pointer to it in <code>P1</code>. Later changes to <code>P0</code> have no effect on the PMC referenced in <code>P1</code>.</p>
+
+<p>With simple strings, the copes created by <code>clone</code> are COW exactly the same as the copy created by <code>set</code>, so there is no difference between these two opcodes for strings. By convention, <code>set</code> is used with strings more often then <code>clone</code>, but there is no rule about this.</p>
+
+<h3><a name="Properties"
+>Properties</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: PMCs (Polymorphic Containers);properties
+--> PMCs can have additional values attached to them as &#34;properties&#34; of the PMC. What these properties do is entirely up to the language being implemented. Most usually properties are used to hold extra metadata about the PMC that is used by the high&#45;level language (HLL).</p>
+
+<p>The <code>setprop</code><!--
+	INDEX: setprop opcode (PIR)
+--> opcode sets the value of a named property on a PMC. It takes three arguments: the PMC to be set with a property, the name of the property, and a PMC containing the value of the property. The <code>getprop</code><!--
+	INDEX: getprop opcode (PIR)
+--> opcode returns the value of a property. It also takes three arguments: the PMC to store the property&#39;s value, the name of the property, and the PMC from which the property value is to be retrieved. Internally a PMCs properties are stored in a Hash structure, where the name of the property is stored in a special properties Hash.</p>
+<pre>  new $P0, "String"
+  set $P0, "Zaphod"
+  new $P1, "Int"
+  set $P1, 1
+  setprop $P0, "constant", $P1       # set a property on $P0
+  getprop $P3, "constant", $P0       # retrieve a property on $P0
+  print $P3                          # prints 1
+  print "\n"
+</pre>
+<p>This example creates a <code>String</code> object in <code>P0</code>, and a <code>Int</code> object with the value 1 in <code>P1</code>. <code>setprop</code> sets a property named &#34;constant&#34; on the object in <code>P0</code> and gives the property the value in <code>P1</code>.The &#34;constant&#34; property is ignored by PIR, but may be significant to the HLL that set it. <code>getprop</code> retrieves the value of the property &#34;constant&#34; on <code>P0</code> and stores it in <code>P3</code>.</p>
+
+<p>Properties are kept in a separate hash for each PMC. Property values are always PMCs, but only references to the actual PMCs. Trying to fetch the value of a property that doesn&#39;t exist returns a <code>Undef</code>.</p>
+
+<p><code>delprop</code><!--
+	INDEX: delprop opcode (PIR)
+--> deletes a property from a PMC.</p>
+<pre>  delprop $P1, "constant"  # delete property
+</pre>
+<p>You can also return a complete hash of all properties on a PMC with <code>prophash</code><!--
+	INDEX: prophash opcode (PIR)
+-->.</p>
+<pre>  prophash $P0, $P1         # set $P0 to the property hash of $P1
+</pre>
+<h2><a name="VTABLE_Interfaces"
+>VTABLE Interfaces</a></h2>
+
+<p>Internally, all operations on PMCs are performed by calling various VTABLE interfaces.</p>
+
+<p>These PMC types have the benefit of the <!--
+	INDEX: PMC;VTABLE Interface
+--> VTABLE interface. VTABLEs are a standard API that all PMCs conform to for performing standard operations. These PMC types support custom methods to perform various operations, may be passed to subroutines that expect PMC arguments, and can be subclassed by a user&#45;defined type.</p>
+
+<p>PMCs are are polymorphic data items that can be one of a large variety of predefined types. As we have seen briefly, and as we will see in more depth later, PMCs have a standard interface called the VTABLE interface. VTABLEs are a standard list of functions that all PMCs implement or, PMCs can choose not to implement each interface explicitly and instead let Parrot call the default implementations.</p>
+
+<p>VTABLEs are very strict: There are a fixed number with fixed names and fixed argument lists. You can&#39;t just create any random VTABLE interface that you want to create, you can only make use of the ones that Parrot supplies and expects. To circumvent this limitation, PMCs may have METHODS in addition to VTABLEs. METHODs are arbitrary code functions that can be written in C, may have any name, and may implement any behavior.</p>
+
+<p>Operations on a PMC are implemented by vtable functions. The result of an operation is entirely determined by the behavior of the PMCs vtable. Since PMCs define their own behavior for these vtable functions, it&#39;s important to familiarize yourself with the behavior of the particular PMC before you start performing a lot of operations on it.</p>
+
+<p>In the chapter on PIR, we&#39;ve seen a number of these vtable functions already, and seen how they implement the behaviors found inside the various opcodes. The vtable interface is standard, and all PMCs implement the exact same set of vtables. We&#39;ve seen some of the vtables and their uses, and more of them will be discussed in this chapter and later in the various reference chapters.</p>
+
+<h2><a name="Control_Structures"
+>Control Structures</a></h2>
+
+<p></p>
+
+<p><!--
+	INDEX: PIR (Parrot intermediate representation);control flow
+--> <!--
+	INDEX: control flow;in PIR
+--></p>
+
+<p>Control flow in PIR occurs entirely with conditional and unconditional branches to labels. This may seem simplistic and primitive, but here PIR shows its roots as a thin overlay on the assembly language of a virtual processor. PIR does not support high&#45;level looping structures such as <code>while</code> or <code>for</code> loops. PIR has some support for basic <code>if</code> branching constructs, but does not support more complicated <code>if</code>/<code>then</code>/<code>else</code> branch structures.</p>
+
+<p>The control structures of high&#45;level languages hew tightly to the semantics of those languages; Parrot provides the minimal feature set necessary to implement any semantic of an HLL without dictating how that HLL may implement its features. Language agnosticism is an important design goal in Parrot, and creates a very flexible and powerful development environment for language developers.</p>
+
+<p><!--
+	INDEX: goto instruction (PIR)
+--> The most basic branching instruction is the unconditional branch, <code>goto</code>:</p>
+<pre>  .sub 'main'
+      goto L1
+      print "never printed"
+
+  L1:
+      print "after branch"
+  .end
+</pre>
+<p>The first <code>print</code> statement never runs because the <code>goto</code> always skips over it to the label <code>L1</code>.</p>
+
+<p>The conditional branches combine <code>if</code> or <code>unless</code> with <code>goto</code>.</p>
+<pre>  .sub 'main'
+      $I0 = 42
+      if $I0 goto L1
+      say "never printed"
+  L1:
+      say "after branch"
+  .end
+</pre>
+<p><!--
+	INDEX: if (conditional);instruction (PIR)
+--> <!--
+	INDEX: unless (conditional);instruction (PIR)
+--> In this example, the <code>goto</code> branches to the label <code>L1</code> only if the value stored in <code>$I0</code> is true. The <code>unless</code> statement is similar, but it branches when the tested value is false. You can use PMC and STRING registers with <code>if</code> and <code>unless</code>. The op will call the <code>get_bool</code> vtable entry on any PMC so used and will convert the STRING to a boolean value. An undefined value, 0, or an empty string are all false values. All other values are true.</p>
+
+<p>The comparison operators (<code>&#60;</code>, <code>&#60;=</code>, <code>==</code>, <code>!=</code>, <code>&#62;</code>, <code>&#62;=</code>) can combine with <code>if ... goto</code>. These branch when the comparison is true:</p>
+<pre>  .sub 'main'
+      $I0 = 42
+      $I1 = 43
+      if $I0 < $I1 goto L1
+      say "never printed"
+  L1:
+      say "after branch"
+  .end
+</pre>
+<p>This example compares <code>$I0</code> to <code>$I1</code> and branches to the label <code>L1</code> if <code>$I0</code> is less than <code>$I1</code>. The <code>if $I0 &#60; $I1 goto L1</code> statement translates directly to the <code>lt</code> branch operation.</p>
+
+<p>Chapter 11&#39;s &#34;PIR Instructions&#34; section summarizes the other comparison operators.</p>
+
+<p><!--
+	INDEX: loops;PIR
+--> <!--
+	INDEX: PIR (Parrot intermediate representation);loop constructs
+--> PIR has no special loop constructs. A combination of conditional and unconditional branches handle iteration:</p>
+<pre>  .sub 'main'
+      $I0 = 1               # product
+      $I1 = 5               # counter
+
+  REDO:                     # start of loop
+      $I0 = $I0 * $I1
+      dec $I1
+      if $I1 > 0 goto REDO  # end of loop
+
+      say $I0
+  .end
+</pre>
+<p><!--
+	INDEX: do&#45;while style loop;(PIR)
+--> This example calculates the factorial <code>5!</code>. Each time through the loop it multiplies <code>$I0</code> by the current value of the counter <code>$I1</code>, decrements the counter, and branches to the start of the loop. The loop ends when <code>$I1</code> counts down to 0. This is a <i>do while</i>&#45;style loop with the condition test at the end, so the code always runs the first time through.</p>
+
+<p><!--
+	INDEX: while&#45;style loop (PIR)
+--> For a <i>while</i>&#45;style loop with the condition test at the start, use a conditional branch with an unconditional branch:</p>
+<pre>  .sub 'main'
+      $I0 = 1               # product
+      $I1 = 5               # counter
+
+  REDO:                     # start of loop
+      if $I1 <= 0 goto LAST
+      $I0 = $I0 * $I1
+      dec $I1
+      goto REDO
+  LAST:                     # end of loop
+
+      say $I0
+  .end
+</pre>
+<p>This example tests the counter <code>$I1</code> at the start of the loop. At the end of the loop, it unconditionally branches back to the start of the loop and tests the condition again. The loop ends when the counter <code>$I1</code> reaches 0 and the <code>if</code> branches to the <code>LAST</code> label. If the counter isn&#39;t a positive number before the loop, the loop never executes.</p>
+
+<p>You can build any high&#45;level flow control construct from conditional and unconditional branches; the lowest level of computer hardware works this way. All modern programming languages use branching constructs to implement their most complex flow control devices.</p>
+
+<p>Branch instructions transfer control to a relative offset from the current instruction. The rightmost argument to every branch opcode is a label, which the assembler converts to the integer value of the offset. You can also branch on a literal integer value, but there&#39;s rarely any need to do so. The simplest branch instruction is <code>branch</code>:</p>
+<pre>    branch L1                # branch 4
+    print "skipped\n"
+  L1:
+    print "after branch\n"
+</pre>
+<p>This example unconditionally branches to the location of the label <code>L1</code>, skipping over the first <code>print</code> statement.</p>
+
+<p>Jump instructions transfer control to an absolute address. The <code>jump</code> opcode doesn&#39;t calculate an address from a label, so it&#39;s used together with <code>set_addr</code>:</p>
+<pre>    set_addr $I0, L1
+    jump $I0
+    print "skipped\n"
+    end
+  L1:
+    print "after jump\n"
+</pre>
+<p>The <code>set_addr</code><!--
+	INDEX: set_addr opcode (PIR)
+--> opcode takes a label or an integer offset and returns an absolute address.</p>
+
+<p>You&#39;ve probably noticed the <code>end</code><!--
+	INDEX: end opcode (PIR)
+--> opcode as the last statement in many examples above. This terminates the execution of the current run loop. Terminating the main bytecode segment (the first run loop) stops the interpreter. Without the <code>end</code> statement, execution just falls off the end of the bytecode segment, with a good chance of crashing the interpreter.</p>
+
+<h3><a name="Conditional_Branches"
+>Conditional Branches</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: PIR (Parrot assembly language);conditional branches
+--> <!--
+	INDEX: conditional branches in PIR
+--> Unconditional jumps and branches aren&#39;t really enough for flow control. What you need to implement the control structures of high&#45;level languages is the ability to select different actions based on a set of conditions. PIR has opcodes that conditionally branch based on the truth of a single value or the comparison of two values. The following example has <code>if</code><!--
+	INDEX: if (conditional);opcode (PIR)
+--> and <code>unless</code><!--
+	INDEX: unless (conditional);opcode (PIR)
+--> conditional branches:</p>
+<pre>    set $I0, 0
+    if $I0, TRUE
+    unless $I0, FALSE
+    print "skipped\n"
+    end
+  TRUE:
+    print "shouldn't happen\n"
+    end
+  FALSE:
+    print "the value was false\n"
+</pre>
+<p><code>if</code> branches if its first argument is a true value, and <code>unless</code> branches if its first argument is a false value. In this case, the <code>if</code> doesn&#39;t branch because <code>I0</code> is false, but the <code>unless</code> does branch. The comparison branching opcodes compare two values and branch if the stated relation holds true. These are <code>eq</code><!--
+	INDEX: eq (equal);opcode (PIR)
+--> (branch when equal), <code>ne</code><!--
+	INDEX: ne (not equal);opcode (PIR)
+--> (when not equal), <code>lt</code><!--
+	INDEX: lt (less than);opcode (PIR)
+--> (when less than), <code>gt</code><!--
+	INDEX: gt (greater than);opcode (PIR)
+--> (when greater than), <code>le</code><!--
+	INDEX: le (less than or equal);opcode (PIR)
+--> (when less than or equal), and <code>ge</code><!--
+	INDEX: ge (greater than or equal);opcode (PIR)
+--> (when greater than or equal). The two compared arguments must be the same register type:</p>
+<pre>    set $I0, 4
+    set $I1, 4
+    eq $I0, $I1, EQUAL
+    print "skipped\n"
+    end
+  EQUAL:
+    print "the two values are equal\n"
+</pre>
+<p>This compares two integers, <code>I0</code> and <code>I1</code>, and branches if they&#39;re equal. Strings of different character sets or encodings are converted to Unicode before they&#39;re compared. PMCs have a <code>cmp</code> vtable method. This gets called on the left argument to perform the comparison of the two objects.</p>
+
+<p>The comparison opcodes don&#39;t specify if a numeric or string comparison is intended. The type of the register selects for integers, floats, and strings. With PMCs, the vtable method <code>cmp</code> or <code>is_equal</code> of the first argument is responsible for comparing the PMC meaningfully with the other operand. If you need to force a numeric or string comparison on two PMCs, use the alternate comparison opcodes that end in the <code>_num</code> and <code>_str</code> suffixes.</p>
+<pre>  eq_str $P0, $P1, label     # always a string compare
+  gt_num $P0, $P1, label     # always numerically
+</pre>
+<p>Finally, the <code>eq_addr</code> opcode branches if two PMCs or strings are actually the same object (have the same address):</p>
+<pre>  eq_addr $P0, $P1, same_pmcs_found
+</pre>
+<h3><a name="Iteration"
+>Iteration</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: iteration;in PIR
+--> <!--
+	INDEX: PIR (Parrot assembly language);iteration
+--> PIR doesn&#39;t define high&#45;level loop constructs. These are built up from a combination of conditional and unconditional branches. A <i>do&#45;while</i><!--
+	INDEX: do&#45;while style loop;(PIR)
+--> style loop can be constructed with a single conditional branch:</p>
+<pre>    set $I0, 0
+    set $I1, 10
+  REDO:
+    inc $I0
+    print $I0
+    print "\n"
+    lt $I0, $I1, REDO
+</pre>
+<p>This example prints out the numbers 1 to 10. The first time through, it executes all statements up to the <code>lt</code> statement. If the condition evaluates as true (<code>I0</code> is less than <code>I1</code>) it branches to the <code>REDO</code> label and runs the three statements in the loop body again. The loop ends when the condition evaluates as false.</p>
+
+<p>Conditional and unconditional branches can build up quite complex looping constructs, as follows:</p>
+<pre>    # loop ($i=1; $i<=10; $i++) {
+    #    print "$i\n";
+    # }
+  loop_init:
+    set $I0, 1
+    branch loop_test
+  loop_body:
+    print $I0
+    print "\n"
+    branch loop_continue
+  loop_test:
+    le $I0, 10, loop_body
+    branch out
+  loop_continue:
+    inc $I0
+    branch loop_test
+  out:
+    # ... 
+</pre>
+<p><!--
+	INDEX: loops;PIR
+--> <!--
+	INDEX: PIR (Parrot assembly language);loops
+--> This example emulates a <!--
+	INDEX: counter&#45;controlled loop
+--> counter&#45;controlled loop like Perl 6&#39;s <code>loop</code> keyword or C&#39;s <code>for</code>. The first time through the loop it sets the initial value of the counter in <code>loop_init</code>, tests that the loop condition is met in <code>loop_test</code>, and then executes the body of the loop in <code>loop_body</code>. If the test fails on the first iteration, the loop body will never execute. The end of <code>loop_body</code> branches to <code>loop_continue</code>, which increments the counter and then goes to <code>loop_test</code> again. The loop ends when the condition fails, and it branches to <code>out</code>. The example is more complex than it needs to be just to count to 10, but it nicely shows the major components of a loop.</p>
+
+<h2><a name="Macros"
+>Macros</a></h2>
+
+<p>Needs supplementing; needs moving.</p>
+
+<h2><a name="Subroutines"
+>Subroutines</a></h2>
+
+<p><!--
+	INDEX: PIR (Parrot intermediate representation);subroutine
+--> <!--
+	INDEX: subroutine (PIR)
+--> Subroutines in PIR are roughly equivalent to the subroutines or methods of a high&#45;level language. All code in a PIR source file must occur within a subroutine. The simplest syntax for a PIR subroutine starts with the <code>.sub</code> directive and ends with the <code>.end</code> directiveThe name <code>main</code> is only a convention.:</p>
+<pre>  .sub 'main'
+      say "Hello, Polly."
+  .end
+</pre>
+<p>This example defines a subroutine named <code>main</code> that prints a string <code>&#34;Hello, Polly.&#34;</code>. Parrot will normally execute the first subroutine it encounters in the first file it runs, but you can flag any subroutine as the first one to execute with the <code>:main</code> marker:</p>
+<pre>  .sub 'first'
+      say "Polly want a cracker?"
+  .end
+
+  .sub 'second' :main
+      say "Hello, Polly."
+  .end
+</pre>
+<p>This code prints out &#34;Hello, Polly.&#34; but not &#34;Polly want a cracker?&#34;. Though the <code>first</code> function appears first in the source code, <code>second</code> has the <code>:main</code> flag and gets called. <code>first</code> is never called. Revising that program produces different results:</p>
+<pre>  .sub 'first' :main
+      say "Polly want a cracker?"
+  .end
+
+  .sub 'second'
+      say "Hello, Polly."
+  .end
+</pre>
+<p>The output now is &#34;Polly want a cracker?&#34;. Execution in PIR starts at the <code>:main</code> function and continues until that function ends. To perform other operations, you must call other functions explicitly. Chapter 4 describes subroutines and their uses.</p>
+
+<p><!--
+	INDEX: PIR (Parrot intermediate representation);subroutines
+--> <!--
+	INDEX: subroutines;in PIR
+--> The most basic building block of code reuse in PIR is the subroutine. A large program may perform a calculation like &#34;the factorial of a number&#34; several times. Subroutines abstract this behavior into a single, named, stand&#45;alone unit. PIR is a subroutine&#45;based language in that all code in PIR must exist in a subroutine. Execution starts in the <code>:main</code> subroutine, which itself can call other subroutines. Subroutines can fit together into more elaborate chunks of code reusability such as methods and objects.</p>
+
+<p>Parrot supports multiple high&#45;level languages. Each language uses a different syntax for defining and calling subroutines. The goal of PIR is not to be a high&#45;level language in itself, but to provide the basic tools that other languages can use to implement them. PIR&#39;s subroutine syntax may seem very primitive for this reason.</p>
+
+<h3><a name="Parrot_Calling_Conventions"
+>Parrot Calling Conventions</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: PIR (Parrot intermediate representation);subroutines;Parrot calling conventions
+--> <!--
+	INDEX: subroutines;Parrot calling conventions;in PIR
+--></p>
+
+<p>The <code>.sub</code> directive defines globally accessible subroutine objects.</p>
+
+<p>Subroutine objects of all kinds can be called with the <code>invoke</code><!--
+	INDEX: invoke opcode (PIR)
+--> opcode. There is also an <code>invoke</code> <code>Px</code> instruction for calling objects held in a different register.</p>
+
+<p>The <code>invokecc</code><!--
+	INDEX: invokecc opcode (PIR)
+--> opcode is like <code>invoke</code>, but it also creates and stores a new return continuation. When the called subroutine invokes this return continuation, it returns control to the instruction after the function call. This kind of call is known as Continuation Passing Style (CPS). <!--
+	INDEX: CPS (Continuation Passing Style)
+--> <!--
+	INDEX: Continuation Passing Style (CPS)
+--></p>
+
+<p>The way that Parrot calls a subroutine &#45;&#45; passing arguments, altering control flow, and returning results &#45;&#45; is the &#34;Parrot Calling Conventions&#34; (PCC). Parrot generally hides the details of PCC from the programmer. PIR has several constructs to gloss over these details, and the average programmer will not need to worry about them. PCC uses the Continuation Passing Style <!--
+	INDEX: Continuation Passing Style (CPS)
+--><!--
+	INDEX: CPS (Continuation Passing Style)
+--> (CPS) to pass control to subroutines and back again. Again, the details are irrelevant for most uses, but the power is available to anyone who wants to take advantage of it.</p>
+
+<h3><a name="Subroutine_Calls"
+>Subroutine Calls</a></h3>
+
+<p><!--
+	INDEX: PIR (Parrot intermediate representation);subroutine calls
+--> PIR&#39;s simplest subroutine call syntax looks much like a subroutine call from a high&#45;level language. This example calls the subroutine <code>fact</code> with two arguments and assigns the result to <code>$I0</code>:</p>
+
+<pre>  $I0 = &#39;fact&#39;(count, product)</pre>
+
+<p>This simple statement hides much complexity. It generates a subroutine PMC object, creates a continuation PMC object to represent the control flow up to this point, passes the arguments, looks up the subroutine by name (and by signature, if necessary)), calls the subroutine, and assigns the results of the call to the appropriate integer register. This is all in addition to the computation the subroutine itself performs.</p>
+
+<p>The single line subroutine call is incredibly convenient, but it isn&#39;t always flexible enough. PIR also has a more verbose call syntax that is still more convenient than manual calls. This example looks up the subroutine <code>fact</code> out in the global symbol table and calls it:</p>
+
+<pre>  find_global $P1, &#34;fact&#34;
+
+  .begin_call
+    .arg count
+    .arg product
+    .call $P1
+    .result $I0
+  .end_call</pre>
+
+<p><!--
+	INDEX: .arg directive
+--> <!--
+	INDEX: .result directive
+--> The whole chunk of code from <code>.begin_call</code> to <code>.end_call</code> acts as a single unit. The <code>.arg</code> directive sets up and passes arguments to the call. The <code>.call</code> directive calls the subroutine and identifies the point at which to return control flow after the subroutine has completed. The <code>.result</code> directive retrieves returned values from the call.</p>
+
+<h3><a name="Subroutine_Declarations"
+>Subroutine Declarations</a></h3>
+
+<p><!--
+	INDEX: .param directive
+--> In addition to syntax for subroutine calls, PIR provides syntax for subroutine definitions: the <code>.sub</code> and <code>.end</code> directives shown in earlier examples. The <code>.param</code> directive defines input parameters and creates local named variables for them (similar to <code>.local</code>):</p>
+
+<pre>  .param int c</pre>
+
+<p><!--
+	INDEX: .return directive
+--> The <code>.return</code> directive allows the subroutine to return control flow to the calling subroutine, and optionally returns result output values.</p>
+
+<p>Here&#39;s a complete code example that implements the factorial algorithm. The subroutine <code>fact</code> is a separate subroutine, assembled and processed after the <code>main</code> function. Parrot resolves global symbols like the <code>fact</code> label between different units.</p>
+<pre>  # factorial.pir
+  .sub 'main' :main
+     .local int count
+     .local int product
+     count   = 5
+     product = 1
+
+     $I0 = 'fact'(count, product)
+
+     say $I0
+  .end
+
+  .sub 'fact'
+     .param int c
+     .param int p
+
+  loop:
+     if c <= 1 goto fin
+     p = c * p
+     dec c
+     branch loop
+  fin:
+     .return (p)
+  .end
+</pre>
+<p>This example defines two local named variables, <code>count</code> and <code>product</code>, and assigns them the values 1 and 5. It calls the <code>fact</code> subroutine with both variables as arguments. The <code>fact</code> subroutine uses <code>.param</code> to retrieve these parameters and <code>.return</code> to return the result. The final printed result is 120.</p>
+
+<p>As usual, execution of the program starts at the <code>:main</code> subroutine.</p>
+
+<h3><a name="Parameters_and_Arguments"
+>Parameters and Arguments</a></h3>
+
+<h4><a name="Named_Parameters"
+>Named Parameters</a></h4>
+
+<p>We have to get our terms straight here. Which are &#34;arguments&#34; (passed in) and which are &#34;parameters&#34; (processed from within).</p>
+
+<p><!--
+	INDEX: positional arguments
+--> <!--
+	INDEX: named arguments
+--> Parameters passed only by their order are <i>positional arguments</i>. The only differentiator between positional arguments is their positions in the function call. Putting positional arguments in a different order will produce different effects, or may cause errors. Parrot also supports <i>named parameters</i>. Instead of passing parameters by their position in the string, parameters are passed by name and can be in any order. Here&#39;s an example:</p>
+<pre> .sub 'MySub'
+    .param string yrs :named("age")
+    .param string call :named("name")
+    $S0 = "Hello " . call
+    $S1 = "You are " . yrs
+    $S1 = $S1 . " years old"
+    say $S0
+    say $S1
+ .end
+
+ .sub 'main' :main
+    'MySub'("age" => 42, "name" => "Bob")
+ .end
+</pre>
+<p>You can also pass these pairs in the opposite order:</p>
+<pre> .sub 'main' :main
+    'MySub'("name" => "Bob", "age" => 42)    # Same!
+ .end
+</pre>
+<p>Named arguments can be a big help because you don&#39;t have to worry about the exact order of variables, especially as argument lists get very long.</p>
+
+<h4><a name="Optional_Parameters"
+>Optional Parameters</a></h4>
+
+<p><!--
+	INDEX: optional arguments
+--> Some functions have arguments with appropriate default values, so that callers don&#39;t always have to pass them. Parrot provides a mechanism to identify optional argument. Parrot also provides a flag value to determine if the caller has passed in an optional argument.</p>
+
+<p>Optional parameters appear in PIR as if they&#39;re actually <i>two</i> parameters: the value and its flag:</p>
+
+<pre>  .param string name     :optional
+  .param int    has_name :opt_flag</pre>
+
+<p>The <code>:optional</code> flag specifies that the given parameter is optional. The <code>:opt_flag</code> specifies an integer which parameter contains a boolean flag; this flag is true if the value was passed, and false otherwise. To provide a default value for an optional parameter, you can write:</p>
+
+<pre>    .param string name     :optional
+    .param int    has_name :opt_flag
+
+    if has_name goto we_have_a_name
+    name = &#34;Default value&#34;
+  we_have_a_name:</pre>
+
+<p>Optional parameters can be positional or named parameters. When using them with positional parameters, they must appear at the end of the list of positional parameters. Also, the <code>:opt_flag</code> parameter must always appear directly after the <code>:optional</code> parameter.</p>
+
+<pre>  .sub &#39;Foo&#39;
+    .param int optvalue :optional
+    .param int hasvalue :opt_flag
+    .param pmc notoptional          # WRONG!
+    ...
+
+  .sub &#39;Bar&#39;
+     .param int hasvalue :opt_flag
+     .param int optvalue :optional  # WRONG!
+     ...
+
+  .sub &#39;Baz&#39;
+    .param int optvalue :optional
+    .param pmc notoptional
+    .param int hasvalue :opt_flag   # WRONG!
+    ...</pre>
+
+<p>You may mix optional parameters with named parameters:</p>
+
+<pre>  .sub &#39;MySub&#39;
+    .param int value     :named(&#34;answer&#34;) :optional
+    .param int has_value :opt_flag
+    ...</pre>
+
+<p>You can call this function in two ways:</p>
+
+<pre>  &#39;MySub&#39;(&#34;answer&#34; =&#62; 42)  # with a value
+  &#39;MySub&#39;()                # without</pre>
+
+<h4><a name="Commandline_Arguments"
+>Commandline Arguments</a></h4>
+
+<p>Programs written in Parrot have access to arguments passed on the command line:</p>
+<pre>  .sub 'MyMain' :main
+    .param pmc all_args :slurpy
+    # ...
+  .end
+</pre>
+<p>Please verify and expand.</p>
+
+<p>The <code>all_args</code> PMC is a ResizableStringArray PMC, which means you can loop over the results, access them individually, or even modify them.</p>
+
+<h3><a name="Continuations"
+>Continuations</a></h3>
+
+<p><!--
+	INDEX: continuations
+--></p>
+
+<p>A continuation is a subroutine that captures a complete copy of the caller&#39;s context. Invoking a continuation starts or restarts it at the entry point:</p>
+<pre>    new $P1, "Integer"
+    set $P1, 5
+
+    newsub $P0, 'Continuation', _con
+  _con:
+    print "in cont "
+    print $P1
+    print "\n"
+    dec $P1
+    unless $P1, done
+    invoke                        # $P0
+  done:
+    print "done\n"
+</pre>
+<p>This prints:</p>
+
+<pre>  in cont 5
+  in cont 4
+  in cont 3
+  in cont 2
+  in cont 1
+  done</pre>
+
+<p>Continuations are a kind of subroutine that take a snapshots of control flow. They are frozen images of the current execution state of the VM. Once you have a continuation, you can invoke it to return to the point where the continuation was first created. It&#39;s like a magical timewarp that allows the developer to arbitrarily move control flow back to any previous point in the program.</p>
+
+<p>Continuations are like any other PMC; you can create one with the <code>new</code> opcode:</p>
+<pre>  $P0 = new 'Continuation'
+</pre>
+<p>The new continuation starts off in an undefined state. If you attempt to invoke a new continuation without initializing it, Parrot will throw an exception. To prepare the continuation for use, assign it a destination label with the <code>set_addr</code> opcode:</p>
+<pre>    $P0 = new 'Continuation'
+    set_addr $P0, my_label
+
+  my_label:
+    # ...
+</pre>
+<p>To jump to the continuation&#39;s stored label and return the context to the state it was in <i>at the point of its creation</i>, invoke the continuation:</p>
+<pre>  invoke $P0  # Explicit using "invoke" opcode
+  $P0()       # Same, but nicer syntax
+</pre>
+<p>Even though you can use the subroutine notation <code>$P0()</code> to invoke the continuation, it doesn&#39;t make any sense to pass arguments or obtain return values:</p>
+<pre>  $P0 = new 'Continuation'
+  set_addr $P0, my_label
+
+  $P0(1, 2)      # WRONG!
+
+  $P1 = $P0()    # WRONG!
+</pre>
+<h4><a name="Continuation_Passing_Style"
+>Continuation Passing Style</a></h4>
+
+<p><!--
+	INDEX: continuation passing style
+--> <!--
+	INDEX: CPS
+--></p>
+
+<p>Parrot uses continuations internally for control flow. When Parrot invokes a function, it creates a continuation representing the current point in the program. It passes this continuation as an invisible parameter to the function call. When that function returns, it invokes the continuation &#45;&#45; in effect, it performs a goto to the point of creation of that continuation. If you have a continuation, you can invoke it to return to its point of creation any time you want.</p>
+
+<p>This type of flow control &#45;&#45; invoking continuations instead of performing bare jumps &#45;&#45; is <!--
+	INDEX: Continuation Passing Style;CPS
+--> Continuation Passing Style (CPS).</p>
+
+<h4><a name="Tailcalls"
+>Tailcalls</a></h4>
+
+<p>In many cases, a subroutine will set up and call another subroutine, and then return the result of the second call directly. This is a <!--
+	INDEX: tailcall
+--> tailcall, and is an important opportunity for optimization. Here&#39;s a contrived example in pseudocode:</p>
+
+<pre>  call add_two(5)
+
+  subroutine add_two(value)
+    value = add_one(value)
+    return add_one(value)</pre>
+
+<p>In this example, the subroutine <code>add_two</code> makes two calls to c&#60;add_one&#62;. The second call to <code>add_one</code> is the return value. <code>add_one</code> gets called; its result gets returned to the caller of <code>add_two</code>. Nothing in <code>add_two</code> uses that return value directly.</p>
+
+<p>A simple optimization is available for this type of code. The second call to <code>add_one</code> can return to the same place that <code>add_two</code> returns; therefore, it&#39;s perfectly safe and correct to use the same return continuation that <code>add_two</code> uses. The two subroutine calls can share a return continuation, instead of having to create a new continuation for each call.</p>
+
+<p><!--
+	INDEX: .tailcall directive
+--></p>
+
+<p>PIR provides the <code>.tailcall</code> directive to identify similar situations. Use it in place of the <code>.return</code> directive. <code>.tailcall</code> performs this optimization by reusing the return continuation of the parent function to make the tailcall:</p>
+<pre>  .sub 'main' :main
+      .local int value
+      value = add_two(5)
+      say value
+  .end
+
+  .sub 'add_two'
+      .param int value
+      .local int val2
+      val2 = add_one(value)
+      .tailcall add_one(val2)
+  .end
+
+  .sub 'add_one'
+      .param int a
+      .local int b
+      b = a + 1
+      .return (b)
+  .end
+</pre>
+<p>This example above will print out the correct value &#34;7&#34;.</p>
+
+<h3><a name="Native_Call_Interface"
+>Native Call Interface</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: subroutines;calling conventions;NCI
+--> A special version of the Parrot calling conventions are used by the <!--
+	INDEX: NCI (Native Call Interface)
+--> Native Call Interface (NCI) for calling subroutines with a known prototype in shared libraries. This is not really portable across all libraries, but it&#39;s worth a short example. This is a simplified version of the first test in <em><a href="../../t/pmc/nci.t.html">t/pmc/nci.t</a></em>:</p>
+<pre>    loadlib $P1, "libnci_test"      # get library object for a shared lib
+    print "loaded\n"
+    dlfunc $P0, $P1, "nci_dd", "dd" # obtain the function object
+    print "dlfunced\n"
+    set $I0, 1                      # prototype used - unchecked
+    set_args "0", 4.0               # set the argument
+    get_results "0", $N5            # prepare to store the return value
+    invokecc $P0                    # call nci_dd
+    ne $N5, 8.0, nok_1              # the test functions returns 2*arg
+    print "ok 1\n"
+    end
+    nok_1:
+    #...
+</pre>
+<p>This example shows two new instructions: <code>loadlib</code> and <code>dlfunc</code>. The <code>loadlib</code><!--
+	INDEX: loadlib opcode (PIR)
+--> opcode obtains a handle for a shared library. It searches for the shared library in the current directory, in <em>runtime/parrot/dynext</em>, and in a few other configured directories. It also tries to load the provided filename unaltered and with appended extensions like <code>.so</code> or <code>.dll</code>. Which extensions it tries depends on the OS Parrot is running on.</p>
+
+<p>The <code>dlfunc</code><!--
+	INDEX: dlfunc opcode (PIR)
+--> opcode gets a function object from a previously loaded library (second argument) of a specified name (third argument) with a known function signature (fourth argument). The function signature is a string where the first character is the return value and the rest of the parameters are the function parameters. The characters used in <!--
+	INDEX: NCI (Native Call Interface);function signatures
+--> NCI function signatures are listed in Table 9&#45;5.</p>
+
+<p>For more information on callback functions, read the documentation in <em>docs/pdds/pdd16_native_call.pod</em> and <em><a href="../pmc/struct.pod.html">docs/pmc/struct.pod</a></em>.</p>
+
+<h3><a name="Coroutines"
+>Coroutines</a></h3>
+
+<p><!--
+	INDEX: PIR;Coroutines
+--> <!--
+	INDEX: Coroutines
+--></p>
+
+<p>As we mentioned in the previous chapter, coroutines are <!--
+	INDEX: subroutines;coroutines
+--> subroutines that can suspend themselves and return control to the caller&#45;&#45;and then pick up where they left off the next time they&#39;re called, as if they never left.</p>
+
+<p><!--
+	INDEX: coroutines
+--> In PIR, coroutines are subroutine&#45;like objects:</p>
+<pre>  newsub P0, .Coroutine, _co_entry
+</pre>
+<p>The <code>Coroutine</code> object has its own user stack, register frame stacks, control stack, and pad stack. The pad stack is inherited from the caller. The coroutine&#39;s control stack has the caller&#39;s control stack prepended, but is still distinct. When the coroutine invokes itself, it returns to the caller and restores the caller&#39;s context (basically swapping all stacks). The next time the coroutine is invoked, it continues to execute from the point at which it previously returned:</p>
+<pre>    new_pad 0                # push a new lexical pad on stack
+    new P0, "Int"            # save one variable in it
+    set P0, 10
+    store_lex -1, "var", P0
+
+    newsub P0, .Coroutine, _cor
+                             # make a new coroutine object
+    saveall                  # preserve environment
+    invoke                   # invoke the coroutine
+    restoreall
+    print "back\n"
+    saveall
+    invoke                   # invoke coroutine again
+    restoreall
+    print "done\n"
+    pop_pad
+    end
+
+  _cor:
+    find_lex P1, "var"       # inherited pad from caller
+    print "in cor "
+    print P1
+    print "\n"
+    inc P1                   # var++
+    saveall
+    invoke                   # yield(  )
+    restoreall
+    print "again "
+    branch _cor              # next invocation of the coroutine
+</pre>
+<p>This prints out the result:</p>
+
+<pre>  in cor 10
+  back
+  again in cor 11
+  done</pre>
+
+<p><!--
+	INDEX: invoke opcode (PIR);coroutines and
+--> The <code>invoke</code> inside the coroutine is commonly referred to as <i>yield</i>. The coroutine never ends. When it reaches the bottom, it branches back up to <code>_cor</code> and executes until it hits <code>invoke</code> again.</p>
+
+<p>The interesting part about this example is that the coroutine yields in the same way that a subroutine is called. This means that the coroutine has to preserve its own register values. This example uses <code>saveall</code> but it could have only stored the registers the coroutine actually used. Saving off the registers like this works because coroutines have their own register frame stacks.</p>
+
+<p>We&#39;ve mentioned coroutines several times before, and we&#39;re finally going to explain what they are. Coroutines are similar to subroutines except that they have an internal notion of <i>state</i> And the cool new name!. Coroutines, in addition to performing a normal <code>.return</code> to return control flow back to the caller and destroy the lexical environment of the subroutine, may also perform a <code>.yield</code> operation. <code>.yield</code> returns a value to the caller like <code>.return</code> can, but it does not destroy the lexical state of the coroutine. The next time the coroutine is called, it continues execution from the point of the last <code>.yield</code>, not at the beginning of the coroutine.</p>
+
+<p>In a Coroutine, when we continue from a <code>.yield</code>, the entire lexical environment is the same as it was when <code>.yield</code> was called. This means that the parameter values don&#39;t change, even if we call the coroutine with different arguments later.</p>
+
+<p>Coroutines are defined like any ordinary subroutine. They do not require any special flag or any special syntax to mark them as being a coroutine. However, what sets them apart is the use of the <code>.yield</code> directive. <code>.yield</code> plays several roles:</p>
+
+<ul>
+<li>Identifies coroutines</li>
+
+<p>When Parrot sees a yield, it knows to create a Coroutine PMC object instead of a Sub PMC.</p>
+
+<li>Creates a continuation</li>
+
+<p>Continuations, as we have already seen, allow us to continue execution at the point of the continuation later. It&#39;s like a snapshot of the current execution environment. <code>.yield</code> creates a continuation in the coroutine and stores the continuation object in the coroutine object or later resuming from the point of the <code>.yield</code>.</p>
+
+<li>Returns a value</li>
+
+<p><code>.yield</code> can return a value or many values, or no values to the caller. It is basically the same as a <code>.return</code> in this regard.</p>
+</ul>
+
+<p>Here is a quick example of a simple coroutine:</p>
+
+<pre>  .sub &#39;MyCoro&#39;
+    .yield(1)
+    .yield(2)
+    .yield(3)
+    .return(4)
+  .end
+
+  .sub &#39;main&#39; :main
+    $I0 = MyCoro()    # 1
+    $I0 = MyCoro()    # 2
+    $I0 = MyCoro()    # 3
+    $I0 = MyCoro()    # 4
+    $I0 = MyCoro()    # 1
+    $I0 = MyCoro()    # 2
+    $I0 = MyCoro()    # 3
+    $I0 = MyCoro()    # 4
+    $I0 = MyCoro()    # 1
+    $I0 = MyCoro()    # 2
+    $I0 = MyCoro()    # 3
+    $I0 = MyCoro()    # 4
+  .end</pre>
+
+<p>This is obviously a contrived example, but it demonstrates how the coroutine stores it&#39;s state. The coroutine stores it&#39;s state when we reach a <code>.yield</code> directive, and when the coroutine is called again it picks up where it last left off. Coroutines also handle parameters in a way that might not be intuitive. Here&#39;s an example of this:</p>
+
+<pre>  .sub &#39;StoredConstant&#39;
+    .param int x
+    .yield(x)
+    .yield(x)
+    .yield(x)
+  .end
+
+  .sub &#39;main&#39; :main
+    $I0 = StoredConstant(5)       # $I0 = 5
+    $I0 = StoredConstant(6)       # $I0 = 5
+    $I0 = StoredConstant(7)       # $I0 = 5
+    $I0 = StoredConstant(8)       # $I0 = 8
+  .end</pre>
+
+<p>Notice how even though we are calling the <code>StoredConstant</code> coroutine with different arguments each time, the value of parameter <code>x</code> doesn&#39;t change until the coroutine&#39;s state resets after the last <code>.yield</code>. Remember that a continuation takes a snapshot of the current state, and the <code>.yield</code> directive takes a continuation. The next time we call the coroutine, it invokes the continuation internally, and returns us to the exact same place in the exact same condition as we were when we called the <code>.yield</code>. In order to reset the coroutine and enable it to take a new parameter, we must either execute a <code>.return</code> directive or reach the end of the coroutine.</p>
+
+<h3><a name="Multiple_Dispatch"
+>Multiple Dispatch</a></h3>
+
+<p>Multiple dispatch is when there are multiple subroutines in a single namespace with the same name. These functions must differ, however, in their parameter list, or &#34;signature&#34;. All subs with the same name get put into a single PMC called a MultiSub. The MultiSub is like a list of subroutines. When the multisub is invoked, the MultiSub PMC object searches through the list of subroutines and searches for the one with the closest matching signature. The best match is the sub that gets invoked.</p>
+
+<p>MultiSubs are subroutines with the <code>:multi</code> flag applied to them. MultiSubs (also called &#34;Multis&#34;) must all differ from one another in the number and/or type of arguments passed to the function. Having two multisubs with the same function signature could result in a parsing error, or the later function could overwrite the former one in the multi.</p>
+
+<p>Multisubs are defined like this:</p>
+
+<pre>  .sub &#39;MyMulti&#39; :multi
+      # does whatever a MyMulti does
+  .end</pre>
+
+<p>Multis belong to a specific namespace. Functions in different namespaces with the same name do not conflict with each other this is one of the reasons for having multisubs in the first place!. It&#39;s only when multiple functions in a single namespace need to have the same name that a multi is used.</p>
+
+<p>Multisubs take a special designator called a <i>multi signature</i>. The multi signature tells Parrot what particular combination of input parameters the multi accepts. Each multi will have a different signature, and Parrot will be able to dispatch to each one depending on the arguments passed. The multi signature is specified in the <code>:multi</code> directive:</p>
+
+<pre>  .sub &#39;Add&#39; :multi(I, I)
+    .param int x
+    .param int y
+    .return(x + y)
+  .end
+
+  .sub &#39;Add&#39; :multi(N, N)
+    .param num x
+    .param num y
+    .return(x + y)
+  .end
+
+  .sub &#39;Start&#39; :main
+    $I0 = Add(1, 2)      # 3
+    $N0 = Add(3.14, 2.0) # 5.14
+    $S0 = Add(&#34;a&#34;, &#34;b&#34;)  # ERROR! No (S, S) variant!
+  .end</pre>
+
+<p>Multis can take I, N, S, and P types, but they can also use <code>_</code> (underscore) to denote a wildcard, and a string that can be the name of a particular PMC type:</p>
+
+<pre>  .sub &#39;Add&#39; :multi(I, I)  # Two integers
+    ...
+
+  .sub &#39;Add&#39; :multi(I, &#39;Float&#39;)  # An integer and Float PMC
+    ...
+
+                           # Two Integer PMCs
+  .sub &#39;Add&#39; :multi(&#39;Integer&#39;, _)
+    ...</pre>
+
+<p>When we call a multi PMC, Parrot will try to take the most specific best&#45;match variant, and will fall back to more general variants if a perfect best&#45;match cannot be found. So if we call <code>&#39;Add&#39;(1, 2)</code>, Parrot will dispatch to the <code>(I, I)</code> variant. If we call <code>&#39;Add&#39;(1, &#34;hi&#34;)</code>, Parrot will match the <code>(I, _)</code> variant, since the string in the second argument doesn&#39;t match <code>I</code> or <code>&#39;Float&#39;</code>. Parrot can also choose to automatically promote one of the I, N, or S values to an Integer, Float, or String PMC.</p>
+
+<p>To make the decision about which multi variant to call, Parrot takes a <i>Manhattan Distance</i> between the two. Parrot calculates the <i>distance</i> between the multi signatures and the argument signature. Every difference counts as one step. A difference can be an autobox from a primitive type to a PMC, or the conversion from one primitive type to another, or the matching of an argument to a <code>_</code> wildcard. After Parrot calculates the distance to each variant, it calls the function with the lowest distance. Notice that it&#39;s possible to define a variant that is impossible to call: for every potential combination of arguments there is a better match. This isn&#39;t necessarily a common occurrence, but it&#39;s something to watch out for in systems with a lot of multis and a limited number of data types in use.</p>
+
+<h3><a name="Sub_PMCs"
+>Sub PMCs</a></h3>
+
+<p>Subroutines are a PMC type in Parrot. You can store them in PMC registers and manipulate them just as you do the other PMC types. Look up a subroutine in the current namespace with the <code>get_global</code> opcode:</p>
+
+<pre>  $P0 = get_global &#34;MySubName&#34;</pre>
+
+<p>To find a subroutine in a different namespace, first look up the appropriate the namespace PMC, then use that with <code>get_global</code>:</p>
+
+<pre>  $P0 = get_namespace &#34;MyNamespace&#34;
+  $P1 = get_global $P0, &#34;MySubName&#34;</pre>
+
+<p>You can obviously invoke a Sub PMC:</p>
+
+<pre>  $P0(1, 2, 3)</pre>
+
+<p>You can get or even <i>change</i> its name:</p>
+
+<pre>  $S0 = $P0               # Get the current name
+  $P0 = &#34;MyNewSubName&#34;    # Set a new name</pre>
+
+<p>You can get a hash of the complete metadata for the subroutine:</p>
+
+<pre>  $P1 = inspect $P0</pre>
+
+<p>The metadata fields in this hash are</p>
+
+<ul>
+<li>pos_required</li>
+
+<p>The number of required positional parameters to the Sub</p>
+
+<li>pos_optional</li>
+
+<p>The number of optional positional parameters to the Sub</p>
+
+<li>named_required</li>
+
+<p>The number of required named parameters to the Sub</p>
+
+<li>named_optional</li>
+
+<p>The number of optional named parameters to the Sub</p>
+
+<li>pos_slurpy</li>
+
+<p>Returns true if the sub has a slurpy parameter to eat up extra positional args</p>
+
+<li>named_slurpy</li>
+
+<p>Returns true if the sub has a slurpy parameter to eat up extra named args</p>
+</ul>
+
+<p>Instead of getting the whole inspection hash, you ask about individual pieces of metadata:</p>
+
+<pre>  $I0 = inspect $P0, &#34;pos_required&#34;</pre>
+
+<p>To discover to get the total number of defined parameters to the Sub, call the <code>arity</code> method:</p>
+
+<pre>  $I0 = $P0.&#39;arity&#39;()</pre>
+
+<p>To fetch the namespace PMC that the Sub was defined into, call the <code>get_namespace</code> method:</p>
+
+<pre>  $P1 = $P0.&#39;get_namespace&#39;()</pre>
+
+<h3><a name="Evaluating_a_Code_String"
+>Evaluating a Code String</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: code strings, evaluating
+--> This isn&#39;t really a subroutine operation, but it does produce a code object that can be invoked. In this case, it&#39;s a <!--
+	INDEX: bytecode segment object
+--> bytecode segment object.</p>
+
+<p>The first step is to get an assembler or compiler for the target language:</p>
+<pre>  compreg $P1, "PIR"
+</pre>
+<p>Within the Parrot interpreter there are currently three registered languages: <code>PASM</code>, <code>PIR</code>, and <code>PASM1</code>. The first two are for parrot assembly language and parrot intermediate representation code. The third is for evaluating single statements in PASM. Parrot automatically adds an <code>end</code> opcode at the end of <code>PASM1</code> strings before they&#39;re compiled.</p>
+
+<p>This example places a bytecode segment object into the destination register <code>P0</code> and then invokes it with <code>invoke</code>:</p>
+<pre>  compreg P1, "PASM1"                # get compiler
+  set S1, "in eval\n"
+  compile P0, P1, "print S1"
+  invoke                             # eval code P0
+  print "back again\n"
+</pre>
+<p>You can register a compiler or assembler for any language inside the Parrot core and use it to compile and invoke code from that language. These compilers may be written in PIR or reside in shared libraries.</p>
+<pre>  compreg "MyLanguage", $P10
+</pre>
+<p>In this example the <code>compreg</code> opcode registers the subroutine&#45;like object <code>P10</code> as a compiler for the language &#34;MyLanguage&#34;. See <em>examples/compilers</em> and <em>examples/japh/japh16.pasm</em> for an external compiler in a shared library.</p>
+
+<h2><a name="Lexicals_and_Globals"
+>Lexicals and Globals</a></h2>
+
+<p>So far, we&#39;ve been treating Parrot registers like the variables of a high&#45;level language. This is fine, as far as it goes, but it isn&#39;t the full picture. The dynamic nature and introspective features of languages like Perl make it desirable to manipulate variables by name, instead of just by register or stack location. These languages also have global variables, which are visible throughout the entire program. Storing a global variable in a register would either tie up that register for the lifetime of the program or require some unwieldy way to shuffle the data into and out of registers.</p>
+
+<p>Parrot provides structures for storing both global and lexically scoped named variables. Lexical and global variables must be PMC values. PIR provides instructions for storing and retrieving variables from these structures so the PIR opcodes can operate on their values.</p>
+
+<h3><a name="Globals"
+>Globals</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: PIR (Parrot assembly language);global variables
+--> Global variables are stored in a <code>Hash</code>, so every variable name must be unique. PIR has two opcodes for globals, <code>set_global</code> and <code>get_global</code>:</p>
+<pre>  new P10, "Int"
+  set P10, 42
+  set_global "$foo", P10
+  # ...
+  get_global P0, "$foo"
+  print P0                        # prints 42
+</pre>
+<p>The first two statements create a <code>Int</code> in the PMC register <code>P10</code> and give it the value 42. In the third statement, <code>set_global</code> stores that PMC as the named global variable <code>$foo</code>. At some later point in the program, <code>get_global</code> retrieves the PMC from the global variable by name, and stores it in <code>P0</code> so it can be printed.</p>
+
+<p>The <code>set_global</code> opcode only stores a reference to the object. If we add an increment statement:</p>
+<pre>  inc $P10
+</pre>
+<p>after the <code>set_global</code> it increments the stored global, printing 43. If that&#39;s not what you want, you can <code>clone</code> the PMC before you store it. Leaving the global variable as an alias does have advantages, though. If you retrieve a stored global into a register and modify it as follows:</p>
+<pre>  get_global P0, "varname"
+  inc P0
+</pre>
+<p>the value of the stored global is directly modified, so you don&#39;t need to call <code>set_global</code> again.</p>
+
+<p>The two&#45;argument forms of <code>set_global</code> and <code>get_global</code> store or retrieve globals from the outermost namespace (what Perl users will know as the &#34;main&#34; namespace). A simple flat global namespace isn&#39;t enough for most languages, so Parrot also needs to support hierarchical namespaces for separating packages (classes and modules in Perl 6). Use <code>set_rootglobal</code> and <code>get_root_global</code> add an argument to select a nested namespace:</p>
+<pre>  set_root_global ["Foo"], "var", P0 # store P0 as var in the Foo namespace
+  get_root_global P1, ["Foo"], "var"  # get Foo::var
+</pre>
+<p>Eventually the global opcodes will have variants that take a PMC to specify the namespace, but the design and implementation of these aren&#39;t finished yet.</p>
+
+<h3><a name="Lexicals"
+>Lexicals</a></h3>
+
+<p><!--
+	INDEX: PIR (Parrot assembly language);lexical variables
+--> Lexical variables are stored in a lexical scratchpad. There&#39;s one pad for each lexical scope. Every pad has both a hash and an array, so elements can be stored either by name or by numeric index.</p>
+
+<h4><a name="Basic_instructions"
+>Basic instructions</a></h4>
+
+<p></p>
+
+<p>To store a lexical variable in the current scope pad, use <code>store_lex</code>. Likewise, use <code>find_lex</code> to retrieve a variable from the current pad.</p>
+<pre>  new $P0, "Int"            # create a variable
+  set $P0, 10               # assign value to it
+  store_lex "foo", $P0      # store the var with the variable name "foo"
+  # ...
+  find_lex $P1, "foo"       # get the var "foo" into P1
+  print $P1
+  print "\n"                # prints 10
+</pre>
+<p>As we have seen above, we can declare a new subroutine to be a nested inner subroutine of an existing outer subroutine using the <code>:outer</code> flag. The outer flag is used to specify the name of the outer subroutine. Where there may be multiple subroutines with the same name such is the case with multisubs, which we will discuss soon, we can use the <code>:subid</code> flag on the outer subroutine to give it a different&#45;&#45;and unique&#45;&#45;name that the lexical subroutines can reference in their <code>:outer</code> declarations. Within lexical subroutines, the <code>.lex</code> command defines a local variable that follows these scoping rules.</p>
+
+<h3><a name="LexPad_and_LexInfo_PMCs"
+>LexPad and LexInfo PMCs</a></h3>
+
+<p>Information about lexical variables in a subroutine is stored in two different types of PMCs: The LexPad PMC that we already mentioned briefly, and the LexInfo PMCs which we haven&#39;t. Neither of these PMC types are really usable from PIR code, but are instead used by Parrot internally to store information about lexical variables.</p>
+
+<p><code>LexInfo</code> PMCs are used to store information about lexical variables at compile time. This is read&#45;only information that is generated during compilation to represent what is known about lexical variables. Not all subroutines get a LexInfo PMC by default, you need to indicate to Parrot somehow that you require a LexInfo PMC to be created. One way to do this is with the <code>.lex</code> directive that we looked at above. Of course, the <code>.lex</code> directive only works for languages where the names of lexical variables are all known at compile time. For languages where this information isn&#39;t known, the subroutine can be flagged with <code>:lex</code> instead.</p>
+
+<p><code>LexPad</code> PMCs are used to store run&#45;time information about lexical variables. This includes their current values and their type information. LexPad PMCs are created at runtime for subs that have a <code>LexInfo</code> PMC already. These are created each time the subroutine is invoked, which allows for recursive subroutine calls without overwriting variable names.</p>
+
+<p>With a Subroutine PMC, you can get access to the associated LexInfo PMC by calling the <code>&#39;get_lexinfo&#39;</code> method:</p>
+
+<pre>  $P0 = find_global &#34;MySubroutine&#34;
+  $P1 = $P0.&#39;get_lexinfo&#39;()</pre>
+
+<p>Once you have the LexInfo PMC, there are a limited number of operations that you can call with it:</p>
+
+<pre>  $I0 = elements $P1    # Get the number of lexical variables from it
+  $P0 = $P1[&#34;name&#34;]     # Get the entry for lexical variable &#34;name&#34;</pre>
+
+<p>There really isn&#39;t much else useful to do with LexInfo PMCs, they&#39;re mostly used by Parrot internally and aren&#39;t helpful to the PIR programmer.</p>
+
+<p>There is no easy way to get a reference to the current LexPad PMC in a given subroutine, but like LexInfo PMCs that doesn&#39;t matter because they aren&#39;t useful from PIR anyway. Remember that subroutines themselves can be lexical and that therefore the lexical environment of a given variable can extend to multiple subroutines and therefore multiple LexPads. The opcodes <code>find_lex</code> and <code>store_lex</code> automatically search through nested LexPads recursively to find the proper environment information about the given variables.</p>
+
+<h3><a name="Lexical_Subroutines"
+>Lexical Subroutines</a></h3>
+
+<p><!--
+	INDEX: Lexical Subroutines
+--></p>
+
+<p>Parrot offers support for lexical subroutines. You can define a subroutine by name inside a larger subroutine, where the inner subroutine is only visible and callable from the outer. The inner subroutine inherits all the lexical variables from the outer subroutine, but can itself define its own lexical variables that the outer subroutine cannot access. PIR lacks the concept of blocks or nested lexical scopes; this is how it performs the same function.</p>
+
+<p>If the subroutine is lexical, you can get its <code>:outer</code> with the <code>get_outer</code> method on the Sub PMC:</p>
+
+<pre>  $P1 = $P0.&#39;get_outer&#39;()</pre>
+
+<p>If there is no <code>:outer</code> PMC, this returns a NULL PMC. Conversely, you can set the outer sub:</p>
+
+<pre>  $P0.&#39;set_outer&#39;($P1)</pre>
+
+<h3><a name="Scope_and_HLLs"
+>Scope and HLLs</a></h3>
+
+<p>As mentioned previously, <!--
+	INDEX: High Level Languages;HLL
+--> High Level Languages such as Perl, Python, and Ruby allow nested scopes, or blocks within blocks that can have their own lexical variables. Even this construct is common in the C programming language:</p>
+
+<pre>  {
+      int x = 0;
+      int y = 1;
+      {
+          int z = 2;
+          /* x, y, and z are all visible here */
+      }
+
+      /* only x and y are visible here */
+  }</pre>
+
+<p>In the inner block, all three varaibles are visible. The variable <code>z</code> is only visible inside that block. The outer block has no knowledge of <code>z</code>. A very direct, na<i>iuml</i>ve translation of this code to PIR might be:</p>
+
+<pre>  .param int x
+  .param int y
+  .param int z
+  x = 0
+  y = 1
+  z = 2
+  ...</pre>
+
+<p>This PIR code is similar, but the handling of the variable <code>z</code> is different: <code>z</code> is visible throughout the entire current subroutine, where it is not visible throughout the entire C function. To help approximate this effect, PIR supplies lexical subroutines to create nested lexical scopes.</p>
+
+<h3><a name="PIR_Scoping"
+>PIR Scoping</a></h3>
+
+<p>Only one PIR structure supports scoping like this: the subroutine... and objects that inherit from subroutines, such as methods, coroutines, and multisubs. There are no blocks in PIR that have their own scope besides subroutines. Fortunately, we can use these lexical subroutines to simulate this behavior that HLLs require:</p>
+<pre>  .sub 'MyOuter'
+      .local int x,y
+      .lex 'x', x
+      .lex 'y', y
+      'MyInner'()
+      # only x and y are visible here
+  .end
+
+  .sub 'MyInner' :outer('MyOuter')
+      .local int z
+      .lex 'z', z
+      #x, y, and z are all "visible" here
+  .end
+</pre>
+<p>In the example above we put the word <code>&#34;visible&#34;</code> in quotes. This is because lexically&#45;defined variables need to be accessed with the <code>get_lex</code> and <code>set_lex</code> opcodes. These two opcodes don&#39;t just access the value of a register, where the value is stored while it&#39;s being used, but they also make sure to interact with the <code>LexPad</code> PMC that&#39;s storing the data. If the value isn&#39;t properly stored in the LexPad, then they won&#39;t be available in nested inner subroutines, or available from <code>:outer</code> subroutines either.</p>
+
+<h2><a name="Namespaces"
+>Namespaces</a></h2>
+
+<p><!--
+	INDEX: Namespaces
+--> <!--
+	INDEX: .namespace
+--> Namespaces provide a mechanism where names can be reused. This may not sound like much, but in large complicated systems, or systems with many included libraries, it can be very handy. Each namespace gets its own area for function names and global variables. This way you can have multiple functions named <code>create</code> or <code>new</code> or <code>convert</code>, for instance, without having to use <i>Multi&#45;Method Dispatch</i> (MMD) which we will describe later. Namespaces are also vital for defining classes and their methods, which we already mentioned. We&#39;ll talk about all those uses here.</p>
+
+<p>Namespaces are specified with the <code>.namespace []</code> directive. The brackets are not optional, but the keys inside them are. Here are some examples:</p>
+
+<pre>  .namespace [ ]               # The root namespace
+  .namespace [ &#34;Foo&#34; ]         # The namespace &#34;Foo&#34;
+  .namespace [ &#34;Foo&#34; ; &#34;Bar&#34; ] # Namespace Foo::Bar
+  .namespace                   # WRONG! The [] are needed</pre>
+
+<p>Using semicolons, namespaces can be nested to any arbitrary depth. Namespaces are special types of PMC, so we can access them and manipulate them just like other data objects. We can get the PMC for the root namespace using the <code>get_root_namespace</code> opcode:</p>
+
+<pre>  $P0 = get_root_namespace</pre>
+
+<p>The current namespace, which might be different from the root namespace can be retrieved with the <code>get_namespace</code> opcode:</p>
+
+<pre>  $P0 = get_namespace             # get current namespace PMC
+  $P0 = get_namespace [&#34;Foo&#34;]     # get PMC for namespace &#34;Foo&#34;</pre>
+
+<p>Namespaces are arranged into a large n&#45;ary tree. There is the root namespace at the top of the tree, and in the root namespace are various special HLL namespaces. Each HLL compiler gets its own HLL namespace where it can store its data during compilation and runtime. Each HLL namespace may have a large hierarchy of other namespaces. We&#39;ll talk more about HLL namespaces and their significance in chapter 10.</p>
+
+<p>The root namespace is a busy place. Everybody could be lazy and use it to store all their subroutines and global variables, and then we would run into all sorts of collisions. One library would define a function &#34;Foo&#34;, and then another library could try to create another subroutine with the same name. This is called <i>namespace pollution</i>, because everybody is trying to put things into the root namespace, and those things are all unrelated to each other. Best practices requires that namespaces be used to hold private information away from public information, and to keep like things together.</p>
+
+<p>As an example, the namespace <code>Integers</code> could be used to store subroutines that deal with integers. The namespace <code>images</code> could be used to store subroutines that deal with creating and manipulating images. That way, when we have a subroutine that adds two numbers together, and a subroutine that performs additive image composition, we can name them both <code>add</code> without any conflict or confusion. And within the <code>image</code> namespace we could have sub namespaces for <code>jpeg</code> and <code>MRI</code> and <code>schematics</code>, and each of these could have a <code>add</code> method without getting into each other&#39;s way.</p>
+
+<p>The short version is this: use namespaces. There aren&#39;t any penalties to them, and they do a lot of work to keep things organized and separated.</p>
+
+<h3><a name="Namespace_PMC"
+>Namespace PMC</a></h3>
+
+<p>The <code>.namespace</code> directive that we&#39;ve seen sets the current namespace. In PIR code, we have multiple ways to address a namespace:</p>
+
+<pre>  # Get namespace &#34;a/b/c&#34; starting at the root namespace
+  $P0 = get_root_namespace [&#34;a&#34; ; &#34;b&#34; ; &#34;c&#34;]
+
+  # Get namespace &#34;a/b/c&#34; starting in the current HLL namespace.
+  $P0 = get_hll_namespace [&#34;a&#34; ; &#34;b&#34; ; &#34;c&#34;]
+  # Same
+  $P0 = get_root_namespace [&#34;hll&#34; ; &#34;a&#34; ; &#34;b&#34; ; &#34;c&#34;]
+
+  # Get namespace &#34;a/b/c&#34; starting in the current namespace
+  $P0 = get_namespace [&#34;a&#34; ; &#34;b&#34; ; &#34;c&#34;]</pre>
+
+<p>Once we have a namespace PMC we can retrieve global variables and subroutine PMCs from it using the following functions:</p>
+
+<pre>  $P1 = get_global $S0            # Get global in current namespace
+  $P1 = get_global [&#34;Foo&#34;], $S0   # Get global in namespace &#34;Foo&#34;
+  $P1 = get_global $P0, $S0       # Get global in $P0 namespace PMC</pre>
+
+<h3><a name="Operations_on_the_Namespace_PMC"
+>Operations on the Namespace PMC</a></h3>
+
+<p>We&#39;ve seen above how to find a Namespace PMC. Once you have it, there are a few things you can do with it. You can find methods and variables that are stored in the namespace, or you can add new ones:</p>
+
+<pre>  $P0 = get_namespace
+  $P0.&#39;add_namespace&#39;($P1)      # Add Namespace $P1 to $P0
+  $P1 = $P0.&#39;find_namespace&#39;(&#34;MyOtherNamespace&#34;)
+
+  # Find namespace &#34;MyNamespace&#34; in $P0, create it if it
+  #    doesn&#39;t exist
+  $P1 = $P0.&#39;make_namespace&#39;(&#34;MyNamespace&#34;)
+
+  $P0.&#39;add_sub&#39;(&#34;MySub&#34;, $P2)   # Add Sub PMC $P2 to the namespace
+  $P1 = $P0.&#39;find_sub&#39;(&#34;MySub&#34;) # Find it
+
+  $P0.&#39;add_var&#39;(&#34;MyVar&#34;, $P3)   # Add variable &#34;MyVar&#34; in $P3
+  $P1 = $P0.&#39;find_var&#39;(&#34;MyVar&#34;) # Find it
+
+  # Return the name of Namespace $P0 as a ResizableStringArray
+  $P3 = $P0.&#39;get_name&#39;()
+
+  # Find the parent namespace that contains this one:
+  $P5 = $P0.&#39;get_parent&#39;()
+
+  # Get the Class PMC associated with this namespace:
+  $P6 = $P0.&#39;get_class&#39;()</pre>
+
+<p>There are a few other operations that can be done on Namespaces, but none as interesting as these. We&#39;ll talk about Namespaces throughout the rest of this chapter.</p>
+
+<h2><a name="Classes_and_Objects"
+>Classes and Objects</a></h2>
+
+<p>This section revolves around one complete example that defines a class, instantiates objects, and uses them. The whole example is included at the end of the section.</p>
+
+<h3><a name="Class_declaration"
+>Class declaration</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: classes;in PIR
+--> The <code>newclass</code><!--
+	INDEX: newclass opcode (PIR)
+--> opcode defines a new class. It takes two arguments, the name of the class and the destination register for the class PMC. All classes (and objects) inherit from the <code>ParrotClass</code> PMC<!--
+	INDEX: ParrotClass PMC
+-->, which is the core of the Parrot object system.</p>
+<pre>    newclass $P1, "Foo"
+</pre>
+<p>To instantiate a new object of a particular class, you first look up the integer value for the class type with the <code>find_type</code> opcode, then create an object of that type with the <code>new</code> opcode:</p>
+<pre>    find_type I1, "Foo"
+    new P3I I1
+</pre>
+<p>The <code>new</code> opcode also checks to see if the class defines a method named &#34;__init&#34; and calls it if it exists.</p>
+
+<h3><a name="Attributes"
+>Attributes</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: attributes;in PIR
+--> <!--
+	INDEX: classes;attributes
+--> The <code>addattribute</code> opcode creates a slot in the class for an attribute (sometimes known as an <i>instance variable</i>) and associates it with a name:</p>
+<pre>    addattribute $P1, ".i"                # Foo.i
+</pre>
+<p>This chunk of code from the <code>__init</code> method looks up the position of the first attribute, creates a <code>Int</code> PMC, and stores it as the first attribute:</p>
+<pre>    classoffset $I0, $P2, "Foo"    # first "Foo" attribute of object P2
+    new $P6, "Int"                 # create storage for the attribute
+    setattribute $P2, $I0, $P6     # store the first attribute
+</pre>
+<p>The <code>classoffset</code> opcode<!--
+	INDEX: classoffset opcode (PIR)
+--> takes a PMC containing an object and the name of its class, and returns an integer index for the position of the first attribute. The <code>setattribute</code> opcode uses the integer index to store a PMC value in one of the object&#39;s attribute slots. This example initializes the first attribute. The second attribute would be at <code>I0 + 1</code>, the third attribute at <code>I0 + 2</code>, etc:</p>
+<pre>    inc $I0
+    setattribute $P2, $I0, $P7       # store next attribute
+    #...
+</pre>
+<p>There is also support for named parameters with fully qualified parameter names (although this is a little bit slower than getting the class offset once and accessing several attributes by index):</p>
+<pre>    new $P6, "Int"
+    setattribute $P2, "Foo\x0.i", $P6   # store the attribute
+</pre>
+<p>You use the same integer index to retrieve the value of an attribute. The <code>getattribute</code><!--
+	INDEX: getattribute opcode (PIR)
+--> opcode takes an object and an index as arguments and returns the attribute PMC at that position:</p>
+<pre>    classoffset $I0, $P2, "Foo"         # first "Foo" attribute of object P2
+    getattribute $P10, $P2, $I0         # indexed get of attribute
+</pre>
+<p>or</p>
+<pre>    getattribute $P10, $P2, "Foo\x0.i"  # named get
+</pre>
+<p>To set the value of an attribute PMC, first retrieve it with <code>getattribute</code> and then assign to the returned PMC. Because PMC registers are only pointers to values, you don&#39;t need to store the PMC again after you modify its value:</p>
+<pre>    getattribute $P10, $P2, $I0
+    set $P10, $I5
+</pre>
+<h3><a name="Methods"
+>Methods</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: methods;in PIR
+--> <!--
+	INDEX: classes;methods
+--> <!--
+	INDEX: classes;namespaces
+--> Methods in PIR are just subroutines installed in the namespace of the class. You define a method with the <code>.pcc_sub</code> directive before the label:</p>
+
+<p>This routine returns half of the value of the first attribute of the object. Method calls use the Parrot calling conventions so they always pass the <i>invocant</i> object (often called <i>self</i>) in <code>P2</code>. Invoking the return continuation in <code>P1</code> returns control to the caller.</p>
+
+<p>The <code>.pcc_sub</code> directive automatically stores the subroutine as a global in the current namespace. The <code>.namespace</code> directive sets the current namespace:</p>
+<pre>  .namespace [ "Foo" ]
+</pre>
+<p>If the namespace is explicitly set to an empty string or key, then the subroutine is stored in the outermost namespace.</p>
+
+<p>The <code>callmethodcc</code><!--
+	INDEX: callmethodcc opcode (PIR)
+--> opcode makes a method call. It follows the Parrot calling conventions, so it expects to find the invocant object in <code>P2</code>, the method object in <code>P0</code>, etc. It adds one bit of magic, though. If you pass the name of the method in <code>S0</code>, <code>callmethodcc</code> looks up that method name in the invocant object and stores the method object in <code>P0</code> for you:</p>
+<pre>    set $S0, "_half"            # set method name
+    set $P2, $P3                # the object
+    callmethodcc                # create return continuation, call
+    print $I5                   # result of method call
+    print "\n"
+</pre>
+<p>The <code>callmethodcc</code> opcode also generates a return continuation and stores it in <code>P1</code>. The <code>callmethod</code> opcode doesn&#39;t generate a return continuation, but is otherwise identical to <code>callmethodcc</code>. Just like ordinary subroutine calls, you have to preserve and restore any registers you want to keep after a method call. Whether you store individual registers, register frames, or half register frames is up to you.</p>
+
+<h4><a name="Overriding_vtable_functions"
+>Overriding vtable functions</a></h4>
+
+<p></p>
+
+<p>Every object inherits a default set of <i>vtable</i> functions from the <code>ParrotObject</code> PMC, but you can also override them with your own methods. The vtable functions have predefined names that start with a double underscore &#34;__&#34;. The following code defines a method named <code>__init</code> in the <code>Foo</code> class that initializes the first attribute of the object with an integer:</p>
+<pre>  .sub __init:
+    classoffset I0, P2, "Foo"     # lookup first attribute position
+    new P6, "Int"                 # create storage for the attribute
+    setattribute P2, I0, P6       # store the first attribute
+    invoke P1                     # return
+</pre>
+<p>Ordinary methods have to be called explicitly, but the vtable functions are called implicitly in many different contexts. Parrot saves and restores registers for you in these calls. The <code>__init</code> method is called whenever a new object is constructed:</p>
+<pre>    find_type I1, "Foo"
+    new P3, I1          # call __init if it exists
+</pre>
+<p>A few other vtable functions in the complete code example for this section are <code>__set_integer_native</code>, <code>__add</code>, <code>__get_integer</code>, <code>__get_string</code>, and <code>__increment</code>. The <code>set</code> opcode calls Foo&#39;s <code>__set_integer_native</code> vtable function when its destination register is a <code>Foo</code> object and the source register is a native integer:</p>
+<pre>    set $P3, 30          # call __set_integer_native method
+</pre>
+<p>The <code>add</code> opcode calls Foo&#39;s <code>__add</code> vtable function when it adds two <code>Foo</code> objects:</p>
+<pre>    new $P4, $I1          # same with P4
+    set $P4, $12
+    new $P5, $I1          # create a new store for add
+
+    add $P5, $P3, $P4     # __add method
+</pre>
+<p>The <code>inc</code> opcode calls Foo&#39;s <code>__increment</code> vtable function when it increments a <code>Foo</code> object:</p>
+<pre>    inc $P3              # __increment
+</pre>
+<p>Foo&#39;s <code>__get_integer</code> and <code>__get_string</code> vtable functions are called whenever an integer or string value is retrieved from a <code>Foo</code> object:</p>
+<pre>    set $I10, $P5         # __get_integer
+    #...
+    print $P5            # calls __get_string, prints 'fortytwo'
+</pre>
+<h3><a name="Inheritance"
+>Inheritance</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: inheritance;in PIR
+--> <!--
+	INDEX: classes;inheritance
+--> The <code>subclass</code><!--
+	INDEX: subclass opcode (PIR)
+--> opcode creates a new class that inherits methods and attributes from another class. It takes 3 arguments: the destination register for the new class, a register containing the parent class, and the name of the new class:</p>
+<pre>    subclass $P3, $P1, "Bar"
+</pre>
+<p><!--
+	INDEX: multiple inheritance; in PIR
+--> For multiple inheritance, the <code>addparent</code><!--
+	INDEX: addparent opcode (PIR)
+--> opcode adds additional parents to a subclass.</p>
+<pre>  newclass $P4, "Baz"
+  addparent $P3, $P4
+</pre>
+<p>To override an inherited method, define a method with the same name in the namespace of the subclass. The following code overrides Bar&#39;s <code>__increment</code> method so it decrements the value instead of incrementing it:</p>
+<pre>  .namespace [ "Bar" ]
+
+  .sub __increment:
+    classoffset I0, P2, "Foo"     # get Foo's attribute slot offset
+    getattribute P10, P2, I0      # get the first Foo attribute
+    dec P10                       # the evil line
+    invoke P1
+</pre>
+<p>Notice that the attribute inherited from <code>Foo</code> can only be looked up with the <code>Foo</code> class name, not the <code>Bar</code> class name. This preserves the distinction between attributes that belong to the class and inherited attributes.</p>
+
+<p>Object creation for subclasses is the same as for ordinary classes:</p>
+<pre>    find_type $I1, "Bar"
+    new $P5, $I1
+</pre>
+<p>Calls to inherited methods are just like calls to methods defined in the class:</p>
+<pre>    set $P5, 42                  # inherited __set_integer_native
+    inc $P5                      # overridden __increment
+    print $P5                    # prints 41 as Bar's __increment decrements
+    print "\n"
+
+    set $S0, "_half"             # set method name
+    set $P2, $P5                 # the object
+    callmethodcc                 # create return continuation, call
+    print $I5
+    print "\n"
+</pre>
+<h3><a name="Additional_Object_Opcodes"
+>Additional Object Opcodes</a></h3>
+
+<p></p>
+
+<p>The <code>isa</code> and <code>can</code> instructuions are also useful when working with objects. <code>isa</code> checks whether an object belongs to or inherits from a particular class. <code>can</code> checks whether an object has a particular method. Both return a true or false value.</p>
+<pre>    $I0 = isa $P3, "Foo"         # 1
+    $I0 = isa $P3, "Bar"         # 1
+    $I0 = can $P3, "add"         # 1
+</pre>
+<p>It may seem more appropriate for a discussion of PIR&#39;s support for classes and objects to reside in its own chapter, instead of appearing in a generic chapter about PIR programming &#34;basics&#34;. However, part of PIR&#39;s core functionality is its support for object&#45;oriented programming. PIR doesn&#39;t use all the fancy syntax as other OO languages, and it doesn&#39;t even support all the features that most modern OO languages have. What PIR does have is support for some of the basic structures and abilities, the necessary subset to construct richer and higher&#45;level object systems.</p>
+
+<h3><a name="Attributes"
+>Attributes</a></h3>
+
+<p>Classes and subclasses can be given attributes in addition to methods, which we will talk about in the next chapter which are named data fields. Attributes are created with the <code>addattribute</code> opcode, and can be set and retrieved with the <code>setattribute</code> and <code>getattribute</code> opcodes respectively:</p>
+
+<pre>  # Create the new class with two attributes
+  $P0 = newclass &#39;MyClass&#39;
+  addattribute $P0, &#39;First&#39;
+  addattribute $P0, &#39;Second&#39;
+
+  # Create a new item of type MyClass
+  $P1 = new &#39;MyClass&#39;
+
+  # Set values to the attributes
+  setattribute $P1, &#39;First&#39;, &#39;First Value&#39;
+  setattribute $P1, &#39;Second&#39;, &#39;Second Value&#39;
+
+  # Get the attribute values
+  $S0 = getattribute $P1, &#39;First&#39;
+  $S1 = getattribute $P1, &#39;Second&#39;</pre>
+
+<p>Those values added as attributes don&#39;t need to be strings, even though both of the ones in the example are. They can be integers, numbers or PMCs too.</p>
+
+<h3><a name="Methods"
+>Methods</a></h3>
+
+<p>PIR provides syntax to simplify writing methods and method calls for object&#45;oriented programming. We&#39;ve seen some method calls in the examples above, especially when we were talking about the interfaces to certain PMC types. We&#39;ve also seen a little bit of information about classes and objects in the previous chapter. PIR allows you to define your own classes, and with those classes you can define method interfaces to them. Method calls follow the same Parrot calling conventions that we have seen above, including all the various parameter configurations, lexical scoping, and other aspects we have already talked about.</p>
+
+<p>The second type of class can be defined in PIR at runtime. We saw some examples of this in the last chapter using the <code>newclass</code> and <code>subclass</code> opcodes. We also talked about class attribute values. Now, we&#39;re going to talk about associating subroutines with these classes, and they&#39;re called <i>methods</i>. Methods are just like other normal subroutines with two major changes: they are marked with the <code>:method</code> flag, and they exist in a <i>namespace</i>. Before we can talk about methods, we need to discuss namespaces first.</p>
+
+<p></p>
+
+<p>Methods are just like subroutines, except they are invoked on a object PMC, and that PMC is passed as the c&#60;self&#62; parameter.</p>
+
+<p>The basic syntax for a method call is similar to the single line subroutine call above. It takes a variable for the invocant PMC and a string with the name of the method:</p>
+
+<pre>  object.&#34;methodname&#34;(arguments)</pre>
+
+<p>Notice that the name of the method must be contained in quotes. If the name of the method is not contained in quotes, it&#39;s treated as a named variable that does. Here&#39;s an example:</p>
+
+<pre>  .local string methname = &#34;Foo&#34;
+  object.methname()               # Same as object.&#34;Foo&#34;()
+  object.&#34;Foo&#34;()                  # Same</pre>
+
+<p>The invocant can be a variable or register, and the method name can be a literal string, string variable, or method object PMC.</p>
+
+<h3><a name="Defining_Methods"
+>Defining Methods</a></h3>
+
+<p>Methods are defined like any other subroutine except with two major differences: They must be inside a namespace named after the class they are a part of, and they must use the <code>:method</code> flag.</p>
+
+<pre>  .namespace [ &#34;MyClass&#34;]
+
+  .sub &#34;MyMethod&#34; :method
+    ...</pre>
+
+<p>Inside the method, the invocant object can be accessed using the <code>self</code> keyword. <code>self</code> isn&#39;t the only name you can call this value, however. You can also use the <code>:invocant</code> flag to define a new name for the invocant object:</p>
+
+<p>(See TT #483)</p>
+<pre>  .sub "MyMethod" :method
+    $S0 = self                    # Already defined as "self"
+    say $S0
+  .end
+
+  .sub "MyMethod2" :method
+    .param pmc item :invocant     # "self" is now called "item"
+    $S0 = item
+    say $S0
+  .end
+</pre>
+<p>This example defines two methods in the <code>Foo</code> class. It calls one from the main body of the subroutine and the other from within the first method:</p>
+<pre>  .sub main
+    .local pmc class
+    .local pmc obj
+    newclass class, "Foo"       # create a new Foo class
+    new obj, "Foo"              # instantiate a Foo object
+    obj."meth"()                # call obj."meth" which is actually
+    print "done\n"              # in the "Foo" namespace
+  .end
+
+  .namespace [ "Foo" ]          # start namespace "Foo"
+
+  .sub meth :method             # define Foo::meth global
+     print "in meth\n"
+     $S0 = "other_meth"         # method names can be in a register too
+     self.$S0()                 # self is the invocant
+  .end
+
+  .sub other_meth :method       # define another method
+     print "in other_meth\n"    # as above Parrot provides a return
+  .end                          # statement
+</pre>
+<p>Each method call looks up the method name in the object&#39;s class namespace. The <code>.sub</code> directive automatically makes a symbol table entry for the subroutine in the current namespace.</p>
+
+<p>When a <code>.sub</code> is declared as a <code>:method</code>, it automatically creates a local variable named <code>self</code> and assigns it the object passed in <code>P2</code>. You don&#39;t need to write <code>.param pmc self</code> to get it, it comes free with the method.</p>
+
+<p>You can pass multiple arguments to a method and retrieve multiple return values just like a single line subroutine call:</p>
+
+<pre>  (res1, res2) = obj.&#34;method&#34;(arg1, arg2)</pre>
+
+<h3><a name="Introspection"
+>Introspection</a></h3>
+
+<p>The details about various PMC classes are managed by the Class PMC. Class PMCs contain information about the class, available methods, the inheritance hierarchy of the class, and various other details. Classes can be created with the <code>newclass</code> opcode:</p>
+
+<pre>  $P0 = newclass &#34;MyClass&#34;</pre>
+
+<p>Once we have created the class PMC, we can instantiate objects of that class using the <code>new</code> opcode. The <code>new</code> opcode takes either the class name or the Class PMC as an argument:</p>
+
+<pre>  $P1 = new $P0        # $P0 is the Class PMC
+  $P2 = new &#34;MyClass&#34;  # Same</pre>
+
+<p>The <code>new</code> opcode can create two different types of PMC. The first type are the built&#45;in core PMC classes. The built&#45;in PMCs are written in C and cannot be extended from PIR without subclassing. However, you can also create user&#45;defined PMC types in PIR. User&#45;defined PMCs use the Object PMC type for instantiation. Object PMCs are used for all user&#45;defined type and keep track of the methods and VTABLE override definitions. We&#39;re going to talk about methods and VTABLE overrides in the next chapter.</p>
+
+<h2><a name="Subclassing_PMCs"
+>Subclassing PMCs</a></h2>
+
+<p>Existing built&#45;in PMC types can be subclassed to associate additional data and methods with that PMC type. Subclassed PMC types act like their PMC base types, by sharing the same VTABLE methods and underlying data types. However, the subclass can define additional methods and attribute data storage. If necessary new VTABLE interfaces can be defined in PIR and old VTABLE methods can be overridden using PIR. We&#39;ll talk about defining methods and VTABLE interface overrides in the next chapter.</p>
+
+<p>Creating a new subclass of an existing PMC class is done using the <code>subclass</code> keyword:</p>
+
+<pre>  # create an anonymous subclass
+  $P0 = subclass &#39;ResizablePMCArray&#39;
+
+  # create a subclass named &#34;MyArray&#34;
+  $P0 = subclass &#39;ResizablePMCArray&#39;, &#39;MyArray&#39;</pre>
+
+<p>This returns a <code>Class</code> PMC which can be used to create and modify the class by adding attributes or creating objects of that class. You can also use the new class PMC to create additional subclasses:</p>
+
+<pre>  $P0 = subclass &#39;ResizablePMCArray&#39;, &#39;MyArray&#39;
+  $P1 = subclass $P0, &#39;MyOtherArray&#39;</pre>
+
+<p>Once you have created these classes, you can create them like normal with the <code>new</code> keyword:</p>
+
+<pre>  $P0 = new &#39;MyArray&#39;
+  $P1 = new &#39;MyOtherArray&#39;</pre>
+
+<h3><a name="Vtable_Overrides"
+>Vtable Overrides</a></h3>
+
+<p>PMCs all subscribe to a common interface of functions called <!--
+	INDEX: VTABLE
+--> VTABLEs. Every PMC implements the same set of these interfaces, which perform very specific low&#45;level tasks on the PMC. The term VTABLE was originally a shortened form of the name &#34;virtual function table&#34;, although that name isn&#39;t used any more by the developers, or in any of the documentation. The virtual functions in the VTABLE, called <!--
+	INDEX: VTABLE interfaces
+--> VTABLE interfaces, are similar to ordinary functions and methods in many respects. VTABLE interfaces are occasionally called &#34;VTABLE functions&#34;, or &#34;VTABLE methods&#34; or even &#34;VTABLE entries&#34; in casual conversation. A quick comparison shows that VTABLE interfaces are not really subroutines or methods in the way that those terms have been used throughout the rest of Parrot. Like methods on an object, VTABLE interfaces are defined for a specific class of PMC, and can be invoked on any member of that class. Likewise, in a VTABLE interface declaration, the <code>self</code> keyword is used to describe the object that it is invoked upon. That&#39;s where the similarities end, however. Unlike ordinary subroutines or methods, VTABLE methods cannot be invoked directly, they are also not inherited through class hierarchies like how methods are. With all this terminology discussion out of the way, we can start talking about what VTABLES are and how they are used in Parrot.</p>
+
+<p>VTABLE interfaces are the primary way that data in the PMC is accessed and modified. VTABLES also provide a way to invoke the PMC if it&#39;s a subroutine or subroutine&#45;like PMC. VTABLE interfaces are not called directly from PIR code, but are instead called internally by Parrot to implement specific opcodes and behaviors. For instance, the <code>invoke</code> opcode calls the <code>invoke</code> VTABLE interface of the subroutine PMC, while the <code>inc</code> opcode on a PMC calls the <code>increment</code> VTABLE interface on that PMC. What VTABLE interface overrides do, in essence, is to allow the programmer to change the very way that Parrot accesses PMC data in the most fundamental way, and changes the very way that the opcodes act on that data.</p>
+
+<p>PMCs, as we will look at more closely in later chapters, are typically implemented using <!--
+	INDEX: PMC Script
+--> PMC Script, a layer of syntax and macros over ordinary C code. A <!--
+	INDEX: PMC Compiler
+--> PMC compiler program converts the PMC files into C code for compilation as part of the ordinary build process. However, VTABLE interfaces can be written <i>and overwritten</i> in PIR using the <code>:vtable</code> flag on a subroutine declaration. This technique is used most commonly when subclassing an existing PMC class in PIR code to create a new data type with custom access methods.</p>
+
+<p>VTABLE interfaces are declared with the <code>:vtable</code> flag:</p>
+
+<pre>  .sub &#39;set_integer&#39; :vtable
+      #set the integer value of the PMC here
+  .end</pre>
+
+<p>in which case the subroutine must have the same name as the VTABLE interface it is intended to implement. VTABLE interfaces all have very specific names, and you can&#39;t override one with just any arbitrary name. However, if you would like to name the function something different but still use it as a VTABLE interface, you could add an additional name parameter to the flag:</p>
+
+<pre>  .sub &#39;MySetInteger&#39; :vtable(&#39;set_integer&#39;)
+      #set the integer value of the PMC here
+  .end</pre>
+
+<p>VTABLE interfaces are often given the <code>:method</code> flag also, so that they can be used directly in PIR code as methods, in addition to being used by Parrot as VTABLE interfaces. This means we can have the following:</p>
+
+<pre>  .namespace [ &#34;MyClass&#34; ]
+
+  .sub &#39;ToString&#39; :vtable(&#39;get_string&#39;) :method
+      $S0 = &#34;hello!&#34;
+      .return($S0)
+  .end
+
+  .namespace [ &#34;OtherClass&#34; ]
+
+  .local pmc myclass = new &#34;MyClass&#34;
+  say myclass                 # say converts to string internally
+  $S0 = myclass               # Convert to a string, store in $S0
+  $S0 = myclass.&#39;ToString&#39;()  # The same</pre>
+
+<p>Inside a VTABLE interface definition, the <code>self</code> local variable contains the PMC on which the VTABLE interface is invoked, just like in a method declaration.</p>
+
+<h3><a name="Roles"
+>Roles</a></h3>
+
+<p>As we&#39;ve seen above and in the previous chapter, Class PMCs and NameSpace PMCs work to keep classes and methods together in a logical way. There is another factor to add to this mix: The Role PMC.</p>
+
+<p>Roles are like classes, but don&#39;t stand on their own. They represent collections of methods and VTABLES that can be added into an existing class. Adding a role to a class is called <i>composing</i> that role, and any class that has been composed with a role <code>does</code> that role.</p>
+
+<p>Roles are created as PMC and can be manipulated through opcodes and methods like other PMCs:</p>
+
+<pre>  $P0 = new &#39;Role&#39;
+  $P1 = get_global &#34;MyRoleSub&#34;
+  $P0.&#39;add_method&#39;(&#34;MyRoleSub&#34;, $P1)</pre>
+
+<p>Once we&#39;ve created a role and added methods to it, we can add that role to a class, or even to another role:</p>
+
+<pre>  $P1 = new &#39;Role&#39;
+  $P2 = new &#39;Class&#39;
+  $P1.&#39;add_role&#39;($P0)
+  $P2.&#39;add_role&#39;($P0)
+  add_role $P2, $P0    # Same!</pre>
+
+<p>Now that we have added the role, we can check whether we implement it:</p>
+
+<pre>  $I0 = does $P2, $P0  # Yes</pre>
+
+<p>We can get a list of roles from our Class PMC:</p>
+
+<pre>  $P3 = $P2.&#39;roles&#39;()</pre>
+
+<p>Roles are very useful for ensuring that related classes all implement a common interface.</p>
+
+<h2><a name="Filehandles"
+>Filehandles</a></h2>
+
+<p>Like almost everything else in Parrot, input and output are handled by PMCs.</p>
+
+<p>We&#39;ve seen <code>print</code> and <code>say</code>. <code>print</code> prints the given string argument, or the stringified form of the argument, if it&#39;s not a string, to standard output. <code>say</code> does the same thing but also appends a trailing newline to it. Another opcode worth mentioning is the <code>printerr</code> opcode, which prints an argument to the standard error output instead.</p>
+
+<p>We can read values from the standard input using the <code>read</code> and <code>readline</code> ops. <code>read</code> takes an integer value and returns a string with that many characters. <code>readline</code> reads an entire line of input from the standard input, and returns the string without the trailing newline. Here is a simple echo program that reads in characters from the user and echos them to standard output:</p>
+<pre>  .sub 'main'
+    loop_top:
+      $S0 = read 10
+      print $S0
+      goto loop_top
+  .end
+</pre>
+<p>The ops we have seen so far are useful if all your I/O operations are limited to the standard streams. However, there are plenty of other places where you might want to get data from and send data to. Things like files, sockets, and databases all might need to have data sent to them. These things can be done by using a file handle.</p>
+
+<p>Filehandles are PMCs that describe a file and keep track of an I/O operations internal state. We can get Filehandles for the standard streams using dedicated opcodes:</p>
+
+<pre>  $P0 = getstdin    # Standard input handle
+  $P1 = getstdout   # Standard output handle
+  $P2 = getstderr   # Standard error handle</pre>
+
+<p>If we have a file, we can create a handle to it using the <code>open</code> op:</p>
+
+<pre>  $P0 = open &#34;my/file/name.txt&#34;</pre>
+
+<p>We can also specify the exact mode that the file handle will be in:</p>
+
+<pre>  $P0 = open &#34;my/file/name.txt&#34;, &#34;wa&#34;</pre>
+
+<p>The mode string at the end should be familiar to C programmers, because they are mostly the same values:</p>
+
+<pre>  r  : read
+  w  : write
+  wa : append
+  p  : pipe</pre>
+
+<p>So if we want a handle that we can read and write to, we write the mode string <code>&#34;rw&#34;</code>. If we want to be able to read and write to it, but we don&#39;t want write operations to overwrite the existing contents, we use <code>&#34;rwa&#34;</code> instead.</p>
+
+<p>When we are done with a filehandle that we&#39;ve created, we can shut it down with the <code>close</code> op. Notice that we don&#39;t want to be closing any of the standard streams.</p>
+
+<pre>  close $P0</pre>
+
+<p>With a filehandle, we can perform all the same operations as we could earlier, but we pass the filehandle as an additional argument to tell the op where to write or read the data from.</p>
+
+<pre>  print &#34;hello&#34;       # Write &#34;hello!&#34; to STDOUT
+
+  $P0 = getstdout
+  print $P0, &#34;hello&#34;  # Same, but more explicit
+
+  say $P0, &#34; world!&#34;  # say to STDOUT
+
+  $P1 = open &#34;myfile.txt&#34;, &#34;wa&#34;
+  print $P1, &#34;foo&#34;    # Write &#34;foo&#34; to myfile.txt</pre>
+
+<h2><a name="Filehandle_PMCs"
+>Filehandle PMCs</a></h2>
+
+<p>Let&#39;s see a little example of a program that reads in data from a file, and prints it to STDOUT.</p>
+<pre>  .sub 'main'
+    $P0 = getstdout
+    $P1 = open "myfile.txt", "r"
+    loop_top:
+      $S0 = readline $P1
+      print $P0, $S0
+      if $P1 goto loop_top
+    close $P1
+  .end
+</pre>
+<p>This example shows that treating a filehandle PMC like a boolean value returns whether or not we have reached the end of the file. A true return value means there is more file to read. A false return value means we are at the end. In addition to this behavior, Filehandle PMCs have a number of methods that can be used to perform various operations.</p>
+
+<dl>
+<dt><a name="$P0.&#39;open&#39;(STRING_filename,_STRING_mode)"
+><b><code>$P0.&#39;open&#39;(STRING filename, STRING mode)</b></code></a></dt>
+Opens the filehandle. Takes two optional strings: the name of the file to open and the open mode. If no filename is given, the previous filename associated with the filehandle is opened. If no mode is given, the previously&#45;used mode is used.
+<pre>  $P0 = new &#39;Filehandle&#39;
+  $P0.&#39;open&#39;(&#34;myfile.txt&#34;, &#34;r&#34;)
+
+  $P0 = open &#34;myfile.txt&#34;, &#34;r&#34;   # Same!</pre>
+The <code>open</code> opcode internally creates a new filehandle PMC and calls the <code>&#39;open&#39;()</code> method on it. So even though the above two code snippets act in an identical way, the later one is a little more concise to write. The caveat is that the <code>open</code> opcode creates a new PMC for every call, while the <code>&#39;open&#39;()</code> method call can reuse an existing filehandle PMC for a new file.
+<dt><a name="$P0.&#39;isatty&#39;()"
+><b><code>$P0.&#39;isatty&#39;()</b></code></a></dt>
+Returns a boolean value whether the filehandle is a TTY terminal
+<dt><a name="$P0.&#39;close&#39;()"
+><b><code>$P0.&#39;close&#39;()</b></code></a></dt>
+Closes the filehandle. Can be reopened with <code>.&#39;open&#39;</code> later.
+<pre>  $P0.&#39;close&#39;()
+
+  close $P0   # Same</pre>
+The <code>close</code> opcode calls the <code>&#39;close&#39;()</code> method on the Filehandle PMC internally, so these two calls are equivalent.
+<dt><a name="$P0.&#39;is_closed&#39;()"
+><b><code>$P0.&#39;is_closed&#39;()</b></code></a></dt>
+Returns true if the filehandle is closed, false if it is opened.
+<dt><a name="$P0.&#39;read&#39;(INTVAL_length)"
+><b><code>$P0.&#39;read&#39;(INTVAL length)</b></code></a></dt>
+Reads <code>length</code> bytes from the filehandle.
+<pre>  $S0 = read $P0, 10
+
+  $P0.&#39;read&#39;(10)</pre>
+The two calls are equivalent, and the <code>read</code> opcode calls the <code>&#39;read&#39;()</code> method internally.
+<dt><a name="$P0.&#39;readline&#39;()"
+><b><code>$P0.&#39;readline&#39;()</b></code></a></dt>
+Reads an entire line (up to a newline character or EOF) from the filehandle.
+<dt><a name="$P0.&#39;readline_interactive&#39;(STRING_prompt)"
+><b><code>$P0.&#39;readline_interactive&#39;(STRING prompt)</b></code></a></dt>
+Displays the string <code>prompt</code> and then reads a line of input.
+<dt><a name="$P0.&#39;readall&#39;(STRING_name)"
+><b><code>$P0.&#39;readall&#39;(STRING name)</b></code></a></dt>
+Reads the entire file <code>name</code> into a string. If the filehandle is closed, it will open the file given by <code>name</code>, read the entire file, and then close the handle. If the filehandle is already open, <code>name</code> should not be passed (it is an optional parameter).
+<dt><a name="$P0.&#39;flush&#39;()"
+><b><code>$P0.&#39;flush&#39;()</b></code></a></dt>
+Flushes the buffer
+<dt><a name="$P0.&#39;print&#39;(PMC_to_print)"
+><b><code>$P0.&#39;print&#39;(PMC to_print)</b></code></a></dt>
+Prints the given value to the filehandle. The <code>print</code> opcode uses the <code>&#39;print&#39;()</code> method internally.
+<pre>  print &#34;Hello&#34;
+
+  $P0 = getstdout
+  print $P0, &#34;Hello!&#34;    # Same
+
+  $P0.&#39;print&#39;(&#34;Hello!&#34;)  # Same</pre>
+
+<dt><a name="$P0.&#39;puts&#39;(STRING_to_print)"
+><b><code>$P0.&#39;puts&#39;(STRING to_print)</b></code></a></dt>
+Prints the given string value to the filehandle
+<dt><a name="$P0.&#39;buffer_type&#39;(STRING_new_type)"
+><b><code>$P0.&#39;buffer_type&#39;(STRING new_type)</b></code></a></dt>
+If <code>new_type</code> is given, changes the buffer to the new type. If it is not, returns the current type. Acceptable types are:
+<pre>  unbuffered
+  line&#45;buffered
+  full&#45;buffered</pre>
+
+<dt><a name="$P0.&#39;buffer_size&#39;(INTVAL_size)"
+><b><code>$P0.&#39;buffer_size&#39;(INTVAL size)</b></code></a></dt>
+If <code>size</code> is given, set the size of the buffer. If not, returns the size of the current buffer.
+<dt><a name="$P0.&#39;mode&#39;()"
+><b><code>$P0.&#39;mode&#39;()</b></code></a></dt>
+Returns the current file access mode.
+<dt><a name="$P0.&#39;encoding&#39;(STRING_encoding)"
+><b><code>$P0.&#39;encoding&#39;(STRING encoding)</b></code></a></dt>
+Sets the filehandle&#39;s string encoding to <code>encoding</code> if given, returns the current encoding otherwise.
+<dt><a name="$P0.&#39;eof&#39;()"
+><b><code>$P0.&#39;eof&#39;()</b></code></a></dt>
+Returns true if the filehandle is at the end of the current file, false otherwise.
+<dt><a name="$P0.&#39;get_fd&#39;()"
+><b><code>$P0.&#39;get_fd&#39;()</b></code></a></dt>
+Returns the integer file descriptor of the current file, but only on operating systems that use file descriptors. Returns <code>&#45;1</code> on systems that do not support this.</dl>
+
+<h2><a name="Exceptions"
+>Exceptions</a></h2>
+
+<h2><a name="Exceptions_and_Exception_Handlers"
+>Exceptions and Exception Handlers</a></h2>
+
+<p></p>
+
+<p><!--
+	INDEX: exceptions
+--> <!--
+	INDEX: exception handlers
+--> Exceptions provide a way of calling a piece of code outside the normal flow of control. They are mainly used for error reporting or cleanup tasks, but sometimes exceptions are just a funny way to branch from one code location to another one. The design and implementation of exceptions in Parrot isn&#39;t complete yet, but this section will give you an idea where we&#39;re headed.</p>
+
+<p>Exceptions are objects that hold all the information needed to handle the exception: the error message, the severity and type of the error, etc. The class of an exception object indicates the kind of exception it is.</p>
+
+<p>Exception handlers are derived from continuations. They are ordinary subroutines that follow the Parrot calling conventions, but are never explicitly called from within user code. User code pushes an exception handler onto the control stack with the <code>set_eh</code><!--
+	INDEX: set_eh opcode (PIR)
+--> opcode. The system calls the installed exception handler only when an exception is thrown (perhaps because of code that does division by zero or attempts to retrieve a global that wasn&#39;t stored.)</p>
+<pre>    newsub P20, .ExceptionHandler, _handler
+    set_eh P20                  # push handler on control stack
+    null P10                    # set register to null
+    get_global P10, "none"     # may throw exception
+    clear_eh                    # pop the handler off the stack
+    #...
+
+  _handler:                     # if not, execution continues here
+    is_null P10, not_found      # test P10
+    #...
+</pre>
+<p>This example creates a new exception handler subroutine with the <code>newsub</code> opcode and installs it on the control stack with the <code>set_eh</code> opcode. It sets the <code>P10</code> register to a null value (so it can be checked later) and attempts to retrieve the global variable named <code>none</code>. If the global variable is found, the next statement (<code>clear_eh</code>) pops the exception handler off the control stack and normal execution continues. If the <code>get_global</code> call doesn&#39;t find <code>none</code> it throws an exception by pushing an exception object onto the control stack. When Parrot sees that it has an exception, it pops it off the control stack and calls the exception handler <code>_handler</code>.</p>
+
+<p>The first exception handler in the control stack sees every exception thrown. The handler has to examine the exception object and decide whether it can handle it (or discard it) or whether it should <code>rethrow</code> the exception to pass it along to an exception handler deeper in the stack. The <code>rethrow</code><!--
+	INDEX: rethrow opcode (PIR)
+--> opcode is only valid in exception handlers. It pushes the exception object back onto the control stack so Parrot knows to search for the next exception handler in the stack. The process continues until some exception handler deals with the exception and returns normally, or until there are no more exception handlers on the control stack. When the system finds no installed exception handlers it defaults to a final action, which normally means it prints an appropriate message and terminates the program.</p>
+
+<p>When the system installs an exception handler, it creates a return continuation with a snapshot of the current interpreter context. If the exception handler just returns (that is, if the exception is cleanly caught) the return continuation restores the control stack back to its state when the exception handler was called, cleaning up the exception handler and any other changes that were made in the process of handling the exception.</p>
+
+<p>Exceptions thrown by standard Parrot opcodes (like the one thrown by <code>get_global</code> above or by the <code>throw</code> opcode) are always resumable, so when the exception handler function returns normally it continues execution at the opcode immediately after the one that threw the exception. Other exceptions at the run&#45;loop level are also generally resumable.</p>
+<pre>  new $P10, 'Exception'    # create new Exception object
+  set $P10, 'I die'        # set message attribute
+  throw $P10               # throw it
+</pre>
+<p>Exceptions are designed to work with the Parrot calling conventions. Since the return addresses of <code>bsr</code> subroutine calls and exception handlers are both pushed onto the control stack, it&#39;s generally a bad idea to combine the two.</p>
+
+<p>Parrot includes a robust exception mechanism that is not only used internally to implement a variety of control flow constructs, but is also available for use directly from PIR code. Exceptions, in as few words as possible, are error conditions in the program. Exceptions are <i>thrown</i> when an error occurs, and they can be <i>caught</i> by special routines called <i>handlers</i>. This enables Parrot to recover from errors in a controlled way, instead of crashing and terminating the process entirely.</p>
+
+<p>Exceptions, like most other data objects in Parrot, are PMCs. They contain and provide access to a number of different bits of data about the error, such as the location where the error was thrown (including complete backtraces), any annotation information from the file, and other data.</p>
+
+<h3><a name="Throwing_Exceptions"
+>Throwing Exceptions</a></h3>
+
+<p>Many exceptions are used internally in Parrot to indicate error conditions. Opcodes such as <code>die</code> and <code>warn</code> throw exceptions internally to do what they are supposed to do. Other opcodes such as <code>div</code> throw exceptions only when an error occurs, such as an attempted division by zero.</p>
+
+<p>Exceptions can also be thrown manually using the <code>throw</code> opcode. Here&#39;s an example:</p>
+
+<pre>  $P0 = new &#39;Exception&#39;
+  throw $P0</pre>
+
+<p>This throws the exception object as an error. If there are any available handlers in scope, the interpreter will pass the exception object to the handler and continue execution there. If there are no handlers available, Parrot will exit.</p>
+
+<h3><a name="Exception_Attributes"
+>Exception Attributes</a></h3>
+
+<p>Since Exceptions are PMC objects, they can contain a number of useful data items. One such data item is the message:</p>
+
+<pre>  $P0 = new &#39;Exception&#39;
+  $P1 = new &#39;String&#39;
+  $P1 = &#34;this is an error message for the exception&#34;
+  $P0[&#34;message&#34;] = $P1</pre>
+
+<p>Another is the severity and the type:</p>
+
+<pre>  $P0[&#34;severity&#34;] = 1   # An integer value
+  $P0[&#34;type&#34;] = 2       # Also an Integer</pre>
+
+<p>Finally, there is a spot for additional data to be included:</p>
+
+<pre>  $P0[&#34;payload&#34;] = $P2  # Any arbitrary PMC</pre>
+
+<h3><a name="Exception_Handlers"
+>Exception Handlers</a></h3>
+
+<p>Exception handlers are labels in PIR code that can be jumped to when an exception is thrown. To list a label as an exception handler, the <code>push_eh</code> opcode is used. All handlers exist on a stack. Pushing a new handler adds it to the top of the stack, and using the <code>pop_eh</code> opcode pops the handler off the top of the stack.</p>
+
+<pre>  push_eh my_handler
+    # something that might cause an error
+
+  my_handler:
+    # handle the error here</pre>
+
+<h3><a name="Catching_Exceptions"
+>Catching Exceptions</a></h3>
+
+<p>The exception PMC that was thrown can be caught using the <code>.get_results()</code> directive. This returns the Exception PMC object that was thrown from inside the handler:</p>
+
+<pre>  my_handler:
+    .local pmc err
+    .get_results(err)</pre>
+
+<p>With the exception PMC available, the various attributes of that PMC can be accessed and analyzed for additional information about the error.</p>
+
+<h3><a name="Exception_Handler_PMCs"
+>Exception Handler PMCs</a></h3>
+
+<p>Like all other interesting data types in Parrot, exception handlers are a PMC type. When using the syntax above with <code>push_eh LABEL</code>, the handler PMC is created internally by Parrot. However, you can create it explicitly too if you want:</p>
+
+<pre>  $P0 = new &#39;ExceptionHandler&#39;
+  set_addr $P0, my_handler
+  push_eh $P0
+  ...
+
+  my_handler:
+    ...</pre>
+
+<h3><a name="Rethrowing_Exceptions"
+>Rethrowing Exceptions</a></h3>
+
+<p>Exception handlers are nested and are stored in a stack. This is because not all handlers are intended to handle all exceptions. If a handler cannot deal with a particular exception, it can <code>rethrow</code> the exception to the next outer handler handler. If none of the set handlers can handle the exception, the exception is a fatal error and Parrot will exit.</p>
+
+<h2><a name="Annotations"
+>Annotations</a></h2>
+
+<p>Annotations are pieces of metadata that can be stored in a bytecode file to give some information about what the original source code looked like. This is especially important when dealing with high&#45;level languages. We&#39;ll go into detail about annotations and their use in Chapter 10.</p>
+
+<p>Annotations are created using the c&#60;.annotation&#62; keyword. Annotations consist of a key/value pair, where the key is a string and the value is an integer, a number, or a string. Since annotations are stored compactly as constants in the compiled bytecode, PMCs cannot be used.</p>
+
+<pre>  .annotation &#39;file&#39;, &#39;mysource.lang&#39;
+  .annotation &#39;line&#39;, 42
+  .annotation &#39;compiletime&#39;, 0.3456</pre>
+
+<p>Annotations exist, or are &#34;in force&#34; throughout the entire subroutine, or until they are redefined. Creating a new annotation with the same name as an old one overwrites it with the new value. The current hash of annotations can be retrieved with the <code>annotations</code> opcode:</p>
+
+<pre>  .annotation &#39;line&#39;, 1
+  $P0 = annotations # {&#39;line&#39; =&#62; 1}
+  .annotation &#39;line&#39;, 2
+  $P0 = annotations # {&#39;line&#39; =&#62; 2}</pre>
+
+<p>Or, to retrieve a single annotation by name, you can write:</p>
+
+<pre>  $I0 = annotations &#39;line&#39;</pre>
+
+<h3><a name="Annotations_in_Exceptions"
+>Annotations in Exceptions</a></h3>
+
+<p>Exception objects contain information about the annotations that were in force when the exception was thrown. These can be retrieved with the <code>&#39;annotation&#39;()</code> method of the exception PMC object:</p>
+
+<pre>  $I0 = $P0.&#39;annotations&#39;(&#39;line&#39;)  # only the &#39;line&#39; annotation
+  $P1 = $P0.&#39;annotations&#39;()        # hash of all annotations</pre>
+
+<p>Exceptions can also give out a backtrace to try and follow where the program was exactly when the exception was thrown:</p>
+
+<pre>  $P1 = $P0.&#39;backtrace&#39;()</pre>
+
+<p>The backtrace PMC is an array of hashes. Each element in the array corresponds to a function in the current call stack. Each hash has two elements: <code>&#39;annotation&#39;</code> which is the hash of annotations that were in effect at that point, and <code>&#39;sub&#39;</code> which is the Sub PMC of that function.</p>
+
+<h2><a name="Events"
+>Events</a></h2>
+
+<p></p>
+
+<p>An event is a notification that something has happened: a timer expired, an IO operation finished, a thread sent a message to another thread, or the user pressed <code>Ctrl&#45;C</code> to interrupt program execution.</p>
+
+<p>What all of these events have in common is that they arrive asynchronously. It&#39;s generally not safe to interrupt program flow at an arbitrary point and continue at a different position, so the event is placed in the interpreter&#39;s task queue. The run loops code regularly checks whether an event needs to be handled. Event handlers may be an internal piece of code or a user&#45;defined event handler subroutine.</p>
+
+<p>Events are still experimental in Parrot, so the implementation and design is subject to change.</p>
+
+<h3><a name="Timers"
+>Timers</a></h3>
+
+<p></p>
+
+<p><code>Timer</code> objects are the replacement for Perl 5&#39;s <code>alarm</code> handlers. They are also a significant improvement. Timers can fire once or repeatedly, and multiple timers can run independently. The precision of a timer is limited by the OS Parrot runs on, but it is always more fine&#45;grained then a whole second. The final syntax isn&#39;t yet fixed, so please consult the documentation for examples.</p>
+
+<h3><a name="Signals"
+>Signals</a></h3>
+
+<p></p>
+
+<p>Signal handling is related to events. When Parrot gets a signal it needs to handle from the OS, it converts that signal into an event and broadcasts it to all running threads. Each thread independently decides if it&#39;s interested in this signal and, if so, how to respond to it.</p>
+<pre>    newsub P20, .ExceptionHandler, _handler
+    set_eh P20                  # establish signal handler
+    print "send SIGINT:\n"
+    sleep 2                     # press ^C after you saw start
+    print "no SIGINT\n"
+    end
+  _handler:
+    .include "signal.pasm"      # get signal definitions
+    print "caught "
+    set I0, P5["type"]         # if _type is negative, the ...
+    neg I0, I0                  # ... negated type is the signal
+    ne I0, .SIGINT, nok
+    print "SIGINT\n"
+  nok:
+    end
+</pre>
+<p>This example creates a signal handler and pushes it on to the control stack. It then prompts the user to send a <code>SIGINT</code> from the shell (this is usually <code>Ctrl&#45;C</code>, but it varies in different shells), and waits for 2 seconds. If the user doesn&#39;t send a SIGINT in 2 seconds the example just prints &#34;no SIGINT&#34; and ends. If the user does send a SIGINT, the signal handler catches it, prints out &#34;caught SIGINT&#34; and ends.Currently, only Linux installs a <code>SIGINT</code> <code>sigaction</code> handler, so this example won&#39;t work on other platforms.</p>
+
+<h2><a name="Threads"
+>Threads</a></h2>
+
+<p></p>
+
+<p>Threads allow multiple pieces of code to run in parallel. This is useful when you have multiple physical CPUs to share the load of running individual threads. With a single processor, threads still provide the feeling of parallelism, but without any improvement in execution time. Even worse, sometimes using threads on a single processor will actually slow down your program.</p>
+
+<p>Still, many algorithms can be expressed more easily in terms of parallel running pieces of code and many applications profit from taking advantage of multiple CPUs. Threads can vastly simplify asynchronous programs like internet servers: a thread splits off, waits for some IO to happen, handles it, and relinquishes the processor again when it&#39;s done.</p>
+
+<p>Parrot compiles in thread support by default (at least, if the platform provides some kind of support for it). Unlike Perl 5, compiling with threading support doesn&#39;t impose any execution time penalty for a non&#45;threaded program. Like exceptions and events, threads are still under development, so you can expect significant changes in the near future.</p>
+
+<p>As outlined in the previous chapter, Parrot implements three different threading models. (<b>Note</b>: As of version 1.0, the <code>TQueue</code> PMC will be deprecated, rendering the following discussion obsolete.) The following example uses the third model, which takes advantage of shared data. It uses a <code>TQueue</code> (thread&#45;safe queue) object to synchronize the two parallel running threads. This is only a simple example to illustrate threads, not a typical usage of threads (no&#45;one really wants to spawn two threads just to print out a simple string).</p>
+<pre>    get_global P5, "_th1"              # locate thread function
+    new P2, "ParrotThread"              # create a new thread
+    find_method P0, P2, "thread3"       # a shared thread's entry
+    new P7, "TQueue"                    # create a Queue object
+    new P8, "Int"                       # and a Int
+    push P7, P8                         # push the Int onto queue
+    new P6, "String"                    # create new string
+    set P6, "Js nte artHce\n"
+    set I3, 3                           # thread function gets 3 args
+    invoke                              # _th1.run(P5,P6,P7)
+    new P2, "ParrotThread"              # same for a second thread
+    get_global P5, "_th2"
+    set P6, "utaohrPro akr"             # set string to 2nd thread's
+    invoke                              # ... data, run 2nd thread too
+    end                                 # Parrot joins both
+
+  .pcc_sub _th1:                        # 1st thread function
+  w1: sleep 0.001                       # wait a bit and schedule
+    defined I1, P7                      # check if queue entry is ...
+    unless I1, w1                       # ... defined, yes: it's ours
+    set S5, P6                          # get string param
+    substr S0, S5, I0, 1                # extract next char
+    print S0                            # and print it
+    inc I0                              # increment char pointer
+    shift P8, P7                        # pull item off from queue
+    if S0, w1                           # then wait again, if todo
+    invoke P1                           # done with string
+
+  .pcc_sub _th2:                        # 2nd thread function
+  w2: sleep 0.001
+    defined I1, P7                      # if queue entry is defined
+    if I1, w2                           # then wait
+    set S5, P6
+    substr S0, S5, I0, 1                # if not print next char
+    print S0
+    inc I0
+    new P8, "Int"                       # and put a defined entry
+    push P7, P8                         # onto the queue so that
+    if S0, w2                           # the other thread will run
+    invoke P1                           # done with string
+</pre>
+<p>This example creates a <code>ParrotThread</code> object and calls its <code>thread3</code> method, passing three arguments: a PMC for the <code>_th1</code> subroutine in <code>P5</code>, a string argument in <code>P6</code>, and a <code>TQueue</code> object in <code>P7</code> containing a single integer. Remember from the earlier section &#34;Parrot calling conventions&#34; that registers 5&#45;15 hold the arguments for a subroutine or method call and <code>I3</code> stores the number of arguments. The thread object is passed in <code>P2</code>.</p>
+
+<p>This call to the <code>thread3</code> method spawns a new thread to run the <code>_th1</code> subroutine. The main body of the code then creates a second <code>ParrotThread</code> object in <code>P2</code>, stores a different subroutine in <code>P5</code>, sets <code>P6</code> to a new string value, and then calls the <code>thread3</code> method again, passing it the same <code>TQueue</code> object as the first thread. This method call spawns a second thread. The main body of code then ends, leaving the two threads to do the work.</p>
+
+<p>At this point the two threads have already started running. The first thread (<code>_th1</code>) starts off by sleeping for a 1000th of a second. It then checks if the <code>TQueue</code> object contains a value. Since it contains a value when the thread is first called, it goes ahead and runs the body of the subroutine. The first thing this does is shift the element off the <code>TQueue</code>. It then pulls one character off a copy of the string parameter using <code>substr</code>, prints the character, increments the current position (<code>I0</code>) in the string, and loops back to the <code>w1</code> label and sleeps. Since the queue doesn&#39;t have any elements now, the subroutine keeps sleeping.</p>
+
+<p>Meanwhile, the second thread (<code>_th2</code>) also starts off by sleeping for a 1000th of a second. It checks if the shared <code>TQueue</code> object contains a defined value but unlike the first thread it only continues sleeping if the queue does contain a value. Since the queue contains a value when the second thread is first called, the subroutine loops back to the <code>w2</code> label and continues sleeping. It keeps sleeping until the first thread shifts the integer off the queue, then runs the body of the subroutine. The body pulls one character off a copy of the string parameter using <code>substr</code>, prints the character, and increments the current position in the string. It then creates a new <code>Int</code>, pushes it onto the shared queue, and loops back to the <code>w2</code> label again to sleep. The queue has an element now, so the second thread keeps sleeping, but the first thread runs through its loop again.</p>
+
+<p>The two threads alternate like this, printing a character and marking the queue so the next thread can run, until there are no more characters in either string. At the end, each subroutine invokes the return continuation in <code>P1</code> which terminates the thread. The interpreter waits for all threads to terminate in the cleanup phase after the <code>end</code> in the main body of code.</p>
+
+<p>The final printed result (as you might have guessed) is:</p>
+
+<pre>  Just another Parrot Hacker</pre>
+
+<p>The syntax for threads isn&#39;t carved in stone and the implementation still isn&#39;t finished but as this example shows, threads are working now and already useful.</p>
+
+<p>Several methods are useful when working with threads. The <code>join</code> method belongs to the <code>ParrotThread</code> class. When it&#39;s called on a <code>ParrotThread</code> object, the calling code waits until the thread terminates.</p>
+<pre>    new $P2, "ParrotThread"       # create a new thread
+    set $I5, $P2                  # get thread ID
+
+    find_method $P0, $P2, "join"  # get the join method...
+    invoke                        # ...and join (wait for) the thread
+    set $P16, $P5                 # the return result of the thread
+</pre>
+<p><code>kill</code> and <code>detach</code> are interpreter methods, so you have to grab the current interpreter object before you can look up the method object.</p>
+<pre>    set $I5, $P2                  # get thread ID of thread P2
+    getinterp $P3                 # get this interpreter object
+    find_method $P0, $P3, "kill"  # get kill method
+    invoke                        # kill thread with ID I5
+
+    find_method $P0, $P3, "detach"
+    invoke                      # detach thread with ID I5
+</pre>
+<p>By the time you read this, some of these combinations of statements and much of the threading syntax above may be reduced to a simpler set of opcodes.</p>
+
+<h2><a name="Loading_Bytecode"
+>Loading Bytecode</a></h2>
+
+<p></p>
+
+<p>In addition to running Parrot bytecode on the command&#45;line, you can also load pre&#45;compiled bytecode directly into your PIR source file. The <code>load_bytecode</code><!--
+	INDEX: load_bytecode opcode (PIR)
+--> opcode takes a single argument: the name of the bytecode file to load. So, if you create a file named <em>file.pasm</em> containing a single subroutine:</p>
+<pre>  # file.pasm
+  .sub _sub2:               # .sub stores a global sub
+     print "in sub2\n"
+     invoke P1
+</pre>
+<p>and compile it to bytecode using the <code>&#45;o</code> command&#45;line switch:</p>
+
+<pre>  $ parrot &#45;o file.pbc file.pasm</pre>
+
+<p>You can then load the compiled bytecode into <em>main.pasm</em> and directly call the subroutine defined in <em>file.pasm</em>:</p>
+<pre>  # main.pir
+  main:
+    load_bytecode "file.pbc"    # compiled file.pasm
+    get_global $P0, "_sub2"
+    invokecc
+</pre>
+<p>The <code>load_bytecode</code> opcode also works with source files, as long as Parrot has a compiler registered for that type of file:</p>
+<pre>  # main2.pir
+  main:
+    load_bytecode "file.pasm"  # PIR source code
+    set_global $P0, "_sub2"
+    invokecc
+</pre>
+<p>Subroutines marked with <code>:load</code> run as soon as they&#39;re loaded (before <code>load_bytecode</code> returns), rather than waiting to be called. A subroutine marked with <code>:main</code> will always run first, no matter what name you give it or where you define it in the file.</p>
+<pre>  # file3.pir
+  .sub :load                    # mark the sub as to be run
+    print "file3\n"
+    invoke $P1                   # return
+
+  # main3.pasm
+  first:                        # first is never invoked
+    print "never\n"
+    invoke $P1
+
+  .sub :main                    # because _main is marked as the
+    print "main\n"              # MAIN entry of program execution
+    load_bytecode "file3.pasm"
+    print "back\n"
+</pre>
+<p>This example uses both <code>:load</code> and <code>:main</code>. Because the <code>main</code> subroutine is defined with <code>:main</code> it will execute first even though another subroutine comes before it in the file. <code>main</code> prints a line, loads the PIR source file, and then prints another line. Because <code>_entry</code> in <em>file3.pasm</em> is marked with <code>:load</code> it runs before <code>load_bytecode</code> returns, so the final output is:</p>
+
+<pre>  main
+  file3
+  back</pre>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

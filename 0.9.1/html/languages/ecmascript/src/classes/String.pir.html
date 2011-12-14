@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>JS Str class and related functions</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Contents</a> &raquo; <a href="../../../../../html/languages.html">Language Implementations</a> &raquo; <a href="../../../../../html/ecmascript.html">ecmascript</a> &raquo; JS Str class and related functions
+                </div>
+
+<h1><a name="TITLE"
+>TITLE</a></h1>
+
+<p>Str &#45; JS Str class and related functions</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This file sets up the <code>JSStr</code> PMC type (from <em>src/pmc/jsstr.pmc</em>) as the JS <code>Str</code> class.</p>
+
+<h1><a name="Methods"
+>Methods</a></h1>
+
+<dl>
+<dt><a name="js()"
+>js()</a></dt>
+Returns a js representation of the Str.
+<dt><a name="sprintf(_*@args_)"
+>sprintf( *@args )</a></dt>
+
+<dt><a name="WHICH()"
+>WHICH()</a></dt>
+Returns the identify value.</dl>
+
+<h1><a name="Functions"
+>Functions</a></h1>
+
+<dl>
+<dt><a name="infix:==="
+>infix:===</a></dt>
+Overridden for Str.</dl>
+
+<h2><a name="TODO_Functions"
+>TODO Functions</a></h2>
+
+<dl>
+<dt><a name="p5chop"
+>p5chop</a></dt>
+
+<pre> our Char multi P5emul::Str::p5chop ( Str  $string is rw )
+ our Char multi P5emul::Str::p5chop ( Str *@strings = ($+_) is rw )</pre>
+Trims the last character from <code>$string</code>, and returns it. Called with a list, it chops each item in turn, and returns the last character chopped.
+<dt><a name="p5chomp"
+>p5chomp</a></dt>
+
+<pre> our Int multi P5emul::Str::p5chomp ( Str  $string is rw )
+ our Int multi P5emul::Str::p5chomp ( Str *@strings = ($+_) is rw )</pre>
+Related to <code>p5chop</code>, only removes trailing chars that match <code>/\n/</code>. In either case, it returns the number of chars removed.
+<dt><a name="chomp"
+>chomp</a></dt>
+
+<pre> our Str method Str::chomp ( Str $string: )</pre>
+Returns string with newline removed from the end. An arbitrary terminator can be removed if the input filehandle has marked the string for where the &#34;newline&#34; begins. (Presumably this is stored as a property of the string.) Otherwise a standard newline is removed.Note: Most users should just let their I/O handles autochomp instead. (Autochomping is the default.)
+<dt><a name="length"
+>length</a></dt>
+This word is banned in JS. You must specify units.
+<dt><a name="index"
+>index</a></dt>
+Needs to be in terms of StrPos, not Int.
+<dt><a name="pack"
+>pack</a></dt>
+
+<dt><a name="pos"
+>pos</a></dt>
+
+<dt><a name="quotemeta"
+>quotemeta</a></dt>
+
+<dt><a name="rindex"
+>rindex</a></dt>
+Needs to be in terms of StrPos, not Int.
+<dt><a name="sprintf"
+>sprintf</a></dt>
+
+<dt><a name="unpack"
+>unpack</a></dt>
+
+<dt><a name="vec"
+>vec</a></dt>
+Should replace vec with declared arrays of bit, uint2, uint4, etc.
+<dt><a name="words"
+>words</a></dt>
+
+<pre> our List multi Str::words ( Rule $matcher = /\S+/,  Str $input = $+_, Int $limit = inf )
+ our List multi Str::words ( Str $input : Rule $matcher = /\S+/, Int $limit = inf )</pre>
+</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

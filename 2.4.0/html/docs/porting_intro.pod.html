@@ -1,0 +1,168 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot Subsystem Porting Introduction</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Home</a> &raquo; <a href="../../html/developer.html">Developer Documentation</a> &raquo; Parrot Subsystem Porting Introduction
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/porting_intro.pod &#45; Parrot Subsystem Porting Introduction</p>
+
+<h1><a name="OVERVIEW"
+>OVERVIEW</a></h1>
+
+<p>This document is an introduction to porting the optional subsystems of Parrot onto a new architecture once the core successfully builds.
+It assumes passing familiarity with common VM techniques but relatively little knowledge of Parrot internals.
+For each feature,
+a brief description of its purpose,
+hints on helping to port it,
+and pointers to more information are included.</p>
+
+<h1><a name="Threads"
+>Threads</a></h1>
+
+<h2><a name="What_it_is"
+>What it is</a></h2>
+
+<p>Parrot abstracts parallel streams of execution (threads) using a small set of concurrency primitives that operate on thread objects with distinct code paths and private data.
+Architecture&#45;specific threading models are mapped onto to these primitives to provide Parrot threads with the most desirable features of native threads.
+Native thread support is very important to the adoption of Parrot.</p>
+
+<h2><a name="How_to_help"
+>How to help</a></h2>
+
+<p>At present Parrot implements support only for POSIX threads (pthreads).
+Most modern UNIX&#45;like operating systems have a pthreads implementation,
+and allowing Parrot to use these is frequently just a matter of finding the right compiler and linker flags.
+Non&#45;POSIX architectures with substantially different threading models will require more implementation and debugging to work with Parrot.</p>
+
+<p>To assist with enhancing threading support,
+compare the threading primitives required by Parrot in <em>thread.h</em> to those provided by your platform&#39;s threading model(s) and implement Parrot threads in terms of native threads.
+See <em>thr_pthread.h</em> for an example of this.</p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<ul>
+<li><em><a href="../t/pmc/threads.t.html">t/pmc/threads.t</a></em></li>
+
+<li><em>config/gen/platform/*/threads.h</em></li>
+
+<li><em><a href="../src/thread.c.html">src/thread.c</a></em></li>
+
+<li><em>include/parrot/thread.h</em></li>
+
+<li><em>include/parrot/thr_pthread.h</em></li>
+</ul>
+
+<h1><a name="Signals"
+>Signals</a></h1>
+
+<h2><a name="What_it_is"
+>What it is</a></h2>
+
+<p>Parrot must be able to receive asynchronous imperative and advisory messages from the operating system and other local processes in a safe manner.
+Typically this is done by registering message&#45;specific callback functions,
+to which the operating system transfers control when signals are generated.</p>
+
+<h2><a name="How_to_help"
+>How to help</a></h2>
+
+<p>UNIX&#45;like systems usually employ the signal() function for this purpose; Windows achieves similar functionality with message queues.
+For now,
+Parrot assumes a mechanism like the former can be used.
+Currently the signal handler test suite only operates under Linux,
+though the mechanism itself is intended to work wherever Parrot does.
+Portable tests as well as fixes for failures thereof are greatly needed.</p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<ul>
+<li><em>config/gen/platform/*/signal.[ch]</em></li>
+
+<li><em><a href="../t/pmc/signal.t.html">t/pmc/signal.t</a></em></li>
+</ul>
+
+<h1><a name="Dynloading"
+>Dynloading</a></h1>
+
+<h2><a name="What_it_is"
+>What it is</a></h2>
+
+<p>Nearly all modern operating systems support runtime&#45;specified importation of shared library object code,
+and Parrot must support this feature in order to use native libraries without relying on the system linker.
+Notable APIs for this mechanism include <code>dlopen()</code> on common *NIXes and LoadLibrary on Win32.</p>
+
+<h2><a name="How_to_help"
+>How to help</a></h2>
+
+<p>If not already supported,
+research the dynamic library loading API for your platform and implement it in the platform&#45;specific sources.
+Since Parrot substantially abstracts the dynload mechanism,
+adding support for a new platform should not require diving far into Parrot internals.</p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<ul>
+<li><em>config/gen/platform/*/dl.[ch]</em></li>
+</ul>
+
+<h1><a name="Memory_protection"
+>Memory protection</a></h1>
+
+<h2><a name="What_it_is"
+>What it is</a></h2>
+
+<p>An ever&#45;increasing number of operating systems support the enforcement of executable/non&#45;executable flags on memory regions to prevent the improper execution of erroneous or malicious instructions.
+When applied by default to regions that rarely need to contain executable code,
+this is a useful security measure.
+However,
+since Parrot (specifically,
+the JIT subsystem) generates and executes native instructions in such regions,
+it must be able to safely circumvent these protections.</p>
+
+<h2><a name="How_to_help"
+>How to help</a></h2>
+
+<p>Determine what level of support for execute protection your architecture/OS combination has,
+and how to selectively disable it.
+Documentation for features like PaX (Linux) and W^X (OpenBSD) are the best place to look for this information.
+The platform&#45;specific source files implement memory allocation wrappers that hide these details,
+so wading deep into Parrot is probably not a prerequisite for this task.</p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<ul>
+<li><em>config/gen/platform/*/memexec.c</em></li>
+</ul>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

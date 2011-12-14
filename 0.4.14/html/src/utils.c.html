@@ -1,0 +1,683 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Some utility functions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Some utility functions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/utils.c &#45; Some utility functions</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Prototypes are in <em lang='und' xml:lang='und'>src/misc.h</em>.</p>
+
+<p>Opcode helper functions that don&#39;t really fit elsewhere.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>*/</p>
+
+<p>#include &#34;parrot/parrot.h&#34;</p>
+
+<p>typedef unsigned short _rand_buf[3];</p>
+
+<p>/* Parrot_register_move companion functions i and data */ typedef struct parrot_prm_context { unsigned char *dest_regs; unsigned char *src_regs; unsigned char temp_reg; int* nb_succ; int* backup; int* reg_to_index; Interp *interp; reg_move_func mov; reg_move_func mov_alt; void *info; } parrot_prm_context;</p>
+
+<p>/* HEADERIZER HFILE: include/parrot/misc.h */ /* HEADERIZER BEGIN: static */</p>
+
+<p>static FLOATVAL _drand48( void ); static FLOATVAL _erand48( _rand_buf buf ); static long _jrand48( _rand_buf buf ); static long _lrand48( void ); static long _mrand48( void ); static long _nrand48( _rand_buf buf ); static void _srand48( long seed ); static void move_reg( int from,
+int dest,
+NOTNULL(parrot_prm_context* c) ) __attribute__nonnull__(3);</p>
+
+<p>static void next_rand( _rand_buf X ); static void process_cycle_without_exit( int node_index,
+NOTNULL(parrot_prm_context* c) ) __attribute__nonnull__(2);</p>
+
+<p>static void rec_climb_back_and_mark( int node_index,
+NOTNULL(parrot_prm_context* c) ) __attribute__nonnull__(2);</p>
+
+<p>/* HEADERIZER END: static */</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: intval_mod</p>
+
+<p>NOTE: This &#34;corrected mod&#34; algorithm is based on the C code on page 70 of [1].
+Assuming correct behavior of the built&#45;in mod operator (%) with positive arguments,
+this algorithm implements a mathematically convenient version of mod,
+defined thus:</p>
+
+<pre lang='und' xml:lang='und'>    x mod y = x &#45; y * floor(x / y)</pre>
+
+<p>For more information on this definition of mod, see section 3.4 of [2], pages 81&#45;85.</p>
+
+<p>References:</p>
+
+<p>[1] Donald E. Knuth, *MMIXware: A RISC Computer for the Third Millennium* Springer, 1999.</p>
+
+<p>[2] Ronald L. Graham, Donald E. Knuth and Oren Patashnik, *Concrete Mathematics*, Second Edition. Addison&#45;Wesley, 1994.</p>
+
+<p>*/</p>
+
+<p>PARROT_CONST_FUNCTION INTVAL intval_mod(INTVAL i2, INTVAL i3) { INTVAL y; INTVAL z = i3; int s = 0; INTVAL r;</p>
+
+<pre lang='und' xml:lang='und'>    if (z == 0)
+        return i2;
+
+    y = i2;
+
+    if (y &#60; 0) { s += 2; y = &#45;y; }
+    if (z &#60; 0) { s += 1; z = &#45;z; }
+
+    r = y % z;
+
+    if (r) {    /* # 36003 */
+        switch (s) {
+            case 0:            break;
+            case 1: r = r &#45; z; break;
+            case 2: r = z &#45; r; break;
+            case 3: r = &#45;r;    break;
+        }
+    }
+
+    return r;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: floatval_mod</p>
+
+<p>Returns <code lang='und' xml:lang='und'>n2 mod n3</code>.</p>
+
+<p>Includes a workaround for buggy code generation in the <code lang='und' xml:lang='und'>lcc</code> compiler.</p>
+
+<p>*/</p>
+
+<p>PARROT_CONST_FUNCTION FLOATVAL floatval_mod(FLOATVAL n2, FLOATVAL n3) { #ifdef __LCC__</p>
+
+<pre lang='und' xml:lang='und'>  /* Another workaround for buggy code generation in the lcc compiler&#45;
+   * adding a temporary variable makes it pass the test.
+   */
+  const FLOATVAL temp = n3 * floor(n2 / n3);
+
+  return n3
+     ? (n2 &#45; temp)
+     : n2;
+#else
+  return n3
+     ? (n2 &#45; n3 * floor(n2 / n3))
+     : n2;
+#endif
+}</pre>
+
+<p>/*</p>
+
+<h2><a name="Random_Number_Generator"
+>Random Number Generator <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Based on the <code lang='und' xml:lang='und'>rand48()</code> family of functions.</p>
+
+<p>*/</p>
+
+<p>/* * currently undefined */ #ifndef PARROT_HAS_DRAND48</p>
+
+<p>/* * s. man drand48, SuS V2 * * X(n+1) = ( aX(n) + c ) mod 2^48 * */ # define A_lo 0xE66D # define A_mid 0xDEEC # define A_hi 0x5 # define C 0xB # define SEED_LO 0x330E</p>
+
+<p>static _rand_buf a = { A_lo, A_mid, A_hi }; static _rand_buf last_rand; static unsigned short c = C;</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: next_rand</p>
+
+<p>Returns the next random number in <code lang='und' xml:lang='und'>X</code>.</p>
+
+<p>*/</p>
+
+<p>static void next_rand(_rand_buf X) { unsigned short lo, mid, hi; unsigned int t;</p>
+
+<pre lang='und' xml:lang='und'>    /* 48 bit mul, one short at a time */
+    t = X[0] * a[0] + c;
+    lo = t &#38; 0xffff;
+    mid = (t &#62;&#62; 16) &#38; 0xffff;
+
+    t = X[1] * a[0] + X[0] * a[1] + mid;
+    mid = t &#38; 0xffff;
+    hi = (t &#62;&#62; 16) &#38; 0xffff;
+
+    t = X[2] * a[0] + X[1] * a[1] + X[0] * a[2] + hi;
+
+    X[0] = lo;
+    X[1] = mid;
+    X[2] = t &#38; 0xffff;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: _erand48</p>
+
+<p>Returns a <code lang='und' xml:lang='und'>double</code> in the interval <code lang='und' xml:lang='und'>[0.0, 1.0)</code>.</p>
+
+<p>*/</p>
+
+<p>static FLOATVAL _erand48(_rand_buf buf) { FLOATVAL r; next_rand(buf); r = ((buf[0] / 65536.0 + buf[1]) / 65536.0 + buf[2]) / 65536.0; return r; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: _drand48</p>
+
+<p>Returns a <code lang='und' xml:lang='und'>double</code> in the interval <code lang='und' xml:lang='und'>[0.0, 1.0)</code>.</p>
+
+<p>*/</p>
+
+<p>static FLOATVAL _drand48(void) { return _erand48(last_rand); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: _jrand48</p>
+
+<p>Returns a <code lang='und' xml:lang='und'>long</code> in the interval <code lang='und' xml:lang='und'>[&#45;2^31, 2^31)</code>.</p>
+
+<p>*/</p>
+
+<p>static long _jrand48(_rand_buf buf) { long ret; next_rand(buf); ret = buf[2] &#60;&#60; 16 | buf[1]; return ret; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: _nrand48</p>
+
+<p>Returns a <code lang='und' xml:lang='und'>long</code> in the interval <code lang='und' xml:lang='und'>[0, 2^31)</code>.</p>
+
+<p>*/</p>
+
+<p>static long _nrand48(_rand_buf buf) { return _jrand48(buf) &#38; 0x7fffffff; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: _lrand48</p>
+
+<p>Returns a <code lang='und' xml:lang='und'>long</code> in the interval <code lang='und' xml:lang='und'>[0, 2^31)</code>.</p>
+
+<p>*/</p>
+
+<p>static long _lrand48(void) { return _nrand48(last_rand); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: _mrand48</p>
+
+<p>Returns a <code lang='und' xml:lang='und'>long</code> in the interval <code lang='und' xml:lang='und'>[&#45;2^31, 2^31)</code>.</p>
+
+<p>*/</p>
+
+<p>static long _mrand48(void) { return _jrand48(last_rand); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: _srand48</p>
+
+<p>Sets the high order 32 bits to the argument <code lang='und' xml:lang='und'>seed</code>. The low order 16 bits are set to the arbitrary value 0x330e.</p>
+
+<p>*/</p>
+
+<p>static void _srand48(long seed) { last_rand[0] = SEED_LO; last_rand[1] = (unsigned short)seed &#38; 0xffff; last_rand[2] = (unsigned short)(seed &#62;&#62; 16) &#38; 0xffff; /* * reinit a, c if changed by lcong48() */ }</p>
+
+<p># undef A_lo # undef A_mid # undef A_hi # undef C</p>
+
+<p>#else</p>
+
+<p># define _drand48 drand48 # define _erand48(b) erand48(b)</p>
+
+<p># define _lrand48 lrand48 # define _nrand48(b) nrand48(b)</p>
+
+<p># define _mrand48 mrand48 # define _jrand48(b) jrand48(b)</p>
+
+<p># define _srand48 srand48</p>
+
+<p>#endif</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_float_rand</p>
+
+<p>Returns a <code lang='und' xml:lang='und'>FLOATVAL</code> in the interval <code lang='und' xml:lang='und'>[0.0, 1.0)</code>.</p>
+
+<p><code lang='und' xml:lang='und'>how_random</code> is ignored.</p>
+
+<p>*/</p>
+
+<p>PARROT_API FLOATVAL Parrot_float_rand(INTVAL how_random) { UNUSED(how_random);</p>
+
+<pre lang='und' xml:lang='und'>    return _drand48();          /* [0.0..1.0] */
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_uint_rand</p>
+
+<p>Returns an <code lang='und' xml:lang='und'>INTVAL</code> in the interval <code lang='und' xml:lang='und'>[0, 2^31)</code>.</p>
+
+<p><code lang='und' xml:lang='und'>how_random</code> is ignored.</p>
+
+<p>*/</p>
+
+<p>PARROT_API INTVAL Parrot_uint_rand(INTVAL how_random) { UNUSED(how_random);</p>
+
+<pre lang='und' xml:lang='und'>    return _lrand48();          /* [0..2^31] */
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_int_rand</p>
+
+<p>Returns an <code lang='und' xml:lang='und'>INTVAL</code> in the interval <code lang='und' xml:lang='und'>[&#45;2^31, 2^31)</code>.</p>
+
+<p><code lang='und' xml:lang='und'>how_random</code> is ignored.</p>
+
+<p>*/</p>
+
+<p>PARROT_API INTVAL Parrot_int_rand(INTVAL how_random) { UNUSED(how_random);</p>
+
+<pre lang='und' xml:lang='und'>    return _mrand48();          /* [&#45;2^31..2^31] */
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_range_rand</p>
+
+<p>Returns an <code lang='und' xml:lang='und'>INTVAL</code> in the range <code lang='und' xml:lang='und'>[from, to]</code>.</p>
+
+<p><code lang='und' xml:lang='und'>how_random</code> is ignored.</p>
+
+<p>*/</p>
+
+<p>PARROT_API INTVAL Parrot_range_rand(INTVAL from, INTVAL to, INTVAL how_random) { return (INTVAL)(from + ((double)(to &#45; from)) * Parrot_float_rand(how_random)); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_srand</p>
+
+<p>Seeds the random number generator with <code lang='und' xml:lang='und'>seed</code>.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void Parrot_srand(INTVAL seed) { _srand48(seed); }</p>
+
+<p>/*</p>
+
+<h2><a name="Array_Functions"
+>Array Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>FUNCDOC: Parrot_make_la</p>
+
+<p>Creates a C array of <code lang='und' xml:lang='und'>long</code>s with one more element than the number of elements in <code lang='und' xml:lang='und'>*array</code>. The elements are then copied from <code lang='und' xml:lang='und'>*array</code> to the new array, and the last (extra) element is set to 0.</p>
+
+<p>Used in <code lang='und' xml:lang='und'>src/nci.c</code>.</p>
+
+<p>*/</p>
+
+<p>PARROT_API PARROT_WARN_UNUSED_RESULT void * Parrot_make_la(PARROT_INTERP, NOTNULL(PMC *array)) { const INTVAL arraylen = VTABLE_elements(interp, array); INTVAL cur;</p>
+
+<pre lang='und' xml:lang='und'>    /* Allocate the array and set the last element to 0. Since we
+       always allocate one element more than we use we&#39;re guaranteed
+       to actually have an array, even if the inbound array is
+       completely empty
+    */
+    long * const out_array = (long *)mem_sys_allocate((sizeof (long)) * (arraylen + 1));
+    out_array[arraylen] = 0;
+    /*    printf(&#34;Long array has %i elements\n&#34;, arraylen);*/
+    for (cur = 0; cur &#60; arraylen; cur++) {
+        out_array[cur] = VTABLE_get_integer_keyed_int(interp, array, cur);
+    }
+
+    return out_array;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_destroy_la</p>
+
+<p>Use this to destroy an array created with <code lang='und' xml:lang='und'>Parrot_make_la()</code>.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void Parrot_destroy_la(long *array) { mem_sys_free(array); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_make_cpa</p>
+
+<p>Creates a C array of <code lang='und' xml:lang='und'>char *</code>s with one more element than the number of elements in <code lang='und' xml:lang='und'>*array</code>. The elements are then copied from <code lang='und' xml:lang='und'>*array</code> to the new array, and the last (extra) element is set to 0.</p>
+
+<p>Currently unused.</p>
+
+<p>Note that you need to free this array with <code lang='und' xml:lang='und'>Parrot_destroy_cpa()</code>.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void * Parrot_make_cpa(PARROT_INTERP, PMC *array) { const INTVAL arraylen = VTABLE_elements(interp, array); INTVAL cur;</p>
+
+<pre lang='und' xml:lang='und'>    /* Allocate the array and set the last element to 0. Since we
+       always allocate one element more than we use we&#39;re guaranteed
+       to actually have an array, even if the inbound array is
+       completely empty
+    */
+    char ** const out_array = (char **)mem_sys_allocate((sizeof (char *))
+                                               * (arraylen + 1));
+    out_array[arraylen] = 0;
+
+    /*    printf(&#34;String array has %i elements\n&#34;, arraylen);*/
+    for (cur = 0; cur &#60; arraylen; cur++) {
+        out_array[cur] =
+            string_to_cstring(interp,
+                              VTABLE_get_string_keyed_int(interp,
+                                                          array, cur));
+        /*        printf(&#34;Offset %i is %s\n&#34;, cur, out_array[cur]);*/
+    }
+
+    return out_array;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_destroy_cpa</p>
+
+<p>Use this to destroy an array created with <code lang='und' xml:lang='und'>Parrot_make_cpa()</code>.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void Parrot_destroy_cpa(NOTNULL(char **array)) { UINTVAL offset = 0; /* Free each piece */ while (array[offset] != NULL) { string_cstring_free(array[offset++]); } /* And then the holding array */ mem_sys_free(array); }</p>
+
+<p>/* &#38;gen_from_enum(tm.pasm) */ typedef enum { TM_SEC, TM_MIN, TM_HOUR, TM_MDAY, TM_MON, TM_YEAR, TM_WDAY, TM_YDAY, TM_ISDST } tm_struct_enum; /* &#38;end_gen */</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: tm_to_array</p>
+
+<p>Helper to convert a <b>struct tm *</b> to an Array</p>
+
+<p>*/</p>
+
+<p>PARROT_API PMC* tm_to_array(PARROT_INTERP, NOTNULL(const struct tm *tm)) { PMC * const Array = pmc_new(interp, enum_class_Array);</p>
+
+<pre lang='und' xml:lang='und'>    VTABLE_set_integer_native(interp, Array, 9);
+    VTABLE_set_integer_keyed_int(interp, Array, 0, tm&#45;&#62;tm_sec);
+    VTABLE_set_integer_keyed_int(interp, Array, 1, tm&#45;&#62;tm_min);
+    VTABLE_set_integer_keyed_int(interp, Array, 2, tm&#45;&#62;tm_hour);
+    VTABLE_set_integer_keyed_int(interp, Array, 3, tm&#45;&#62;tm_mday);
+    VTABLE_set_integer_keyed_int(interp, Array, 4, tm&#45;&#62;tm_mon + 1);
+    VTABLE_set_integer_keyed_int(interp, Array, 5, tm&#45;&#62;tm_year + 1900);
+    VTABLE_set_integer_keyed_int(interp, Array, 6, tm&#45;&#62;tm_wday);
+    VTABLE_set_integer_keyed_int(interp, Array, 7, tm&#45;&#62;tm_yday);
+    VTABLE_set_integer_keyed_int(interp, Array, 8, tm&#45;&#62;tm_isdst);
+
+    return Array;
+}</pre>
+
+<p>PARROT_API INTVAL Parrot_byte_index(SHIM_INTERP, NOTNULL(const STRING *base), NOTNULL(const STRING *search), UINTVAL start_offset) { const INTVAL searchlen = search&#45;&#62;strlen; const char * const search_start = search&#45;&#62;strstart; const INTVAL max_possible_offset = (base&#45;&#62;strlen &#45; search&#45;&#62;strlen); INTVAL current_offset;</p>
+
+<pre lang='und' xml:lang='und'>    for (current_offset = start_offset; current_offset &#60;= max_possible_offset;
+            current_offset++) {
+        const char * const base_start = (char *)base&#45;&#62;strstart + current_offset;
+        if (memcmp(base_start, search_start, searchlen) == 0) {
+            return current_offset;
+        }
+    }
+
+    return &#45;1;
+}</pre>
+
+<p>PARROT_API PARROT_WARN_UNUSED_RESULT INTVAL Parrot_byte_rindex(SHIM_INTERP, NOTNULL(const STRING *base), NOTNULL(const STRING *search), UINTVAL start_offset) { const INTVAL searchlen = search&#45;&#62;strlen; const char * const search_start = search&#45;&#62;strstart; UINTVAL max_possible_offset = (base&#45;&#62;strlen &#45; search&#45;&#62;strlen); INTVAL current_offset;</p>
+
+<pre lang='und' xml:lang='und'>    if (start_offset &#38;&#38; start_offset &#60; max_possible_offset)
+        max_possible_offset = start_offset;
+
+    for (current_offset = max_possible_offset; current_offset &#62;= 0;
+            current_offset&#45;&#45;) {
+        const char * const base_start = (char *)base&#45;&#62;strstart + current_offset;
+        if (memcmp(base_start, search_start, searchlen) == 0) {
+            return current_offset;
+        }
+    }
+
+    return &#45;1;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: rec_climb_back_and_mark</p>
+
+<p>Recursive function, used by Parrot_register_move to climb back the graph of register moves operations.</p>
+
+<p>The node must have a predecessor: it is implicit because if a node has a node_index, it must have a predecessor because the node_index are the index of registers in dest_regs[] array, so by definition they have a corrsponding src_regs register.</p>
+
+<p>Then it emits the move operation with its predecessor, or its backup if already used/visited.</p>
+
+<p>Then continues the climbing if the predecessor was not modified, anf in that case marks it, and set node_index as its backup.</p>
+
+<pre lang='und' xml:lang='und'>  node_index  ... the index of a destination (i.e. with a pred.) register
+  c           ... the graph and all the needed params : the context</pre>
+
+<p>*/</p>
+
+<p>static void rec_climb_back_and_mark(int node_index, NOTNULL(parrot_prm_context* c)) { const int node = c&#45;&#62;dest_regs[node_index]; const int pred = c&#45;&#62;src_regs[node_index]; const int pred_index = c&#45;&#62;reg_to_index[pred];</p>
+
+<pre lang='und' xml:lang='und'>    if (pred_index &#60; 0) { /* pred has no predecessor */
+        move_reg(pred, node, c);
+    }
+    else { /* pred has a predecessor, so may be processed */
+        const int src = c&#45;&#62;backup[pred_index];
+        if (src &#60; 0) { /* not visited */
+            move_reg(pred, node, c);
+            c&#45;&#62;backup[pred_index] = node; /* marks pred*/
+            rec_climb_back_and_mark(pred_index, c);
+        }
+        else { /* already visited, use backup instead */
+            move_reg(src, node, c);
+        }
+    }
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: process_cycle_without_exit</p>
+
+<p>Recursive function, used by Parrot_register_move to handle the case of cycles without exits, that are cycles of move ops between registers where each register has exactly one predecessor and one successor</p>
+
+<p>For instance: 1&#45;&#45;&#62;2, 2&#45;&#45;&#62;3, 3&#45;&#45;&#62;1</p>
+
+<pre lang='und' xml:lang='und'>  node_index  ... the index of a destination (i.e. with a pred.) register
+  c           ... the graph and all the needed params : the context</pre>
+
+<p>*/</p>
+
+<p>static void process_cycle_without_exit(int node_index, NOTNULL(parrot_prm_context* c)) { const int pred = c&#45;&#62;src_regs[node_index];</p>
+
+<pre lang='und' xml:lang='und'>    /* let&#39;s try the alternate move function*/
+    const int alt =
+        c&#45;&#62;mov_alt
+            ? c&#45;&#62;mov_alt(c&#45;&#62;interp, c&#45;&#62;dest_regs[node_index], pred, c&#45;&#62;info)
+            : 0;
+
+    if (0 == alt) { /* use temp reg */
+        move_reg(c&#45;&#62;dest_regs[node_index],c&#45;&#62;temp_reg, c);
+        c&#45;&#62;backup[node_index] = c&#45;&#62;temp_reg;
+    }
+    else
+        c&#45;&#62;backup[node_index] = c&#45;&#62;dest_regs[node_index];
+
+    rec_climb_back_and_mark(node_index, c);
+}</pre>
+
+<p>/* should be self&#45;speaking */</p>
+
+<p>static void move_reg(int from, int dest, NOTNULL(parrot_prm_context* c)) { /* fprintf(stderr,&#34;move %i ==&#62; %i\n&#34;,from,dest);*/ c&#45;&#62;mov(c&#45;&#62;interp, dest, from, c&#45;&#62;info); }</p>
+
+<p>/*</p>
+
+<p>Move <code lang='und' xml:lang='und'>n_regs</code> from the given register list <code lang='und' xml:lang='und'>src_regs</code> to <code lang='und' xml:lang='und'>dest_regs</code>.</p>
+
+<pre lang='und' xml:lang='und'>  n_regs    ... amount of registers to move
+  dest_regs ... list of register numbers 0..255
+  src_regs  ... list of register numbers 0..255
+  temp_reg  ... a register number not in one of these lists
+  mov       ... a register move function to be called to move one register
+  mov_alt   ... a register move function to be called to move one register
+                which triese fetching from an alternate src (or NULLfunc):
+
+    (void)  (mov)(interp, dest, src, info);
+    moved = (mov_alt)(interp, dest, src, info);</pre>
+
+<p>Some <code lang='und' xml:lang='und'>dest_regs</code> might be the same as <code lang='und' xml:lang='und'>src_regs</code>, which makes this a bit non&#45;trivial, because if the destination is already clobbered, using it later as source doesn&#34;t work. E.g.</p>
+
+<pre lang='und' xml:lang='und'>  0 &#60;&#45; 1
+  1 &#60;&#45; 0     # register 0 already clobbered</pre>
+
+<p>or</p>
+
+<pre lang='und' xml:lang='und'>  2 &#60;&#45; 0
+  0 &#60;&#45; 1
+  3 &#60;&#45; 2      # register 2 already clobbered &#45; reorder moves</pre>
+
+<p>To handle such cases, we do:</p>
+
+<pre lang='und' xml:lang='und'>  a) rearrange the order of moves (not possible in the first case)
+     and/or if that failed:
+  b) if an alternate move function is available, it may fetch the
+     source from a different (non&#45;clobbered) location &#45; call it.
+     if the function returns 0 also use c)
+  c) if no alternate move function is available, use the temp reg</pre>
+
+<p>The amount of register moves should of course be minimal.</p>
+
+<p>TODO The current implementation will not work for following cases</p>
+
+<p>Talked to Leo and he said those cases are not likely (Vishal Soni). 1. I0&#45;&#62;I1 I1&#45;&#62;I0 I0&#45;&#62;I3 2. I1&#45;&#62;I2 I3&#45;&#62;I2</p>
+
+<p>TODO: Add tests for the above conditions.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void Parrot_register_move(PARROT_INTERP, int n_regs, NOTNULL(unsigned char *dest_regs), NOTNULL(unsigned char *src_regs), unsigned char temp_reg, reg_move_func mov, reg_move_func mov_alt, void *info) { int i; int max_reg = 0; int* nb_succ = NULL; int* backup = NULL; int* reg_to_index = NULL; parrot_prm_context c;</p>
+
+<pre lang='und' xml:lang='und'>    if (n_regs == 0)
+        return;
+
+    if (n_regs == 1) {
+        if (src_regs[0] != dest_regs[0])
+            mov(interp, dest_regs[0], src_regs[0], info);
+        return;
+    }
+
+    c.interp = interp;
+    c.info = info;
+    c.mov = mov;
+    c.mov_alt = mov_alt;
+    c.src_regs = src_regs;
+    c.dest_regs = dest_regs;
+    c.temp_reg = temp_reg;
+
+    /* compute max_reg, the max reg number + 1 */
+    for (i = 0; i &#60; n_regs; i++) {
+        if (src_regs[i] &#62; max_reg)
+            max_reg = src_regs[i];
+        if (dest_regs[i] &#62; max_reg)
+            max_reg = dest_regs[i];
+    }
+    ++max_reg;
+
+
+    /* allocate space for data structures */
+    /* NOTA: data structures could be kept allocated somewhere waiting to get reused...*/
+    c.nb_succ = nb_succ = (int*)mem_sys_allocate_zeroed(sizeof (int) * n_regs);
+    c.backup = backup = (int*)mem_sys_allocate(sizeof (int) * n_regs);
+    c.reg_to_index = reg_to_index = (int*)mem_sys_allocate(sizeof (int) * max_reg);
+
+    /* init backup array */
+    for (i = 0; i &#60; n_regs; i++)
+        backup[i] = &#45;1;
+
+    /* fill in the conversion array between a register number and its index */
+    for (i = 0; i &#60; max_reg; i++)
+        reg_to_index[i] = &#45;1;
+    for (i = 0; i &#60; n_regs; i++) {
+        const int index = dest_regs[i];
+        if (index != src_regs[i]) /* get rid of self&#45;assignment */
+            reg_to_index[index] = i;
+    }
+
+    /* count the nb of successors for each reg index */
+    for (i = 0; i &#60; n_regs; i++) {
+        const int index = reg_to_index[ src_regs[i] ];
+        if (index &#62;= 0) /* not interested in the wells that have no preds */
+            nb_succ[ index ]++;
+    }
+    /* process each well if any */
+    for (i = 0; i &#60; n_regs; i++) {
+        if (0 == nb_succ[i]) { /* a well */
+            rec_climb_back_and_mark(i, &#38;c);
+        }
+    }
+
+    /* process remaining dest registers not processed */
+    /* remaining nodes are members of cycles without exits */
+    for (i = 0; i &#60; n_regs; i++) {
+        if (0 &#60; nb_succ[i] &#38;&#38; 0 &#62; backup[i]) { /* not a well nor visited*/
+            process_cycle_without_exit(i, &#38;c);
+        }
+    }
+
+    mem_sys_free(nb_succ);
+    mem_sys_free(reg_to_index);
+    mem_sys_free(backup);
+}</pre>
+
+<p>/*</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Initial version by leo 2003.09.09.</p>
+
+<p>*/</p>
+
+<p>/* * Local variables: * c&#45;file&#45;style: &#34;parrot&#34; * End: * vim: expandtab shiftwidth=4: */</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

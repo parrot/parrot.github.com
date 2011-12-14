@@ -1,0 +1,207 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Dead object destruction of the various headers</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Dead object destruction of the various headers</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/gc/dod.c &#45; Dead object destruction of the various headers</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This file implements <i>dead object destruction</i>.
+This is documented in PDD 9 with supplementary notes in <em lang='und' xml:lang='und'>docs/dev/dod.pod</em>.</p>
+
+<p>It&#39;s possible to turn on/off the checking of the system stack and processor registers.
+The actual checking is implemented in <em lang='und' xml:lang='und'><a href="../cpu_dep.c.html">src/cpu_dep.c</a></em>.</p>
+
+<p>There&#39;s also a verbose mode for garbage collection.</p>
+
+<h1><a name="FUNCTIONS"
+>FUNCTIONS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="static_void_mark_special(PARROT_INTERP,_NOTNULL(PMC_*obj))"
+><b><code lang='und' xml:lang='und'>static void mark_special(PARROT_INTERP, NOTNULL(PMC *obj))</b></code></a></dt><p class="pad"></p>
+
+<dd>Mark a special PMC.
+If it has a <code lang='und' xml:lang='und'>PMC_EXT</code> structure,
+append or prepend the <code lang='und' xml:lang='und'>next_for_GC</code> pointer; otherwise,
+do the custom mark directly.</dd><p class="pad"></p>
+
+<dd>This should really be inline,
+so if inline isn&#39;t available,
+it would be better if it were a macro.</dd><p class="pad"></p>
+
+<dt><a name="PARROT_API_void_pobject_lives(PARROT_INTERP,_NOTNULL(PObj_*obj))"
+><b><code lang='und' xml:lang='und'>PARROT_API void pobject_lives(PARROT_INTERP, NOTNULL(PObj *obj))</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="int_Parrot_dod_trace_root(PARROT_INTERP,_int_trace_stack)"
+><b><code lang='und' xml:lang='und'>int Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)</b></code></a></dt><p class="pad"></p>
+
+<dd>Trace the root set.
+Returns 0 if it&#39;s a lazy DOD run and all objects that need timely destruction were found.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>trace_stack</code> can have these values:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> 0 ... trace normal roots, no system areas
+ 1 ... trace whole root set
+ 2 ... trace system areas only</pre>
+
+<dt><a name="static_int_trace_active_PMCs(PARROT_INTERP,_int_trace_stack)"
+><b><code lang='und' xml:lang='und'>static int trace_active_PMCs(PARROT_INTERP, int trace_stack)</b></code></a></dt><p class="pad"></p>
+
+<dd>Do a full trace run and mark all the PMCs as active if they are. Returns whether the run completed, that is, whether it&#39;s safe to proceed with GC.</dd><p class="pad"></p>
+
+<dt><a name="int_Parrot_dod_trace_children(PARROT_INTERP,_size_t_how_many)"
+><b><code lang='und' xml:lang='und'>int Parrot_dod_trace_children(PARROT_INTERP, size_t how_many)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns whether the tracing process completed.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_trace_pmc_data(PARROT_INTERP,_NOTNULL(PMC_*_const_p))"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_trace_pmc_data(PARROT_INTERP, NOTNULL(PMC *const p))</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="void_clear_cow(PARROT_INTERP,_NOTNULL(Small_Object_Pool_*pool),_int_cleanup)"
+><b><code lang='und' xml:lang='und'>void clear_cow(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int cleanup)</b></code></a></dt><p class="pad"></p>
+
+<dd>Clear the COW ref count.</dd><p class="pad"></p>
+
+<dt><a name="void_used_cow(PARROT_INTERP,_NOTNULL(Small_Object_Pool_*pool),_int_cleanup)"
+><b><code lang='und' xml:lang='und'>void used_cow(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int cleanup)</b></code></a></dt><p class="pad"></p>
+
+<dd>Find other users of COW&#39;s <code lang='und' xml:lang='und'>bufstart</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_sweep(PARROT_INTERP,_NOTNULL(Small_Object_Pool_*pool))"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_sweep(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool))</b></code></a></dt><p class="pad"></p>
+
+<dd>Put any buffers/PMCs that are now unused onto the pool&#39;s free list. If <code lang='und' xml:lang='und'>GC_IS_MALLOC</code>, bufstart gets freed too, if possible. Avoid buffers that are immune from collection (i.e. constant).</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>void Parrot_dod_free_pmc(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), NOTNULL(PObj *p))</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_free_pmc_ext(PARROT_INTERP,_NOTNULL(PMC_*p))"
+><b><code lang='und' xml:lang='und'>void Parrot_free_pmc_ext(PARROT_INTERP, NOTNULL(PMC *p))</b></code></a></dt><p class="pad"></p>
+
+<dd>Frees the PMC_EXT structure attached to a PMC, if it exists.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>void Parrot_dod_free_sysmem(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), NOTNULL(PObj *b))</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>void Parrot_dod_free_buffer_malloc(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), NOTNULL(PObj *b))</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>void Parrot_dod_free_buffer(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), NOTNULL(PObj *b))</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_CONST_FUNCTION static size_t find_common_mask(PARROT_INTERP, size_t val1, size_t val2)</b></code></a></dt><p class="pad"></p>
+
+<dd>Find a mask covering the longest common bit&#45;prefix of <code lang='und' xml:lang='und'>val1</code> and <code lang='und' xml:lang='und'>val2</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_trace_mem_block(PARROT_INTERP,_size_t_lo_var_ptr,_size_t_hi_var_ptr)"
+><b><code lang='und' xml:lang='und'>void trace_mem_block(PARROT_INTERP, size_t lo_var_ptr, size_t hi_var_ptr)</b></code></a></dt><p class="pad"></p>
+
+<dd>Traces the memory block between <code lang='und' xml:lang='und'>lo_var_ptr</code> and <code lang='und' xml:lang='und'>hi_var_ptr</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_void_clear_live_bits(NOTNULL(Small_Object_Pool_*pool))"
+><b><code lang='und' xml:lang='und'>static void clear_live_bits(NOTNULL(Small_Object_Pool *pool))</b></code></a></dt><p class="pad"></p>
+
+<dd>Run through all PMC arenas and clear live bits.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_clear_live_bits(PARROT_INTERP)"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_clear_live_bits(PARROT_INTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_profile_start(PARROT_INTERP)"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_profile_start(PARROT_INTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>Records the start time of a DOD run when profiling is enabled.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_profile_end(PARROT_INTERP,_int_what)"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_profile_end(PARROT_INTERP, int what)</b></code></a></dt><p class="pad"></p>
+
+<dd>Records the end time of the DOD part <code lang='und' xml:lang='und'>what</code> run when profiling is enabled. Also record start time of next part.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_ms_run_init(PARROT_INTERP)"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_ms_run_init(PARROT_INTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>Prepare for a mark &#38; sweep DOD run.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static int sweep_cb(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(void *arg))</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_ms_run(PARROT_INTERP,_int_flags)"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_ms_run(PARROT_INTERP, int flags)</b></code></a></dt><p class="pad"></p>
+
+<dd>Run the stop&#45;the&#45;world mark &#38; sweep collector.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_do_dod_run(PARROT_INTERP,_UINTVAL_flags)"
+><b><code lang='und' xml:lang='und'>void Parrot_do_dod_run(PARROT_INTERP, UINTVAL flags)</b></code></a></dt><p class="pad"></p>
+
+<dd>Call the configured garbage collector to reclaim unused headers.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/dod.h</em>, <em lang='und' xml:lang='und'><a href="../cpu_dep.c.html">src/cpu_dep.c</a></em>, <em lang='und' xml:lang='und'>docs/dev/dod.dev</em> and <em lang='und' xml:lang='und'>docs/pdds/pdd09_gc.pod</em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Initial version by Mike Lambert on 2002.05.27.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

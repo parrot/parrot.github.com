@@ -1,0 +1,290 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Accessing C Structs from Parrot</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Accessing C Structs from Parrot
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>Structures &#45; Accessing C Structs from Parrot</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Parrot provides two PMC classes to deal with C structures.
+These are UnManagedStruct and ManagedStruct.
+The former has no allocated memory and is typically used to access structures returned by NCI calls,
+while the latter can be used to define a structure and pass it over to a C function &#45; pointers to structures in both cases of course.</p>
+
+<h1><a name="Structure_definition"
+>Structure definition</a></h1>
+
+<p>The Struct PMCs take an array of triples per structure element,
+either as initializer or with the <b>assign</b> opcode to define the struct elements.</p>
+
+<dl>
+<dt><a name="Datatype"
+>Datatype</a></dt>
+The datatype is defined by constants declared in <em>datatypes.pasm</em>.
+<dt><a name="Array_Size"
+>Array Size</a></dt>
+The second initializer item,
+if set to a value greater then 1,
+defines the struct element to consist of an array of the given data type.
+<dt><a name="Byte_Offset"
+>Byte Offset</a></dt>
+The third initializer is the byte offset of the data item in the structure.
+This entry can be 0 if packing of the structure is aligned to the item&#39;s sizes or the alignment is the item&#39;s size.
+Otherwise these offsets must be set correctly as Parrot doesn&#39;t know how your C compiler packs arbitrary data.
+Parrot only knows the size of each item.</dl>
+
+<h2><a name="Alignment"
+>Alignment</a></h2>
+
+<p>Parrot tries to do The Right Thing that is currently align items at their size.</p>
+
+<pre>  struct {
+    char c;
+    int  i;
+  }</pre>
+
+<p>The <code>i</code> above is aligned at 4 (for i386 or such).</p>
+
+<h2><a name="Example"
+>Example</a></h2>
+
+<p>The C structure</p>
+
+<pre>  struct {
+    double d;
+    float  f;
+    int    i[4];
+    char  *s;
+  };</pre>
+
+<p>can be declared with this initializer:</p>
+<pre>  new P2, 'ResizablePMCArray'
+  .include "datatypes.pasm"
+  push P2, .DATATYPE_DOUBLE
+  push P2, 0	# no array i.e. 1 element
+  push P2, 0	# calculate offset by just adding item size
+  push P2, .DATATYPE_FLOAT
+  push P2, 0
+  push P2, 0
+  push P2, .DATATYPE_INT
+  push P2, 4	# 4 elem array
+  push P2, 0
+  push P2, .DATATYPE_CSTR
+  push P2, 0
+  push P2, 0
+</pre>
+<h2><a name="Named_Structure_Elements"
+>Named Structure Elements</a></h2>
+
+<p>The initializer can be an OrderedHash PMC too. When all elements are defined in the correct order this can be used to define and access struct elements by name and by index:</p>
+<pre>  new P2, 'OrderedHash'
+  .include "datatypes.pasm"
+  set P2["d"], .DATATYPE_DOUBLE
+  push P2, 0	# no array i.e. 1 element
+  push P2, 0	# calculate offset by just adding item size
+  set P2["f"], .DATATYPE_FLOAT
+</pre>
+<h1><a name="Size_of_a_Structure"
+>Size of a Structure</a></h1>
+
+<p>For ManagedStruct (a new structure passed over to a C function) the storage for data items has to be allocated. This is done automatically, when the initializer is attached to the Struct PMC.</p>
+
+<p>The size can be obtained by:</p>
+<pre>  new P5, 'ManagedStruct', P2   # P2 be some initializer
+
+  set I0, P5	# allocated size
+</pre>
+<h1><a name="Accessing_Structure_Items"
+>Accessing Structure Items</a></h1>
+
+<p>Setting or getting items is done by keyed access to the Struct PMC. The first key is the structure item, an optional second key can access the n&#45;th array element.</p>
+
+<h2><a name="Example"
+>Example</a></h2>
+<pre>  set P5[0], N0		# set d
+  set N0, P5[0]		# get d
+
+  set N0, P5["d"]       # get d if initializer is an OrderedHash
+
+  set P5[1], N1		# set f
+  set N1, P5[1]		# get f
+  set N1, P5["f"]       # get f if initializer is an OrderedHash
+
+  set P5[2;0], I2	# set i[0]
+  set I3, P5[2;3]	# get i[3]
+
+  set P5["i"; 2]        # set i[2] if initializer is an OrderedHash
+
+  set S0, P5[3]         # get string at *s
+  set S0, P5["s"]	# same
+</pre>
+<h2><a name="Strings"
+>Strings</a></h2>
+
+<p>When passing a STRING to a structure that needs a 0&#45;terminated C&#45;string (char *s), then you have to provide the terminating NUL char in the string.</p>
+
+<pre>  struct {
+    ...
+    char *s;
+  };</pre>
+<pre>  set P5["s"], "a string\x0"
+</pre>
+<p>Please also note, that the C function currently gets a pointer to string memory, so any code that might trigger GC should be avoided (or GC turned off). Passing constant strings like above is safe though.</p>
+<pre>  set P5["s"], S0  # S0 shouldn't move until function call
+</pre>
+<h2><a name="Callback_Functions_in_the_C_Library"
+>Callback Functions in the C Library</a></h2>
+
+<p>Given a C function that returns a structure containing a callback function like in this example:</p>
+
+<pre>  static struct {
+      int (*f)(char *);
+  } t = {
+       call_back
+  };
+  return &#38;t;</pre>
+
+<p>The PASM would look like:</p>
+<pre>  push P2, .DATATYPE_FUNC_PTR
+  # attach function signature property to this type
+  set P1, P2[-1]
+  new P3, 'String'
+  set P3, "it"
+  setprop P1, "_signature", P3
+  push P2, 0
+  push P2, 0
+  # P5 is the return UnManagedStruct PMC
+  assign P5, P2
+  # now we get a callable NCI PMC
+  set P0, P5[0]
+  set S5, "hello call_back"
+  # call the call_back function
+  invoke
+</pre>
+<h2><a name="Nested_Structures_or_Pointers_to_Nested_Structures"
+>Nested Structures or Pointers to Nested Structures</a></h2>
+
+<p>Each contained structure needs its own UnManagedStruct initializer. The UnManagedStruct of the contained structures has to be attached to the structure type PMC as the property <b>&#34;_struct&#34;</b>.</p>
+
+<p>If a C function returns a pointer to this structure:</p>
+
+<pre>  static struct xt {
+      char x;
+      struct yt {
+          char i;
+          int  j;
+      } _y;
+      char z;
+  } _x;</pre>
+
+<p>... access to elements could look like:</p>
+<pre>  # the nested structure
+  new P3, 'OrderedHash'
+  set P3["i"], .DATATYPE_CHAR
+  push P3, 0
+  push P3, 0
+  set P3["j"], .DATATYPE_INT
+  push P3, 0
+  push P3, 0
+  new P4, 'UnManagedStruct', P3
+
+  # outer structure
+  new P2, 'OrderedHash'
+  set P2["x"], .DATATYPE_CHAR
+  push P2, 0
+  push P2, 0
+  set P2["_y"], .DATATYPE_STRUCT
+
+  # attach the unmanaged struct as property to the type PMC
+  set P1, P2[-1]		# last element
+  setprop P1, "_struct", P4
+  push P2, 0
+  push P2, 0
+  set P2["z"], .DATATYPE_CHAR
+  push P2, 0
+  push P2, 0
+
+  # attach struct initializer to return value in P5
+  assign P5, P2
+
+  # now access values
+  set I0, P5[0]		# x
+  set I0, P5[1;0] 	# _y.i
+  set I0, P5[1;1]       # _y.j
+  set I0, P5[2]		# z
+
+  # or by name
+  set I0, P5["x"]
+  set I0, P5["_y"; "i"]
+  set I0, P5["_y"; "j"]
+  set I0, P5["z"]
+</pre>
+<p>If the structure has a pointer to another structure the datatype is:</p>
+<pre>  push P2, .DATATYPE_STRUCT_PTR
+</pre>
+<h1><a name="Passing_A_Structure_to_a_C_function"
+>Passing A Structure to a C function</a></h1>
+
+<p>For a shared library <b>libnci_test.so</b> (or whatever) and a C function</p>
+
+<pre>  typedef struct _dfi_t {
+    double d;
+    float  f;
+    int    i[4];
+  } dfi_t;
+
+  int nci_ip(dfi_t *p) {}</pre>
+
+<p>a pointer to the structure is passed with the <b>p</b> signature char:</p>
+<pre>  loadlib P1, "libnci_test"
+  dlfunc P0, P1, "nci_ip", "ip"
+  # P5 is ManagedStruct from above
+  invoke
+  # I5 is result
+<pre>
+<h1><a name="BUGS"
+>BUGS</a></h1>
+Not all datatypes are implemented. Alignment is barely tested on different
+machines. Arrays of structures aren't handled yet. Passing nested structures to
+C isn't finished.
+<h1><a name="FILES"
+>FILES</a></h1>
+F<src/pmc/unmanagedstruct.pmc>, F<src/pmc/managedstruct.pmc>
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+F<docs/pdds/pdd03_calling_conventions.pod> F<t/pmc/nci.t>, F<src/nci_test.c>
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+Leopold Toetsch <lt@toetsch.at></pre>            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - [DRAFT] PDD 31: HLL Compilers and Libraries</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; <a href="../../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; [DRAFT] PDD 31: HLL Compilers and Libraries
+                </div>
+
+<h1><a name="[DRAFT]_PDD_31:_HLL_Compilers_and_Libraries"
+>[DRAFT] PDD 31: HLL Compilers and Libraries</a></h1>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>This PDD describes the standard compiler API and support for cross&#45;library communication between high&#45;level languages (HLLs).</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<p>Parrot&#39;s support for HLL interoperability is primarily focused on enabling programs written in one language to be able to use libraries and code written in a different language.
+At the same time,
+language implementors should not be overly restricted by a global specification.</p>
+
+<p>This PDD describes an API for HLL compiler objects to use to promote library sharing among languages.
+It&#39;s intended to make it easy for a program to request loading of a local or foreign module,
+determine the capabilities provided by the module,
+and potentially import and integrate them into its own namespaces.
+In general,
+the API treats library&#45;level interoperability as a negotiation among HLL compiler objects,
+with each HLL compiler maintaining primary control over the operations performed in its HLL space.</p>
+
+<p>In particular,
+this HLL API does not attempt to prescribe how languages should organize their internal capabilities,
+PMCs,
+namespaces,
+methods,
+data structures,
+and the like.</p>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<h3><a name="Compiler_API"
+>Compiler API</a></h3>
+
+<p>This section describes the abstract API for HLL compiler objects.</p>
+
+<h4><a name="Locating_a_compiler_object"
+>Locating a compiler object</a></h4>
+
+<p>Generally HLL compilers are loaded via the <code>load_language</code> opcode,
+and register themselves using the <code>compreg</code> opcode.
+By convention,
+each HLL compiler should at minimum register itself using the name of its HLL namespace (see PDD 26),
+although a compiler can choose to register itself under other names as well.</p>
+
+<h4><a name="Methods"
+>Methods</a></h4>
+
+<dl>
+<dt><a name="compile"
+><b><code>compile</b></code></a></dt>
+
+<pre>    $P0 = compiler.&#39;compile&#39;(source [, options :named :slurpy])</pre>
+Return the result of compiling <code>source</code> according to <code>options</code>. Common options include:
+<dl>
+<dt><a name="target"
+>target</a></dt>
+Stop the compilation process when the stage given by target has been reached. Common values for target include &#34;parse&#34;, &#34;past&#34;, &#34;pir&#34;, and &#34;pbc&#34;.
+<dt><a name="outer_ctx"
+>outer_ctx</a></dt>
+Use the supplied context as the outer (lexical) context for the compilation. Some languages require this option to be able to look up lexical symbols in outer scopes when performing a dynamic compilation at runtime.</dl>
+
+<dt><a name="eval"
+><b><code>eval</b></code></a></dt>
+
+<pre>    $P0 = compiler.&#39;eval&#39;(source [, options :named :slurpy])</pre>
+Compile and evaluate (execute) the code given by <code>source</code> according to <code>options</code>. The available options are generally the same as for the <code>compile</code> method above; in particular, the <code>outer_ctx</code> option can be used to specify the outer lexical context for the evaluated source.
+<dt><a name="parse_name"
+><b><code>parse_name</b></code></a></dt>
+
+<pre>    $P0 = compiler.&#39;parse_name&#39;(name)</pre>
+Parse the string <code>name</code> using the rules specific to <code>compiler</code>, and return an array of individual name elements.For example, a Java compiler would turn &#39;<code>a.b.c</code>&#39; to <code>[&#39;a&#39;,&#39;b&#39;,&#39;c&#39;]</code>, while a Perl compiler would turn &#39;<code>a::b::c</code>&#39; into the same result. Perl&#39;s sigil rules would likely turn &#39;<code>$a::b::c</code>&#39; into <code>[&#39;a&#39;,&#39;b&#39;,&#39;$c&#39;]</code>.
+<dt><a name="load_module"
+><b><code>load_module</b></code></a></dt>
+
+<pre>    module = compiler.&#39;load_module&#39;(name)</pre>
+Locate and load the module given by <code>name</code> using the rules for libraries specific to <code>compiler</code>, and return a <code>module</code> handle for the module just loaded. The <code>name</code> argument is typically an array or a string to be processed as in <code>parse_name</code> above. In general the module handle returned should be considered opaque by the caller, but specific HLL compilers are allowed to specify the nature of the handle returned (e.g., a namespace for the loaded module, or a specific &#34;handle&#34; object).
+<dt><a name="get_module"
+><b><code>get_module</b></code></a></dt>
+
+<pre>    module = compiler.&#39;get_module&#39;(name)</pre>
+Similar to <code>load_module</code> above, this method returns a handle to an already&#45;loaded module given by <code>name</code>.
+<dt><a name="get_exports"
+><b><code>get_exports</b></code></a></dt>
+
+<pre>    $P0 = compiler.&#39;get_exports&#39;(module [,name,name,...] [, &#39;tagset&#39;=&#62;tagset])</pre>
+Requests the exported objects given by <code>name</code> and/or <code>tagset</code> for <code>module</code> within the given <code>compiler</code>. The <code>module</code> argument should be a module handle as obtained by <code>load_module</code> or <code>get_module</code> above.A <code>tagset</code> argument provides an identifier that a compiler and/or module can use to supply their own lists of items to be exported. By convention, a <code>tagset</code> of &#34;DEFAULT&#34; refers to the default set of exported items for the module, while &#34;ALL&#34; returns all available exports. Compilers and modules are free to define their own custom tagsets beyond these.Any <code>name</code> arguments supplied generally limit the export list to the tagset items corresponding to the supplied names (as determined by the compiler invocant). If names are provided without an explicit tagset, then &#34;ALL&#34; is assumed. If neither names nor a tagset are provided, then symbols from &#34;DEFAULT&#34; are returned.The returned export list is a hash of hashes; each entry in the top level hash has a key identifying the type of exported object (one of <code>&#39;namespace&#39;</code>, <code>&#39;sub&#39;</code>, or <code>&#39;var&#39;</code>) and a value hash containing the corresponding exported symbol names and objects. This hash&#45;of&#45;hashes approach is intended to generally correspond to the &#34;Typed Interface&#34; section of PDD 21 (&#34;Namespaces&#34;), and allows the module&#39;s source HLL to indicate the type of exported object to the caller. The hash&#45;of&#45;hash approach also accommodates languages where a single name might be used to refer to several objects that differ in type. (This PDD explicitly rejects the notion that a HLL should be directly exporting or injecting symbols into a foreign HLL&#39;s namespaces.)</dl>
+
+<h3><a name="HLL::Compiler_class"
+>HLL::Compiler class</a></h3>
+
+<p>HLL::Compiler is a common base class for compiler objects based on the Parrot Compiler Toolkit (PCT) and NQP (Not Quite Perl) libraries. It provides a default implementation of the abstract Compiler API above, plus some additional methods for simple symbol table export and import. The default methods are intended to support importing and exporting symbols using standard Parrot namespace objects (PDD 21). However, it&#39;s normal (and expected) that languages will subclass HLL::Compiler to provide language&#45;specific semantics where needed.</p>
+
+<h4><a name="Methods"
+>Methods</a></h4>
+
+<dl>
+<dt><a name="language"
+><b><code>language</b></code></a></dt>
+
+<pre>    $S0 = compiler.&#39;language&#39;([name])</pre>
+If <code>name</code> is provided, sets the language name of the invocant and registers the invocant as the compiler for <code>name</code> via the <code>compreg</code> opcode.Returns the language name of the compiler.
+<dt><a name="parse_name"
+><b><code>parse_name</b></code></a></dt>
+
+<pre>    $P0 = compiler.&#39;parse_name&#39;(name)</pre>
+Splits a name based on double&#45;colons, such that &#34;<code>A::B::C</code>&#34; becomes <code>[&#39;A&#39;,&#39;B&#39;,&#39;C&#39;]</code>.
+<dt><a name="get_module"
+><b><code>get_module</b></code></a></dt>
+
+<pre>    module = compiler.&#39;get_module&#39;(name)</pre>
+Returns a handle to the HLL namespace associated with <code>name</code> (which is processed via the invocant&#39;s <code>parse_name</code> method if needed).
+<dt><a name="load_module"
+><b><code>load_module</b></code></a></dt>
+
+<pre>    module = compiler.&#39;load_module&#39;(name)</pre>
+Loads a module <code>name</code> via the <code>load_bytecode</code> opcode using both &#34;.pbc&#34; and &#34;.pir&#34; extensions. Parrot&#39;s standard library paths for <code>load_bytecode</code> are searched.Returns the HLL namespace associated with <code>name</code> (which may be PMCNULL if loading failed or if the requested module did not create an associated namespace).
+<dt><a name="get_exports"
+><b><code>get_exports</b></code></a></dt>
+
+<pre>    $P0 = compiler.&#39;get_exports&#39;(module [,name,name,...] [, &#39;tagset&#39;=&#62;tagset])</pre>
+Implements a simple exporting interface that meets the &#34;Compiler API&#34; above. The <code>module</code> argument is expected to be something that supports a hash interface, such as NameSpace or LexPad. (Note that this is what gets returned by the default <code>get_module</code> and <code>load_module</code> methods above.) The <code>module[&#34;EXPORT&#34;]</code> entry should return another hash&#45;like object keyed by tagset names; each of those tagset names then identify the exportable symbols associated with that tagset.With this default arrangement, it&#39;s entirely possible for a module to indicate its tagsets by using symbol entries in namespaces. For example, a module with namespace <code>[&#39;XYZ&#39;]</code> can define its default exports by binding symbols in the <code>[&#39;XYZ&#39;;&#39;EXPORT&#39;;&#39;DEFAULT&#39;]</code> namespace. (Modules aren&#39;t required to use exactly this mechanism; it&#39;s just one possibility of many.)If the &#34;ALL&#34; tagset is requested and there is no &#34;ALL&#34; entry in the <code>module[&#39;EXPORT&#39;]</code> hash, then <code>module</code> itself is used as the source of exportable symbols for this method. This enables <code>get_exports</code> to be used to obtain symbols from modules that do not follow the &#34;EXPORT&#34; convention above (e.g., core Parrot modules).As described in the Compiler API section above, the return value from <code>get_exports</code> is a hash&#45;of&#45;hashes with exported namespaces in the <code>namespace</code> hash, exported subroutines in the <code>sub</code> hash, and all other exports in the <code>var</code> hash.
+<dt><a name="import"
+><b><code>import</b></code></a></dt>
+
+<pre>    compiler.&#39;import&#39;(target, export_hash)</pre>
+Import the entries from <code>export_hash</code> (typically obtained via <code>get_exports</code> above) into <code>target</code> according to the rules for <code>compiler</code>. Any entries in <code>export_hash[&#39;namespace&#39;]</code> are imported first, followed by entries in <code>export_hash[&#39;sub&#39;]</code>, followed by entries in <code>export_hash[&#39;var&#39;]</code>.Note that this method is not part of the abstract Compiler API &#45;&#45; a HLL compiler is able to implement importing in any way it deems appropriate. The <code>HLL::Compiler</code> class provides this method as a useful default for many HLL compilers.For each exported item of <code>export_hash</code>, import takes place by checking the invocant for an <code>import_[type]</code> method and using that if it exists (where <code>[type]</code> is one of &#34;namespace&#34;, &#34;sub&#34;, or &#34;var&#34;). These methods are used to implemented &#34;typed imports&#34;, and allows the compiler object to perform any name mangling or other operations needed to properly import an object.If the compiler invocant doesn&#39;t define an <code>import_[type]</code> method, <code>import</code> attempts to use any <code>add_[type]</code> method that exists on <code>target</code> (e.g., for the case where <code>target</code> is a namespace PMC supporting the typed interface defined by PDD 21).If neither of these methods are available, then <code>import</code> simply binds the symbol using <code>target</code>&#39;s hash interface.</dl>
+
+<h3><a name="Examples"
+>Examples</a></h3>
+
+<h4><a name="Importing_a_module_Acme::Boom_from_language_xyz_into_language_abc"
+>Importing a module Acme::Boom from language xyz into language abc</a></h4>
+<pre>    # Load the HLL library and get its compiler
+    .local pmc xyzcompiler, module, exports
+    load_language 'xyz'
+    xyzcompiler = compreg 'xyz'
+
+    # load xyz's module "Acme::Boom"
+    module = xyzcompiler.'load_module'("Acme::Boom")
+
+    # get the default exports for the module
+    # (note that 'tagset'=>'DEFAULT' is optional here
+    exports = xyzcompiler.'get_exports'(module, 'tagset'=>'DEFAULT')
+
+    # import into current namespace
+    .local pmc abccompiler
+    abccompiler = compreg 'abc'
+    $P0 = get_namespace
+    abccompiler.'import'($P0, exports)
+</pre>
+<h2><a name="References"
+>References</a></h2>
+
+<p><a href='TODO'>pdd21_namespaces.pod</a></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

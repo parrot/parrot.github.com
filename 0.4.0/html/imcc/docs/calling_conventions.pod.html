@@ -1,0 +1,374 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>calling conventions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">calling conventions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/imcc.html">IMCC</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>PIR &#45; calling conventions</p>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>0.5</p>
+
+<h1><a name="NOTE_ABOUT_CHANGES_IN_PROGRESS"
+>NOTE ABOUT CHANGES IN PROGRESS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The syntax here is going to stay,
+but the calling convention is in the middle of a transition.
+Instead of fixed registers,
+the new convention allows the user to use any registers in any order,
+and converts types as required.
+Additional syntax features,
+like the <code lang='und' xml:lang='und'>:flat</code> adverb for arguments and <code lang='und' xml:lang='und'>:slurpy</code> for parameters,
+will make sense to explain here once the document as a whole is updated.</p>
+
+<p>One thing that&#39;s handy: If you have a list in a PMC and you want it to be flattened out into a list,
+append <code lang='und' xml:lang='und'>:flat</code> to the argument name in the <code lang='und' xml:lang='und'>.arg</code> directive or in the shortcut parameter list.</p>
+
+<h1><a name="OVERVIEW"
+>OVERVIEW <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This document describes subroutine and method calling conventions.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>As imcc does register allocation,
+it has to track the life span of variables.
+This includes the (possible) data flow in and out of subroutines.</p>
+
+<h1><a name="Parrot_calling_conventions_&#45;_CPS"
+>Parrot calling conventions &#45; CPS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Explicitly_Calling_PASM_Subroutines"
+>Explicitly Calling PASM Subroutines <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  .const .Sub $P0 = &#34;_sub_label&#34; 
+  $P1 = new .Continuation
+  set_addr $P1, ret_addr
+  ...
+  .local int x
+  .local num y
+  .local str z
+  .pcc_begin
+  .arg x
+  .arg y
+  .arg z
+  .pcc_call $P0, $P1    # r = _sub_label(x, y, z)
+  ret_addr:
+  .local int r  # optional &#45; new result var
+  .result r
+  .pcc_end</pre>
+
+<h2><a name="The_Short_Way"
+>The Short Way <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  ...  # variable decls
+  r = _sub_label(x, y, z)
+  (r1[, r2 ...]) = _sub_label(x, y, z)
+  _sub_label(x, y, z)</pre>
+
+<p>Instead of the label a Subroutine object can be used too:</p>
+
+<pre lang='und' xml:lang='und'>   find_global $P0, &#34;_sub_label&#34;
+   $P0(args)</pre>
+
+<h2><a name="Subroutines"
+>Subroutines <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  .sub _sub_label [Subpragma, ...]
+   .param int a # I5
+   .param int b # I6
+   .param int c # I7
+  ...
+  .pcc_begin_return
+   .return xy   # e.g. I5
+  .pcc_end_return
+  ...
+  .end</pre>
+
+<p>An alternative syntaxs allow to express a return in one line. The surrounded parentheses are mandatory. Besides making sequence break more conspiscuous, this is necessary to distinguish this syntax from other uses of the .return directive that will be probably deprecated.</p>
+
+<pre lang='und' xml:lang='und'>  .return ( a, b )      # return the values of a and b
+
+  .return ()            # return no value
+
+  .return func_call()   # tail call function
+
+  .return o.&#34;meth&#34;()    # tail method call</pre>
+
+<p>Similarly, one can yield using the .yield directive</p>
+
+<pre lang='und' xml:lang='und'>  .yield ( a, b )      # yield with the values of a and b
+
+  .yield ()            # yield with no value</pre>
+
+<h2><a name="Subpragma"
+>Subpragma <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>This is a list of zero or more items with the following meaning:</p>
+
+<ul>
+<li>:main</li><p class="pad"></p>
+
+<p>Define &#34;main&#34; entry point to start execution. If multiple subroutines are marked as <b>:main</b>, the <b>last</b> marked subroutine is entered.</p>
+
+<li>:load</li><p class="pad"></p>
+
+<p>Run this subroutine during the <b>load_library</b> opcode. <b>:load</b> is ignored, if another subroutine in that file is marked with <b>:main</b>. If multiple subs have the <b>:load</b> pragma, the subs are run in compilation that is source code order.</p>
+
+<li>:anon</li><p class="pad"></p>
+
+<p>Do not install this subroutine in the namespace. Allows the subroutine name to be reused.</p>
+
+<li>:multi(Type1, Type2...)</li><p class="pad"></p>
+
+<p>Engage in multiple dispatch with the listed types.</p>
+
+<li>:method</li><p class="pad"></p>
+
+<p>Declare subroutine being a method.</p>
+</ul>
+
+<p>Notes:</p>
+
+<ul>
+<li><b>pcc_call</b></li><p class="pad"></p>
+
+<p>Takes either 2 arguments: the sub and the return continuation, or the sub only. For the latter case an <b>invokecc</b> gets emitted. Providing an explicit return continuation is more efficient, if its created outside of a loop and the call is done inside a loop.</p>
+
+<li>Saved Regs:</li><p class="pad"></p>
+
+<p>Only the top half of registers are preserved currently.</p>
+
+<li><b>.args</b>, <b>.param</b>, <b>.result</b>, and <b>.return</b> are optional.</li><p class="pad"></p>
+
+<li><b>.param</b></li><p class="pad"></p>
+
+<p>The <b>.param</b> declarations must be the first statements in the sub if any. No other statements are allowed between <b>.param</b> &#45; not even comments currently.</p>
+
+<li><b>pcc_begin_return</b>, <b>pcc_end_return</b></li><p class="pad"></p>
+
+<p>If there is no return value and the return should be the last instruction of the subroutine, this declaration pair can be omitted. Parrot provides an <b>invoke P1</b> as last instruction automatically.</p>
+</ul>
+
+<h2><a name="Calling_Methods"
+>Calling Methods <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The syntax is very similar to subroutine calls. The call is done with <code lang='und' xml:lang='und'>meth_call</code> which must immediately be preceded by the <code lang='und' xml:lang='und'>.invocant</code>:</p>
+
+<pre lang='und' xml:lang='und'>   .local pmc class
+   .local pmc obj
+   newclass class, &#34;Foo&#34;
+   find_type $I0, &#34;Foo&#34;
+   new obj, $I0
+  .pcc_begin
+  .arg x
+  .arg y
+  .arg z
+  .invocant obj
+  .meth_call &#34;_method&#34; [, $P1 ] # r = obj.&#34;_method&#34;(x, y, z)
+  .local int r  # optional &#45; new result var
+  .result r
+  .pcc_end</pre>
+
+<p>The return continuation is optional. The method can be a string constant or a string variable.</p>
+
+<h2><a name="Shortcuts"
+>Shortcuts <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  r = obj.&#34;_method&#34;(args)
+  (r1, r2) = obj.&#34;_method&#34;(args)
+  obj.&#34;_method&#34;(args)</pre>
+
+<h2><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  .namespace [ &#34;Foo&#34; ]
+
+  .sub _sub_label method [,Subpragma, ...]
+   .param int a # I5
+   .param int b # I6
+   .param int c # I7
+   ...
+   self.&#34;_other_meth&#34;()
+  ...
+  .pcc_begin_return
+   .return xy   # e.g. I5
+  .pcc_end_return
+  ...
+  .end</pre>
+
+<p>The variable &#34;self&#34; automatically refers to the invocating object, if the subroutine declaration contains &#34;method&#34;.</p>
+
+<p>Restore namespace to the global namespace:</p>
+
+<pre lang='und' xml:lang='und'>  .namespace [ &#34;&#34; ]</pre>
+
+<h2><a name="NCI"
+>NCI <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Proposed syntax:</p>
+
+<pre lang='und' xml:lang='und'>  load_lib $P0, &#34;libname&#34;
+  dlfunc $P1, $P0, &#34;funcname&#34;, &#34;signature&#34;
+  ...
+  .pcc_begin
+  .arg x
+  .arg y
+  .arg z
+  .nci_call $P1 # r = funcname(x, y, z)
+  .local int r  # optional &#45; new result var
+  .result r
+  .pcc_end</pre>
+
+<p>This prepares parameters as described in <em lang='und' xml:lang='und'>pdd03_calling_conventions.pod</em>, saves the registers and invokes the function. The <b>.arg</b> pseudo ops put the given argument into increasing registers of the appropriate type.</p>
+
+<h1><a name="Exception_handlers"
+>Exception handlers <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>TBD.</p>
+
+<h1><a name="Stack_calling_conventions"
+>Stack calling conventions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Arguments are <b>save</b>d in reverse order onto the user stack:</p>
+
+<pre lang='und' xml:lang='und'>   .arg y       # save args in reversed order
+   .arg x
+   call _foo    #(r, s) = _foo(x,y)
+   .local int r
+   .local int s
+   .result r    # restore results in order
+   .result s    #</pre>
+
+<p>and return values are <b>restore</b>d in argument order from there.</p>
+
+<p>The subroutine is responsible for preserving registers.</p>
+
+<pre lang='und' xml:lang='und'> .sub _foo              # sub foo(int a, int b)
+   saveall
+   .param int a         # receive arguments from left to right
+   .param int b
+   ...
+
+   .return mi           # return (pl, mi), push results
+   .return pl           # in reverse order
+   restoreall
+   ret
+ .end</pre>
+
+<h2><a name="Rational"
+>Rational <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Pushing arguments in reversed order on the user stack makes the left most argument the top of stack entry. This allows for a variable number of function arguments (and return values), where the left most argument before a variable number of following arguments is the argument count.</p>
+
+<h2><a name="Status"
+>Status <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Implemented. When the subroutine is in the same compilation unit, the callee can <b>saveall</b> registers; when the subroutine is in a different compilation unit, the callee must preserve all used registers.</p>
+
+<h1><a name="Invoking_subroutines"
+>Invoking subroutines <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>IMCC tries to keep track of the address where the <b>invoke</b> will branch to, but can only succeed to do so when the <b>set_addr</b> and the <b>invoke</b> opcodes are located together.</p>
+
+<pre lang='und' xml:lang='und'>  $P10 = new Sub
+  $I1 = addr _the_sub
+  $P10 = $I1
+  invoke $P10   # ok</pre>
+
+<p>But not:</p>
+
+<pre lang='und' xml:lang='und'>    bsr get_addr
+    invoke $P10 # error
+    ...
+  get_addr:
+    $P10 = new Sub
+    $I1 = addr _the_sub
+    $P10 = $I1
+    ret</pre>
+
+<p>The latter example will very likely lead to an incorrect CFG and thus to incorrect register allocation.</p>
+
+<h2><a name="Status"
+>Status <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Implemented. When the subroutine does <b>saveall</b>/<b>restoreall</b>, the branch from the <b>ret</b> statement back is ignored in the CFG.</p>
+
+<h1><a name="Namespaces_and_lexicals"
+>Namespaces and lexicals <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'> &#45; Should imcc keep track of pad opcodes?
+ &#45; Should imcc even emit such opcodes from e.g. .local directives?</pre>
+
+<h1><a name="FILES"
+>FILES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>imcc/imcc.y</em>, <em lang='und' xml:lang='und'>imcc/t/syn/bsr.t</em>, <em lang='und' xml:lang='und'>imcc/t/syn/pcc.t</em>, <em lang='und' xml:lang='und'>imcc/t/syn/objects.t</em>, <em lang='und' xml:lang='und'><a href="../../docs/pdds/pdd03_calling_conventions.pod.html">docs/pdds/pdd03_calling_conventions.pod</a></em></p>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Leopold Toetsch &#60;lt@toetsch.at&#62;</p>
+
+<h1><a name="CHANGES"
+>CHANGES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="0.5_eliminate_{non_,}prototyped_distinction"
+>0.5 eliminate {non_,}prototyped distinction</a></dt><p class="pad"></p>
+
+<dt><a name="0.4_methods_and_shortcuts_documented"
+>0.4 methods and shortcuts documented</a></dt><p class="pad"></p>
+
+<dt><a name="0.3_updated_parrot_calling_conventions_and_invoke"
+>0.3 updated parrot calling conventions and invoke</a></dt><p class="pad"></p>
+
+<dt><a name="0.2_initial,_checked_in"
+>0.2 initial, checked in</a></dt><p class="pad"></p>
+
+<dt><a name="0.1_initial_proposal"
+>0.1 initial proposal</a></dt><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

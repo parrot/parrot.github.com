@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Functions for manipulating vtables</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Contents</a> &raquo; <a href="../../../html/perl.html">Perl Modules</a> &raquo; Functions for manipulating vtables
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>Parrot::Vtable &#45; Functions for manipulating vtables</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    use Parrot::Vtable;</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p><code>Parrot::Vtable</code> provides a collection of functions for manipulating PMC vtables. It is used by <em><a href="../../tools/build/jit2c.pl.html">tools/build/jit2c.pl</a></em>, <em><a href="../../tools/build/pmc2c.pl.html">tools/build/pmc2c.pl</a></em>, <em><a href="../../tools/build/vtable_h.pl.html">tools/build/vtable_h.pl</a></em>, <em><a href="../../tools/dev/gen_class.pl.html">tools/dev/gen_class.pl</a></em>.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<p>The following functions are exported:</p>
+
+<dl>
+<dt><a name="parse_vtable($file)"
+><b><code>parse_vtable($file)</b></code></a></dt>
+Returns a reference to an array containing
+<pre>  [ return_type method_name parameters section MMD_type attributes ]</pre>
+for each vtable method defined in <code>$file</code>. If <code>$file</code> is unspecified it defaults to <em>src/vtable.tbl</em>. If it is not an MMD method, <code>MMD_type</code> is &#45;1.
+<dt><a name="vtbl_defs($vtable)"
+><b><code>vtbl_defs($vtable)</b></code></a></dt>
+Returns the C <code>typedef</code> definitions for the elements in the referenced vtable array.
+<dt><a name="vtbl_struct($vtable)"
+><b><code>vtbl_struct($vtable)</b></code></a></dt>
+Returns the C <code>struct</code> definitions for the elements in the referenced vtable array.
+<dt><a name="vtbl_macros($vtable)"
+><b><code>vtbl_macros($vtable)</b></code></a></dt>
+Returns the C <code>#define</code> definitions for the elements in the referenced vtable array.
+<dt><a name="vtbl_embed($vtable)"
+><b><code>vtbl_embed($vtable)</b></code></a></dt>
+Returns the C function definitions to call the vtable methods on a PMC for the elements in the referenced vtable array.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<dl>
+<dt><a name="tools/build/jit2c.pl"
+><em><a href="../../tools/build/jit2c.pl.html">tools/build/jit2c.pl</a></em></a></dt>
+
+<dt><a name="tools/build/pmc2c.pl"
+><em><a href="../../tools/build/pmc2c.pl.html">tools/build/pmc2c.pl</a></em></a></dt>
+
+<dt><a name="tools/build/vtable_h.pl"
+><em><a href="../../tools/build/vtable_h.pl.html">tools/build/vtable_h.pl</a></em></a></dt>
+
+<dt><a name="tools/dev/gen_class.pl"
+><em><a href="../../tools/dev/gen_class.pl.html">tools/dev/gen_class.pl</a></em></a></dt>
+</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

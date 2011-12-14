@@ -1,0 +1,279 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Calling Conventions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Calling Conventions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>docs/pdds/pdd03_calling_conventions.pod &#45; Parrot Calling Conventions</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Parrot&#39;s inter&#45;routine calling conventions.</p>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>$Revision$</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This document describes how to pass arguments from registers to subroutines,
+and how subroutines can extract their parameters into registers for use.</p>
+
+<p>Since Parrot&#39;s calling conventions are continuation&#45;based,
+there is arguably very little difference between a call and a return.
+Because of this,
+the conversion rules are the same regardless of whether code is invoking a subroutine or a return continuation.</p>
+
+<h2><a name="Common_Features_of_Argument/Return_Opcodes"
+>Common Features of Argument/Return Opcodes <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>There are four opcodes involved in parameter and return value propagation:</p>
+
+<ul>
+<li><code lang='und' xml:lang='und'>set_args</code>,
+for passing arguments;</li><p class="pad"></p>
+
+<li><code lang='und' xml:lang='und'>set_returns</code>,
+for returning values;</li><p class="pad"></p>
+
+<li><code lang='und' xml:lang='und'>get_params</code>,
+for accepting parameters; and</li><p class="pad"></p>
+
+<li><code lang='und' xml:lang='und'>get_results</code>,
+for accepting return values.</li><p class="pad"></p>
+</ul>
+
+<p>FAQ: Given Parrot&#39;s internal use of continuation&#45;passing style [&#34;CPS&#34;],
+it would be possible to use one pair of opcodes for both call and return,
+since under CPS returns <i>are</i> calls.
+And perhaps someday we will have only two opcodes.
+But for now,
+certain efficiency hacks are easier with four opcodes.)</p>
+
+<p>The common syntax of these opcodes is:</p>
+
+<pre lang='und' xml:lang='und'>    &#60;set_opcode&#62; &#34;(flags0, flags1, ..., flagsN)&#34;, VAL0, VAL1, ... VALN
+    &#60;get_opcode&#62; &#34;(flags0, flags1, ..., flagsN)&#34;, REG0, REG1, ... REGN</pre>
+
+<p>The flags string is a literal quoted string denoting a list of zero or more comma&#45;separated integers. The list as a whole may be surrounded by parentheses. Integers may be specified either in decimal, or if prefixed with &#34;0b&#34;/&#34;0x&#34;, in binary/hexadecimal. There must be exactly one integer for each value or register given.</p>
+
+<p>For documentation purposes we&#39;ll number the bits 0 (low) through 30 (high). Bit 31 (and higher, where available) will not be used.</p>
+
+<h3><a name="Flag_Words;_Common_Flag_Word_Bits"
+>Flag Words; Common Flag Word Bits</a></h3>
+
+<p>Each integer in the flag string controls the processing of the corresponding value or register.</p>
+
+<p>These bits of each flag word have common meanings for all argument/ return&#45;value opcodes:</p>
+
+<pre lang='und' xml:lang='und'>    0&#45;1   TYPE
+               0b00 = I
+               0b01 = S
+               0b10 = P
+               0b11 = N</pre>
+
+<p>You can just set these bits (as well as the <i>CONSTANT</i> bit below) to zero as the assembler calculates the correct setting depending on the given arguments.</p>
+
+<h2><a name="Passing_Arguments,_Returning_Values"
+>Passing Arguments, Returning Values <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Just before calling a subroutine with <code lang='und' xml:lang='und'>invokecc</code> or calling a method with &#60;call_methodcc&#62;, use the <code lang='und' xml:lang='und'>set_args</code> opcode to tell Parrot where the subroutine&#39;s or method&#39;s arguments will come from and how they should be expanded by the target.</p>
+
+<p>Similarly, just before returning from such a subroutine or method, use the <code lang='und' xml:lang='und'>set_returns</code> opcode to tell Parrot where the return values will come from and how to expand them for the caller&#39;s use.</p>
+
+<h3><a name="Flag_Word_Bits_For_&#39;Setting&#39;"
+>Flag Word Bits For &#39;Setting&#39;</a></h3>
+
+<p>These bits of each flag word have these meanings specific to <code lang='und' xml:lang='und'>set_args</code> and <code lang='und' xml:lang='und'>set_returns</code>:</p>
+
+<pre lang='und' xml:lang='und'>    2     CONSTANT
+               The value is a literal constant, not a register.
+               (Don&#39;t set this bit yourself; the assembler sets this bit
+               automatically if a constant is given.)
+
+    3     FLAT
+               If this bit is set on a PMC value, then the PMC must be an
+               aggregate or a scalar containing a reference to an aggregate.
+               The contents of the aggregate, rather than the aggregate
+               itself, will be passed.
+
+               The meaning of this bit is undefined when applied to integer,
+               number, and string values.
+
+    4     MAYBE_FLAT
+               If:
+                (a) this bit is set on a PMC value; and,
+                (b) the PMC is an aggregate or a scalar containing a reference
+                    to an aggregate; and,
+                (c) the called function has a slurpy flag on the corresponding
+                    parameter;
+               then, pretend FLAT bit was set.
+
+               XXX &#45; TODO &#45; Determine whether this is really useful.
+                            This description is kind of ad&#45;hoc.
+
+    5     (unused)
+
+    6     (unused)
+
+    7     NAMED
+               XXX &#45; TODO</pre>
+
+<h2><a name="Accepting_Parameters,_Accepting_Return_Values"
+>Accepting Parameters, Accepting Return Values <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>As the <i>first opcode</i> in a subroutine that will be called with <code lang='und' xml:lang='und'>invokecc</code> or a method that will be called with &#60;call_methodcc&#62;, use the <code lang='und' xml:lang='und'>get_params</code> opcode to tell Parrot where the subroutine&#39;s or method&#39;s arguments should be stored and how they should be expanded.</p>
+
+<p>Similarly, just <i>before</i> (yes, <i>before</i>) calling such a subroutine or method, use the <code lang='und' xml:lang='und'>get_results</code> opcode to tell Parrot where the return values should be stored and how to expand them for your use.</p>
+
+<p>NOTE: It should be obvious, but in case it&#39;s not: You must name only registers as targets of these opcodes, not constants. (You can&#39;t store anything into a constant. That would make it a variable.)</p>
+
+<h3><a name="Flag_Word_Bits_For_&#39;Getting&#39;"
+>Flag Word Bits For &#39;Getting&#39;</a></h3>
+
+<p>These bits of each flag word have these meanings specific to <code lang='und' xml:lang='und'>get_params</code> and <code lang='und' xml:lang='und'>get_results</code>:</p>
+
+<pre lang='und' xml:lang='und'>    2     (unused)
+
+    3     SLURPY (P only)
+               If this bit is set on a P register, then it will be populated
+               with an aggregate that will contain all of the remaining values
+               that have not already been stored in other registers.
+
+               All such values will be converted to PMCs according to the
+               detailed rules below, and those PMCs will be stored into the
+               new aggregate.
+
+               XXX &#45; TODO &#45; If NAMED is not set, the aggregate will be an
+               Array type (HLL&#45;specific) and the contents will be all
+               unassigned positional parameters.
+
+               XXX &#45; TODO &#45; If NAMED is set, the aggregate will be a Hash type
+               (HLL&#45;specific) and the contents will be all unassigned named
+               parameters.
+
+    4     (unused)
+
+    5     OPTIONAL
+               If this bit is set on a register for which no value has been
+               passed, no exception will be raised; rather, the register will
+               be set to a default value: a Null PMC for P, an empty string
+               for S, or zero for N or I.
+
+    6     OPT_FLAG (I only)
+               An I register with this bit set is set to one if the
+               immediately preceding B&#60;OPTIONAL&#62; register received a value;
+               otherwise, it is set to zero.
+
+    6     READONLY (P only)
+               XXX &#45; PROPOSED ONLY &#45; XXX
+               If this bit is set on a P register that receives a value,
+               Parrot will ensure that the final value in the P register
+               is read&#45;only (i.e. will not permit modification).  If the
+               received value was a mutable PMC, then Parrot will create
+               and set the register to a read&#45;only PMC wrapper around the
+               original PMC.
+
+               Parrot&#39;s algorithm for deciding what is writable may be pretty
+               simplistic.  In initial implementations, it may assume that any
+               PMC not of a known read&#45;only&#45;wrapper type is mutable.
+
+    7     NAMED
+               XXX &#45; TODO</pre>
+
+<h3><a name="Overflow"
+>Overflow</a></h3>
+
+<p>If too many values are provided to fit into the given target registers, Parrot will throw an exception. Note that if the final target is a P register with FLAT set, then this exception can never occur.</p>
+
+<p>XXX &#45; FIXME &#45; which exception? We really could use an exception subsystem. Oh, wait, that&#39;s my job. Never mind. &#45;&#45;Chip</p>
+
+<h3><a name="Underflow"
+>Underflow</a></h3>
+
+<p>If too few values are provided so that some target registers are left unset, this too results in an exception.</p>
+
+<h3><a name="Type_Conversions"
+>Type Conversions</a></h3>
+
+<p>Unlike the <code lang='und' xml:lang='und'>set_*</code> opcodes, the <code lang='und' xml:lang='und'>get_*</code> opcodes must perform conversion from one register type to another. Here are the conversion rules:</p>
+
+<ul>
+<li>When the target is an I, N, or S register, storage will behave like an <code lang='und' xml:lang='und'>assign</code> (standard conversion).</li><p class="pad"></p>
+
+<li>When the target and source are both P registers, storage will behave like a <code lang='und' xml:lang='und'>set</code> (pass by reference).</li><p class="pad"></p>
+
+<li>When the target is a P register and the source is an integer, the P will be set to a new .Integer[1] which has been <code lang='und' xml:lang='und'>assign</code>ed the given integer.</li><p class="pad"></p>
+
+<li>When the target is a P register and the source is a number, the P will be set to a new .Float[1] which has been <code lang='und' xml:lang='und'>assign</code>ed the given number.</li><p class="pad"></p>
+
+<li>When the target is a P register and the source is a string, the P will be set to a new .String[1] which has been <code lang='und' xml:lang='und'>assign</code>ed the given string.</li><p class="pad"></p>
+</ul>
+
+<p>[1] according the current HLL type mappings.</p>
+
+<h1><a name="BUGS"
+>BUGS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Required features are missing:</p>
+
+<ul>
+<li>Named parameters (partly done)</li><p class="pad"></p>
+
+<li>Specific exceptions to throw for specific errors.</li><p class="pad"></p>
+</ul>
+
+<p>PIR has pretty syntactical sugar around the get and set opcodes. This document should specify what that looks like, too.</p>
+
+<h1><a name="ATTACHMENTS"
+>ATTACHMENTS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>None.</p>
+
+<h1><a name="REFERENCES"
+>REFERENCES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>None.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

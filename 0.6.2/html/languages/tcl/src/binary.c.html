@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>languages/tcl/src/binary.c</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">languages/tcl/src/binary.c</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/tcl.html">TCL</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>languages/tcl/src/binary.c</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>RT#48162</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_int_extract_int(char_*str,_int_*pos,_int_length)"
+><b><code lang='und' xml:lang='und'>static int extract_int(char *str, int *pos, int length)</b></code></a></dt><p class="pad"></p>
+
+<dd>Extract an integer from the string at the position given.
+Return the integer and update the position.
+Returns 1 if no digit is found or if the int is zero.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static PMC *binary_scan_number_field(PARROT_INTERP, char field, char *binstr, int *_pos, int length)</b></code></a></dt><p class="pad"></p>
+
+<dd>Scan and remove a number from a binary string.
+Return a PMC representing that value.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static PMC *binary_scan_number_slurpy(PARROT_INTERP, char field, char *binstr, int *_pos, int length)</b></code></a></dt><p class="pad"></p>
+
+<dd>Scan the binary string for all remaining occurences of a number of the type of the field.
+Returns a TclList PMC of the number PMCs.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static PMC *binary_scan_number(PARROT_INTERP, char field, char *format, int *formatpos, int formatlen, char *binstr, int *binstrpos, int binstrlen)</b></code></a></dt><p class="pad"></p>
+
+<dd>Scan the binary string for a number field.
+There may be a width following the field specifier.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static STRING *binary_scan_string_field(PARROT_INTERP, char field, char *binstr, int *_binstrpos, int binstrlen, STRING *value, int length)</b></code></a></dt><p class="pad"></p>
+
+<dd>Scan the binary string for a string field.
+Returns the value of the extracted string (concatenated to its previous value).</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static STRING *binary_scan_string_slurpy(PARROT_INTERP, char field, char *binstr, int *_binstrpos, int binstrlen, STRING *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Scan the binary string for all remaining matches of the field.
+Returns the new value of the STRING value passed in.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static PMC *binary_scan_string(PARROT_INTERP, char field, char *format, int *formatpos, int formatlen, char *binstr, int *binstrpos, int binstrlen)</b></code></a></dt><p class="pad"></p>
+
+<dd>Scan the binary string for a string field.
+Returns a TclString PMC with the value(s) extracted.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*ParTcl_binary_scan(PARROT_INTERP,_STRING_*BINSTR,_STRING_*FORMAT)"
+><b><code lang='und' xml:lang='und'>PMC *ParTcl_binary_scan(PARROT_INTERP, STRING *BINSTR, STRING *FORMAT)</b></code></a></dt><p class="pad"></p>
+
+<dd>Scan a binary string according to a format string and return a TclList of the extracted values.</dd><p class="pad"></p>
+
+<dd>Assumes,
+in order to prevent entering another PIR runloop,
+that the format has been checked to contain valid fields.</dd><p class="pad"></p>
+
+<dd>String and number field code has been separated in an effort to reduce code.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static STRING *binary_format_number_field(PARROT_INTERP, char field, STRING *binstr, PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48164: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static STRING *binary_format_number(PARROT_INTERP, char field, STRING *binstr, PMC *value, char *format, int *formatpos, int formatlen)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48164: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static STRING *binary_format_string_field(PARROT_INTERP, char field, STRING *binstr, STRING *strval, int length)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48164: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static STRING *binary_format_string(PARROT_INTERP, char field, STRING *binstr, PMC *value, char *format, int *formatpos, int formatlen)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48164: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="STRING_*ParTcl_binary_format(PARROT_INTERP,_STRING_*FORMAT,_PMC_*values)"
+><b><code lang='und' xml:lang='und'>STRING *ParTcl_binary_format(PARROT_INTERP, STRING *FORMAT, PMC *values)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48164: Not yet documented!!!</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

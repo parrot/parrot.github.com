@@ -1,0 +1,323 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Episode 7: Operators and Precedence</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Home</a> &raquo; <a href="../../../../../html/PCT_Tutorial.html">PCT Tutorial</a> &raquo; Episode 7: Operators and Precedence
+                </div>
+
+<h1><a name="Episode_7:_Operators_and_Precedence"
+>Episode 7: Operators and Precedence</a></h1>
+
+<p>Up till now,
+we&#39;ve implemented a great deal of the Squaak language.
+We&#39;ve seen assignments,
+control&#45;flow statements,
+variable declarations and scope,
+subroutines and invocation.
+Our expressions have been limited so far to singular values,
+such as string literals and integer constants.
+In this episode,
+we&#39;ll enhance Squaak so it can handle operators,
+so you can construct more complex expressions.</p>
+
+<h2><a name="Operators,_precedence_and_parse_trees"
+>Operators,
+precedence and parse trees</a></h2>
+
+<p>We will first briefly introduce the problem with recursive&#45;descent parsers (which parsers generated with NQP are) when parsing expressions.
+Consider the following mini&#45;grammar,
+which is a very basic calculator.</p>
+
+<pre> rule TOP {
+     &#60;expression&#62;*
+ }
+
+ rule expression {
+     &#60;term&#62;
+ }
+
+ rule term {
+     &#60;factor&#62; [ &#60;addop&#62; &#60;factor&#62; ]*
+ }
+
+ token addop { &#39;+&#39; | &#39;&#45;&#39; }
+
+ rule factor {
+     &#60;value&#62; [ &#60;mulop&#62; &#60;value&#62; ]*
+ }
+
+ token mulop { &#39;*&#39; | &#39;/&#39; | &#39;%&#39; }
+
+ rule value{
+     | &#60;number&#62;
+     | &#39;(&#39; &#60;expression&#62; &#39;)&#39;
+ }</pre>
+
+<p>This basic expression grammar implements operator precedence by taking advantage of the nature of a recursive&#45;descent parser (if you haven&#39;t seen the word, google it). However, the big disadvantage of parsing expressions this way, is that the parse trees can become quite large. Perhaps more importantly, the parsing process is not very efficient. Let&#39;s take a look at some sample input. We won&#39;t show the parse trees as shown in Episode 2, but we&#39;ll just show an outline.</p>
+
+<pre> input: 42 results in this parse tree:
+
+ TOP
+   expression
+     term
+       factor
+         value
+           number
+             42</pre>
+
+<p>As you can see, the input of this single number will invoke 6 grammar rules</p>
+
+<p>before parsing the actual digits. Not that bad, you might think.</p>
+
+<pre> input: &#34;1 + 2&#34; results in this parse tree (we ignore the operator for now):
+
+ TOP
+   expression
+     term
+       factor
+       | value
+       |   number
+       |     1
+       factor
+         value
+           number
+             2</pre>
+
+<p>Only a few more grammar rules are invoked, not really a problem either.</p>
+
+<pre> input: &#34;(1 + 2) * 3&#34; results in this parse tree:
+
+ TOP
+   expression
+     term
+       factor
+         value
+         | expression
+         |   term
+         |   | factor
+         |   |   value
+         |   |     number
+         |   |       1
+         |   term
+         |     factor
+         |       value
+         |         number
+         |           2
+         value
+           number
+             3</pre>
+
+<p>Right; 16 grammar rules just to parse this simple input. I&#39;d call this slightly inefficient. The point is, implementing operator precedence using a recursive&#45;descent parser is somewhat problematic, and given the fact there are better methods to parse expressions like these, not the way to go. Check out this nice explanation or google it.</p>
+
+<h2><a name="Bottom&#45;up_parsing_and_stacks:_operator_tables"
+>Bottom&#45;up parsing and stacks: operator tables</a></h2>
+
+<p>I would like to explain to you how bottom&#45;up parsing works for expressions (or bottom&#45;up parsers in general; Yacc/Bison are parser generators that generate bottom&#45;up parsers for your grammar specification), taking operator precedence into account. However, it&#39;s been about 6 years that I did this in a CS class, and I don&#39;t remember the particular details. If you really want to know, check out the links at the end of the previous section. It&#39;s actually worth checking out. For now, I&#39;ll just assume you know what the problem is, so that I&#39;ll introduce the solution for NQP&#45;based compilers immediately. At some point when parsing your input, you might encounter an expression. At this point, we&#39;d like the parser to switch from top&#45;down to bottom&#45;up parsing. NQP&#45;rx supports this, and is used as follows:</p>
+
+<pre> &#60;EXPR&#62;</pre>
+
+<p>Of course, the optable must be populated with some operators that we need to be able to parse and it might be told what precedence and associativity they have. The easiest way to do this is by setting up precedence levels in an <code>INIT</code> block:</p>
+
+<pre>    INIT {
+        Squaak::Grammar.O(&#39;:prec&#60;t&#62;, :assoc&#60;left&#62;&#39;, &#39;%additive&#39;);
+        Squaak::Grammar.O(&#39;:prec&#60;u&#62;, :assoc&#60;lefT&#62;&#39;, &#39;%multiplicative&#39;);
+    }</pre>
+
+<p>In this <code>INIT</code> block, we use the <code>O</code> method of the compiler to set up two precedence levels: one for operators like addition (named <code>%additive</code>), and one for operators like multiplication (named <code>%multiplicative</code>). Each of themhas a &#34;:prec&#34; value and an &#34;:assoc&#34; value. &#34;:prec&#34; determines the precedence. Lexicographically greater values indicate higher precedence, so <code>%additive</code> operators, with a precedence value of &#34;t&#34;, have lower precedence than <code>%multiplicative</code> operators with a precedence value of &#34;u&#34;.&#34;:assoc&#34; defines the associativity of the operators. If <code>@</code> is a left associative operator, then 1 @ 2 @ 3 is equivalent to (1 @ 2) @ 3. However, if <code>@</code> is right associative, then 1 @ 2 @ 3 is equivalent to 1 @ (2 @ 3). There are other options for the associativity, but we&#39;ll discuss them as we come to them.</p>
+
+<pre>    token infix:sym&#60;*&#62; { &#60;sym&#62; &#60;O(&#39;%multiplicative, :pirop&#60;mul&#62;&#39;)&#62; }</pre>
+
+<p>This defines the operator <code>*</code> (the <code>infix:</code> is a prefix that tells the operator parser that this operator is an infix operator; there are other types, such as prefix, postfix and others). As you can see, it uses the O rule to specify that it is part of the <code>%multiplicative</code> group of operators. The &#34;:pirop&#34; value specifies that the operator should compile to the <code>mul</code> PIR opcode.</p>
+
+<p>Of course, the expression parser does not just parse operators, it must also parse the operands. So, how do we declare the most basic entity that represents an operand? It can be anything, from a basic integer&#45;constant, a function call, or even a function definition (but adding two function definition doesn&#39;t really make sense, does it?). The operands are parsed in a recursive&#45;descent fashion, so somewhere the parser must switch back from bottom&#45;up (expression parsing) to top&#45;down. This &#34;switch&#45;back&#34; point is the proto token <code>term</code>. This is the reason why integer constants are parsed by the rule term:sym&#60;integer_constant&#62;, for example, in our grammar.</p>
+
+<p>The <code>term</code> proto token is invoked every time a new operand is needed</p>
+
+<h2><a name="Squaak_Operators"
+>Squaak Operators</a></h2>
+
+<p>We have defined the entry and exit point of the expression (bottom&#45;up) parser, now it&#39;s time to add the operators. Let&#39;s have a look at Squaak&#39;s operators and their precedence. The operators are listed with decreasing precedence (so that high&#45;precedence operators are listed at the top). (I&#39;m not sure if this precedence table is common compared to other languages; some operators may have a different precedence w.r.t. other operators than you&#39;re used to. At least the mathematical operators are organized according to standard math rules).</p>
+
+<pre> unary &#34;&#45;&#34;
+ unary &#34;not&#34;
+ * / %
+ + &#45; ..
+ &#60; &#60;= &#62;= &#62; != ==
+ and
+ or</pre>
+
+<p>(&#34;..&#34; is the string concatenation operator). Besides defining an entry and exit point for the expression parser, you need to define precedence levels for your operators. Find the <code>INIT</code> block in Grammar.pm below the &#34;## Operators&#34; comment, and replace it with this:</p>
+
+<pre>    INIT {
+        Squaak::Grammar.O(&#39;:prec&#60;w&#62;, :assoc&#60;unary&#62;&#39;, &#39;%unary&#45;negate&#39;);
+        Squaak::Grammar.O(&#39;:prec&#60;v&#62;, :assoc&#60;unary&#62;&#39;, &#39;%unary&#45;not&#39;);
+        Squaak::Grammar.O(&#39;:prec&#60;u&#62;, :assoc&#60;left&#62;&#39;,  &#39;%multiplicative&#39;);
+        Squaak::Grammar.O(&#39;:prec&#60;t&#62;, :assoc&#60;left&#62;&#39;,  &#39;%additive&#39;);
+        Squaak::Grammar.O(&#39;:prec&#60;s&#62;, :assoc&#60;left&#62;&#39;,  &#39;%relational&#39;);
+        Squaak::Grammar.O(&#39;:prec&#60;r&#62;, :assoc&#60;left&#62;&#39;,  &#39;%conjunction&#39;);
+        Squaak::Grammar.O(&#39;:prec&#60;q&#62;, :assoc&#60;left&#62;&#39;,  &#39;%disjunction&#39;);
+    }</pre>
+
+<p>Now, we need to define the actual operators:</p>
+
+<pre>    token infix:sym&#60;or&#62; { &#60;sym&#62; &#60;O(&#39;%disjunction, :pasttype&#60;unless&#62;&#39;)&#62; }
+    token infix:sym&#60;and&#62; { &#60;sym&#62; &#60;O(&#39;%conjunction, :pasttype&#60;if&#62;&#39;)&#62; }
+    token infix:sym&#194;&#171;&#60;&#194;&#187; { &#60;sym&#62; &#60;O(&#39;%relational, :pirop&#60;islt&#62;&#39;)&#62; }
+    token infix:sym&#60;+&#62; { &#60;sym&#62; &#60;O(&#39;%additive, :pirop&#60;add&#62;&#39;)&#62; }
+    token infix:sym&#60;*&#62; { &#60;sym&#62; &#60;O(&#39;%multiplicative, :pirop&#60;mul&#62;&#39;)&#62; }
+    token prefix:sym&#60;not&#62; { &#60;sym&#62; &#60;O(&#39;%unary&#45;not, :pirop&#60;isfalse&#62;&#39;)&#62; }
+    token prefix:sym&#60;&#45;&#62; { &#60;sym&#62; &#60;O(&#39;%unary&#45;negate, :pirop&#60;neg&#62;&#39;)&#62; }</pre>
+
+<p>Note that some operators are missing. See the exercises section for this.</p>
+
+<h2><a name="Short&#45;circuiting_logical_operators"
+>Short&#45;circuiting logical operators</a></h2>
+
+<p>Squaak has two logical operators: <code>and</code> and <code>or</code>; and results true if and only if both operands evaluate to true, while or results true if at least one of its operands evaluates to true. Both operands are short&#45;circuited, which means that they don&#39;t evaluate both operands if that&#39;s unnecessary. For instance, if the first operand of the and operator evaluates to false, then there&#39;s no need to evaluate the second operand, as the final result of the and&#45;expression cannot become true anymore (remember: both operands must evaluate to true).Let&#39;s think about how to implement this. When evaluating an and&#45;expression, we first evaluate the first operand, and if it&#39;s true, only then does it make sense to evaluate the second operand. This behavior looks very much the same as an if&#45;statement, doesn&#39;t it? In an if&#45;statement, the first child is always evaluated, and if true, the second child (the <code>then</code> block) is evaluated (remember, the third child &#45;&#45; the <code>else</code> clause &#45;&#45; is optional). It would be great to be able to implement the and operator using a <code>PAST::Op( :pasttype(&#39;if&#39;) )</code> node. Well, you can, using the &#34;:pasttype&#34; option! Here&#39;s how:</p>
+
+<pre>    token infix:sym&#60;and&#62; { &#60;sym&#62; &#60;O(&#39;%conjunction, :pasttype&#60;if&#62;&#39;)&#62; }</pre>
+
+<p>So what about the or operator? When evaluating an or&#45;expression, the first operand is evaluated. If it evaluates to true, then there&#39;s no need to evaluate the second operand, as the result of the or&#45;expression is already true! Only if the first operand evaluates to false, is it necessary to evaluate the second child. Mmmmm.... what we&#39;re saying here is, unless the first operand evaluates to true, evaluate the second child. Guess what pasttype you&#39;d need for that!</p>
+
+<h2><a name="Operators_PAST_types_and_PIR_instructions"
+>Operators PAST types and PIR instructions</a></h2>
+
+<p>In the previous section, we introduced the <code>pasttype</code> clause that you can specify. This means that for that operator (for instance, the <code>and</code> operator we discussed), a <code>PAST::Op( :pasttype(&#39;if&#39;) )</code> node is created. What happens if you don&#39;t specify a pasttype? In that case, the corresponding action method is called. Obviously, some languages have very exotic semantics for the <code>+</code> operator, but many languages just want to use Parrot&#39;s built&#45;in <code>add</code> instruction. How do we achieve that?</p>
+
+<p>Instead of adding a <code>pasttype</code> clause, specify a <code>pirop</code> clause. The <code>pirop</code>, or <i>PIR operator</i>, clause tells the code generator what operator should be generated. Instead of generating a subroutine invocation with the operands as arguments, it will generate the specified instruction with the operator&#39;s operands as arguments. Neat huh? Let&#39;s look at an example:</p>
+
+<pre>    token infix:sym&#60;+&#62; { &#60;sym&#62; &#60;O(&#39;%additive, :pirop&#60;add&#62;&#39;)&#62; }</pre>
+
+<p>This specifies to use the <code>add</code> instruction, which tells Parrot to create a new result object instead of changing one of the operands. PCT just emits the following for this:</p>
+
+<pre> add $P12, $P10, $P11</pre>
+
+<p>which means that the PMCs in registers <code>$P10</code> and <code>$P11</code> are added, and assigned to a newly created PMC which is stored in register <code>$P12</code>.</p>
+
+<h2><a name="To_circumfix_or_not_to_circumfix"
+>To circumfix or not to circumfix</a></h2>
+
+<p>Squaak supports parenthesized expressions. Parentheses can be used to change the order of evaluation in an expression, just as you probably have seen in other languages. Besides infix, prefix and postfix operators, you can define circumfix operators, which is specified with the left and right delimiter. This is an ideal way to implement parenthesized expressions:</p>
+
+<pre>    token circumfix:sym&#60;( )&#62; { &#39;(&#39; &#60;.ws&#62; &#60;EXPR&#62; &#39;)&#39; }
+
+    # with the action method:
+    method circumfix:sym&#60;( )&#62; { make $&#60;EXPR&#62;.ast; }</pre>
+
+<p>This rule and action method were generated for us when we ran mk_language_shell.pl; you don&#39;t need to add them to the grammar and actions yourself. Circumfix operators are treated as terms by the operator&#45;precedence parser, so it will parse as we want it to automatically.</p>
+
+<h2><a name="Expression_parser&#39;s_action_method"
+>Expression parser&#39;s action method</a></h2>
+
+<p>For all grammar rules we introduced, we also introduced an action method that is invoked after the grammar rule was done matching. What about the action method for EXPR? Our Squaak::Actions class inherits that from HLL::Actions. We don&#39;t have to write one.</p>
+
+<h2><a name="What&#39;s_Next?"
+>What&#39;s Next?</a></h2>
+
+<p>This episode covered the implementation of operators, which allows us to write complex expressions. By now, most of our language is implemented, except for one thing: aggregate data structures. This will be the topic of Episode 8. We will introduce the two aggregate data types: array and hashtables, and see how we can implement these. We&#39;ll also discuss what happens when we pass such aggregates as subroutine arguments, and the difference with the basic data types.</p>
+
+<h2><a name="Exercises"
+>Exercises</a></h2>
+
+<ul>
+<li>Currently, Squaak only has grammar rules for integer and string constants, not floating point constants. Implement this grammar rule. A floating&#45;point number consists of zero or more digits, followed by a dot and at least one digit, or, at least one digit followed by a dot and any number of digits. Examples are:</li>
+
+<pre> 42.0, 1., .0001.</pre>
+
+<p>There may be no whitespace between the individual digits and the dot. Make sure you understand the difference between a &#34;rule&#34; and a &#34;token&#34;.</p>
+
+<p>Hint: a floating&#45;point constant should produce a value of type &#39;Float&#39;.</p>
+
+<p>Note: in Perl 6 regexes, when matching an alternation as in a proto rule, the alternative which matches the most of the string is supposed to match. However, NQP&#45;rx does not yet implement this. As a work&#45;around, NQP&#45;rx specifies that the version of a proto regex with the longest name will match. Since the part of a floating&#45;point constant before the decimal place is the same as an integer constant, unless the token for floating&#45;point constants has a longer name than the token for integer&#45;constants, the latter will match and a syntax error will result.</p>
+
+<li>Implement the missing operators: (binary) &#34;&#45;&#34;, &#34;&#60;=&#34;, &#34;&#62;=&#34;, &#34;==&#34;, &#34;!=&#34;, &#34;/&#34;, &#34;%&#34;, &#34;or&#34;</li>
+</ul>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p>docs/pct/pct_optable_guide.pod</p>
+
+<h2><a name="Solution_to_the_exercises"
+>Solution to the exercises</a></h2>
+
+<ol>
+<li>A floating&#45;point number consists of zero or more digits, followed by a dot and at least one digit, or, at least one digit followed by a dot and any number of digits. Examples are: 42.0, 1., .0001. There may be no whitespace between the individual digits and the dot. Make sure you understand the difference between a <code>rule</code> and a <code>token</code>.</li>
+
+<p>Hint: a floating&#45;point constant should produce a value of type &#39;Float&#39;.</p>
+
+<p>Note: in Perl 6 regexes, when matching an alternation as in a proto rule, the alternative which matches the most of the string is supposed to match. However, NQP&#45;rx does not yet implement this. As a work&#45;around, NQP&#45;rx specifies that the version of a proto regex with the longest name will match. Since the part of a floating&#45;point constant before the decimal place is the same as an integer constant, unless the token for floating&#45;point constants has a longer name than the token for integer&#45;constants, the latter will match and a syntax error will result.</p>
+
+<pre>    token term:sym&#60;float_constant_long&#62; { # longer to work around lack of LTM
+        [
+        | \d+ &#39;.&#39; \d*
+        | \d* &#39;.&#39; \d+
+        ]
+    }
+
+    # with action method:
+    method term:sym&#60;float_constant_long&#62;($/) { # name worksaround lack of LTM
+        make PAST::Val.new(:value(+$/), :returns&#60;Float&#62;);
+    }</pre>
+
+<li>For sake of completeness (and easy copy&#45;paste for you), here&#39;s the list of operator declarations as I wrote them for Squaak:</li>
+
+<pre>    INIT {
+        Squaak::Grammar.O(&#39;:prec&#60;w&#62;, :assoc&#60;unary&#62;&#39;, &#39;%unary&#45;negate&#39;);
+        Squaak::Grammar.O(&#39;:prec&#60;v&#62;, :assoc&#60;unary&#62;&#39;, &#39;%unary&#45;not&#39;);
+        Squaak::Grammar.O(&#39;:prec&#60;u&#62;, :assoc&#60;left&#62;&#39;,  &#39;%multiplicative&#39;);
+        Squaak::Grammar.O(&#39;:prec&#60;t&#62;, :assoc&#60;left&#62;&#39;,  &#39;%additive&#39;);
+        Squaak::Grammar.O(&#39;:prec&#60;s&#62;, :assoc&#60;left&#62;&#39;,  &#39;%relational&#39;);
+        Squaak::Grammar.O(&#39;:prec&#60;r&#62;, :assoc&#60;left&#62;&#39;,  &#39;%conjunction&#39;);
+        Squaak::Grammar.O(&#39;:prec&#60;q&#62;, :assoc&#60;left&#62;&#39;,  &#39;%disjunction&#39;);
+    }
+
+    token circumfix:sym&#60;( )&#62; { &#39;(&#39; &#60;.ws&#62; &#60;EXPR&#62; &#39;)&#39; }
+
+    token prefix:sym&#60;&#45;&#62; { &#60;sym&#62; &#60;O(&#39;%unary&#45;negate, :pirop&#60;neg&#62;&#39;)&#62; }
+    token prefix:sym&#60;not&#62; { &#60;sym&#62; &#60;O(&#39;%unary&#45;not, :pirop&#60;isfalse&#62;&#39;)&#62; }
+
+    token infix:sym&#60;*&#62;  { &#60;sym&#62; &#60;O(&#39;%multiplicative, :pirop&#60;mul&#62;&#39;)&#62; }
+    token infix:sym&#60;%&#62;  { &#60;sym&#62; &#60;O(&#39;%multiplicative, :pirop&#60;mod&#62;&#39;)&#62; }
+    token infix:sym&#60;/&#62;  { &#60;sym&#62; &#60;O(&#39;%multiplicative, :pirop&#60;div&#62;&#39;)&#62; }
+
+    token infix:sym&#60;+&#62;  { &#60;sym&#62; &#60;O(&#39;%additive, :pirop&#60;add&#62;&#39;)&#62; }
+    token infix:sym&#60;&#45;&#62;  { &#60;sym&#62; &#60;O(&#39;%additive, :pirop&#60;sub&#62;&#39;)&#62; }
+    token infix:sym&#60;..&#62; { &#60;sym&#62; &#60;O(&#39;%additive, :pirop&#60;concat&#62;&#39;)&#62; }
+
+    token infix:sym&#194;&#171;&#60;&#194;&#187; { &#60;sym&#62; &#60;O(&#39;%relational, :pirop&#60;isle iPP&#62;&#39;)&#62; }
+    token infix:sym&#194;&#171;&#60;=&#194;&#187; { &#60;sym&#62; &#60;O(&#39;%relational, :pirop&#60;islt iPP&#62;&#39;)&#62; }
+    token infix:sym&#194;&#171;&#62;&#194;&#187; { &#60;sym&#62; &#60;O(&#39;%relational, :pirop&#60;isgt iPP&#62;&#39;)&#62; }
+    token infix:sym&#194;&#171;&#62;=&#194;&#187; { &#60;sym&#62; &#60;O(&#39;%relational, :pirop&#60;isge iPP&#62;&#39;)&#62; }
+    token infix:sym&#194;&#171;==&#194;&#187; { &#60;sym&#62; &#60;O(&#39;%relational, :pirop&#60;iseq iPP&#62;&#39;)&#62; }
+    token infix:sym&#194;&#171;!=&#194;&#187; { &#60;sym&#62; &#60;O(&#39;%relational, :pirop&#60;isne iPP&#62;&#39;)&#62; }
+
+    token infix:sym&#60;and&#62; { &#60;sym&#62; &#60;O(&#39;%conjunction, :pasttype&#60;if&#62;&#39;)&#62; }
+    token infix:sym&#60;or&#62; { &#60;sym&#62; &#60;O(&#39;%disjunction, :pasttype&#60;unless&#62;&#39;)&#62; }</pre>
+</ol>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

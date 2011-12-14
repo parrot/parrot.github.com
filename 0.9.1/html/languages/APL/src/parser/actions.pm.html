@@ -1,0 +1,95 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Untitled</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Contents</a> &raquo; <a href="../../../../../html/languages.html">Language Implementations</a> &raquo; <a href="../../../../../html/apl.html">APL</a> &raquo; Untitled
+                </div>
+
+<p>class APL::Grammar::Actions;</p>
+
+<p>method TOP($/) { my $catchpir := &#34; get_results &#39;0&#39;,
+$P0\n $S0 = $P0\n print $S0\n .return ($P0)\n&#34;; my $past := PAST::Block.new( PAST::Op.new( $( $&#60;statement_list&#62; ),
+PAST::Op.new( :inline( $catchpir) ),
+:pasttype(&#39;try&#39;),
+:node($/) ),
+:hll(&#39;apl&#39;) ); make $past; }</p>
+
+<p>method statement_list($/) { my $past := PAST::Stmts.new( :node($/) ); for $&#60;statement&#62; { $past.push( $( $_ ) ); } make $past; }</p>
+
+<p>method statement($/) { my $past := $( $&#60;expression&#62; ); if $past.WHAT() ne &#39;Op&#39; || $past.pasttype() ne &#39;copy&#39; { $past := PAST::Op.new( $past,
+:name(&#39;aplprint&#39;),
+:node( $/ ) ); } make $past; }</p>
+
+<p>method expression($/,
+$key) { our %inlinetable; if ($key eq &#39;assign&#39;) { my $past := PAST::Op.new( $($&#60;target&#62;),
+$($&#60;expression&#62;),
+:pasttype(&#39;copy&#39;),
+:node($/) ); make $past; } elsif ($key eq &#39;monadic&#39;) { my $name := &#39;monadic:&#39; ~ $&#60;monadic_identifier&#62;; my $past := PAST::Op.new( $($&#60;expression&#62;),
+:node($/) ); if %inlinetable{$name} { $past.inline( %inlinetable{$name} ); } else { $past.name($name); } make $past; } else { my $past := $( $&#60;subexpression&#62; ); if $&#60;dyadic_identifier&#62;[0] { my $name := &#39;dyadic:&#39; ~ $&#60;dyadic_identifier&#62;[0]; $past := PAST::Op.new( $past,
+$($&#60;expression&#62;[0]),
+:node($/) ); if %inlinetable{$name} { $past.inline(%inlinetable{$name}); } else { $past.name($name); } } make $past; } }</p>
+
+<p>method subexpression($/) { make $( $&#60;simple_expression&#62; ); }</p>
+
+<p>method simple_expression($/,
+$key) { make $( $/{$key} ); }</p>
+
+<p>method target($/) { my $past := $( $&#60;variable_identifier&#62; ); $past.lvalue(1); make $past; }</p>
+
+<p>method array_identifier($/,
+$key) { make $( $/{$key} ); }</p>
+
+<p>method constant($/,
+$key) { make $( $/{$key} ); }</p>
+
+<p>method numeric_constant($/) { if +$&#60;decimal_representation&#62; != 1 { my $past := PAST::Op.new( :name(&#39;aplvector&#39;),
+:node($/) ); for $&#60;decimal_representation&#62; { $past.push( $( $_ ) ); } make $past; } else { make $( $&#60;decimal_representation&#62;[0] ); } }</p>
+
+<p>method decimal_representation($/) { my $value := ~$/; $value.replace(&#34;\x207b&#34;,
+&#39;&#45;&#39;); PIR q&#60; $P0 = find_lex &#39;$value&#39; &#62;; PIR q&#60; $S0 = $P0 &#62;; PIR q&#60; $I0 = index $S0,
+&#39;.&#39; &#62;; PIR q&#60; unless $I0 &#60; 0 goto ffff &#62;; PIR q&#60; $I0 = index $S0,
+&#39;E&#39; &#62;; PIR q&#60; unless $I0 &#60; 0 goto ffff &#62;; PIR q&#60; concat $P0,
+&#39;.&#39; &#62;; PIR q&#60; ffff: &#62;; make PAST::Val.new( :value($value),
+:returns(&#39;Float&#39;),
+:node($/) ); }</p>
+
+<p>method variable_identifier($/) { make PAST::Var.new( :name( ~$/ ),
+:viviself(&#39;Undef&#39;),
+:scope(&#39;package&#39;),
+:node( $/ ) ); }</p>
+
+<p>method character_constant_double($/) { my $value := ~$/[0]; $value.replace(&#39;&#34;&#34;&#39;,
+&#39;&#34;&#39;); make PAST::Op.new( PAST::Val.new( :value($value) ),
+:name(&#39;aplstring&#39;),
+:node( $/ ) ); }</p>
+
+<p>method character_constant_single($/) { my $value := ~$/[0]; $value.replace(&#34;&#39;&#39;&#34;,
+&#34;&#39;&#34;); make PAST::Op.new( PAST::Val.new( :value($value) ),
+:name(&#39;aplstring&#39;),
+:node( $/ ) ); }</p>
+
+<p># Local Variables: # mode: cperl # cperl&#45;indent&#45;level: 4 # fill&#45;column: 100 # End: # vim: expandtab shiftwidth=4:</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - BigNum PMC class</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; BigNum PMC class
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/bignum.pmc &#45; BigNum PMC class</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p><code>BigNum</code> provides arbitrary precision floating point mathematic functions,
+based on the GMP mpf library.</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<p>Make mixing of classes work,
+like in:</p>
+
+<pre>        new $P0 [&#39;BigInt&#39;]
+        new $P1 [&#39;BigNum&#39;]
+        set $P0, 10
+        set $P1, 2
+        div P2, P0, P1  # $P2 = $P0 / $P1; (BigNum) 5.0</pre>
+
+<p>Make auto&#45;upgrading/downgrading work.</p>
+
+<pre>        set $N1, $P0
+        set $N1, $P1
+        set $I1, $P0
+        set $I1, $P1
+        set $P0, $I1
+        set $P0, $N1
+        set $P1, $I1
+        set $P1, $N1
+
+  BigNum
+    =&#62; BigInt =&#62; Integer
+    =&#62; Number: float (can be long double) and double
+    =&#62; Integer (unsigned long)</pre>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="static_void_bignum_init(Interp*,_PMC_*self)"
+><b><code>static void bignum_init(Interp*, PMC *self)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_clear(Interp*,_PMC_*self)"
+><b><code>static void bignum_clear(Interp*, PMC *self)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_set(Interp*,_PMC_*dest,_PMC_*src)"
+><b><code>static void bignum_set(Interp*, PMC *dest, PMC *src)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_set_si(Interp*,_PMC_*self,_long_value)"
+><b><code>static void bignum_set_si(Interp*, PMC *self, long value)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_set_ui(Interp*,_PMC_*self,_unsigned_long_value)"
+><b><code>static void bignum_set_ui(Interp*, PMC *self, unsigned long value)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_set_float(Interp*,_PMC_*self,_FLOATVAL_value)"
+><b><code>static void bignum_set_float(Interp*, PMC *self, FLOATVAL value)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_set_double(Interp*,_PMC_*self,_double_value)"
+><b><code>static void bignum_set_double(Interp*, PMC *self, double value)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_set_str(Interp*,_PMC_*self,_char_*value,_int_base)"
+><b><code>static void bignum_set_str(Interp*, PMC *self, char *value, int base)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_set_bigint(Interp*,_PMC_*self,_struct_BIGINT_*value)"
+><b><code>static void bignum_set_bigint(Interp*, PMC *self, struct BIGINT *value)</b></code></a></dt>
+
+<dt><a name="static_BIGNUM*_bignum_get_self(Interp*,_PMC_*self)"
+><b><code>static BIGNUM* bignum_get_self(Interp*, PMC *self)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_set_self(Interp*,_PMC_*self,_BIGNUM_*value)"
+><b><code>static void bignum_set_self(Interp*, PMC *self, BIGNUM *value)</b></code></a></dt>
+
+<dt><a name="static_long_bignum_get_si(Interp*,_PMC_*self)"
+><b><code>static long bignum_get_si(Interp*, PMC *self)</b></code></a></dt>
+
+<dt><a name="static_unsigned_long_bignum_get_ui(Interp*,_PMC_*self)"
+><b><code>static unsigned long bignum_get_ui(Interp*, PMC *self)</b></code></a></dt>
+
+<dt><a name="static_int_bignum_get_bool(Interp*,_PMC_*self)"
+><b><code>static int bignum_get_bool(Interp*, PMC *self)</b></code></a></dt>
+
+<dt><a name="static_char*_bignum_get_string(Interp*,_PMC_*self,_int_base)"
+><b><code>static char* bignum_get_string(Interp*, PMC *self, int base)</b></code></a></dt>
+
+<dt><a name="static_char*_bignum_get_string_size(Interp*,_PMC_*self,_int_base,_int_digits)"
+><b><code>static char* bignum_get_string_size(Interp*, PMC *self, int base, int digits)</b></code></a></dt>
+
+<dt><a name="static_double_bignum_get_double(Interp*,_PMC_*self)"
+><b><code>static double bignum_get_double(Interp*, PMC *self)</b></code></a></dt>
+
+<dt><a name="static_FLOATVAL_bignum_get_float(Interp*,_PMC_*self)"
+><b><code>static FLOATVAL bignum_get_float(Interp*, PMC *self)</b></code></a></dt>
+
+<dt><a name="static_BIGINT_bignum_get_bigint(Interp*,_PMC_*self)"
+><b><code>static BIGINT bignum_get_bigint(Interp*, PMC *self)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_add_bignum(Interp*,_PMC_*self,_PMC_*value,_PMC_*dest)"
+><b><code>static void bignum_add_bignum(Interp*, PMC *self, PMC *value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_add_bignum_int(Interp*,_PMC_*self,_INTVAL_value,_PMC_*dest)"
+><b><code>static void bignum_add_bignum_int(Interp*, PMC *self, INTVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_add_bignum_float(Interp*,_PMC_*self,_FLOATVAL_value,_PMC_*dest)"
+><b><code>static void bignum_add_bignum_float(Interp*, PMC *self, FLOATVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_sub_bignum(Interp*,_PMC_*self,_PMC_*value,_PMC_*dest)"
+><b><code>static void bignum_sub_bignum(Interp*, PMC *self, PMC *value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_sub_bignum_int(Interp*,_PMC_*self,_INTVAL_value,_PMC_*dest)"
+><b><code>static void bignum_sub_bignum_int(Interp*, PMC *self, INTVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_sub_bignum_float(Interp*,_PMC_*self,_FLOATVAL_value,_PMC_*dest)"
+><b><code>static void bignum_sub_bignum_float(Interp*, PMC *self, FLOATVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_mul_bignum(Interp*,_PMC_*self,_PMC_*value,_PMC_*dest)"
+><b><code>static void bignum_mul_bignum(Interp*, PMC *self, PMC *value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_mul_bignum_int(Interp*,_PMC_*self,_INTVAL_value,_PMC_*dest)"
+><b><code>static void bignum_mul_bignum_int(Interp*, PMC *self, INTVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_mul_bignum_float(Interp*,_PMC_*self,_FLOATVAL_value,_PMC_*dest)"
+><b><code>static void bignum_mul_bignum_float(Interp*, PMC *self, FLOATVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_pow_bignum_int(Interp*,_PMC_*self,_INTVAL_value,_PMC_*dest)"
+><b><code>static void bignum_pow_bignum_int(Interp*, PMC *self, INTVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_check_divide_zero(Interp*,_PMC_*value)"
+><b><code>static void bignum_check_divide_zero(Interp*, PMC *value)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_div_bignum(Interp*,_PMC_*self,_PMC_*value,_PMC_*dest)"
+><b><code>static void bignum_div_bignum(Interp*, PMC *self, PMC *value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_div_bignum_int(Interp*,_PMC_*self,_INTVAL_value,_PMC_*dest)"
+><b><code>static void bignum_div_bignum_int(Interp*, PMC *self, INTVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_div_bignum_float(Interp*,_PMC_*self,_FLOATVAL_value,_PMC_*dest)"
+><b><code>static void bignum_div_bignum_float(Interp*, PMC *self, FLOATVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_fdiv_bignum(Interp*,_PMC_*self,_PMC_*value,_PMC_*dest)"
+><b><code>static void bignum_fdiv_bignum(Interp*, PMC *self, PMC *value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_fdiv_bignum_int(Interp*,_PMC_*self,_INTVAL_value,_PMC_*dest)"
+><b><code>static void bignum_fdiv_bignum_int(Interp*, PMC *self, INTVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="static_INTVAL_bignum_cmp(Interp*,_PMC_*self,_PMC_*value)"
+><b><code>static INTVAL bignum_cmp(Interp*, PMC *self, PMC *value)</b></code></a></dt>
+
+<dt><a name="static_INTVAL_bignum_cmp_double(Interp*,_PMC_*self,_double_value)"
+><b><code>static INTVAL bignum_cmp_double(Interp*, PMC *self, double value)</b></code></a></dt>
+
+<dt><a name="static_INTVAL_bignum_cmp_int(Interp*,_PMC_*self,_INTVAL_value)"
+><b><code>static INTVAL bignum_cmp_int(Interp*, PMC *self, INTVAL value)</b></code></a></dt>
+
+<dt><a name="static_INTVAL_bignum_cmp_ulong(Interp*,_PMC_*self,_unsigned_long_value)"
+><b><code>static INTVAL bignum_cmp_ulong(Interp*, PMC *self, unsigned long value)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_abs(Interp*,_PMC_*self,_PMC_*dest)"
+><b><code>static void bignum_abs(Interp*, PMC *self, PMC *dest)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_neg(Interp*,_PMC_*self,_PMC_*dest)"
+><b><code>static void bignum_neg(Interp*, PMC *self, PMC *dest)</b></code></a></dt>
+
+<dt><a name="static_INTVAL_bignum_get_default_prec(Interp*,_PMC_*self)"
+><b><code>static INTVAL bignum_get_default_prec(Interp*, PMC *self)</b></code></a></dt>
+
+<dt><a name="static_void_bignum_set_default_prec(Interp*,_PMC_*self,_INTVAL_prec)"
+><b><code>static void bignum_set_default_prec(Interp*, PMC *self, INTVAL prec)</b></code></a></dt>
+</dl>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="METHOD_version()"
+><b><code>METHOD version()</b></code></a></dt>
+Return GMP version string &#34;x.y.z&#34;.
+<dt><a name="void_set_integer_native(INTVAL_value)"
+><b><code>void set_integer_native(INTVAL value)</b></code></a></dt>
+
+<dt><a name="void_set_number_native(FLOATVAL_value)"
+><b><code>void set_number_native(FLOATVAL value)</b></code></a></dt>
+Sets the value of the BigNum to <code>value</code>.
+<dt><a name="void_set_string_native(STRING_*value)"
+><b><code>void set_string_native(STRING *value)</b></code></a></dt>
+Sets the value of the BigNum to the result of converting <code>*value</code> to a number.
+<dt><a name="void_set_string_keyed_int(INTVAL_base,_STRING_*value)"
+><b><code>void set_string_keyed_int(INTVAL base, STRING *value)</b></code></a></dt>
+Same assume number base <code>base</code>.
+<dt><a name="void_set_pmc(PMC_*value)"
+><b><code>void set_pmc(PMC *value)</b></code></a></dt>
+Sets the value of the BigNum to the BigNum value of <code>*value</code>.
+<dt><a name="FLOATVAL_get_number()"
+><b><code>FLOATVAL get_number()</b></code></a></dt>
+Down&#45;converts the precise BigNum to an imprecise double.
+<dt><a name="INTVAL_get_integer()"
+><b><code>INTVAL get_integer()</b></code></a></dt>
+Returns the integer conversion of the BigNum.
+<dt><a name="INTVAL_get_ulong()"
+><b><code>INTVAL get_ulong()</b></code></a></dt>
+Returns the unsigned long conversion of the BigNum.
+<dt><a name="PMC_*get_bignum()"
+><b><code>PMC *get_bignum()</b></code></a></dt>
+Returns SELF, keeping floating point precision.
+<dt><a name="FLOATVAL_get_bigint()"
+><b><code>FLOATVAL get_bigint()</b></code></a></dt>
+Trunc the BigNum to an BigInt.
+<dt><a name="INTVAL_get_bool()"
+><b><code>INTVAL get_bool()</b></code></a></dt>
+Returns the boolean value of the BigNum.
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+Returns the string representation of the BigNum.
+<dt><a name="STRING_*get_string_keyed_int(INTVAL_base)"
+><b><code>STRING *get_string_keyed_int(INTVAL base)</b></code></a></dt>
+Returns the string representation of the BigNum in base <code>base</code>.
+<dt><a name="STRING_*get_string_keyed_int_int(INTVAL_base,_INTVAL_digits)"
+><b><code>STRING *get_string_keyed_int_int(INTVAL base, INTVAL digits)</b></code></a></dt>
+Returns the string representation of the BigNum in base <code>base</code> with <code>digits</code> digits.
+<dt><a name="STRING_*get_repr()"
+><b><code>STRING *get_repr()</b></code></a></dt>
+Returns the string representation of the BigNum with the letter &#39;N&#39; appended.
+<dt><a name="void_increment()"
+><b><code>void increment()</b></code></a></dt>
+Increment the BigNum by 1.0.
+<dt><a name="void_decrement()"
+><b><code>void decrement()</b></code></a></dt>
+Decrement the BigNum by 1.0.
+<dt><a name="void_add()"
+><b><code>void add()</b></code></a></dt>
+
+<dt><a name="void_substract()"
+><b><code>void substract()</b></code></a></dt>
+
+<dt><a name="void_multiply()"
+><b><code>void multiply()</b></code></a></dt>
+
+<dt><a name="void_pow()"
+><b><code>void pow()</b></code></a></dt>
+
+<dt><a name="void_divide()"
+><b><code>void divide()</b></code></a></dt>
+
+<dt><a name="void_floor_divide()"
+><b><code>void floor_divide()</b></code></a></dt>
+
+<dt><a name="void_cmp()"
+><b><code>void cmp()</b></code></a></dt>
+
+<dt><a name="void_is_equal()"
+><b><code>void is_equal()</b></code></a></dt>
+
+<dt><a name="PMC_*absolute(PMC_*dest)"
+><b><code>PMC *absolute(PMC *dest)</b></code></a></dt>
+
+<dt><a name="void_i_absolute()"
+><b><code>void i_absolute()</b></code></a></dt>
+Sets <code>dest</code> to the absolute value of SELF.
+<dt><a name="PMC_*neg(PMC_*dest)"
+><b><code>PMC *neg(PMC *dest)</b></code></a></dt>
+
+<dt><a name="void_i_neg()"
+><b><code>void i_neg()</b></code></a></dt>
+Set <code>dest</code> to the negated value of <code>SELF</code>.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/perl6.html">Perl6</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<p>## ok</p>
+
+<p>ok(2 + 2 == 4,
+&#39;2 and 2 make 4&#39;); ok(2 + 2 == 4,
+desc =&#62; &#39;2 and 2 make 4&#39;); ok(2 + 2 == 4,
+:desc(&#39;2 and 2 make 4&#39;));</p>
+
+<p>ok(2 + 2 == 5,
+desc =&#62; &#39;2 and 2 doesnt make 5&#39;,
+todo =&#62; &#60;bug&#62;); ok(2 + 2 == 5,
+:desc(&#39;2 and 2 doesnt make 5&#39;),
+:todo(1));</p>
+
+<p>## is</p>
+
+<p>is(2 + 2,
+4,
+&#39;2 and 2 make 4&#39;); is(2 + 2,
+4,
+desc =&#62; &#39;2 and 2 make 4&#39;); is(2 + 2,
+4,
+:desc(&#39;2 and 2 make 4&#39;));</p>
+
+<p>is(2 + 2,
+5,
+todo =&#62; 1,
+desc =&#62; &#39;2 and 2 doesnt make 5&#39;); is(2 + 2,
+5,
+:todo&#60;feature&#62;,
+:desc(&#39;2 and 2 doesnt make 5&#39;));</p>
+
+<p>## isnt</p>
+
+<p>isnt(2 + 2,
+5,
+&#39;2 and 2 does not make 5&#39;); isnt(2 + 2,
+5,
+desc =&#62; &#39;2 and 2 does not make 5&#39;); isnt(2 + 2,
+5,
+:desc(&#39;2 and 2 does not make 5&#39;));</p>
+
+<p>isnt(2 + 2,
+4,
+&#39;2 and 2 does make 4&#39;,
+:todo(1)); isnt(2 + 2,
+4,
+desc =&#62; &#39;2 and 2 does make 4&#39;,
+todo =&#62; 1); isnt(2 + 2,
+4,
+:desc(&#39;2 and 2 does make 4&#39;),
+todo =&#62; 1);</p>
+
+<p>## is_deeply</p>
+
+<p>is_deeply([ 1..4 ],
+[ 1..4 ],
+&#34;is_deeply (simple)&#34;);</p>
+
+<p>is_deeply({ a =&#62; &#34;b&#34;,
+c =&#62; &#34;d&#34;,
+nums =&#62; [&#60;1 2 3 4 5 6&#62;] },
+{ nums =&#62; [&#39;1&#39;..&#39;6&#39;],
+&#60;a b c d&#62; },
+&#34;is_deeply (more complex)&#34;);</p>
+
+<p>my @a = &#34;a&#34; ..
+&#34;z&#34;; my @b = @a.reverse; @b = @b.map(sub($a,
+$b) { $b,
+$a }); my %a = @a; my %b = @b; is_deeply(%a,
+%b,
+&#34;is_deeply (test hash key ordering)&#34;);</p>
+
+<p>## isa_ok</p>
+
+<p>my @list = ( 1,
+2,
+3 );</p>
+
+<p>isa_ok(@list,
+&#39;List&#39;); isa_ok({ &#39;one&#39; =&#62; 1 },
+&#39;Hash&#39;);</p>
+
+<p>isa_ok(@list,
+&#39;Hash&#39;,
+&#39;this is a description&#39;,
+todo =&#62; 1); isa_ok(@list,
+&#39;Hash&#39;,
+desc =&#62; &#39;this is a description&#39;,
+:todo&#60;bug&#62;); isa_ok(@list,
+&#39;Array&#39;,
+:desc(&#39;this is a description&#39;));</p>
+
+<p>class Foo {}; my $foo = Foo.new(); isa_ok($foo,
+&#39;Foo&#39;); isa_ok(Foo.new(),
+&#39;Foo&#39;);</p>
+
+<p>## like</p>
+
+<p>like(&#34;Hello World&#34;,
+rx:P5/\s/,
+&#39;...
+testing like()&#39;); like(&#34;Hello World&#34;,
+rx:P5/\s/,
+desc =&#62; &#39;...
+testing like()&#39;); like(&#34;Hello World&#34;,
+rx:P5/\s/,
+:desc(&#39;...
+testing like()&#39;));</p>
+
+<p>like(&#34;HelloWorld&#34;,
+rx:P5/\s/,
+desc =&#62; &#39;...
+testing like()&#39;,
+todo =&#62; 1); like(&#34;HelloWorld&#34;,
+rx:P5/\s/,
+:todo(1),
+:desc(&#39;...
+testing like()&#39;));</p>
+
+<p>## unlike</p>
+
+<p>unlike(&#34;HelloWorld&#34;,
+rx:P5/\s/,
+&#39;...
+testing unlike()&#39;); unlike(&#34;HelloWorld&#34;,
+rx:P5/\s/,
+desc =&#62; &#39;...
+testing unlike()&#39;); unlike(&#34;HelloWorld&#34;,
+rx:P5/\s/,
+:desc(&#39;...
+testing unlike()&#39;));</p>
+
+<p>unlike(&#34;Hello World&#34;,
+rx:P5/\s/,
+todo =&#62; 1,
+desc =&#62; &#39;...
+testing unlike()&#39;); unlike(&#34;Hello World&#34;,
+rx:P5/\s/,
+:desc(&#39;...
+testing unlike()&#39;),
+:todo(1));</p>
+
+<p>## cmp_ok</p>
+
+<p>cmp_ok(&#39;test&#39;,
+sub ($a,
+$b) { ?($a gt $b) },
+&#39;me&#39;,
+&#39;...
+testing gt on two strings&#39;); cmp_ok(&#39;test&#39;,
+sub ($a,
+$b) { ?($a gt $b) },
+&#39;me&#39;,
+desc =&#62; &#39;...
+testing gt on two strings&#39;); cmp_ok(&#39;test&#39;,
+sub ($a,
+$b) { ?($a gt $b) },
+&#39;me&#39;,
+:desc(&#39;...
+testing gt on two strings&#39;));</p>
+
+<p>cmp_ok(&#39;test&#39;,
+sub ($a,
+$b) { ?($a gt $b) },
+&#39;you&#39;,
+:todo(1),
+desc =&#62; &#39;...
+testing gt on two strings&#39;); cmp_ok(&#39;test&#39;,
+sub ($a,
+$b) { ?($a gt $b) },
+&#39;you&#39;,
+:desc(&#39;...
+testing gt on two strings&#39;),
+todo =&#62; 1);</p>
+
+<p>## use_ok</p>
+
+<p>use lib &#60;ext/Test&#62;; # Hack if we&#39;re run from make smoke use_ok(&#39;t::use_ok_test&#39;);</p>
+
+<p># Need to do a test loading a package that is not there,
+# and see that the load fails.
+Gracefully.
+:) #use_ok(&#39;Non::Existent::Package&#39;,
+:todo(1));</p>
+
+<p>## dies_ok</p>
+
+<p>dies_ok &#45;&#62; { die &#34;Testing dies_ok&#34; },
+&#39;...
+it dies_ok&#39;; dies_ok &#45;&#62; { die &#34;Testing dies_ok&#34; },
+desc =&#62; &#39;...
+it dies_ok&#39;; dies_ok &#45;&#62; { die &#34;Testing dies_ok&#34; },
+:desc(&#39;...
+it dies_ok&#39;);</p>
+
+<p>dies_ok &#45;&#62; { &#34;Testing dies_ok&#34; },
+desc =&#62; &#39;...
+it dies_ok&#39;,
+todo =&#62; 1; dies_ok &#45;&#62; { &#34;Testing dies_ok&#34; },
+:desc(&#39;...
+it dies_ok&#39;),
+:todo(1);</p>
+
+<p>## lives_ok</p>
+
+<p>lives_ok &#45;&#62; { &#34;test&#34; },
+&#39;...
+it lives_ok&#39;; lives_ok &#45;&#62; { &#34;test&#34; },
+desc =&#62; &#39;...
+it lives_ok&#39;; lives_ok &#45;&#62; { &#34;test&#34; },
+:desc(&#39;...
+it lives_ok&#39;);</p>
+
+<p>lives_ok &#45;&#62; { die &#34;test&#34; },
+desc =&#62; &#39;...
+it lives_ok&#39;,
+todo =&#62; 1; lives_ok &#45;&#62; { die &#34;test&#34; },
+:desc(&#39;...
+it lives_ok&#39;),
+:todo(1);</p>
+
+<p>## throws_ok</p>
+
+<p>#throws_ok &#45;&#62; { die &#34;Testing throws_ok&#34; },
+&#39;Testing throws_ok&#39;,
+&#39;...
+it throws_ok with a Str&#39;; #throws_ok &#45;&#62; { die &#34;Testing throws_ok&#34; },
+rx:P5:i/testing throws_ok/,
+&#39;...
+it throws_ok with a Rule&#39;;</p>
+
+<p>## diag</p>
+
+<p>diag(&#39;some misc comments and documentation&#39;);</p>
+
+<p>## pass</p>
+
+<p>pass(&#39;This test passed&#39;);</p>
+
+<p>## flunk</p>
+
+<p>flunk(&#39;This test failed&#39;,
+todo =&#62; 1); flunk(&#39;This test failed&#39;,
+:todo(1));</p>
+
+<p>## skip</p>
+
+<p>skip(&#39;skip this test for now&#39;); skip(3,
+&#39;skip 3 more tests for now&#39;); skip_rest(&#39;skipping the rest&#39;);</p>
+
+<p>1;</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

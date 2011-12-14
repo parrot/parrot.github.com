@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This file implements an API for generating bytecode.
+All gory details are hidden.
+In order to improve modularity,
+all bytecode generating functions take a <code lang='und' xml:lang='und'>bytecode</code> struct parameter,
+which keeps track of the <i>state</i>; this includes a Parrot interpreter.</p>
+
+<p>Since this state is private,
+the bytecode struct is declared in this C file,
+not in the header file.
+It is,
+however,
+declared in the header file as a struct,
+so you can use it as a type,
+but not touch its private bits.
+Everything you need to know should be accessible through accessor functions.</p>
+
+<h1><a name="FUNCTIONS"
+>FUNCTIONS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="static_int_new_const(bytecode_*_const_bc)"
+><b><code lang='und' xml:lang='und'>static int new_const(bytecode *const bc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Add a new constant to the constant table.</dd><p class="pad"></p>
+
+<dd>XXX This function needs to be cleaned up,
+as it&#39;s not really efficient: constant table is resized each time a constant is added.</dd><p class="pad"></p>
+
+<dt><a name="int_add_pmc_const(bytecode_*_const_bc,_PMC_*_pmc)"
+><b><code lang='und' xml:lang='und'>int add_pmc_const(bytecode *const bc, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Add the PMC constant <code lang='und' xml:lang='und'>pmc</code> to the constant table.
+This function returns the index in the constant table where <code lang='und' xml:lang='und'>pmc</code> is stored.</dd><p class="pad"></p>
+
+<dt><a name="int_add_string_const(bytecode_*_const_bc,_char_const_*_const_str)"
+><b><code lang='und' xml:lang='und'>int add_string_const(bytecode *const bc, char const *const str)</b></code></a></dt><p class="pad"></p>
+
+<dd>Add the string constant <code lang='und' xml:lang='und'>str</code> to the constant table.
+This function returns the index in the constant table where <code lang='und' xml:lang='und'>str</code> is stored.</dd><p class="pad"></p>
+
+<dd>XXX what to do with encoding&#45;thingy &#34;ascii&#34;?
+Probably should be an extra parameter?
+Or should it be a STRING at this point already?</dd><p class="pad"></p>
+
+<dt><a name="c&#60;int_add_num_const(bytecode_*_const_bc,_double_f)&#62;"
+>c&#60;int add_num_const(bytecode * const bc,
+double f)&#62;</a></dt><p class="pad"></p>
+
+<dd>XXX should f be a FLOATVAL?</dd><p class="pad"></p>
+
+<dd>Add a number constant to the constants list.
+The index in the constant table where <code lang='und' xml:lang='und'>f</code> is stored is returned.</dd><p class="pad"></p>
+
+<dt><a name="int_add_key_const(bytecode_*_const_bc,_PMC_*key)"
+><b><code lang='und' xml:lang='und'>int add_key_const(bytecode *const bc, PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Add a key constant to the constants list.
+XXX Implement this.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>bytecode *new_bytecode(Interp *interp, char const *const filename, int bytes, int codesize)</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a new bytecode struct,
+representing the bytecode for file <code lang='und' xml:lang='und'>filename</code></dd><p class="pad"></p>
+
+<dd>Create a new bytecode struct and return a pointer to it.</dd><p class="pad"></p>
+
+<dt><a name="void_emit_opcode(bytecode_*_const_bc,_opcode_t_op)"
+><b><code lang='und' xml:lang='und'>void emit_opcode(bytecode *const bc, opcode_t op)</b></code></a></dt><p class="pad"></p>
+
+<dd>Write the opcode <code lang='und' xml:lang='und'>op</code> into the bytecode stream.</dd><p class="pad"></p>
+
+<dt><a name="void_emit_int_arg(bytecode_*_const_bc,_int_intval)"
+><b><code lang='und' xml:lang='und'>void emit_int_arg(bytecode *const bc, int intval)</b></code></a></dt><p class="pad"></p>
+
+<dd>Write an integer argument into the bytecode stream.
+XXX Possibly use 1 function for emitting opcodes and ints; they&#39;re the same anyway?</dd><p class="pad"></p>
+
+<dt><a name="void_emit_op_by_name(bytecode_*_const_bc,_char_const_*_const_opname)"
+><b><code lang='und' xml:lang='und'>void emit_op_by_name(bytecode *const bc, char const *const opname)</b></code></a></dt><p class="pad"></p>
+
+<dd>Emit the opcode by name.
+<code lang='und' xml:lang='und'>opname</code> must be a valid,
+signatured opname.
+So,
+<code lang='und' xml:lang='und'>print</code> is not valid,
+whereas <code lang='und' xml:lang='und'>print_ic</code> is.
+The opcode of the opname is looked up and written into the bytecode stream.
+If <code lang='und' xml:lang='und'>opname</code> is not valid,
+an error message is written.</dd><p class="pad"></p>
+
+<dd>XXX Possibly bail out if error?
+No need to continue.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>void add_sub_pmc(bytecode *const bc, char const *const subname, &#45;&#45; the name of this sub char const *const nsentry, &#45;&#45; the value of the :nsentry flag char const *const subid, &#45;&#45; the value of the :subid flag int vtable_index, &#45;&#45; vtable index, or &#45;1 if no :vtable unsigned regs_used[], &#45;&#45; register usage of this sub int startoffset, &#45;&#45; start offset of this sub in bytecode int endoffset)</b></code> &#45;&#45; end offset of this sub in bytecode</a></dt><p class="pad"></p>
+
+<dd>Add a sub PMC to the constant table.
+This function initializes the sub PMC.</dd><p class="pad"></p>
+
+<dt><a name="void_write_pbc_file(bytecode_*_const_bc,_char_const_*_const_filename)"
+><b><code lang='und' xml:lang='und'>void write_pbc_file(bytecode *const bc, char const *const filename)</b></code></a></dt><p class="pad"></p>
+
+<dd>Write the generated bytecode (stored somewhere in a packfile) to the file <code lang='und' xml:lang='und'>filename</code>.</dd><p class="pad"></p>
+
+<dd>*/ void write_pbc_file(bytecode * const bc,
+char const * const filename) { size_t size; opcode_t *packed; FILE *fp; int result;</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    /* pack the packfile */
+    size   = PackFile_pack_size(bc&#45;&#62;interp, bc&#45;&#62;interp&#45;&#62;code&#45;&#62;base.pf) * sizeof (opcode_t);
+    packed = (opcode_t*) mem_sys_allocate(size);
+    PackFile_pack(bc&#45;&#62;interp, bc&#45;&#62;interp&#45;&#62;code&#45;&#62;base.pf, packed);
+
+    /* write to file */
+    fp = fopen(filename, &#34;wb&#34;);
+
+    if (fp == NULL)
+        fprintf(stderr, &#34;Couldn&#39;t open %s\n&#34;, filename);
+
+    result = fwrite(packed, size, 1, fp);
+
+    if (result != 1)
+        fprintf(stderr, &#34;Couldn&#39;t write %s\n&#34;, filename);
+
+    fclose(fp);
+
+    /* done! */
+}</pre>
+
+<dd>/*</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

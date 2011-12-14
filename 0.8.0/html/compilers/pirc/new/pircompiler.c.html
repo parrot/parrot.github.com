@@ -1,0 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<dl>
+<dt><a name="static_allocated_mem_ptrs_*_new_mem_ptrs_block(void)"
+><b><code lang='und' xml:lang='und'>static allocated_mem_ptrs *new_mem_ptrs_block(void)</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a new <code lang='und' xml:lang='und'>allocated_mem_ptrs</code> block; all pointers to allocated memory within pirc are stored in such blocks.
+One block has space for a number of pointers; if the block is full,
+a new block must be created and linked into the list of blocks.</dd><p class="pad"></p>
+
+<dt><a name="static_void_register_ptr(lexer_state_*lexer,_void_*ptr)"
+><b><code lang='und' xml:lang='und'>static void register_ptr(lexer_state *lexer, void *ptr)</b></code></a></dt><p class="pad"></p>
+
+<dd>Store the pointer <code lang='und' xml:lang='und'>ptr</code> in a datastructure; whenever <code lang='und' xml:lang='und'>release_resources()</code> is invoked,
+<code lang='und' xml:lang='und'>ptr</code> will be freed through <code lang='und' xml:lang='und'>mem_sys_free()</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_*_pir_mem_allocate_zeroed(lexer_state_*_const_lexer,_size_t_numbytes)"
+><b><code lang='und' xml:lang='und'>void *pir_mem_allocate_zeroed(lexer_state *const lexer, size_t numbytes)</b></code></a></dt><p class="pad"></p>
+
+<dd>Memory allocation function for all PIR internal functions.
+Memory is allocated through Parrot&#39;s allocation functions,
+but the pointer to the allocated memory is stored in a data structure; this way,
+freeing all memory can be done by just iterating over these pointers and freeing them.</dd><p class="pad"></p>
+
+<dt><a name="void_init_hashtable(lexer_state_*_const_lexer,_hashtable_*_const_table,_unsigned_size)"
+><b><code lang='und' xml:lang='und'>void init_hashtable(lexer_state *const lexer, hashtable *const table, unsigned size)</b></code></a></dt><p class="pad"></p>
+
+<dd>Initialize the hashtable <code lang='und' xml:lang='und'>table</code> with space for <code lang='und' xml:lang='und'>size</code> buckets.</dd><p class="pad"></p>
+
+<dt><a name="lexer_state_*_new_lexer(char_*_const_filename)"
+><b><code lang='und' xml:lang='und'>lexer_state *new_lexer(char *const filename)</b></code></a></dt><p class="pad"></p>
+
+<dd>Constructor for a lexer structure.
+Initializes all fields,
+creates a Parrot interpreter structure.</dd><p class="pad"></p>
+
+<dt><a name="static_bucket_*_new_bucket(void)"
+><b><code lang='und' xml:lang='und'>static bucket *new_bucket(void)</b></code></a></dt><p class="pad"></p>
+
+<dd>Constructor for a bucket object.</dd><p class="pad"></p>
+
+<dt><a name="static_void_store_string(lexer_state_*_const_lexer,_char_*_const_str)"
+><b><code lang='und' xml:lang='und'>static void store_string(lexer_state *const lexer, char *const str)</b></code></a></dt><p class="pad"></p>
+
+<dd>Store the string <code lang='und' xml:lang='und'>str</code> in a hashtable; whenever this string is needed,
+a pointer to the same physical string is returned,
+preventing allocating different buffers for the same string.
+This is especially useful for ops,
+as most ops in a typical program will be used many times.</dd><p class="pad"></p>
+
+<dt><a name="static_char_const_*_find_string(lexer_state_*_const_lexer,_char_*_const_str)"
+><b><code lang='und' xml:lang='und'>static char const *find_string(lexer_state *const lexer, char *const str)</b></code></a></dt><p class="pad"></p>
+
+<dd>Find the string <code lang='und' xml:lang='und'>str</code> in the lexer&#39;s string hashtable.
+If the string was found,
+then a pointer to that buffer is returned.
+So,
+whenever for instance the string &#34;print&#34; is used,
+the string will only be stored in memory once,
+and a pointer to that buffer will be returned.</dd><p class="pad"></p>
+
+<dt><a name="char_*_dupstrn(lexer_state_*_const_lexer,_char_const_*_const_source,_size_t_slen)"
+><b><code lang='und' xml:lang='und'>char *dupstrn(lexer_state *const lexer, char const *const source, size_t slen)</b></code></a></dt><p class="pad"></p>
+
+<dd>See dupstr,
+except that this version takes the number of characters to be copied.
+Easy for copying a string except the quotes,
+for instance.</dd><p class="pad"></p>
+
+<dd>XXX maybe make this a runtime (commandline) option?
+Might be slightly slower.</dd><p class="pad"></p>
+
+<dt><a name="char_*_dupstr(lexer_state_*_const_lexer,_char_const_*_const_source)"
+><b><code lang='und' xml:lang='und'>char *dupstr(lexer_state *const lexer, char const *const source)</b></code></a></dt><p class="pad"></p>
+
+<dd>The C89 standard does not define a strdup() in the C library,
+so define our own strdup.
+Function names beginning with &#34;str&#34; are reserved,
+so make it dupstr,
+as that is what it does: duplicate a string.</dd><p class="pad"></p>
+
+<dt><a name="void_release_resources(lexer_state_*lexer)"
+><b><code lang='und' xml:lang='und'>void release_resources(lexer_state *lexer)</b></code></a></dt><p class="pad"></p>
+
+<dd>Release all resources pointed to by <code lang='und' xml:lang='und'>lexer</code>.
+Free all memory that was allocated through <code lang='und' xml:lang='und'>pir_mem_allocate_zeroed()</code>.
+Call the destructor on the Parrot Interpreter,
+and free <code lang='und' xml:lang='und'>lexer</code> itself.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

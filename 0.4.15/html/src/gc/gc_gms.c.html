@@ -1,0 +1,1108 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Generational mark and sweep garbage collection</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Generational mark and sweep garbage collection</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/gc_gms.c &#45; Generational mark and sweep garbage collection</p>
+
+<h1><a name="OVERVIEW"
+>OVERVIEW <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The following comments describe a generational garbage collection scheme for Parrot.</p>
+
+<p>Keywords:</p>
+
+<pre lang='und' xml:lang='und'> &#45; non&#45;copying, mark &#38; sweep
+ &#45; generational
+ &#45; implicit reclamation, treadmill</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>A plain mark &#38; sweep collector performs work depending on the amount of all allocated objects. The advantage of a generational GC is achieved by not processing all objects. This is based on the weak generational hypothesis, which states that young objects are likely to die early. Old objects, which have survived a few GC cycles tend to be long&#45;lived.</p>
+
+<p>The terms young and old objects imply that there is some ordering in object creation time and the ordering is also followed by object references.</p>
+
+<p>Specifically object references have to follow the marking direction. In pure functional programming languages this can be a very simple scheme:</p>
+
+<pre lang='und' xml:lang='und'>        +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+    object references
+        v            |
+   old   .... young .... youngest
+                            |
+                   &#60;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;  scan direction</pre>
+
+<p>If (simplified) the only reference&#45;like operation of the interpreter is:</p>
+
+<pre lang='und' xml:lang='und'>   cons = (car, cdr)</pre>
+
+<p>and the object references &#34;car&#34; and &#34;cdr&#34; are created prior to the &#34;aggregate&#34; &#34;cons&#34;, all object references point always to older objects. By scanning from the youngest to the oldest objects, all non&#45;marked objects can be reclaimed immediately. And the scan can be aborted at any time after some processing, creating a generational GC in a trivial way.</p>
+
+<p>But the programming languages we are serving are working basically the other direction, when it comes to object history:</p>
+
+<pre lang='und' xml:lang='und'>  @a[$i] = $n</pre>
+
+<p>A reference operation like this needs first an aggregate and then the contents of it. So the scan direction is from old objects to younger ones. In such a scheme it&#39;s a bit more complicated to skip parts of the objects.</p>
+
+<p>To take advantage of not processing all the objects, these are divided into generations, e.g.:</p>
+
+<pre lang='und' xml:lang='und'>   old               young := nursery
+   generation 0      generation 1</pre>
+
+<p>A mark phase now processes the root set and only objects from the young generation. When all objects are either referenced by the root set or only by the young generation, the algorithm is correct and complete.</p>
+
+<p>But there is of course the possibilty that a young object is stored into an aggregate of an older generation. This case is tracked by the write barrier, which remembers all such operations in the IGP (inter generational pointer) list. When now generation 1 is marked, the IGP list can be considered as an extension to the root set, so that again all live objects of the young generation are detected.</p>
+
+<h2><a name="Structures"
+>Structures <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="typedef_struct__gc_gms_gen_Gc_gms_gen"
+><b><code lang='und' xml:lang='und'>typedef struct _gc_gms_gen Gc_gms_gen</b></code></a></dt><p class="pad"></p>
+
+<dd>Describes the state of one generation for one pool.</dd><p class="pad"></p>
+
+<dt><a name="typedef_struct__gc_gms_hdr_Gc_gms_hdr"
+><b><code lang='und' xml:lang='und'>typedef struct _gc_gms_hdr Gc_gms_hdr</b></code></a></dt><p class="pad"></p>
+
+<dd>This header is in front of all Parrot objects. It forms a doubly&#45;linked list of all objects in one pool and points to its generation.</dd><p class="pad"></p>
+
+<dt><a name="PObj_to_GMSH(o)"
+>PObj_to_GMSH(o)</a></dt><p class="pad"></p>
+
+<dt><a name="GMSH_to_PObj(p)"
+>GMSH_to_PObj(p)</a></dt><p class="pad"></p>
+
+<dd>These two macros convert from and to headers and objects.</dd><p class="pad"></p>
+
+<dt><a name="typedef_struct__gc_gms_hdr_list_Gc_gms_hdr_list"
+><b><code lang='und' xml:lang='und'>typedef struct _gc_gms_hdr_list Gc_gms_hdr_list</b></code></a></dt><p class="pad"></p>
+
+<dd>A chained list of headers used e.g. for the IGP list.</dd><p class="pad"></p>
+</dl>
+
+<p>*/</p>
+
+<p>#include &#34;parrot/parrot.h&#34; #include &#34;parrot/dod.h&#34;</p>
+
+<p>#if PARROT_GC_GMS</p>
+
+<p>typedef struct Gc_gms_private { UINTVAL current_gen_no; /* the nursery generation number */ } Gc_gms_private;</p>
+
+<p>/* HEADERIZER HFILE: include/parrot/dod.h */</p>
+
+<p>/* HEADERIZER BEGIN: static */</p>
+
+<p>static int end_cycle_cb( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(void *arg) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(4);</p>
+
+<p>static void gc_gms_add_free_object( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), NOTNULL(PObj *to_add) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static void gc_gms_alloc_objects( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void gc_gms_chain_objects( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), NOTNULL(Small_Object_Arena *new_arena), size_t real_size ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static void gc_gms_clear_hdr_list( PARROT_INTERP, NOTNULL(Gc_gms_hdr_list *l) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void gc_gms_clear_igp( PARROT_INTERP, NOTNULL(Gc_gms_gen *gen) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>PARROT_MALLOC PARROT_CANNOT_RETURN_NULL static Gc_gms_gen * gc_gms_create_gen( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), size_t gen_no ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void gc_gms_end_cycle( PARROT_INTERP ) __attribute__nonnull__(1);</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL static Gc_gms_gen * gc_gms_find_gen( PARROT_INTERP, NOTNULL(Gc_gms_hdr *h), UINTVAL gen_no ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL static PObj * gc_gms_get_free_object( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void gc_gms_init_gen( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void gc_gms_init_mark( PARROT_INTERP ) __attribute__nonnull__(1);</p>
+
+<p>static void gc_gms_merge_gen( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(Gc_gms_plan *plan) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(4);</p>
+
+<p>static void gc_gms_more_objects( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void gc_gms_pool_init( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void gc_gms_promote( PARROT_INTERP, NOTNULL(Gc_gms_hdr *h), UINTVAL gen_no ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void gc_gms_set_gen( PARROT_INTERP ) __attribute__nonnull__(1);</p>
+
+<p>static void gc_gms_setto_black( PARROT_INTERP, NOTNULL(Gc_gms_hdr *h), int priority ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void gc_gms_setto_gray( PARROT_INTERP, NOTNULL(Gc_gms_hdr *h), int priority ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void gc_gms_store_hdr_list( PARROT_INTERP, NOTNULL(Gc_gms_hdr_list *l), NOTNULL(Gc_gms_hdr *h) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static void gc_gms_store_igp( PARROT_INTERP, NOTNULL(Gc_gms_hdr *h) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void gc_gms_sweep( PARROT_INTERP ) __attribute__nonnull__(1);</p>
+
+<p>static int gc_gms_trace_children( PARROT_INTERP ) __attribute__nonnull__(1);</p>
+
+<p>static int gc_gms_trace_root( PARROT_INTERP, int trace_stack ) __attribute__nonnull__(1);</p>
+
+<p>static void gc_gms_use_gen( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(Gc_gms_plan *plan) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(4);</p>
+
+<p>static void gms_debug_verify( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), NOTNULL(const char *action) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static int init_mark_cb( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(void *arg) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(4);</p>
+
+<p>static void parrot_gc_gms_deinit( PARROT_INTERP ) __attribute__nonnull__(1);</p>
+
+<p>static void parrot_gc_gms_run( PARROT_INTERP, int flags ) __attribute__nonnull__(1);</p>
+
+<p>PARROT_WARN_UNUSED_RESULT static int set_gen_cb( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(void *arg) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(4);</p>
+
+<p>static int sweep_cb_buf( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(void *arg) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(4);</p>
+
+<p>static int sweep_cb_pmc( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(void *arg) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(4);</p>
+
+<p>static int trace_children_cb( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(void *arg) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(4);</p>
+
+<p>static int trace_igp_cb( PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(void *arg) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(4);</p>
+
+<p>/* HEADERIZER END: static */</p>
+
+<p>/* * XXX * * Main problem TODO 1): * * [ PCont ] ... continuation object in old generation * | * v * [ Stack chunk ] &#45;&#45;&#62; [ e.g. P register frame ] ... new generation * * By pushing a new stack chunk onto the (old) existing stack frame, * we&#39;d need a WRITE_BARRIER that promotes the stack chunk to the old * generation of the continuation. * This would also need an IGP entry for the stack chunk buffer. But &#45; * as buffers aren&#39;t really containers in Parrot &#45; this isn&#39;t possible. * * To get that right, the code needs better support by the running * interpreter. * &#45; never promote continuations (and stacks) in the current stack frame * to an old generation * &#45; create scope_enter / scope_exit opcodes * * A scope_enter happens on a subroutine call *and&#39; with new_pad / * push_pad opcodes. Each lexical scope must have its distinct register * frame, else timely destruction can&#39;t work. * If the frame needs active destruction, the old frame should be * converted to the (new&#45;1) generation, the inner frame is the nursery. * On scope exit the newest (nursery) generation is collected and the * current generation number is reset back to (new&#45;1). * * If the scope_enter doesn&#39;t indicate timely destruction, generation * promoting should be done only, if object statistics indicate the * presence of a fair amount of live objects. * * TODO 2) in lazy sweep * If timely destruction didn&#39;t find (all) eager objects, go back to * older generations, until all these objects have been seen. * * TODO 3) interpreter startup * After all internal structures are created, promote interpreter state * into initial first old generation by running one GC cycle before * program execution begins (or just treat all objects as being alive). * */</p>
+
+<p>/* * call code to verify chain of pointers after each change * this is very expensive, but should be used during development */ # define GC_GMS_DEBUG 0</p>
+
+<p># define UNITS_PER_ALLOC_GROWTH_FACTOR 1.75 # define POOL_MAX_BYTES 65536*128</p>
+
+<p>/*</p>
+
+<h2><a name="Initialization_functions"
+>Initialization functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>FUNCDOC: parrot_gc_gms_deinit</p>
+
+<p>Free used resources.</p>
+
+<p>FUNCDOC: gc_gms_pool_init</p>
+
+<p>Initialize pool variables. This function must set the pool function pointers for <code lang='und' xml:lang='und'>add_free_object</code>, <code lang='und' xml:lang='und'>get_free_object</code>, <code lang='und' xml:lang='und'>alloc_objects</code>, and <code lang='und' xml:lang='und'>more_objects</code>.</p>
+
+<p>FUNCDOC: Parrot_gc_gms_init</p>
+
+<p>Initialize the state structures of the gc system. Called immediately before creation of memory pools.</p>
+
+<p>*/</p>
+
+<p>static void parrot_gc_gms_deinit(PARROT_INTERP) { Arenas * const arena_base = interp&#45;&#62;arena_base;</p>
+
+<pre lang='und' xml:lang='und'>    /*
+     * TODO free generations
+     */
+    mem_sys_free(arena_base&#45;&#62;gc_private);
+    arena_base&#45;&#62;gc_private = NULL;
+}</pre>
+
+<p>static void gc_gms_pool_init(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool) ) { pool&#45;&#62;add_free_object = gc_gms_add_free_object; pool&#45;&#62;get_free_object = gc_gms_get_free_object; pool&#45;&#62;alloc_objects = gc_gms_alloc_objects; pool&#45;&#62;more_objects = gc_gms_more_objects;</p>
+
+<pre lang='und' xml:lang='und'>    /* initialize generations */
+    gc_gms_init_gen(interp, pool);
+    pool&#45;&#62;white = pool&#45;&#62;white_fin = pool&#45;&#62;free_list = &#38;pool&#45;&#62;marker;
+
+    pool&#45;&#62;object_size += sizeof (Gc_gms_hdr);
+}</pre>
+
+<p>PARROT_API void Parrot_gc_gms_init(PARROT_INTERP) { Arenas * const arena_base = interp&#45;&#62;arena_base;</p>
+
+<pre lang='und' xml:lang='und'>    arena_base&#45;&#62;gc_private = mem_sys_allocate_zeroed(sizeof (Gc_gms_private));
+
+    /*
+     * set function hooks according to pdd09
+     */
+    arena_base&#45;&#62;do_dod_run = parrot_gc_gms_run;
+    arena_base&#45;&#62;de_init_gc_system = parrot_gc_gms_deinit;
+    arena_base&#45;&#62;init_pool = gc_gms_pool_init;</pre>
+
+<p>}</p>
+
+<p>/*</p>
+
+<h2><a name="Interface_functions"
+>Interface functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>FUNCDOC: gc_gms_add_free_object</p>
+
+<p>Unused. White (dead) objects are added in a bunch to the free_list.</p>
+
+<p>FUNCDOC: gc_gms_get_free_object</p>
+
+<p>Get a new object off the free_list in the given pool.</p>
+
+<p>FUNCDOC: gc_gms_alloc_objects</p>
+
+<p>Allocate new objects for the given pool.</p>
+
+<p>FUNCDOC: gc_gms_more_objects</p>
+
+<p>Run a GC cycle or allocate new objects for the given pool.</p>
+
+<p>*/</p>
+
+<p>static void gc_gms_add_free_object(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), NOTNULL(PObj *to_add)) { real_exception(interp, NULL, 1, &#34;gms abuse&#34;); }</p>
+
+<p>/* * TODO: interfere active_destroy and put these items into a * separate white area, so that a sweep has just to run through these * objects * * Header chain layout: * &#45; all objects are chained together forming a circular list * &#45; pool&#45;&#62;marker is the &#34;anchor&#34; of the circle (shown twice below)</p>
+
+<pre lang='und' xml:lang='und'> 1) object allocation
+
+ 1a) one bunch of allocated objects was consumed: the free ptr did
+     hit the marker
+
+ +===+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+===+
+ I M I w | w | w | w | w I M I
+ +   +&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+   +
+       ^                   ^
+       |                   |
+       white               free == marker
+
+ All these pointer ranges include the first element, but not the last one.
+
+  [white ... free_list)   is the list of all whites
+
+ 1b) after allocating another bunch of objects
+
+ +===+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+===+
+ I M I w | w | w | w | w | f | f | f | f | f I M I
+ +   +&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+   +
+       ^                   ^                   ^
+       |                   |                   |
+       white               free                marker
+
+ */</pre>
+
+<p>static void gc_gms_chain_objects(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), NOTNULL(Small_Object_Arena *new_arena), size_t real_size) { Gc_gms_hdr *p, *next, *prev, *marker; size_t i, n;</p>
+
+<pre lang='und' xml:lang='und'>    p = new_arena&#45;&#62;start_objects;
+    marker = &#38;pool&#45;&#62;marker;
+    PARROT_ASSERT(pool&#45;&#62;free_list == marker);
+
+    /* update pool statistics */
+    n = new_arena&#45;&#62;total_objects;
+    pool&#45;&#62;total_objects += n;
+    pool&#45;&#62;num_free_objects += n;
+    new_arena&#45;&#62;used = n;
+    /* initially all is pointing to marker */
+    if (pool&#45;&#62;white == marker) {
+        /* set origin of first allocation */
+        marker&#45;&#62;next = p;
+        p&#45;&#62;prev = marker;
+        pool&#45;&#62;white = pool&#45;&#62;white_fin = p;
+        prev = marker;
+    }
+    else
+        prev = marker&#45;&#62;prev;
+    /* chain objects together by inserting to the left of marker */
+
+    /* point to end of last object */
+    p = (void*) ((char*) p + real_size * n);
+    next = marker;
+    for (i = 0; i &#60; n; ++i) {
+        p = (void*) ((char *)p &#45; real_size);
+        p&#45;&#62;next = next;
+        next&#45;&#62;prev = p;
+#  ifndef NDEBUG
+        p&#45;&#62;gen = (void *)0xdeadbeef;
+#  endif
+        next = p;
+    }
+    PARROT_ASSERT(p == new_arena&#45;&#62;start_objects);
+    p&#45;&#62;prev = prev;
+    prev&#45;&#62;next = p;
+    pool&#45;&#62;free_list = p;
+    PARROT_ASSERT(p != marker);
+}</pre>
+
+<p>static void gc_gms_alloc_objects(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool)) { const size_t real_size = pool&#45;&#62;object_size; Small_Object_Arena * const new_arena = mem_internal_allocate(sizeof (Small_Object_Arena)); const size_t size = real_size * pool&#45;&#62;objects_per_alloc;</p>
+
+<pre lang='und' xml:lang='und'>    new_arena&#45;&#62;start_objects = mem_internal_allocate(size);
+    /* insert arena in list */
+    Parrot_append_arena_in_pool(interp, pool, new_arena, size);
+    /* create chain of objects, set free pointer */
+    gc_gms_chain_objects(interp, pool, new_arena, real_size);
+
+    /* allocate more next time */
+    pool&#45;&#62;objects_per_alloc = (UINTVAL) pool&#45;&#62;objects_per_alloc *
+        UNITS_PER_ALLOC_GROWTH_FACTOR;
+    size = real_size * pool&#45;&#62;objects_per_alloc;
+    if (size &#62; POOL_MAX_BYTES) {
+        pool&#45;&#62;objects_per_alloc = POOL_MAX_BYTES / real_size;
+    }
+}</pre>
+
+<p>static void gc_gms_more_objects(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool)) { if (pool&#45;&#62;skip) pool&#45;&#62;skip = 0; else if (pool&#45;&#62;last_Arena) { Parrot_do_dod_run(interp, DOD_trace_stack_FLAG); if (pool&#45;&#62;num_free_objects &#60;= pool&#45;&#62;replenish_level) pool&#45;&#62;skip = 1; }</p>
+
+<pre lang='und' xml:lang='und'>    if (pool&#45;&#62;free_list == &#38;pool&#45;&#62;marker) {
+        (*pool&#45;&#62;alloc_objects) (interp, pool);
+    }
+}</pre>
+
+<p>/* * 2) object consumption * the free ptr moves towards the marker */</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL static PObj * gc_gms_get_free_object(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool)) { PObj *ptr; Gc_gms_hdr *hdr;</p>
+
+<pre lang='und' xml:lang='und'>    hdr = pool&#45;&#62;free_list;
+    if (hdr == &#38;pool&#45;&#62;marker)
+        (pool&#45;&#62;more_objects)(interp, pool);
+
+    hdr = pool&#45;&#62;free_list;
+    pool&#45;&#62;free_list = hdr&#45;&#62;next;
+    hdr&#45;&#62;gen = pool&#45;&#62;last_gen;
+    ptr = GMSH_to_PObj(hdr);
+    PObj_flags_SETTO((PObj*) ptr, 0);
+    return ptr;
+}</pre>
+
+<p>/*</p>
+
+<h2><a name="Generation_handling_functions"
+>Generation handling functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>FUNCDOC: gc_gms_create_gen</p>
+
+<p>Create a generation structure for the given generation number.</p>
+
+<p>FUNCDOC: gc_gms_init_gen</p>
+
+<p>Initalize the generation system by creating the first two generations.</p>
+
+<p>*/</p>
+
+<p>/* * overall header chain layout</p>
+
+<pre lang='und' xml:lang='und'>           gen 0         gen 1      ...    gen N
+  marker [first last) [first last)  ...   [first last)  marker
+
+  The last (youngest) generation N holds these (pool) pointers:
+
+  [ black ... gray )          during marking
+  [ gray ... white )          during marking
+  [ white ... free_list )     allocated items
+  [ free_list ... marker )    free items
+
+  The black, white, and generation ranges have additionally (TODO)
+  *fin variants, which refer to PMCs that need destruction/finalization.
+  These are always in front of the ranges to be processed first.
+
+ */</pre>
+
+<p>PARROT_MALLOC PARROT_CANNOT_RETURN_NULL static Gc_gms_gen * gc_gms_create_gen(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), size_t gen_no) { Gc_gms_gen * const gen = mem_sys_allocate(sizeof (*gen));</p>
+
+<pre lang='und' xml:lang='und'>    gen&#45;&#62;gen_no = gen_no;
+    gen&#45;&#62;pool = pool;
+    gen&#45;&#62;timely_destruct_obj_sofar = 0;
+    gen&#45;&#62;black_color = b_PObj_live_FLAG;
+    gen&#45;&#62;prev = NULL;
+    gen&#45;&#62;next = NULL;
+    gen&#45;&#62;first = gen&#45;&#62;last = gen&#45;&#62;fin = &#38;pool&#45;&#62;marker;
+    gen&#45;&#62;igp.first = NULL;
+    gen&#45;&#62;igp.last = NULL;
+
+    return gen;
+}</pre>
+
+<p>static void gc_gms_init_gen(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool)) { Gc_gms_private *gmsp; /* * Generations are numbered beginning at zero * 0 ... oldest * 1 ... next oldest * * If a constant hash PMC refers to non&#45;constant header buffers or * items, these items can be placed in the constant generation 0 * XXX: OTOH this would work only for this GC subsystem. */ pool&#45;&#62;first_gen = gc_gms_create_gen(interp, pool, 0); pool&#45;&#62;last_gen = pool&#45;&#62;first_gen; gmsp = interp&#45;&#62;arena_base&#45;&#62;gc_private; gmsp&#45;&#62;current_gen_no = 0; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: parrot_gc_gms_wb</p>
+
+<p>Called by the write barrier. The aggregate belongs to an older generation then the <i>new</i> value written into it. Put the header of the new value onto the IGP list for the current generation, if it contains pointers to other items, and promote it to the old generation.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL static Gc_gms_gen * gc_gms_find_gen(PARROT_INTERP, NOTNULL(Gc_gms_hdr *h), UINTVAL gen_no) { Gc_gms_gen *gen; Small_Object_Pool * const pool = h&#45;&#62;gen&#45;&#62;pool;</p>
+
+<pre lang='und' xml:lang='und'>    PARROT_ASSERT(pool);
+
+    for (gen = pool&#45;&#62;first_gen; gen; gen = gen&#45;&#62;next) {
+        if (gen_no == gen&#45;&#62;gen_no)
+            return gen;
+        if (gen&#45;&#62;gen_no &#62; gen_no) {
+            gen = NULL;
+            break;
+        }
+    }
+    /* we could create generations lazily &#45; not all object sizes
+     * might exist in every generation
+     *
+     * TODO insert generation
+     */
+    real_exception(interp, NULL, 1, &#34;generation %d not found for hdr %p&#34;,
+            gen_no, h);
+}</pre>
+
+<p>static void gc_gms_promote(PARROT_INTERP, NOTNULL(Gc_gms_hdr *h), UINTVAL gen_no) { Gc_gms_gen *gen; Gc_gms_hdr *prev, *next; Small_Object_Pool * const pool = h&#45;&#62;gen&#45;&#62;pool;</p>
+
+<pre lang='und' xml:lang='und'>    /* unsnap from current generation */
+    prev = h&#45;&#62;prev;
+    next = h&#45;&#62;next;
+    if (h == pool&#45;&#62;white) {
+        pool&#45;&#62;white = next;
+    }
+    prev&#45;&#62;next = next;
+    next&#45;&#62;prev = prev;
+
+    /* locate generation pointer */
+    gen = gc_gms_find_gen(interp, h, gen_no);
+    PARROT_ASSERT(gen&#45;&#62;last);
+    PARROT_ASSERT(gen&#45;&#62;first);
+
+    /* TODO if it needs destroy put it in front */
+    next = gen&#45;&#62;last;
+    if (h == next)
+        next = gen&#45;&#62;last = h&#45;&#62;next;
+    prev = next&#45;&#62;prev;
+    if (gen&#45;&#62;first == &#38;pool&#45;&#62;marker)
+        gen&#45;&#62;first = h;
+    h&#45;&#62;prev = prev;
+    h&#45;&#62;next = next;
+    prev&#45;&#62;next = h;
+    next&#45;&#62;prev = h;
+#  if GC_GMS_DEBUG
+    gms_debug_verify(interp, pool, &#34;promote&#34;);
+#  endif
+}</pre>
+
+<p>static void gc_gms_store_hdr_list(PARROT_INTERP, NOTNULL(Gc_gms_hdr_list *l), NOTNULL(Gc_gms_hdr *h)) { Gc_gms_hdr_store * const s = l&#45;&#62;last;</p>
+
+<pre lang='und' xml:lang='und'>    /* if it&#39;s not created or if it&#39;s full allocate new store */
+    if (!s || s&#45;&#62;ptr == &#38;s&#45;&#62;store[GC_GMS_STORE_SIZE]) {
+        s = mem_sys_allocate(sizeof (Gc_gms_hdr_store));
+        s&#45;&#62;ptr = &#38;s&#45;&#62;store[0];
+        s&#45;&#62;next = NULL;
+        /* chain new store to old one */
+        if (l&#45;&#62;first) {
+            PARROT_ASSERT(l&#45;&#62;last);
+            l&#45;&#62;last&#45;&#62;next = s;
+        }
+        else {
+            l&#45;&#62;first = s;
+        }
+        l&#45;&#62;last = s;
+    }
+    *(s&#45;&#62;ptr)++ = h;
+}</pre>
+
+<p>static void gc_gms_clear_hdr_list(PARROT_INTERP, NOTNULL(Gc_gms_hdr_list *l)) { Gc_gms_hdr_store *s, *next;</p>
+
+<pre lang='und' xml:lang='und'>    for (s = l&#45;&#62;first; s; s = next) {
+        next = s&#45;&#62;next;
+        mem_sys_free(s);
+    }
+    l&#45;&#62;first = l&#45;&#62;last = NULL;
+}</pre>
+
+<p>static void gc_gms_store_igp(PARROT_INTERP, NOTNULL(Gc_gms_hdr *h)) { Gc_gms_gen * const gen = h&#45;&#62;gen; Gc_gms_hdr_list * const igp = &#38;gen&#45;&#62;igp;</p>
+
+<pre lang='und' xml:lang='und'>    gc_gms_store_hdr_list(interp, igp, h);
+}</pre>
+
+<p>static void gc_gms_clear_igp(PARROT_INTERP, NOTNULL(Gc_gms_gen *gen)) { Gc_gms_hdr_list * const igp = &#38;gen&#45;&#62;igp;</p>
+
+<pre lang='und' xml:lang='und'>    gc_gms_clear_hdr_list(interp, igp);
+}</pre>
+
+<p>void parrot_gc_gms_wb(PARROT_INTERP, NOTNULL(PMC *agg), NOTNULL(void *old), NOTNULL(void *new)) { Gc_gms_hdr * const nh = PObj_to_GMSH(new); Gc_gms_hdr * const ah = PObj_to_GMSH(agg);</p>
+
+<pre lang='und' xml:lang='und'>    /* if this may be an aggregate store it in IGP list, thus making
+     * it a possible root for this generation
+     */
+    if (PObj_is_PMC_TEST((PObj*)new) &#38;&#38; ((PMC*)new)&#45;&#62;pmc_ext)
+        gc_gms_store_igp(interp, nh);
+
+    /* promote RHS to old generation of aggregate */
+    gc_gms_promote(interp, nh, ah&#45;&#62;gen&#45;&#62;gen_no);
+
+    /*
+     * TODO check old &#45; its overwritten, increment overwrite count,
+     * if it&#39;s an aggregate all contents *may* be dead now, so
+     * increment overwrite count by elements
+     */
+}</pre>
+
+<p>void parrot_gc_gms_wb_key(PARROT_INTERP, NOTNULL(PMC *agg), NOTNULL(void *old), NOTNULL(void *old_key), NOTNULL(void *new), NOTNULL(void *new_key)) { Gc_gms_hdr *nh, *ah;</p>
+
+<pre lang='und' xml:lang='und'>    /* handle hash values */
+    parrot_gc_gms_wb(interp, agg, old, new);
+
+    /* if hash keys are PObj* then promote new key too */
+
+    /* TODO check, if key is a PObj */
+
+    nh = PObj_to_GMSH(new_key);
+    ah = PObj_to_GMSH(agg);
+
+    /* promote new key to old generation of aggregate */
+    gc_gms_promote(interp, nh, ah&#45;&#62;gen&#45;&#62;gen_no);
+}</pre>
+
+<p>typedef struct Gc_gms_plan { int merge_gen; int gen_no; } Gc_gms_plan;</p>
+
+<p>static void gc_gms_merge_gen(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(Gc_gms_plan *plan)) { Gc_gms_hdr *h;</p>
+
+<pre lang='und' xml:lang='und'>    /* run through the blacks and set their generation pointer
+     * to the previous generation
+     */
+    Gc_gms_gen * const gen = pool&#45;&#62;last_gen;
+    Gc_gms_gen * const prev = gen&#45;&#62;prev;
+
+    for (h = pool&#45;&#62;black; h != pool&#45;&#62;free_list; h = h&#45;&#62;next) {
+        h&#45;&#62;gen = prev;
+        /* TODO update statistics */
+        /* TODO merge hdrs that need finalization */
+    }
+    prev&#45;&#62;last = pool&#45;&#62;free_list;
+    /*
+     * clear IGP for gen
+     */
+    gc_gms_clear_igp(interp, gen);
+}</pre>
+
+<p>static void gc_gms_use_gen(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(Gc_gms_plan *plan)) { Gc_gms_gen *gen, *prev; UINTVAL next_gen;</p>
+
+<pre lang='und' xml:lang='und'>    /* set hdr pointers in last generation */
+    gen = pool&#45;&#62;last_gen;
+    gen&#45;&#62;first = pool&#45;&#62;black;
+    gen&#45;&#62;fin = pool&#45;&#62;black_fin;
+    gen&#45;&#62;last = pool&#45;&#62;free_list;
+
+    /* create and append a new generation */
+    next_gen = plan&#45;&#62;gen_no + 1;
+    gen = gc_gms_create_gen(interp, pool, next_gen);
+    prev = pool&#45;&#62;last_gen;
+    pool&#45;&#62;last_gen = gen;
+    prev&#45;&#62;next = gen;
+    gen&#45;&#62;prev = prev;
+
+    /* set generation in interpreter */
+    interp&#45;&#62;gc_generation = next_gen;</pre>
+
+<p>}</p>
+
+<p>PARROT_WARN_UNUSED_RESULT static int set_gen_cb(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(void *arg)) { Gc_gms_plan * const plan = (Gc_gms_plan *)arg;</p>
+
+<pre lang='und' xml:lang='und'>    if (plan&#45;&#62;merge_gen)
+        gc_gms_merge_gen(interp, pool, flag, plan);
+    else
+        gc_gms_use_gen(interp, pool, flag, plan);
+    return 0;
+}</pre>
+
+<p>static void gc_gms_set_gen(PARROT_INTERP) { Gc_gms_plan plan; Gc_gms_private *gmsp; /* * there are these basic plans * 1) Use the black as the next old generation * 2) Merge the blacks to the existing older generation * The plan to use depends on the interpreter, specifically, if * we are doing a lazy run, entering a new scope, or what not. * 3) If we are leaving a scope (denoted by a lazy DOD run * and we had created one or more generations in this scope * go back by resetting the generation number to the outer * scope&#39;s generation * 4) Check the overwrite count of older generations. If there is * a significant percentage of possibly dead objects, scan * older generations too. * * TODO only 1 and 2 done for now * 3) and 4) need to reset live flags of the previous generation(s) * or better use the per&#45;generation black_color for marking */ gmsp = interp&#45;&#62;arena_base&#45;&#62;gc_private; plan.merge_gen = 0; plan.gen_no = gmsp&#45;&#62;current_gen_no; if (gmsp&#45;&#62;current_gen_no &#62; 0) plan.merge_gen = 1; else gmsp&#45;&#62;current_gen_no = 1; Parrot_forall_header_pools(interp, POOL_ALL, &#38;plan, set_gen_cb); }</p>
+
+<p>/*</p>
+
+<h2><a name="Marking_functions"
+>Marking functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>FUNCDOC: gc_gms_setto_gray</p>
+
+<p>Set the white header <code lang='und' xml:lang='und'>h</code> to gray.</p>
+
+<p>FUNCDOC: void gc_gms_setto_black</p>
+
+<p>Set the white header <code lang='und' xml:lang='und'>h</code> to black.</p>
+
+<p>*/</p>
+
+<p>/* * * Header chain layout * * Init: gray := black := white</p>
+
+<pre lang='und' xml:lang='und'> 3) marking the root set
+
+ 3a) the white &#39;h&#39; is to be set to gray to be scanned for children
+
+ +&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#62;      +&#45;&#45;&#45;+&#45;&#62;
+ | b | b | g | g | g | w          | h |
+ +&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+      &#60;&#45;+&#45;&#45;&#45;+
+   ^       ^           ^
+   |       |           |
+   black   gray        white
+
+ 3b) DFS if &#39;h&#39; needs timely destruction
+
+ +&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#62;
+ | b | b | h | g | g | g | w
+ +&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+
+   ^       ^               ^
+   |       |               |
+   black   gray            white
+
+
+ 3c) BFS in the normal case
+
+ +&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#62;
+ | b | b | g | g | g | h | w
+ +&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+
+   ^       ^               ^
+   |       |               |
+   black   gray            white
+
+ */</pre>
+
+<p>static void gc_gms_setto_gray(PARROT_INTERP, NOTNULL(Gc_gms_hdr *h), int priority) { Small_Object_Pool * const pool = h&#45;&#62;gen&#45;&#62;pool; /* * TODO high_priority like in src/dod.c */ /* * if the white is adjacent to gray, move pointer */ if (pool&#45;&#62;white == h &#38;&#38; (!priority || pool&#45;&#62;white == pool&#45;&#62;gray)) pool&#45;&#62;white = h&#45;&#62;next; else { Gc_gms_hdr *next, *prev;</p>
+
+<pre lang='und' xml:lang='und'>        prev = h&#45;&#62;prev;
+        next = h&#45;&#62;next;
+        if (h == pool&#45;&#62;white)
+            pool&#45;&#62;white = next;
+        prev&#45;&#62;next = next;
+        next&#45;&#62;prev = prev;
+
+        if (priority) {
+            /* insert at gray */
+            next = pool&#45;&#62;gray;       /* DFS */
+            pool&#45;&#62;gray = h;
+        }
+        else {
+            /* insert before white */
+            next = pool&#45;&#62;white;                  /* BFS */
+        }
+        prev = next&#45;&#62;prev;
+        h&#45;&#62;next = next;
+        h&#45;&#62;prev = prev;
+        next&#45;&#62;prev = h;
+        prev&#45;&#62;next = h;
+
+        /* if there wasn&#39;t any gray or black before */
+        if (pool&#45;&#62;gray == pool&#45;&#62;white) {
+            pool&#45;&#62;gray = h;
+            if (pool&#45;&#62;black == pool&#45;&#62;white) {
+                pool&#45;&#62;black = h;
+            }
+        }
+    }
+    PARROT_ASSERT(h != pool&#45;&#62;white);
+    /* verify all these pointer moves */
+#  if GC_GMS_DEBUG
+    gms_debug_verify(interp, pool, &#34;to_gray&#34;);
+#  endif
+}</pre>
+
+<p>/*</p>
+
+<pre lang='und' xml:lang='und'> 3d) the white is a scalar and immediately blackened
+
+
+ +&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#62;
+ | b | b | h | g | g | g | w
+ +&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+
+   ^           ^           ^
+   |           |           |
+   black       gray        white</pre>
+
+<p>*/</p>
+
+<p>static void gc_gms_setto_black(PARROT_INTERP, NOTNULL(Gc_gms_hdr *h), int priority) { Small_Object_Pool * const pool = h&#45;&#62;gen&#45;&#62;pool;</p>
+
+<pre lang='und' xml:lang='und'>    /*
+     * TODO high_priority like src/dod.c
+     * TODO if h needs destructions insert in front of chain
+     */
+    /*
+     * if the white is adjacent to black, move pointer
+     */
+    if (pool&#45;&#62;black == h) {
+        PARROT_ASSERT(pool&#45;&#62;gray == h);
+        PARROT_ASSERT(pool&#45;&#62;white == h);
+        pool&#45;&#62;white = h&#45;&#62;next;
+        pool&#45;&#62;gray = h&#45;&#62;next;
+    }
+    else {
+        Gc_gms_hdr *next, *prev;
+
+        prev = h&#45;&#62;prev;
+        next = h&#45;&#62;next;
+        if (h == pool&#45;&#62;white) {
+            pool&#45;&#62;white = next;
+            if (h == pool&#45;&#62;gray)
+                pool&#45;&#62;gray = next;
+        }
+        prev&#45;&#62;next = next;
+        next&#45;&#62;prev = prev;
+
+        /* insert before gray */
+        next = pool&#45;&#62;gray;
+        prev = next&#45;&#62;prev;
+        h&#45;&#62;next = next;
+        h&#45;&#62;prev = prev;
+        next&#45;&#62;prev = h;
+        prev&#45;&#62;next = h;
+        if (pool&#45;&#62;black == pool&#45;&#62;gray) {
+            pool&#45;&#62;black = h;
+        }
+    }
+    PARROT_ASSERT(h != pool&#45;&#62;white);
+    PARROT_ASSERT(h != pool&#45;&#62;gray);
+#  if GC_GMS_DEBUG
+    gms_debug_verify(interp, pool, &#34;to_black&#34;);
+#  endif
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: parrot_gc_gms_pobject_lives</p>
+
+<p>Set the object live &#45; called by the pobject_lives macro</p>
+
+<p>FUNCDOC: static void gc_gms_init_mark</p>
+
+<p>Initialize the mark phase of GC.</p>
+
+<p>FUNCDOC: static int gc_gms_trace_root</p>
+
+<p>Trace the root set. If <code lang='und' xml:lang='und'>trace_stack</code> is true, trace system areas.</p>
+
+<p>FUNCDOC: static int gc_gms_trace_children</p>
+
+<p>Traverse gray objects: mark and blacken. Returns 0 if the trace was aborted lazily.</p>
+
+<p>FUNCDOC: static int gc_gms_sweep</p>
+
+<p>Free unused resources, put white objects onto free_list.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void parrot_gc_gms_pobject_lives(PARROT_INTERP, NOTNULL(PObj *obj)) { Gc_gms_hdr *h; int priority;</p>
+
+<pre lang='und' xml:lang='und'>    PObj_live_SET(obj);
+    priority =  PObj_needs_early_DOD_TEST(obj);
+    if (priority)
+        ++interp&#45;&#62;arena_base&#45;&#62;num_early_PMCs_seen;
+    h = PObj_to_GMSH(obj);
+    /* unsnap it from white, put it into gray or black */
+    if (PObj_is_PMC_TEST(obj) &#38;&#38; ((PMC*)obj)&#45;&#62;pmc_ext)
+        gc_gms_setto_gray(interp, h, priority);
+    else
+        gc_gms_setto_black(interp, h, priority);
+}</pre>
+
+<p>static int init_mark_cb(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(void *arg)) { pool&#45;&#62;gray = pool&#45;&#62;black = pool&#45;&#62;black_fin = pool&#45;&#62;white; # if GC_GMS_DEBUG gms_debug_verify(interp, pool, &#34;init_mark&#34;); # endif return 0; }</p>
+
+<p>static void gc_gms_init_mark(PARROT_INTERP) { Arenas * const arena_base = interp&#45;&#62;arena_base;</p>
+
+<pre lang='und' xml:lang='und'>    arena_base&#45;&#62;dod_trace_ptr = NULL;
+    arena_base&#45;&#62;dod_mark_start = NULL;
+    arena_base&#45;&#62;num_early_PMCs_seen = 0;
+    arena_base&#45;&#62;num_extended_PMCs = 0;
+
+    Parrot_forall_header_pools(interp, POOL_ALL, 0, init_mark_cb);
+}</pre>
+
+<p>static int trace_igp_cb(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(void *arg)) { Gc_gms_hdr_store *s; Gc_gms_gen * const gen = pool&#45;&#62;last_gen; Gc_gms_hdr_list * const igp = &#38;gen&#45;&#62;igp;</p>
+
+<pre lang='und' xml:lang='und'>    for (s = igp&#45;&#62;first; s; s = s&#45;&#62;next) {
+        Gc_gms_hdr **p;
+        for (p = s&#45;&#62;store; p &#60; s&#45;&#62;ptr; ++p) {
+            Gc_gms_hdr * const h = *p;
+            pobject_lives(interp, GMSH_to_PObj(h));
+        }
+    }
+    return 0;
+}</pre>
+
+<p>static int gc_gms_trace_root(PARROT_INTERP, int trace_stack) { const int ret = Parrot_dod_trace_root(interp, trace_stack);</p>
+
+<pre lang='und' xml:lang='und'>    if (ret == 0)
+        return 0;
+    Parrot_forall_header_pools(interp, POOL_ALL, 0, trace_igp_cb);
+    return ret;
+}</pre>
+
+<p>/*</p>
+
+<pre lang='und' xml:lang='und'> 3e) blacken the gray &#39;h&#39; during trace_children
+
+ +&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#62;
+ | b | b | h | g | g | g | w
+ +&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+
+   ^       ^               ^
+   |       |               |
+   black   gray            white
+
+
+ +&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#62;
+ | b | b | h | g | g | g | w
+ +&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+&#45;&#45;&#45;+
+   ^           ^           ^
+   |           |           |
+   black       gray        white</pre>
+
+<p>*/</p>
+
+<p>static int trace_children_cb(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(void *arg)) { Arenas * const arena_base = interp&#45;&#62;arena_base; const int lazy_dod = arena_base&#45;&#62;lazy_dod; const UINTVAL mask = PObj_data_is_PMC_array_FLAG | PObj_custom_mark_FLAG; Gc_gms_hdr *h;</p>
+
+<pre lang='und' xml:lang='und'>    for (h = pool&#45;&#62;gray; h != pool&#45;&#62;white;) {
+        PMC * const current = (PMC*)GMSH_to_PObj(h);
+        UINTVAL bits;
+
+        if (lazy_dod &#38;&#38; arena_base&#45;&#62;num_early_PMCs_seen &#62;=
+                arena_base&#45;&#62;num_early_DOD_PMCs) {
+            return 1;
+        }
+        /* TODO propagate flag in pobject_lives */
+        arena_base&#45;&#62;dod_trace_ptr = current;
+        if (!PObj_needs_early_DOD_TEST(current))
+            PObj_high_priority_DOD_CLEAR(current);
+        /* mark children */
+        bits = PObj_get_FLAGS(current) &#38; mask;
+        if (bits) {
+            if (bits == PObj_data_is_PMC_array_FLAG) {
+                /* malloced array of PMCs */
+                PMC ** const data = PMC_data(current);
+
+                if (data) {
+                    INTVAL i;
+                    for (i = 0; i &#60; PMC_int_val(current); i++) {
+                        if (data[i]) {
+                            pobject_lives(interp, (PObj *)data[i]);
+                        }
+                    }
+                }
+            }
+            else {
+                /* All that&#39;s left is the custom */
+                VTABLE_mark(interp, current);
+            }
+        }
+        if (h != pool&#45;&#62;gray) {
+            /* if a gray was inserted DFS, it is next */
+            h = pool&#45;&#62;gray;
+        }
+        else {
+            h = h&#45;&#62;next;
+            pool&#45;&#62;gray = h;
+        }
+    }
+    return 0;
+}</pre>
+
+<p>static int gc_gms_trace_children(PARROT_INTERP) { return !Parrot_forall_header_pools(interp, POOL_PMC, 0, trace_children_cb); }</p>
+
+<p>/* * move everything from white up to the free_list to the free_list * scan for active destroy objects * TODO put these in front of the pool at pool&#45;&#62;white_fin */ static int sweep_cb_pmc(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(void *arg)) { Gc_gms_hdr *h; Arenas * const arena_base = interp&#45;&#62;arena_base;</p>
+
+<pre lang='und' xml:lang='und'>    /* TODO object stats */
+
+    for (h = pool&#45;&#62;white; h != pool&#45;&#62;free_list; h = h&#45;&#62;next) {
+        PMC * const obj = (PMC*)GMSH_to_PObj(h);
+        if (PObj_needs_early_DOD_TEST(obj))
+            &#45;&#45;arena_base&#45;&#62;num_early_DOD_PMCs;
+        if (PObj_active_destroy_TEST(obj))
+            VTABLE_destroy(interp, (PMC *)obj);
+        if (PObj_is_PMC_EXT_TEST(obj) &#38;&#38; obj&#45;&#62;pmc_ext) {
+            /* if the PMC has a PMC_EXT structure,
+             * return it to the pool
+             */
+            Small_Object_Pool * const ext_pool = arena_base&#45;&#62;pmc_ext_pool;
+            ext_pool&#45;&#62;add_free_object(interp, ext_pool, obj&#45;&#62;pmc_ext);
+        }
+
+    }
+    pool&#45;&#62;free_list = pool&#45;&#62;white;
+    return 0;
+}</pre>
+
+<p>static int sweep_cb_buf(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(void *arg)) { Gc_gms_hdr *h;</p>
+
+<pre lang='und' xml:lang='und'>    /* TODO object stats */
+
+    for (h = pool&#45;&#62;white; h != pool&#45;&#62;free_list; h = h&#45;&#62;next) {
+        PObj * const obj = GMSH_to_PObj(h);
+        /*
+         * this is ugly, we still have to sweep all buffers
+         */
+        if (PObj_sysmem_TEST(obj) &#38;&#38; PObj_bufstart(obj)) {
+            /* has sysmem allocated, e.g. string_pin */
+            mem_sys_free(PObj_bufstart(obj));
+            PObj_bufstart(obj) = NULL;
+            PObj_buflen(obj) = 0;
+        }
+        else {
+#  ifdef GC_IS_MALLOC
+            /* free allocated space at (int*)bufstart &#45; 1,
+             * but not if it is used COW or external
+             */
+            if (PObj_bufstart(obj) &#38;&#38;
+                    !PObj_is_external_or_free_TESTALL(obj)) {
+                if (PObj_COW_TEST(obj)) {
+                    INTVAL *refcount = ((INTVAL *)PObj_bufstart(obj) &#45; 1);
+
+                    if (!&#45;&#45;(*refcount))
+                        free(refcount); /* the actual bufstart */
+                }
+                else
+                    free((INTVAL*)PObj_bufstart(obj) &#45; 1);
+            }
+#  else
+            /*
+             * XXX Jarkko did report that on irix pool&#45;&#62;mem_pool
+             *     was NULL, which really shouldn&#39;t happen
+             */
+            if (pool&#45;&#62;mem_pool) {
+                if (!PObj_COW_TEST(obj)) {
+                    ((Memory_Pool *)
+                     pool&#45;&#62;mem_pool)&#45;&#62;guaranteed_reclaimable +=
+                        PObj_buflen(obj);
+                }
+                ((Memory_Pool *)
+                 pool&#45;&#62;mem_pool)&#45;&#62;possibly_reclaimable +=
+                    PObj_buflen(obj);
+            }
+#  endif
+            PObj_buflen(obj) = 0;
+        }
+    }
+    pool&#45;&#62;free_list = pool&#45;&#62;white;
+    return 0;
+}</pre>
+
+<p>static void gc_gms_sweep(PARROT_INTERP) { Parrot_forall_header_pools(interp, POOL_PMC, 0, sweep_cb_pmc); Parrot_forall_header_pools(interp, POOL_BUFFER, 0, sweep_cb_buf); }</p>
+
+<p>static int end_cycle_cb(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), int flag, NOTNULL(void *arg)) { Gc_gms_hdr *h; /* * clear live flags * TODO just swap black and white */ if (!pool&#45;&#62;black || pool&#45;&#62;black == &#38;pool&#45;&#62;marker) return 0; for (h = pool&#45;&#62;black; h != pool&#45;&#62;white; h = h&#45;&#62;next) PObj_live_CLEAR(GMSH_to_PObj(h)); pool&#45;&#62;black = pool&#45;&#62;black_fin = pool&#45;&#62;gray = pool&#45;&#62;white; return 0; }</p>
+
+<p>static void gc_gms_end_cycle(PARROT_INTERP) { Parrot_forall_header_pools(interp, POOL_ALL, 0, end_cycle_cb); } /*</p>
+
+<h2><a name="Interface_function_main_entry"
+>Interface function main entry <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>FUNCDOC: parrot_gc_gms_run</p>
+
+<p>Interface to <code lang='und' xml:lang='und'>Parrot_do_dod_run</code>. <code lang='und' xml:lang='und'>flags</code> is one of:</p>
+
+<pre lang='und' xml:lang='und'>  DOD_lazy_FLAG   ... timely destruction
+  DOD_finish_FLAG ... run a final sweep to destruct objects at
+                      interpreter shutdown</pre>
+
+<p>*/</p>
+
+<p>static void parrot_gc_gms_run(PARROT_INTERP, int flags) { Arenas * const arena_base = interp&#45;&#62;arena_base; Gc_gms_private *g_gms;</p>
+
+<pre lang='und' xml:lang='und'>    if (arena_base&#45;&#62;DOD_block_level) {
+        return;
+    }
+    ++arena_base&#45;&#62;DOD_block_level;
+    g_gms = arena_base&#45;&#62;gc_private;
+    if (flags &#38; DOD_finish_FLAG) {
+        Small_Object_Pool * const pool = arena_base&#45;&#62;pmc_pool;
+
+        pool&#45;&#62;white = pool&#45;&#62;marker.next;
+        /* XXX need to sweep over objects that have finalizers only */
+        Parrot_forall_header_pools(interp, POOL_PMC, 0, sweep_cb_pmc);
+        gc_gms_end_cycle(interp);
+        &#45;&#45;arena_base&#45;&#62;DOD_block_level;
+        return;
+    }
+
+    /* normal or lazy DOD run */
+    arena_base&#45;&#62;dod_runs++;
+    arena_base&#45;&#62;lazy_dod = (flags &#38; DOD_lazy_FLAG);
+    gc_gms_init_mark(interp);
+    if (gc_gms_trace_root(interp, !arena_base&#45;&#62;lazy_dod) &#38;&#38;
+            gc_gms_trace_children(interp)) {
+        gc_gms_sweep(interp);
+        gc_gms_set_gen(interp);
+    }
+    else {
+        /*
+         * successful lazy DOD run
+         */
+        ++arena_base&#45;&#62;lazy_dod_runs;
+    }
+    gc_gms_end_cycle(interp);
+    &#45;&#45;arena_base&#45;&#62;DOD_block_level;
+}</pre>
+
+<p># if GC_GMS_DEBUG static void gms_debug_verify(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), NOTNULL(const char *action)) { Gc_gms_hdr *h; int bf, gf, wf, ff; size_t i;</p>
+
+<pre lang='und' xml:lang='und'>    const size_t n = pool&#45;&#62;total_objects;
+
+    bf = gf = wf = ff = 0;
+
+
+    for (i = 0, h = &#38;pool&#45;&#62;marker; i &#60;= n + 10; ++i) {
+        if (i &#38;&#38; h == &#38;pool&#45;&#62;marker)
+            break;
+        if (h == pool&#45;&#62;black)
+            bf++;
+        if (h == pool&#45;&#62;gray)
+            gf++;
+        if (h == pool&#45;&#62;white)
+            wf++;
+        if (h == pool&#45;&#62;free_list)
+            ff++;
+        h = h&#45;&#62;next;
+    }
+    if (i != n + 1)
+        fprintf(stderr, &#34;gms_verify %s: chain corrupt %u objs %u total\n&#34;,
+                action, i, n);
+    if (bf != 1)
+        fprintf(stderr, &#34;gms_verify %s: found %u blacks\n&#34;, action, bf);
+    if (gf != 1)
+        fprintf(stderr, &#34;gms_verify %s: found %u grays\n&#34;, action, gf);
+    if (wf != 1)
+        fprintf(stderr, &#34;gms_verify %s: found %u whites\n&#34;, action, wf);
+    if (ff != 1)
+        fprintf(stderr, &#34;gms_verify %s: found %u frees\n&#34;, action, ff);
+}</pre>
+
+<p># endif /* GC_GMS_DEBUG */</p>
+
+<p>#endif /* PARROT_GC_GMS */</p>
+
+<p>/*</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>src/dod.c</em>, <em lang='und' xml:lang='und'>include/parrot/dod.h</em>, <em lang='und' xml:lang='und'>include/parrot/pobj.h</em>, <em lang='und' xml:lang='und'>src/gc_ims.c</em></p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Initial version by leo (2005.01.12 &#45; 2005.01.30)</p>
+
+<p>*/</p>
+
+<p>/* * Local variables: * c&#45;file&#45;style: &#34;parrot&#34; * End: * vim: expandtab shiftwidth=4: */</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

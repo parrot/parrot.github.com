@@ -1,0 +1,128 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Files and Directories PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Files and Directories PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/os.pmc &#45; Files and Directories PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p><code>OS</code> is a singleton class which provides access to the filesystem files and directories.</p>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="void_*get_pointer()"
+><b><code>void *get_pointer()</b></code></a></dt>
+
+<dt><a name="void_set_pointer(void_*ptr)"
+><b><code>void set_pointer(void *ptr)</b></code></a></dt>
+These two functions are part of the singleton creation interface.
+For more information see <em><a href="../pmc.c.html">src/pmc.c</a></em>.
+<dt><a name="STRING_*cwd()"
+><b><code>STRING *cwd()</b></code></a></dt>
+Returns the current working directory.
+<dt><a name="void_chdir(STRING_*path)"
+><b><code>void chdir(STRING *path)</b></code></a></dt>
+Changes the current working directory to the one specified by <code>path</code>.
+<dt><a name="void_rm(STRING_*path)"
+><b><code>void rm(STRING *path)</b></code></a></dt>
+Calls <code>remove</code> to remove the file or empty directory specified by <code>path</code>.
+<dt><a name="void_mkdir(STRING_*path,_STRING_*mode)"
+><b><code>void mkdir(STRING *path, STRING *mode)</b></code></a></dt>
+Creates a directory specified by <code>path</code> with mode <code>mode</code>.
+<dt><a name="fixedpmcarray_*stat(STRING_*path)"
+><b><code>fixedpmcarray *stat(STRING *path)</b></code></a></dt>
+Stats a file,
+and returns a 13 position array as in Perl:
+<pre>     0 dev      device number of filesystem
+     1 ino      inode number
+     2 mode     file mode  (type and permissions)
+     3 nlink    number of (hard) links to the file
+     4 uid      numeric user ID of file&#39;s owner
+     5 gid      numeric group ID of file&#39;s owner
+     6 rdev     the device identifier (special files only)
+     7 size     total size of file, in bytes
+     8 atime    last access time in seconds since the epoch
+     9 mtime    last modify time in seconds since the epoch
+    10 ctime    inode change time in seconds since the epoch (*)
+    11 blksize  preferred block size for file system I/O
+    12 blocks   actual number of blocks allocated</pre>
+11 and 12 are not available under Windows.
+<dt><a name="fixedpmcarray_*lstat(STRING_*path)"
+><b><code>fixedpmcarray *lstat(STRING *path)</b></code></a></dt>
+Stats a file, and returns a 13 position array as in Perl:
+<pre>     0 dev      device number of filesystem
+     1 ino      inode number
+     2 mode     file mode  (type and permissions)
+     3 nlink    number of (hard) links to the file
+     4 uid      numeric user ID of file&#39;s owner
+     5 gid      numeric group ID of file&#39;s owner
+     6 rdev     the device identifier (special files only)
+     7 size     total size of file, in bytes
+     8 atime    last access time in seconds since the epoch
+     9 mtime    last modify time in seconds since the epoch
+    10 ctime    inode change time in seconds since the epoch (*)
+    11 blksize  preferred block size for file system I/O
+    12 blocks   actual number of blocks allocated</pre>
+11 and 12 are not available under Windows.
+<dt><a name="void_symlink(STRING_*from,_STRING_*to)"
+><b><code>void symlink(STRING *from, STRING *to)</b></code></a></dt>
+Creates a symlink, where available
+<dt><a name="void_link(STRING_*from,_STRING_*to)"
+><b><code>void link(STRING *from, STRING *to)</b></code></a></dt>
+Creates a hard link, where available(?)
+<dt><a name="INTVAL_umask(INTVAL_mask)"
+><b><code>INTVAL umask(INTVAL mask)</b></code></a></dt>
+umask sets the process&#39;s file mode creation mask (and returns the previous one).
+<dt><a name="INTVAL_chroot(STRING_*path)"
+><b><code>INTVAL chroot(STRING *path)</b></code></a></dt>
+it makes the named directory the new root directory for all further pathnames that begin with a &#34;/&#34; by your process and all its children.<b>NOTE</b>: perl restricts this operation to superusers. It might be a good idea to do the same with parrot.
+<dt><a name="PMC_*readdir(STRING_*path)"
+><b><code>PMC *readdir(STRING *path)</b></code></a></dt>
+reads entries from a directory.
+<dt><a name="rename(STRING_*oldpath,_STRING_*newpath)"
+><b><code>rename(STRING *oldpath, STRING *newpath)</b></code></a></dt>
+This method is a wrapper for rename(2). On error a SystemError exception is thrown.
+<dt><a name="chmod(STRING_*path,_INTVAL_mode)"
+><b><code>chmod(STRING *path, INTVAL mode)</b></code></a></dt>
+</dl>
+
+<h1><a name="SEE_ALS0"
+>SEE ALS0</a></h1>
+
+<pre>   chdir(2), getcwd(3), unlink(2), mkdir(2), stat(2), lstat(2),
+   symlink(2), link(2), umask(2), chroot(2)</pre>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

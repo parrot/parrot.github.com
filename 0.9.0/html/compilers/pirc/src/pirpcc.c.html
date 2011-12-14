@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This file contains functions that convert the data structures that contain sub calls,
+return statements etc.,
+created during the parse into a series of instructions that implement the Parrot Calling Conventions.</p>
+
+<h1><a name="FUNCTIONS"
+>FUNCTIONS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>*/</p>
+
+<p>#include &#34;pirpcc.h&#34; #include &#34;pircompunit.h&#34; #include &#34;pircompiler.h&#34; #include &#34;pirerr.h&#34; #include &#34;pirsymbol.h&#34;</p>
+
+<p>#include &#34;parrot/oplib/ops.h&#34;</p>
+
+<p>/*</p>
+
+<dl>
+<dt><a name="static_int_calculate_pcc_target_flags(target_*_const_result)"
+><b><code>static int calculate_pcc_target_flags(target *const result)</b></code></a></dt>
+Calculate Parrot Calling Conventions flags for the target node <code>result</code>.
+<dt><a name="static_int_calculate_pcc_argument_flags(argument_*_const_arg)"
+><b><code>static int calculate_pcc_argument_flags(argument *const arg)</b></code></a></dt>
+Calculate the Parrot Calling Conventions flags for the argument <code>arg</code>.
+An int encoding the flags is returned.
+<dt><a name="static_target_*_generate_unique_pir_reg(lexer_state_*_const_lexer,_pir_type_type)"
+><b><code>static target *generate_unique_pir_reg(lexer_state *const lexer, pir_type type)</b></code></a></dt>
+Generate a unique,
+temporary PIR register of type <code>type</code>.
+It uses the <code>reg</code> constructor to create a target node,
+and using <code>pir_reg_generator</code> field of <code>lexer</code> the PIR register number is specified.
+Because the positive PIR register numbers can be used in PIR code,
+we use the negative numbers here,
+for the reg() constructor this doesn&#39;t matter; a PIR register is always mapped to a PASM register,
+so using negative PIR register is safe.
+<dt><a name="static_int_generate_signature_pmc(lexer_state_*_const_lexer,_unsigned_size)"
+><b><code>static int generate_signature_pmc(lexer_state *const lexer, unsigned size)</b></code></a></dt>
+Create a FixedIntegerArray PMC object that encodes the types and flags of parameters and add it to the PBC constant table.
+The index in that PBC constant table is returned.
+<dt><a name="void_emit_sub_epilogue(lexer_state_*_const_lexer)"
+><b><code>void emit_sub_epilogue(lexer_state *const lexer)</b></code></a></dt>
+Emit final instructions for the current subroutine.
+In case this is a <code>:main</code> sub,
+the &#34;end&#34; instruction is emitted,
+otherwise it&#39;s a standard return sequence.
+<dt><a name="static_void_add_alias_operand(lexer_state_*_const_lexer,_PMC_*array,_int_index,_char_const_*_const_alias)"
+><b><code>static void add_alias_operand(lexer_state *const lexer, PMC *array, int index, char const *const alias)</b></code></a></dt>
+Add an alias operand to current instruction; <code>array</code> is the signature array,
+which must hold the right flags for this new operand (at position <code>index</code>).
+The alias name is passed in <code>alias</code>.
+<dt><a name="static_void_targets_to_operands(lexer_state_*_const_lexer,_target_*_const_targets)"
+><b><code>static void targets_to_operands(lexer_state *const lexer, target *const targets)</b></code></a></dt>
+Convert a list of <code>target</code> nodes into operands.
+Before the operands are added to the <i>current</i> instruction,
+a FixedIntegerArray is created,
+which contains one integer for each target (to be converted into an operand).
+The integer encodes the type of the target (operand) and other flags,
+such as <code>:slurpy</code> etc.If one of the targets has the :named flag,
+an extra operand is inserted,
+which indicates a string constant,
+containing the alias by which that target receives a value.
+So,
+in case of:
+<pre> .param int i :named(&#39;answer&#39;)</pre>
+then the extra operand is a string constant (index in the PBC constant table) with value &#34;answer&#34;.
+<dt><a name="static_void_arguments_to_operands(lexer_state_*_const_lexer,_argument_*_const_args)"
+><b><code>static void arguments_to_operands(lexer_state *const lexer, argument *const args)</b></code></a></dt>
+Convert a list of <code>argument</code> nodes into operands. Before the operands are added to the <i>current</i> instruction, a FixedIntegerArray PMC is created which will hold one integer for each argument in the list. The integer at index <code>i</code> encodes the type and flags (such as <code>:flat</code>) for operand <code>i</code>.
+<dt><a name="void_generate_parameters_instr(lexer_state_*_const_lexer,_unsigned_num_parameters)"
+><b><code>void generate_parameters_instr(lexer_state *const lexer, unsigned num_parameters)</b></code></a></dt>
+Generate the &#34;get_params&#34; instruction, taking &#60;num_parameters&#62; variable arguments; this is the number of parameters of this function.
+<dt><a name="void_generate_getresults_instr(lexer_state_*_const_lexer,_target_*_const_targetlist)"
+><b><code>void generate_getresults_instr(lexer_state *const lexer, target *const targetlist)</b></code></a></dt>
+Generate instruction for the <code>.get_results</code> statement.
+<dt><a name="static_void_save_global_reference(lexer_state_*_const_lexer,_instruction_*_const_instr,_char_const_*_const_label)"
+><b><code>static void save_global_reference(lexer_state *const lexer, instruction *const instr, char const *const label)</b></code></a></dt>
+Store the instruction <code>instr</code>, which references the global label <code>label</code> in a list. After the parse phase, this instruction can be patched, if <code>label</code> can be resolved during compile time.
+<dt><a name="static_target_*_get_invoked_sub(lexer_state_*_const_lexer,_target_*_const_sub)"
+><b><code>static target *get_invoked_sub(lexer_state *const lexer, target *const sub)</b></code></a></dt>
+Return a <code>target</code> node that represents the sub to invoke. If <code>sub</code> is a register, that is returned. If it&#39;s a declared <code>.local</code>, then a target node representing that symbol is returned. If it&#39;s just the name of a .sub, then there&#39;s 2 possibilities: either the sub was already parsed, in which case it&#39;s stored as a global_label, or the sub was not parsed yet, in which case a runtime resolving instruction is emitted.
+<dt><a name="static_void_convert_pcc_call(lexer_state_*_const_lexer,_invocation_*_const_inv)"
+><b><code>static void convert_pcc_call(lexer_state *const lexer, invocation *const inv)</b></code></a></dt>
+Generate instructions for a normal invocation using the Parrot Calling Conventions (PCC). This is the sequence of the following instructions:For $P0():
+<pre> set_args_pc
+ get_results_pc
+ invokecc_p / invoke_p_p</pre>
+For &#34;foo&#34;() and foo():
+<pre> set_args_pc
+ set_p_pc / find_sub_not_null_p_sc
+ get_results_pc
+ invokecc_p</pre>
+
+<dt><a name="static_void_convert_pcc_tailcall(lexer_state_*_const_lexer,_invocation_*_const_inv)"
+><b><code>static void convert_pcc_tailcall(lexer_state *const lexer, invocation *const inv)</b></code></a></dt>
+Generate instructions for a tailcall using the Parrot Calling Conventions (PCC). The sequence of instructions is:
+<pre> set_args_pc
+ tailcall_pc</pre>
+
+<dt><a name="static_void_convert_pcc_return(lexer_state_*_const_lexer,_invocation_*_const_inv)"
+><b><code>static void convert_pcc_return(lexer_state *const lexer, invocation *const inv)</b></code></a></dt>
+Generate instructions for a normal return statement using the Parrot Calling Conventions (PCC). The sequence of instructions is:
+<pre> set_returns_pc
+ returncc</pre>
+
+<dt><a name="static_void_convert_nci_call(lexer_state_*_const_lexer,_invocation_*_const_inv)"
+><b><code>static void convert_nci_call(lexer_state *const lexer, invocation *const inv)</b></code></a></dt>
+Generate instructions for a function invocation using the Native Call Interface (NCI). The sequence of instructions is:
+<pre> set_args_pc
+ get_results_pc
+ invokecc_p</pre>
+
+<dt><a name="static_void_convert_pcc_yield(lexer_state_*_const_lexer,_invocation_*_const_inv)"
+><b><code>static void convert_pcc_yield(lexer_state *const lexer, invocation *const inv)</b></code></a></dt>
+Generate instructions for a yield statement using the Parrot Calling Conventions. The sequence of instructions is:
+<pre> set_returns_pc
+ yield</pre>
+
+<dt><a name="static_void_convert_pcc_methodcall(lexer_state_*_const_lexer,_invocation_*_const_inv)"
+><b><code>static void convert_pcc_methodcall(lexer_state *const lexer, invocation *const inv)</b></code></a></dt>
+Generate instructions for a method call using the Parrot Calling Conventions (PCC). The sequence of instructions is:
+<pre> set_args_pc
+ get_results_pc
+ callmethodcc_p_sc</pre>
+
+<dt><a name="static_void_convert_pcc_methodtailcall(lexer_state_*_const_lexer,_invocation_*_const_inv)"
+><b><code>static void convert_pcc_methodtailcall(lexer_state *const lexer, invocation *const inv)</b></code></a></dt>
+Generate instructions for a method tailcall, using the Parrot Calling Conventions (PCC). The sequence of instructions is:
+<pre> set_args_pc
+ tailcallmethod_p_p / tailcallmethod_p_sc</pre>
+
+<dt><a name="void_convert_inv_to_instr(lexer_state_*_const_lexer,_invocation_*_const_inv)"
+><b><code>void convert_inv_to_instr(lexer_state *const lexer, invocation *const inv)</b></code></a></dt>
+Convert an <code>invocation</code> structure into a series of instructions. This is the dispatch function, which calls the appropriate conversion function, based on the type of <code>inv</code>.</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

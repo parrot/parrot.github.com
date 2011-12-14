@@ -1,0 +1,186 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/tools.html">Tools</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="ncidef2asm.pl"
+>ncidef2asm.pl <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Take an NCI library definition file and turn it into a</p>
+
+<h1><a name="Sections"
+>Sections <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>An NCI library definition file provides the information needed to generate a parrot wrapper for the named library (or libraries).
+Its format is simple,
+and looks like:</p>
+
+<pre lang='und' xml:lang='und'>  [package]
+  ncurses 
+
+  [lib]
+  libform.so
+
+  [defs]
+  p new_field i i i i i i
+
+  [lib]
+  libncurses.so
+
+  [defs]
+  i is_term_resized i i</pre>
+
+<p>Note that the assembly file is generated in the order you specify, so if there are library dependencies, make sure you have them in the correct order.</p>
+
+<h2><a name="package"
+>package <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Declares the package that all subsequent sub PMCs will be put into. The name is a simple concatenation of the package name, double colon, and the routine name, with no preceding punctuation.</p>
+
+<h2><a name="lib"
+>lib <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>The name of the library to be loaded. Should be as qualified as necessary for your platform&#45;&#45;generally the full filename is required, though the directory generally isn&#39;t.</p>
+
+<p>You may load multiple libraries here, but only the last one loaded will be exposed to subsequent defs.</p>
+
+<h2><a name="defs"
+>defs <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>This section holds the definitions of functions. Each function is assumed to be in the immediate preceeding library. The definition of the function is:</p>
+
+<pre lang='und' xml:lang='und'>  return_type name [param [param [param ...]]]</pre>
+
+<p>The param and return_type parameters use the NCI standard, which for reference is:</p>
+
+<dl>
+<dt><a name="p"
+>p</a></dt><p class="pad"></p>
+
+<dd>Parameter is a void pointer, taken from the PMC&#39;s data pointer. PMC is assumed to be an unmanagedstruct or child class.</dd><p class="pad"></p>
+
+<dd>Taken from a P register</dd><p class="pad"></p>
+
+<dt><a name="c"
+>c</a></dt><p class="pad"></p>
+
+<dd>Parameter is a character.</dd><p class="pad"></p>
+
+<dd>Taken from an I register</dd><p class="pad"></p>
+
+<dt><a name="s"
+>s</a></dt><p class="pad"></p>
+
+<dd>Parameter is a short</dd><p class="pad"></p>
+
+<dd>Taken from an I register</dd><p class="pad"></p>
+
+<dt><a name="i"
+>i</a></dt><p class="pad"></p>
+
+<dd>Parameter is an int</dd><p class="pad"></p>
+
+<dd>Taken from an I register</dd><p class="pad"></p>
+
+<dt><a name="l"
+>l</a></dt><p class="pad"></p>
+
+<dd>Parameter is a long</dd><p class="pad"></p>
+
+<dd>Taken from an I register</dd><p class="pad"></p>
+
+<dt><a name="f"
+>f</a></dt><p class="pad"></p>
+
+<dd>Paramter is a float</dd><p class="pad"></p>
+
+<dd>Taken from an N register.</dd><p class="pad"></p>
+
+<dt><a name="d"
+>d</a></dt><p class="pad"></p>
+
+<dd>Parameter is a double.</dd><p class="pad"></p>
+
+<dd>Taken from an N register.</dd><p class="pad"></p>
+
+<dt><a name="t"
+>t</a></dt><p class="pad"></p>
+
+<dd>Paramter is a char *, presumably a C string</dd><p class="pad"></p>
+
+<dd>Taken from an S register</dd><p class="pad"></p>
+
+<dt><a name="v"
+>v</a></dt><p class="pad"></p>
+
+<dd>Void. Only valid as a return type, noting that the function returns no data.</dd><p class="pad"></p>
+
+<dt><a name="I"
+>I</a></dt><p class="pad"></p>
+
+<dd>Interpreter pointer. The current interpreter pointer is passed in</dd><p class="pad"></p>
+
+<dt><a name="P"
+>P</a></dt><p class="pad"></p>
+
+<dd>PMC.</dd><p class="pad"></p>
+
+<dt><a name="2"
+>2</a></dt><p class="pad"></p>
+
+<dd>Pointer to short.</dd><p class="pad"></p>
+
+<dd>Taken from an I register.</dd><p class="pad"></p>
+
+<dt><a name="3"
+>3</a></dt><p class="pad"></p>
+
+<dd>Pointer to int.</dd><p class="pad"></p>
+
+<dd>Taken from an I register</dd><p class="pad"></p>
+
+<dt><a name="4"
+>4</a></dt><p class="pad"></p>
+
+<dd>Pointer to long</dd><p class="pad"></p>
+
+<dd>Taken from an I register</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

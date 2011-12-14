@@ -1,0 +1,445 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Multimethod dispatch for binary opcode functions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Multimethod dispatch for binary opcode functions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/mmd.c &#45; Multimethod dispatch for binary opcode functions</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>This system is set up to handle type&#45;based dispatching for binary (i.e.
+two&#45;arg) functions.
+This includes,
+though isn&#39;t necessarily limited to,
+binary operators such as addition or subtraction.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>The MMD system is straightforward,
+and currently must be explicitly invoked,
+for example by a vtable function.
+(We may reserve the right to use MMD in all circumstances,
+but currently do not).</p>
+
+<h2><a name="API"
+>API <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>For the purposes of the API,
+each MMD&#45;able function is assigned a unique number which is used to find the correct function table.
+This is the <code lang='und' xml:lang='und'>func_num</code> parameter in the following functions.
+While Parrot isn&#39;t restricted to a predefined set of functions,
+it <i>does</i> set things up so that all the binary vtable functions have a MMD table preinstalled for them,
+with default behaviour.</p>
+
+<h2><a name="Remarks"
+>Remarks <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p><code lang='und' xml:lang='und'>binop_mmd_funcs&#45;&#62;x</code> and <code lang='und' xml:lang='und'>&#45;&#62;y</code> are table sizes not highest type in table.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_PMC*_mmd_deref(Interp_*interp,_INTVAL_function,_PMC_*value)"
+><b><code lang='und' xml:lang='und'>static PMC *mmd_deref(Interp *interp, INTVAL function, PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>If <code lang='und' xml:lang='und'>value</code> is a reference&#45;like PMC,
+dereference it so we can make an MMD call on the &#39;real&#39; value.</dd><p class="pad"></p>
+
+<dt><a name="static_void_mmd_ensure_writable(Interp_*,_INTVAL_function,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>static void mmd_ensure_writable(Interp *, INTVAL function, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Make sure <code lang='und' xml:lang='und'>pmc</code> is writable enough for <code lang='und' xml:lang='und'>function</code>.</dd><p class="pad"></p>
+
+<dt><a name="PMC*_mmd_dispatch_p_ppp(Interp_*,_PMC_*left,_PMC_*right,_PMC_*dest,_INTVAL_function)"
+><b><code lang='und' xml:lang='und'>PMC *mmd_dispatch_p_ppp(Interp *, PMC *left, PMC *right, PMC *dest, INTVAL function)</b></code></a></dt><p class="pad"></p>
+
+<dd>Dispatch to a multimethod that returns a PMC.
+<code lang='und' xml:lang='und'>left</code>,
+<code lang='und' xml:lang='und'>right</code>,
+and <code lang='und' xml:lang='und'>dest</code> are all PMC pointers,
+while <code lang='und' xml:lang='und'>func_num</code> is the MMD table that should be used to do the dispatching.
+If the <code lang='und' xml:lang='und'>dest</code> pointer is NULL,
+it dispatches two a two&#45;argument function that returns a new <code lang='und' xml:lang='und'>dest</code> always.</dd><p class="pad"></p>
+
+<dd>The MMD system will figure out which function should be called based on the types of <code lang='und' xml:lang='und'>left</code> and <code lang='und' xml:lang='und'>right</code> and call it,
+passing in <code lang='und' xml:lang='und'>left</code>,
+<code lang='und' xml:lang='und'>right</code>,
+and possibly <code lang='und' xml:lang='und'>dest</code> like any other binary vtable function.</dd><p class="pad"></p>
+
+<dt><a name="PMC*_mmd_dispatch_p_pip(Interp_*,_PMC_*left,_INTVAL_right,_PMC_*dest,_INTVAL_function)"
+><b><code lang='und' xml:lang='und'>PMC *mmd_dispatch_p_pip(Interp *, PMC *left, INTVAL right, PMC *dest, INTVAL function)</b></code></a></dt><p class="pad"></p>
+
+<dd>Like above,
+right argument is a native INTVAL.</dd><p class="pad"></p>
+
+<dt><a name="PMC*_mmd_dispatch_p_pnp(Interp_*,_PMC_*left,_FLOATVAL_right,_PMC_*dest,_INTVAL_function)"
+><b><code lang='und' xml:lang='und'>PMC *mmd_dispatch_p_pnp(Interp *, PMC *left, FLOATVAL right, PMC *dest, INTVAL function)</b></code></a></dt><p class="pad"></p>
+
+<dd>Like above,
+right argument is a native FLOATVAL.</dd><p class="pad"></p>
+
+<dt><a name="PMC*_mmd_dispatch_p_psp(Interp_*,_PMC_*left,_STRING_*right,_PMC_*dest,_INTVAL_function)"
+><b><code lang='und' xml:lang='und'>PMC *mmd_dispatch_p_psp(Interp *, PMC *left, STRING *right, PMC *dest, INTVAL function)</b></code></a></dt><p class="pad"></p>
+
+<dd>Like above,
+right argument is a native STRING *.</dd><p class="pad"></p>
+
+<dt><a name="void_mmd_dispatch_v_pp(Interp_*,_PMC_*left,_PMC_*right,_INTVAL_function)"
+><b><code lang='und' xml:lang='und'>void mmd_dispatch_v_pp(Interp *, PMC *left, PMC *right, INTVAL function)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="void_mmd_dispatch_v_pi(Interp_*,_PMC_*left,_INTVAL_right,_INTVAL_function)"
+><b><code lang='und' xml:lang='und'>void mmd_dispatch_v_pi(Interp *, PMC *left, INTVAL right, INTVAL function)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="void_mmd_dispatch_v_pn(Interp_*,_PMC_*left,_FLOATVAL_right,_INTVAL_function)"
+><b><code lang='und' xml:lang='und'>void mmd_dispatch_v_pn(Interp *, PMC *left, FLOATVAL right, INTVAL function)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="void_mmd_dispatch_v_ps(Interp_*,_PMC_*left,_STRING_*right,_INTVAL_function)"
+><b><code lang='und' xml:lang='und'>void mmd_dispatch_v_ps(Interp *, PMC *left, STRING *right, INTVAL function)</b></code></a></dt><p class="pad"></p>
+
+<dd>Inplace dispatch functions for <code lang='und' xml:lang='und'>left &#60;op=&#62; right</code>.</dd><p class="pad"></p>
+
+<dd>*/</dd><p class="pad"></p>
+
+<dd>PMC* mmd_dispatch_p_ppp(Interp *interp,
+PMC *left,
+PMC *right,
+PMC *dest,
+INTVAL func_nr) { mmd_f_p_ppp real_function; PMC *sub; int is_pmc;</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    left = mmd_deref(interp, func_nr, left);
+    right = mmd_deref(interp, func_nr, right);
+
+    real_function = (mmd_f_p_ppp)get_mmd_dispatcher(interp,
+            left, right, func_nr, &#38;is_pmc);
+
+    if (is_pmc) {
+        sub = (PMC*)real_function;
+        if (dest)
+            return Parrot_runops_fromc_args(interp, sub, &#34;PPPP&#34;,
+                    left, right, dest);
+        else
+            return Parrot_runops_fromc_args(interp, sub, &#34;PPP&#34;,
+                    left, right);
+    }
+    else {
+        return (*real_function)(interp, left, right, dest);
+    }
+}</pre>
+
+<dd>PMC* mmd_dispatch_p_pip(Interp *interp, PMC *left, INTVAL right, PMC *dest, INTVAL func_nr) { int is_pmc;</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    UINTVAL left_type;
+    mmd_f_p_pip real_function;
+
+    left = mmd_deref(interp, func_nr, left);
+
+    left_type = left&#45;&#62;vtable&#45;&#62;base_type;
+
+    real_function =
+        (mmd_f_p_pip)get_mmd_dispatch_type(interp, func_nr,
+                                           left_type, enum_type_INTVAL,
+                                           &#38;is_pmc);
+
+    if (is_pmc) {
+        PMC * const sub = (PMC*)real_function;
+        if (dest)
+            return Parrot_runops_fromc_args(interp, sub, &#34;PPIP&#34;,
+                    left, right, dest);
+        else
+            return Parrot_runops_fromc_args(interp, sub, &#34;PPI&#34;,
+                    left, right);
+    }
+    else {
+        return (*real_function)(interp, left, right, dest);
+    }
+}</pre>
+
+<dd>PMC* mmd_dispatch_p_pnp(Interp *interp, PMC *left, FLOATVAL right, PMC *dest, INTVAL func_nr) { mmd_f_p_pnp real_function; PMC *sub; int is_pmc; UINTVAL left_type;</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    left = mmd_deref(interp, func_nr, left);
+
+    left_type = left&#45;&#62;vtable&#45;&#62;base_type;
+    real_function = (mmd_f_p_pnp)get_mmd_dispatch_type(interp,
+            func_nr, left_type, enum_type_FLOATVAL, &#38;is_pmc);
+    if (is_pmc) {
+        sub = (PMC*)real_function;
+        if (dest)
+            return Parrot_runops_fromc_args(interp, sub, &#34;PPNP&#34;,
+                    left, right, dest);
+        else
+            return Parrot_runops_fromc_args(interp, sub, &#34;PPN&#34;,
+                    left, right);
+    }
+    else {
+        return (*real_function)(interp, left, right, dest);
+    }
+}</pre>
+
+<dd>PMC* mmd_dispatch_p_psp(Interp *interp, PMC *left, STRING *right, PMC *dest, INTVAL func_nr) { mmd_f_p_psp real_function; PMC *sub; int is_pmc; UINTVAL left_type;</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    left_type = left&#45;&#62;vtable&#45;&#62;base_type;
+    real_function = (mmd_f_p_psp)get_mmd_dispatch_type(interp,
+            func_nr, left_type, enum_type_STRING, &#38;is_pmc);
+    if (is_pmc) {
+        sub = (PMC*)real_function;
+        if (dest)
+            return Parrot_runops_fromc_args(interp, sub, &#34;PPSP&#34;,
+                    left, right, dest);
+        else
+            return Parrot_runops_fromc_args(interp, sub, &#34;PPS&#34;,
+                    left, right);
+    }
+    else {
+        return (*real_function)(interp, left, right, dest);
+    }
+}</pre>
+
+<dd>/* * inplace variants */ void mmd_dispatch_v_pp(Interp *interp, PMC *left, PMC *right, INTVAL func_nr) { mmd_f_v_pp real_function; PMC *sub; int is_pmc;</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    left = mmd_deref(interp, func_nr, left);
+    right = mmd_deref(interp, func_nr, right);
+
+    mmd_ensure_writable(interp, func_nr, left);
+
+    real_function = (mmd_f_v_pp)get_mmd_dispatcher(interp,
+            left, right, func_nr, &#38;is_pmc);
+
+    if (is_pmc) {
+        sub = (PMC*)real_function;
+        Parrot_runops_fromc_args(interp, sub, &#34;vPP&#34;, left, right);
+    }
+    else {
+        (*real_function)(interp, left, right);
+    }
+}</pre>
+
+<dd>void mmd_dispatch_v_pi(Interp *interp, PMC *left, INTVAL right, INTVAL func_nr) { mmd_f_v_pi real_function; PMC *sub; int is_pmc; UINTVAL left_type;</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    left = mmd_deref(interp, func_nr, left);
+    mmd_ensure_writable(interp, func_nr, left);
+
+    left_type = left&#45;&#62;vtable&#45;&#62;base_type;
+    real_function = (mmd_f_v_pi)get_mmd_dispatch_type(interp,
+            func_nr, left_type, enum_type_INTVAL, &#38;is_pmc);
+    if (is_pmc) {
+        sub = (PMC*)real_function;
+        Parrot_runops_fromc_args(interp, sub, &#34;vPI&#34;, left, right);
+    }
+    else {
+        (*real_function)(interp, left, right);
+    }
+}</pre>
+
+<dd>void mmd_dispatch_v_pn(Interp *interp, PMC *left, FLOATVAL right, INTVAL func_nr) { mmd_f_v_pn real_function; PMC *sub; int is_pmc; UINTVAL left_type;</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    left = mmd_deref(interp, func_nr, left);
+    mmd_ensure_writable(interp, func_nr, left);
+
+    left_type = left&#45;&#62;vtable&#45;&#62;base_type;
+    real_function = (mmd_f_v_pn)get_mmd_dispatch_type(interp,
+            func_nr, left_type, enum_type_FLOATVAL, &#38;is_pmc);
+    if (is_pmc) {
+        sub = (PMC*)real_function;
+        Parrot_runops_fromc_args(interp, sub, &#34;vPN&#34;, left, right);
+    }
+    else {
+        (*real_function)(interp, left, right);
+    }
+}</pre>
+
+<dd>void mmd_dispatch_v_ps(Interp *interp, PMC *left, STRING *right, INTVAL func_nr) { mmd_f_v_ps real_function; PMC *sub; int is_pmc; UINTVAL left_type;</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    left = mmd_deref(interp, func_nr, left);
+    mmd_ensure_writable(interp, func_nr, left);
+
+    left_type = VTABLE_type(interp, left);
+    real_function = (mmd_f_v_ps)get_mmd_dispatch_type(interp,
+            func_nr, left_type, enum_type_STRING, &#38;is_pmc);
+    if (is_pmc) {
+        sub = (PMC*)real_function;
+        Parrot_runops_fromc_args(interp, sub, &#34;vPS&#34;, left, right);
+    }
+    else {
+        (*real_function)(interp, left, right);
+    }
+}</pre>
+
+<dd>/*</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_mmd_dispatch_i_pp(Interp_*interp,_PMC_*left,_PMC_*right,_INTVAL_func_nr)"
+><b><code lang='und' xml:lang='und'>INTVAL mmd_dispatch_i_pp(Interp *interp, PMC *left, PMC *right, INTVAL func_nr)</b></code></a></dt><p class="pad"></p>
+
+<dd>Like <code lang='und' xml:lang='und'>mmd_dispatch_p_ppp()</code>, only it returns an <code lang='und' xml:lang='und'>INTVAL</code>. This is used by MMD compare functions.</dd><p class="pad"></p>
+
+<dt><a name="void_mmd_add_function(Interp_*interp,_INTVAL_funcnum,_funcptr_t_function)"
+><b><code lang='und' xml:lang='und'>void mmd_add_function(Interp *interp, INTVAL funcnum, funcptr_t function)</b></code></a></dt><p class="pad"></p>
+
+<dd>Add a new binary MMD function to the list of functions the MMD system knows of. <code lang='und' xml:lang='und'>func_num</code> is the number of the new function. <code lang='und' xml:lang='und'>function</code> is ignored.</dd><p class="pad"></p>
+
+<dd>TODO change this to a MMD register interface that takes a function *name*.</dd><p class="pad"></p>
+
+<dt><a name="static_void_mmd_expand_x(Interp_*interp,_INTVAL_func_nr,_INTVAL_new_x)"
+><b><code lang='und' xml:lang='und'>static void mmd_expand_x(Interp *interp, INTVAL func_nr, INTVAL new_x)</b></code></a></dt><p class="pad"></p>
+
+<dd>Expands the function table in the X dimension to include <code lang='und' xml:lang='und'>new_x</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_void_mmd_expand_y(Interp_*interp,_INTVAL_func_nr,_INTVAL_new_y)"
+><b><code lang='und' xml:lang='und'>static void mmd_expand_y(Interp *interp, INTVAL func_nr, INTVAL new_y)</b></code></a></dt><p class="pad"></p>
+
+<dd>Expands the function table in the Y direction.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>void mmd_add_by_class(Interp *interp, INTVAL functype, STRING *left_class, STRING *right_class, funcptr_t funcptr)</b></code></a></dt><p class="pad"></p>
+
+<dd>Add a function to the MMD table by class name, rather than class number. Handles the case where the named class isn&#39;t loaded yet.</dd><p class="pad"></p>
+
+<dd>Adds a new MMD function <code lang='und' xml:lang='und'>funcptr</code> to the <code lang='und' xml:lang='und'>func_num</code> function table that will be invoked when the left parameter is of class <code lang='und' xml:lang='und'>left_class</code> and the right parameter is of class <code lang='und' xml:lang='und'>right_class</code>. Both classes are <code lang='und' xml:lang='und'>STRING *</code>s that hold the PMC class names for the left and right sides. If either class isn&#39;t yet loaded, Parrot will cache the information such that the function will be installed if at some point in the future both classes are available.</dd><p class="pad"></p>
+
+<dd>Currently this is done by just assigning class numbers to the classes, which the classes will pick up and use if they&#39;re later loaded, but we may later put the functions into a deferred table that we scan when PMC classes are loaded. Either way, the function will be guaranteed to be installed when it&#39;s needed.</dd><p class="pad"></p>
+
+<dd>The function table must exist, but if it is too small, it will automatically be expanded.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>void mmd_register(Interp *interp, INTVAL func_num, INTVAL left_type, INTVAL right_type, funcptr_t funcptr)</b></code></a></dt><p class="pad"></p>
+
+<dd>Register a function <code lang='und' xml:lang='und'>funcptr</code> for MMD function table <code lang='und' xml:lang='und'>func_num</code> for classes <code lang='und' xml:lang='und'>left_type</code> and <code lang='und' xml:lang='und'>right_type</code>. The left and right types are <code lang='und' xml:lang='und'>INTVAL</code>s that represent the class ID numbers.</dd><p class="pad"></p>
+
+<dd>The function table must exist, but if it is too small, it will automatically be expanded.</dd><p class="pad"></p>
+
+<dd>Adding a new function to the table can be interestingly non&#45;trivial, so we get to be tricky.</dd><p class="pad"></p>
+
+<dd>If the left or right types are larger than anything we&#39;ve seen so far, it means that we have to expand the table. Making Y larger is simple &#45;&#45; just realloc with some more rows. Making X larger is less simple. In either case, we punt to other functions.</dd><p class="pad"></p>
+
+<dd>TODO &#45; Currently the MMD system doesn&#39;t handle inheritance and best match searching, as it assumes that all PMC types have no parent type. This can be considered a bug, and will be resolved at some point in the future.</dd><p class="pad"></p>
+
+<dt><a name="void_mmd_destroy(Parrot_Interp_interp)"
+><b><code lang='und' xml:lang='und'>void mmd_destroy(Parrot_Interp interp)</b></code></a></dt><p class="pad"></p>
+
+<dd>Frees all the memory allocated used the MMD subsystem.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*_mmd_vtfind(Parrot_Interp_interp,_INTVAL_type,_INTVAL_left,_INTVAL_right)"
+><b><code lang='und' xml:lang='und'>PMC *mmd_vtfind(Parrot_Interp interp, INTVAL type, INTVAL left, INTVAL right)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return an MMD PMC function for the given data types. The return result is either a Sub PMC (for PASM MMD functions) or a NCI PMC holding the C function pointer in PMC_struct_val.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*Parrot_mmd_sort_candidate_list(Interp_*interp,_PMC_*candidates)"
+><b><code lang='und' xml:lang='und'>PMC *Parrot_mmd_sort_candidate_list(Interp *interp, PMC *candidates)</b></code></a></dt><p class="pad"></p>
+
+<dd>Given an array PMC (usually a MultiSub) sort the mmd candidates by their manhatten distance to the current args.</dd><p class="pad"></p>
+
+<dt><a name="_static_PMC*_mmd_arg_tuple_inline(Interp_*,_STRING_*signature,_va_list_args)"
+><b><code lang='und' xml:lang='und'> static PMC *mmd_arg_tuple_inline(Interp *, STRING *signature, va_list args)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return a list of argument types. PMC arguments are specified as function arguments.</dd><p class="pad"></p>
+
+<dt><a name="_static_PMC*_mmd_arg_tuple_func(Interp_*)"
+><b><code lang='und' xml:lang='und'> static PMC *mmd_arg_tuple_func(Interp *)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return a list of argument types. PMC arguments are take from registers according to calling conventions.</dd><p class="pad"></p>
+
+<dt><a name="static_PMC*_mmd_search_default(Interp_*,_STRING_*meth,_PMC_*arg_tuple)"
+><b><code lang='und' xml:lang='und'>static PMC *mmd_search_default(Interp *, STRING *meth, PMC *arg_tuple)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default implementation of MMD search. Search scopes for candidates, walk the class hierarchy, sort all candidates by their Manhattan distance, and return result</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void mmd_search_classes(Interp *, STRING *meth, PMC *arg_tuple, PMC *cl, INTVAL start_at_parent)</b></code></a></dt><p class="pad"></p>
+
+<dd>Search all the classes in all MultiSubs of the candidates <code lang='und' xml:lang='und'>cl</code> and return a list of all candidates. <code lang='und' xml:lang='und'>start_at_parent</code> is 0 to start at the class itself or 1 to search from the first parent class.</dd><p class="pad"></p>
+
+<dt><a name="static_UINTVAL_mmd_distance(Interp_*,_PMC_*pmc,_PMC_*arg_tuple)"
+><b><code lang='und' xml:lang='und'>static UINTVAL mmd_distance(Interp *, PMC *pmc, PMC *arg_tuple)</b></code></a></dt><p class="pad"></p>
+
+<dd>Create Manhattan Distance of sub <code lang='und' xml:lang='und'>pmc</code> against given argument types. 0xffff is the maximum distance</dd><p class="pad"></p>
+
+<dt><a name="static_void_mmd_sort_candidates(Interp_*,_PMC_*arg_tuple,_PMC_*cl)"
+><b><code lang='und' xml:lang='und'>static void mmd_sort_candidates(Interp *, PMC *arg_tuple, PMC *cl)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sort the candidate list <code lang='und' xml:lang='und'>cl</code> by Manhattan Distance</dd><p class="pad"></p>
+
+<dt><a name="static_PMC*_mmd_search_scopes(Interp_*,_STRING_*meth,_PMC_*arg_tuple)"
+><b><code lang='und' xml:lang='und'>static PMC *mmd_search_scopes(Interp *, STRING *meth, PMC *arg_tuple)</b></code></a></dt><p class="pad"></p>
+
+<dd>Search all scopes for MMD candidates matching the arguments given in <code lang='und' xml:lang='und'>arg_tuple</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_int_mmd_is_hidden(Interp_*,_PMC_*multi,_PMC_*cl)"
+><b><code lang='und' xml:lang='und'>static int mmd_is_hidden(Interp *, PMC *multi, PMC *cl)</b></code></a></dt><p class="pad"></p>
+
+<dd>Check if the given multi sub is hidden by any inner multi sub (already in the candidate list <code lang='und' xml:lang='und'>cl</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_int_mmd_maybe_candidate(Interp_*,_PMC_*pmc,_PMC_*arg_tuple,_PMC_*cl)"
+><b><code lang='und' xml:lang='und'>static int mmd_maybe_candidate(Interp *, PMC *pmc, PMC *arg_tuple, PMC *cl)</b></code></a></dt><p class="pad"></p>
+
+<dd>If the candidate <code lang='und' xml:lang='und'>pmc</code> is a Sub PMC, push it on the candidate list and return TRUE to stop further search.</dd><p class="pad"></p>
+
+<dd>If the candidate is a MultiSub remember all matching Subs and return FALSE to continue searching outer scopes.</dd><p class="pad"></p>
+
+<dt><a name="static_int_mmd_search_cur_namespace(Interp_*,_STRING_*meth,_PMC_*arg_tuple,_PMC_*cl)"
+><b><code lang='und' xml:lang='und'>static int mmd_search_cur_namespace(Interp *, STRING *meth, PMC *arg_tuple, PMC *cl)</b></code></a></dt><p class="pad"></p>
+
+<dd>Search the current package namespace for matching candidates. Return TRUE if the MMD search should stop.</dd><p class="pad"></p>
+
+<dt><a name="static_void_mmd_search_builtin(Interp_*,_STRING_*meth,_PMC_*arg_tuple,_PMC_*cl)"
+><b><code lang='und' xml:lang='und'>static void mmd_search_builtin(Interp *, STRING *meth, PMC *arg_tuple, PMC *cl)</b></code></a></dt><p class="pad"></p>
+
+<dd>Search the builtin namespace for matching candidates. This is the last search in all the namespaces.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_mmd_register_table(Interp*,_INTVAL_type,_MMD_init_*,_INTVAL)"
+><b><code lang='und' xml:lang='und'>void Parrot_mmd_register_table(Interp*, INTVAL type, MMD_init *, INTVAL)</b></code></a></dt><p class="pad"></p>
+
+<dd>Register MMD functions for this PMC type.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_mmd_rebuild_table(Interp*,_INTVAL_type,_INTVAL_func_nr)"
+><b><code lang='und' xml:lang='und'>void Parrot_mmd_rebuild_table(Interp*, INTVAL type, INTVAL func_nr)</b></code></a></dt><p class="pad"></p>
+
+<dd>Rebuild the static MMD_table for the given class type and MMD function number. If <code lang='und' xml:lang='und'>type</code> is negative all classes are rebuilt. If <code lang='und' xml:lang='und'>func_nr</code> is negative all MMD functions are rebuilt.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/mmd.h</em>, <em lang='und' xml:lang='und'>http://svn.perl.org/perl6/doc/trunk/design/apo/A12.pod</em>, <em lang='und' xml:lang='und'>http://svn.perl.org/perl6/doc/trunk/design/syn/S12.pod</em></p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

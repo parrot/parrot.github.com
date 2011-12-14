@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Common stack handling routines for Parrot</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Common stack handling routines for Parrot</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/stack_common.c &#45; Common stack handling routines for Parrot</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Both the register stacks and stacks implemented in <em lang='und' xml:lang='und'><a href="stacks.c.html">src/stacks.c</a></em> have a common functionality,
+which is implemented in this file.</p>
+
+<p>These stacks all differ only in the size of items.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>*/</p>
+
+<p>#include &#34;parrot/parrot.h&#34; #include &#34;parrot/stacks.h&#34; #include &#60;assert.h&#62;</p>
+
+<p>/* HEADER: include/parrot/stacks.h */</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Called from <code lang='und' xml:lang='und'>make_interpreter()</code> to initialize the interpreter&#39;s register stacks.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void stack_system_init(Interp *interp) { }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Create a new stack and name it.
+<code lang='und' xml:lang='und'>stack&#45;&#62;name</code> is used for debugging/error reporting.</p>
+
+<p>*/</p>
+
+<p>PARROT_API Stack_Chunk_t * register_new_stack(Interp *interp,
+const char *name /*NN*/,
+size_t item_size) /* WARN_UNUSED */ { Stack_Chunk_t *chunk;</p>
+
+<pre lang='und' xml:lang='und'>    item_size += offsetof(Stack_Chunk_t, u.data);
+    make_bufferlike_pool(interp, item_size);
+    chunk = (Stack_Chunk_t *)new_bufferlike_header(interp, item_size);
+    chunk&#45;&#62;prev = chunk;        /* mark the top of the stack */
+    chunk&#45;&#62;name = name;
+    chunk&#45;&#62;size = item_size;    /* TODO store the pool instead the size */
+    return chunk;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Get a new chunk either from the freelist or allocate one.</p>
+
+<p>*/</p>
+
+<p>PARROT_API Stack_Chunk_t * cst_new_stack_chunk(Parrot_Interp interp, const Stack_Chunk_t *chunk /*NN*/) /* WARN_UNUSED */ { Small_Object_Pool * const pool = get_bufferlike_pool(interp, chunk&#45;&#62;size); Stack_Chunk_t * const new_chunk = (Stack_Chunk_t *)pool&#45;&#62;get_free_object(interp, pool);</p>
+
+<pre lang='und' xml:lang='und'>    PObj_bufstart(new_chunk) = NULL;
+    PObj_buflen(new_chunk) = 0;
+
+    new_chunk&#45;&#62;size = chunk&#45;&#62;size;
+    new_chunk&#45;&#62;name = chunk&#45;&#62;name;
+    return new_chunk;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Return a pointer, where new entries go for push.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void* stack_prepare_push(Parrot_Interp interp, Stack_Chunk_t **stack_p /*NN*/) { Stack_Chunk_t * const chunk = *stack_p; Stack_Chunk_t * const new_chunk = cst_new_stack_chunk(interp, chunk);</p>
+
+<pre lang='und' xml:lang='und'>    new_chunk&#45;&#62;prev = chunk;
+    *stack_p = new_chunk;
+    return STACK_DATAP(new_chunk);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Return a pointer, where new entries are popped off.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void* stack_prepare_pop(Parrot_Interp interp, Stack_Chunk_t **stack_p /*NN*/) { Stack_Chunk_t * const chunk = *stack_p; /* * the first entry (initial top) refers to itself */ if (chunk == chunk&#45;&#62;prev) { internal_exception(ERROR_STACK_EMPTY, &#34;No entries on %sStack!&#34;, chunk&#45;&#62;name); } *stack_p = chunk&#45;&#62;prev; return STACK_DATAP(chunk); }</p>
+
+<p>/*</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/stacks.h</em>, <em lang='und' xml:lang='und'><a href="stacks.c.html">src/stacks.c</a></em>, <em lang='und' xml:lang='und'>src/registers.c</em></p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

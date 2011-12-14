@@ -1,0 +1,220 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot Compiler Tools</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; Parrot Compiler Tools
+                </div>
+
+<h1><a name="Parrot_Compiler_Tools"
+>Parrot Compiler Tools</a></h1>
+
+<p></p>
+
+<p>So far we&#39;ve talked a lot about low&#45;level Parrot programming with PIR and PASM.
+However,
+the true power of Parrot is its ability to host programs written in high level languages such as Perl 6,
+Python,
+Ruby,
+Tcl,
+and PHP.
+In order to write code in these languages developers need there to be compilers that convert from the language into PIR or PASM (or even directly convert to Parrot Bytecode).
+People who have worked on compilers before may be anticipating us to use terms like &#34;Lex and Yacc&#34; here,
+but we promise that we won&#39;t.</p>
+
+<p>Instead of traditional lexical analyzers and parser&#45;generators that have been the mainstay of compiler designers for decades,
+Parrot uses an advanced set of parsing tools called the Parrot Compiler Tools (PCT)<!--
+	INDEX: Parrot Compiler Tools
+-->.
+PCT uses a subset of the Perl 6 programming language called <i>Not Quite Perl</i><!--
+	INDEX: Not Quite Perl
+--> (NQP) and an implementation of the Perl 6 Grammar Engine <!--
+	INDEX: Perl 6 Grammar Engine
+--> (PGE) to build compilers for Parrot.
+Instead of using traditional low&#45;level languages to write compilers,
+we can use a modern dynamic language like Perl 6 to write it instead.
+On a more interesting note,
+this means that the Perl 6 compiler is itself being written in Perl 6,
+a mind&#45;boggling process known as <code>bootstrapping</code>.</p>
+
+<p>The language&#45;neutrality of the interpreter is partially a design decision for modularity.
+Keeping the implementation independent of the syntax makes the codebase cleaner and easier to maintain.
+Modular design also benefits future language designers,
+not just designers of current languages.
+Instead of targeting <i>lex</i>/<i>yacc</i> and reimplementing low&#45;level features such as garbage collection and dynamic data types,
+designers can leave the details to Parrot and focus on the high&#45;level features of their language: syntax,
+libraries,
+capabilities.
+Parrot does all the necessary bookkeeping,
+exposing a rich interface with capabilities that few languages can make full use of.</p>
+
+<p>A robust exceptions system,
+a capability to compile into platform&#45;independent bytecode,
+and a clean extension and embedding mechanism would be just some of the necessary and standard features.</p>
+
+<p>Since Parrot would support the features of the major dynamic languages and wasn&#39;t biased to a particular syntax,
+it could run all these languages with little additional effort.</p>
+
+<p>Language interoperability is another core goal.
+Different languages are suited to different tasks,
+and picking which language to use in a large software project is a common planning problem.
+There&#39;s never a perfect fit,
+at least not for all jobs.
+Developers find themselves settling for the language with the most advantages and the least noticeable disadvantages.
+The ability to easily combine multiple languages within a single project opens up the potential of using well&#45;tested libraries from one language,
+taking advantage of clean problem&#45;domain expression in a second,
+while binding it together in a third that elegantly captures the overall architecture.
+It&#39;s about using languages according to their inherent strengths,
+and mitigating the cost of their weaknesses.</p>
+
+<h2><a name="PCT_Overview"
+>PCT Overview</a></h2>
+
+<p>PCT is a collection of classes which handle the creation of a compiler and driver program for a high&#45;level language.
+The <code>PCT::HLLCompiler</code> class handles building the compiler front end while the <code>PCT::Grammar</code> and <code>PCT::Grammar::Actions</code> classes handle building the parser and lexical analyzer.
+Creating a new HLL compiler is as easy as subclassing these three entities with methods specific to that high&#45;level language.</p>
+
+<h3><a name="Grammars_and_Action_Files"
+>Grammars and Action Files</a></h3>
+
+<p>Creating a compiler using PCT requires three basic files,
+plus any additional files needed to implement the languages logic and library:</p>
+
+<ul>
+<li>A main file</li>
+
+<p>The main file should contain the <code>:main</code> function that is the driver program for the compiler.
+Here,
+a new <code>PCT::HLLCompiler</code> object is instantiated,
+libraries are loaded,
+and necessary special global variables are created.
+The driver program is typically written in PIR,
+although thankfully they tend to be very short.
+Most of the action happens elsewhere.</p>
+
+<li>A parser file</li>
+
+<p>The grammar for the high level language is specified using the Perl 6 grammar engine (PGE) and is stored in a <code>.pg</code> file.
+This file should subclass the <code>PCT::Grammar</code> class and implement all the necessary rules to successfully parse the language.</p>
+
+<li>An actions file</li>
+
+<p>Actions files are written in NQP.
+They take match objects generated by the grammar file and convert them into an Abstract Syntax Tree (AST) <!--
+	INDEX: Abstract Syntax Tree;Parrot Abstract Syntax Tree;AST;PAST
+--> which is converted by PCT into PIR for compiling and execution.
+The PIR implementation of these AST trees and nodes is called the Parrot Abstract Syntax Tree (PAST).</p>
+</ul>
+
+<h3><a name="make_language_shell.pl"
+><code>make_language_shell.pl</code></a></h3>
+
+<p>The Parrot repository contains a number of helpful utilities for doing some common development and building tasks with Parrot.
+Many of these utilities are currently written in Perl 5,
+though some run on Parrot directly,
+and in future releases more will be migrated to Parrot.</p>
+
+<p>One of the tools of use to new compiler designers and language implementers is <code>make_language_shell.pl</code>.
+<code>make_language_shell.pl</code> is a tool for automatically creating all the necessary stub files for creating a new compiler for Parrot.
+It generates the driver file,
+parser grammar and actions files,
+builtin functions stub file,
+makefile,
+and test harness.
+All of these are demonstrative stubs and will obviously need to be edited furiously or even completely overwritten,
+but they give a good idea of what is needed to start on development of the compiler.</p>
+
+<p><code>make_language_shell.pl</code> is designed to be run from within the Parrot repository file structure.
+It creates a subfolder in <code>/languages/</code> with the name of your new language implementation.
+Typically a new implementation of an existing language is not simply named after the language,
+but is given some other descriptive name to let users know it is only one implementation available.
+Consider the way Perl 5 distributions are named things like &#34;Active Perl&#34; or &#34;Strawberry Perl&#34;,
+or how Python distributions might be &#34;IronPython&#34; or &#34;VPython&#34;.
+If,
+on the other hand,
+you are implementing an entirely new language,
+you don&#39;t need to give it a fancy distribution name.</p>
+
+<h3><a name="Parsing_Fundamentals"
+>Parsing Fundamentals</a></h3>
+
+<p>Compilers typically consist of three components: The lexical analyzer,
+the parser,
+and the code generator <code>This is an oversimplification, compilers also may have semantic analyzers, symbol tables, optimizers, preprocessors, data flow analyzers, dependency analyzers, and resource allocators, among other components. All these things are internal to Parrot and aren&#39;t the concern of the compiler implementer. Plus, these are all well beyond the scope of this book</code>.
+The lexical analyzer converts the HLL input file into individual tokens.
+A token may consist of an individual punctuation mark(&#34;+&#34;),
+an identifier (&#34;myVar&#34;),
+or a keyword (&#34;while&#34;),
+or any other artifact that cannot be sensibly broken down.
+The parser takes a stream of these input tokens,
+and attempts to match them against a given pattern,
+or grammar.
+The matching process orders the input tokens into an abstract syntax tree (AST),
+which is a form that the computer can easily work with.
+This AST is passed to the code generator which converts it into code of the target language.
+For something like the GCC C compiler,
+the target language is machine code.
+For PCT and Parrot,
+the target language is PIR and PBC.</p>
+
+<p>Parsers come in two general varieties: Top&#45;down and bottom&#45;up.
+Top&#45;down parsers start with a top&#45;level rule,
+a rule which is supposed to represent the entire input.
+It attempts to match various combination of subrules until the entire input is matched.
+Bottom&#45;down parsers,
+on the other hand,
+start with individual tokens from the lexical analyzer and attempt to combine them together into larger and larger patterns until they produce a top&#45;level token.</p>
+
+<p>PGE itself is a top&#45;down parser,
+although it also contains a bottom&#45;up <i>operator precedence</i> parser,
+for things like mathematical expressions where bottom&#45;up methods are more efficient.
+We&#39;ll discuss both,
+and the methods for switching between the two,
+throughout this chapter.</p>
+
+<h2><a name="Driver_Programs"
+>Driver Programs</a></h2>
+
+<p>The driver program for the new compiler must create instances of the various necessary classes that run the parser.
+It must also include the standard function libraries,
+create global variables,
+and handle commandline options.
+Most commandline options are handled by PCT,
+but there are some behaviors that the driver program will want to override.</p>
+
+<p>PCT programs can,
+by default,
+be run in two ways: Interactive mode,
+which is run one statement at a time in the console,
+and file mode which loads and runs an entire file.
+For interactive mode,
+it is necessary to specify information about the prompt that&#39;s used and the environment that&#39;s expected.
+Help and error messages need to be written for the user too.</p>
+
+<h3><a name="HLLCompiler_class"
+><code>HLLCompiler</code> class</a></h3>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,394 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Abstract root class</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Abstract root class</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/pmc.html">PMCs</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/pmc/default.pmc &#45; Abstract root class</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>These are the vtable functions for the default PMC class.</p>
+
+<p>All methods which are not defined here get a default implementation generated from <em lang='und' xml:lang='und'>src/vtable.tbl</em> by <em lang='und' xml:lang='und'><a href="../../tools/build/pmc2c.pl.html">tools/build/pmc2c.pl</a></em>.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_const_char_*caller(PARROT_INTERP,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>static const char *caller(PARROT_INTERP, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a C string for the name of <code lang='und' xml:lang='und'>*pmc</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_void_cant_do_method(PARROT_INTERP,_PMC_*pmc,_const_char_*methname)"
+><b><code lang='und' xml:lang='und'>static void cant_do_method(PARROT_INTERP, PMC *pmc, const char *methname)</b></code></a></dt><p class="pad"></p>
+
+<dd>Throws an exception &#34;$methname() not implemented in class &#39;$class&#39;&#34;,
+used by all unimplemented messages.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_check_set_std_props(PARROT_INTERP,_PMC_*pmc,_STRING_*key,_PMC_*value)"
+><b><code lang='und' xml:lang='und'>static INTVAL check_set_std_props(PARROT_INTERP, PMC *pmc, STRING *key, PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Called from <code lang='und' xml:lang='und'>setprop()</code>.</dd><p class="pad"></p>
+
+<dd>Returns a true value if <code lang='und' xml:lang='und'>setprop()</code> can avoid actually setting a property in the prophash.
+If it returns true,
+the property setting will be reflected in a future call to <code lang='und' xml:lang='und'>propagate_std_props()</code></dd><p class="pad"></p>
+
+<dt><a name="static_void_propagate_std_props(PARROT_INTERP,_PMC_*self,_PMC_*prop_hash)"
+><b><code lang='und' xml:lang='und'>static void propagate_std_props(PARROT_INTERP, PMC *self, PMC *prop_hash)</b></code></a></dt><p class="pad"></p>
+
+<dd>Set pending standard properties in <code lang='und' xml:lang='und'>prop_hash</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_has_pending_std_props(PMC_*self)"
+><b><code lang='und' xml:lang='und'>static INTVAL has_pending_std_props(PMC *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns true if propagate_std_props() would create a non&#45;empty prophash.</dd><p class="pad"></p>
+
+<dt><a name="static_PMC*_check_get_std_props(PARROT_INTERPeter,_PMC_*self,_STRING_*key)"
+><b><code lang='und' xml:lang='und'>static PMC *check_get_std_props(PARROT_INTERPeter, PMC *self, STRING *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Checks if we can infer the value of <code lang='und' xml:lang='und'>key</code> property from <code lang='und' xml:lang='und'>self</code> without looking at its prophash.
+Returns <code lang='und' xml:lang='und'>PMCNULL</code> if not,
+returns the value otherwise.</dd><p class="pad"></p>
+
+<dt><a name="static_PMC_*_make_prop_hash(PARROT_INTERP,_PMC_*self)"
+><b><code lang='und' xml:lang='und'>static PMC *make_prop_hash(PARROT_INTERP, PMC *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a property hash for <code lang='und' xml:lang='und'>self</code>.
+Returns the created hash.
+Inferred properties will be added to the hash and it will be set as <code lang='und' xml:lang='und'>PMC_metadata(self)</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_does_isa(PARROT_INTERP,_STRING_*method,_STRING_*what)"
+><b><code lang='und' xml:lang='und'>static INTVAL does_isa(PARROT_INTERP, STRING *method, STRING *what)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compares <code lang='und' xml:lang='und'>*method</code> and <code lang='und' xml:lang='und'>*what</code>.
+Returns true (1) if <b>method</b> is found in <b>what</b>,
+false (0) otherwise.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code lang='und' xml:lang='und'>void init()</b></code></a></dt><p class="pad"></p>
+
+<dd>Does nothing.</dd><p class="pad"></p>
+
+<dt><a name="void_init_pmc(PMC_*initializer)"
+><b><code lang='und' xml:lang='und'>void init_pmc(PMC *initializer)</b></code></a></dt><p class="pad"></p>
+
+<dd>With a null <code lang='und' xml:lang='und'>initializer</code>,
+calls <code lang='und' xml:lang='und'>init()</code>,
+else throws an exception.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*instantiate(PMC_*init)"
+><b><code lang='und' xml:lang='und'>PMC *instantiate(PMC *init)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default fallback.
+Creates a new PMC of the type of the class SELF and calls init().</dd><p class="pad"></p>
+
+<dt><a name="void_mark()"
+><b><code lang='und' xml:lang='und'>void mark()</b></code></a></dt><p class="pad"></p>
+
+<dd>Panics with a &#34;no custom mark routine defined&#34; error message.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*getprop(STRING_*key)"
+><b><code lang='und' xml:lang='und'>PMC *getprop(STRING *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the property for <code lang='und' xml:lang='und'>*key</code>.
+If no property is defined then the NULL PMC is returned.</dd><p class="pad"></p>
+
+<dt><a name="void_setprop(STRING_*key,_PMC_*value)"
+><b><code lang='und' xml:lang='und'>void setprop(STRING *key, PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the property for <code lang='und' xml:lang='und'>*key</code> to <code lang='und' xml:lang='und'>*value</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_delprop(STRING_*key)"
+><b><code lang='und' xml:lang='und'>void delprop(STRING *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Deletes the property for <code lang='und' xml:lang='und'>*key</code>.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*getprops()"
+><b><code lang='und' xml:lang='und'>PMC *getprops()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the PMC&#39;s properties or the NULL PMC if no properties exist.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_type()"
+><b><code lang='und' xml:lang='und'>INTVAL type()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the PMC&#39;s type.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_type_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>INTVAL type_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>type_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*name()"
+><b><code lang='und' xml:lang='und'>STRING *name()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the name of the PMC.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*pmc_namespace"
+><b><code lang='und' xml:lang='und'>PMC *pmc_namespace</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the namespace for this PMC.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*find_method(STRING_*method_name)"
+><b><code lang='und' xml:lang='und'>PMC *find_method(STRING *method_name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Looks up the method for <code lang='und' xml:lang='und'>*method_name</code> and returns it.
+If no method is found then <code lang='und' xml:lang='und'>NULL</code> is returned.</dd><p class="pad"></p>
+
+<dt><a name="void_add_method(STRING_*method_name,_PMC_*sub)"
+><b><code lang='und' xml:lang='und'>void add_method(STRING *method_name, PMC *sub)</b></code></a></dt><p class="pad"></p>
+
+<dd>Store the method as a global in the namespace of this class.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_integer_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>INTVAL get_integer_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>get_integer_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="FLOATVAL_get_number_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>FLOATVAL get_number_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>get_number_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*get_string_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>STRING *get_string_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>get_string_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_bool_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>INTVAL get_bool_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>get_bool_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_elements_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>INTVAL elements_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>elements_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_pmc_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>PMC *get_pmc_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>get_pmc_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="void_*get_pointer()"
+><b><code lang='und' xml:lang='und'>void *get_pointer()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the address of the PMC.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_is_same(const_PMC_*value)"
+><b><code lang='und' xml:lang='und'>INTVAL is_same(const PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns whether the PMC is numerically equal to <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_assign_pmc(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void assign_pmc(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="void_assign_string_native(PMC_*value)"
+><b><code lang='und' xml:lang='und'>void assign_string_native(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Defaults fall back to <code lang='und' xml:lang='und'>set_pmc</code> and <code lang='und' xml:lang='und'>set_string_native</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_morph(INTVAL_type)"
+><b><code lang='und' xml:lang='und'>void morph(INTVAL type)</b></code></a></dt><p class="pad"></p>
+
+<dd>Changes the PMC to a PMC of a new type</dd><p class="pad"></p>
+
+<dt><a name="void_set_integer_keyed_int(INTVAL_key,_INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_integer_keyed_int(INTVAL key, INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and calls <code lang='und' xml:lang='und'>set_integer_keyed()</code> with it and <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_number_keyed_int(INTVAL_key,_FLOATVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_number_keyed_int(INTVAL key, FLOATVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and calls <code lang='und' xml:lang='und'>set_number_keyed()</code> with it and <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_string_keyed_int(INTVAL_key,_STRING_*string)"
+><b><code lang='und' xml:lang='und'>void set_string_keyed_int(INTVAL key, STRING *string)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and calls <code lang='und' xml:lang='und'>set_string_keyed()</code> with it and <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_bool_keyed_int(INTVAL_key,_INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_bool_keyed_int(INTVAL key, INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and calls <code lang='und' xml:lang='und'>set_bool_keyed()</code> with it and <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_set_pmc_keyed_int(INTVAL_key,_PMC_*value)"
+><b><code lang='und' xml:lang='und'>void set_pmc_keyed_int(INTVAL key, PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and calls <code lang='und' xml:lang='und'>set_pmc_keyed()</code> with it and <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_is_equal(PMC_*value)"
+><b><code lang='und' xml:lang='und'>INTVAL is_equal(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns whether the PMC is equal to <code lang='und' xml:lang='und'>*value</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_is_equal_num(PMC_*value)"
+><b><code lang='und' xml:lang='und'>INTVAL is_equal_num(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns whether the PMC is numerically equal to <code lang='und' xml:lang='und'>*value</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_is_equal_str(PMC_*value)"
+><b><code lang='und' xml:lang='und'>INTVAL is_equal_str(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns whether the PMC is numerically equal to <code lang='und' xml:lang='und'>*value</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_exists_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>INTVAL exists_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>exists_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_defined()"
+><b><code lang='und' xml:lang='und'>INTVAL defined()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns true.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_defined_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>INTVAL defined_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>defined_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="void_delete_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>void delete_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and calls <code lang='und' xml:lang='und'>delete_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*nextkey_keyed_int(INTVAL_key,_INTVAL_w)"
+><b><code lang='und' xml:lang='und'>PMC *nextkey_keyed_int(INTVAL key, INTVAL w)</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts <code lang='und' xml:lang='und'>key</code> to a PMC key and returns the result of calling <code lang='und' xml:lang='und'>nextkey_keyed()</code> with it.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_can(STRING_*method)"
+><b><code lang='und' xml:lang='und'>INTVAL can(STRING *method)</b></code></a></dt><p class="pad"></p>
+
+<dd>Reports whether the PMC &#34;can&#34; perform <code lang='und' xml:lang='und'>method</code>.
+If the PMC implements the vtable function <code lang='und' xml:lang='und'>method</code>,
+true (1) is returned; otherwise,
+false (0) is returned.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_does(STRING_*interface)"
+><b><code lang='und' xml:lang='und'>INTVAL does(STRING *interface)</b></code></a></dt><p class="pad"></p>
+
+<dd>Reports whether the PMC &#34;does&#34; perform <code lang='und' xml:lang='und'>interface</code>.
+If the interface <code lang='und' xml:lang='und'>interface</code> is found in the PMC&#39;s interface list,
+true (1) is returned; otherwise,
+false (0) is returned.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_isa_pmc(PMC_*_class)"
+><b><code lang='und' xml:lang='und'>INTVAL isa_pmc(PMC *_class)</b></code></a></dt><p class="pad"></p>
+
+<dd>Reports whether the PMC &#34;isa&#34; <code lang='und' xml:lang='und'>_class</code>.
+If the class <code lang='und' xml:lang='und'>_class</code> is found in the PMC&#39;s class hierarchy,
+true (1) is returned; otherwise,
+false (0) is returned.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_isa(STRING_*_class)"
+><b><code lang='und' xml:lang='und'>INTVAL isa(STRING *_class)</b></code></a></dt><p class="pad"></p>
+
+<dd>Reports whether the PMC &#34;isa&#34; <code lang='und' xml:lang='und'>_class</code>.
+If the class <code lang='und' xml:lang='und'>_class</code> is found in the PMC&#39;s class hierarchy,
+true (1) is returned; otherwise,
+false (0) is returned.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*subclass(PMC_*name)"
+><b><code lang='und' xml:lang='und'>PMC *subclass(PMC *name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates a subclass,
+optionally with a given <code lang='und' xml:lang='und'>name</code>.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_class()"
+><b><code lang='und' xml:lang='und'>PMC *get_class()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns SELF.
+A PMC is its own class.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_attr_str(STRING_*attr)"
+><b><code lang='und' xml:lang='und'>PMC *get_attr_str(STRING *attr)</b></code></a></dt><p class="pad"></p>
+
+<dd>Look for NCI methods and properties.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_attr_keyed(PMC_*key,_STRING_*name)"
+><b><code lang='und' xml:lang='und'>PMC *get_attr_keyed(PMC *key, STRING *name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default version of keyed attribute lookups.
+Discards the key and does a lookup by the string name passed in.</dd><p class="pad"></p>
+
+<dt><a name="void_set_attr_keyed(PMC_*key,_STRING_*name,_PMC_*value)"
+><b><code lang='und' xml:lang='und'>void set_attr_keyed(PMC *key, STRING *name, PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Default version of keyed attribute set.
+Discards the key and does a set by the string name passed in.</dd><p class="pad"></p>
+
+<dt><a name="void_add_parent(PMC_*parent)"
+><b><code lang='und' xml:lang='und'>void add_parent(PMC *parent)</b></code></a></dt><p class="pad"></p>
+
+<dd>Add class <code lang='und' xml:lang='und'>parent</code> to the list of our parents.</dd><p class="pad"></p>
+
+<dt><a name="void_visit(visit_info_*info)"
+><b><code lang='und' xml:lang='und'>void visit(visit_info *info)</b></code></a></dt><p class="pad"></p>
+
+<dd>Used by DOD to mark the PMC.</dd><p class="pad"></p>
+
+<dt><a name="void_freeze(visit_info_*info)"
+><b><code lang='und' xml:lang='und'>void freeze(visit_info *info)</b></code></a></dt><p class="pad"></p>
+
+<dd>Does nothing.</dd><p class="pad"></p>
+
+<dt><a name="void_thaw(visit_info_*info)"
+><b><code lang='und' xml:lang='und'>void thaw(visit_info *info)</b></code></a></dt><p class="pad"></p>
+
+<dd>Initializes the PMC during unarchiving.</dd><p class="pad"></p>
+
+<dt><a name="void_thawfinish(visit_info_*info)"
+><b><code lang='und' xml:lang='und'>void thawfinish(visit_info *info)</b></code></a></dt><p class="pad"></p>
+
+<dd>Does nothing.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

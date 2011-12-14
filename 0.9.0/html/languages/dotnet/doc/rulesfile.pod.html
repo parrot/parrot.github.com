@@ -1,0 +1,338 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/dotnet.html">.Net</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="Translation_Rules_File"
+>Translation Rules File <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This document describes the format of the translation rules file used by the translator builder,
+as documented in <a href='TODO'>translatorbuilder.pod</a>.</p>
+
+<h2><a name="Syntax"
+>Syntax <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>The file contains an entry for each .NET instruction to translate.
+The entry for an instruction starts with its full name in square brackets on a line of its own.</p>
+
+<pre>  [add]</pre>
+
+<p>This is followed by a number of entries in a &#34;key = value&#34; format, with one entry per line. The ordering of these entries does not matter.</p>
+
+<pre>  pop = 2</pre>
+
+<p>Sometimes a value may need to span multiple lines. When this happens, it is specified as a here&#45;document; that is, the value starts with &#60;&#60;TOKEN and ends on the first line found that only contains TOKEN.</p>
+
+<pre>  pir = &#60;&#60;PIRCODE
+  # Multi line
+  # stuff goes
+  # here
+  PIRCODE</pre>
+
+<p>Meta&#45;variables, things that the translator generator will substitute with something else such as an actual register name, are prefixed by a dollar sign and circumfixed with curly braces.</p>
+
+<pre>  ${STACK0}</pre>
+
+<p>These can only be used in some values, as described in the next sections of the document.</p>
+
+<p>A complete example of a translation rule follows.</p>
+
+<pre>  [add]
+  code = 58
+  class = op
+  pop = 2
+  push = 1
+  instruction = add ${DEST}, ${STACK0}, ${STACK1}</pre>
+
+<h2><a name="Instruction_Information_Entries"
+>Instruction Information Entries <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Many of the types of entry simply provide information about the instruction that is being translated. These are needed by the translator generator.</p>
+
+<h3><a name="code"
+>code</a></h3>
+
+<p>This entry specifies the numerical representation of the instruction. It is specified as one or more pairs of hexadecimal digits seperated by spaces. Examples:</p>
+
+<pre>  code = 2E
+  code = FE 11</pre>
+
+<p>This entry is <b>mandatory</b>.</p>
+
+<h3><a name="class"
+>class</a></h3>
+
+<p>This entry specifies the type of instruction. Valid instruction types are:</p>
+
+<ul>
+<li>op &#45; For any operation that operates only on the stack and results in no change of flow control (for example, add and ceq). An instruction such as debug, which has no effect on the stack or global state, would fit into this category.</li>
+
+<li>branch &#45; For any control flow related operation that could transfer control to an instruction other than the next one, but restricted to instructions in the current method (so call or ret are not in this class, for example).</li>
+
+<li>load &#45; For any operation that takes data from a location other than the stack and places it onto the stack.</li>
+
+<li>store &#45; For any operation that takes data from the stack and stores it in a location other than the stack.</li>
+
+<li>calling &#45; For any operation that is involved in calling another method or returning from a method, incorporating tail calling and method jumps.</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>  class = op</pre>
+
+<p>This entry is <b>mandatory</b>.</p>
+
+<h3><a name="push"
+>push</a></h3>
+
+<p>The number of new items that the instruction places on the stack. Note that this is strictly the total number of pushes, not accounting for any pops. This means that the add instruction, which pops two items off the top of the stack, adds them together and pushes the result onto the stack, has a value of 1. Example:</p>
+
+<pre>  push = 1</pre>
+
+<p>This entry is not allowed when class is set to calling. It is optional in other classes when it would bet set to zero.</p>
+
+<h3><a name="pop"
+>pop</a></h3>
+
+<p>The number of items that the instruction removes from the stack. Note that this is strictly the number of pops, not accounting for any pushes. This means that the add instruction, which pops two items off the top of the stack, adds them together and pushes the result onto the stack, has a value of 1. Example:</p>
+
+<pre>  pop = 2</pre>
+
+<p>This entry is not allowed when class is set to calling. It is optional in other classes when it would bet set to zero.</p>
+
+<h3><a name="arguments"
+>arguments</a></h3>
+
+<p>This entry specifies any arguments that an instruction takes and their types. This is specified as a list of types seperated by commas. Valid types are as follows.</p>
+
+<ul>
+<li>uint8 &#45; unsigned 8 bit integer</li>
+
+<li>int8 &#45; signed 8 bit integer</li>
+
+<li>uint16 &#45; unsigned 16 bit integer</li>
+
+<li>int16 &#45; signed 16 bit integer</li>
+
+<li>uint32 &#45; unsigned 32 bit integer</li>
+
+<li>int32 &#45; signed 32 bit integer</li>
+
+<li>int64 &#45; signed 64 bit integer</li>
+
+<li>float32 &#45; single precision floating point number</li>
+
+<li>float64 &#45; double precision floating point number</li>
+
+<li>tmethod &#45; a MethodDef or MethodRef (actually MemberRef) metadata token</li>
+
+<li>tstandalonesig &#45; A StandAloneSig metadata token</li>
+
+<li>tvaluetype &#45; A valueType token</li>
+
+<li>ttype &#45; a TypeDef or TypeRef metadata token</li>
+
+<li>tfield &#45; a FieldDef or FieldRef (actually MemberRef) metadata token</li>
+
+<li>tstring &#45; a string (metadata token?! &#45; the spec sucks at times)</li>
+</ul>
+
+<p>Examples:</p>
+
+<pre>  arguments = uint8
+  arguments = uint16, uint32
+  arguments =</pre>
+
+<p>This entry is <b>optional</b> if there are no arguments.</p>
+
+<h2><a name="Translation_Entries"
+>Translation Entries <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>These specify the translation itself. One of insturction or pir is required (that is, not both).</p>
+
+<h3><a name="instruction"
+>instruction</a></h3>
+
+<p>This can be used when the translated instructions can be produced by simply substituting some meta&#45;variables into PIR code and emitting it. Note that PIR written with the &#34;instruction&#34; directive is what will be emitted by the translator. If more control is needed for producing the translated code, use the &#34;pir&#34; entry. Example:</p>
+
+<pre>  instruction = add ${DEST0}, ${STACK0}, ${STACK1}</pre>
+
+<p>Multiple lines of instructions are allowed.</p>
+
+<h3><a name="pir"
+>pir</a></h3>
+
+<p>This is for the times when instruction isn&#39;t enough. It allows a chunk of PIR to be written that will be inserted into the translator after meta&#45; variables have been substituted. This may involve emitting some PIR that makes up the translated code, or just setting the right meta&#45;variables. Example:</p>
+
+<pre>  pir = &#60;&#60;PIR
+    ${INS} = concat &#34;# A comment\n&#34;
+  PIR</pre>
+
+<p>Once again, to clarify: code specified with pir goes into the translator, code specified with instruction is what the translator will *emit*.</p>
+
+<h2><a name="Dataflow_Analysis_Entries"
+>Dataflow Analysis Entries <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>There is a single entry that needs to be made for all rules with class op or load. In the case of op, it needs to populate ${DTYPES}. In the case of load, it needs to populate ${LOADTYPE}.</p>
+
+<h3><a name="typeinfo"
+>typeinfo</a></h3>
+
+<p>This entry contains code that will be placed into the translator that will determine the types of data being loaded or placed onto the stack.</p>
+
+<p>Example for a load instruction:</p>
+
+<pre>  typeinfo = ${LOADTYPE} = ${PTYPES}[0]</pre>
+
+<p>This is the typeinfo for loading the first parameter. It simply sets the load type to the type of the parameter.</p>
+
+<p>Example for an op instruction:</p>
+
+<pre>  typeinfo = &#60;&#60;PIR
+  ${DTYPES}[0] = ${STYPES}[0]
+  ${DTYPES}[1] = ${STYPES}[0]
+  PIR</pre>
+
+<p>Constants as specified in Partition II Section 22.1.15 will be set.</p>
+
+<h2><a name="Meta&#45;variables"
+>Meta&#45;variables <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="${STACK0},_${STACK1},_..."
+>${STACK0}, ${STACK1}, ...</a></h3>
+
+<p>These refer to locations on the stack. ${STACK0} refers to the stack top, ${STACK1} refers to the element second from the top, etc. Note that these will be popped from the stack down to the lowest point in the stack tha is accessed. or example, if ${STACK0} and ${STACK2} are used, then the second location in the stack (which would be called ${STACK1}) will also be popped off.</p>
+
+<h3><a name="${DEST0},_${DEST1},_..."
+>${DEST0}, ${DEST1}, ...</a></h3>
+
+<p>For instructions in the op class, these are the locations that the results of the operation will be placed. For instructions in the load class, ${DEST0} is sometimes used to mean the register that the loaded content will be placed in. These are used when new data needs to be pushed onto the stack. This works the opposite way round to the ${STACKn} meta&#45;variables; ${DEST0} will be pushed first, followed by ${DEST1}, etc. If this is used when the class is anything other than op or load, or is used in a load and also mention ${LOADREG}, then a monkey may explode. Oh, and you&#39;ll get an error.</p>
+
+<h3><a name="${ARG0},_${ARG1},_..."
+>${ARG0}, ${ARG1}, ...</a></h3>
+
+<p>These refer to the arguments for the instruction, as specified in the &#34;arguments&#34; entry. Here, ${ARG0} is the first argument, ${ARG1} the second, etc.</p>
+
+<h3><a name="${ITEMP0},_${ITEMP1},_..."
+>${ITEMP0}, ${ITEMP1}, ...</a></h3>
+
+<p>These are temporary variables that can be used in any PIR code. They will alway map to an I register. Do not assume anything about the contents of these &#45; they will likely contain junk from whatever used them last.</p>
+
+<h3><a name="${NTEMP0},_${NTEMP1},_..."
+>${NTEMP0}, ${NTEMP1}, ...</a></h3>
+
+<p>These are temporary variables that can be used in any PIR code. They will alway map to a N register. Do not assume anything about the contents of these &#45; they will likely contain junk from whatever used them last.</p>
+
+<h3><a name="${STEMP0},_${STEMP1},_..."
+>${STEMP0}, ${STEMP1}, ...</a></h3>
+
+<p>These are temporary variables that can be used in any PIR code. They will alway map to a S register. Do not assume anything about the contents of these &#45; they will likely contain junk from whatever used them last.</p>
+
+<h3><a name="${PTEMP0},_${PTEMP1},_..."
+>${PTEMP0}, ${PTEMP1}, ...</a></h3>
+
+<p>These are temporary variables that can be used in any PIR code. They will alway map to a P register. Do not assume anything about the contents of these &#45; they will likely contain junk from whatever used them last.</p>
+
+<h3><a name="${LOADREG}"
+>${LOADREG}</a></h3>
+
+<p>This is used with instructions in the load class when the location to load is stored in a fixed register (that is, for locals and arguments). Assign to this the name of the register that would hold the variable in the translated code (e.g. not in the translator itself). ${DEST} should not be used in conjunction with this. Usage in anything other than a load instruction is an error. The purpose of this is to allow production of more optimal code when we can simply reference a register directly rather than copying it to a stack location.</p>
+
+<h3><a name="${STOREREG}"
+>${STOREREG}</a></h3>
+
+<p>This is used with instructions in the store class when the location to store to is stored in a fixed register (that is, for locals and arguments). Assign to this the name of the register that would hold the variable in the translated code (e.g. not in the translator itself). Usage in anything other than a store instruction is an error. The purpose of this is to allow production of more optimal code when we can simply reference a register directly rather than copying it to a stack location.</p>
+
+<h3><a name="${INS}"
+>${INS}</a></h3>
+
+<p>This is the current sequence of PIR instructions that has been emitted. Just concatenate extra ones on to it to emit more. Simple.</p>
+
+<h3><a name="${BC}"
+>${BC}</a></h3>
+
+<p>This is the DotNetBytecode PMC, used for walking the bytecode. Hopefully, it should not be required to play with this too often. However, there is a case when it will be needed &#45; iterating over the var arg switch instruction.</p>
+
+<h3><a name="${STYPES}"
+>${STYPES}</a></h3>
+
+<p>This is an array of type describing hashes (see translatorbuilder.pod) that describe the types of data on the stack. The last element is the stack top. Note that locals and parameters are not considered to be stack locations.</p>
+
+<h3><a name="${DTYPES}"
+>${DTYPES}</a></h3>
+
+<p>This array of type describing hashes describes the types of items that are going to be placed on the stack as a result of some operation. The first element is the first item that will be pushed onto the stack.</p>
+
+<h3><a name="${LOADTYPE}"
+>${LOADTYPE}</a></h3>
+
+<p>When a value is being loaded onto the stack, code needs to be provided to assign a type&#45;describing hash to this meta&#45;variable describing the type of the value that will be loaded onto the stack.</p>
+
+<h3><a name="${PTYPES}"
+>${PTYPES}</a></h3>
+
+<p>An array of type describing hashes describing the type of each of the method&#39;s parameters.</p>
+
+<h3><a name="${LTYPES}"
+>${LTYPES}</a></h3>
+
+<p>An array of type describing hashes describing the type of each of the method&#39;s local variable.</p>
+
+<h3><a name="${CURIC}"
+>${CURIC}</a></h3>
+
+<p>The instruction code of the current instruction.</p>
+
+<h3><a name="${PARAMS}"
+>${PARAMS}</a></h3>
+
+<p>For use with instructions in the class calling. It is used to hold the names of registers that are being passed or returned. The ${STACKn} meta&#45;variables are not suitable here as the number of parameters is not known until runtime. (That is, runtime for the translator.)</p>
+
+<h2><a name="Not_Screwing_It_Up"
+>Not Screwing It Up <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>There are three levels at which this system is working. There&#39;s the translated code that is produced, which is PIR code. There&#39;s the translator that takes the .NET instructions and produces this PIR code, and that translator is written in PIR. Finally, there is the translator builder.</p>
+
+<p>When using the &#34;instruction&#34; entry, this is specifying the instruction that the translator will emit &#45; *not* an instruction that will appear in the translator. Thefore this is wrong:</p>
+
+<pre>  instruction = ${LOADREG} = &#34;local0&#34;</pre>
+
+<p>As ${LOADREG} is a meta&#45;variable of the translator. Emitting this into the translated code would assign the string &#34;local0&#34; to some likely unwanted place. Well, if the translator was written badly enough to allow mistakes like this to slip through anyway. However, more subtle ones are very likely possible and probably easy to make.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

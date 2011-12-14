@@ -1,0 +1,193 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - [DRAFT] PDD 5: Opcodes</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; <a href="../../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; [DRAFT] PDD 5: Opcodes
+                </div>
+
+<h1><a name="[DRAFT]_PDD_5:_Opcodes"
+>[DRAFT] PDD 5: Opcodes</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>This PDD specifies how the opcode functions should behave and how they are called by the Parrot interpreter.</p>
+
+<p>{{ NOTE: this PDD is only loosely connected to the current state of Parrot.
+}}</p>
+
+<p>{{ NOTE: standardize on underscores or no underscores?
+}}</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<p>The opcode functions are the workhorse of the Parrot engine.
+They control program flow and do most of the work in a program.
+(The rest being done by the variable vtable functions)</p>
+
+<p>Opcode functions have very few limitations or restrictions on them.
+In particular,
+opcode functions:</p>
+
+<ul>
+<li>Can assume a working interpreter</li>
+
+<li>Must leave all interpreter registers the way they were found,
+unless the opcode signature indicates otherwise</li>
+</ul>
+
+<p>Each opcode has two separate functions.
+The first function takes two parameters,
+the current interpreter pointer and current interpreter PC,
+and returns the address of the next opcode to execute.
+The second function takes zero or more parameters as addresses,
+register numbers,
+integers,
+or floating point numbers and optionally returns either the address of the next opcode or the register number holding the address of the next opcode.
+These are referred to as the <i>wrapping function</i> and the <i>inner function</i>,
+respectively.</p>
+
+<p>The <i>wrapping function</i> is required,
+as this is the code that the interpreter will call.
+Normally this is automatically generated.</p>
+
+<p>The <i>inner function</i> is the code that gets directly executed when parrot gets TIL&#45;ified.
+If there is no <i>inner function</i> for some reason,
+then your opcode will likely run slower (as the interpreter would need to set up the registers and other stuff that would normally get stripped away for speed)</p>
+
+<h3><a name="The_wrapping_function"
+>The wrapping function</a></h3>
+
+<p>This is the function that the interpreter actually executes.
+It has all the intimate knowledge of its parameters embedded in it,
+and is responsible for figuring out what register data it needs and from where.</p>
+
+<p>This function is generally created automatically by <code>opcode_process.pl</code>,
+so the programmer doesn&#39;t have to create it.
+If,
+for some reason,
+you do need or want to write it (for example if you have no inner function) that&#39;s fine.</p>
+
+<h3><a name="The_inner_function"
+>The inner function</a></h3>
+
+<p>The inner function is the code that actually does the work.
+This is generally a chunk of C code,
+though the interpreter will be able to call perl code soon.</p>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<h3><a name="Prototype_declaration_of_inner_function"
+>Prototype declaration of inner function</a></h3>
+
+<pre>   RETURN function(INPUT[, INPUT[, INPUT...]])</pre>
+
+<p>The <code>RETURN</code> type may be one of:</p>
+
+<dl>
+<dt><a name="void"
+>void</a></dt>
+Indicates the function returns nothing. The <i>wrapping function</i> will automagically figure out what address to return based on the size of the current opcode.
+<dt><a name="void_*"
+>void *</a></dt>
+Indicates the function returns the address of the next opcode to execute.
+<dt><a name="I"
+>I</a></dt>
+Indicates the function returns the number of the <code>PMC</code> register that holds address of the next opcode to be execute.</dl>
+
+<p>The <code>ITEM</code> may be one of:</p>
+
+<dl>
+<dt><a name="IV"
+>IV</a></dt>
+Indicates the item is an integer
+<dt><a name="IV_*"
+>IV *</a></dt>
+Indicates the item is a pointer to an integer
+<dt><a name="NV"
+>NV</a></dt>
+Indicates the item is a float
+<dt><a name="NV_*"
+>NV *</a></dt>
+Indicates the item is a pointer to a float
+<dt><a name="STRING"
+>STRING</a></dt>
+Indicates the item is a parrot string pointer
+<dt><a name="PMC"
+>PMC</a></dt>
+Indicates the item is a pointer to a PMC
+<dt><a name="INT"
+>INT</a></dt>
+Indicates the item is a pointer to an bigint structure
+<dt><a name="NUM"
+>NUM</a></dt>
+Indicates the item is a pointer to a bignum structure
+<dt><a name="Ix"
+>Ix</a></dt>
+Indicates the item is an integer register number.
+<dt><a name="Nx"
+>Nx</a></dt>
+Indicates the item is a float register number.
+<dt><a name="Sx"
+>Sx</a></dt>
+Indicates the item is a string register number.
+<dt><a name="Px"
+>Px</a></dt>
+Indicates the item is a PMC register number.</dl>
+
+<p>The function starts with the first open brace, which should generally be on the first non&#45;empty line.</p>
+
+<p>For example:</p>
+
+<pre>     void addI(Ix out, Ix in1, Ix in2)
+     {
+       INTREG(out) = INTREG(in1) + INTREG(in2);
+     }</pre>
+
+<p>is a simple opcode function that corresponds to the <code>addI</code> opcode.</p>
+
+<h2><a name="TODO"
+>TODO</a></h2>
+
+<dl>
+<dt><a name="write_opcode_process.pl"
+>write opcode_process.pl</a></dt>
+</dl>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p>Oploop PDD, PDD 4 (Internal types).</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

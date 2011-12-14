@@ -1,0 +1,398 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>built&#45;in functions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">built&#45;in functions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/pynie.html">Pynie</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>src/builtins/funcs.pir &#45; built&#45;in functions</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Implements Python&#39;s built&#45;in functions.
+Descriptions are taken from: <a href="http://docs.python.org/lib/built&#45;in&#45;funcs.html">http://docs.python.org/lib/built&#45;in&#45;funcs.html</a></p>
+
+<p>NOTE: most functions are not implemented yet,
+only stubs are supplied.</p>
+
+<h1><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="abs(x)"
+>abs(x)</a></dt>
+Return the absolute value of a number.
+The argument may be a plain or long integer or a floating point number.
+If the argument is a complex number,
+its magnitude is returned.
+<dt><a name="all(iterable)"
+>all(iterable)</a></dt>
+Return True if all elements of the iterable are true.
+<dt><a name="any(iterable)"
+>any(iterable)</a></dt>
+Return True if any element of the iterable is true.
+<dt><a name="basestring()"
+>basestring()</a></dt>
+This abstract type is the superclass for str and unicode.
+It cannot be called or instantiated,
+but it can be used to test whether an object is an instance of str or unicode.
+isinstance(obj,
+basestring) is equivalent to isinstance(obj,
+(str,
+unicode)).
+New in version 2.3.
+<dt><a name="bool([x])"
+>bool([x])</a></dt>
+Convert a value to a Boolean,
+using the standard truth testing procedure.
+If x is false or omitted,
+this returns False; otherwise it returns True.
+bool is also a class,
+which is a subclass of int.
+Class bool cannot be subclassed further.
+Its only instances are False and True.
+<dt><a name="callable(object)"
+>callable(object)</a></dt>
+Return true if the object argument appears callable,
+false if not.
+If this returns true,
+it is still possible that a call fails,
+but if it is false,
+calling object will never succeed.
+Note that classes are callable (calling a class returns a new instance); class instances are callable if they have a __call__() method.
+<dt><a name="chr(i)"
+>chr(i)</a></dt>
+Return a string of one character whose ASCII code is the integer i.
+For example,
+chr(97) returns the string &#39;a&#39;.
+This is the inverse of ord().
+The argument must be in the range [0..255],
+inclusive; ValueError will be raised if i is outside that range.
+<dt><a name="classmethod(function)"
+>classmethod(function)</a></dt>
+Return a class method for function.
+A class method receives the class as implicit first argument,
+just like an instance method receives the instance.
+To declare a class method,
+use this idiom:
+<pre>    class C:
+        @classmethod
+        def f(cls, arg1, arg2, ...): ...</pre>
+The @classmethod form is a function decorator &#45; see the description of function definitions in chapter 7 of the Python Reference Manual for details.It can be called either on the class (such as C.f()) or on an instance (such as C().f()). The instance is ignored except for its class. If a class method is called for a derived class, the derived class object is passed as the implied first argument.Class methods are different than C++ or Java static methods. If you want those, see staticmethod() in this section.For more information on class methods, consult the documentation on the standard type hierarchy in chapter 3 of the Python Reference Manual (at the bottom). New in version 2.2. Changed in version 2.4: Function decorator syntax added.
+<dt><a name="cmp(x,_y)"
+>cmp(x, y)</a></dt>
+Compare the two objects x and y and return an integer according to the outcome. The return value is negative if x &#60; y, zero if x == y and strictly positive if x &#62; y.
+<dt><a name="compile(string,_filename,_kind[,_flags[,_dont_inherit]])"
+>compile(string, filename, kind[, flags[, dont_inherit]])</a></dt>
+Compile the string into a code object. Code objects can be executed by an exec statement or evaluated by a call to eval(). The filename argument should give the file from which the code was read; pass some recognizable value if it wasn&#39;t read from a file (&#39;&#60;string&#62;&#39; is commonly used). The kind argument specifies what kind of code must be compiled; it can be &#39;exec&#39; if string consists of a sequence of statements, &#39;eval&#39; if it consists of a single expression, or &#39;single&#39; if it consists of a single interactive statement (in the latter case, expression statements that evaluate to something else than None will be printed).When compiling multi&#45;line statements, two caveats apply: line endings must be represented by a single newline character (&#39;\n&#39;), and the input must be terminated by at least one newline character. If line endings are represented by &#39;\r\n&#39;, use the string replace() method to change them into &#39;\n&#39;.The optional arguments flags and dont_inherit (which are new in Python 2.2) control which future statements (see PEP 236) affect the compilation of string. If neither is present (or both are zero) the code is compiled with those future statements that are in effect in the code that is calling compile. If the flags argument is given and dont_inherit is not (or is zero) then the future statements specified by the flags argument are used in addition to those that would be used anyway. If dont_inherit is a non&#45;zero integer then the flags argument is it &#45; the future statements in effect around the call to compile are ignored.Future statements are specified by bits which can be bitwise or&#45;ed together to specify multiple statements. The bitfield required to specify a given feature can be found as the compiler_flag attribute on the _Feature instance in the __future__ module.
+<dt><a name="complex([real[,_imag]])"
+>complex([real[, imag]])</a></dt>
+Create a complex number with the value real + imag*j or convert a string or number to a complex number. If the first parameter is a string, it will be interpreted as a complex number and the function must be called without a second parameter. The second parameter can never be a string. Each argument may be any numeric type (including complex). If imag is omitted, it defaults to zero and the function serves as a numeric conversion function like int(), long() and float(). If both arguments are omitted, returns 0j.
+<dt><a name="delattr(object,_name)"
+>delattr(object, name)</a></dt>
+This is a relative of setattr(). The arguments are an object and a string. The string must be the name of one of the object&#39;s attributes. The function deletes the named attribute, provided the object allows it. For example, delattr(x, &#39;foobar&#39;) is equivalent to del x.foobar.
+<dt><a name="dict([mapping&#45;or&#45;sequence])"
+>dict([mapping&#45;or&#45;sequence])</a></dt>
+Return a new dictionary initialized from an optional positional argument or from a set of keyword arguments. If no arguments are given, return a new empty dictionary. If the positional argument is a mapping object, return a dictionary mapping the same keys to the same values as does the mapping object. Otherwise the positional argument must be a sequence, a container that supports iteration, or an iterator object. The elements of the argument must each also be of one of those kinds, and each must in turn contain exactly two objects. The first is used as a key in the new dictionary, and the second as the key&#39;s value. If a given key is seen more than once, the last value associated with it is retained in the new dictionary.If keyword arguments are given, the keywords themselves with their associated values are added as items to the dictionary. If a key is specified both in the positional argument and as a keyword argument, the value associated with the keyword is retained in the dictionary. For example, these all return a dictionary equal to {&#34;one&#34;: 2, &#34;two&#34;: 3}:
+<pre>        * dict({&#39;one&#39;: 2, &#39;two&#39;: 3})
+        * dict({&#39;one&#39;: 2, &#39;two&#39;: 3}.items())
+        * dict({&#39;one&#39;: 2, &#39;two&#39;: 3}.iteritems())
+        * dict(zip((&#39;one&#39;, &#39;two&#39;), (2, 3)))
+        * dict([[&#39;two&#39;, 3], [&#39;one&#39;, 2]])
+        * dict(one=2, two=3)
+        * dict([([&#39;one&#39;, &#39;two&#39;][i&#45;2], i) for i in (2, 3)])</pre>
+New in version 2.2. Changed in version 2.3: Support for building a dictionary from keyword arguments added.
+<dt><a name="dir([object])"
+>dir([object])</a></dt>
+Without arguments, return the list of names in the current local symbol table. With an argument, attempts to return a list of valid attributes for that object. This information is gleaned from the object&#39;s __dict__ attribute, if defined, and from the class or type object. The list is not necessarily complete. If the object is a module object, the list contains the names of the module&#39;s attributes. If the object is a type or class object, the list contains the names of its attributes, and recursively of the attributes of its bases. Otherwise, the list contains the object&#39;s attributes&#39; names, the names of its class&#39;s attributes, and recursively of the attributes of its class&#39;s base classes. The resulting list is sorted alphabetically. For example:
+<pre>    &#62;&#62;&#62; import struct
+    &#62;&#62;&#62; dir()
+    [&#39;__builtins__&#39;, &#39;__doc__&#39;, &#39;__name__&#39;, &#39;struct&#39;]
+    &#62;&#62;&#62; dir(struct)
+    [&#39;__doc__&#39;, &#39;__name__&#39;, &#39;calcsize&#39;, &#39;error&#39;, &#39;pack&#39;, &#39;unpack&#39;]</pre>
+Note: Because dir() is supplied primarily as a convenience for use at an interactive prompt, it tries to supply an interesting set of names more than it tries to supply a rigorously or consistently defined set of names, and its detailed behavior may change across releases.
+<dt><a name="divmod(a,_b)"
+>divmod(a, b)</a></dt>
+Take two (non complex) numbers as arguments and return a pair of numbers consisting of their quotient and remainder when using long division. With mixed operand types, the rules for binary arithmetic operators apply. For plain and long integers, the result is the same as (a // b, a % b). For floating point numbers the result is (q, a % b), where q is usually math.floor(a / b) but may be 1 less than that. In any case q * b + a % b is very close to a, if a % b is non&#45;zero it has the same sign as b, and 0 &#60;= abs(a % b) &#60; abs(b).Changed in version 2.3: Using divmod() with complex numbers is deprecated.
+<dt><a name="enumerate(iterable)"
+>enumerate(iterable)</a></dt>
+Return an enumerate object. iterable must be a sequence, an iterator, or some other object which supports iteration. The next() method of the iterator returned by enumerate() returns a tuple containing a count (from zero) and the corresponding value obtained from iterating over iterable. enumerate() is useful for obtaining an indexed series: (0, seq[0]), (1, seq[1]), (2, seq[2]), .... New in version 2.3.
+<dt><a name="eval(expression[,_globals[,_locals]])"
+>eval(expression[, globals[, locals]])</a></dt>
+The arguments are a string and optional globals and locals. If provided, globals must be a dictionary. If provided, locals can be any mapping object. Changed in version 2.4: formerly locals was required to be a dictionary.The expression argument is parsed and evaluated as a Python expression (technically speaking, a condition list) using the globals and locals dictionaries as global and local name space. If the globals dictionary is present and lacks &#39;__builtins__&#39;, the current globals are copied into globals before expression is parsed. This means that expression normally has full access to the standard __builtin__ module and restricted environments are propagated. If the locals dictionary is omitted it defaults to the globals dictionary. If both dictionaries are omitted, the expression is executed in the environment where eval is called. The return value is the result of the evaluated expression. Syntax errors are reported as exceptions. Example:
+<pre>    &#62;&#62;&#62; x = 1
+    &#62;&#62;&#62; print eval(&#39;x+1&#39;)
+    2</pre>
+This function can also be used to execute arbitrary code objects (such as those created by compile()). In this case pass a code object instead of a string. The code object must have been compiled passing &#39;eval&#39; as the kind argument.Hints: dynamic execution of statements is supported by the exec statement. Execution of statements from a file is supported by the execfile() function. The globals() and locals() functions returns the current global and local dictionary, respectively, which may be useful to pass around for use by eval() or execfile().
+<dt><a name="execfile(filename[,_globals[,_locals]])"
+>execfile(filename[, globals[, locals]])</a></dt>
+This function is similar to the exec statement, but parses a file instead of a string. It is different from the import statement in that it does not use the module administration &#45;&#45; it reads the file unconditionally and does not create a new module.2.2The arguments are a file name and two optional dictionaries. The file is parsed and evaluated as a sequence of Python statements (similarly to a module) using the globals and locals dictionaries as global and local namespace. If provided, locals can be any mapping object. Changed in version 2.4: formerly locals was required to be a dictionary. If the locals dictionary is omitted it defaults to the globals dictionary. If both dictionaries are omitted, the expression is executed in the environment where execfile() is called. The return value is None.Warning: The default locals act as described for function locals() below: modifications to the default locals dictionary should not be attempted. Pass an explicit locals dictionary if you need to see effects of the code on locals after function execfile() returns. execfile() cannot be used reliably to modify a function&#39;s locals.
+<dt><a name="file(filename[,_mode[,_bufsize]])"
+>file(filename[, mode[, bufsize]])</a></dt>
+Constructor function for the file type, described further in section 3.9, ``File Objects&#39;&#39;. The constructor&#39;s arguments are the same as those of the open() built&#45;in function described below.When opening a file, it&#39;s preferable to use open() instead of invoking this constructor directly. file is more suited to type testing (for example, writing &#34;isinstance(f, file)&#34;).New in version 2.2.
+<dt><a name="filter(function,_list)"
+>filter(function, list)</a></dt>
+Construct a list from those elements of list for which function returns true. list may be either a sequence, a container which supports iteration, or an iterator, If list is a string or a tuple, the result also has that type; otherwise it is always a list. If function is None, the identity function is assumed, that is, all elements of list that are false are removed.Note that filter(function, list) is equivalent to [item for item in list if function(item)] if function is not None and [item for item in list if item] if function is None.
+<dt><a name="float([x])"
+>float([x])</a></dt>
+Convert a string or a number to floating point. If the argument is a string, it must contain a possibly signed decimal or floating point number, possibly embedded in whitespace. Otherwise, the argument may be a plain or long integer or a floating point number, and a floating point number with the same value (within Python&#39;s floating point precision) is returned. If no argument is given, returns 0.0.Note: When passing in a string, values for NaN and Infinity may be returned, depending on the underlying C library. The specific set of strings accepted which cause these values to be returned depends entirely on the C library and is known to vary.
+<dt><a name="frozenset([iterable])"
+>frozenset([iterable])</a></dt>
+Return a frozenset object whose elements are taken from iterable. Frozensets are sets that have no update methods but can be hashed and used as members of other sets or as dictionary keys. The elements of a frozenset must be immutable themselves. To represent sets of sets, the inner sets should also be frozenset objects. If iterable is not specified, returns a new empty set, frozenset([]). New in version 2.4.
+<dt><a name="getattr(object,_name[,_default])"
+>getattr(object, name[, default])</a></dt>
+Return the value of the named attributed of object. name must be a string. If the string is the name of one of the object&#39;s attributes, the result is the value of that attribute. For example, getattr(x, &#39;foobar&#39;) is equivalent to x.foobar. If the named attribute does not exist, default is returned if provided, otherwise AttributeError is raised.
+<dt><a name="globals()"
+>globals()</a></dt>
+Return a dictionary representing the current global symbol table. This is always the dictionary of the current module (inside a function or method, this is the module where it is defined, not the module from which it is called).
+<dt><a name="hasattr(object,_name)"
+>hasattr(object, name)</a></dt>
+The arguments are an object and a string. The result is True if the string is the name of one of the object&#39;s attributes, False if not. (This is implemented by calling getattr(object, name) and seeing whether it raises an exception or not.)
+<dt><a name="hash(object)"
+>hash(object)</a></dt>
+Return the hash value of the object (if it has one). Hash values are integers. They are used to quickly compare dictionary keys during a dictionary lookup. Numeric values that compare equal have the same hash value (even if they are of different types, as is the case for 1 and 1.0).
+<dt><a name="help([object])"
+>help([object])</a></dt>
+Invoke the built&#45;in help system. (This function is intended for interactive use.) If no argument is given, the interactive help system starts on the interpreter console. If the argument is a string, then the string is looked up as the name of a module, function, class, method, keyword, or documentation topic, and a help page is printed on the console. If the argument is any other kind of object, a help page on the object is generated. New in version 2.2.
+<dt><a name="hex(x)"
+>hex(x)</a></dt>
+Convert an integer number (of any size) to a hexadecimal string. The result is a valid Python expression. Changed in version 2.4: Formerly only returned an unsigned literal.
+<dt><a name="id(object)"
+>id(object)</a></dt>
+Return the ``identity&#39;&#39; of an object. This is an integer (or long integer) which is guaranteed to be unique and constant for this object during its lifetime. Two objects with non&#45;overlapping lifetimes may have the same id() value. (Implementation note: this is the address of the object.)
+<dt><a name="input([prompt])"
+>input([prompt])</a></dt>
+Equivalent to eval(raw_input(prompt)). Warning: This function is not safe from user errors! It expects a valid Python expression as input; if the input is not syntactically valid, a SyntaxError will be raised. Other exceptions may be raised if there is an error during evaluation. (On the other hand, sometimes this is exactly what you need when writing a quick script for expert use.)If the readline module was loaded, then input() will use it to provide elaborate line editing and history features.Consider using the raw_input() function for general input from users.
+<dt><a name="int([x[,_radix]])"
+>int([x[, radix]])</a></dt>
+Convert a string or number to a plain integer. If the argument is a string, it must contain a possibly signed decimal number representable as a Python integer, possibly embedded in whitespace. The radix parameter gives the base for the conversion and may be any integer in the range [2, 36], or zero. If radix is zero, the proper radix is guessed based on the contents of string; the interpretation is the same as for integer literals. If radix is specified and x is not a string, TypeError is raised. Otherwise, the argument may be a plain or long integer or a floating point number. Conversion of floating point numbers to integers truncates (towards zero). If the argument is outside the integer range a long object will be returned instead. If no arguments are given, returns 0.
+<dt><a name="isinstance(object,_classinfo)"
+>isinstance(object, classinfo)</a></dt>
+Return true if the object argument is an instance of the classinfo argument, or of a (direct or indirect) subclass thereof. Also return true if classinfo is a type object and object is an object of that type. If object is not a class instance or an object of the given type, the function always returns false. If classinfo is neither a class object nor a type object, it may be a tuple of class or type objects, or may recursively contain other such tuples (other sequence types are not accepted). If classinfo is not a class, type, or tuple of classes, types, and such tuples, a TypeError exception is raised. Changed in version 2.2: Support for a tuple of type information was added.
+<dt><a name="issubclass(class,_classinfo)"
+>issubclass(class, classinfo)</a></dt>
+Return true if class is a subclass (direct or indirect) of classinfo. A class is considered a subclass of itself. classinfo may be a tuple of class objects, in which case every entry in classinfo will be checked. In any other case, a TypeError exception is raised. Changed in version 2.3: Support for a tuple of type information was added.
+<dt><a name="iter(o[,_sentinel])"
+>iter(o[, sentinel])</a></dt>
+Return an iterator object. The first argument is interpreted very differently depending on the presence of the second argument. Without a second argument, o must be a collection object which supports the iteration protocol (the __iter__() method), or it must support the sequence protocol (the __getitem__() method with integer arguments starting at 0). If it does not support either of those protocols, TypeError is raised. If the second argument, sentinel, is given, then o must be a callable object. The iterator created in this case will call o with no arguments for each call to its next() method; if the value returned is equal to sentinel, StopIteration will be raised, otherwise the value will be returned. New in version 2.2.
+<dt><a name="len(s)"
+>len(s)</a></dt>
+Return the length (the number of items) of an object. The argument may be a sequence (string, tuple or list) or a mapping (dictionary).
+<dt><a name="list([sequence])"
+>list([sequence])</a></dt>
+Return a list whose items are the same and in the same order as sequence&#39;s items. sequence may be either a sequence, a container that supports iteration, or an iterator object. If sequence is already a list, a copy is made and returned, similar to sequence[:]. For instance, list(&#39;abc&#39;) returns [&#39;a&#39;, &#39;b&#39;, &#39;c&#39;] and list( (1, 2, 3) ) returns [1, 2, 3]. If no argument is given, returns a new empty list, [].
+<dt><a name="locals()"
+>locals()</a></dt>
+Update and return a dictionary representing the current local symbol table. Warning: The contents of this dictionary should not be modified; changes may not affect the values of local variables used by the interpreter.
+<dt><a name="long([x[,_radix]])"
+>long([x[, radix]])</a></dt>
+Convert a string or number to a long integer. If the argument is a string, it must contain a possibly signed number of arbitrary size, possibly embedded in whitespace. The radix argument is interpreted in the same way as for int(), and may only be given when x is a string. Otherwise, the argument may be a plain or long integer or a floating point number, and a long integer with the same value is returned. Conversion of floating point numbers to integers truncates (towards zero). If no arguments are given, returns 0L.
+<dt><a name="map(function,_list,_...)"
+>map(function, list, ...)</a></dt>
+Apply function to every item of list and return a list of the results. If additional list arguments are passed, function must take that many arguments and is applied to the items of all lists in parallel; if a list is shorter than another it is assumed to be extended with None items. If function is None, the identity function is assumed; if there are multiple list arguments, map() returns a list consisting of tuples containing the corresponding items from all lists (a kind of transpose operation). The list arguments may be any kind of sequence; the result is always a list.
+<dt><a name="max(s[,_args...][key])"
+>max(s[, args...][key])</a></dt>
+With a single argument s, return the largest item of a non&#45;empty sequence (such as a string, tuple or list). With more than one argument, return the largest of the arguments.The optional key argument specifies a one&#45;argument ordering function like that used for list.sort(). The key argument, if supplied, must be in keyword form (for example, &#34;max(a,b,c,key=func)&#34;). Changed in version 2.5: Added support for the optional key argument.
+<dt><a name="min(s[,_args...][key])"
+>min(s[, args...][key])</a></dt>
+With a single argument s, return the smallest item of a non&#45;empty sequence (such as a string, tuple or list). With more than one argument, return the smallest of the arguments.The optional key argument specifies a one&#45;argument ordering function like that used for list.sort(). The key argument, if supplied, must be in keyword form (for example, &#34;min(a,b,c,key=func)&#34;). Changed in version 2.5: Added support for the optional key argument.
+<dt><a name="object()"
+>object()</a></dt>
+Return a new featureless object. object is a base for all new style classes. It has the methods that are common to all instances of new style classes. New in version 2.2.Changed in version 2.3: This function does not accept any arguments. Formerly, it accepted arguments but ignored them.
+<dt><a name="oct(x)"
+>oct(x)</a></dt>
+Convert an integer number (of any size) to an octal string. The result is a valid Python expression. Changed in version 2.4: Formerly only returned an unsigned literal.
+<dt><a name="open(filename[,_mode[,_bufsize]])"
+>open(filename[, mode[, bufsize]])</a></dt>
+Open a file, returning an object of the file type described in section 3.9, ``File Objects&#39;&#39;. If the file cannot be opened, IOError is raised. When opening a file, it&#39;s preferable to use open() instead of invoking the file constructor directly.The first two arguments are the same as for stdio&#39;s fopen(): filename is the file name to be opened, and mode is a string indicating how the file is to be opened.The most commonly&#45;used values of mode are &#39;r&#39; for reading, &#39;w&#39; for writing (truncating the file if it already exists), and &#39;a&#39; for appending (which on some Unix systems means that all writes append to the end of the file regardless of the current seek position). If mode is omitted, it defaults to &#39;r&#39;. When opening a binary file, you should append &#39;b&#39; to the mode value to open the file in binary mode, which will improve portability. (Appending &#39;b&#39; is useful even on systems that don&#39;t treat binary and text files differently, where it serves as documentation.) See below for more possible values of mode.The optional bufsize argument specifies the file&#39;s desired buffer size: 0 means unbuffered, 1 means line buffered, any other positive value means use a buffer of (approximately) that size. A negative bufsize means to use the system default, which is usually line buffered for tty devices and fully buffered for other files. If omitted, the system default is used.2.3Modes &#39;r+&#39;, &#39;w+&#39; and &#39;a+&#39; open the file for updating (note that &#39;w+&#39; truncates the file). Append &#39;b&#39; to the mode to open the file in binary mode, on systems that differentiate between binary and text files; on systems that don&#39;t have this distinction, adding the &#39;b&#39; has no effect.In addition to the standard fopen() values mode may be &#39;U&#39; or &#39;rU&#39;. Python is usually built with universal newline support; supplying &#39;U&#39; opens the file as a text file, but lines may be terminated by any of the following: the Unix end&#45;of&#45;line convention &#39;\n&#39;, the Macintosh convention &#39;\r&#39;, or the Windows convention &#39;\r\n&#39;. All of these external representations are seen as &#39;\n&#39; by the Python program. If Python is built without universal newline support a mode with &#39;U&#39; is the same as normal text mode. Note that file objects so opened also have an attribute called newlines which has a value of None (if no newlines have yet been seen), &#39;\n&#39;, &#39;\r&#39;, &#39;\r\n&#39;, or a tuple containing all the newline types seen.Python enforces that the mode, after stripping &#39;U&#39;, begins with &#39;r&#39;, &#39;w&#39; or &#39;a&#39;.Changed in version 2.5: Restriction on first letter of mode string introduced.
+<dt><a name="ord(c)"
+>ord(c)</a></dt>
+Given a string of length one, return an integer representing the Unicode code point of the character when the argument is a unicode object, or the value of the byte when the argument is an 8&#45;bit string. For example, ord(&#39;a&#39;) returns the integer 97, ord(u&#39;\u2020&#39;) returns 8224. This is the inverse of chr() for 8&#45;bit strings and of unichr() for unicode objects. If a unicode argument is given and Python was built with UCS2 Unicode, then the character&#39;s code point must be in the range [0..65535] inclusive; otherwise the string length is two, and a TypeError will be raised.
+<dt><a name="pow(x,_y[,_z])"
+>pow(x, y[, z])</a></dt>
+Return x to the power y; if z is present, return x to the power y, modulo z (computed more efficiently than pow(x, y) % z). The two&#45;argument form pow(x, y) is equivalent to using the power operator: x**y.The arguments must have numeric types. With mixed operand types, the coercion rules for binary arithmetic operators apply. For int and long int operands, the result has the same type as the operands (after coercion) unless the second argument is negative; in that case, all arguments are converted to float and a float result is delivered. For example, 10**2 returns 100, but 10**&#45;2 returns 0.01. (This last feature was added in Python 2.2. In Python 2.1 and before, if both arguments were of integer types and the second argument was negative, an exception was raised.) If the second argument is negative, the third argument must be omitted. If z is present, x and y must be of integer types, and y must be non&#45;negative. (This restriction was added in Python 2.2. In Python 2.1 and before, floating 3&#45;argument pow() returned platform&#45;dependent results depending on floating&#45;point rounding accidents.)
+<dt><a name="property([fget[,_fset[,_fdel[,_doc]]]])"
+>property([fget[, fset[, fdel[, doc]]]])</a></dt>
+Return a property attribute for new&#45;style classes (classes that derive from object).fget is a function for getting an attribute value, likewise fset is a function for setting, and fdel a function for del&#39;ing, an attribute. Typical use is to define a managed attribute x:
+<pre>  class C(object):
+    def __init__(self): self.__x = None
+    def getx(self): return self._x
+    def setx(self, value): self._x = value
+    def delx(self): del self._x
+    x = property(getx, setx, delx, &#34;I&#39;m the &#39;x&#39; property.&#34;)</pre>
+If given, doc will be the docstring of the property attribute. Otherwise, the property will copy fget&#39;s docstring (if it exists). This makes it possible to create read&#45;only properties easily using property() as a decorator:
+<pre>  class Parrot(object):
+    def __init__(self):
+        self._voltage = 100000
+
+    @property
+    def voltage(self):
+        &#34;&#34;&#34;Get the current voltage.&#34;&#34;&#34;
+        return self._voltage</pre>
+turns the voltage() method into a ``getter&#39;&#39; for a read&#45;only attribute with the same name.New in version 2.2. Changed in version 2.5: Use fget&#39;s docstring if no doc given.
+<dt><a name="range([start,]_stop[,_step])"
+>range([start,] stop[, step])</a></dt>
+This is a versatile function to create lists containing arithmetic progressions. It is most often used in for loops. The arguments must be plain integers. If the step argument is omitted, it defaults to 1. If the start argument is omitted, it defaults to 0. The full form returns a list of plain integers [start, start + step, start + 2 * step, ...]. If step is positive, the last element is the largest start + i * step less than stop; if step is negative, the last element is the smallest start + i * step greater than stop. step must not be zero (or else ValueError is raised). Example:
+<pre>    &#62;&#62;&#62; range(10)
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    &#62;&#62;&#62; range(1, 11)
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    &#62;&#62;&#62; range(0, 30, 5)
+    [0, 5, 10, 15, 20, 25]
+    &#62;&#62;&#62; range(0, 10, 3)
+    [0, 3, 6, 9]
+    &#62;&#62;&#62; range(0, &#45;10, &#45;1)
+    [0, &#45;1, &#45;2, &#45;3, &#45;4, &#45;5, &#45;6, &#45;7, &#45;8, &#45;9]
+    &#62;&#62;&#62; range(0)
+    []
+    &#62;&#62;&#62; range(1, 0)
+    []</pre>
+
+<dt><a name="raw_input([prompt])"
+>raw_input([prompt])</a></dt>
+If the prompt argument is present, it is written to standard output without a trailing newline. The function then reads a line from input, converts it to a string (stripping a trailing newline), and returns that. When EOF is read, EOFError is raised. Example:
+<pre>  &#62;&#62;&#62; s = raw_input(&#39;&#45;&#45;&#62; &#39;)
+  &#45;&#45;&#62; Monty Python&#39;s Flying Circus
+  &#62;&#62;&#62; s
+  &#34;Monty Python&#39;s Flying Circus&#34;</pre>
+If the readline module was loaded, then raw_input() will use it to provide elaborate line editing and history features.
+<dt><a name="reduce(function,_sequence[,_initializer])"
+>reduce(function, sequence[, initializer])</a></dt>
+Apply function of two arguments cumulatively to the items of sequence, from left to right, so as to reduce the sequence to a single value. For example, reduce(lambda x, y: x+y, [1, 2, 3, 4, 5]) calculates ((((1+2)+3)+4)+5). The left argument, x, is the accumulated value and the right argument, y, is the update value from the sequence. If the optional initializer is present, it is placed before the items of the sequence in the calculation, and serves as a default when the sequence is empty. If initializer is not given and sequence contains only one item, the first item is returned.
+<dt><a name="reload(module)"
+>reload(module)</a></dt>
+Reload a previously imported module. The argument must be a module object, so it must have been successfully imported before. This is useful if you have edited the module source file using an external editor and want to try out the new version without leaving the Python interpreter. The return value is the module object (the same as the module argument).When reload(module) is executed:
+<pre>    * Python modules&#39; code is recompiled and the module&#45;level code reexecuted,
+    defining a new set of objects which are bound to names in the module&#39;s
+    dictionary. The init function of extension modules is not called a second time.
+
+    * As with all other objects in Python the old objects are only reclaimed
+    after their reference counts drop to zero.
+
+    * The names in the module namespace are updated to point to any
+    new or changed objects.
+
+    * Other references to the old objects (such as names external to the module)
+    are not rebound to refer to the new objects and must be updated in each
+    namespace where they occur if that is desired.</pre>
+There are a number of other caveats:If a module is syntactically correct but its initialization fails, the first import statement for it does not bind its name locally, but does store a (partially initialized) module object in sys.modules. To reload the module you must first import it again (this will bind the name to the partially initialized module object) before you can reload() it.When a module is reloaded, its dictionary (containing the module&#39;s global variables) is retained. Redefinitions of names will override the old definitions, so this is generally not a problem. If the new version of a module does not define a name that was defined by the old version, the old definition remains. This feature can be used to the module&#39;s advantage if it maintains a global table or cache of objects &#45;&#45; with a try statement it can test for the table&#39;s presence and skip its initialization if desired:
+<pre>  try:
+      cache
+  except NameError:
+      cache = {}</pre>
+It is legal though generally not very useful to reload built&#45;in or dynamically loaded modules, except for sys, __main__ and __builtin__. In many cases, however, extension modules are not designed to be initialized more than once, and may fail in arbitrary ways when reloaded.If a module imports objects from another module using from ... import ..., calling reload() for the other module does not redefine the objects imported from it &#45;&#45; one way around this is to re&#45;execute the from statement, another is to use import and qualified names (module.name) instead.If a module instantiates instances of a class, reloading the module that defines the class does not affect the method definitions of the instances &#45;&#45; they continue to use the old class definition. The same is true for derived classes.
+<dt><a name="repr(object)"
+>repr(object)</a></dt>
+Return a string containing a printable representation of an object. This is the same value yielded by conversions (reverse quotes). It is sometimes useful to be able to access this operation as an ordinary function. For many types, this function makes an attempt to return a string that would yield an object with the same value when passed to eval().
+<dt><a name="reversed(seq)"
+>reversed(seq)</a></dt>
+Return a reverse iterator. seq must be an object which supports the sequence protocol (the __len__() method and the __getitem__() method with integer arguments starting at 0). New in version 2.4.
+<dt><a name="round(x[,_n])"
+>round(x[, n])</a></dt>
+Return the floating point value x rounded to n digits after the decimal point. If n is omitted, it defaults to zero. The result is a floating point number. Values are rounded to the closest multiple of 10 to the power minus n; if two multiples are equally close, rounding is done away from 0 (so. for example, round(0.5) is 1.0 and round(&#45;0.5) is &#45;1.0).
+<dt><a name="set([iterable])"
+>set([iterable])</a></dt>
+Return a set whose elements are taken from iterable. The elements must be immutable. To represent sets of sets, the inner sets should be frozenset objects. If iterable is not specified, returns a new empty set, set([]). New in version 2.4.
+<dt><a name="setattr(object,_name,_value)"
+>setattr(object, name, value)</a></dt>
+This is the counterpart of getattr(). The arguments are an object, a string and an arbitrary value. The string may name an existing attribute or a new attribute. The function assigns the value to the attribute, provided the object allows it. For example, setattr(x, &#39;foobar&#39;, 123) is equivalent to x.foobar = 123.
+<dt><a name="slice([start,]_stop[,_step])"
+>slice([start,] stop[, step])</a></dt>
+Return a slice object representing the set of indices specified by range(start, stop, step). The start and step arguments default to None. Slice objects have read&#45;only data attributes start, stop and step which merely return the argument values (or their default). They have no other explicit functionality; however they are used by Numerical Python and other third party extensions. Slice objects are also generated when extended indexing syntax is used. For example: &#34;a[start:stop:step]&#34; or &#34;a[start:stop, i]&#34;.
+<dt><a name="sorted(iterable[,_cmp[,_key[,_reverse]]])"
+>sorted(iterable[, cmp[, key[, reverse]]])</a></dt>
+Return a new sorted list from the items in iterable.The optional arguments cmp, key, and reverse have the same meaning as those for the list.sort() method (described in section 3.6.4).cmp specifies a custom comparison function of two arguments (iterable elements) which should return a negative, zero or positive number depending on whether the first argument is considered smaller than, equal to, or larger than the second argument: &#34;cmp=lambda x,y: cmp(x.lower(), y.lower())&#34;key specifies a function of one argument that is used to extract a comparison key from each list element: &#34;key=str.lower&#34;reverse is a boolean value. If set to True, then the list elements are sorted as if each comparison were reversed.In general, the key and reverse conversion processes are much faster than specifying an equivalent cmp function. This is because cmp is called multiple times for each list element while key and reverse touch each element only once.New in version 2.4.
+<dt><a name="staticmethod(function)"
+>staticmethod(function)</a></dt>
+Return a static method for function.A static method does not receive an implicit first argument. To declare a static method, use this idiom:
+<pre>    class C:
+        @staticmethod
+        def f(arg1, arg2, ...): ...</pre>
+The @staticmethod form is a function decorator &#45; see the description of function definitions in chapter 7 of the Python Reference Manual for details.It can be called either on the class (such as C.f()) or on an instance (such as C().f()). The instance is ignored except for its class.Static methods in Python are similar to those found in Java or C++. For a more advanced concept, see classmethod() in this section.For more information on static methods, consult the documentation on the standard type hierarchy in chapter 3 of the Python Reference Manual (at the bottom). New in version 2.2. Changed in version 2.4: Function decorator syntax added.
+<dt><a name="str([object])"
+>str([object])</a></dt>
+Return a string containing a nicely printable representation of an object. For strings, this returns the string itself. The difference with repr(object) is that str(object) does not always attempt to return a string that is acceptable to eval(); its goal is to return a printable string. If no argument is given, returns the empty string, &#39;&#39;.
+<dt><a name="sum(sequence[,_start])"
+>sum(sequence[, start])</a></dt>
+Sums start and the items of a sequence, from left to right, and returns the total. start defaults to 0. The sequence&#39;s items are normally numbers, and are not allowed to be strings. The fast, correct way to concatenate sequence of strings is by calling &#39;&#39;.join(sequence). Note that sum(range(n), m) is equivalent to reduce(operator.add, range(n), m) New in version 2.3.
+<dt><a name="super(type[,_object&#45;or&#45;type])"
+>super(type[, object&#45;or&#45;type])</a></dt>
+Return the superclass of type. If the second argument is omitted the super object returned is unbound. If the second argument is an object, isinstance(obj, type) must be true. If the second argument is a type, issubclass(type2, type) must be true. super() only works for new&#45;style classes.A typical use for calling a cooperative superclass method is:
+<pre>    class C(B):
+        def meth(self, arg):
+            super(C, self).meth(arg)</pre>
+Note that super is implemented as part of the binding process for explicit dotted attribute lookups such as &#34;super(C, self).__getitem__(name)&#34;. Accordingly, super is undefined for implicit lookups using statements or operators such as &#34;super(C, self)[name]&#34;. New in version 2.2.
+<dt><a name="tuple([sequence])"
+>tuple([sequence])</a></dt>
+Return a tuple whose items are the same and in the same order as sequence&#39;s items. sequence may be a sequence, a container that supports iteration, or an iterator object. If sequence is already a tuple, it is returned unchanged. For instance, tuple(&#39;abc&#39;) returns (&#39;a&#39;, &#39;b&#39;, &#39;c&#39;) and tuple([1, 2, 3]) returns (1, 2, 3). If no argument is given, returns a new empty tuple, ().
+<dt><a name="type(object)"
+>type(object)</a></dt>
+Return the type of an object. The return value is a type object. The isinstance() built&#45;in function is recommended for testing the type of an object.With three arguments, type functions as a constructor as detailed below.
+<dt><a name="type(name,_bases,_dict)"
+>type(name, bases, dict)</a></dt>
+Return a new type object. This is essentially a dynamic form of the class statement. The name string is the class name and becomes the __name__ attribute; the bases tuple itemizes the base classes and becomes the __bases__ attribute; and the dict dictionary is the namespace containing definitions for class body and becomes the __dict__ attribute. For example, the following two statements create identical type objects:
+<pre>      &#62;&#62;&#62; class X(object):
+      ...     a = 1
+      ...
+      &#62;&#62;&#62; X = type(&#39;X&#39;, (object,), dict(a=1))</pre>
+New in version 2.2.
+<dt><a name="unichr(i)"
+>unichr(i)</a></dt>
+Return the Unicode string of one character whose Unicode code is the integer i. For example, unichr(97) returns the string u&#39;a&#39;. This is the inverse of ord() for Unicode strings. The valid range for the argument depends how Python was configured &#45; it may be either UCS2 [0..0xFFFF] or UCS4 [0..0x10FFFF]. ValueError is raised otherwise. New in version 2.0.
+<dt><a name="unicode([object[,_encoding_[,_errors]]])"
+>unicode([object[, encoding [, errors]]])</a></dt>
+Return the Unicode string version of object using one of the following modes:If encoding and/or errors are given, unicode() will decode the object which can either be an 8&#45;bit string or a character buffer using the codec for encoding. The encoding parameter is a string giving the name of an encoding; if the encoding is not known, LookupError is raised. Error handling is done according to errors; this specifies the treatment of characters which are invalid in the input encoding. If errors is &#39;strict&#39; (the default), a ValueError is raised on errors, while a value of &#39;ignore&#39; causes errors to be silently ignored, and a value of &#39;replace&#39; causes the official Unicode replacement character, U+FFFD, to be used to replace input characters which cannot be decoded. See also the codecs module.If no optional parameters are given, unicode() will mimic the behaviour of str() except that it returns Unicode strings instead of 8&#45;bit strings. More precisely, if object is a Unicode string or subclass it will return that Unicode string without any additional decoding applied.For objects which provide a __unicode__() method, it will call this method without arguments to create a Unicode string. For all other objects, the 8&#45;bit string version or representation is requested and then converted to a Unicode string using the codec for the default encoding in &#39;strict&#39; mode.New in version 2.0. Changed in version 2.2: Support for __unicode__() added.
+<dt><a name="vars([object])"
+>vars([object])</a></dt>
+Without arguments, return a dictionary corresponding to the current local symbol table. With a module, class or class instance object as argument (or anything else that has a __dict__ attribute), returns a dictionary corresponding to the object&#39;s symbol table. The returned dictionary should not be modified: the effects on the corresponding symbol table are undefined.2.4
+<dt><a name="xrange([start,]_stop[,_step])"
+>xrange([start,] stop[, step])</a></dt>
+This function is very similar to range(), but returns an ``xrange object&#39;&#39; instead of a list. This is an opaque sequence type which yields the same values as the corresponding list, without actually storing them all simultaneously. The advantage of xrange() over range() is minimal (since xrange() still has to create the values when asked for them) except when a very large range is used on a memory&#45;starved machine or when all of the range&#39;s elements are never used (such as when the loop is usually terminated with break).Note: xrange() is intended to be simple and fast. Implementations may impose restrictions to achieve this. The C implementation of Python restricts all arguments to native C longs (&#34;short&#34; Python integers), and also requires that the number of elements fit in a native C long.
+<dt><a name="zip([iterable,_...])"
+>zip([iterable, ...])</a></dt>
+This function returns a list of tuples, where the i&#45;th tuple contains the i&#45;th element from each of the argument sequences or iterables. The returned list is truncated in length to the length of the shortest argument sequence. When there are multiple arguments which are all of the same length, zip() is similar to map() with an initial argument of None. With a single sequence argument, it returns a list of 1&#45;tuples. With no arguments, it returns an empty list. New in version 2.0.Changed in version 2.4: Formerly, zip() required at least one argument and zip() raised a TypeError instead of returning an empty list.</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Pynie is authored and maintained by Patrick R. Michaud.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

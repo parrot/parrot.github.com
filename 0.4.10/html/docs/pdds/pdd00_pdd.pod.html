@@ -1,0 +1,219 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Design Documents</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Design Documents</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>docs/pdds/pdd00_pdd.pod &#45; Parrot Design Documents</p>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>$Revision$</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This document defines the content and format of Parrot Design Documents (PDDs).</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>PDDs are living documents,
+which should be maintained to reflect the current and contemplated design of Parrot.</p>
+
+<p>The key aspects of Parrot&#39;s design are its interface to the outside world &#45;&#45; its feature set &#45;&#45; and its internal structure,
+both in code and in the broader project.
+Thus,
+PDDs descirbe Parrot&#39;s:</p>
+
+<ul>
+<li><i>Codable interfaces</i>: headers,
+functions,
+macros,
+file formats,
+etc.</li><p class="pad"></p>
+
+<li><i>Structural requirements</i> that the implementation must obey: resource usage,
+portability,
+modularity,
+interdependency,
+etc.</li><p class="pad"></p>
+
+<li><i>Abstract models</i> that the implementation expresses or conforms to.
+These models are in some sense meta&#45;designs,
+because they provide guidance for the evolution of the current design.</li><p class="pad"></p>
+
+<li>More?
+&#45; FIXME</li><p class="pad"></p>
+</ul>
+
+<p>PDDS <b>should not</b> discuss the implementation details or trade&#45;offs,
+unless they absolutely have to.
+Such implementation documentation should go in the relevant <em lang='und' xml:lang='und'>*.dev</em> file.
+On the other hand,
+PDDs <b>should</b> document design trade&#45;offs,
+i.e.
+the paths not chosen.</p>
+
+<p>These guidelines may seem fuzzy.
+The line between &#34;design&#34; and &#34;implementation&#34; is a murky one.
+Still,
+please try to adhere to this design for Parrot design documentation.
+How you implement it is up to you.
+:&#45;)</p>
+
+<h1><a name="IMPLEMENTATION"
+>IMPLEMENTATION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>All newly created PDDs will adhere to the PDD standard current as of the time of proposal.
+An example of the currently accepted layout is given in <em lang='und' xml:lang='und'><a href="pdd_template.pod.html">docs/pdds/pdd_template.pod</a></em>,
+which should be used as a template for any future PDDs.</p>
+
+<h2><a name="FORMAT"
+>FORMAT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>All PDDs will be written in POD parseable by the current stable release of Perl.
+Although XML is a viable solution and has its vocal supporters,
+and although Parrot is intended to be used by many groups outside of the Perl community,
+we have chosen POD for its simplicity and ease of reading in plaintext form.
+Conversion to other formats (e.g.
+HTML) is encouraged,
+but the master version must be POD.</p>
+
+<p>All PDDs will be written in English.
+The choice of British,
+American,
+or Other is up to the author.
+Translation to other languages,
+like all Perl documentation,
+is encouraged.
+(See <a href='#PDD_TRANSLATIONS'>&#34;PDD&#160;TRANSLATIONS&#34;</a>.)</p>
+
+<p>PDDs should be word&#45;wrapped at column 78.
+For Emacs variants,
+this can be arranged by putting these lines at the end of the file,
+after &#34;=cut&#34;:</p>
+
+<pre lang='und' xml:lang='und'>    Local Variables:
+      fill&#45;column:78
+    End:</pre>
+
+<p>See <a href='TODO'>pdd_template.pod</a> for the basic structure of a PDD. Notes on the sections:</p>
+
+<dl>
+<dt><a name="NAME:"
+>NAME:</a></dt><p class="pad"></p>
+
+<dd>A short, general description of a specific part of the Parrot design. This may be a particular subsystem (e.g. the garbage collector), or a more general topic (e.g. basic Parrot datatypes).</dd><p class="pad"></p>
+
+<dt><a name="VERSION:"
+>VERSION:</a></dt><p class="pad"></p>
+
+<dd>Document version. Since Parrot is currently kept in a Subversion repository, the $$&#45;delimited keyword &#34;Revision&#34; will do nicely.</dd><p class="pad"></p>
+
+<dt><a name="MAINTAINER_(optional):"
+>MAINTAINER <i>(optional)</i>:</a></dt><p class="pad"></p>
+
+<dd>The name and current email address for the point of contact for the PDD. This is the person to whom questions, comments, and patches should generally be addressed. This need not be the author of the document. By default, all PDDs are maintained by the Parrot Architect.</dd><p class="pad"></p>
+
+<dt><a name="ABSTRACT:"
+>ABSTRACT:</a></dt><p class="pad"></p>
+
+<dd>A quick blurb explaining the purpose of the PDD.</dd><p class="pad"></p>
+
+<dt><a name="SYNOPSIS:"
+>SYNOPSIS:</a></dt><p class="pad"></p>
+
+<dd>Code snippets showing the semantics of the PDD (if applicable).</dd><p class="pad"></p>
+
+<dt><a name="DESCRIPTION:"
+>DESCRIPTION:</a></dt><p class="pad"></p>
+
+<dd>A description of the general nature of the PDD and how it relates to Parrot.</dd><p class="pad"></p>
+
+<dt><a name="IMPLEMENTATION:"
+>IMPLEMENTATION:</a></dt><p class="pad"></p>
+
+<dd>A major section of the PDD that encapsulates a free&#45;form discussion of any and all applicable information related to the final observations, conclusions, and what&#45;have&#45;you that required writing the document in the first place.</dd><p class="pad"></p>
+
+<dt><a name="ATTACHMENTS:"
+>ATTACHMENTS:</a></dt><p class="pad"></p>
+
+<dd>References to supporting files that should be considered part of the PDD. Text files and image files may be in any widely accepted format, which is rather subjective. Violators may be prosecuted.</dd><p class="pad"></p>
+
+<dd>Text files and image files should only provide supplemental information; no fair hiding all the info in an attachment just to not have to write an implementation section.</dd><p class="pad"></p>
+
+<dt><a name="REFERENCES:"
+>REFERENCES:</a></dt><p class="pad"></p>
+
+<dd>References to additional sources of information, but not those necessary for the PDD itself.</dd><p class="pad"></p>
+</dl>
+
+<p>The PDD author may add any additional sections he or she wishes.</p>
+
+<h2><a name="SUBMISSION_CRITERIA"
+>SUBMISSION CRITERIA <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Proposed PDDs should be submitted to the parrot&#45;porters mailing list (located at parrot&#45;porters@perl.org) for discussion, criticism and general kibitzing. Acceptance of a particular PDD is ultimately up to the Parrot Architect.</p>
+
+<h2><a name="PDD_TRANSLATIONS"
+>PDD TRANSLATIONS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Translations of PDDs into other languages should meet these guidelines:</p>
+
+<ul>
+<li>The <code lang='und' xml:lang='und'>MAINTAINER</code> section should record who made the translation.</li><p class="pad"></p>
+
+<li>The <code lang='und' xml:lang='und'>VERSION</code> section should include an additional note of the translation version.</li><p class="pad"></p>
+</ul>
+
+<h1><a name="ATTACHMENTS"
+>ATTACHMENTS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>(none)</p>
+
+<h1><a name="REFERENCES"
+>REFERENCES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>(none)</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

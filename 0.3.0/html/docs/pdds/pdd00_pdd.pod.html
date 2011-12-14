@@ -1,0 +1,314 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Design Documents</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Design Documents</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>docs/pdds/pdd00_pdd.pod &#45; Parrot Design Documents</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This document defines the standard format for the Parrot Design Documents (PDDs) &#45; the basic descriptions/plans for the design of Parrot.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The original intent of the Parrot Design Documents (which themselves were initially Perl Design Documents) was threefold:</p>
+
+<ol>
+<li>To provide a clear indication of the direction of current development (essentially,
+a road map from an abstract idea to a concrete implementation).</li><p class="pad"></p>
+
+<li>To act as a historical record of the rationale behind the decision,
+in order to provide context to future developers,
+who may not have been familiar with the original discussion.</li><p class="pad"></p>
+
+<li>To provide a historical,
+technical and cultural perspective for future development work.
+Re&#45;implementation or even tangential tasks need only address what has changed since the original PDD.</li><p class="pad"></p>
+</ol>
+
+<p>Needless to say,
+things didn&#39;t work out this way.
+Some of the context discussed above is now documented in the <em lang='und' xml:lang='und'>*.dev</em> documents (see the <em lang='und' xml:lang='und'>/docs/dev</em> directory); much of it remains undocumented.
+The portions that have wound up being documented as PDDs are the basic design of the Parrot interpreter.
+In other words,
+the PDDs describe the <b>features that the interpreter should implement</b>.
+They <b>should not</b> discuss the details of the actual implementation (unless they absolutely have to) or the choices leading to that particular implementation; these are details that should go in the relevant <em lang='und' xml:lang='und'>*.dev</em> file.
+On the other hand,
+they <b>should</b> detail the trade&#45;offs made in the actual design.</p>
+
+<h1><a name="IMPLEMENTATION"
+>IMPLEMENTATION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>All newly created PDDs will adhere to the PDD standard current as of the time of proposal.
+An example of the currently accepted layout is given in <em lang='und' xml:lang='und'><a href="pdd_template.pod.html">docs/pdds/pdd_template.pod</a></em>,
+which should be used as a template for any future PDDs.</p>
+
+<h2><a name="FORMAT"
+>FORMAT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>All PDDs will be written in POD parseable by the current stable release of Perl.
+Although XML is a viable solution and has its vocal supporters,
+and although Parrot is intended to be used by many groups outside of the Perl community,
+we have chosen POD for its simplicity and ease of reading in plaintext form.
+Conversion to other formats (e.g.
+HTML) is encouraged,
+but the POD version should remain the master copy.</p>
+
+<p>All PDDs will be written in English.
+British,
+American,
+or Other is the choice of the author.
+Translation to other languages,
+like all Perl documentation,
+is encouraged.
+(See <a href='#PDD_TRANSLATIONS'>&#34;PDD&#160;TRANSLATIONS&#34;</a>.)</p>
+
+<p>All PDDs will contain the following information:</p>
+
+<dl>
+<dt><a name="TITLE:"
+>TITLE:</a></dt><p class="pad"></p>
+
+<dd>A short,
+general description of a specific part of the Parrot design.
+This may be a particular subsystem (e.g.
+the garbage collector),
+or a more general topic (e.g.
+basic Parrot datatypes).</dd><p class="pad"></p>
+
+<dt><a name="VERSION:"
+>VERSION:</a></dt><p class="pad"></p>
+
+<dd>Contains current and selected historical metadata on the PDD itself.</dd><p class="pad"></p>
+
+<dt><a name="CURRENT:"
+>CURRENT:</a></dt><p class="pad"></p>
+
+<dd>Contains the following information,
+current as of the date of submission.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="Maintainer"
+>Maintainer</a></dt><p class="pad"></p>
+
+<dd>Required.
+The name and current email address for the point of contact for the PDD.
+This is the person to whom questions,
+comments,
+and patches should generally be addressed.
+This need not be the author of the document.</dd><p class="pad"></p>
+
+<dd>(In practice,
+non&#45;trivial changes to the PDDs should probably be discussed on the perl6&#45;internals mailing list before they take place).</dd><p class="pad"></p>
+
+<dt><a name="Class"
+>Class</a></dt><p class="pad"></p>
+
+<dd>Required.
+The area of Parrot the PDD covers.
+This allows related PDDs to be logically grouped.
+The current list of valid classes is:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    Internals     &#45; on the design of the Parrot interpreter
+    Documentation &#45; on Parrot documentation
+    Meta          &#45; on the Parrot project as an entity
+    Testing       &#45; on the testing of Parrot</pre>
+
+<dd>It is expected that most PDDs will fit into a single class, but in principle a may belong to more than one class. However, peripheral excursions into the scope of another class should not warrant an actual classification (i.e. you shouldn&#39;t classify something as <code lang='und' xml:lang='und'>Testing</code> simply because you happen to mention potential tests at one or two points in the text).</dd><p class="pad"></p>
+
+<dt><a name="PDD_Number"
+>PDD Number</a></dt><p class="pad"></p>
+
+<dd>Required. No two PDDs should have the same number. PDD numbers are assigned by whoever commits the PDDs to the repository, subject to the approval of the Pumpking.</dd><p class="pad"></p>
+
+<dt><a name="Version"
+>Version</a></dt><p class="pad"></p>
+
+<dd>Required. A one&#45;up integer reflecting each public revision of a PDD. This reflects the version of the document itself, and not version of the standard the document may provide.</dd><p class="pad"></p>
+
+<dt><a name="Status"
+>Status</a></dt><p class="pad"></p>
+
+<dd>Required. The current state of the PDD. Currently, the only classifications in use are <code lang='und' xml:lang='und'>Informational</code> and <code lang='und' xml:lang='und'>Developing</code>. We hope to eventually add <code lang='und' xml:lang='und'>Standard</code>. All three are detailed below:</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="Informational"
+>Informational</a></dt><p class="pad"></p>
+
+<dd>A PDD discussing possible design choices for a particular area of Parrot. This is non&#45;prescriptive &#45;&#45; the final design may look nothing like the suggested one &#45;&#45; but provides a useful way to document detailed design concepts for later reference. For a good example, see <em lang='und' xml:lang='und'><a href="pdd14_bignum.pod.html">/docs/pdds/pdd14_bignum.pod</a></em>.</dd><p class="pad"></p>
+
+<dt><a name="Developing"
+>Developing</a></dt><p class="pad"></p>
+
+<dd>An acceptable (at least, in theory) PDD that needs further fleshing out and fine tuning. The PDD, as well as the implementation it describes, are both under official development by the Parrot development community.</dd><p class="pad"></p>
+
+<dt><a name="Standard_(Version_#)"
+>Standard (Version #)</a></dt><p class="pad"></p>
+
+<dd>A frozen snapshot of the design as it applies to Parrot at a particular moment in time. The version number should reflect that version number of Parrot that the standard was first applied to. <code lang='und' xml:lang='und'>Developing</code> PDDs are expected to eventually become <code lang='und' xml:lang='und'>standard</code>.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="Last_Modified"
+>Last Modified</a></dt><p class="pad"></p>
+
+<dd>Required. The date of the last submission.</dd><p class="pad"></p>
+
+<dt><a name="PDD_Format"
+>PDD Format</a></dt><p class="pad"></p>
+
+<dd>Required. The specific PDD Standard that the PDD adheres to. This allows scripts to better parse PDDs of multiple aging formats. The format currently in use is PDD format 1.</dd><p class="pad"></p>
+
+<dt><a name="Language"
+>Language</a></dt><p class="pad"></p>
+
+<dd>Optional. The language that the PDD is written in.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="HISTORY:"
+>HISTORY:</a></dt><p class="pad"></p>
+
+<dd>A list of free&#45;flow descriptions of significant metadata changes, such as status changes, or change of maintainers. Each entry should include the version, date, and nature of the change. This provides a quick historical overview of the major metadata changes of a PDD. This field is not to be used for a comprehensive list of alterations to the document.</dd><p class="pad"></p>
+
+<dt><a name="CHANGES:"
+>CHANGES:</a></dt><p class="pad"></p>
+
+<dd>A summary of the changes since the last version. A comprehensive change log should be kept, but only within a supporting document.</dd><p class="pad"></p>
+
+<dt><a name="ABSTRACT:"
+>ABSTRACT:</a></dt><p class="pad"></p>
+
+<dd>A quick blurb explaining the purpose of the PDD.</dd><p class="pad"></p>
+
+<dt><a name="DESCRIPTION:"
+>DESCRIPTION:</a></dt><p class="pad"></p>
+
+<dd>A description of the general nature of the PDD and how it relates to Parrot.</dd><p class="pad"></p>
+
+<dt><a name="IMPLEMENTATION:"
+>IMPLEMENTATION:</a></dt><p class="pad"></p>
+
+<dd>A major section of the PDD that encapsulates a free&#45;form discussion of any and all applicable information related to the final observations, conclusions, and what&#45;have&#45;you that required writing the document in the first place.</dd><p class="pad"></p>
+
+<dt><a name="ATTACHMENTS:"
+>ATTACHMENTS:</a></dt><p class="pad"></p>
+
+<dd>References to supporting files that should be considered part of the PDD. Text files and image files may be in any widely accepted format, which is rather subjective. Violators may be prosecuted.</dd><p class="pad"></p>
+
+<dd>Text files and image files should only provide supplemental information; no fair hiding all the info in an attachment just to not have to write an implementation section.</dd><p class="pad"></p>
+
+<dt><a name="REFERENCES:"
+>REFERENCES:</a></dt><p class="pad"></p>
+
+<dd>References to additional sources of information, but not those necessary for the PDD itself.</dd><p class="pad"></p>
+</dl>
+
+<p>The PDD author may add any additional sections he or she wishes.</p>
+
+<h2><a name="SUBMISSION_CRITERIA"
+>SUBMISSION CRITERIA <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Proposed PDDs should be submitted to the perl6&#45;internals mailing list (located at perl6&#45;internals@perl.org) for discussion, criticism and general kibitzing. Acceptance of a particular PDD is ultimately up to the current Pumpking and/or the internals chief (a.k.a. Dan).</p>
+
+<h2><a name="PDD_TRANSLATIONS"
+>PDD TRANSLATIONS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Should a PDD be translated into another language, the following guidelines should be met.</p>
+
+<ul>
+<li>The <code lang='und' xml:lang='und'>Maintainer</code> field should reflect who did the translation.</li><p class="pad"></p>
+
+<li>The <code lang='und' xml:lang='und'>Version</code> number should match the original document&#39;s <code lang='und' xml:lang='und'>Version</code> number. Should multiple translated versions of a single original PDD be done (to correct spellings, etc.), the revision specific to that document version should be included in parentheses following the version number.</li><p class="pad"></p>
+
+<li>Attributions in the <code lang='und' xml:lang='und'>HISTORY</code> section should be left alone.</li><p class="pad"></p>
+</ul>
+
+<h2><a name="PDD_STATUS_CHANGES"
+>PDD STATUS CHANGES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Any change to the status of a particular PDD should be approved by the current Pumpking and/or the internals chief.</p>
+
+<h2><a name="AVAILABILITY"
+>AVAILABILITY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>All <code lang='und' xml:lang='und'>Informational</code>, and <code lang='und' xml:lang='und'>Developing</code> PDDs should be readily available, in a centralized location, to at least the current Parrot development circles. All <code lang='und' xml:lang='und'>Standard</code> PDDs should be readily available, in a centralized location, to the general public.</p>
+
+<h1><a name="ATTACHMENTS"
+>ATTACHMENTS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>None.</p>
+
+<h1><a name="REFERENCES"
+>REFERENCES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Dan Sugalski&#39;s original PDD guidelines at <a href='http://www.mail&#45;archive.com/perl6&#45;internals@perl.org/msg01766.html'><a href="http://www.mail&#45;archive.com/perl6&#45;internals@perl.org/msg01766.html">http://www.mail&#45;archive.com/perl6&#45;internals@perl.org/msg01766.html</a></a></p>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="CURRENT"
+>CURRENT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>    Maintainer: Simon Glover &#60;scog@amnh.org&#62;
+    Class: Meta
+    PDD Number: 0 
+    Version: 2
+    Status: Developing
+    Last Modified:  20 February 2004
+    PDD Format: 1
+    Language: English</pre>
+
+<h2><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>    v2 substantially rewritten on 20 Feb 2004 by Simon Glover
+    v1 created on 7 Dec 2000 by BCWarnock &#60;bwarnock@raba.com&#62;
+    v1 promoted to Developing as PDD 0 on 20 February 2001 by Dan Sugalski.</pre>
+
+<h1><a name="CHANGES"
+>CHANGES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>    Substantially rewritten to reflect what the PDDs actually are (rather
+    than what we hoped they would be 3+ years ago). </pre>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

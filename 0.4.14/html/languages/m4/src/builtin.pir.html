@@ -1,0 +1,187 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>builtin and user defined macros</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">builtin and user defined macros</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/m4.html">M4</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>builtin.pir &#45; builtin and user defined macros</p>
+
+<h2><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Copyright: 2004 Bernhard Schmalhofer.
+All Rights Reserved.
+SVN Info: $Id$ History: Ported from GNU m4 1.4 References: <a href="http://www.gnu.org/software/m4/m4.html">http://www.gnu.org/software/m4/m4.html</a></p>
+
+<p>Code for all builtin macros,
+initialisation of symbol table,
+and expansion of user defined macros.</p>
+
+<h1><a name="SUBROUTINES"
+>SUBROUTINES <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="void_builtin_tab_init(_Hash_state_)"
+>void builtin_tab_init( Hash state ) <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Initialise all builtin and predefined macros.</p>
+
+<h2><a name="void_builtin_init(_Hash_state_)"
+>void builtin_init( Hash state ) <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Initialise all builtin and predefined macros.</p>
+
+<h2><a name="void_define_builtin(_Hash_state,_string_name,_string_bp_)"
+>void define_builtin( Hash state,
+string name,
+string bp ) <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Install a builtin macro with name &#39;name&#39;,
+bound to the function &#39;bp&#39;.</p>
+
+<h2><a name="void_define_user_macro(_Hash_state,_string_name,_string_text_)"
+>void define_user_macro( Hash state,
+string name,
+string text ) <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Define a predefined or user&#45;defined macro,
+with name &#39;name&#39;,
+and expansion &#39;text&#39;.
+This function is also called from main().</p>
+
+<h2><a name="define_macro"
+>define_macro <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>The function define_macro is common for the builtins &#34;define&#34;,
+&#34;undefine&#34;,
+&#34;pushdef&#34; and &#34;popdef&#34;.
+ARGC and ARGV is as for the caller,
+and MODE argument determines how the macro name is entered into the symbol table.</p>
+
+<h2><a name="m4___file__"
+>m4___file__ <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Mostly for debugging.
+TODO: This is broken for multiple input files.
+TODO: This is broken when the path seperator is not &#39;/&#39;</p>
+
+<h2><a name="m4_decr"
+>m4_decr <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Decrease a number.</p>
+
+<h2><a name="m4_define"
+>m4_define <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Define a user defined macro.</p>
+
+<h2><a name="m4_errprint"
+>m4_errprint <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Print to standard error.
+The individual arguments are seperated by a blank.</p>
+
+<h2><a name="m4_eval"
+>m4_eval <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Integer arithmetics.</p>
+
+<h2><a name="m4_format"
+>m4_format <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Frontend for printf like formatting.</p>
+
+<h2><a name="m4_ifdef"
+>m4_ifdef <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>A conditional.
+Check whether a macro is defined.</p>
+
+<h2><a name="m4_ifelse"
+>m4_ifelse <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>A conditional.
+Can also be used a block comment or as a switch statement.</p>
+
+<h2><a name="m4_incr"
+>m4_incr <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Increase a number.</p>
+
+<h2><a name="m4_index"
+>m4_index <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>The macro expands to the first index of the second argument in the first argument.</p>
+
+<h2><a name="m4_len"
+>m4_len <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Expand to the length of the first argument.</p>
+
+<h2><a name="m4_substr"
+>m4_substr <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>The macro &#34;substr&#34; extracts substrings from the first argument,
+starting from the index given by the second argument,
+extending for a length given by the third argument.
+If the third argument is missing,
+the substring extends to the end of the first argument.</p>
+
+<h2><a name="m4_syscmd"
+>m4_syscmd <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Execute a shell command and don&#39;t return the return code.</p>
+
+<h2><a name="m4_sysval"
+>m4_sysval <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Return the exit status of the last syscmd.</p>
+
+<h2><a name="m4_undefine"
+>m4_undefine <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Define a user defined macro.</p>
+
+<h2><a name="m4_not_implemented"
+>m4_not_implemented <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>A placeholder for unimplemented functions.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

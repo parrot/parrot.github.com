@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Long option parsing</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Long option parsing</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>docs/dev/longopt.dev &#45; Long option parsing</p>
+
+<h1><a name="SUMMARY"
+>SUMMARY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The files <em lang='und' xml:lang='und'>longopt.c</em> and <em lang='und' xml:lang='und'>longopt.h</em> implement rudimentary long option parsing.
+They have little to do with Parrot itself,
+other than that the parrot binary and imcc both needed long options.
+So this gives it to them.</p>
+
+<h1><a name="USAGE"
+>USAGE <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>To use longopt,
+you first need to #include &#34;parrot/longopt.h&#34; (it comes with parrot/parrot.h,
+too).
+Then you need to set up the options table,
+which is an array of <code lang='und' xml:lang='und'>struct longopt_opt_decl</code>s.</p>
+
+<p>Each element of this array has four components: the short option,
+the option id (generally the same as the short option),
+some flags,
+and finally a list of up to nine long options (all for this one behavior),
+terminated with a NULL pointer.</p>
+
+<p>There is currently one possible flag: OPTION_required_FLAG,
+which states that this option has a required argument.
+Optional arguments are not supported,
+and they should be.</p>
+
+<p>The array should be terminated with an element that has 0 for the option id.
+So,
+for example:</p>
+
+<pre lang='und' xml:lang='und'>    struct longopt_opt_decl options[] = {
+        { &#39;f&#39;, &#39;f&#39;, 0,                    { &#34;&#45;&#45;foo&#34;, NULL } },
+        { &#39;b&#39;, &#39;b&#39;, OPTION_required_FLAG, { &#34;&#45;&#45;bar&#34;, NULL } },
+        {   0, 128, 0,                    { &#34;&#45;&#45;baz&#34;, &#34;&#45;&#45;bazbar&#34;, NULL } },
+        {   0,   0, 0,                    { NULL } }
+    };</pre>
+
+<p>This is a structure that specifies three options.</p>
+
+<p>Some various ways you could give these options on the command line follow:</p>
+
+<pre lang='und' xml:lang='und'>    program &#45;&#45;baz &#45;&#45;bar=arg &#45;&#45;foo somefile
+    program &#45;&#45;bar arg &#45;f somefile
+    program &#45;f &#45;b arg &#45;&#45;bazbar somefile
+    program &#45;barg &#45;f somefile
+    program &#45;fbarg somefile</pre>
+
+<p>So it basically behaves how most GNU programs do. It accepts &#45; as a real argument, and &#45;&#45; as a non argument, but that specifies that only non&#45;flags will follow. Again, just like GNU.</p>
+
+<p>No options can follow a non&#45;option, however. This is because programs that this is written for, like parrot, usually want to pass options given after the file to the file they&#39;re executing.</p>
+
+<h1><a name="BUGS"
+>BUGS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>It won&#39;t complain if you don&#39;t give it an argument to an option expecting one. It will just set the opt_arg pointer to NULL.</p>
+
+<p>It won&#39;t complain if you give an argument to an option not expecting one. It will just ignore it (this only applies to the &#45;&#45;foo=bar style).</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>    Luke Palmer  &#60;fibonaci@babylonia.flatirons.org&#62;</pre>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

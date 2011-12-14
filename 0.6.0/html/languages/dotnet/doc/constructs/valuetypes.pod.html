@@ -1,0 +1,202 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/dotnet.html">.Net</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="Translating_Value_Types"
+>Translating Value Types <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>This document discusses .NET&#39;s value types and how their semantics can be realised on the Parrot platform.</p>
+
+<h2><a name="About_.NET&#39;s_Value_Types"
+>About .NET&#39;s Value Types <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p>The name pretty much says it all &#45; value types are simply types that exhibit value semantics (that is,
+anywhere that,
+say,
+an integer would be copied a value type will almost be copied; think passing,
+assignment etc).</p>
+
+<p>All value types derive directly from System.ValueType and be sealed.
+They can have instance and static fields and methods.
+They can exist in two forms &#45; an unboxed form where they have value semantics and a boxed form where they become an object.
+When calling an instance method on the unboxed form,
+a managed pointer to it is passed.
+When calling an instance method on the boxed form,
+the reference is passed.</p>
+
+<p>There is a special cases of value types,
+System.Enum,
+where there is only a single instance field that must be of an integral or number type.
+These can be treated as integers or numbers on the stack as appropriate.
+This allows the .NET platform to implement them efficiently (and will allow for the same to be achieved in the Parrot translation).</p>
+
+<h2><a name="Parrot&#39;s_Support_For_Value_Types"
+>Parrot&#39;s Support For Value Types <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p>While Parrot provides all the primitives upon which complex value types can be built,
+it doesn&#39;t provide any support in the form that .NET does.</p>
+
+<h2><a name="Translating_Value_Types"
+>Translating Value Types <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="Value_Types_Are_Really_Just_Classes_With_A_Property"
+>Value Types Are Really Just Classes With A Property</a></h3>
+
+<p>Value types have fields (in Parrot terminology,
+attributes) and,
+in their boxed form may have virtual methods called on them.
+Their value semantics aside they are much like objects.
+(The .NET benefit aside that you avoid an additional indirection; trying to emulate that in Parrot would be hard to do,
+thus that is lost in this implementation of the translation.)</p>
+
+<p>There needs to be a way to differentiate between the boxed and unboxed forms,
+even though in the Parrot translation they are essentially the same thing at a data structure level.
+Therefore,
+a PMC property is used to mark an object as &#34;boxed&#34;.
+This is optimized for the common case &#45; that the unboxed form will be being used.</p>
+
+<h3><a name="Initialization"
+>Initialization</a></h3>
+
+<p>As it is completely OK to start using a value type without initialising it.
+This is different from objects.
+Locals that are to hold a value type therefore need to have their value type PMCs initialized.
+For arguments this should be a non&#45;issue &#45; what gets passed will have been initialised.
+For instance fields,
+initialization should be done in the __init method.
+For static fields,
+initialization should be done at the point that static variables are declared.
+For arrays,
+each element needs to be initialized; this feels expensive and a possible improvement may be a special value type array PMC that,
+if the element is empty,
+auto&#45;vivifies it.</p>
+
+<h3><a name="Copy_On_Load_(And_No,_I_Didn&#39;t_Mean_Write_;&#45;))"
+>Copy On Load (And No,
+I Didn&#39;t Mean Write ;&#45;))</a></h3>
+
+<p>When a value type is loaded,
+an instruction to clone it must be emitted directly afterwards.
+These instructions include all loads from locals,
+arguments,
+array elements and fields.
+These should all be marked up with the &#34;load&#34; instruction class and therefore this can be done automatically.
+Note that care is needed with the interaction with LOADREG &#45; the pre_load and post_load without the &#34;need destination register&#34; flag should be allowed to proceed as normal,
+then &#34;pre_op&#34; and &#34;post_op&#34; used to make the value available for the clone.
+This way,
+no additional assistance from the SRM is needed.
+The SRM should not need to know about value types.
+It doesn&#39;t want to.
+I don&#39;t want to.
+Your dog doesn&#39;t want to.
+Nobody wants to.</p>
+
+<p>Note that value types will also have to implement __clone.
+This is because when a value type &#34;references&#34; another value type,
+then it is really a flat data structure,
+but in Parrot&#39;s view it&#39;s a reference to another PMC that will also need to be cloned.</p>
+
+<h3><a name="Calling"
+>Calling</a></h3>
+
+<p>XXX TO DO</p>
+
+<h3><a name="The_Enum_Special_Casae"
+>The Enum Special Casae</a></h3>
+
+<p>XXX TO DO</p>
+
+<h3><a name="Box_and_Unbox_Instructions"
+>Box and Unbox Instructions</a></h3>
+
+<p>Both of these instructions need special cases for enumerations and the built&#45;in raw types.
+For other value types,
+a more general mechanism is required.</p>
+
+<p>Boxing (through the box instruction) requires that the attributes are copied when the boxing takes place.
+This can be done with the clone Parrot instruction,
+and then the &#34;boxed&#34; property needs to be set.
+The box instruction will update the stack type state so reflect that the object on the stack is now an object.</p>
+
+<p>Unboxing does not require any copying of the attributes,
+the operation simply needs to unset the boxed property and update the stack type state.
+However,
+the unbox instruction has an additional subtlety &#45; it places onto the stack not the unboxed value itself,
+but rather a managed pointer to it.
+This is not really a problem,
+just some extra instructions to emit when translating the unbox operation.</p>
+
+<h3><a name="Other_Value_Type_Instructions"
+>Other Value Type Instructions</a></h3>
+
+<h4><a name="initobj"
+>initobj</a></h4>
+
+<p>A PMC __init method can be provided; since it knows the fields it can be generated to do the Right Thing.
+This instruction simply gets the value type using the managed pointer to it,
+then calls its __init v&#45;table method.</p>
+
+<h4><a name="copyobj"
+>copyobj</a></h4>
+
+<p>This is translated to a call to load_pmc on the managed pointer to get the value,
+followed by a clone of that value and finally a call to store_pmc on the destination managed pointer.</p>
+
+<h4><a name="ldobj"
+>ldobj</a></h4>
+
+<p>This is translated as a call to load_pmc on the managed pointer that is followed by a clone.</p>
+
+<h4><a name="sizeof"
+>sizeof</a></h4>
+
+<p>XXX TO DO</p>
+
+<p>Thoughts: as we are using PMCs then any array would be a PMC array so we can just hand back sizeof(void*)?
+Or is that going to cause problems?
+Ugh.</p>
+
+<h4><a name="stobj"
+>stobj</a></h4>
+
+<p>Clone the PMC representing the value type,
+then call store_pmc on the on the managed pointer to actually do the store.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

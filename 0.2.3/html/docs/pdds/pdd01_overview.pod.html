@@ -1,0 +1,217 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>A high&#45;level overview of the Parrot system</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">A high&#45;level overview of the Parrot system</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>docs/pdds/pdd01_overview.pod &#45; A high&#45;level overview of the Parrot system</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This PDD provides a high&#45;level overview of the Parrot system.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Major_components"
+>Major components <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The Parrot system generally looks like this:</p>
+
+<pre lang='und' xml:lang='und'> +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+ |                   Embedding App                    |
+ +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+ |          |            |             |              |
+ |  parser &#60;&#45;&#62; compiler &#60;&#45;&#62; optimizer &#60;&#45;&#62; interpreter |
+ |          |            |             |              |
+ +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+ |                Extensions to Parrot                |
+ +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+ </pre>
+
+<dl>
+<dt><a name="Parser"
+>Parser</a></dt><p class="pad"></p>
+
+<dd>The parser takes source code of some sort and creates a syntax tree of that source.</dd><p class="pad"></p>
+
+<dd>Different high level languages will generally have their own parser modules, implemented in whatever language is most convenient. For instance, we currently intend to write the parser for Perl 6 in Perl 6, to allow for easy extension. Generally there will be one parser per language, though there&#39;s no reason that there can&#39;t be multiple independent parsers.</dd><p class="pad"></p>
+
+<dt><a name="Bytecode_compiler"
+>Bytecode compiler</a></dt><p class="pad"></p>
+
+<dd>The bytecode compiler module takes a syntax tree from the parser and emits an unoptimized stream of bytecode. This code is suitable for passing straight to the interpreter, though it is probably not going to be very fast.</dd><p class="pad"></p>
+
+<dt><a name="Optimizer"
+>Optimizer</a></dt><p class="pad"></p>
+
+<dd>The optimizer module takes the bytecode stream from the compiler and optionally the syntax tree the bytecode was generated from, and optimizes the bytecode.</dd><p class="pad"></p>
+
+<dt><a name="Interpreter"
+>Interpreter</a></dt><p class="pad"></p>
+
+<dd>The interpreter module takes the bytecode stream from either the optimizer or the bytecode compiler and executes it. There must always be at least one interpreter module available for any program that can handle all of Perl, since it&#39;s required for use statements and BEGIN blocks.</dd><p class="pad"></p>
+
+<dd>While there must be at least one interpreter, there may be multiple interpreter modules linked into an executable. This would be the case, for example, for programs that produced Java bytecode, where one of the interpreter modules would take the bytecode stream and spit out Java bytecode instead of interpreting it.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Independent_subsystems"
+>Independent subsystems <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Parrot also has a number of subsystems that are independent of any single module.</p>
+
+<dl>
+<dt><a name="ParrotIO_subsystem"
+>ParrotIO subsystem</a></dt><p class="pad"></p>
+
+<dd>The ParrotIO subsystem provides source&#45; and platform&#45;independent asynchronous I/O to Parrot. The intent is to make Parrot (and any languages that run on it) independent of C&#39;s stdio system. (And good riddance&#45;&#45;it sucks) How this maps to the OS&#39;s underlying I/O code is not generally Parrot&#39;s concern, and a platform isn&#39;t obligated to provide asynchronous I/O.</dd><p class="pad"></p>
+
+<dd>Additionally, the ParrotIO subsystem allows a program to push filters onto an input stream if necessary, to manipulate the data before it is presented to a program.</dd><p class="pad"></p>
+
+<dt><a name="Regex_engine"
+>Regex engine</a></dt><p class="pad"></p>
+
+<dd>By providing a regular expression engine as a separate subsystem of Parrot, we intend to make it easily available to any language running on Parrot (cf. the Perl 5 regex engine, which is intimately linked to the perl core). The job of the regex engine is to turn regexes into objects, and apply those regex objects to strings.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="API_levels"
+>API levels <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="Embedding"
+>Embedding</a></dt><p class="pad"></p>
+
+<dd>The embedding API is the set of calls exported to the embedding application. This is a small, simple set of calls, requiring minimum effort to use.</dd><p class="pad"></p>
+
+<dd>The goal is to provide an interface that a competent programmer who is uninterested in Parrot internals can use to provide access to a Parrot interpreter within another application with very little programming or intellectual effort. Generally it should take less than thirty minutes for a simple interface, though more complete integration will take longer.</dd><p class="pad"></p>
+
+<dd>Backwards binary compatibility at this level is guaranteed across the life of Parrot.</dd><p class="pad"></p>
+
+<dt><a name="Extensions"
+>Extensions</a></dt><p class="pad"></p>
+
+<dd>The extension API is the set of calls exported to Parrot extensions. They provide access to most of the things an extension needs to do, while hiding the implementation details. (So that, for example, we can change the way scalars are stored without having to rewrite, or even recompile, an extension).</dd><p class="pad"></p>
+
+<dd>Binary compatibility is a serious goal, though it may be broken if absolutely necessary.</dd><p class="pad"></p>
+
+<dt><a name="Guts"
+>Guts</a></dt><p class="pad"></p>
+
+<dd>The guts&#45;level APIs are the routines used within a component. These aren&#39;t guaranteed to be stable, and shouldn&#39;t be used outside a component. (For example, an extension to the interpreter shouldn&#39;t call any of the parser&#39;s internal routines).</dd><p class="pad"></p>
+
+<dd>No binary compatibility is guaranteed, and routines here may be changed without notice.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="VARIATIONS_ON_A_THEME"
+>VARIATIONS ON A THEME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>One of the explicit goals of the Parrot project is to generate Java bytecode and .NET code, as well as to run on small devices such as the Palm. The modular nature of the Parrot system makes this reasonably straightforward.</p>
+
+<dl>
+<dt><a name="Parrot_for_small_platforms"
+>Parrot for small platforms</a></dt><p class="pad"></p>
+
+<dd>For small platforms, any parser, compiler, and optimizer modules are replaced with a small bytecode loader module which reads in Parrot bytecode and passes it to the interpreter for execution. Note that the lack of a parser will limit the available functionality in some languages: for instance, in Perl, string eval, do, use, and require will not be available (although loading of precompiled modules via do, use, or require may be supported).</dd><p class="pad"></p>
+
+<dt><a name="Bytecode_compilation"
+>Bytecode compilation</a></dt><p class="pad"></p>
+
+<dd>One straightforward use of the Parrot system is to precompile a program into bytecode and save it for later use. Essentially, we would compile a program as normal, but then simply freeze the bytecode to disk for later loading.</dd><p class="pad"></p>
+
+<dt><a name="Perl_in,_Java_(or_whatever)_out"
+>Perl in, Java (or whatever) out</a></dt><p class="pad"></p>
+
+<dd>The previous section implicitly assumes that we will be emitting Parrot bytecode. However, there are other possibilities: we could translate the bytecode to Java bytecode or .NET code, or even to a native executable. In principle, Parrot could also act as a front end to other modular compilers such as gcc or HP&#39;s GEM compiler system.</dd><p class="pad"></p>
+
+<dt><a name="Standalone_pieces"
+>Standalone pieces</a></dt><p class="pad"></p>
+
+<dd>Each piece of Parrot can, with enough support hidden away (in the form of an interpreter for the parsing module, for example), stand on its own. This means it&#39;s feasible to make the parser, bytecode compiler, optimizer and interpreter separate executables.</dd><p class="pad"></p>
+
+<dd>This allows us to develop pieces independently&#45;&#45;the first version of the Perl 6 parser, for example, can be written mainly in perl 5 using an embedded interpreter. It also means we can have a standalone optimizer which can spend a lot of time groveling over bytecode, far more than you might want to devote to optimizing one&#45;liners or code that&#39;ll run only once or twice.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="CURRENT"
+>CURRENT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>    Maintainer: Dan Sugalski
+    Class: Meta
+    PDD Number: 1
+    Version: 1
+    Status: Developing
+    Last Modified: 12 August 2003
+    PDD Format: 1
+    Language: English</pre>
+
+<h2><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="1.1"
+>1.1</a></dt><p class="pad"></p>
+
+<dd>12 Aug 2003</dd><p class="pad"></p>
+
+<dt><a name="1.0"
+>1.0</a></dt><p class="pad"></p>
+
+<dd>02 Jan 2001</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="CHANGES"
+>CHANGES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="1.1"
+>1.1</a></dt><p class="pad"></p>
+
+<dd>Changed perl to Parrot where appropriate. Rewrote some sections to reflect the language agnostic nature of the project.</dd><p class="pad"></p>
+
+<dt><a name="1.0"
+>1.0</a></dt><p class="pad"></p>
+
+<dd>None. First version</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

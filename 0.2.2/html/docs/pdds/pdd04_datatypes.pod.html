@@ -1,0 +1,329 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot&#39;s internal data types</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot&#39;s internal data types</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>docs/pdds/pdd04_datatypes.pod &#45; Parrot&#39;s internal data types</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This PDD describes Parrot&#39;s internal data types.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This PDD details the basic datatypes that the Parrot core knows how to deal with.
+Three of these (the integer,
+floating point and string datatypes) have no additional semantics.
+The fourth datatype,
+the Parrot Magic Cookie (PMC) acts as the basis for all high level languages running on top of Parrot; only the most basic aspects are described here.</p>
+
+<p>Note that PMC and string internals are volatile and may be changed in the future (although this will become increasingly unlikely as we near v1.0).
+Access from external code to the internals of particular datatypes should be via the extension mechanism (see <em lang='und' xml:lang='und'><a href="pdd11_extending.pod.html">docs/pdds/pdd11_extending.pod</a></em>,
+which has more explicit guarantees of stability.</p>
+
+<h1><a name="IMPLEMENTATION"
+>IMPLEMENTATION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Integer_data_types"
+>Integer data types <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Integer data types are generically referred to as <code lang='und' xml:lang='und'>INT</code>s.
+These are whatever size native integer was chosen at Parrot configuration time.
+The C&#45;level typedefs <code lang='und' xml:lang='und'>INTVAL</code> and <code lang='und' xml:lang='und'>UINTVAL</code> get you a platform&#45;native signed and unsigned integer respectively.</p>
+
+<h2><a name="Floating_point_data_types"
+>Floating point data types <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Floating point data types are generically referred to as <code lang='und' xml:lang='und'>NUM</code>s.
+These are whatever size float was chosen when parrot was configured.
+The C level typedef <code lang='und' xml:lang='und'>FLOATVAL</code> will get you one of these.</p>
+
+<h2><a name="String_data_types"
+>String data types <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Parrot has a single internal string form:</p>
+
+<pre lang='und' xml:lang='und'>    struct parrot_string_t {
+        pobj_t obj;
+        UINTVAL bufused;
+        void *strstart;
+        UINTVAL strlen;
+        const ENCODING *encoding;
+        const CHARTYPE *type;
+        INTVAL language;
+    }</pre>
+
+<p>The fields are:</p>
+
+<dl>
+<dt><a name="obj"
+>obj</a></dt><p class="pad"></p>
+
+<dd>A pointer to a Parrot object, Parrot&#39;s most general internal data type. In this case, it holds the buffer for the string data, the size of the buffer in bytes, and any applicable flags.</dd><p class="pad"></p>
+
+<dt><a name="bufused"
+>bufused</a></dt><p class="pad"></p>
+
+<dd>The amount of the buffer currently in use, in bytes.</dd><p class="pad"></p>
+
+<dt><a name="strstart"
+>strstart</a></dt><p class="pad"></p>
+
+<dd>A pointer to the beginning of the actual string (which may not be positioned at the start of the buffer).</dd><p class="pad"></p>
+
+<dt><a name="strlen"
+>strlen</a></dt><p class="pad"></p>
+
+<dd>The length of the string, in characters.</dd><p class="pad"></p>
+
+<dt><a name="encoding"
+>encoding</a></dt><p class="pad"></p>
+
+<dd>How the data is encoded (e.g. fixed 8&#45;bit characters, UTF&#45;8, or UTF&#45;32). Note that this specifies encoding only &#45;&#45; it&#39;s valid to encode EBCDIC characters with the UTF&#45;8 algorithm. Silly, but valid.</dd><p class="pad"></p>
+
+<dd>The ENCODING structure specifies the encoding (by index number and by name, for ease of lookup), the maximum number of bytes that a single character will occupy in that encoding, as well as functions for manipulating strings with that encoding.</dd><p class="pad"></p>
+
+<dt><a name="type"
+>type</a></dt><p class="pad"></p>
+
+<dd>What sort of string data is in the buffer, for example ASCII, EBCDIC, or Unicode.</dd><p class="pad"></p>
+
+<dd>The CHARTYPE structure specifies the character type (by index number and by name) and provides functions for transcoding to and from that character type.</dd><p class="pad"></p>
+
+<dt><a name="language"
+>language</a></dt><p class="pad"></p>
+
+<dd>This specifies the language corresponding to the string. This is to allow for locale&#45;based data to be attached to strings. To give an example of the use of this: strings in German may not sort in the same way as strings in French, even when both types use the Latin&#45;1 charset and are encoded in UTF&#45;8.</dd><p class="pad"></p>
+
+<dd>Note that language&#45;agnostic utilities are at liberty to ignore this entry.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Parrot_Magic_Cookies_(PMCs)"
+>Parrot Magic Cookies (PMCs) <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Parrot Magic Cookies, or PMCs, are the last of Parrot&#39;s basic datatypes, but are also potentially the most important. Their basic structure is as follows. All PMCs have the form:</p>
+
+<pre lang='und' xml:lang='und'>    struct PMC {
+        pobj_t obj;
+        VTABLE *vtable;
+ #if ! PMC_DATA_IN_EXT
+        DPOINTER *data;
+ #endif
+        struct PMC_EXT *pmc_ext;
+    };</pre>
+
+<p>where <code lang='und' xml:lang='und'>obj</code> is a pointer to an <code lang='und' xml:lang='und'>pobj_t</code> structure:</p>
+
+<pre lang='und' xml:lang='und'>    typedef struct pobj_t {
+        UnionVal u;
+        Parrot_UInt flags;
+ #if ! DISABLE_GC_DEBUG
+        UINTVAL _pobj_version;
+ #endif
+    } pobj_t;</pre>
+
+<p>and where:</p>
+
+<pre lang='und' xml:lang='und'>    typedef union UnionVal {
+        struct {
+            void * _bufstart;
+            size_t _buflen;
+        } _b;
+        struct {
+            DPOINTER* _struct_val;
+            PMC* _pmc_val;
+        } _ptrs;
+        INTVAL _int_val;
+        FLOATVAL _num_val;
+        struct parrot_string_t * _string_val;
+    } UnionVal;</pre>
+
+<p><code lang='und' xml:lang='und'>u</code> holds data associated with the PMC. This can be in the form of an integer value, a floating point value, a string value, or a pointer to other data. <code lang='und' xml:lang='und'>u</code> may be empty, since the PMC structure also provides a more general data pointer, but is useful for PMCs which hold only a single piece of data (e.g. <code lang='und' xml:lang='und'>PerlInts</code>).</p>
+
+<p><code lang='und' xml:lang='und'>flags</code> holds a set of flags associated with the PMC; these are documented in <em lang='und' xml:lang='und'>include/parrot/pobj.h</em>, and are generally only used within the Parrot internals.</p>
+
+<p><code lang='und' xml:lang='und'>_pobj_version</code> is only used for debugging Parrot&#39;s garbage collector. It is documented elsewhere (well, it will be once we get around to doing that...).</p>
+
+<p><code lang='und' xml:lang='und'>vtable</code> holds a pointer to the <b>vtable</b> associated with the PMC. This points to a set of functions, with interfaces described in <em lang='und' xml:lang='und'><a href="pdd02_vtables.pod.html">docs/pdds/pdd02_vtables.pod</a></em> that implement the basic behaviour of the PMC (i.e. how it behaves under addition, subtraction, cloning etc.)</p>
+
+<p><code lang='und' xml:lang='und'>data</code> (if present) holds a pointer to any additional data associated with the PMC. This may be NULL.</p>
+
+<p><code lang='und' xml:lang='und'>pmc_ext</code> points to an extended PMC structure. This has the form:</p>
+
+<pre lang='und' xml:lang='und'>    struct PMC_EXT {
+ #if PMC_DATA_IN_EXT
+        DPOINTER *data;
+ #endif
+        PMC *_metadata;
+        struct _Sync *_synchronize;
+        PMC *_next_for_GC;
+    };</pre>
+
+<p><code lang='und' xml:lang='und'>data</code> is a generic data pointer, as described above.</p>
+
+<p><code lang='und' xml:lang='und'>_metadata</code> holds internal PMC metadata. The specification for this has not yet been finalized.</p>
+
+<p><code lang='und' xml:lang='und'>_synchronize</code> is for access synchronization between shared PMCs.</p>
+
+<p><code lang='und' xml:lang='und'>_next_for_GC</code> determines the next PMC in the &#39;used&#39; list during dead object detection in the GC.</p>
+
+<p>PMCs are not required to have a <code lang='und' xml:lang='und'>PMC_EXT</code> structure (i.e. <code lang='und' xml:lang='und'>pmc_ext</code> can be null).</p>
+
+<p>PMCs are used to implement the basic data types of the high level languages running on top of Parrot. For instance, a Perl 5 <code lang='und' xml:lang='und'>SV</code> will map onto one (or more) types of PMC, while particular Python datatypes will map onto different types of PMC.</p>
+
+<h1><a name="ATTACHMENTS"
+>ATTACHMENTS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>None.</p>
+
+<h1><a name="REFERENCES"
+>REFERENCES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The perl modules Math::BigInt and Math::BigFloat. Alex Gough&#39;s suggestions for bigint/bignum implementation, outlined in <em lang='und' xml:lang='und'><a href="pdd14_bignum.pod.html">docs/pdds/pdd14_bignum.pod</a></em>. The Unicode standard at <a href="http://www.unicode.org.">http://www.unicode.org.</a></p>
+
+<h1><a name="GLOSSARY"
+>GLOSSARY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Type"
+>Type</a></dt><p class="pad"></p>
+
+<dd>Type refers to a basic Parrot data type. There are four such: integers, floating point numbers (often just numbers), strings and Parrot Magic Cookies (PMCs).</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>1.4</p>
+
+<h2><a name="CURRENT"
+>CURRENT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>     Maintainer: Dan Sugalski &#60;dan@sidhe.org&#62;
+     Class: Internals
+     PDD Number: 4
+     Version: 1.5
+     Status: Developing
+     Last Modified: 11 June 2005
+     PDD Format: 1
+     Language: English</pre>
+
+<h2><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="Version_1.5,_11_June_2005"
+>Version 1.5, 11 June 2005</a></dt><p class="pad"></p>
+
+<dt><a name="Version_1.4,_20_February_2004"
+>Version 1.4, 20 February 2004</a></dt><p class="pad"></p>
+
+<dt><a name="Version_1.3,_2_July_2001"
+>Version 1.3, 2 July 2001</a></dt><p class="pad"></p>
+
+<dt><a name="Version_1.2,_2_July_2001"
+>Version 1.2, 2 July 2001</a></dt><p class="pad"></p>
+
+<dt><a name="Version_1.1,_2_March_2001"
+>Version 1.1, 2 March 2001</a></dt><p class="pad"></p>
+
+<dt><a name="Version_1,_1_March_2001"
+>Version 1, 1 March 2001</a></dt><p class="pad"></p>
+</dl>
+
+<h1><a name="CHANGES"
+>CHANGES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Version_1.5"
+>Version 1.5</a></dt><p class="pad"></p>
+
+<dd>Removed BigInt and BigNum from the definition of I* and N* registers &#45;&#45; according to Leo they are now always PMCs, never register types of their own.</dd><p class="pad"></p>
+
+<dt><a name="Version_1.4"
+>Version 1.4</a></dt><p class="pad"></p>
+
+<dd>Document basic PMC internals. Make clear the fact that the bigint/bignum description is still provisional. Other minor fixups to make the documentation match reality.</dd><p class="pad"></p>
+
+<dt><a name="Version_1.3"
+>Version 1.3</a></dt><p class="pad"></p>
+
+<dd>Fixed some silly typos and dropped phrases.</dd><p class="pad"></p>
+
+<dd>Took all the underscores out of the field names.</dd><p class="pad"></p>
+
+<dt><a name="Version_1.2"
+>Version 1.2</a></dt><p class="pad"></p>
+
+<dd>The string header format has changed some to allow for type tagging. The flags information for strings has changed as well.</dd><p class="pad"></p>
+
+<dt><a name="Version_1.1"
+>Version 1.1</a></dt><p class="pad"></p>
+
+<dd>INT and NUM are now concepts rather than data structures, as making them data structures was a Bad Idea.</dd><p class="pad"></p>
+
+<dt><a name="Version_1"
+>Version 1</a></dt><p class="pad"></p>
+
+<dd>None. First version</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="POD_ERRORS"
+>POD ERRORS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Hey! <b>The above document had some coding errors, which are explained below:</b></p>
+
+<dl>
+<dt><a name="Around_line_35:"
+>Around line 35:</a></dt><p class="pad"></p>
+
+<dd>=back without =over</dd><p class="pad"></p>
+
+<dt><a name="Around_line_43:"
+>Around line 43:</a></dt><p class="pad"></p>
+
+<dd>=back without =over</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

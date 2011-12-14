@@ -1,0 +1,82 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>CPU&#45;dependent mark/sweep functions</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Contents</a> &raquo; <a href="../../../html/c.html">C</a> &raquo; CPU&#45;dependent mark/sweep functions
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/gc/system.c &#45; CPU&#45;dependent mark/sweep functions</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>These functions setup a trace of the current processor context and the system stack.
+The trace is set up here in <code>trace_system_areas</code>.
+This function gets the current processor context and either traces it directly or stores it on the system stack.
+<code>trace_system_stack</code> sets up a trace of the system stack using two marker addresses as boundaries.
+The code to actually perform the trace of a memory block between two boundaries is located in <code>src/gc/api.c:trace_mem_block</code>.</p>
+
+<p>TT #273: This file needs to be cleaned up significantly.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="void_trace_system_areas"
+><b><code>void trace_system_areas</b></code></a></dt>
+Initiates a trace of the system stack,
+looking for pointers which are being used by functions in the call chain,
+but which might not be marked as alive in any other way.
+Setting the trace up,
+which involves storing the processor context onto the stack,
+is highly system dependent.
+However,
+once stored,
+tracing the stack is very straightforward.
+<dt><a name="static_void_trace_system_stack"
+><b><code>static void trace_system_stack</b></code></a></dt>
+Traces the memory block starting at <code>interp&#45;&#62;lo_var_ptr</code>.
+This should be the address of a local variable which has been created on the stack early in the interpreter&#39;s lifecycle.
+We trace until the address of another local stack variable in this function,
+which should be at the &#34;top&#34; of the stack.
+<dt><a name="static_size_t_find_common_mask"
+><b><code>static size_t find_common_mask</b></code></a></dt>
+Finds a mask covering the longest common bit&#45;prefix of <code>val1</code> and <code>val2</code>.
+<dt><a name="void_trace_mem_block"
+><b><code>void trace_mem_block</b></code></a></dt>
+Traces the memory block between <code>lo_var_ptr</code> and <code>hi_var_ptr</code>.
+Attempt to find pointers to PObjs or buffers,
+and mark them as &#34;alive&#34; if found.
+See src/cpu_dep.c for more information about tracing memory areas.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em><a href="api.c.html">src/gc/api.c</a></em> and <em>include/parrot/gc_api.h</em>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Perl 6 Control functions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Perl 6 Control functions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/perl6.html">Perl6</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>src/builtins/control.pir &#45; Perl 6 Control functions</p>
+
+<h1><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="return"
+>return</a></dt><p class="pad"></p>
+
+<dd>Create a return exception.
+(Only handles 1 return value for the moment &#45;&#45; we&#39;ll do more complex handling a bit later.)</dd><p class="pad"></p>
+
+<dt><a name="fail"
+>fail</a></dt><p class="pad"></p>
+
+<dt><a name="take"
+>take</a></dt><p class="pad"></p>
+
+<dt><a name="gather"
+>gather</a></dt><p class="pad"></p>
+
+<dt><a name="next"
+>next</a></dt><p class="pad"></p>
+
+<dt><a name="term:..."
+>term:...</a></dt><p class="pad"></p>
+
+<dt><a name="die"
+>die</a></dt><p class="pad"></p>
+
+<dt><a name="exit"
+>exit</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> multi Control::Basic::exit ( Int $status = 0)</pre>
+
+<dd>Stops all program execution, and returns <code lang='und' xml:lang='und'>$status</code> to the calling environment.</dd><p class="pad"></p>
+
+<dt><a name="nothing"
+>nothing</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> multi Control::Basic::nothing ()</pre>
+
+<dd>No operation. Literally does nothing.</dd><p class="pad"></p>
+
+<dt><a name="sleep"
+>sleep</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> our Num multi Control::Basic::sleep ( Num $for = Inf )</pre>
+
+<dd>Attempt to sleep for up to <code lang='und' xml:lang='und'>$for</code> seconds. Implementations are obligated to support subsecond resolutions if that is at all possible.</dd><p class="pad"></p>
+
+<dd>[Q: what about multithreading? do we just sleep this thread? need to coordinate with entire async model. &#45;law]</dd><p class="pad"></p>
+
+<dt><a name="time"
+>time</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> our Time sub Control::Basic::time()</pre>
+
+<dd>XXX Should be returning a (currently unspec&#39;d, it seems) Time object that numifies to a floating point value giving the number of seconds and fractional seconds since 2000. At the moment, just handing back what the Parrot time opcode does, since that doesn&#39;t give something with a consistent epoch. Mails sent about both issues, will fix when answers come back.</dd><p class="pad"></p>
+
+<dt><a name="eval"
+>eval</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> multi Control::Basic::eval ( Str $code, Grammar :$lang = CALLER::&#60;$?PARSER&#62;)</pre>
+
+<dd>Execute <code lang='und' xml:lang='und'>$code</code> as if it were code written in <code lang='und' xml:lang='und'>$lang</code>. The default is the language in effect at the exact location of the eval call.</dd><p class="pad"></p>
+
+<dd>Returns whatever <code lang='und' xml:lang='und'>$code</code> returns, or undef on error. Sets caller&#39;s <code lang='und' xml:lang='und'>$!</code> on error.</dd><p class="pad"></p>
+
+<dt><a name="warn"
+>warn</a></dt><p class="pad"></p>
+</dl>
+
+<h1><a name="TODO:_Functions"
+>TODO: Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="evalfile"
+>evalfile</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> multi Control::Basic::evalfile (Str $filename : Grammar :$lang = Perl6)</pre>
+
+<dd>Behaves like, and replaces Perl 5 <code lang='und' xml:lang='und'>do EXPR</code>, with optional <code lang='und' xml:lang='und'>$lang</code> support.</dd><p class="pad"></p>
+
+<dt><a name="fail"
+>fail</a></dt><p class="pad"></p>
+
+<dd><b>TODO</b>: Research the exception handling system.</dd><p class="pad"></p>
+
+<dt><a name="warn"
+>warn</a></dt><p class="pad"></p>
+
+<dd><b>TODO</b>: Throw a resumable exception when Rakudo supports top&#45;level exception handlers. Note that the default exception handler should print the message of this exception to standard error.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

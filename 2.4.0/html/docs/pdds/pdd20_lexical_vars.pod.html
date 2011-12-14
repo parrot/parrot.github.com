@@ -1,0 +1,320 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PDD 20: Lexical Variables</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; PDD 20: Lexical Variables
+                </div>
+
+<h1><a name="PDD_20:_Lexical_Variables"
+>PDD 20: Lexical Variables</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>This document defines the requirements and implementation strategy for lexically scoped variables.</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Synopsis"
+>Synopsis</a></h2>
+<pre>    .sub 'foo'
+        .lex "$a", $P0
+        $P1 = new 'Integer'
+        $P1 = 13013
+        store_lex "$a", $P1
+        print $P0            # prints 13013
+    .end
+
+    .sub 'bar' :outer('foo')
+        $P0 = find_lex "$a"
+    .end
+
+    .sub 'baz'
+        $P0 = find_lex "$a"  # guaranteed to fail: no .lex, no :outer()
+    .end
+
+    .sub 'corge'
+        print "hi"
+    .end # no .lex and no :lex, thus: no LexInfo, no LexPad
+
+
+    # Lexical behavior varies by HLL.  For example,
+    # Tcl's lexicals are not declared at compile time.
+
+    .HLL "Tcl"
+    .loadlib 'tcl_group'
+
+    .sub grault :lex         # without ":lex", Tcl subs have no lexicals
+        $P0 = find_lex "x"   # FAILS
+
+        box $P0, 42          # really TclInteger
+        store_lex "x", $P0   # creates lexical "x"
+
+        $P0 = find_lex "x"   # SUCCEEDS
+    .end
+</pre>
+<h2><a name="Description"
+>Description</a></h2>
+
+<p>For Parrot purposes,
+&#34;lexical variables&#34; are variables stored in a hash (or hash&#45;like) PMC associated with a subroutine invocation,
+a.k.a.
+a call frame.</p>
+
+<h3><a name="Conceptual_Model"
+>Conceptual Model</a></h3>
+
+<h4><a name="LexInfo_PMC"
+>LexInfo PMC</a></h4>
+
+<p>LexInfo PMCs contain what is known at compile time about lexical variables of a given subroutine: their names (for most languages),
+perhaps their types,
+etc.
+They are the interface through which the PIR compiler stores and validates compile&#45;time information about lexical variables.</p>
+
+<p>At compile time,
+each newly created Subroutine (or Subroutine derivative,
+e.g.
+Closure) that uses lexical variables will be populated with a PMC of HLL&#45;mapped type LexInfo.
+(Note that this type may actually be Null in some HLLs,
+e.g.
+Tcl.)</p>
+
+<h4><a name="LexPad_PMC"
+>LexPad PMC</a></h4>
+
+<p>LexPads hold what becomes known at run time about lexical variables of a given invocation of a given subroutine: their values,
+of course,
+and for some languages (e.g.
+Tcl) their names.
+They are the interface through which the Parrot runtime stores and fetches lexical variables.</p>
+
+<p>At run time,
+each call frame for a Sub (or Sub derivative) that uses lexical variables will be populated with a PMC of HLL&#45;mapped type LexPad.
+Note that call frames for subroutines without lexical variables will omit the LexPad.</p>
+
+<p>From the interface perspective,
+LexPads are basically Hashes,
+with strings as keys and PMCs as values.
+They extend the basic Hash interface with specialized initialization (requiring a reference to an associated LexInfo) and the query METHOD <code>get_lexinfo()</code> (to return it).</p>
+
+<p>LexPad keys are unique.
+Therefore,
+in each subroutine,
+there can be only one lexical variable with a given name.</p>
+
+<p>In the normal use case,
+LexPads are not exposed to user code (not for any special reason; it just worked out that way).
+Instead,
+specialized opcodes implement the common use cases.
+Specialized opcodes are particularly a Good Idea here because most lexical usage involves searching more than one LexPad,
+so a single LexPad reference wouldn&#39;t be as useful as one might expect.
+And,
+of course,
+opcodes can cheat ...
+er,
+can be written in optimized C.
+:&#45;)</p>
+
+<h4><a name="Nested_Subroutines_Have_Outies;_the_&#34;:outer&#34;_attribute"
+>Nested Subroutines Have Outies; the &#34;:outer&#34; attribute</a></h4>
+
+<p>For HLLs that support nested subroutines,
+Parrot provides a way to denote that a given subroutine is conceptually &#34;inside&#34; another.
+Lookup for lexical variables starts at the current call frame and proceeds through call frames of the &#34;outer&#34; subroutines.
+The specific meaning of &#34;outer&#34; is defined below,
+but it&#39;s designed to support the common linguistic structure of nested subroutines where inner subs refer to lexical variables contained in outer blocks.</p>
+
+<p>Note that &#34;outer&#34; and &#34;caller&#34; are very different concepts!
+For example,
+given the Perl 6 code:</p>
+
+<pre>   sub foo {
+      my $a = 1;
+      my sub a { eval &#39;$a&#39; }
+      return &#38;a;
+   }</pre>
+
+<p>The <code>&#38;foo</code> subroutine is the outer subroutine of <code>&#38;a</code>, but it is not the caller of <code>&#38;a</code>.</p>
+
+<p>In the above example, the definition of the Parrot subroutine implementing &#38;a must include a notation that it is textually enclosed within <code>&#38;foo</code>. This is normally a static attribute of a Sub, but can be changed dynamically using the <code>set_outer</code> method.</p>
+<pre>    .sub 'a' :outer('foo')
+       # ...
+    .end
+</pre>
+<p>The value of <code>:outer</code> identifies a subroutine by its <code>:subid</code> flag; subroutine definitions that do not have an explicit <code>:subid</code> flag have the name of the Sub as the <code>:subid</code>.</p>
+
+<p>Note that the outer sub <b>must</b> be compiled first; in other words, &#34;foo&#34; must appear before &#34;a&#34; in the source text. Compilers can easily do this via preorder traversal of lexically&#45;nested subs.</p>
+
+<h4><a name="Capturing_the_lexical_environment"
+>Capturing the lexical environment</a></h4>
+
+<p>The <code>capture_lex</code> opcode is used to attach the current lexical environment to any subroutines that are lexically nested within the current sub. This is normally done either when the outer sub is entered or just prior to invoking the inner sub.</p>
+<pre>    .sub 'a'
+        .lex '$a', $P0
+        # ...
+        # capture current lexical environment for inner sub 'foo'
+        .const 'Sub' $P0 = 'foo'
+        capture_lex $P0
+        # invoke inner sub 'foo'
+        'foo'()
+    .end
+</pre>
+<p>The <code>newclosure</code> opcode will clone a subroutine and then perform <code>capture_lex</code> on the newly cloned sub.</p>
+<pre>    .sub 'a'
+        .lex '$a', $P0
+
+        # invoke inner sub 'foo'
+        .const 'Sub' $P0 = 'foo'
+        $P1 = newclosure $P0
+        $P1()
+    .end
+</pre>
+<h4><a name="Lexical_Lookup_Algorithm"
+>Lexical Lookup Algorithm</a></h4>
+
+<p>When a subroutine is invoked, its newly created call frame points to the outer sub&#39;s context that was established for the sub by the <code>capture_lex</code> opcode above. When Parrot is asked to access a lexical variable named &#39;$a&#39; (e.g., via the <code>find_lex</code> opcode), Parrot starts with the current call frame and follows the chain of outer lexical call frames until it finds one containing the requested lexical. If none of the outer lexical environments define such a variable, an exception is thrown.</p>
+
+<h4><a name="Autoclose_semantics"
+>Autoclose semantics</a></h4>
+
+<p>If an inner subroutine is invoked that hasn&#39;t had a <code>capture_lex</code> operation performed on it, then Parrot will attempt to dynamically perform the lexical capture using the call from from its outer sub. If the outer sub doesn&#39;t have a call frame, as might occur when jumping directly to the inner sub without previously invoking the outer, then Parrot creates a dummy call frame for the outer sub to be used for its inner lexical sub captures (until the outer sub is invoked, at which point it receives a new call frame).</p>
+
+<p>Note that the dummy call frame created for the outer sub will be attached to its outer call frame, which may require creating dummy call frames for additional outer contexts (until an invoked outer sub is located, or the top&#45;level outer lexical context is reached).</p>
+
+<h4><a name="LexPad_and_LexInfo_are_optional;_the_&#34;:lex&#34;_attribute"
+>LexPad and LexInfo are optional; the &#34;:lex&#34; attribute</a></h4>
+
+<p>Parrot does not assume that every subroutine needs lexical variables. Therefore, Parrot defaults to <i>not</i> creating LexInfo or LexPad PMCs. It only creates a LexInfo when it first encounters a &#34;.lex&#34; directive in the subroutine. If no such directive is found, Parrot does not create a LexInfo for it at compile time, and therefore cannot create a LexPad for it at run time.</p>
+
+<p>However, an absence of &#34;.lex&#34; directives is normal for some languages (e.g. Tcl) which lack compile&#45;time knowledge of lexicals. For these languages, the additional Subroutine attribute &#34;:lex&#34; should be specified. It forces Parrot to create LexInfo and LexPads.</p>
+
+<h4><a name="HLL_Type_Mapping"
+>HLL Type Mapping</a></h4>
+
+<p>The implementation of lexical variables in the PIR compiler depends on two new PMCs: LexPad and LexInfo. However, the default Parrot LexPad and LexInfo PMCs will not meet the needs of all languages. They should suit Perl 6, for example, but not Tcl.</p>
+
+<p>Therefore, it is expected that HLLs will map the LexPad and LexInfo types to something more appropriate (e.g. TclLexPad and TclLexInfo). That mapping will automatically occur when the appropriate &#34;.HLL&#34; directive is in force.</p>
+
+<p>Using Tcl as an extreme example: TclLexPad will likely be a thin veneer on PMCHash. Meanwhile, TclLexInfo will likely map to Null: Tcl provides no reliable compile&#45;time information about lexicals; without any compile&#45;time information to store, there&#39;s no need for TclLexInfo to do anything interesting.</p>
+
+<h3><a name="Required_Interfaces:_LexPad,_LexInfo"
+>Required Interfaces: LexPad, LexInfo</a></h3>
+
+<h4><a name="LexInfo"
+>LexInfo</a></h4>
+
+<p>Below are the standard LexInfo methods that all HLL LexInfo PMCs may support. Each LexInfo PMC should only define the methods that it can usefully implement, so the compiler can use method lookup failure to generate useful diagnostics (e.g. &#34;register aliasing not supported by Tcl lexicals&#34;).</p>
+
+<p>Each language&#39;s LexInfo will implement methods that are helpful to that language&#39;s LexPad. In the extreme case, LexInfo can be Null &#45;&#45; but if it is, the given HLL should not generate any &#34;.lex*&#34; directives.</p>
+
+<dl>
+<dt><a name="void_init_pmc(PMC_*sub)"
+><b>void init_pmc(PMC *sub)</b></a></dt>
+Called exactly once.
+<dt><a name="PMC_*get_sub()"
+><b>PMC *get_sub()</b></a></dt>
+Return the associated Subroutine.
+<dt><a name="void_declare_lex_preg(STRING_*name,_INTVAL_preg)"
+><b>void declare_lex_preg(STRING *name, INTVAL preg)</b></a></dt>
+Declare a lexical variable that is an alias for a PMC register. The PIR compiler calls this method in response to a <code>.lex STRING, PREG</code> directive. For example, given this preamble:<pre>    .lex "$a", $P0
+    $P1 = new 'Integer'
+</pre>These two opcodes have an identical effect:<pre>    $P0 = $P1
+    store_lex "$a", $P1
+</pre>And these two opcodes also have an identical effect:<pre>    $P1 = $P0
+    $P1 = find_lex "$a"
+</pre></dl>
+
+<h4><a name="LexPad"
+>LexPad</a></h4>
+
+<p>LexPads start by implementing the Hash interface: variable names are string keys, and variable values are PMCs.</p>
+
+<p>In addition, LexPads must implement the following methods:</p>
+
+<dl>
+<dt><a name="void_init_pmc(PMC_*lexinfo)"
+><b>void init_pmc(PMC *lexinfo)</b></a></dt>
+Called exactly once. Note that Parrot guarantees that this method will be called after the new Context object is made current. It is recommended that any LexPad that aliases registers take a pointer to the current Context at <code>init_pmc()</code> time.
+<dt><a name="PMC_*get_lexinfo()"
+><b>PMC *get_lexinfo()</b></a></dt>
+Return the associated LexInfo.</dl>
+
+<h3><a name="Default_Parrot_LexPad_and_LexInfo"
+>Default Parrot LexPad and LexInfo</a></h3>
+
+<p>The default LexInfo supports lexicals only as aliases for PMC registers. It therefore implements <code>declare_lex_preg()</code>. (Internally, it could be a Hash of some kind, where keys are String variable names and values are integer register numbers.)</p>
+
+<p>The default LexPad (like all LexPads) implements the Hash interface. When asked to look up a variable, it finds the corresponding register number by querying its associated LexInfo. It then gets or sets the given numbered register in its associated Parrot Context structure.</p>
+
+<h3><a name="Introspection_without_Call_Frame_PMCs"
+>Introspection without Call Frame PMCs</a></h3>
+
+<p>Due to implementation concerns, it will not be until late in Parrot development &#45;&#45; if ever &#45;&#45; that call frames will be available to user code as PMCs. Until then, the interpreter and continuation PMCs will be the interface to use to get frame info.</p>
+
+<p>For example, to get the immediate caller&#39;s LexPad, use:</p>
+<pre>    $P0 = getinterp
+    $P1 = $P0["lexpad"; 1]
+</pre>
+<p>To access a sub&#39;s <code>:outer</code> subroutine, use the <code>get_outer()</code> method:</p>
+<pre>    .include "interpinfo.pasm"
+    interpinfo $P1, .INTERPINFO_CURRENT_SUB
+    $P2 = $P1."get_outer"()
+</pre>
+<p>Here, <code>$P1</code> contains information on the current subroutine. <code>$P2</code> will contain <code>$P1</code>&#39;s outer subroutine.</p>
+
+<p>To get <code>$P2</code>&#39;s outer subroutine (if any), the same method can be used on <code>$P2</code> itself:</p>
+<pre>    $P3 = $P2."get_outer"()
+</pre>
+<p>Using the <code>interpinfo</code> instruction is one way to do it. Another way is this:</p>
+<pre>    $P0 = getinterp
+    $P1 = $P0["outer"; "sub"]
+    $P2 = $P0["outer"; "sub"; 2] # get the outer sub of the current's outer
+                                 # subroutine
+</pre>
+<p>It is also possible to get the <code>:outer</code> sub&#39;s LexPad, as above:</p>
+<pre>    $P0 = getinterp
+    $P1 = $P0["outer"; "lexpad"]
+</pre>
+<p>See [1] for an example.</p>
+
+<p>It&#39;s likely that this interface will continue to be available even once call frames become visible as PMCs.</p>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<p>TK.</p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p><em><a href="../../t/op/lexicals.t.html">t/op/lexicals.t</a></em></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

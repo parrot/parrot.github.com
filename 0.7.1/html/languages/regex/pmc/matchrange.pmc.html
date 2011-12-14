@@ -1,0 +1,239 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>MatchRange Numbers PMC Class</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">MatchRange Numbers PMC Class</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/regex.html">Regex</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>src/dynpmc/matchrange.pmc &#45; MatchRange Numbers PMC Class</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p><code lang='und' xml:lang='und'>MatchRange</code> provides a representation of regular expression matches,
+by describing the starting and ending offsets within the input string.
+This PMC only provides the start and end values; the Match PMC is responsible for interpreting these values appropriately (namely,
+as a substring within the input string.)</p>
+
+<p>This really probably shouldn&#39;t be a top&#45;level class; it probably ought to inherit from &#34;IntPair&#34; or something like that.
+(But it can&#39;t just *be* &#34;IntPair&#34;,
+because the Match PMC uses the type to figure out whether it has a regular variable or something that it needs to interpret as a string given its value and the input string.)</p>
+
+<p>This PMC is used by the languages/regex rule compiler,
+together with the Match PMC.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_INTVAL*_matchrange_locate_keyed_int(Interp*_interp,_PMC*_self,_STRING_*key)"
+><b><code lang='und' xml:lang='und'>static INTVAL *matchrange_locate_keyed_int(Interp *interp, PMC *self, STRING *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Interpret the string <code lang='und' xml:lang='und'>key</code>; valid keys are <code lang='und' xml:lang='und'>start</code> and <code lang='und' xml:lang='und'>end</code>,
+representing the offsets of the first and last characters of the matching range.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_class_init()"
+><b><code lang='und' xml:lang='und'>void class_init()</b></code></a></dt><p class="pad"></p>
+
+<dd>Class initialization.
+Caches the type id of the MatchRange PMC,
+because it will be used frequently here.</dd><p class="pad"></p>
+
+<dd>*/</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    void class_init() {
+        /* class_init_code */
+        if (pass) {
+            MatchRange_type_id = entry;
+        }
+    }</pre>
+
+<dd>/*</dd><p class="pad"></p>
+
+<dt><a name="void_init()"
+><b><code lang='und' xml:lang='und'>void init()</b></code></a></dt><p class="pad"></p>
+
+<dd>Initializes the matchrange with [&#45;2,&#45;2].</dd><p class="pad"></p>
+
+<dt><a name="void_init_pmc(PMC*_initializer)"
+><b><code lang='und' xml:lang='und'>void init_pmc(PMC *initializer)</b></code></a></dt><p class="pad"></p>
+
+<dd>Initializes the matchrange number with the specified values. (not implemented)</dd><p class="pad"></p>
+
+<dt><a name="void_destroy()"
+><b><code lang='und' xml:lang='und'>void destroy()</b></code></a></dt><p class="pad"></p>
+
+<dd>Cleans up.</dd><p class="pad"></p>
+
+<dt><a name="PMC*_clone()"
+><b><code lang='und' xml:lang='und'>PMC *clone()</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates an identical copy of the matchrange number.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_bool()"
+><b><code lang='und' xml:lang='und'>INTVAL get_bool()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns true if the match range is defined.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_integer_keyed(PMC*_key)"
+><b><code lang='und' xml:lang='und'>INTVAL get_integer_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="INTVAL_get_integer_keyed_str(STRING*_key)"
+><b><code lang='und' xml:lang='und'>INTVAL get_integer_keyed_str(STRING *key)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="FLOATVAL_get_number_keyed(PMC*_key)"
+><b><code lang='und' xml:lang='und'>FLOATVAL get_number_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="FLOATVAL_get_number_keyed_str(STRING*_key)"
+><b><code lang='und' xml:lang='und'>FLOATVAL get_number_keyed_str(STRING *key)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="PMC*_get_pmc_keyed(PMC*_key)"
+><b><code lang='und' xml:lang='und'>PMC *get_pmc_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="PMC*_get_pmc_keyed_str(STRING*_key)"
+><b><code lang='und' xml:lang='und'>PMC *get_pmc_keyed_str(STRING *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the requested number (real part for <code lang='und' xml:lang='und'>real</code> and imaginary for <code lang='und' xml:lang='und'>imag</code>).</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_integer_keyed_int(INTVAL_key)"
+><b><code lang='und' xml:lang='und'>INTVAL get_integer_keyed_int(INTVAL key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Quick hack to emulate get_start() and get_end():</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  key = 0 ... get start offset
+  key = 1 ... get end offset</pre>
+
+<dt><a name="void_set_integer_keyed_int(INTVAL_key,_INTVAL_v)"
+><b><code lang='und' xml:lang='und'>void set_integer_keyed_int(INTVAL key, INTVAL v)</b></code></a></dt><p class="pad"></p>
+
+<dd>Set start or end depending on key</dd><p class="pad"></p>
+
+<dd>*/</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    INTVAL get_integer_keyed_int(INTVAL key) {
+        switch (key) {
+            case 0:
+                return RANGE_START(SELF);
+            case 1:
+                return RANGE_END(SELF);
+            default:
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                    &#34;MatchRange: key must be 0 or 1&#34;);
+        }
+        return &#45;2;
+    }
+
+    void set_integer_keyed_int(INTVAL key, INTVAL v) {
+        switch (key) {
+            case 0:
+                RANGE_START(SELF) = v;
+                break;
+            case 1:
+                RANGE_END(SELF) = v;
+                break;
+            default:
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                    &#34;MatchRange: key must be 0 or 1&#34;);
+        }
+    }
+/*</pre>
+
+<dt><a name="void_set_pmc(PMC*_value)"
+><b><code lang='und' xml:lang='und'>void set_pmc(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>if <code lang='und' xml:lang='und'>value</code> is a MatchRange PMC then the set the range indices to the same values; otherwise throw an exception. This really only makes sense if you&#39;re using a MatchRange from the same Match, or at least for the same input string, but I won&#39;t worry about that for now.</dd><p class="pad"></p>
+
+<dt><a name="void_set_integer_keyed(PMC*_key,_INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_integer_keyed(PMC *key, INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="void_set_integer_keyed_str(STRING*_key,_INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_integer_keyed_str(STRING *key, INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="void_set_number_keyed(PMC*_key,_FLOATVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_number_keyed(PMC *key, FLOATVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="void_set_number_keyed_str(STRING*_key,_FLOATVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_number_keyed_str(STRING *key, FLOATVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="void_set_number_keyed_int(INTVAL_key,_FLOATVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_number_keyed_int(INTVAL key, FLOATVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="void_set_pmc_keyed(PMC*_key,_PMC*_value)"
+><b><code lang='und' xml:lang='und'>void set_pmc_keyed(PMC *key, PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="void_set_pmc_keyed_str(STRING*_key,_PMC*_value)"
+><b><code lang='und' xml:lang='und'>void set_pmc_keyed_str(STRING *key, PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the requested number(start offset for <code lang='und' xml:lang='und'>start</code> and end offset for <code lang='und' xml:lang='und'>end</code>) to <code lang='und' xml:lang='und'>value</code>. For the keyed_int variants, 0 means RANGE_START, 1 means RANGE_END.</dd><p class="pad"></p>
+
+<dt><a name="PMC*_add(PMC*_value,_PMC*_dest)"
+><b><code lang='und' xml:lang='und'>PMC *add(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="PMC*_add_int(INTVAL_value,_PMC*_dest)"
+><b><code lang='und' xml:lang='und'>PMC *add_int(INTVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="PMC*_add_float(FLOATVAL_value,_PMC*_dest)"
+><b><code lang='und' xml:lang='und'>PMC *add_float(FLOATVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Adds <code lang='und' xml:lang='und'>value</code> to the ending offset of the match range, placing the result in <code lang='und' xml:lang='und'>dest</code>.</dd><p class="pad"></p>
+
+<dt><a name="PMC*_subtract(PMC*_value,_PMC*_dest)"
+><b><code lang='und' xml:lang='und'>PMC *subtract(PMC *value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="PMC*_subtract_int(INTVAL_value,_PMC*_dest)"
+><b><code lang='und' xml:lang='und'>PMC *subtract_int(INTVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="PMC*_subtract_float(FLOATVAL_value,_PMC*_dest)"
+><b><code lang='und' xml:lang='und'>PMC *subtract_float(FLOATVAL value, PMC *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Subtracts <code lang='und' xml:lang='und'>value</code> from the ending offset of the match range, placing the result in <code lang='und' xml:lang='und'>dest</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_is_equal(PMC*_value)"
+><b><code lang='und' xml:lang='und'>INTVAL is_equal(PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compares the matchrange number with <code lang='und' xml:lang='und'>value</code> and returs true if they are equal.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

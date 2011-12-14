@@ -1,0 +1,313 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot JIT (i386/gcc)</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Parrot JIT (i386/gcc)
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/dev/jit_i386.pod &#45; Parrot JIT (i386/gcc)</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT</a></h1>
+
+<p>This PDD describes the i386 gcc JIT implementation.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>JIT i386/gcc is a combination of unrolled assembly instructions and the Computed Goto Predereferenced (CGP) run loop.
+For branch instructions the function implementation in the standard core is called.</p>
+
+<p>Another difference of JIT/i386 is that most vtable functions are JITed instructions which use register mappings.</p>
+
+<p>For a better understanding of the control flow between these basically 3 run loop cores,
+an example shows the gory details.</p>
+
+<h1><a name="EXAMPLE"
+>EXAMPLE</a></h1>
+
+<p>Given the following PASM program,
+the righthand three columns show where each opcode gets executed:</p>
+
+<pre>        PASM                 JIT ops   Normal     CGP ops</pre>
+<pre>	set I0, 10           # set_i_ic
+	print I0             # (call)               print_i
+	print "\n"           #                      print_sc
+        new P1, 'ResizableIntegerArray'
+	local_branch P0, inc # (call) local_branch_p_ic  cpu_ret
+	end                  # (jmp) HALT           end (ret)
+	                     # end (ret)
+  inc:
+	inc I0               # inc_i
+	new P0, 'String'     # new_p_sc
+	set P0, I0           # set_p_i
+	print P0             # (call)               print_p
+	print "\n"           #                      print_sc
+	local_return P1      # (call) local_return_p     cpu_ret
+</pre>
+<h2><a name="Startup_sequence"
+>Startup sequence</a></h2>
+
+<p>In <b>runops_jit</b> a prederefed copy of the opcode stream is built by <b>init_prederef</b>. Then <b>build_asm</b> generates the assembler code sequence as usual. This generated code (shown as <b>runops_jit</b> in <b>ddd</b>) is then executed.</p>
+
+<p>Generate minimal stack frame, save %ebx</p>
+
+<pre>    0x812c510 &#60;jit_func&#62;:       push   %ebp
+    0x812c511 &#60;jit_func+1&#62;:     mov    %esp,%ebp
+    0x812c513 &#60;jit_func+3&#62;:     push   %ebx</pre>
+
+<p>Get the program counter to %ebx</p>
+
+<pre>    0x812c514 &#60;jit_func+4&#62;:     mov    0xc(%ebp),%ebx</pre>
+
+<p>Push <b>interpreter</b> and <b>(opcode_t*) 1</b> and call <b>cgp_core</b></p>
+
+<pre>    0x812c517 &#60;jit_func+7&#62;:     push   $0x8113db8
+    0x812c51c &#60;jit_func+12&#62;:    push   $0x1
+    0x812c521 &#60;jit_func+17&#62;:    mov    $0x1,%eax
+    0x812c526 &#60;jit_func+22&#62;:    call   0x80b5830 &#60;cgp_core&#62;</pre>
+
+<p>In <b>cgp_core</b> all callee saved registers are saved.</p>
+
+<pre>    0x80b5830 &#60;cgp_core&#62;:       push   %ebp
+    0x80b5831 &#60;cgp_core+1&#62;:     mov    %esp,%ebp
+    0x80b5833 &#60;cgp_core+3&#62;:     sub    $0xdc,%esp
+    0x80b5839 &#60;cgp_core+9&#62;:     lea    0x8(%ebp),%eax
+    0x80b583c &#60;cgp_core+12&#62;:    push   %edi
+    0x80b583d &#60;cgp_core+13&#62;:    push   %esi
+    0x80b583e &#60;cgp_core+14&#62;:    push   %ebx</pre>
+
+<p>In <b>%eax</b> the init flag is set to <b>&#45;1</b></p>
+
+<pre>    0x80b583f &#60;cgp_core+15&#62;:    mov    %eax,0xfffffff</pre>
+
+<p>The parameter <b>*cur_op</b> (the program counter) is put into <b>%esi</b> and ...</p>
+
+<pre>    0x80b5842 &#60;cgp_core+18&#62;:    mov    0x8(%ebp),%esi
+    0x80b5845 &#60;cgp_core+21&#62;:    test   %esi,%esi
+    0x80b5847 &#60;cgp_core+23&#62;:    jne    0x80b5853 &#60;cgp_core+35&#62;
+    0x80b5849 &#60;cgp_core+25&#62;:    mov    $0x810ca60,%eax
+    0x80b584e &#60;cgp_core+30&#62;:    jmp    0x80bb470 &#60;cgp_core+23616&#62;</pre>
+
+<p>... compared to <b>1</b></p>
+
+<pre>    0x80b5853 &#60;cgp_core+35&#62;:    cmp    $0x1,%esi
+    0x80b5856 &#60;cgp_core+38&#62;:    jne    0x80b5860 &#60;cgp_core+48&#62;</pre>
+
+<p>If true, the program jumps to the return address of above function call, i.e. it jumps back again to JIT code.</p>
+
+<pre>    0x80b5858 &#60;cgp_core+40&#62;:    jmp    *0x4(%ebp)</pre>
+
+<p>Back again in JIT code, the init flag is checked</p>
+
+<pre>    0x812c52b &#60;jit_func+27&#62;:    test   %eax,%eax
+    0x812c52d &#60;jit_func+29&#62;:    jne    0x812c536 &#60;jit_func+38&#62;</pre>
+
+<p>... and if zero, the function would be left.</p>
+
+<pre> [   0x812c52f &#60;jit_func+31&#62;:   pop    %ebx          ]
+ [   0x812c531 &#60;jit_func+33&#62;:   mov    %ebp,%esp     ]
+ [   0x812c533 &#60;jit_func+35&#62;:   pop    %ebp          ]
+ [   0x812c535 &#60;jit_func+37&#62;:   ret                  ]</pre>
+
+<p>When coming from the init sequence, program flow continues by checking the <b>resume_offset</b> and jumping to the desired instruction</p>
+
+<pre>    0x812c536 &#60;jit_func+38&#62;:    mov    %ebx,%eax
+    0x812c538 &#60;jit_func+40&#62;:    sub    $0x400140c0,%eax
+    0x812c53e &#60;jit_func+46&#62;:    mov    $0x812c4a8,%edx
+    0x812c543 &#60;jit_func+51&#62;:    jmp    *(%edx,%eax,1)</pre>
+
+<p><b>set I0, 10</b> and save_registers</p>
+
+<pre>    0x812c546 &#60;jit_func+54&#62;:    mov    $0xa,%ebx
+    0x812c54b &#60;jit_func+59&#62;:    mov    %ebx,0x8113db8</pre>
+
+<p>Now non&#45;JITed code follows &#45;&#45; get the address from the prederefed op_func_table and call it:</p>
+
+<pre>    0x812c551 &#60;jit_func+65&#62;:    mov    $0x812ac0c,%esi
+    0x812c556 &#60;jit_func+70&#62;:    call   *(%esi)
+
+    inline op print(in INT) {
+      printf(INTVAL_FMT, (INTVAL)$1);
+      goto NEXT();
+    }</pre>
+
+<p>where the <b>goto NEXT()</b> is a simple:</p>
+
+<pre>    0x80b5b49 &#60;cgp_core+793&#62;:   jmp    *(%esi)
+
+    op print(in STR) {
+     ...
+      goto NEXT();
+    }</pre>
+
+<p>As the last instruction of the non&#45;JITed code sequence is a branch, this is not executed in CGP, but the opcode:</p>
+
+<pre>    inline op cpu_ret() {
+    #ifdef __GNUC__
+    # ifdef I386
+       asm(&#34;ret&#34;)</pre>
+
+<p>is executed. This opcode is patched into the prederefed code stream by Parrot_jit_normal_op at the end of a non&#45;JITed code sequence. This returns to JIT code again, where the next instruction gets called as a function in the standard core ...</p>
+
+<pre>    0x812c558 &#60;jit_func+72&#62;:    push   $0x8113db8
+    0x812c55d &#60;jit_func+77&#62;:    push   $0x400140dc
+    0x812c562 &#60;jit_func+82&#62;:    call   0x805be60 &#60;Parrot_bsr_ic&#62;
+    0x812c567 &#60;jit_func+87&#62;:    add    $0x8,%esp</pre>
+
+<p>... and from the return result in <b>%eax</b>, the new code position in JIT is calculated and gets jumped to:</p>
+
+<pre>    0x812c56a &#60;jit_func+90&#62;:    sub    $0x400140c0,%eax
+    0x812c570 &#60;jit_func+96&#62;:    mov    $0x812c4a8,%edx
+    0x812c575 &#60;jit_func+101&#62;:   jmp    *(%edx,%eax,1)</pre>
+
+<p>Now in the subroutine <b>inc</b>:</p>
+
+<pre>    0x812c580 &#60;jit_func+112&#62;:   mov    0x8113db8,%ebx
+    0x812c586 &#60;jit_func+118&#62;:   inc    %ebx</pre>
+
+<p>Save register and arguments and call <b>pmc_new_noinit</b>:</p>
+
+<pre>    0x812c587 &#60;jit_func+119&#62;:   push   %edx
+    0x812c588 &#60;jit_func+120&#62;:   push   $0x11
+    0x812c58d &#60;jit_func+125&#62;:   push   $0x8113db8
+    0x812c592 &#60;jit_func+130&#62;:   call   0x806fc60 &#60;pmc_new_noinit&#62;</pre>
+
+<p>put the PMC* into Parrot&#39;s register:</p>
+
+<pre>    0x812c597 &#60;jit_func+135&#62;:   mov    %eax,0x8113fb8</pre>
+
+<p>and prepare arguments for a VTABLE call:</p>
+
+<pre>    0x812c59d &#60;jit_func+141&#62;:   push   %eax
+    0x812c59e &#60;jit_func+142&#62;:   push   $0x8113db8
+    0x812c5a3 &#60;jit_func+147&#62;:   mov    0x10(%eax),%eax
+    0x812c5a6 &#60;jit_func+150&#62;:   call   *0x18(%eax)
+    0x812c5a9 &#60;jit_func+153&#62;:   add    $0x10,%esp
+    0x812c5ac &#60;jit_func+156&#62;:   pop    %edx</pre>
+
+<p>and another one:</p>
+
+<pre>    0x812c5ae &#60;jit_func+158&#62;:   push   %edx</pre>
+
+<p>Here, with the mapped register in <b>%ebx</b>, push <b>I0</b>, the PMC and the interpreter:</p>
+
+<pre>    0x812c5af &#60;jit_func+159&#62;:   push   %ebx
+    0x812c5b0 &#60;jit_func+160&#62;:   mov    0x8113fb8,%eax
+    0x812c5b6 &#60;jit_func+166&#62;:   push   %eax
+    0x812c5b7 &#60;jit_func+167&#62;:   push   $0x8113db8</pre>
+
+<p>and call the vtable:</p>
+
+<pre>    0x812c5bc &#60;jit_func+172&#62;:   mov    0x10(%eax),%eax
+    0x812c5bf &#60;jit_func+175&#62;:   call   *0xdc(%eax)
+    0x812c5c5 &#60;jit_func+181&#62;:   add    $0xc,%esp
+    0x812c5c8 &#60;jit_func+184&#62;:   pop    %edx</pre>
+
+<p>As this ends the JITed section, used registers are saved back to Parrot&#39;s register:</p>
+
+<pre>    0x812c5ca &#60;jit_func+186&#62;:   mov    %ebx,0x8113db8</pre>
+
+<p>and again the code in <b>cgp_core</b> gets called:</p>
+
+<pre>    0x812c5d0 &#60;jit_func+192&#62;:   mov    $0x812ac48,%esi
+    0x812c5d5 &#60;jit_func+197&#62;:   call   *(%esi)</pre>
+
+<p>which after executing the <b>print</b> returns back here in JIT, where the <b>ret</b> is called:</p>
+
+<pre>    0x812c5d7 &#60;jit_func+199&#62;:   push   $0x8113db8
+    0x812c5dc &#60;jit_func+204&#62;:   push   $0x40014118
+    0x812c5e1 &#60;jit_func+209&#62;:   call   0x805d5e0 &#60;Parrot_ret&#62;
+    0x812c5e6 &#60;jit_func+214&#62;:   add    $0x8,%esp</pre>
+
+<p>From the returned PC a JIT address is calculated, which gets executed:</p>
+
+<pre>    0x812c5e9 &#60;jit_func+217&#62;:   sub    $0x400140c0,%eax
+    0x812c5ef &#60;jit_func+223&#62;:   mov    $0x812c4a8,%edx
+    0x812c5f4 &#60;jit_func+228&#62;:   jmp    *(%edx,%eax,1)</pre>
+
+<p>Now at the <b>end</b> opcode, the CGP code for HALT() gets jumped to:</p>
+
+<pre>    0x812c578 &#60;jit_func+104&#62;:   mov    $0x80b5877,%esi
+    0x812c57d &#60;jit_func+109&#62;:   jmp    *%esi</pre>
+
+<p>which is:</p>
+
+<pre>    inline op end() {
+      HALT();
+    }</pre>
+
+<p>or, set return result:</p>
+
+<pre>    0x80b8b6f &#60;cgp_core+13119&#62;: xor    %eax,%eax
+    ...</pre>
+
+<p>and clean up stack frame and ret:</p>
+
+<pre>    0x80bb470 &#60;cgp_core+23616&#62;: lea    0xffffff18(%ebp),%esp
+    0x80bb476 &#60;cgp_core+23622&#62;: pop    %ebx
+    0x80bb477 &#60;cgp_core+23623&#62;: pop    %esi
+    0x80bb478 &#60;cgp_core+23624&#62;: pop    %edi
+    0x80bb479 &#60;cgp_core+23625&#62;: mov    %ebp,%esp
+    0x80bb47b &#60;cgp_core+23627&#62;: pop    %ebp
+    0x80bb47c &#60;cgp_core+23628&#62;: ret</pre>
+
+<p>This returns after the position where <b>cgp_core</b> was called during the init sequence, but now the return value <b>%eax</b> is zero and the..</p>
+
+<pre>    0x812c52b &#60;jit_func+27&#62;:    test   %eax,%eax
+    0x812c52d &#60;jit_func+29&#62;:    jne    0x812c536 &#60;jit_func+38&#62;
+    0x812c52f &#60;jit_func+31&#62;:    pop    %ebx
+    0x812c531 &#60;jit_func+33&#62;:    mov    %ebp,%esp
+    0x812c533 &#60;jit_func+35&#62;:    pop    %ebp
+    0x812c535 &#60;jit_func+37&#62;:    ret</pre>
+
+<p>... whole story ends here, we are back again in <b>runops_jit</b>.</p>
+
+<p>So this is rather simple once it gets going.</p>
+
+<h1><a name="BUGS"
+>BUGS</a></h1>
+
+<p>The floating point registers do not get saved to Parrot before vtable calls. This assumes that external routines preserve the FP stack pointer and don&#39;t use more the 4 floating point registers at once.</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Leopold Toetsch <code>lt@toetsch.at</code></p>
+
+<h1><a name="VERSION"
+>VERSION</a></h1>
+
+<h2><a name="CURRENT"
+>CURRENT</a></h2>
+
+<p>14.02.2003 by Leopold Toetsch</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/abc.html">abc</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<p>rule TOP { ^ &#60;statement_list&#62; [ $ || &#60;panic: &#39;parse error&#39;&#62; ] {*} }</p>
+
+<p>rule statement_list { &#60;statement&#62;?
+[ &#39;;&#39; &#60;statement&#62;?
+]* {*} }</p>
+
+<p>rule statement { | &#60;if_statement&#62; {*} #= if_statement | &#60;while_statement&#62; {*} #= while_statement | &#60;for_statement&#62; {*} #= for_statement | &#60;compound_statement&#62; {*} #= compound_statement | &#60;string&#62; {*} #= string # | &#39;break&#39; # | &#39;continue&#39; # | &#39;halt&#39; # | &#39;return&#39; [ &#39;(&#39; &#60;expression&#62; &#39;)&#39; ]?
+| &#60;expression&#62; {*} #= expression }</p>
+
+<p>rule if_statement { &#39;if&#39; &#39;(&#39; &#60;expression&#62; &#39;)&#39; &#60;statement&#62; [ &#39;else&#39; &#60;statement&#62; ]?
+{*} }</p>
+
+<p>rule while_statement { &#39;while&#39; &#39;(&#39; &#60;expression&#62; &#39;)&#39; &#60;statement&#62; {*} }</p>
+
+<p>rule for_statement { &#39;for&#39; &#39;(&#39; &#60;expression&#62; &#39;;&#39; &#60;expression&#62; &#39;;&#39; &#60;expression&#62; &#39;)&#39; &#60;statement&#62; {*} }</p>
+
+<p>rule compound_statement { &#39;{&#39; &#60;statement_list&#62; &#39;}&#39; {*} }</p>
+
+<p>token string { &#39;&#34;&#39; &#60;string_literal: &#39;&#34;&#39;&#62; &#39;&#34;&#39; {*} }</p>
+
+<p>## create operator precedence parser rule &#39;expression&#39; is optable { ...
+}</p>
+
+<p>## recognize terms token term { | &#60;float&#62; {*} #= float | &#60;integer&#62; {*} #= integer | &#60;variable&#62; {*} #= variable }</p>
+
+<p>token float { [ | \d+ &#39;.&#39; \d* | &#39;.&#39; \d+ ] {*} }</p>
+
+<p>token integer { \d+ {*} }</p>
+
+<p>token variable { $&#60;name&#62;=[ &#60;[a..z]&#62; &#60;[_a..z0..9]&#62;* ] [ &#39;(&#39; &#60;expression&#62; &#39;)&#39; {*} #= call | &#60;.null&#62; {*} #= var ] }</p>
+
+<p>## terms proto &#39;term:&#39; is precedence(&#39;=&#39;) is parsed(&#38;term) { ...
+}</p>
+
+<p>proto circumfix:&#60;( )&#62; is equiv(&#39;term:&#39;) is pirop(&#39;set&#39;) { ...
+}</p>
+
+<p>## autoincrement proto postfix:&#60;++&#62; is looser(&#39;term:&#39;) is lvalue(1) { ...
+} proto postfix:&#60;&#45;&#45;&#62; is equiv(postfix:&#60;++&#62;) is lvalue(1) { ...
+} proto prefix:&#60;++&#62; is equiv(postfix:&#60;++&#62;) is lvalue(1) { ...
+} proto prefix:&#60;&#45;&#45;&#62; is equiv(postfix:&#60;++&#62;) is lvalue(1) { ...
+}</p>
+
+<p>## negation proto prefix:&#60;&#45;&#62; is looser(postfix:&#60;++&#62;) is pirop(&#39;n_neg&#39;) { ...
+}</p>
+
+<p>## exponentiation proto infix:&#60;^&#62; is looser(prefix:&#60;&#45;&#62;) { ...
+}</p>
+
+<p>## multiplicative proto infix:&#60;*&#62; is looser(infix:&#60;^&#62;) is pirop(&#39;n_mul&#39;) { ...
+}</p>
+
+<p>proto infix:&#60;/&#62; is equiv(infix:&#60;*&#62;) is pirop(&#39;n_div&#39;) { ...
+}</p>
+
+<p>proto infix:&#60;%&#62; is equiv(infix:&#60;*&#62;) is pirop(&#39;n_mod&#39;) { ...
+}</p>
+
+<p>## additive proto infix:&#60;+&#62; is looser(infix:&#60;*&#62;) is pirop(&#39;n_add&#39;) { ...
+}</p>
+
+<p>proto infix:&#60;&#45;&#62; is equiv(infix:&#60;+&#62;) is pirop(&#39;n_sub&#39;) { ...
+}</p>
+
+<p>## assignment proto infix:&#60;=&#62; is looser(infix:&#60;+&#62;) is assoc(&#39;right&#39;) is pasttype(&#39;bind&#39;) is lvalue(1) { ...
+}</p>
+
+<p>## relational proto infix:&#60;==&#62; is looser(infix:&#60;=&#62;) is assoc(&#39;non&#39;) { ...
+} proto infix:&#60;!=&#62; is equiv(infix:&#60;==&#62;) { ...
+} proto infix:&#194;&#171;&#60;&#194;&#187; is equiv(infix:&#60;==&#62;) { ...
+} proto infix:&#194;&#171;&#60;=&#194;&#187; is equiv(infix:&#60;==&#62;) { ...
+} proto infix:&#194;&#171;&#62;&#194;&#187; is equiv(infix:&#60;==&#62;) { ...
+} proto infix:&#194;&#171;&#62;=&#194;&#187; is equiv(infix:&#60;==&#62;) { ...
+}</p>
+
+<p>## boolean proto prefix:&#60;!&#62; is looser(infix:&#60;==&#62;) is pirop(&#39;n_not&#39;) { ...
+} proto infix:&#60;&#38;&#38;&#62; is looser(prefix:&#60;!&#62;) is assoc(&#39;left&#39;) { ...
+} proto infix:&#60;||&#62; is looser(infix:&#60;&#38;&#38;&#62;) is assoc(&#39;left&#39;) { ...
+}</p>
+
+<p>## vim: expandtab sw=4</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

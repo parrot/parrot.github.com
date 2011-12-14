@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - About the IMCC optimizer</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; About the IMCC optimizer
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/dev/optimizer.pod &#45; About the IMCC optimizer</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT</a></h1>
+
+<p>This document describes how the IMCC optimizer works.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>The objective of the IMCC optimizer is to take a PASM function as input and apply code&#45;improving transformations to it to be more efficient,
+i.e.
+improving execution time and reducing code size.
+It must do this while preserving the same code behavior.</p>
+
+<h2><a name="Data_Structures"
+>Data Structures</a></h2>
+
+<p>The optimizer uses a number of data structures to build a model of the code to be optimized.</p>
+
+<dl>
+<dt><a name="IMC_Unit"
+>IMC_Unit</a></dt>
+The IMC_Unit structure contains all the information known about a function.
+It is passed in to each optimizer method.
+<dt><a name="Instruction"
+>Instruction</a></dt>
+Each instruction line has an Instruction structure.
+Pointers to the first and last Instruction are stored in IMC_Unit.
+Instructions are stored as a linked list.
+To iterate through all Instructions,
+use:
+<pre>    Instruction *ins;
+    for (ins = unit&#45;&#62;instructions; ins; ins = ins&#45;&#62;next) {
+        ...
+    }</pre>
+
+<dt><a name="Basic_block"
+>Basic_block</a></dt>
+Basic blocks are the most important structure for optimization. A basic block identifies a block of instructions that will all execute in sequence without jumps into or out of that block. All labels will appear at the beginning of a block, and all conditional or unconditional jumps will appear at the end. Basic_block structures are stored as an array of pointers, each with an index that denotes their position in the array. Block 0 is implicitly the top block. To iterate through all Basic_blocks, use:
+<pre>    int i;
+    for (i = 0; i &#60; unit&#45;&#62;n_basic_blocks; i++) {
+        ...
+    }</pre>
+
+<dt><a name="Edge"
+>Edge</a></dt>
+Edges denote the flow of control between Basic_blocks. Edges and Basic_blocks together make up the basic CFG. Each Basic_block has *pred_list and *succ_list pointer to the first predecessor edge and successor edge, respectively. Each edge has a *to and *from pointer to the Basic_blocks it joins. To iterate through all predecessor Edges, use:
+<pre>    Edge *pred;
+    for (pred = to&#45;&#62;pred_list; pred; pred=pred&#45;&#62;pred_next) {
+        ...
+    }</pre>
+
+<dt><a name="Loop_info"
+>Loop_info</a></dt>
+Loop_info structures denote the presence of loops in the instructions. They are found by identifying backedges, where control passes from a tail block to the head of the loop. Loop_info stores the header, preheader, exit blocks, and depth of the loop.
+<dt><a name="Set"
+>Set</a></dt>
+Set is a useful structure for defining sets of integers, which map to indexes of structures. This is used most often to create sets of Basic_blocks. Dominators, dominance frontiers, and loops use Set. A Set must be a defined size, and cannot grow or shrink. Most standard set operations are implemented: add, contains, copy, equal, union, and intersection.</dl>
+
+<h2><a name="Optimizations"
+>Optimizations</a></h2>
+
+<p>Optimizations are organized into an optimization loop within imc_reg_alloc() in reg_alloc.c. The ordering is based on the amount of CFG information needed by each group of optimizations: pre_optimize(), cfg_optimize(), and optimize(). Each optimization function (group and individual) returns an int, with TRUE denoting that an optimization has been performed and a change to the code has been made. The power of the optimizer is that performing one optimization may often allow another to be performed as well. Once all optimizations have been run without changes, the optimizer is finished.</p>
+
+<p>The optimizer loop works as follows:</p>
+
+<dl>
+<dt><a name="1._Run_all_pre_optimize()_optimizations_until_none_make_a_change."
+>1. Run all pre_optimize() optimizations until none make a change.</a></dt>
+
+<dt><a name="2._Build_basic_block_info."
+>2. Build basic block info.</a></dt>
+
+<dt><a name="3._Run_all_cfg_optimize()_optimizations._If_one_makes_a_change,_go_to_step_1."
+>3. Run all cfg_optimize() optimizations. If one makes a change, go to step 1.</a></dt>
+
+<dt><a name="4._Build_all_other_CFG_info_(dominators,_loops,_life_analysis)."
+>4. Build all other CFG info (dominators, loops, life analysis).</a></dt>
+
+<dt><a name="5._Run_all_optimize()_optimizations._If_one_makes_a_change,_go_to_step_1."
+>5. Run all optimize() optimizations. If one makes a change, go to step 1.</a></dt>
+</dl>
+
+<p>Two cfg_optimize() or optimize() optimizations cannot be run in a row. This is because most of these make the CFG information invalid when a change is performed, and the CFG must be rebuilt.</p>
+
+<h3><a name="Pre_optimizer"
+>Pre optimizer</a></h3>
+
+<p>Optimizations using only Instruction info, no CFG constructed.</p>
+
+<dl>
+<dt><a name="strength_reduce()"
+>strength_reduce()</a></dt>
+Converts an expensive instruction to a simpler one
+<dt><a name="if_branch()"
+>if_branch()</a></dt>
+Converts if/branch/label constructs to a simpler form</dl>
+
+<h3><a name="CFG_optimizer"
+>CFG optimizer</a></h3>
+
+<p>Optimizations using Basic_block info. These functions invalidate the CFG when a change is made.</p>
+
+<dl>
+<dt><a name="branch_reorg()"
+>branch_reorg()</a></dt>
+Moves statements following an unconditional jump in order to remove the jump
+<dt><a name="branch_branch()"
+>branch_branch()</a></dt>
+Replaces a branch directly to another branch with a single branch to the end of the chain
+<dt><a name="unused_label()"
+>unused_label()</a></dt>
+Removes unused labels
+<dt><a name="dead_code_remove()"
+>dead_code_remove()</a></dt>
+Removes unreachable code</dl>
+
+<h3><a name="Optimizer"
+>Optimizer</a></h3>
+
+<dl>
+<dt><a name="constant_propagation()"
+>constant_propagation()</a></dt>
+Does conservative constant propagation, i.e. replaces &#34;1 + 2&#34; with &#34;3&#34;
+<dt><a name="used_once()"
+>used_once()</a></dt>
+Removes an instruction when the register written is only used once (only appears in that instruction)</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Curtis Rawls &#60;cgrawls@gmail.com&#62;</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

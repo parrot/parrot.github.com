@@ -1,0 +1,196 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - String PMC Class</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; String PMC Class
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/string.pmc &#45; String PMC Class</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p><code>String</code> extends <code>scalar</code> to provide a string for languages that want a <code>string</code> type without going to an S register.
+It acts as a wrapper for the functions in <em>src/string.c</em>.</p>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes the string.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Marks the string as live.
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+Creates a copy of the string.
+<dt><a name="INTVAL_get_integer()"
+><b><code>INTVAL get_integer()</b></code></a></dt>
+Returns the integer representation of the string.
+<dt><a name="FLOATVAL_get_number()"
+><b><code>FLOATVAL get_number()</b></code></a></dt>
+Returns the floating&#45;point representation of the string.
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+Returns the string itself.
+<dt><a name="INTVAL_get_bool()"
+><b><code>INTVAL get_bool()</b></code></a></dt>
+Returns the boolean value of the string.
+<dt><a name="VOID_set_integer_native(INTVAL_value)"
+><b><code>VOID set_integer_native(INTVAL value)</b></code></a></dt>
+
+<dt><a name="VOID_set_bool(INTVAL_value)"
+><b><code>VOID set_bool(INTVAL value)</b></code></a></dt>
+Sets the value of the string to the integer <code>value</code>.
+<dt><a name="VOID_set_number_native(FLOATVAL_value)"
+><b><code>VOID set_number_native(FLOATVAL value)</b></code></a></dt>
+Sets the value of the string to the floating&#45;point <code>value</code>.
+<dt><a name="VOID_set_string_native(STRING_*value)"
+><b><code>VOID set_string_native(STRING *value)</b></code></a></dt>
+Sets the value of the string to that of the specified <code>string</code>.
+<dt><a name="VOID_assign_string_native(STRING_*value)"
+><b><code>VOID assign_string_native(STRING *value)</b></code></a></dt>
+Sets the value of the string to a copy of the specified <code>string</code>.
+<dt><a name="VOID_set_pmc(PMC_*value)"
+><b><code>VOID set_pmc(PMC *value)</b></code></a></dt>
+Sets the value of the string to the string value of the specified <code>PMC</code>.
+<dt><a name="INTVAL_is_equal(PMC_*value)"
+><b><code>INTVAL is_equal(PMC *value)</b></code></a></dt>
+Compares the string with <code>value</code>; returns true if they match.
+<dt><a name="INTVAL_is_equal_num(PMC_*value)"
+><b><code>INTVAL is_equal_num(PMC *value)</b></code></a></dt>
+Compares the numerical value of the string with that of <code>value</code>; returns true if they match.
+<dt><a name="INTVAL_is_equal_string(PMC_*value)"
+><b><code>INTVAL is_equal_string(PMC *value)</b></code></a></dt>
+Compares the string with <code>value</code>; returns FALSE if they match.
+<dt><a name="INTVAL_cmp(PMC_*value)"
+><b><code>INTVAL cmp(PMC *value)</b></code></a></dt>
+Compares the string with <code>value</code>; returns &#45;1 if the string is smaller,
+0 if they are equal,
+and 1 if <code>value</code> is smaller.
+<dt><a name="INTVAL_cmp_num(PMC_*value)"
+><b><code>INTVAL cmp_num(PMC *value)</b></code></a></dt>
+Compares the numerical value of the string with that of <code>value</code>; returns &#45;1 if the string is smaller,
+0 if they are equal,
+and 1 if <code>value</code> is smaller.
+<dt><a name="INTVAL_cmp_string(PMC_*value)"
+><b><code>INTVAL cmp_string(PMC *value)</b></code></a></dt>
+Compares the string with <code>value</code>; returns &#45;1 if the string is smaller,
+0 if they are equal,
+and 1 if <code>value</code> is smaller.
+<dt><a name="void_substr(INTVAL_offset,_INTVAL_length,_PMC_*dest)"
+><b><code>void substr(INTVAL offset, INTVAL length, PMC *dest)</b></code></a></dt>
+Extracts the substring starting at <code>offset</code>,
+with size <code>length</code>,
+and places it in <code>dest</code>.
+<dt><a name="STRING_*substr_str(INTVAL_offset,_INTVAL_length)"
+><b><code>STRING *substr_str(INTVAL offset, INTVAL length)</b></code></a></dt>
+Extracts the substring starting at <code>offset</code>,
+with size <code>length</code>,
+and returns it.
+<dt><a name="INTVAL_exists_keyed(PMC_*key)"
+><b><code>INTVAL exists_keyed(PMC *key)</b></code></a></dt>
+Returns true if the <code>key</code>&#39;th character in the string exists.
+Negative numbers count from the end.
+<dt><a name="STRING_*get_string_keyed(PMC_*key)"
+><b><code>STRING *get_string_keyed(PMC *key)</b></code></a></dt>
+Returns the <code>key</code>&#39;th character in the string.
+Negative numbers count from the end.
+<dt><a name="INTVAL_get_integer_keyed(PMC_*key)"
+><b><code>INTVAL get_integer_keyed(PMC *key)</b></code></a></dt>
+Returns the integer value (ord) at <code>*key</code>.
+<dt><a name="void_set_string_keyed(PMC_*key,_STRING_*val)"
+><b><code>void set_string_keyed(PMC *key, STRING *val)</b></code></a></dt>
+Replace the string at <code>key</code> with <code>value</code>.
+<dt><a name="void_set_integer_keyed(PMC_*key,_INTVAL_val)"
+><b><code>void set_integer_keyed(PMC *key, INTVAL val)</b></code></a></dt>
+Replace the string at <code>key</code> with the chr of <code>value</code>.
+<dt><a name="void_replace(STRING_*orig,_STRING_*_new)"
+><b><code>void replace(STRING *orig, STRING *_new)</b></code></a></dt>
+Replace every occurrence of <code>orig</code> with <code>_new</code>.
+<dt><a name="PMC_*to_int(INTVAL_base)"
+><b><code>PMC *to_int(INTVAL base)</b></code></a></dt>
+Return the integer equivalent of SELF,
+which is assumed to be a <code>base</code> digit string.
+The String is assumed to be in an ascii&#45;compatible encoding.
+The String is considered being unsigned,
+and no <i>+</i> or <i>&#45;</i> chars are processed.
+<code>base</code> has to be within [2..36].If any chars in the String aren&#39;t converted,
+an exception is thrown.TODO Currently overflow to BigInt is <b>not</b> handled nor detected.</dl>
+
+<h2><a name="Iterator_Interface"
+>Iterator Interface</a></h2>
+
+<dl>
+<dt><a name="PMC_*get_iter(PMC_*key)"
+><b><code>PMC *get_iter(PMC *key)</b></code></a></dt>
+Return a new iterator for this string.
+<dt><a name="INTVAL_elements()"
+><b><code>INTVAL elements()</b></code></a></dt>
+Return length of the string.</dl>
+
+<h2><a name="Freeze/thaw_Interface"
+>Freeze/thaw Interface</a></h2>
+
+<dl>
+<dt><a name="void_freeze(PMC_*info)"
+><b><code>void freeze(PMC *info)</b></code></a></dt>
+Used to archive the string.
+<dt><a name="void_thaw(PMC_*info)"
+><b><code>void thaw(PMC *info)</b></code></a></dt>
+Used to unarchive the string.</dl>
+
+<h2><a name="NCI_methods"
+>NCI methods</a></h2>
+
+<dl>
+<dt><a name="void_trans(STRING_*src,_PMC_*trams_table)"
+><b><code>void trans(STRING *src, PMC *trams_table)</b></code></a></dt>
+Translate ascii string <code>src</code> with entries from <code>trans_table</code>.
+<dt><a name="void_reverse(STRING_*src)"
+><b><code>void reverse(STRING *src)</b></code></a></dt>
+Either reverse this PMC&#39;s contents or set this PMC&#39;s value to the reverse of <code>src</code>,
+if present.
+<dt><a name="INTEGER_is_integer(STRING_*src)"
+><b><code>INTEGER is_integer(STRING *src)</b></code></a></dt>
+Checks if the ascii STRING <code>str</code> is just an integer.
+<dt><a name="INTEGER_reverse_index(STRING_*substring,_INTVAL_start)"
+><b><code>INTEGER reverse_index(STRING *substring, INTVAL start)</b></code></a></dt>
+Find last occurrence of <code>substring</code>,
+but not after the <code>start</code> position.
+<dt><a name="STRING_*unescape()"
+><b><code>STRING *unescape()</b></code></a></dt>
+EXPERIMENTAL,
+for testing only.
+See TT #1628</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

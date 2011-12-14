@@ -1,0 +1,727 @@
+=head1 NAME
+
+core.ops - Core Opcodes
+
+
+=cut
+
+=head1 DESCRIPTION
+
+Parrot's core library of ops.
+
+Core operations are primarily flow control and interpreter
+introspection.
+
+When making changes to any ops file, run C<make bootstrap-ops> to regenerate
+all generated ops files.
+
+
+=cut
+
+=head2 Basic ops
+
+These are the fundamental operations.
+Please note: These opcodes must not be moved; they must have
+exactly these opcode numbers. Opcodes ending with underscores are for
+internal use only; don't emit these opcodes.
+
+=over 4
+
+
+=cut
+
+=item B<end>()
+
+Halts the interpreter. (Must be op #0, CORE_OPS_end). See also B<exit>.
+
+
+=cut
+
+=item B<noop>()
+
+Does nothing other than waste an iota of time and 32 bits of bytecode space.
+(Must be op #1, CORE_OPS_noop)
+
+=item B<check_events>()
+
+Check the event queue and run event handlers if there are unhandled events.
+Note: This opcode is mainly for testing. It should not be necessary to ever
+use it explicitly.
+(Must be op #3, CORE_OPS_check_events).
+
+=item B<check_events__>()
+
+Check the event queue and run event handlers if there are unhandled events.
+Note: Do B<not> use this opcode. It is for internal use only.
+(Must be op #4, CORE_OPS_check_events__).
+
+=item B<wrapper__>()
+
+Internal opcode to wrap unknown ops from loaded opcode libs.
+Don't use.
+(Must be op #5, CORE_OPS_wrapper__).
+
+=item B<load_bytecode>(in STR)
+
+Load Parrot bytecode from file $1, and search the library path to locate the
+file.
+
+
+=cut
+
+=item B<load_language>(in STR)
+
+Load the compiler libraries for a language $1. Search the library path to
+locate the main compiler file in the standard locations.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Control flow
+
+The control flow opcodes check conditions and manage program flow.
+
+=over 4
+
+
+=cut
+
+=item B<branch>(in LABEL)
+
+Branch forward or backward by the amount in $1.
+
+
+=cut
+
+=item B<local_branch>(invar PMC, in LABEL)
+
+Go to the location specified by the label in $2. Push the current location onto
+the stack passed in $1 for later returning.
+
+
+=cut
+
+=item B<local_return>(invar PMC)
+
+Pop the location off the top of the call stack and go there.
+
+
+=cut
+
+=item B<jump>(in LABEL)
+
+Jump to the address held in register $1.
+
+
+=cut
+
+=item B<enternative>()
+
+Internal opcode used to jump from normal bytecode into a JITted version.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Conditional branch operations
+
+These operations perform a conditional relative branch. If the condition is
+met, the branch happens.  Otherwise control falls to the next operation.
+
+=over 4
+
+
+=cut
+
+=item B<if>(invar INT, inconst LABEL)
+
+=item B<if>(invar NUM, inconst LABEL)
+
+=item B<if>(invar PMC, inconst LABEL)
+
+=item B<if>(invar STR, inconst LABEL)
+
+Check register $1. If true, branch by $2.
+
+
+=cut
+
+=item B<unless>(invar INT, inconst LABEL)
+
+=item B<unless>(invar NUM, inconst LABEL)
+
+=item B<unless>(invar PMC, inconst LABEL)
+
+=item B<unless>(invar STR, inconst LABEL)
+
+Check register $1. If false, branch by $2.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Subroutine operations
+
+These operations are used to generate and call subroutines and
+continuations.
+
+=over 4
+
+
+=cut
+
+=item B<invokecc>(invar PMC)
+
+Call the subroutine in $1 and generate a new return continuation, if needed.
+For example, a NCI subroutine which executes code in some C library will not
+create a continuation, nor will anything but the first call to a coroutine.
+
+=item B<invoke>(invar PMC, invar PMC)
+
+Call the subroutine in $1 and use continuation $2.
+
+=item B<yield>()
+
+Yield results from a coroutine.
+
+=item B<tailcall>(invar PMC)
+
+Call the subroutine in $1 and use the current continuation as the subs
+continuation.
+
+=item B<returncc>()
+
+Return from the sub or method via the current continuation.
+
+=item B<capture_lex>(invar PMC)
+
+Capture the current lexical state of the inner subroutine PMC.
+
+=item B<newclosure>(out PMC, invar PMC)
+
+Create a closure of the given subroutine PMC by cloning the sub's state.
+
+
+=cut
+
+=back
+
+=head2 Function argument opcode
+
+Implementations of function argument and params handling
+
+=over 4
+
+=item B<set_args>(inconst PMC /* , ... */)
+
+Define arguments for the next function call.
+
+=item B<get_results>(inconst PMC /* , ... */)
+
+Define return values for the next function call.
+
+=item B<get_params>(inconst PMC /* , ... */)
+
+Define function parameters for this subroutine.
+
+=item B<set_returns>(inconst PMC /* , ... */)
+
+Define return results for the subroutine return statement.
+
+For all of these opcodes the passed invar PMC constant is the string
+representation of a FixedIntegerArray with one flag word per argument.
+The flags are documented currently in F<include/parrot/enums.h> only.
+
+After this argument a variable amount of arguments must follow according
+to the elements of the signature array.
+
+
+=cut
+
+=item B<set_result_info>(in PMC)
+
+Set result_info. See also C<result_info>.
+
+
+=cut
+
+=item B<result_info>(out PMC)
+
+Returns the get_results signature PMC of the caller. This PMC is a
+FixedIntegerPMCArray. The number of elements of this PMC is equal to the number
+of return values that are expected.  The individual bits per entry are
+specified in F<docs/pdds/pdd03_calling_conventions.pod>.
+
+
+=cut
+
+=back
+
+=head2 Address manipulation
+
+=for clarity
+
+
+=cut
+
+=over 4
+
+=item B<set_addr>(out INT, inconst LABEL)
+
+Sets register $1 to the current address plus the offset $2.
+
+=item B<set_addr>(invar PMC, inconst LABEL)
+
+Sets PMC in register $1 to the current address plus the offset $2.
+
+=item B<set_addr>(invar PMC, invar LABEL)
+
+Sets PMC in register $1 to the absolute address $2 obtained from B<get_addr>.
+
+=item B<get_addr>(out INT, invar PMC)
+
+Sets $1 to the absolute address of the Sub PMC $2.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Concurrency operations
+
+=over 4
+
+=item B<schedule>(invar PMC)
+
+Register a task with the concurrency scheduler. Details about the task are
+stored within the task PMC.
+
+
+=cut
+
+=item B<addhandler>(invar PMC)
+
+Add an event or exception handler to the concurrency scheduler. Details about
+the handler are stored within the handler PMC.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Exception handling
+
+=over 4
+
+=item B<push_eh>(inconst LABEL)
+
+Create an exception handler for the given catch label and push it onto
+the exception handler stack.
+
+=item B<push_eh>(invar PMC)
+
+Push an invokable PMC onto the exception handler stack.
+
+=item B<pop_eh>()
+
+Pop the most recently placed exception off the handler stack.
+
+=item B<throw>(invar PMC)
+
+Throw the exception in $1 with current continuation.
+
+=item B<throw>(invar PMC, invar PMC)
+
+Throw the exception in $1 with continuation from $2.
+
+=item B<rethrow>(invar PMC)
+
+Only valid inside an exception handler. Rethrow the exception $1.
+
+=item B<count_eh>(out INT)
+
+Get a count of currently active exception handlers on the stack.
+
+=item B<die>(in STR)
+
+=item B<die>(in PMC)
+
+Die with message $1
+
+=item B<die>(in INT, in INT)
+
+Die with severity $1 and error $2. If severity is .EXCEPT_DOOMED,
+call _exit($2). The latter isn't catchable.
+
+=item B<exit>(in INT)
+
+Exit the interpreter with exit_status $1. If you want to communicate an
+extended exit status, create an exception with severity B<EXCEPT_exit>
+and throw it.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Interpreter operations
+
+These operations inspect or modify the interpreter itself, possibly
+affecting its subsequent operation.
+
+=over 4
+
+
+=cut
+
+=item B<debug>(in INT)
+
+If $1 is zero, turn off debugging. Otherwise turn debug flag $1 on.
+
+
+=cut
+
+=item B<bounds>(in INT)
+
+If $1 is zero, turn off byte code bounds checking. Otherwise turn it on.
+
+
+=cut
+
+=item B<profile>(in INT)
+
+If $1 is zero, turn off profiling. Otherwise turn it on.
+
+
+=cut
+
+=item B<trace>(in INT)
+
+If $1 is zero, turn off tracing. Otherwise turn trace flag $1 on.
+
+
+=cut
+
+=item B<gc_debug>(in INT)
+
+If $1 is zero, turn off GC_DEBUG. Otherwise turn it on.
+
+
+=cut
+
+=item B<interpinfo>
+
+Fetch some piece of information about the interpreter and put it in $1.
+Possible values for $2 are defined in F<runtime/parrot/include/interpinfo.pasm>.
+The valid constants for each return value are:
+
+=over 4
+
+=item B<interpinfo>(out INT, in INT)
+
+.TOTAL_MEM_ALLOC, .GC_MARK_RUNS, .GC_COLLECT_RUNS, .ACTIVE_PMCS, .ACTIVE_BUFFERS,
+.TOTAL_PMCS, .TOTAL_BUFFERS, .HEADER_ALLOCS_SINCE_COLLECT,
+.MEM_ALLOCS_SINCE_COLLECT, .TOTAL_COPIED, .IMPATIENT_PMCS, .GC_LAZY_MARK_RUNS,
+.EXTENDED_PMCS, .RUNCORE
+
+=item B<interpinfo>(out PMC, in INT)
+
+.CURRENT_SUB, .CURRENT_CONT, .CURRENT_OBJECT, .CURRENT_LEXPAD
+
+=item B<interpinfo>(out STR, in INT)
+
+.EXECUTABLE_FULLNAME, .EXECUTABLE_BASENAME, .RUNTIME_PREFIX
+
+=back
+
+
+=cut
+
+=item B<warningson>(in INT)
+
+Turns on warnings categories. Categories already turned on will stay on.
+Initial setting is currently all warnings off.  Include F<warnings.pasm> to
+access the categories. Refer to that file for the current list of warnings
+available.
+
+=over 4
+
+=back
+
+To turn on multiple categories, OR the category numbers together.
+
+
+=cut
+
+=item B<warningsoff>(in INT)
+
+Turns off warnings categories.  Categories already turned off will
+stay off.  See the documentation for B<warningson> for category
+numbers.
+
+
+=cut
+
+=item B<errorson>(in INT)
+
+Turns on error categories. Categories already turned on will stay on.  To
+access these from PASM, include F<errors.pasm>.  The current categories are:
+
+=over 4
+
+=item .PARROT_ERRORS_GLOBALS_FLAG
+
+Throw an exception if global doesn't exist.  Default: on.
+
+=item .PARROT_ERRORS_OVERFLOW_FLAG
+
+Throw math overflow instead of promoting to BigInt.  Default: off.
+
+=item .PARROT_ERRORS_PARAM_COUNT_FLAG
+
+Throw exception on argument <-> param count mismatch.  Default: off.
+
+=item .PARROT_ERRORS_RESULT_COUNT_FLAG
+
+Throw exception on return <-> result count mismatch.  Default: off.
+
+=item .PARROT_ERRORS_ALL_FLAG
+
+=back
+
+To turn on multiple categories, OR the category numbers together.
+
+
+=cut
+
+=item B<errorsoff>(in INT)
+
+Turns off errors categories.  Categories already turned off will
+stay off.  See the documentation for B<errorson> for category
+numbers.
+
+
+=cut
+
+=item B<runinterp>(invar PMC, in LABEL)
+
+Run the code starting at offset $2 within interpreter $1.
+
+=item B<getinterp>(out PMC)
+
+Get the current ParrotInterpreter.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Garbage Collection
+
+Opcodes that interact with the GC subsystem.
+
+=over 4
+
+
+=cut
+
+=item B<sweep>(inconst INT)
+
+Triggers a GC run, based on the value of $1, where:
+
+=over
+
+=item * 0
+
+Trigger a GC run only if there are things that have flagged themselves as
+really needing to be collected.
+
+=item * 1
+
+Trigger a GC run unconditionally.
+
+=back
+
+
+=cut
+
+=item B<collect>()
+
+Trigger a garbage collection.
+
+
+=cut
+
+=item B<sweepoff>()
+
+Disable GC runs. (Nestable)
+
+
+=cut
+
+=item B<sweepon>()
+
+Re-enable GC runs.
+
+
+=cut
+
+=item B<collectoff>()
+
+Disable GC runs (nestable).
+
+
+=cut
+
+=item B<collecton>()
+
+Re-enable GC.
+
+
+=cut
+
+=item B<needs_destroy>(invar PMC)
+
+Mark the PMC wanting destruction as soon as possible, for example
+when unused during the lazy sweep, triggered by C<sweep 0>.
+
+
+=cut
+
+=back
+
+=head2 Native Call Interface
+
+Opcodes for interfacing with C functions in shared libraries.
+
+=over 4
+
+
+=cut
+
+=item B<loadlib>(out PMC, in STR)
+
+=item B<loadlib>(out PMC, in STR, in PMC)
+
+Load a dynamic link library named $2 and store it in $1. $3, if
+provided, controls library loading and initialization; currently,
+we expect a bitmask accessible as an integer.  Bit definitions are
+accessible from PASM if F<dlopenflags.pasm> is included.  The current
+bits are:
+
+=over 4
+
+=item PARROT_DLOPEN_GLOBAL
+
+Make any symbols in the library accessible to other libraries loaded.
+
+=back
+
+=item B<dlfunc>(out PMC, invar PMC, in STR, in STR)
+
+Look up symbol $3 in library $2 with signature $4, and put the
+corresponding sub object in $1. Note that you need the signature so we
+can build or find an appropriate thunking function.
+
+=item B<dlvar>(out PMC, invar PMC, in STR)
+
+Look up symbol $3 in library $2. We assume that this is actually a
+variable address rather than a function address, and build an
+UnManagedStruct PMC and stick the address into its data pointer.
+
+=item B<compreg>(out PMC, in STR)
+
+Get the compiler object for source type $2.  The returned compiler
+object should provide a C<compile> method for translating code
+in the source type.  However, some Parrot compilers such as
+C<PIR> and C<PASM> currently return a sub that is to be
+invoked directly on the source.
+
+=item B<compreg>(in STR, invar PMC)
+
+Register $2 as the compiler object for source type $1.
+
+=item B<new_callback>(out PMC, invar PMC, invar PMC, in STR)
+
+Create a callback stub $1 for PASM subroutine $2 with userdata $3 and
+callback function signature $4. Only 2 argument signatures with
+signature chars I<U[1iscpt]> or I<[1iscpt]U>  are handled currently.
+But these cover a lot of callback signatures. Please note that the
+userdata PMC I<U> has to be handled transparently by the caller of
+the callback function.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Annotations operations
+
+These operations relate to bytecode annotations.
+
+=over 4
+
+
+=cut
+
+=item B<annotations>(out PMC)
+
+Gets all bytecode annotations in effect at the current point, in a Hash.
+If there are none, returns an empty Hash.
+
+
+=cut
+
+=item B<annotations>(out PMC, in STR)
+
+Gets the bytecode annotation with the given name that is in effect at the
+current point. Returns PMCNULL if there is none.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head1 COPYRIGHT
+
+Copyright (C) 2001-2010, Parrot Foundation.
+
+=head1 LICENSE
+
+This program is free software. It is subject to the same license
+as the Parrot interpreter itself.
+
+
+=cut
+

@@ -1,0 +1,628 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Comparison Opcodes</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/ops.html">Opcodes</a> &raquo; Comparison Opcodes
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>cmp.ops &#45; Comparison Opcodes</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Operations that compare two registers against each other.
+Some of these operations affect control flow directly; others do not.</p>
+
+<p>When making changes to any ops file,
+run <code>make bootstrap&#45;ops</code> to regenerate all generated ops files.</p>
+
+<h2><a name="Flow_control_comparison_operators"
+>Flow control comparison operators</a></h2>
+
+<p>These operators branch based on the relationship between their operands.</p>
+
+<dl>
+<dt><a name="eq(in_INT,_in_INT,_inconst_LABEL)"
+><b>eq</b>(in INT,
+in INT,
+inconst LABEL)</a></dt>
+
+<dt><a name="eq(in_NUM,_in_NUM,_inconst_LABEL)"
+><b>eq</b>(in NUM,
+in NUM,
+inconst LABEL)</a></dt>
+
+<dt><a name="eq(in_STR,_in_STR,_inconst_LABEL)"
+><b>eq</b>(in STR,
+in STR,
+inconst LABEL)</a></dt>
+
+<dt><a name="eq(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>eq</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+
+<dt><a name="eq(invar_PMC,_in_INT,_inconst_LABEL)"
+><b>eq</b>(invar PMC,
+in INT,
+inconst LABEL)</a></dt>
+
+<dt><a name="eq(invar_PMC,_in_NUM,_inconst_LABEL)"
+><b>eq</b>(invar PMC,
+in NUM,
+inconst LABEL)</a></dt>
+
+<dt><a name="eq(invar_PMC,_in_STR,_inconst_LABEL)"
+><b>eq</b>(invar PMC,
+in STR,
+inconst LABEL)</a></dt>
+
+<dt><a name="eq_str(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>eq_str</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+
+<dt><a name="eq_num(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>eq_num</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+
+<dt><a name="eq_addr(in_STR,_in_STR,_inconst_LABEL)"
+><b>eq_addr</b>(in STR,
+in STR,
+inconst LABEL)</a></dt>
+
+<dt><a name="eq_addr(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>eq_addr</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+Branch if $1 is equal to $2.
+For PMCs this does a generic comparison,
+whatever that is for the involved PMCs.
+Mixed PMC number/string operands do a numeric or string comparison respectively.<b>eq_str</b> and <b>eq_num</b> enforce string or number comparisons.<b>eq_addr</b> compares the address of the objects or strings.
+<dt><a name="ne(in_INT,_in_INT,_inconst_LABEL)"
+><b>ne</b>(in INT,
+in INT,
+inconst LABEL)</a></dt>
+
+<dt><a name="ne(in_NUM,_in_NUM,_inconst_LABEL)"
+><b>ne</b>(in NUM,
+in NUM,
+inconst LABEL)</a></dt>
+
+<dt><a name="ne(in_STR,_in_STR,_inconst_LABEL)"
+><b>ne</b>(in STR,
+in STR,
+inconst LABEL)</a></dt>
+
+<dt><a name="ne(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>ne</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+
+<dt><a name="ne(invar_PMC,_in_INT,_inconst_LABEL)"
+><b>ne</b>(invar PMC,
+in INT,
+inconst LABEL)</a></dt>
+
+<dt><a name="ne(invar_PMC,_in_NUM,_inconst_LABEL)"
+><b>ne</b>(invar PMC,
+in NUM,
+inconst LABEL)</a></dt>
+
+<dt><a name="ne(invar_PMC,_in_STR,_inconst_LABEL)"
+><b>ne</b>(invar PMC,
+in STR,
+inconst LABEL)</a></dt>
+
+<dt><a name="ne_str(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>ne_str</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+
+<dt><a name="ne_num(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>ne_num</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+
+<dt><a name="ne_addr(in_STR,_in_STR,_inconst_LABEL)"
+><b>ne_addr</b>(in STR,
+in STR,
+inconst LABEL)</a></dt>
+
+<dt><a name="ne_addr(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>ne_addr</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+Branch if $1 is not equal to $2.
+<dt><a name="lt(in_INT,_in_INT,_inconst_LABEL)"
+><b>lt</b>(in INT,
+in INT,
+inconst LABEL)</a></dt>
+
+<dt><a name="lt(in_NUM,_in_NUM,_inconst_LABEL)"
+><b>lt</b>(in NUM,
+in NUM,
+inconst LABEL)</a></dt>
+
+<dt><a name="lt(in_STR,_in_STR,_inconst_LABEL)"
+><b>lt</b>(in STR,
+in STR,
+inconst LABEL)</a></dt>
+
+<dt><a name="lt(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>lt</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+
+<dt><a name="lt(invar_PMC,_in_INT,_inconst_LABEL)"
+><b>lt</b>(invar PMC,
+in INT,
+inconst LABEL)</a></dt>
+
+<dt><a name="lt(invar_PMC,_in_NUM,_inconst_LABEL)"
+><b>lt</b>(invar PMC,
+in NUM,
+inconst LABEL)</a></dt>
+
+<dt><a name="lt(invar_PMC,_in_STR,_inconst_LABEL)"
+><b>lt</b>(invar PMC,
+in STR,
+inconst LABEL)</a></dt>
+
+<dt><a name="lt_str(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>lt_str</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+
+<dt><a name="lt_num(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>lt_num</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+Branch if $1 is less than $2.
+<dt><a name="le(in_INT,_in_INT,_inconst_LABEL)"
+><b>le</b>(in INT,
+in INT,
+inconst LABEL)</a></dt>
+
+<dt><a name="le(in_NUM,_in_NUM,_inconst_LABEL)"
+><b>le</b>(in NUM,
+in NUM,
+inconst LABEL)</a></dt>
+
+<dt><a name="le(in_STR,_in_STR,_inconst_LABEL)"
+><b>le</b>(in STR,
+in STR,
+inconst LABEL)</a></dt>
+
+<dt><a name="le(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>le</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+
+<dt><a name="le(invar_PMC,_in_INT,_inconst_LABEL)"
+><b>le</b>(invar PMC,
+in INT,
+inconst LABEL)</a></dt>
+
+<dt><a name="le(invar_PMC,_in_NUM,_inconst_LABEL)"
+><b>le</b>(invar PMC,
+in NUM,
+inconst LABEL)</a></dt>
+
+<dt><a name="le(invar_PMC,_in_STR,_inconst_LABEL)"
+><b>le</b>(invar PMC,
+in STR,
+inconst LABEL)</a></dt>
+
+<dt><a name="le_str(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>le_str</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+
+<dt><a name="le_num(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>le_num</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+Branch if $1 is less than or equal to $2.
+<dt><a name="gt(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>gt</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+
+<dt><a name="gt(invar_PMC,_in_INT,_inconst_LABEL)"
+><b>gt</b>(invar PMC,
+in INT,
+inconst LABEL)</a></dt>
+
+<dt><a name="gt(invar_PMC,_in_NUM,_inconst_LABEL)"
+><b>gt</b>(invar PMC,
+in NUM,
+inconst LABEL)</a></dt>
+
+<dt><a name="gt(invar_PMC,_in_STR,_inconst_LABEL)"
+><b>gt</b>(invar PMC,
+in STR,
+inconst LABEL)</a></dt>
+
+<dt><a name="gt_str(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>gt_str</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+
+<dt><a name="gt_num(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>gt_num</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+Branch if $1 is greater than $2.
+<dt><a name="ge(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>ge</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+
+<dt><a name="ge(invar_PMC,_in_INT,_inconst_LABEL)"
+><b>ge</b>(invar PMC,
+in INT,
+inconst LABEL)</a></dt>
+
+<dt><a name="ge(invar_PMC,_in_NUM,_inconst_LABEL)"
+><b>ge</b>(invar PMC,
+in NUM,
+inconst LABEL)</a></dt>
+
+<dt><a name="ge(invar_PMC,_in_STR,_inconst_LABEL)"
+><b>ge</b>(invar PMC,
+in STR,
+inconst LABEL)</a></dt>
+
+<dt><a name="ge_str(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>ge_str</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+
+<dt><a name="ge_num(invar_PMC,_invar_PMC,_inconst_LABEL)"
+><b>ge_num</b>(invar PMC,
+invar PMC,
+inconst LABEL)</a></dt>
+Branch if $1 is greater than or equal to $2.
+<dt><a name="if_null(invar_PMC,_inconst_LABEL)"
+><b>if_null</b>(invar PMC,
+inconst LABEL)</a></dt>
+Branch to $2 if $1 is a NULL PMC.
+<dt><a name="if_null(invar_STR,_inconst_LABEL)"
+><b>if_null</b>(invar STR,
+inconst LABEL)</a></dt>
+Branch to $2 if $1 is a NULL STRING.
+<dt><a name="unless_null(invar_PMC,_inconst_LABEL)"
+><b>unless_null</b>(invar PMC,
+inconst LABEL)</a></dt>
+Branch to $2 if $1 is <i>not</i> a NULL PMC.
+<dt><a name="unless_null(invar_STR,_inconst_LABEL)"
+><b>unless_null</b>(invar STR,
+inconst LABEL)</a></dt>
+Branch to $2 if $1 is <i>not</i> a NULL STRING.</dl>
+
+<h2><a name="Non&#45;flow_control_comparison_ops"
+>Non&#45;flow control comparison ops</a></h2>
+
+<p>These ops do comparisons and truth testing without doing flow control.</p>
+
+<dl>
+<dt><a name="cmp(out_INT,_in_INT,_in_INT)"
+><b>cmp</b>(out INT,
+in INT,
+in INT)</a></dt>
+
+<dt><a name="cmp(out_INT,_in_NUM,_in_NUM)"
+><b>cmp</b>(out INT,
+in NUM,
+in NUM)</a></dt>
+
+<dt><a name="cmp(out_INT,_in_STR,_in_STR)"
+><b>cmp</b>(out INT,
+in STR,
+in STR)</a></dt>
+
+<dt><a name="cmp(out_INT,_invar_PMC,_invar_PMC)"
+><b>cmp</b>(out INT,
+invar PMC,
+invar PMC)</a></dt>
+
+<dt><a name="cmp(out_INT,_invar_PMC,_in_INT)"
+><b>cmp</b>(out INT,
+invar PMC,
+in INT)</a></dt>
+
+<dt><a name="cmp(out_INT,_invar_PMC,_in_NUM)"
+><b>cmp</b>(out INT,
+invar PMC,
+in NUM)</a></dt>
+
+<dt><a name="cmp(out_INT,_invar_PMC,_in_STR)"
+><b>cmp</b>(out INT,
+invar PMC,
+in STR)</a></dt>
+
+<dt><a name="cmp_str(out_INT,_invar_PMC,_invar_PMC)"
+><b>cmp_str</b>(out INT,
+invar PMC,
+invar PMC)</a></dt>
+
+<dt><a name="cmp_num(out_INT,_invar_PMC,_invar_PMC)"
+><b>cmp_num</b>(out INT,
+invar PMC,
+invar PMC)</a></dt>
+Sets $1 to &#45;1 if $2 &#60; $3,
++1 if $2 &#62; $3,
+and 0 otherwise.
+<dt><a name="cmp_pmc(out_PMC,_invar_PMC,_invar_PMC)"
+><b>cmp_pmc</b>(out PMC,
+invar PMC,
+invar PMC)</a></dt>
+Does the same thing as the other cmp_* variants,
+but puts a PMC in $1.
+This is useful for avoiding the semipredicate problem in HLLs where two aggregate PMCs are not always comparable.
+<dt><a name="issame(out_INT,_invar_PMC,_invar_PMC)"
+><b>issame</b>(out INT,
+invar PMC,
+invar PMC)</a></dt>
+
+<dt><a name="issame(out_INT,_in_STR,_in_STR)"
+><b>issame</b>(out INT,
+in STR,
+in STR)</a></dt>
+Sets $1 to 1 or 0,
+depending on the identity of the 2 objects.
+The identity is the PMCs memory address.
+<dt><a name="isntsame(out_INT,_invar_PMC,_invar_PMC)"
+><b>isntsame</b>(out INT,
+invar PMC,
+invar PMC)</a></dt>
+
+<dt><a name="isntsame(out_INT,_in_STR,_in_STR)"
+><b>isntsame</b>(out INT,
+in STR,
+in STR)</a></dt>
+Sets $1 to 0 or 1,
+depending on the identity of the 2 objects.
+<dt><a name="istrue(out_INT,_invar_PMC)"
+><b>istrue</b>(out INT,
+invar PMC)</a></dt>
+Sets $1 to 1 or 0,
+depending on whether $2 is true or not.
+<dt><a name="isfalse(out_INT,_invar_PMC)"
+><b>isfalse</b>(out INT,
+invar PMC)</a></dt>
+Sets $1 to 1 or 0,
+depending on whether $2 is false or not.
+<dt><a name="isnull(out_INT,_in_PMC)"
+><b>isnull</b>(out INT,
+in PMC)</a></dt>
+Sets $1 to 1 if the object is null,
+0 otherwise.
+<dt><a name="isnull(out_INT,_in_STR)"
+><b>isnull</b>(out INT,
+in STR)</a></dt>
+Sets $1 to 1 if the string is null,
+0 otherwise.
+<dt><a name="isgt(out_INT,_in_INT,_in_INT)"
+><b>isgt</b>(out INT,
+in INT,
+in INT)</a></dt>
+
+<dt><a name="isgt(out_INT,_in_NUM,_in_NUM)"
+><b>isgt</b>(out INT,
+in NUM,
+in NUM)</a></dt>
+
+<dt><a name="isgt(out_INT,_in_STR,_in_STR)"
+><b>isgt</b>(out INT,
+in STR,
+in STR)</a></dt>
+These 3 opcodes are valid,
+but create as their reverse.
+<dt><a name="isgt(out_INT,_invar_PMC,_invar_PMC)"
+><b>isgt</b>(out INT,
+invar PMC,
+invar PMC)</a></dt>
+Sets $1 to 1 if $2 is greater than $3.
+<dt><a name="isge(out_INT,_in_INT,_in_INT)"
+><b>isge</b>(out INT,
+in INT,
+in INT)</a></dt>
+
+<dt><a name="isge(out_INT,_in_NUM,_in_NUM)"
+><b>isge</b>(out INT,
+in NUM,
+in NUM)</a></dt>
+
+<dt><a name="isge(out_INT,_in_STR,_in_STR)"
+><b>isge</b>(out INT,
+in STR,
+in STR)</a></dt>
+These 3 opcodes are valid,
+but create as their reverse.
+<dt><a name="isge(out_INT,_invar_PMC,_invar_PMC)"
+><b>isge</b>(out INT,
+invar PMC,
+invar PMC)</a></dt>
+Sets $1 to 1 if $2 is greater than or equal to $3.
+<dt><a name="isle(out_INT,_in_INT,_in_INT)"
+><b>isle</b>(out INT,
+in INT,
+in INT)</a></dt>
+
+<dt><a name="isle(out_INT,_in_NUM,_in_NUM)"
+><b>isle</b>(out INT,
+in NUM,
+in NUM)</a></dt>
+
+<dt><a name="isle(out_INT,_in_STR,_in_STR)"
+><b>isle</b>(out INT,
+in STR,
+in STR)</a></dt>
+
+<dt><a name="isle(out_INT,_invar_PMC,_invar_PMC)"
+><b>isle</b>(out INT,
+invar PMC,
+invar PMC)</a></dt>
+Sets $1 to 1 if $2 is less than or equal to $3.
+<dt><a name="islt(out_INT,_in_INT,_in_INT)"
+><b>islt</b>(out INT,
+in INT,
+in INT)</a></dt>
+
+<dt><a name="islt(out_INT,_in_NUM,_in_NUM)"
+><b>islt</b>(out INT,
+in NUM,
+in NUM)</a></dt>
+
+<dt><a name="islt(out_INT,_in_STR,_in_STR)"
+><b>islt</b>(out INT,
+in STR,
+in STR)</a></dt>
+
+<dt><a name="islt(out_INT,_invar_PMC,_invar_PMC)"
+><b>islt</b>(out INT,
+invar PMC,
+invar PMC)</a></dt>
+Sets $1 to 1 if $2 is less than $3.
+<dt><a name="iseq(out_INT,_in_INT,_in_INT)"
+><b>iseq</b>(out INT,
+in INT,
+in INT)</a></dt>
+
+<dt><a name="iseq(out_INT,_in_NUM,_in_NUM)"
+><b>iseq</b>(out INT,
+in NUM,
+in NUM)</a></dt>
+
+<dt><a name="iseq(out_INT,_in_STR,_in_STR)"
+><b>iseq</b>(out INT,
+in STR,
+in STR)</a></dt>
+
+<dt><a name="iseq(out_INT,_invar_PMC,_invar_PMC)"
+><b>iseq</b>(out INT,
+invar PMC,
+invar PMC)</a></dt>
+Sets $1 to 1 if $2 is equal to $3.
+<dt><a name="isne(out_INT,_in_INT,_in_INT)"
+><b>isne</b>(out INT,
+in INT,
+in INT)</a></dt>
+
+<dt><a name="isne(out_INT,_in_NUM,_in_NUM)"
+><b>isne</b>(out INT,
+in NUM,
+in NUM)</a></dt>
+
+<dt><a name="isne(out_INT,_in_STR,_in_STR)"
+><b>isne</b>(out INT,
+in STR,
+in STR)</a></dt>
+
+<dt><a name="isne(out_INT,_invar_PMC,_invar_PMC)"
+><b>isne</b>(out INT,
+invar PMC,
+invar PMC)</a></dt>
+Sets $1 to 1 if $2 is not equal to $3.</dl>
+
+<h2><a name="Logical_operations"
+>Logical operations</a></h2>
+
+<p>These operations apply logical functions to their arguments.</p>
+
+<dl>
+<dt><a name="and(out_INT,_in_INT,_in_INT)"
+><b>and</b>(out INT,
+in INT,
+in INT)</a></dt>
+
+<dt><a name="and(invar_PMC,_invar_PMC,_invar_PMC)"
+><b>and</b>(invar PMC,
+invar PMC,
+invar PMC)</a></dt>
+Short&#45;circuiting logical and.
+Returns $2 if it&#39;s false,
+else returns $3.
+<dt><a name="not(inout_INT)"
+><b>not</b>(inout INT)</a></dt>
+
+<dt><a name="not(invar_PMC)"
+><b>not</b>(invar PMC)</a></dt>
+Set the boolean state of $1 to the opposite of the boolean state from $1.
+<dt><a name="not(out_INT,_in_INT)"
+><b>not</b>(out INT,
+in INT)</a></dt>
+
+<dt><a name="not(out_PMC,_invar_PMC)"
+><b>not</b>(out PMC,
+invar PMC)</a></dt>
+
+<dt><a name="or(out_INT,_in_INT,_in_INT)"
+><b>or</b>(out INT,
+in INT,
+in INT)</a></dt>
+
+<dt><a name="or(invar_PMC,_invar_PMC,_invar_PMC)"
+><b>or</b>(invar PMC,
+invar PMC,
+invar PMC)</a></dt>
+Short&#45;circuiting logical or.
+Returns $2 if it&#39;s true,
+else returns $3.
+<dt><a name="xor(out_INT,_in_INT,_in_INT)"
+><b>xor</b>(out INT,
+in INT,
+in INT)</a></dt>
+
+<dt><a name="xor(invar_PMC,_invar_PMC,_invar_PMC)"
+><b>xor</b>(invar PMC,
+invar PMC,
+invar PMC)</a></dt>
+Logical xor.
+Returns $2 if it&#39;s true and $3 isn&#39;t,
+returns $3 if it&#39;s true and $2 isn&#39;t,
+else returns false.</dl>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT</a></h1>
+
+<p>Copyright (C) 2001&#45;2010,
+Parrot Foundation.</p>
+
+<h1><a name="LICENSE"
+>LICENSE</a></h1>
+
+<p>This program is free software.
+It is subject to the same license as the Parrot interpreter itself.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

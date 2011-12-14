@@ -1,0 +1,640 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot FAQ for compiler writers in PIR</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Home</a> &raquo; Parrot FAQ for compiler writers in PIR
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/compiler_faq.pod &#45; Parrot FAQ for compiler writers in PIR</p>
+
+<h1><a name="General_Questions"
+>General Questions</a></h1>
+
+<h2><a name="Which_C_compilers_can_I_use_with_Parrot?"
+>Which C compilers can I use with Parrot?</a></h2>
+
+<p>Whoa,
+there&#45;&#45;you&#39;re looking at the wrong FAQ.
+This document is for people writing compilers that target Parrot.</p>
+
+<p>To answer your question,
+though,
+Parrot should theoretically work with any C89&#45;compliant C compiler.
+See the <em>README</em> files in the root directory for more information about building Parrot.</p>
+
+<h2><a name="How_can_I_implement_a_compiler_to_use_as_a_compiler_object_from_within_Parrot?"
+>How can I implement a compiler to use as a compiler object from within Parrot?</a></h2>
+
+<p>See <a href='http://www.parrotblog.org/2008/03/targeting&#45;parrot&#45;vm.html'><a href="http://www.parrotblog.org/2008/03/targeting&#45;parrot&#45;vm.html">http://www.parrotblog.org/2008/03/targeting&#45;parrot&#45;vm.html</a></a>.</p>
+
+<h2><a name="How_do_I_embed_source_locations_in_my_code_for_debugging?"
+>How do I embed source locations in my code for debugging?</a></h2>
+
+<p>Use <code>.line 42 &#34;file.pir&#34;</code> for this.</p>
+
+<h1><a name="Subroutines"
+>Subroutines</a></h1>
+
+<h2><a name="How_do_I_generate_a_sub_call_in_PIR?"
+>How do I generate a sub call in PIR?</a></h2>
+
+<p>This looks like a function call in many HLLs:</p>
+<pre>   $P0( $P1, $P2, $P3 )
+</pre>
+<p>where $P0 is the function object,
+and $P1,
+$P2,
+and $P3 are its parameters.
+You can also use a function&#39;s name in place of the object,
+as long as it&#39;s in the same namespace.</p>
+<pre>   somefunctionlabel( $P1, $P2, $P3 )
+</pre>
+<p>You can also get return value(s):</p>
+<pre>  ($P1,$P2) = $P0( $P1, $P2, $P3 )
+</pre>
+<p>If the function name might collide with a Parrot opcode,
+quote it:</p>
+<pre>   .local int i
+   i = 'new'(42)
+</pre>
+<p>You can also use the full PCC for these calls.
+See <a href='TODO#pdd19_pir.pod%2FParameter_Passing_and_Getting_Flags'>&#34;pdd19_pir.pod/Parameter Passing and Getting Flags&#34; in docs</a> and other questions below for more information.</p>
+
+<h2><a name="How_do_I_generate_a_method_call_in_PIR?"
+>How do I generate a method call in PIR?</a></h2>
+
+<p>Similar to function calls,
+just append <code>.</code> and the method name to the object.
+You should quote a literal method name to avoid confusion.</p>
+<pre>  .local pmc ret_val, some_obj, arg
+  ret_val = some_obj.'some_meth'(arg)
+</pre>
+<p>The method name may also be a string variable representing a method name:</p>
+<pre>  .local string m
+  .local pmc curses_obj
+  m = 'bold'
+  curses_obj.m()
+</pre>
+<h2><a name="How_do_I_locate_or_create_a_subroutine_object?"
+>How do I locate or create a subroutine object?</a></h2>
+
+<p>There are several ways to achieve this,
+depending on the location of the subroutine.</p>
+
+<p>If the sub is in the same file use a Sub constant:</p>
+<pre>  .const 'Sub' foo = 'foo'
+  # ...
+  foo()
+</pre>
+<p>A more dynamic way is:</p>
+<pre>  .local pmc foo
+  foo = find_name 'foo'
+</pre>
+<p>This searches for a subroutine &#39;foo&#39; in the current lexical pad,
+in the current namespace,
+in the global,
+and in the builtin namespace in that order.
+This opcode is generated,
+if <i>foo()</i> is used,
+but the compiler can&#39;t figure out,
+where the function is.</p>
+
+<p>If the subroutine is in a different namespace,
+use the <code>get_hll_global</code> or <code>get_root_global</code> opcodes:</p>
+<pre>  .local pmc foo
+  foo = get_root_global ['Foo'], 'foo'
+</pre>
+<p>This fetches the sub <code>foo</code> in the <code>Foo</code> namespace.</p>
+
+<h2><a name="How_do_I_create_a_Closure_or_Coroutine?"
+>How do I create a Closure or Coroutine?</a></h2>
+
+<p>Closure and Coroutine carry both a dynamic state.
+Therefore you need to perform two steps.
+First use one of the above ways to locate the Sub object.
+Then use the op <code>newclosure</code> to capture the environment.</p>
+<pre>  .local pmc coro
+  coro = find_name 'my_coro'
+  coro = newclosure coro
+</pre>
+<p>Any subroutine that contains a <code>.yield</code> directive is automatically created as a Coroutine PMC:</p>
+<pre>  .sub my_coro             # automagically a Coroutine PMC
+     .param pmc result
+     #...
+     .yield (result)
+     #...
+  .end
+</pre>
+<h2><a name="How_do_I_generate_a_tail_call_in_PIR?"
+>How do I generate a tail call in PIR?</a></h2>
+<pre>  .sub foo
+      # ...
+      .tailcall bar(42)           # tail call sub bar
+  .end
+
+  .sub bar
+      .param int answer
+      inc answer
+      .return(answer)
+  .end
+</pre>
+<p>The sub <code>bar</code> will return to the caller of <code>foo</code>.
+(Warning!
+This fails in some cases.
+XXX Find the Trac ticket and reference it here.)</p>
+
+<h2><a name="How_do_I_generate_a_sub_call_with_a_variable&#45;length_parameter_list_in_PIR?"
+>How do I generate a sub call with a variable&#45;length parameter list in PIR?</a></h2>
+
+<p>If you have a variable amounts of arguments in an array,
+you can pass all items of that array with the <code>:flat</code> directive.</p>
+<pre>  .local pmc ar, foo
+  ar = new 'ResizablePMCArray'
+  push ar, "arg 1\n"
+  push ar, "arg 2\n"
+  #...
+  foo(ar :flat)
+  #...
+</pre>
+<h2><a name="How_to_I_retrieve_the_contents_of_a_variable&#45;length_parameter_list_being_passed_to_me?"
+>How to I retrieve the contents of a variable&#45;length parameter list being passed to me?</a></h2>
+
+<p>Use a slurpy array:</p>
+<pre>  .sub mysub
+    .param pmc argv      :slurpy
+    .local int argc
+    argc = argv
+    #...
+  .end
+</pre>
+<p>If you have a few fixed parameters too,
+you can use a slurpy array to get the rest of the arguments</p>
+<pre>  .sub mysub
+    .param pmc arg0
+    .param pmc arg1
+    .param pmc varargs   :slurpy
+    .local int num_varargs
+    num_varargs = varargs
+    # ...
+  .end
+</pre>
+<h2><a name="How_do_I_pass_optional_arguments?"
+>How do I pass optional arguments?</a></h2>
+
+<p>Use the <code>:optional</code> and <code>:opt_flag</code> pragmas:</p>
+<pre>  .sub foo
+     .param pmc arg1       :optional
+     .param int has_arg1   :opt_flag
+     .param pmc arg2       :optional
+     .param int has_arg2   :opt_flag
+
+     if has_arg1 goto got_arg1
+     #...
+  .end
+</pre>
+<h2><a name="How_do_I_create_nested_subroutines?"
+>How do I create nested subroutines?</a></h2>
+
+<p>Please refer to <a href='TODO#pdds%2Fpdd20_lexical_vars.pod%2FNested_Subroutines_Have_Outies%3B_the_%22%3Aouter%22_attribute'>&#34;pdds/pdd20_lexical_vars.pod/Nested Subroutines Have Outies; the &#34;:outer&#34; attribute&#34; in docs</a> for details.</p>
+
+<h1><a name="Variables"
+>Variables</a></h1>
+
+<h2><a name="How_do_I_fetch_a_variable_from_the_global_namespace?"
+>How do I fetch a variable from the global namespace?</a></h2>
+
+<p>Use the <code>get_root_global</code> or <code>get_hll_global</code> op:</p>
+<pre>    get_hll_global $P0, ['name'; 'space'], 'name_of_the_global'
+    get_hll_global $P1, 'name_of_the_global'
+</pre>
+<h2><a name="How_can_I_delete_a_global?"
+>How can I delete a global?</a></h2>
+
+<p>You can retrieve the namespace hash and use the <code>delete</code> opcode.</p>
+<pre>    .sub main :main
+    $P0 = new 'Integer'
+    $P0 = 42
+    set_hll_global 'foo', $P0
+    set_hll_global ['Bar'], 'baz', $P0
+    show_baz()
+    .local pmc ns, Bar_ns
+    ns = get_hll_namespace
+    delete ns['foo']              # delete from top level
+    Bar_ns = ns['Bar']            # get Bar namespace
+    delete Bar_ns['baz']
+    show_baz()
+    .end
+    .sub show_baz
+    $P0 = get_hll_global ['Bar'], 'baz'
+    print "'baz' is "
+    if null $P0 goto is_null
+    print $P0
+    print ".\n"
+    .return ()
+    is_null:
+    print "null.\n"
+    .end
+</pre>
+<h2><a name="How_do_I_use_lexical_pads_to_have_both_a_function_scope_and_a_global_scope?"
+>How do I use lexical pads to have both a function scope and a global scope?</a></h2>
+
+<p>Please refer to <a href='TODO#pdds%2Fpdd20_lexical_vars.pod'>&#34;pdds/pdd20_lexical_vars.pod&#34; in docs</a> for details.</p>
+
+<h2><a name="How_can_I_delete_a_lexical_variable?"
+>How can I delete a lexical variable?</a></h2>
+
+<p>You can&#39;t.
+You can store a PMCNULL as the value though,
+which will catch all further access to that variable and throw an exception.
+(You can create a PMCNULL with the <code>null</code> opcode.)</p>
+
+<h2><a name="How_do_I_resolve_a_variable_name?"
+>How do I resolve a variable name?</a></h2>
+
+<p>Use <code>find_name</code>:</p>
+<pre>    $P0 = find_name '$x'
+    find_name $P0, 'foo'    # same thing
+</pre>
+<p>This will find the name <code>foo</code> in the lexical,
+global,
+or builtin namespace,
+in that order,
+and store it in <code>$P0</code>.</p>
+
+<h2><a name="How_do_I_fetch_a_variable_from_the_current_lexical_pad?"
+>How do I fetch a variable from the current lexical pad?</a></h2>
+<pre>    find_lex $P0, 'foo'
+</pre>
+<p>or much better,
+if possible just use the variable defined along with the <code>.lex</code> definition of <code>foo</code>.</p>
+
+<h2><a name="How_do_I_fetch_a_variable_from_any_nesting_depth?"
+>How do I fetch a variable from any nesting depth?</a></h2>
+
+<p>That is still the same:</p>
+<pre>    find_lex $P0, 'foo'
+</pre>
+<p>This finds a <code>foo</code> variable at any <b>outer</b> depth starting from the top.</p>
+
+<p>If your language looks up variables differently,
+you have to walk the &#39;caller&#39; chain.
+See also <em><a href="../t/dynpmc/dynlexpad.t.html">t/dynpmc/dynlexpad.t</a></em>.</p>
+
+<h2><a name="How_can_I_produce_more_efficient_code_for_lexicals?"
+>How can I produce more efficient code for lexicals?</a></h2>
+
+<p>Don&#39;t emit <code>store_lex</code> at all.
+Use <code>find_lex</code> only if the compiler doesn&#39;t know the variable.
+You can always just use the register that was defined in the <code>.lex</code> directive as an alias to that lexical,
+if you are in the same scope.</p>
+
+<h1><a name="Modules,_Classes,_and_Objects"
+>Modules,
+Classes,
+and Objects</a></h1>
+
+<h2><a name="How_do_I_create_a_module?"
+>How do I create a module?</a></h2>
+
+<p>XXX</p>
+
+<h2><a name="How_do_I_create_a_class?"
+>How do I create a class?</a></h2>
+
+<p>With the <code>newclass</code> op:</p>
+<pre>    newclass $P0, 'Animal'
+</pre>
+<h2><a name="How_do_I_add_instance_variables/attributes?"
+>How do I add instance variables/attributes?</a></h2>
+
+<p>Each class knows which attributes its objects can have.
+You can add attributes to a class (not to individual objects) like so:</p>
+<pre>    addattribute $P0, 'legs'
+</pre>
+<h2><a name="How_do_I_add_instance_methods_to_a_class?"
+>How do I add instance methods to a class?</a></h2>
+
+<p>Methods are declared as functions in the class namespace with the <code>:method</code> keyword appended to the function declaration:</p>
+<pre>  .namespace [ 'Animal' ]
+
+  .sub run :method
+     print "slow and steady\n"
+  .end
+</pre>
+<h2><a name="How_do_I_override_a_vtable_on_a_class?"
+>How do I override a vtable on a class?</a></h2>
+
+<p>As with methods,
+but note the new keyword.
+The vtable name specified <b>must</b> be an existing vtable slot.</p>
+<pre>  .namespace [ 'NearlyPi' ]
+
+  .sub get_string :vtable
+     .return ('three and a half')
+  .end
+</pre>
+<p>Now,
+given an instance of NearlyPi in $P0</p>
+<pre>  $S0 = $P0
+  say $S0  # prints 'three and a half'
+</pre>
+<h2><a name="How_do_I_access_attributes?"
+>How do I access attributes?</a></h2>
+
+<p>You can access attributes by a short name:</p>
+<pre>  $P0 = getattribute self, 'legs'
+  assign $P0, 4                   # set attribute's value
+</pre>
+<h2><a name="When_should_I_use_properties_vs._attributes?"
+>When should I use properties vs.
+attributes?</a></h2>
+
+<p>Properties aren&#39;t inherited.
+If you have some additional data that don&#39;t fit into the class&#39;s hierarchy,
+you could use properties.</p>
+
+<h2><a name="How_do_I_create_a_class_that_is_a_subclass_of_another_class?"
+>How do I create a class that is a subclass of another class?</a></h2>
+
+<p>You first have to get the class PMC of the class you want to subclass.
+Either you use the PMC returned by the <code>newclass</code> op if you created the class,
+or use the <code>get_class</code> op:</p>
+<pre>    get_class $P0, 'Animal'
+</pre>
+<p>Then you can use the <code>subclass</code> op to create a new class that is a subclass of this class:</p>
+<pre>    subclass $P1, $P0, 'Dog'
+</pre>
+<p>This stores the newly created class PMC in $P1.</p>
+
+<h2><a name="How_do_I_create_a_class_that_has_more_than_one_parent_class?"
+>How do I create a class that has more than one parent class?</a></h2>
+
+<p>First,
+create a class without a parent class using <code>newclass</code> (or with only one subclass,
+see previous question).
+Then add the other parent classes to it.
+Please refer to the next question for an example.</p>
+
+<h2><a name="How_do_I_add_another_parent_class_to_my_class?"
+>How do I add another parent class to my class?</a></h2>
+
+<p>If you have a class PMC (created with <code>newclass</code> or by <code>subclass</code>),
+you can add more parent classes to it with the <code>addparent</code> op:</p>
+<pre>    get_class $P1, 'Dog'
+    subclass $P2, $P1, 'SmallDog'
+    get_class $P3, 'Pet'
+    addparent $P2, $P3  # make "SmallDog" also a "Pet"
+</pre>
+<h2><a name="How_can_I_specify_the_constructor_of_a_class?"
+>How can I specify the constructor of a class?</a></h2>
+
+<p>Just override the init vtable for that class.</p>
+<pre>    .sub _ :main
+      newclass $P0, 'Dog'         # create a class named Dog
+    .end
+
+    .namespace ['Dog']
+
+    .sub init :vtable
+      # ...
+    .end
+</pre>
+<p>Or you can specify the constructor method by setting the BUILD property of the class PMC:</p>
+<pre>    newclass $P0, 'Dog'         # create a class named Dog
+    new $P1, 'String'           # create a string
+    set $P1, 'initialise'       # set it to the name of the constructor method
+    setprop $P0, 'BUILD', $P1   # set the BUILD property
+</pre>
+<h2><a name="How_do_I_instantiate_a_class?"
+>How do I instantiate a class?</a></h2>
+
+<p>You can do so either with the class name:</p>
+<pre>    new $P0, 'Dog'
+</pre>
+<p>or with the class object:</p>
+<pre>    .loadlib 'io_ops'
+
+    $P1 = get_class 'Dog'   # find the 'Dog' class
+    unless null $P1 goto have_dog_class
+    printerr "Oops; can't find the 'Dog' class.\n"
+    .return ()
+  have_dog_class:
+    new $P0, $P1    # creates a Dog object and stores it in register $P0
+</pre>
+<p>The chief difference is that using a string constant will produce the specific error &#34;Class &#39;Dog&#39; not found&#34; if that happens to be the case; the other code has to check explicitly.</p>
+
+<p>During the <code>new</code> opcode the constructor is called.</p>
+
+<h2><a name="How_can_I_pass_arguments_to_a_constructor?"
+>How can I pass arguments to a constructor?</a></h2>
+
+<p>You can pass only a single argument to a constructor.
+By convention,
+a hash PMC is passed to the constructor that contains the arguments as key/value pairs:</p>
+<pre>    new $P0, 'Hash'
+    set $P0['greeting'], 'hello'
+    set $P0['size'], 1.23
+
+    new $P1, 'Alien', $P0       # create an Alien object and pass
+                                # the hash to the constructor
+</pre>
+<h2><a name="How_do_I_add_module/class_methods?"
+>How do I add module/class methods?</a></h2>
+
+<p>XXX</p>
+
+<h2><a name="How_do_I_access_module/class_variables?"
+>How do I access module/class variables?</a></h2>
+
+<p>XXX</p>
+
+<h1><a name="Exceptions"
+>Exceptions</a></h1>
+
+<h2><a name="How_do_I_throw_an_exception_in_PIR?"
+>How do I throw an exception in PIR?</a></h2>
+
+<p>The easiest way is the perl&#45;like</p>
+<pre>    die 'Eeeek!'
+</pre>
+<p>You can also explicitly create an exception object and throw it:</p>
+<pre>    $P0 = new 'Exception'
+    $P0 = 'something happened'
+    throw $P0
+</pre>
+<h2><a name="How_do_I_catch_an_exception_in_PIR?"
+>How do I catch an exception in PIR?</a></h2>
+
+<p>Use <code>push_eh</code> to push an exception handler onto the stack.
+End the set of instructions that might throw the exception you&#39;re interested in with <code>pop_eh</code>.</p>
+<pre>    push_eh handler
+      die 'whoops'  # or any other code that might throw an exception...
+    pop_eh
+    # ok
+</pre>
+<p>An exception handler is called with one argument,
+which is the exception object.
+The message of the exception can be easily extracted,
+as follows:</p>
+<pre>  handler: # exception
+    .get_results ($P0)
+    print 'Exception caught:'
+    $S0 = $P0['message']
+    say $S0
+</pre>
+<h2><a name="How_do_I_let_exceptions_from_exit_pass_through_my_handler?"
+>How do I let exceptions from <code>exit</code> pass through my handler?</a></h2>
+
+<p>Rethrow the exception if it has a severity of <code>EXCEPT_EXIT</code>.</p>
+<pre>  .include 'except_severity.pasm'
+  # ...
+  handler:
+    .get_results ($P0)
+    $I0 = $P0['severity']
+    if $I0 == .EXCEPT_EXIT goto handle_exit
+    say 'Exception caught!'
+    # ...
+
+  handle_exit:
+    rethrow $P0 # let the next handler deal with it.
+</pre>
+<p>Exception example:</p>
+<pre>    push_eh handler
+    $P0 = new 'Exception'
+    $P0 = 'something happened'
+    throw $P0
+    pop_eh
+    exit 0
+
+  handler:
+    .local pmc exception
+    .local string message
+    .get_results (exception)
+    print 'Exception: '
+    message = exception['message']
+    print message
+    print "\n"
+    exit 1
+</pre>
+<h1><a name="C_Extensions"
+>C Extensions</a></h1>
+
+<h2><a name="How_do_I_create_PMCs_for_my_compiler?"
+>How do I create PMCs for my compiler?</a></h2>
+
+<p>Parrot supports dynamic PMCs,
+loadable at runtime,
+to allow compiler writers to extend Parrot with additional types.
+For more information about writing PMCs,
+see <a href='TODO#build%2Fpmc2c.pl'>&#34;build/pmc2c.pl&#34; in tools</a> and <a href='TODO#pmc.pod'>&#34;pmc.pod&#34; in docs</a>.</p>
+
+<p>See <a href='TODO#dynpmc%2FMakefile'>&#34;dynpmc/Makefile&#34; in src</a> for an example of how to build your dynamic PMCS.</p>
+
+<h2><a name="How_do_I_add_another_op_to_Parrot?"
+>How do I add another op to Parrot?</a></h2>
+
+<p>Parrot supports dynamic op libraries.
+These allow for ops specific to one language to be used without having to place them into the Parrot core itself.
+For examples of dynamic op libraries,
+see <a href='TODO#dynoplibs'>&#34;dynoplibs&#34; in src</a>.</p>
+
+<h2><a name="How_do_I_use_the_Native_Calling_Interface_(NCI)?"
+>How do I use the Native Calling Interface (NCI)?</a></h2>
+
+<p>Using the NCI you can invoke functions written in C from a Parrot script.
+To every NCI invocation,
+there are two parts: the native function to be invoked,
+and the PIR code to do the invocation.</p>
+
+<p>First the native function,
+to be written in C.
+On Windows,
+it is necessary to do a DLL export specification of the NCI function:</p>
+
+<pre>  /* foo.c */
+
+  /* specify the function prototype */
+  #ifdef __WIN32
+  __declspec(dllexport) void foo(void);
+  #else
+  void foo(void);
+  #endif
+
+  void foo(void) {
+    printf(&#34;Hello Parrot!\n&#34;);
+  }</pre>
+
+<p>Then, after having compiled the file as a shared library, the PIR code looks like this:</p>
+<pre>  .sub main :main
+     .local pmc lib, func
+
+     # load the shared library
+     lib = loadlib "hello" # no extension, .so or .dll is assumed
+
+     # get a reference to the function from the library just
+     # loaded, called "foo", and signature "void" (and no arguments)
+     func = dlfunc lib, "foo", "v"
+
+     # invoke
+     func()
+
+  .end
+</pre>
+<p>If you embedded a Parrot in your C file and you want to invoke another function in that same C file, you should pass a null string to loadlib. Do that as follows:</p>
+<pre> .local pmc lib
+ .local string libname
+ null libname
+
+ lib = loadlib libname
+</pre>
+<p>Under Linux, the .c file must then be linked with the &#45;export&#45;dynamic option.</p>
+
+<h1><a name="Misc"
+>Misc</a></h1>
+
+<h2><a name="How_can_I_access_a_program&#39;s_environment?"
+>How can I access a program&#39;s environment?</a></h2>
+
+<p>Create a new <code>Env</code> PMC and access it like a hash.</p>
+<pre>    .local pmc e
+    e = new 'Env'
+    $P0 = e['USER']      # lt
+</pre>
+<h2><a name="How_can_I_access_Parrot&#39;s_configuration?"
+>How can I access Parrot&#39;s configuration?</a></h2>
+<pre>    .include 'iglobals.pasm'
+    .local pmc interp, cfg
+    interp = getinterp
+    cfg = interp[.IGLOBALS_CONFIG_HASH]
+    $S0 = cfg['VERSION']    # "0.3.0"
+</pre>
+<p>See <em>config_lib.pasm</em> for all the keys in the config hash &#45; or iterate over the config hash.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

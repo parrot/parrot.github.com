@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>implementation of character class vtables</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">implementation of character class vtables</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/libs.html">Libraries</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>PGE::Class &#45; implementation of character class vtables</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>This file implements objects that represent character class atoms.
+The design is a simple vtable design,
+so that we can add unicode trait classes and such when we find out how.</p>
+
+<p>Yes,
+it is all in PIR.
+And yes,
+this is a speed&#45;critical part of PGE.
+Don&#39;t complain; it&#39;s designed so that you can drop in a faster implementation any time.
+Just replace these classes with PMCs.</p>
+
+<p>There&#39;s also something to be said for adding an optimizer at some point.
+The number of tests could get expensive for complex classes,
+so an optimizer would walk the logic tree and replace it with a direct lookup or something.</p>
+
+<h2><a name="PGE::Class"
+>PGE::Class <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p>This is an abstract base class for the atomic classes defined later in the file.
+It provides the following methods to all other classes defined here:</p>
+
+<ul>
+<li>(int) matches(str char)</li><p class="pad"></p>
+
+<p>Returns 1 if <i>char</i> is in the character class,
+0 if not.
+The behavior is undefined if <i>char</i> is more than one character long.
+This is just a named proxy to the get_integer_keyed vtable slot.</p>
+
+<li>(int) find_forward(str source [,
+int offset])</li><p class="pad"></p>
+
+<p>Finds the first character in <i>source</i> that matches the character class and returns its offset.
+The optional <i>offset</i> argument tells the method where to start looking.</p>
+</ul>
+
+<h2><a name="PGE::Class::Discrete"
+>PGE::Class::Discrete <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p>This class represents a discrete set of characters,
+such as [aeiou] (or &#60;[aeiou]&#62; in Perl 6&#45;land).
+To use this class:</p>
+
+<pre lang='und' xml:lang='und'>    # create the character class
+    .local pmc new_sub
+    .local pmc class
+    find_global new_sub, &#34;PGE::Class::Discrete&#34;, &#34;new&#34;
+    class = new_sub(&#34;aeiou&#34;)
+
+    # decide whether it matches a character
+    .local int matches
+    matches = class[&#34;x&#34;]
+    # or
+    matches = class.matches(&#34;x&#34;)</pre>
+
+<p>Ranges (&#34;a&#45;m&#34;) are not supported. That means the three characters &#34;a&#34;, &#34;&#45;&#34;, and &#34;m&#34;.</p>
+
+<h2><a name="PGE::Class::Invert"
+>PGE::Class::Invert <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p>This class represents the logical inversion of another class. That is, it matches exactly when its child doesn&#39;t. To create this class:</p>
+
+<pre lang='und' xml:lang='und'>    # create the character class
+    .local pmc class
+    .local pmc new_sub
+    find_global new_sub, &#34;PGE::Class::Invert&#34;, &#34;new&#34;
+    class = new_sub(some_other_pge_class)</pre>
+
+<h1><a name="AUTHORS"
+>AUTHORS <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Luke Palmer (luke@luqui.org) wrote this module. Patrick Michaud (pmichaud@pobox.com) engineered PGE as a whole. Questions about PGE should be directed to perl6&#45;compiler@perl.org.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

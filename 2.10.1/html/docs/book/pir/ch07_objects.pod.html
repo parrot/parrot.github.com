@@ -1,0 +1,345 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Classes and Objects</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; Classes and Objects
+                </div>
+
+<h1><a name="Classes_and_Objects"
+>Classes and Objects</a></h1>
+
+<p>Many of Parrot&#39;s core classes &#45;&#45; such as <code>Integer</code>,
+<code>String</code>,
+or <code>ResizablePMCArray</code> &#45;&#45; are written in C,
+but you can also write your own classes in PIR.
+PIR doesn&#39;t have the shiny syntax of high&#45;level object&#45;oriented languages,
+but it provides the necessary features to construct well&#45;behaved objects every bit as powerful as those of high&#45;level object systems.</p>
+
+<p><!--
+	INDEX: objects
+--> Parrot developers often use the word &#34;PMCs&#34; to refer to the objects defined in C classes and &#34;objects&#34; to refer to the objects defined in PIR.
+In truth,
+all PMCs are objects and all objects are PMCs,
+so the distinction is a community tradition with no official meaning.</p>
+
+<h2><a name="Class_Declaration"
+>Class Declaration</a></h2>
+
+<p><!--
+	INDEX: classes
+--> The <code>newclass</code><!--
+	INDEX: newclass opcode
+--> opcode defines a new class.
+It takes a single argument,
+the name of the class to define.</p>
+<pre>    $P0 = newclass 'Foo'
+</pre>
+<p>Just as with Parrot&#39;s core classes,
+the <code>new</code><!--
+	INDEX: new opcode
+--> opcode instantiates a new object of a named class.</p>
+<pre>  $P1 = new 'Foo'
+</pre>
+<p>In addition to a string name for the class,
+<code>new</code> can also instantiate an object from a class object or from a keyed namespace name.</p>
+<pre>  $P0 = newclass 'Foo'
+  $P1 = new $P0
+
+  $P2 = new ['Bar';'Baz']
+</pre>
+<h2><a name="Attributes"
+>Attributes</a></h2>
+
+<p><!--
+	INDEX: attributes
+--> <!--
+	INDEX: classes;attributes
+--> The <code>addattribute</code> opcode defines a named attribute &#45;&#45; or <i>instance variable</i> &#45;&#45; in the class:</p>
+<pre>  $P0 = newclass 'Foo'
+  addattribute $P0, 'bar'
+</pre>
+<p>The <code>setattribute</code><!--
+	INDEX: setattribute
+--> opcode sets the value of a declared attribute.
+You must declare an attribute before you may set it.
+The value of an attribute is always a PMC,
+never an integer,
+number,
+or string.Though it can be an <code>Integer</code>,
+<code>Number</code>,
+or <code>String</code> PMC.</p>
+<pre>    $P6 = box 42
+    setattribute $P1, 'bar', $P6
+</pre>
+<p>The <code>getattribute</code><!--
+	INDEX: getattribute opcode
+--> opcode fetches the value of a named attribute.
+It takes an object and an attribute name as arguments and returns the attribute PMC:</p>
+<pre>    $P10 = getattribute $P1, 'bar'
+</pre>
+<p>Because PMCs are containers,
+you may modify an object&#39;s attribute by retrieving the attribute PMC and modifying its value.
+You don&#39;t need to call <code>setattribute</code> for the change to stick:</p>
+<pre>    $P10 = getattribute $P1, 'bar'
+    $P10 = 5
+</pre>
+<h2><a name="Instantiation"
+>Instantiation</a></h2>
+
+<p>With a created class,
+we can use the <code>new</code> opcode to instantiate an object of that class in the same way we can instantiate a new PMC.</p>
+<pre>    $P0 = newclass "Foo"
+    $P1 = new $P0
+</pre>
+<p>Or,
+if we don&#39;t have the class object handy,
+we can do it by name too:</p>
+<pre>    $P1 = new "Foo"
+</pre>
+<p>PMCs have two VTABLE interface functions for dealing with instantiating a new object: <code>init</code> and <code>init_pmc</code>.
+The former is called when a new PMC is created,
+the later is called when a new PMC is created with an initialization argument.</p>
+<pre>    .namespace ["Foo"]
+    .sub 'init' :vtable
+        say "Creating a new Foo"
+    .end
+
+    .sub 'init_pmc' :vtable
+        .param pmc args
+        print "Creating a new Foo with argument "
+        say args
+    .end
+
+    .namespace[]
+    .sub 'main' :main
+        $P1 = new ['Foo']       # init
+        $P2 = new ['Foo'], $P1  # init_pmc
+    .end
+</pre>
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<p><!--
+	INDEX: methods
+--> <!--
+	INDEX: classes;methods
+--> <!--
+	INDEX: subroutines;methods
+--> Methods in PIR are subroutines stored in the class object.
+Define a method with the <code>.sub</code> directive and the <code>:method</code><!--
+	INDEX: :method subroutine modifier
+--> modifier:</p>
+<pre>  .sub half :method
+    $P0 = getattribute self, 'bar'
+    $P1 = $P0 / 2
+    .return($P1)
+  .end
+</pre>
+<p>This method returns the integer value of the <code>bar</code> attribute of the object divided by two.
+Notice that the code never declares the named variable <code>self</code>.
+Methods always make the invocant object &#45;&#45; the object on which the method was invoked &#45;&#45; available in a local variable called <code>self</code><!--
+	INDEX: self variable
+-->.</p>
+
+<p>The <code>:method</code> modifier adds the subroutine to the class object associated with the currently selected namespace,
+so every class definition file must contain a <code>.namespace</code><!--
+	INDEX: .namespace directive
+--> declaration.
+Class files for languages may also contain an <code>.HLL</code><!--
+	INDEX: .HLL directive
+--> declaration to associate the namespace with the appropriate high&#45;level language:</p>
+<pre>  .HLL 'php'
+  .namespace [ 'Foo' ]
+</pre>
+<p>Method calls in PIR use a period (<code>.</code>) to separate the object from the method name.
+The method name is either a literal string in quotes or a string variable.
+The method call looks up the method in the invocant object using the string name:</p>
+<pre>    $P0 = $P1.'half'()
+
+    $S2 = 'double'
+    $P0 = $P1.$S2()
+</pre>
+<p>You can also pass a method object to the method call instead of looking it up by string name:</p>
+<pre>    $P2 = get_global 'triple'
+    $P0 = $P1.$P2()
+</pre>
+<p>Parrot always treats a PMC used in the method position as a method object,
+so you can&#39;t pass a <code>String</code> PMC as the method name.</p>
+
+<p>Methods can have multiple arguments and multiple return values just like subroutines:</p>
+<pre>  ($P0, $S1) = $P2.'method'($I3, $P4)
+</pre>
+<p>The <code>can</code><!--
+	INDEX: can opcode
+--> opcode checks whether an object has a particular method.
+It returns 0 (false) or 1 (true):</p>
+<pre>    $I0 = can $P3, 'add'
+</pre>
+<h2><a name="Inheritance"
+>Inheritance</a></h2>
+
+<p><!--
+	INDEX: inheritance
+--> <!--
+	INDEX: classes;inheritance
+--> The <code>subclass</code><!--
+	INDEX: subclass opcode
+--> opcode creates a new class that inherits methods and attributes from another class.
+It takes two arguments: the name of the parent class and the name of the new class:</p>
+<pre>    $P3 = subclass 'Foo', 'Bar'
+</pre>
+<p><code>subclass</code> can also take a class object as the parent class instead of a class name:</p>
+<pre>    $P3 = subclass $P2, 'Bar'
+</pre>
+<p><!--
+	INDEX: multiple inheritance
+--> The <code>addparent</code><!--
+	INDEX: addparent opcode
+--> opcode also adds a parent class to a subclass.
+This is especially useful for multiple inheritance,
+as the <code>subclass</code> opcode only accepts a single parent class:</p>
+<pre>  $P4 = newclass 'Baz'
+  addparent $P3, $P4
+  addparent $P3, $P5
+</pre>
+<p>To override an inherited method in the child class,
+define a method with the same name in the subclass.
+This example code overrides <code>Bar</code>&#39;s <code>who_am_i</code> method to return a more meaningful name:</p>
+<pre>  .namespace [ 'Bar' ]
+
+  .sub 'who_am_i' :method
+    .return( 'I am proud to be a Bar' )
+  .end
+</pre>
+<p><!--
+	INDEX: new opcode
+--> Object creation for subclasses is the same as for ordinary classes:</p>
+<pre>    $P5 = new 'Bar'
+</pre>
+<p>Calls to inherited methods are just like calls to methods defined in the class:</p>
+<pre>    $P1.'increment'()
+</pre>
+<p>The <code>isa</code> opcode checks whether an object is an instance of or inherits from a particular class.
+It returns 0 (false) or 1 (true):</p>
+<pre>    $I0 = isa $P3, 'Foo'
+    $I0 = isa $P3, 'Bar'
+</pre>
+<h2><a name="Overriding_Vtable_Functions"
+>Overriding Vtable Functions</a></h2>
+
+<p><!--
+	INDEX: overriding vtable functions
+--> <!--
+	INDEX: vtable functions;overriding
+--> The <code>Object</code> PMC<!--
+	INDEX: Object PMC
+--> is a core PMC written in C that provides basic object&#45;like behavior.
+Every object instantiated from a PIR class inherits a default set of vtable functions from <code>Object</code>,
+but you can override them with your own PIR subroutines.</p>
+
+<p>The <code>:vtable</code><!--
+	INDEX: :vtable subroutine modifier
+--> modifier marks a subroutine as a vtable override.
+As it does with methods,
+Parrot stores vtable overrides in the class associated with the currently selected namespace:</p>
+<pre>  .sub 'init' :vtable
+    $P6 = new 'Integer'
+    setattribute self, 'bar', $P6
+    .return()
+  .end
+</pre>
+<p>Subroutines acting as vtable overrides must either have the name of an actual vtable function or include the vtable function name in the <code>:vtable</code> modifier:</p>
+<pre>  .sub foozle :vtable('init')
+    # ...
+  .end
+</pre>
+<p>You must call methods on objects explicitly,
+but Parrot calls vtable functions implicitly in multiple contexts.
+For example,
+creating a new object with <code>$P3 = new &#39;Foo&#39;</code> will call <code>init</code> with the new <code>Foo</code> object.</p>
+
+<p>As an example of some of the common vtable overrides,
+the <code>=</code><!--
+	INDEX: = operator
+--> operator (or <code>set</code><!--
+	INDEX: set opcode
+--> opcode) calls <code>Foo</code>&#39;s vtable function <code>set_integer_native</code> when its left&#45;hand side is a <code>Foo</code> object and the argument is an integer literal or integer variable:</p>
+<pre>    $P3 = 30
+</pre>
+<p>The <code>+</code><!--
+	INDEX: + operator
+--> operator (or <code>add</code><!--
+	INDEX: add opcode
+--> opcode) calls <code>Foo</code>&#39;s <code>add</code> vtable function when it adds two <code>Foo</code> objects:</p>
+<pre>    $P3 = new 'Foo'
+    $P3 = 3
+    $P4 = new 'Foo'
+    $P4 = 1774
+
+    $P5 = $P3 + $P4
+    # or:
+    add $P5, $P3, $P4
+</pre>
+<p>The <code>inc</code><!--
+	INDEX: inc opcode
+--> opcode calls <code>Foo</code>&#39;s <code>increment</code> vtable function when it increments a <code>Foo</code> object:</p>
+<pre>    inc $P3
+</pre>
+<p>Parrot calls <code>Foo</code>&#39;s <code>get_integer</code> and <code>get_string</code> vtable functions to retrieve an integer or string value from a <code>Foo</code> object:</p>
+<pre>    $I10 = $P5  # get_integer
+    say $P5     # get_string
+</pre>
+<h2><a name="Introspection"
+>Introspection</a></h2>
+
+<p><!--
+	INDEX: introspection
+--> <!--
+	INDEX: classes;introspection
+--> Classes defined in PIR using the <code>newclass</code> opcode are instances of the <code>Class</code> PMC<!--
+	INDEX: Class PMC
+-->.
+This PMC contains all the meta&#45;information for the class,
+such as attribute definitions,
+methods,
+vtable overrides,
+and its inheritance hierarchy.
+The opcode <code>inspect</code><!--
+	INDEX: inspect opcode
+--> provides a way to peek behind the curtain of encapsulation to see what makes a class tick.
+When called with no arguments,
+<code>inspect</code> returns an associative array containing data on all characteristics of the class that it chooses to reveal:</p>
+<pre>  $P1 = inspect $P0
+  $P2 = $P1['attributes']
+</pre>
+<p>When called with a string argument,
+<code>inspect</code> only returns the data for a specific characteristic of the class:</p>
+<pre>  $P0 = inspect $P1, 'parents'
+</pre>
+<p>Table 7&#45;1 shows the introspection characteristics supported by <code>inspect</code>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PackfileDirectory PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; PackfileDirectory PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/packfiledirectory.pmc &#45; PackfileDirectory PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This class implements a PackfileDirectory object,
+a segment of the .pbc data file used for listing the rest of the file&#39;s contents.
+Essentially this segment is a container for all other segments within a Packfile.</p>
+
+<p>See packfile.pmc for the toplevel Packfile interface,
+see packfilesegment.pmc for the list of common methods every packfile segment pmc must implement; see PDD13 for the design spec.</p>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initialize PackfileDirectory.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Marks the object as live.
+<dt><a name="void_set_pointer(void_*ptr)"
+><b><code>void set_pointer(void *ptr)</b></code></a></dt>
+Initialize PackfileDirectory from PackFile_Directory.
+<dt><a name="void_*get_pointer()"
+><b><code>void *get_pointer()</b></code></a></dt>
+Creates PackFile for given directory.
+<dt><a name="INTVAL_elements()"
+><b><code>INTVAL elements()</b></code></a></dt>
+Get the number of elements in the array.
+<dt><a name="PMC_*get_iter()"
+><b><code>PMC *get_iter()</b></code></a></dt>
+Return a new iterator for the directory.
+<dt><a name="PMC_*get_pmc_keyed_str(STRING_*name)"
+><b><code>PMC *get_pmc_keyed_str(STRING *name)</b></code></a></dt>
+Search the array for a segment with the given name,
+and return it if it exists.
+<dt><a name="PMC_*get_pmc_keyed(PMC_*key)"
+><b><code>PMC *get_pmc_keyed(PMC *key)</b></code></a></dt>
+Fetch a keyed string value from the packfiledirectory object.
+<dt><a name="void_set_pmc_keyed_str(STRING_*name,_PMC_*segment)"
+><b><code>void set_pmc_keyed_str(STRING *name, PMC *segment)</b></code></a></dt>
+Add a segment with the given name to the directory.
+If a segment with this name already existed,
+it will be replaced with the new segment.
+<dt><a name="PMC_*set_pmc_keyed(PMC_*key,_PMC_*segment)"
+><b><code>PMC *set_pmc_keyed(PMC *key, PMC *segment)</b></code></a></dt>
+Add a segment with the given name to the directory.
+Dispatches to set_pmc_keyed_str.
+<dt><a name="PMC_*delete_keyed(PMC_*key)"
+><b><code>PMC *delete_keyed(PMC *key)</b></code></a></dt>
+Delete the specified segment from the directory.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

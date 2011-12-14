@@ -1,0 +1,865 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - [DRAFT] PDD 6: Parrot Assembly Language (PASM)</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; <a href="../../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; [DRAFT] PDD 6: Parrot Assembly Language (PASM)
+                </div>
+
+<h1><a name="[DRAFT]_PDD_6:_Parrot_Assembly_Language_(PASM)"
+>[DRAFT] PDD 6: Parrot Assembly Language (PASM)</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>The format of Parrot&#39;s bytecode assembly language.</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<p>Parrot&#39;s bytecode can be thought of as a form of machine language for a virtual super CISC machine.
+It makes sense,
+then,
+to define an assembly language for it for those people who may need to generate bytecode directly,
+rather than indirectly through a high&#45;level language.</p>
+
+<p>{{ NOTE: out&#45;of&#45;date and incomplete.
+It seems that it would be more useful as a specification of the format of PASM than as a comprehensive listing of all opcodes.
+}}</p>
+
+<h2><a name="Questions"
+>Questions</a></h2>
+
+<ul>
+<li>&#60;barney&#62; Can we get rid of PASM ?
+&#60;spinclad&#62; conversely,
+does PASM need to be kept up to date?
+&#60;allison&#62; PASM is just a text form of PBC,
+so it should be kept &#60;allison&#62; are there specific PBC features that can&#39;t currently be represented in PASM?
+&#60;particle&#62; besides hll and :outer?
+&#60;chromatic&#62; :init &#60;mdiep&#62; lexicals?
+&#60;chromatic&#62; :vtable &#60;mdiep&#62; I&#39;m a bit rusty,
+but anything that starts with a &#39;.&#39; or &#39;:&#39; is suspect &#60;allison&#62; things that start with &#39;.&#39; are just directives to IMCC,
+equally applicable to PASM and PIR &#60;mdiep&#62; isn&#39;t PASM separate from IMCC?
+&#60;allison&#62; mdiep: it used to be separate &#60;mdiep&#62; so to say that PASM can have directives is a major architectural change &#60;allison&#62; perhaps the biggest thing we need is a definition of what PASM actually is &#60;allison&#62; the line has grown quite fuzzy over the years &#60;barney&#62; PASM could be defined as stringified PBC &#60;particle&#62; compilable stringified pbc &#60;mdiep&#62; it should be defined that way if we&#39;re going to call it assembly.
+&#60;allison&#62; barney: that&#39;s the most likely direction,
+and if so,
+it has some implications for how PASM behaves &#60;particle&#62; allison: which is what we want,
+anyway,
+right?
+&#60;allison&#62; particle: yup &#60;barney&#62; yes &#60;particle&#62; good,
+looks like we&#39;re in agreement and headed in the proper direction on that topic.</li>
+</ul>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<p>Parrot opcodes take the format of:</p>
+
+<pre>  code destination[dest_key], source1[source1_key], source2[source2_key]</pre>
+
+<p>The brackets do not denote optional arguments as such&#45;&#45;they are real brackets. They may be left out entirely, however. If any argument has a key the assembler will substitute the null key for arguments missing keys.</p>
+
+<p>Conditional branches take the format:</p>
+
+<pre>  code boolean[bool_key], true_dest</pre>
+
+<p>The key parameters are optional, and may be either an integer or a string. If either is passed they are associated with the parameter to their left, and are assumed to be either an array/list entry number, or a hash key. Any time a source or destination can be a PMC register, there may be a key.</p>
+
+<p>Destinations for conditional branches are an integer offset from the current PC.</p>
+
+<p>All registers have a type prefix of P, S, I, or N, for PMC, string, integer, and number respectively.</p>
+
+<h2><a name="Assembly_Syntax"
+>Assembly Syntax</a></h2>
+
+<p>All assembly opcodes contain only ASCII lowercase letters, digits, and the underscore.</p>
+
+<p>Assembler directives are prefixed with a dot. These directives are instructions for the assembler and may or may not translate to a PASM instruction.</p>
+
+<p>Labels all end with a colon. They may have ASCII letters, numbers, and underscores in them.</p>
+
+<p>Namespaces are noted with the <code>.namespace</code> directive. It takes a single parameter, the name of the namespace, in the form of a multi&#45;dimensional key.</p>
+
+<p>Constants can be declared with the <code>.macro_const</code> directive. It takes two parameters: the name of the constant and the value.</p>
+
+<p>Subroutine names are noted with the <code>.pcc_sub</code> directive. It takes a single parameter, the name of the subroutine, which is added to the namespace&#39;s symbol table. Sub names may be any valid Unicode alphanumeric character and the underscore. The <code>.pcc_sub</code> directive may take flags to indicate when the sub should be invoked. The following flags are available: <code>:main</code> to indicate that execution should start at the specified subroutine; <code>:immediate</code> or <code>:postcomp</code> to indicate that the sub should be run immediately after compilation; <code>:load</code> to indicate that the sub should be executed when its bytecode segment is loaded; <code>:init</code> to indicate the sub should be run when the file is run directly.</p>
+
+<p>Constants don&#39;t need to be named and put in a separate section of the assembly source. The assembler will take care of putting them in the appropriate part of the generated bytecode.</p>
+
+<p>Below is an overview of the grammar of a PASM file.</p>
+
+<p>{{ See compilers/pirc/src for a bison&#45;based implementation of PASM }}</p>
+
+<pre> pasm_file:
+   [ pasm_line &#39;\n&#39; ]*
+
+ pasm_line:
+     pasm_instruction
+   | constant_directive
+   | namespace_directive
+
+ pasm_instruction:
+   [ [ sub_directive ]? label ]? instruction
+
+ sub_directive:
+   &#34;.pcc_sub&#34; [ sub_flag ]?
+
+ sub_flag:
+   &#34;:init&#34; | &#34;:main&#34; | &#34;:load&#34; | &#34;:postcomp&#34; | &#34;:immediate&#34; | &#34;:anon&#34;
+
+ label:
+   identifier &#34;:&#34;
+
+ constant_directive:
+   &#34;.macro_const&#34; identifier literal
+
+ namespace_directive:
+   &#34;.namespace&#34; &#34;[&#34; multi_dimensional_key &#34;]&#34;
+
+ multi_dimensional_key:
+   quoted_string [ &#34;;&#34; quoted_string ]*</pre>
+
+<h2><a name="Opcode_List"
+>Opcode List</a></h2>
+
+<p>In the following list, there may be multiple (but unlisted) versions of an opcode. If an opcode takes a register that might be keyed, the keyed version of the opcode has a _k suffix. If an opcode might take multiple types of registers for a single parameter, the opcode function really has a _x suffix, where x is either P, S, I, or N, depending on whether a PMC, string, integer, or numeric register is involved. The suffix isn&#39;t necessary (though not an error) as the assembler can intuit the information from the code.</p>
+
+<p>In those cases where an opcode can take several types of registers, and more than one of the sources or destinations are of variable type, then the register is passed in extended format. An extended format register number is of the form:</p>
+
+<pre>     register_number | register_type</pre>
+
+<p>where register_type is 0x100, 0x200, 0x400, or 0x800 for PMC, string, integer, or number respectively. So N19 would be 0x413.</p>
+
+<p><b>Note</b>: Instructions tagged with a * will call a vtable method to handle the instruction if used on PMC registers.</p>
+
+<p>In all cases, the letters x, y, and z refer to register numbers. The letter t refers to a generic register (P, S, I, or N). A lowercase p, s, i, or n means either a register or constant of the appropriate type (PMC, string, integer, or number)</p>
+
+<h3><a name="Control_flow"
+>Control flow</a></h3>
+
+<p>The control flow opcodes check conditions and manage program flow.</p>
+
+<dl>
+<dt><a name="if_tx,_ix"
+>if tx, ix</a></dt>
+Check register tx. If true, branch by X.
+<dt><a name="unless_tx,_ix"
+>unless tx, ix</a></dt>
+Check register tx. If false, branch by X.
+<dt><a name="jump_tx"
+>jump tx</a></dt>
+Jump to the address held in register x (Px, Sx, or Ix).
+<dt><a name="branch_tx"
+>branch tx</a></dt>
+Branch forward or backward by the amount in register x. (X may be either Ix, Nx, or Px) Branch offset may also be an integer constant.</dl>
+
+<h3><a name="Data_manipulation"
+>Data manipulation</a></h3>
+
+<p>These ops handle manipulating the data in registers</p>
+
+<dl>
+<dt><a name="new_Px,_iy"
+>new Px, iy</a></dt>
+Create a new PMC of class y stored in PMC register x.
+<dt><a name="destroy_Px"
+>destroy Px</a></dt>
+Destroy the PMC in register X, leaving it undef
+<dt><a name="set_tx,_ty"
+>set tx, ty</a></dt>
+Copies y into x. Note that strings and PMCs are referred to by pointer, so if you do something like:
+<pre>   set S0, S1</pre>
+this will copy the pointer in S1 into S0, leaving <b>both</b> registers pointing at the same string.
+<dt><a name="exchange_tx,_ty"
+>exchange tx, ty</a></dt>
+Exchange the contents of registers X and Y, which must be of the same type. (Generally cheaper than using the stack as an intermediary when setting up registers for function calls)
+<dt><a name="assign_Px,_ty"
+>assign Px, ty</a></dt>
+Takes the contents of Y and assigns them into the existing PMC in X.While set just copies pointers from one register to another, assign actually does a value assignment, as:
+<pre>    $foo = $bar;</pre>
+X&#39;s assign vtable method is invoked and it does whatever is appropriate.
+<dt><a name="clone_Px,_Py"
+>clone Px, Py</a></dt>
+
+<dt><a name="clone_Sx,_xy"
+>clone Sx, xy</a></dt>
+Performs a &#34;deeper&#34; copy of y into x, using the vtable appropriate to the class of Py if cloning a PMC.
+<dt><a name="tostring_Sx,_ty,_Iz"
+>tostring Sx, ty, Iz</a></dt>
+Take the value in register y and convert it to a string of type z, storing the result in string register x.
+<dt><a name="add_tx,_ty,_tz_*"
+>add tx, ty, tz *</a></dt>
+Add registers y and z and store the result in register x. (x = y + z) The registers must all be the same type, PMC, integer, or number.
+<dt><a name="sub_tx,_ty,_tz_*"
+>sub tx, ty, tz *</a></dt>
+Subtract register z from register y and store the result in register x. (x = y &#45; z) The registers must all be the same type, PMC, integer, or number.
+<dt><a name="mul_tx,_ty,_tz_*"
+>mul tx, ty, tz *</a></dt>
+Multiply register y by register z and store the results in register x. The registers must be the same type.
+<dt><a name="div_tx,_ty,_tz_*"
+>div tx, ty, tz *</a></dt>
+Divide register y by register z, and store the result in register x.
+<dt><a name="inc_tx,_nn_*"
+>inc tx, nn *</a></dt>
+Increment register x by nn. nn is an integer constant. If nn is omitted, increment is 1.
+<dt><a name="dec_tx,_nn_*"
+>dec tx, nn *</a></dt>
+Decrement register x by nn. nn is an integer constant. If nn is omitted, decrement by 1.
+<dt><a name="length_Ix,_Sy"
+>length Ix, Sy</a></dt>
+Put the length of string y into integer register x.
+<dt><a name="concat_Sx,_Sy"
+>concat Sx, Sy</a></dt>
+Add string y to the end of string x.
+<dt><a name="repeat_Sx,_Sy,_iz"
+>repeat Sx, Sy, iz</a></dt>
+Copies string y z times into string x.</dl>
+
+<h3><a name="Transcendental_operations"
+>Transcendental operations</a></h3>
+
+<p>These opcodes handle the transcendental math functions. The destination register here must always be either a numeric or a PMC register.</p>
+
+<dl>
+<dt><a name="sin_nx,_ty"
+>sin nx, ty</a></dt>
+Return the sine of the number in Y
+<dt><a name="cos_nx,_ty"
+>cos nx, ty</a></dt>
+Return the cosine of the number in Y
+<dt><a name="tan_nx,_ty"
+>tan nx, ty</a></dt>
+Return the tangent of the number in Y
+<dt><a name="sec_nx,_ty"
+>sec nx, ty</a></dt>
+Return the secant of the number in Y
+<dt><a name="atan_nx,_ty"
+>atan nx, ty</a></dt>
+Return the arctangent of Y
+<dt><a name="atan2_nx,_ty"
+>atan2 nx, ty</a></dt>
+Return the result of atan2 of Y
+<dt><a name="asin_nx,_ty"
+>asin nx, ty</a></dt>
+Return the arcsine of y
+<dt><a name="acos_nx,_ty"
+>acos nx, ty</a></dt>
+Return the arccosine of y
+<dt><a name="asec_nx,_ty"
+>asec nx, ty</a></dt>
+Return the arcsecant of y
+<dt><a name="cosh_nx,_ty"
+>cosh nx, ty</a></dt>
+Return the hyperbolic cosine of y
+<dt><a name="sinh_nx,_ty"
+>sinh nx, ty</a></dt>
+Return the hyperbolic sine of y
+<dt><a name="tanh_nx,_ty"
+>tanh nx, ty</a></dt>
+Return the hyperbolic tangent of y
+<dt><a name="sech_nx,_ty"
+>sech nx, ty</a></dt>
+Return the hyperbolic secant of y
+<dt><a name="log2_nx,_ty"
+>log2 nx, ty</a></dt>
+Return the base 2 log of y
+<dt><a name="log10_nx,_ty"
+>log10 nx, ty</a></dt>
+Return the base 10 log of y
+<dt><a name="ln_Nx,_ty"
+>ln Nx, ty</a></dt>
+Return the base e log of y
+<dt><a name="log_nx,_ty,_tz"
+>log nx, ty, tz</a></dt>
+Return the base Z log of Y
+<dt><a name="pow_nx,_ty,_tz"
+>pow nx, ty, tz</a></dt>
+Return Y to the Z power
+<dt><a name="exp_nx,_ty"
+>exp nx, ty</a></dt>
+Return e to the Y power</dl>
+
+<h3><a name="Register_and_stack_ops"
+>Register and stack ops</a></h3>
+
+<p>These opcodes deal with registers and stacks</p>
+
+<dl>
+<dt><a name="clearp"
+>clearp</a></dt>
+Clean out the current set of PMC registers, setting them to NULL
+<dt><a name="cleari"
+>cleari</a></dt>
+Clean out the current set of I registers, setting them to 0
+<dt><a name="clears"
+>clears</a></dt>
+Clean out the current set of S registers, setting them to NULL
+<dt><a name="clearn"
+>clearn</a></dt>
+Clean out the current set of N registers, setting them to 0
+<dt><a name="null_tx"
+>null tx</a></dt>
+Set register X to a null value; for S and P registers, this will be NULL, while for I and N registers it is 0
+<dt><a name="save_tx"
+>save tx</a></dt>
+Push register or constant X onto the generic stack
+<dt><a name="restore_tx"
+>restore tx</a></dt>
+Restore register X from the generic stack by popping off the topmost entry. The type of this entry must match the register type.
+<dt><a name="entrytype_Ix,_iy"
+>entrytype Ix, iy</a></dt>
+Put the type of generic stack entry Y into integer register X
+<dt><a name="depth_Ix"
+>depth Ix</a></dt>
+Get the current depth of the generic stack
+<dt><a name="lookback_tx,_iy"
+>lookback tx, iy</a></dt>
+Fetch the entry that&#39;s at position Y from the top of the generic stack. This does not remove an entry from the stack, merely fetches the entry off it.0 is the entry at the top of the stack, 1 is the entry immediately previous to that, and so on. Entry &#45;1 is the very bottom&#45;most entry in the stack. (While the stack may be a tree when looked at from the bottom up, you don&#39;t have access to any other branches when looking this way).</dl>
+
+<h3><a name="Names,_pads,_and_globals"
+>Names, pads, and globals</a></h3>
+
+<p>These operations are responsible for finding names in lexical or global scopes, as well as storing data into those slots. A static scope is captured by a scratchpad. The current dynamic scope is represented by the state of the lexical stack (which contains scratchpads). For more detail on these ops see the inline POD documentation in <em>ops/var.ops</em>.</p>
+
+<dl>
+<dt><a name="store_lex_sx,_Py"
+>store_lex sx, Py</a></dt>
+
+<dt><a name="find_lex_Px,_sy"
+>find_lex Px, sy</a></dt>
+Instructions for storing in, and retrieving from, the scratchpad associated with the current context.
+<dt><a name="find_global_Px,_sy,_sz"
+>find_global Px, sy, sz</a></dt>
+Find the PMC for the global variable sy from the table sz and store it in register X{{ DEPRECATED: op find_global was deprecated }}
+<dt><a name="find_global_Px,_sy"
+>find_global Px, sy</a></dt>
+Find the PMC for the global in the default table and put it in X.{{ DEPRECATED: op find_global was deprecated }}
+<dt><a name="find_global_table_Px,_sy"
+>find_global_table Px, sy</a></dt>
+Find the global symbol table Y and store its PMC in X
+<dt><a name="find_global_slot_ix,_Py,_sz"
+>find_global_slot ix, Py, sz</a></dt>
+Find the slot in the global table Y for the global named Z, and store its slot in register X.
+<dt><a name="fetch_global_Px,_Py,_iz"
+>fetch_global Px, Py, iz</a></dt>
+Fetch the global in slot Z of the symbol table pointed to by Y
+<dt><a name="store_global_Px,_sy"
+>store_global Px, sy</a></dt>
+Store X in the default global symbol table with a name of Y.{{ DEPRECATED: op store_global was deprecated }}</dl>
+
+<h3><a name="Exceptions"
+>Exceptions</a></h3>
+
+<p>These opcodes deal with exception handling at the lowest level. Exception handlers are dynamically scoped, and any exception handler set in a scope will be removed when that scope is exited.</p>
+
+<dl>
+<dt><a name="set_eh_Px"
+>set_eh Px</a></dt>
+Sets an exception handler in place. The code referred to by register Px will get called if an exception is thrown while the exception handler is in scope.
+<dt><a name="pop_eh"
+>pop_eh</a></dt>
+Pop the most recently placed exception off the handler stack.
+<dt><a name="throw_Px"
+>throw Px</a></dt>
+Throw an exception represented by the object in PMC register x.
+<dt><a name="rethrow_Px"
+>rethrow Px</a></dt>
+Only valid inside an exception handler. Rethrow the exception represented by the object in PMC register x. This object may have been altered by the exception handler.</dl>
+
+<h3><a name="Object_things"
+>Object things</a></h3>
+
+<p>These opcodes deal with PMCs as objects, rather than as opaque data items.</p>
+
+<dl>
+<dt><a name="find_method_Px,_Py,_tz"
+>find_method Px, Py, tz</a></dt>
+Find the method Z for object Y, and return a PMC for it in X.
+<dt><a name="callmethod_Px,_ty"
+>callmethod Px, ty</a></dt>
+
+<dt><a name="set_attribute_Px,_ty,_tz"
+>set_attribute Px, ty, tz</a></dt>
+
+<dt><a name="can_Ix,_Py,_sz"
+>can Ix, Py, sz</a></dt>
+Sets X to TRUE if object Y can perform method Z; otherwise, X is set to FALSE.
+<dt><a name="does_Ix,_Py,_sz"
+>does Ix, Py, sz</a></dt>
+Sets X to TRUE if object Y can implements interface Z; otherwise, X is set to FALSE.
+<dt><a name="isa_Px,_ty"
+>isa Px, ty</a></dt>
+</dl>
+
+<h3><a name="Module_handling"
+>Module handling</a></h3>
+
+<p>These opcodes deal with loading in bytecode or executable code libraries, and fetching info about those libraries. This is all dealing with precompiled bytecode or shared libraries.</p>
+
+<dl>
+<dt><a name="load_bytecode_sx"
+>load_bytecode sx</a></dt>
+Load in the bytecode in file X. Search the library path if need be.
+<dt><a name="load_opcode_lib_sx,_iy"
+>load_opcode_lib sx, iy</a></dt>
+Load in the opcode library X, starting at opcode number Y. Search the path if needed.
+<dt><a name="load_string_lib_sx"
+>load_string_lib sx</a></dt>
+Load in the string handling library named X
+<dt><a name="get_op_count_sx"
+>get_op_count sx</a></dt>
+Return the number of opcodes in opcode library X
+<dt><a name="get_string_name_sx"
+>get_string_name sx</a></dt>
+Get the name of the string encoding that the library X handles
+<dt><a name="find_string_lib_sx,_sy"
+>find_string_lib sx, sy</a></dt>
+Find the string library that handles strings of type Y. Return its name in X.</dl>
+
+<h3><a name="I/O_operations"
+>I/O operations</a></h3>
+
+<p>Reads and writes read and write records, for some value of record.</p>
+
+<dl>
+<dt><a name="new_fh_px"
+>new_fh px</a></dt>
+Create a new filehandle px
+<dt><a name="open_px,_sy"
+>open px, sy</a></dt>
+Open the file Y on filehandle X
+<dt><a name="read_px,_py,_pz"
+>read px, py, pz</a></dt>
+Issue a read on the filehandle in y, and put the result in PMC X. PMC Z is the sync object.
+<dt><a name="write_px,_sy,_pz"
+>write px, sy, pz</a></dt>
+Write the string Y to filehandle X. PMC Z is the sync object.
+<dt><a name="wait_px"
+>wait px</a></dt>
+Wait for the I/O operation represented by sync object X to finish
+<dt><a name="readw_px,_py"
+>readw px, py</a></dt>
+Read from filehandle Y and put the results in PMC X. Blocks until the read completes.
+<dt><a name="writew_px,_sy"
+>writew px, sy</a></dt>
+Write string Y to filehandle X, waiting for the write to complete.
+<dt><a name="seek_px,_ty"
+>seek px, ty</a></dt>
+Seek filehandle X to position Y.
+<dt><a name="tell_tx,_py"
+>tell tx, py</a></dt>
+Return the current position of filehandle Y and put it in X. Returns &#45;1 for filehandles where this can&#39;t be determined. (Such as stream connections)
+<dt><a name="status_px,_py,_tz"
+>status px, py, tz</a></dt>
+Get informational item Z for filehandle Y and put the result in X. This fetches things like the number of entries in the IO pipe, number of outstanding I/O ops, number of ops on the filehandle, and so forth.</dl>
+
+<h3><a name="Threading_ops"
+>Threading ops</a></h3>
+
+<dl>
+<dt><a name="lock_Px"
+>lock Px</a></dt>
+Take out a high&#45;level lock on the PMC in register X
+<dt><a name="unlock_Px"
+>unlock Px</a></dt>
+Unlock the PMC in register X
+<dt><a name="pushunlock_Px"
+>pushunlock Px</a></dt>
+Push an unlock request on the stack</dl>
+
+<h3><a name="Interpreter_ops"
+>Interpreter ops</a></h3>
+
+<dl>
+<dt><a name="newinterp_Px,_flags"
+>newinterp Px, flags</a></dt>
+Create a new interpreter in X, using the passed flags.
+<dt><a name="runinterp_Px,_iy"
+>runinterp Px, iy</a></dt>
+Jump into interpreter X and run the code starting at offset Y from the current location. (This is temporary until we get something better)
+<dt><a name="callout_Pw,_Px,_sy,_pz"
+>callout Pw, Px, sy, pz</a></dt>
+Call routine Y in interpreter x, passing it the list of parameters Z. W is a synchronization object returned. It can be waited on like the sync objects returned from async I/O routines.
+<dt><a name="interpinfo_Ix,_iy"
+>interpinfo Ix, iy</a></dt>
+Get information item Y and put it in register X. Currently defined are:
+<dl>
+<dt><a name="1_TOTAL_MEM_ALLOC"
+>1 TOTAL_MEM_ALLOC</a></dt>
+The total amount of system memory allocated for later parceling out to Buffers. Doesn&#39;t include any housekeeping memory, memory for Buffer or PMC structs, or things of that nature.
+<dt><a name="2_GC_MARK_RUNS"
+>2 GC_MARK_RUNS</a></dt>
+The total number of garbage collection mark runs that have been made.
+<dt><a name="3_GC_COLLECT_RUNS"
+>3 GC_COLLECT_RUNS</a></dt>
+The total number of garbage collection sweep runs that have been made.
+<dt><a name="4_ACTIVE_PMCS"
+>4 ACTIVE_PMCS</a></dt>
+The number of PMCs considered active. This means the GC scan hasn&#39;t noted them as dead.
+<dt><a name="5_ACTIVE_BUFFERS"
+>5 ACTIVE_BUFFERS</a></dt>
+The number of Buffers (usually STRINGs but could be other things) considered active.
+<dt><a name="6_TOTAL_PMCS"
+>6 TOTAL_PMCS</a></dt>
+The total number of PMCs the interpreter has available. Includes both active and free PMCs
+<dt><a name="7_TOTAL_BUFFERS"
+>7 TOTAL_BUFFERS</a></dt>
+The total number of Buffer structs the interpreter has available.
+<dt><a name="8_HEADERS_ALLOC_SINCE_COLLECT"
+>8 HEADERS_ALLOC_SINCE_COLLECT</a></dt>
+The number of new Buffer header block allocations that have been made since the last GC mark run. (Buffers, when allocated, are allocated in chunks)
+<dt><a name="9_MEM_ALLOCS_SINCE_COLLECT"
+>9 MEM_ALLOCS_SINCE_COLLECT</a></dt>
+The number of times we&#39;ve requested a block of memory from the system for allocation to Buffers since the last time we compacted the memory heap.</dl>
+</dl>
+
+<h3><a name="Garbage_collection"
+>Garbage collection</a></h3>
+
+<dl>
+<dt><a name="sweep"
+>sweep</a></dt>
+Fire off a dead object sweep
+<dt><a name="collect"
+>collect</a></dt>
+Fire off a garbage collection sweep
+<dt><a name="pausecollect"
+>pausecollect</a></dt>
+Pause the garbage collector. No collections will be done for this interpreter until the collector is unpaused.
+<dt><a name="resumecollect"
+>resumecollect</a></dt>
+Unpause the collector. This doesn&#39;t necessarily do a GC run, merely allows the interpreter to fire one off when it deems it necessary.</dl>
+
+<h3><a name="Key_operations"
+>Key operations</a></h3>
+
+<p>Keys are used to get access to individual elements of an aggregate variable. This is done to allow for opaque, packed, and multidimensional aggregate types.</p>
+
+<p>A key entry may be an integer, string, or PMC. Integers are used for array lookups, strings for hash lookups, and PMCs for either.</p>
+
+<dl>
+<dt><a name="new_key_Sx"
+>new_key Sx</a></dt>
+Create a new key structure and put a pointer to it in register X.
+<dt><a name="clone_key_Sx,_ky"
+>clone_key Sx, ky</a></dt>
+Make a copy of the key Y and put a pointer to it in register X. Y may be either an S register or a constant.
+<dt><a name="size_key_Sx,_iy"
+>size_key Sx, iy</a></dt>
+Make the key structure X large enough to hold Y key entries
+<dt><a name="key_size_Ix,_ky"
+>key_size Ix, ky</a></dt>
+Put the number of elements in key Y into integer register X.
+<dt><a name="toss_key_Sx"
+>toss_key Sx</a></dt>
+Nuke key X. Throws the structure away and invalidates the register.
+<dt><a name="ke_type_Ix,_ky,_iz"
+>ke_type Ix, ky, iz</a></dt>
+Put the type of key Y&#39;s entry Z in register X. Current values are 0, 1, and 2 for Integer, String, and PMC, respectively.
+<dt><a name="ke_value_tx,_ky,_iz"
+>ke_value tx, ky, iz</a></dt>
+Put the value from key Y, entry Z into register X.
+<dt><a name="chop_key_Sx"
+>chop_key Sx</a></dt>
+Toss the topmost entry from key X.
+<dt><a name="inc_key_Sx,_iy"
+>inc_key Sx, iy</a></dt>
+Increment entry Y of key X by one.
+<dt><a name="set_key_Sw,_[isp]x,_iy[,_iz]"
+>set_key Sw, [isp]x, iy[, iz]</a></dt>
+Set key W, offset Y, to value X. If X is a PMC, then the fourth operand must be specified. It can have a value of 0, 1, or 2, corresponding to integer, string, or object. Aggregates use this to figure out how to treat the key entry.</dl>
+
+<h3><a name="Properties"
+>Properties</a></h3>
+
+<p>Properties are a sort of runtime note attached to a PMC. Any PMC can have properties on it. Properties live in a flat namespace, and they are not in any way associated with the class of the PMC that they are attached to.</p>
+
+<p>Properties may be used for runtime notes on variables, or other metadata that may change. They are not for object attributes.</p>
+
+<dl>
+<dt><a name="setprop_Px,_sy,_Pz"
+>setprop Px, sy, Pz</a></dt>
+Set the property named Y of PMC X to the PMC in Z
+<dt><a name="getprop_Px,_sy,_Pz"
+>getprop Px, sy, Pz</a></dt>
+Get the property named Y from PMC Z and put the result in register X. Returns a NULL if the property doesn&#39;t exist.
+<dt><a name="delprop_Px,_sy"
+>delprop Px, sy</a></dt>
+Delete the property Y from PMC X
+<dt><a name="prophash_Px,_Py"
+>prophash Px, Py</a></dt>
+Fetch the properties from Y, put them in a Hash, and put the Hash in X.</dl>
+
+<h3><a name="Symbolic_support_for_HLLs"
+>Symbolic support for HLLs</a></h3>
+
+<dl>
+<dt><a name="setline_ix"
+>setline ix</a></dt>
+Sets the &#39;current line&#39; marker.
+<dt><a name="setfile_sx"
+>setfile sx</a></dt>
+Sets the &#39;current file&#39; marker.
+<dt><a name="setpackage_sx"
+>setpackage sx</a></dt>
+Sets the &#39;current package&#39; marker.
+<dt><a name="getline_ix"
+>getline ix</a></dt>
+Fetches the &#39;current line&#39; marker.
+<dt><a name="getfile_sx"
+>getfile sx</a></dt>
+Fetches the &#39;current file&#39; marker.
+<dt><a name="getpackage_sx"
+>getpackage sx</a></dt>
+Fetches the &#39;current package&#39; marker.</dl>
+
+<h3><a name="Foreign_library_access"
+>Foreign library access</a></h3>
+
+<p>These are the ops we use to load in and interface to non&#45;parrot libraries.</p>
+
+<dl>
+<dt><a name="loadlib_Px,_Sy"
+>loadlib Px, Sy</a></dt>
+Load in the library whose name is specified by y, and put a handle to it into P register x.
+<dt><a name="dlfunc_Pw,_Px,_Sy,_Sz"
+>dlfunc Pw, Px, Sy, Sz</a></dt>
+Find a routine named Y, in library X (which you did, of course, open with loadlib), and put a sub PMC onto W for it. You can call this sub as if it were any other parrot subroutine.Z has the function signature, which tells Parrot how to build the interface from parrot (and parrot&#39;s calling conventions) to the calling conventions of the library routine. Yes, this does mean that you must know the function signature, but if you don&#39;t know that why the heck would you be invoking the function, right?The signature is a series of 1 or more characters, representing the types for the call. The first character is the return type, while the rest are the parameters. The types are:
+<dl>
+<dt><a name="v"
+>v</a></dt>
+Void. As a return type indicates that there <i>is</i> no return type. As a parameter indicates that there are no parameters. Can&#39;t be mixed with other parameter types.
+<dt><a name="c"
+>c</a></dt>
+Char. This is an integer type, taken from (or put into) an I register.
+<dt><a name="s"
+>s</a></dt>
+short. An integer type, taken from 0 or put into an I register
+<dt><a name="i"
+>i</a></dt>
+int. An integer type.
+<dt><a name="l"
+>l</a></dt>
+long. An integer type. You know the drill.
+<dt><a name="f"
+>f</a></dt>
+float. F register denizen.
+<dt><a name="d"
+>d</a></dt>
+double. F register, double&#45;precision floating point type
+<dt><a name="p"
+>p</a></dt>
+PMC thingie. A generic pointer, taken from or stuck into a PMC&#39;s data pointer. If this is a return type, parrot will create a new UnManagedStruct PMC type, which is just a generic &#34;pointer so some damn thing or other&#34; PMC type which Parrot does <i>no</i> management of.
+<dt><a name="t"
+>t</a></dt>
+string pointer. Taken from, or stuck into, a string register. (Converted to a null&#45;terminated C string before passing in)</dl>
+So the signature for, for example, this SDL routine:
+<pre>   int SDL_BlitSurface(SDL_Surface *src,
+                       SDL_Rect    *srcrect,
+                       SDL_Surface *dst,
+                       SDL_Rect    *dstrect);</pre>
+would be <code>ipppp</code>, since it returns an integer and takes four pointers. Presumably previous calls would have set those pointers up properly.Do note that parrot makes no guarantees as to the behaviour of the libraries, and currently does no type checking on the input parameters. We will fix that later.The generated routine follows the calling conventions in PDD03. Note that int, string, pmc, and float parameters are counted separately. So if you have a signature of <code>ippiidd</code> the return goes into I5, and the parameters come from P5, P6, I5, I6, N5, and N6, respectively. A signature of <code>ipdiidp</code> has the identical same set of registers used (and in the same order).
+<dt><a name="invoke"
+>invoke</a></dt>
+Invoke a subroutine in P0. Presumes that all the registers are set up right for the call. The invoked subroutine <i>must</i> preserve any registers that are not explicitly return parameters or calling convention metadata parameters. (Such as the number of I reg parameters, for example)</dl>
+
+<h3><a name="Runtime_compilation"
+>Runtime compilation</a></h3>
+
+<p>These opcodes deal with runtime creation of bytecode and compilation of source code.</p>
+
+<dl>
+<dt><a name="compile_Px,_Py,_Sz"
+>compile Px, Py, Sz</a></dt>
+Compile source string Z, with compiler unit Y, and stick a handle to a subroutine for the resulting bytecode segment (already loaded into the current interpreter) into X.Y is a assembler/compiler object of some sort, as registered with the <b>compreg</b> opcode or the Parrot_compreg function. This will be something like &#34;Perl5&#34;, &#34;Perl6&#34;, &#34;Perl5RE&#34;, &#34;Perl6RE&#34;, &#34;Python&#34;, &#34;Ruby&#34;... you get the picture.Parrot knows of a &#34;PASM1&#34; compiler, i.e. a one statement PASM compiler implemented as PDB_eval. Imcc registers &#34;PASM&#34; and &#34;PIR&#34; compilers.This is a high&#45;level op, with the assumption that the resulting sub will be called. It&#39;s the equivalent of perl 5&#39;s string eval, except for the actual execution of the resulting code.
+<dt><a name="compreg_Px,_Sy"
+>compreg Px, Sy</a></dt>
+Get a compiler for source type Y.
+<dt><a name="compreg_Sx,_Py"
+>compreg Sx, Py</a></dt>
+Register the sub Y as a parser/compiler function named X. It will be called whenever anyone invokes the compile op with the name X.</dl>
+
+<h2><a name="Attachments"
+>Attachments</a></h2>
+
+<p>None.</p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p>None.</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>1.9</p>
+
+<h3><a name="Current"
+>Current</a></h3>
+
+<pre>    Maintainer: Dan Sugalski
+    Class: Internals
+    PDD Number: 6
+    Version: 1.9
+    Status: Developing
+    Last Modified: 28 February 2007
+    PDD Format: 1
+    Language: English</pre>
+
+<h3><a name="History"
+>History</a></h3>
+
+<dl>
+<dt><a name="Version_1.9"
+>Version 1.9</a></dt>
+February 28, 2007
+<dt><a name="Version_1.8"
+>Version 1.8</a></dt>
+December 11, 2002
+<dt><a name="Version_1.7"
+>Version 1.7</a></dt>
+December 02, 2002
+<dt><a name="Version_1.6"
+>Version 1.6</a></dt>
+November 05, 2001
+<dt><a name="Version_1.5"
+>Version 1.5</a></dt>
+October 12, 2001
+<dt><a name="Version_1.4"
+>Version 1.4</a></dt>
+September 24, 2001
+<dt><a name="Version_1.3"
+>Version 1.3</a></dt>
+September 12, 2001
+<dt><a name="Version_1.2"
+>Version 1.2</a></dt>
+August 25, 2001
+<dt><a name="Version_1.1"
+>Version 1.1</a></dt>
+August 8, 2001
+<dt><a name="version_1"
+>version 1</a></dt>
+None. First version</dl>
+
+<h2><a name="Changes"
+>Changes</a></h2>
+
+<dl>
+<dt><a name="Version_1.9"
+>Version 1.9</a></dt>
+
+<ul>
+<li>Removed remark on &#34;upper case names reserved for directives&#34;</li>
+
+<li>Fixed &#34;.sub&#34; directive, should be &#34;.pcc_sub&#34;</li>
+
+<li>Added constant directive in description.</li>
+
+<li>Added grammar overview.</li>
+</ul>
+
+<dt><a name="Version_1.8"
+>Version 1.8</a></dt>
+
+<ul>
+<li>Added property ops</li>
+
+<li>Fixed some bad register designations</li>
+
+<li>Opened up opcode name character list to include numbers</li>
+</ul>
+
+<dt><a name="Version_1.7"
+>Version 1.7</a></dt>
+
+<ul>
+<li>Fixed stack ops; push, pop, and clear properly documented according to the engine&#39;s behaviour now.</li>
+</ul>
+
+<dt><a name="Version_1.6"
+>Version 1.6</a></dt>
+
+<ul>
+<li>Added GC opcodes</li>
+</ul>
+
+<dt><a name="Version_1.5"
+>Version 1.5</a></dt>
+
+<ul>
+<li>Now have a bsr in addition to a jsr</li>
+
+<li>return is now ret</li>
+
+<li>Added save and restore ops for saving and restoring individual registers</li>
+</ul>
+
+<dt><a name="Version_1.4"
+>Version 1.4</a></dt>
+
+<ul>
+<li>Conditional branches have just a true destination now</li>
+
+<li>Added the I/O ops</li>
+
+<li>Added in the threading ops</li>
+
+<li>Added in the interpreter ops</li>
+</ul>
+
+<dt><a name="Version_1.3"
+>Version 1.3</a></dt>
+
+<ul>
+<li>Added in the low&#45;level module loading ops</li>
+
+<li>Added in transcendental functions and modulo</li>
+
+<li>Finished the pad/global variable fetching bits</li>
+</ul>
+
+<dt><a name="Version_1.2"
+>Version 1.2</a></dt>
+We have an interpreter now! Yay! (Okay, a simple one, but still...) Changes made to reflect that.
+<dt><a name="Version_1.1"
+>Version 1.1</a></dt>
+
+<ul>
+<li>Added in object</li>
+
+<li>Changed remnants of &#34;perl&#34; to &#34;Parrot&#34;</li>
+
+<li>Branch destination may be integer constant</li>
+
+<li>Added <a href='#Assembly_Syntax'>&#34;Assembly Syntax&#34;</a> section</li>
+</ul>
+
+<dt><a name="Version_1.0"
+>Version 1.0</a></dt>
+None. First version</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

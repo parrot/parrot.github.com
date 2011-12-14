@@ -1,0 +1,600 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Regular Expression Engine, version 4.0</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Regular Expression Engine, version 4.0</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/ops.html">Ops</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>rx.ops &#45; Parrot Regular Expression Engine,
+version 4.0</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>  # NOTE: This looks a LOT scarier than it really is
+  # &#34;zzabbbcdcdcdzz&#34; =~ /ab*[cd]+/
+
+  # This represents an inlined, unoptimized regex
+
+          set S0, &#34;zzabbbcdcdzz&#34;
+
+  RX_0:
+          set I0, 0
+          set I1, 0
+          branch start0
+  advance:
+          rx_advance S0, I0, fail
+          set I1, I0
+  start0:
+          rx_literal S0, I1, &#34;a&#34;, advance
+  start1:
+          rx_pushmark
+  top1:
+          rx_literal S0, I1, &#34;b&#34;, start2
+          rx_pushindex I1
+          branch top1
+  back1:
+          rx_popindex I1, advance
+
+  start2:
+          rx_oneof S0, I1, &#34;cd&#34;, back1
+  top2:
+          rx_oneof S0, I1, &#34;cd&#34;, succeed
+          branch top2
+
+  succeed:
+          print &#34;Match&#34;
+          end
+  fail:
+          print &#34;No Match&#34;
+          end</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>The Perl 5 regular expression engine was state&#45;of&#45;the&#45;art. It was the fastest and most featureful implementation available. Everybody used Perl 5&#39;s regular expression syntax wherever possible.</p>
+
+<p>The Perl 5 regular expression engine was also a mess.</p>
+
+<p>The engine was like a separate interpreter unto itself. Few understood its dark magic, and fewer worked on its baroque source. It was a black box, sealed off from the outside world with only a couple opcodes to show in other files. It was the slowest part of Perl to adapt to new features&#45;&#45;it was one of the last to get threadsafety and full Unicode support&#45;&#45;because so few people understood it. Larry Wall once said that three people understood the regex engine, give or take four.</p>
+
+<p>Because of these issues, the design documents for Parrot called for regular expression opcodes to be built in to the interpreter. This group of opcodes, called the Parrot Regular Expression Engine version 4.0 (or simply Rx4), is the result.</p>
+
+<h1><a name="Basic_Concepts"
+>Basic Concepts <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Perl 5 had one opcode for each operation in the regular expression. For example:</p>
+
+<pre lang='und' xml:lang='und'>        &#62;perl &#45;mre=debug &#45;e &#39;/ab+[cd]/&#39;
+        Compiling REx `ab+[cd]&#39;
+        size 15 first at 1
+           1: EXACT &#60;a&#62;(3)
+           3: PLUS(6)
+           4:   EXACT &#60;b&#62;(0)
+           6: ANYOF[cd](15)
+          15: END(0)
+        anchored `ab&#39; at 0 floating `b&#39; at 1..2147483647 (checking anchored) minlen 3
+        Freeing REx: `ab+[cd]&#39;</pre>
+
+<p>(The <code lang='und' xml:lang='und'>re</code> pragma with the &#39;debug&#39; switch displays the compiled version of the regex. The numbers in parenthesis represent where to jump to on success; 0 is a special value meaning &#34;this part of the regex is done&#34;.)</p>
+
+<p>In Rx4, that regular expression would be something like:</p>
+
+<pre lang='und' xml:lang='und'>        advance:
+                rx_advance S0, I0, fail
+                set I1, I0
+        start:
+                rx_literal S0, I1, &#34;ab&#34;, advance
+                rx_pushmark
+        top:
+                rx_pushindex I1
+                rx_literal S0, I1, &#34;b&#34;, next
+                branch top
+        backtrack:
+                rx_popindex I1, advance
+        next:
+                rx_oneof S0, I1, &#34;cd&#34;, backtrack
+                branch success</pre>
+
+<p>(In Rx4, the last parameter is a label to branch to on <i>failure</i>, not success.)</p>
+
+<p>10 operations in Rx4 to 5 in Perl 5. I can already hear the cynicism: &#34;how could that be BETTER?!?&#34; Well, there&#39;s several reasons.</p>
+
+<p>The first is that it frees us to use normal ops, and in fact they&#39;re used all the time. <code lang='und' xml:lang='und'>branch</code> is a normal op; so is <code lang='und' xml:lang='und'>bsr</code>, the normal way to call a subrule. Things like <code lang='und' xml:lang='und'>(?{CODE})</code> can be implemented with relative ease&#45;&#45;simply put the normal opcodes in the appropriate place in the regex. If you&#39;re debugging a regex, you can simply sprinkle output messages liberally throughout the regex.</p>
+
+<p>The second is opcode dispatch. Parrot has very fast opcode dispatch, and we can use that to our advantage.</p>
+
+<p>Finally, there&#39;s the matter of optimizations. As an example, take <code lang='und' xml:lang='und'>/a+bc+/</code>. The most efficient way to look for that is probably to look for the constant string &#39;abc&#39; and expand outwards from there&#45;&#45;especially if you use Boyer&#45;Moore or another fast search algorithm. It means that the code generator can decide whether to optimize for success or failure, for compilation or execution speed. You get the idea.</p>
+
+<p>Bottom line is, Rx4 lays out exactly what&#39;s going on. This is a feature. It gives the regex compiler total control over what&#39;s going on.</p>
+
+<h1><a name="The_Opcodes"
+>The Opcodes <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>There are two basic rules to how the opcodes operate.</p>
+
+<p>The first rule is that the first argument to each opcode is the string we are matching against, and the second one is the current index in the string.</p>
+
+<p>The second rule pertains to the ops that have an integer constant as their last parameter. For the most part, these ops will branch to that parameter if they &#39;fail&#39;. For most ops, &#39;fail&#39; means &#39;fail to match&#39;.</p>
+
+<p>If the documentation for an op doesn&#39;t specifically mention the first or last parameter, that&#39;s what they are.</p>
+
+<p>The documentation for each opcode follows.</p>
+
+<h2><a name="Preparation"
+>Preparation <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="rx_compile(out_str,_in_str,_in_str)"
+><b><code lang='und' xml:lang='und'>rx_compile</b></code>(out str, in str, in str)</a></dt><p class="pad"></p>
+
+<dd>Provides a built&#45;in regular expression compiler. The first parameter is set to the address of the newly&#45;compiled regex, which can then be <code lang='und' xml:lang='und'>jsr</code>&#39;ed to; the second parameter is the regex itself; and the third parameter is the modifiers on the regex.</dd><p class="pad"></p>
+
+<dd><b>XXX</b> Currently this op has not been implemented.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Stack_manipulation_ops"
+>Stack manipulation ops <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="rx_pushindex(in_pmc)"
+><b><code lang='und' xml:lang='und'>rx_pushindex</b></code>(in pmc)</a></dt><p class="pad"></p>
+
+<dd>Pushes the current index onto the stack contained in the info structure.</dd><p class="pad"></p>
+
+<dt><a name="rx_pushmark()"
+><b><code lang='und' xml:lang='und'>rx_pushmark</b></code>()</a></dt><p class="pad"></p>
+
+<dd>Pushes a &#39;mark&#39; onto the stack contained in the info structure. Marks are used to indicate where one operation&#39;s backtrack information ends and another&#39;s begins.</dd><p class="pad"></p>
+
+<dt><a name="rx_popindex(out_int,_labelconst_int)"
+><b><code lang='und' xml:lang='und'>rx_popindex</b></code>(out int, labelconst int)</a></dt><p class="pad"></p>
+
+<dd>Pops an index off the stack. If it pops a mark off instead, it branches to the second parameter.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Simple_matching_ops"
+>Simple matching ops <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>This ops match a simple pattern against the string, and branch on their last argument when they fail.</p>
+
+<dl>
+<dt><a name="rx_advance(in_str,_inout_int,_labelconst_int)"
+><b><code lang='und' xml:lang='und'>rx_advance</b></code>(in str, inout int, labelconst int)</a></dt><p class="pad"></p>
+
+<dd>Increments the start index one character. Branches to the third parameter if it goes past the end of the string.</dd><p class="pad"></p>
+
+<dd>$2 is the current value of start_index.</dd><p class="pad"></p>
+
+<dt><a name="rx_literal(in_str,_inout_int,_in_str,_labelconst_int)"
+><b><code lang='und' xml:lang='und'>rx_literal</b></code>(in str, inout int, in str, labelconst int)</a></dt><p class="pad"></p>
+
+<dd>Matches the exact string passed in the third parameter.</dd><p class="pad"></p>
+
+<dd><b>XXX</b> Currently there is no way to do case&#45;insensitive matches. The right way would involve either a specialized rx_literal_insensitive op, or some more sophisticated method.</dd><p class="pad"></p>
+
+<dt><a name="rx_char(in_str,_inout_int,_in_int,_labelconst_int)"
+><b><code lang='und' xml:lang='und'>rx_char</b></code>(in str, inout int, in int, labelconst int)</a></dt><p class="pad"></p>
+
+<dd>Matches the char $3 at the position $2 of string $1.</dd><p class="pad"></p>
+
+<dt><a name="rx_is_w(in_str,_inout_int,_labelconst_int)"
+><b><code lang='und' xml:lang='und'>rx_is_w</b></code>(in str, inout int, labelconst int)</a></dt><p class="pad"></p>
+
+<dd>Matches a word character (usually <code lang='und' xml:lang='und'>\w</code>).</dd><p class="pad"></p>
+
+<dt><a name="rx_is_d(in_str,_inout_int,_labelconst_int)"
+><b><code lang='und' xml:lang='und'>rx_is_d</b></code>(in str, inout int, labelconst int)</a></dt><p class="pad"></p>
+
+<dd>Matches a number character (usually <code lang='und' xml:lang='und'>\d</code>).</dd><p class="pad"></p>
+
+<dt><a name="rx_is_s(in_str,_inout_int,_labelconst_int)"
+><b><code lang='und' xml:lang='und'>rx_is_s</b></code>(in str, inout int, labelconst int)</a></dt><p class="pad"></p>
+
+<dd>Matches a whitespace character (usually <code lang='und' xml:lang='und'>\s</code>).</dd><p class="pad"></p>
+
+<dt><a name="rx_oneof(in_str,_inout_int,_in_pmc,_labelconst_int)"
+><b><code lang='und' xml:lang='und'>rx_oneof</b></code>(in str, inout int, in pmc, labelconst int)</a></dt><p class="pad"></p>
+
+<dd>Matches if the current character is one of the characters in the third parameter.</dd><p class="pad"></p>
+
+<dd>This op requires that its input be sorted for efficiency. Further, it requires that all ranges (<code lang='und' xml:lang='und'>a&#45;z</code>) be expanded by the regex compiler.</dd><p class="pad"></p>
+
+<dt><a name="rx_oneof_bmp(in_str,_inout_int,_in_pmc,_labelconst_int)"
+><b><code lang='und' xml:lang='und'>rx_oneof_bmp</b></code>(in str, inout int, in pmc, labelconst int)</a></dt><p class="pad"></p>
+
+<dd>This op has the exact same behavior as <code lang='und' xml:lang='und'>rx_oneof</code>, except that the third parameter is a Pointer to a bitmap generated by <code lang='und' xml:lang='und'>rx_makebmp</code>.</dd><p class="pad"></p>
+
+<dt><a name="rx_dot(in_str,_inout_int,_labelconst_int)"
+><b><code lang='und' xml:lang='und'>rx_dot</b></code>(in str, inout int, labelconst int)</a></dt><p class="pad"></p>
+
+<dd>Matches any character. This currently works exactly like rx_advance, but we leave it here in case they have to diverge in the future.</dd><p class="pad"></p>
+
+<dt><a name="rx_zwa_boundary(in_str,_in_int,_labelconst_int)"
+><b><code lang='und' xml:lang='und'>rx_zwa_boundary</b></code>(in str, in int, labelconst int)</a></dt><p class="pad"></p>
+
+<dd>Matches if the one of the previous character and the next character is a word character, and the other one is not (usually <code lang='und' xml:lang='und'>\b</code>).</dd><p class="pad"></p>
+
+<dt><a name="rx_zwa_atend(in_str,_in_int,_labelconst_int)"
+><b><code lang='und' xml:lang='und'>rx_zwa_atend</b></code>(in str, in int, labelconst int)</a></dt><p class="pad"></p>
+
+<dd>Matches at the end of the string.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Optimization_ops:_searching_at_the_beginning_of_the_string."
+>Optimization ops: searching at the beginning of the string. <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>This ops combine rx_advance with other ops, with the goal of increasing the code density, and saving a few repeated computations.</p>
+
+<p>This ops will not increment the value of start_index if the pattern matches at the current position of the string. So when the overall match fails, you\&#39;ll have to increment start_index by hand before calling them.</p>
+
+<p>Additionally, this op can be used to optimize matches of the type:</p>
+
+<pre lang='und' xml:lang='und'>        .*? &#60;pattern&#62;  # non&#45;greedy repetition of dot, followed by
+                       # a known pattern</pre>
+
+<dl>
+<dt><a name="rx_search(in_str,_out_int,_inout_int,_in_str,_labelconst_in)"
+><b><code lang='und' xml:lang='und'>rx_search</b></code>(in str, out int, inout int, in str, labelconst in)</a></dt><p class="pad"></p>
+
+<dd>Searches for the literal $4 on the string $1 starting at $3. Sets $2 to the current index in the string (after the literal), and $3 to start_index.</dd><p class="pad"></p>
+
+<dd>Branches to $5 if the literal is not found.</dd><p class="pad"></p>
+
+<dt><a name="rx_search_char_(in_str,_out_int,_inout_int,_in_str,_labelconst_in)"
+><b><code lang='und' xml:lang='und'>rx_search_char</b></code> (in str, out int, inout int, in str, labelconst in)</a></dt><p class="pad"></p>
+
+<dd>Searches for the char $4 on the string $1 starting at $3. Sets $2 to the current index in the string (after the char)</dd><p class="pad"></p>
+
+<dd>Branches to $5 if the char is not found.</dd><p class="pad"></p>
+
+<dd>The char is expressed as an integer representing its codepoint.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Optimization_ops:_combining_a_simple_match_with_a_greedy_star."
+>Optimization ops: combining a simple match with a greedy star. <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="rx_literal_all(in_str,_inout_int,_in_str)"
+><b><code lang='und' xml:lang='und'>rx_literal_all</b></code>(in str, inout int, in str)</a></dt><p class="pad"></p>
+
+<dd>Matches greedily the repetition of the literal passed in the third parameter.</dd><p class="pad"></p>
+
+<dd>It never fails, and it doesn&#39;t save the intermediate points in the stack.</dd><p class="pad"></p>
+
+<dd>If you need to backtrack over rx_literal_all, you should manage it manually:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>                set I2, I1                     # save the start point
+                rx_literal_all S0, I1, &#34;lit&#34;   # lit *
+                set I3, I1
+
+        again:  .. do stuff ..
+
+        backtrack_rx_literal:
+
+                lte I3, I2, fail
+                dec I1, I3, 3                   # 3 is the length of &#34;lit&#34;
+
+        fail:
+                                                # lit* has failed</pre>
+
+<dd>This is a bit clumsy, but saves a bunch of stack pushing.</dd><p class="pad"></p>
+
+<dt><a name="rx_char_all(in_str,_inout_int,_in_int)"
+><b><code lang='und' xml:lang='und'>rx_char_all</b></code>(in str, inout int, in int)</a></dt><p class="pad"></p>
+
+<dd>Matches the greedy repetition of char $3 at the position $2 of string $1.</dd><p class="pad"></p>
+
+<dd>It never fails, and it doesn&#39;t push intermediate positions in the stack, so if you need backtracking you&#39;ll have to manage it manually.</dd><p class="pad"></p>
+
+<dt><a name="rx_oneof_bmp_all_(in_str,_inout_in,_in_pmc,_inconst_int)"
+><b><code lang='und' xml:lang='und'>rx_oneof_bmp_all</b></code> (in str, inout in, in pmc, inconst int)</a></dt><p class="pad"></p>
+
+<dd>Matches the greedy repetition of rx_one_of_bmp. Like its cousins, it never fails and it doesn&#39;t push the intermediate position in the stack</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Other_ops"
+>Other ops <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="rx_makebmp(out_pmc,_in_str)"
+><b><code lang='und' xml:lang='und'>rx_makebmp</b></code>(out pmc, in str)</a></dt><p class="pad"></p>
+
+<dd>This op pre&#45;generates bitmaps to be used with <code lang='und' xml:lang='und'>rx_oneof_bmp</code>, increasing performance. The first parameter will be set to a Pointer to the bitmap; the second parameter is the string to be bitmapped.</dd><p class="pad"></p>
+
+<dd>Note that bitmaps are currently NOT compatible with characters above 255 (as defined by whatever character set you&#39;re using). This may change in the future.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Using_the_opcodes"
+>Using the opcodes <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<h2><a name="Tutorial"
+>Tutorial <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Let&#39;s see how simple regexes using the Rx4 engine. This examples will show inlined regexes (i.e., regexes that appear on the middle of perl code, of the kind that was so popular in the old perl5 days).</p>
+
+<p>We won&#39;t deal then with named regular expressions (also known as rules) and the conventions used to call them (we expect that some form of the standard calling conventions will be used).</p>
+
+<p>First of all, let&#39;s explain the concept behind the Rx4 ops. During the life&#45;time of a match, we keep the state of the match in concrete, well&#45;known (by the compiler) registers. There are at least three registers needed to save the state of match, which we will call S0, I0, I1 (there is no particular reason to use this three registers, the compiler can choose any registers of the right type that are free during the match, but we will use this ones in all our examples).</p>
+
+<p>The purpose of this registers is:</p>
+
+<dl>
+<dt><a name="S0:"
+><b><code lang='und' xml:lang='und'>S0</b></code>:</a></dt><p class="pad"></p>
+
+<dd>Saves the string we are matching against</dd><p class="pad"></p>
+
+<dt><a name="I0:"
+><b><code lang='und' xml:lang='und'>I0</b></code>:</a></dt><p class="pad"></p>
+
+<dd>Saves the &#34;start&#45;of&#45;match&#34; position. The position in the string where the first character of the pattern matched.</dd><p class="pad"></p>
+
+<dt><a name="I1:"
+><b><code lang='und' xml:lang='und'>I1</b></code>:</a></dt><p class="pad"></p>
+
+<dd>Saves the current position in the string.</dd><p class="pad"></p>
+</dl>
+
+<p>As we will see, most of the rx opcodes read or modify at least one of this registers. Sometimes, the compiler can decide to use some other registers, to save temporary information about the match (like the position of the beginning of a group, for example).</p>
+
+<p>Let&#39;s start with a really simple regex. Imagine that we want to compile the code</p>
+
+<pre lang='und' xml:lang='und'>  if (/^foobar/) { print 1 };</pre>
+
+<p>Now, this can done in a very simple way. Assuming that we have managed to put the string contents of $_ into S0, the code would be:</p>
+
+<pre lang='und' xml:lang='und'>  start:
+          set I0, 0
+          rx_literal S0, I0, &#34;foobar&#34;, end
+          print 1
+  end:</pre>
+
+<p>Let&#39;s look at this instructions one at&#45;a&#45;time.</p>
+
+<pre lang='und' xml:lang='und'>  start:
+          ## we start matching from the beginning of the match
+          set I0, 0
+
+          ## match the string &#34;foobar&#34; at the current position, or branch to end
+          rx_literal S0, I0, &#34;foobar&#34;, end
+
+          ## we have matched, so let&#39;s print 1
+          print 1
+  end:</pre>
+
+<p>This was a very simple kind of pattern. Imagine now that we wanted to search for &#34;foobar&#34; in any point of the string. We would need to add some form of loop that iterates over the characters of the string, looking for the match &#34;foobar&#34;. This example shows how:</p>
+
+<pre lang='und' xml:lang='und'>          set I0, 0
+  start:
+          set I1, I0
+          rx_literal, S0, I1, &#34;foobar&#34;, advance
+          print &#34;match&#34;
+          branch end
+
+  advance:
+          rx_advance S0, I0, fail
+          branch start
+
+  fail:
+          print &#34;no match&#34;
+
+  end:</pre>
+
+<p>This looks very complicated, but it is not. The match starts at the position 0. It tries to match &#34;foobar&#34; at this position, and if it fails, is branches to rx_advance, where it will increase the start&#45;of&#45;match position by one and try again. When there are no characters left, rx_advance branches to $fail.</p>
+
+<p>This is the skeleton of how regexes work in general. The main loop iterates over I0 (start&#45;of&#45;match) while the inner ops update I1 (match&#45;position).</p>
+
+<p>For this particular case, Rx4 offers an specialized op that can be used to optimize the computation. <code lang='und' xml:lang='und'>rx_search</code> merges the functionality of <code lang='und' xml:lang='und'>rx_advance</code> and <code lang='und' xml:lang='und'>rx_literal</code> in one op.</p>
+
+<p>Using this new op, the code to match would look like:</p>
+
+<pre lang='und' xml:lang='und'>          set I0, 0
+  start:
+          rx_search, S0, I1, I0, &#34;foobar&#34;, fail
+          print &#34;match&#34;
+          branch end
+  fail:
+          print &#34;nomatch&#34;
+  end:</pre>
+
+<p>This is very useful, since many matches start with a literal. Rx4 offers also <code lang='und' xml:lang='und'>rx_search_char</code> which searches for a single char, and <code lang='und' xml:lang='und'>rx_search_bmp</code> which searches for a character class.</p>
+
+<p>From here it is mostly a matter of knowing how to implement the various forms of quantifiers and groups. The following section explains how the most common constructs can be implemented.</p>
+
+<h2><a name="Common_constructs"
+>Common constructs <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>The list below gives simple templates for common quantifiers operations.</p>
+
+<p>(This templates could be heavily optimized in the particular case that &#34;x&#34; is a literal. But that&#39;s not the point here.)</p>
+
+<dl>
+<dt><a name="x*"
+><b><code lang='und' xml:lang='und'>x*</b></code></a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  start:
+          rx_pushmark
+  loop:
+          rx_pushindex I1
+          rx_literal S0, I1, &#34;x&#34;, next
+          branch loop
+  back:
+          rx_popindex I1, lastback</pre>
+
+<dt><a name="x+"
+><b><code lang='und' xml:lang='und'>x+</b></code></a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  start:
+          rx_literal S0, I1, &#34;x&#34;, lastback
+          rx_pushmark
+  loop:
+          rx_pushindex I1
+          rx_literal S0, I1, next
+          branch loop
+  back:
+          rx_popindex I1, lastback</pre>
+
+<dt><a name="x?"
+><b><code lang='und' xml:lang='und'>x?</b></code></a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  # this could be done using the stack, but this way
+  # is slightly faster
+
+  # I2 is used to check if we cannot backtrack more
+
+  start:
+          set I2, I1
+          set I3, 1
+          rx_literal S0, I1, &#34;x&#34;, next
+          set I3, 0
+          branch next
+  back:
+          if I3, lastback
+          set I3, 1
+          set I1, I2
+          branch next</pre>
+
+<dt><a name="x*?"
+><b><code lang='und' xml:lang='und'>x*?</b></code></a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  start:
+          set I2, I1
+          branch next
+  back:
+          set I1, I2
+          rx_literal S0, I1, &#34;x&#34;, lastback
+          branch start</pre>
+
+<dt><a name="x+?"
+><b><code lang='und' xml:lang='und'>x+?</b></code></a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  start:
+          rx_literal S0, I1, &#34;x&#34;, lastback
+          set I2, I1
+          branch next
+  back:
+          set I1, I2
+          branch start</pre>
+
+<dt><a name="x??"
+><b><code lang='und' xml:lang='und'>x??</b></code></a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  start:
+          set I2, 0     #I2 used to make sure we haven&#39;t
+                          # backtracked before
+          branch next
+  back:
+          if I2, lastback
+          rx_literal S0, I1, &#34;x&#34;, lastback
+          set I2, 1
+          branch next</pre>
+
+<dt><a name="x|y|z"
+><b><code lang='und' xml:lang='und'>x|y|z</b></code></a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  start:
+          set I2, I1     #I2  the beginning of the group
+          set I3, &#45;6       #I3  next alternation in the group, expressed
+                           #as an offset from the branch point
+
+          rx_literal S0, I1, &#34;x&#34;, alt2
+          branch next
+
+  alt2:
+          set I1, I2
+          set I3, &#45;3
+          rx_literal S0, I1, &#34;y&#34;, alt3
+          branch next
+  alt3:
+          set I1, I2
+          set I3, 1
+          rx_literal S0, I1, &#34;z&#34;, lastback
+  back:
+          branch I3
+
+  backlast:</pre>
+
+<dt><a name="x{m,n}"
+><b><code lang='und' xml:lang='und'>x{m,n}</b></code></a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  top_m:
+          inc I2
+          eq I2, m, n
+          rx_literal S0, I1, &#34;x&#34;, lastback
+          branch top_m
+  n:
+          rx_pushmark
+  top_n:
+          inc I2
+          eq I2, n, out
+          rx_literal S0, I1, &#34;x&#34;, next
+          rx_pushindex I1
+          branch top_n
+  back:
+          rx_popindex I1, lastback
+          branch next</pre>
+</dl>
+
+<p><b>XXX</b> Finish this documentation.</p>
+
+<h1><a name="BUGS"
+>BUGS <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<ul>
+<li>This code currently requires everything to be in an eight&#45;bit encoding compatible with ASCII.</li><p class="pad"></p>
+
+<li>A lot of ops are missing, features such as $$, ^^, etc. are not implemented.</li><p class="pad"></p>
+
+<li>There is not a convenient way of doing case&#45;insensitive matches.</li><p class="pad"></p>
+
+<li>The implementation of perl6 advanced features such as subrules, or hypothetical variables has not been resolved.</li><p class="pad"></p>
+
+<li>There are undoubtedly many more in code this complicated.</li><p class="pad"></p>
+</ul>
+
+<h1><a name="AUTHORS"
+>AUTHORS <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Copyright (C) 2001&#45;2004 The Parrot Team &#60;perl6&#45;internals@perl.org&#62;.</p>
+
+<p>Initial version by Brent Dax &#60;brentdax@cpan.org&#62;; special thanks to Angel Faus &#60;afaus@corp.vlex.com&#62; and Jeff &#39;japhy&#39; Pinyan &#60;japhy@pobox.com&#62; for major help, especially with decisions on the architecture of the engine.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

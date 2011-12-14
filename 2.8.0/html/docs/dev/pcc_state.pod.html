@@ -1,0 +1,138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - parrot calling conventions state table</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; parrot calling conventions state table
+                </div>
+
+<h1><a name="parrot_calling_conventions_state_table"
+>parrot calling conventions state table</a></h1>
+
+<p>this document expresses the calling conventions as outlined in PDD03 in table format.
+this is a work in progress,
+which,
+when finished,
+should assist in creating an exhaustive test suite for calling conventions.</p>
+
+<pre>              1      2      3      4      5      6      7      8      9
+
+           |                          DEST                         |      |
+           |          unnamed          |           named         *3|      |
+           |   required  |   optional  |   required  |   optional  |      |
+           |      |    *1|      |    *1|      |    *1|      |    *1|      |
+           | nrml | slrp | nrml | slrp | nrml | slrp | nrml | slrp | END  |
+   &#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;
+           |      |      |      |      |      |      |      |      |      |
+ A    nrml |  P1  |  P2  |  P1  |  P2  |  E6  |  E6  |  E6  |  E6  |  E1  |
+    u      |      |      |      |      |      |      |      |      |      |
+    n&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;
+    n  *1,2|      |      |      |      |      |      |      |      |      |
+ B  a flat |  P3  |  P3  |  P3  |  P3  |  P4  |  P5  | P4   |  P5  |  E2  |
+    m      |      |      |      |      |      |      |      |      |      |
+    e&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;
+    d    *1|      |      |      |      |      |      |      |      |      |
+ C    mayb |  P1  |  X1  |  P1  |  X1  |      |      |      |      |  E2  |
+   S       |      |      |      |      |      |      |      |      |      |
+   R&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;
+   C       |      |      |      |      |      |      |      |      |      |
+ D    nrml |  E5  |  E5  |  E5  |  E5  |      |      |      |      |  E1  |
+           |      |      |      |      |      |      |      |      |      |
+    n&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;
+    a    *3|      |      |      |      |      |      |      |      |      |
+ E  m flat |  E5  |  E5  |  E5  |  E5  |      |      |      |      |  E2  |
+    e      |      |      |      |      |      |      |      |      |      |
+    d&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;
+           |      |      |      |      |      |      |      |      |      |
+ F    mayb |  E4  |  E4  |  E4  |  E4  |  E4  |  E4  |  E4  |  E4  |  E2  |
+           |      |      |      |      |      |      |      |      |      |
+   &#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;
+           |      |      |      |      |      |      |      |      |      |
+ G     END |  E3  |  E3  |  D1  |  D1  |  E3  |  E3  |  D1  |  D1  |  D1  |
+           |      |      |      |      |      |      |      |      |      |
+   &#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;</pre>
+
+<h2><a name="Glossary"
+>Glossary</a></h2>
+
+<dl>
+<dt><a name="Flag_Values"
+>Flag Values</a></dt>
+
+<pre>  nrml  no flags   (src: val &#38; 0x03a0 = 0; dest: val &#38; 0x0260 = 0)
+  slrp  SLURPY     (val &#38; 0x0020 = 1)
+  flat  FLAT       (val &#38; 0x0020 = 1)</pre>
+
+<dt><a name="Passing"
+>Passing</a></dt>
+
+<pre>  P1  pass as&#45;is, next state
+  P2  pass as&#45;is, next src
+  P3  pass contents as array items, next
+  P4  pass current array item as&#45;is, next src array item
+  P5  pass current array items as pairs (a[0],a[0]) or as (a[0],a[1]) (a.size % 2 = 0)
+  P4  pass current array item as&#45;is, next src array item
+  P5  pass current array items as pairs (a[0],a[0]) or as (a[0],a[1]) (a.size % 2 = 0)</pre>
+
+<dt><a name="Expressions"
+>Expressions</a></dt>
+
+<pre>  X1  if(src pmc is aggregate or reference to aggregate)
+        if dest is array, pass as flat
+        if dest is hash, pass as pairs</pre>
+
+<dt><a name="Errors"
+>Errors</a></dt>
+
+<pre>  E1  overflow
+  E2  overflow if aggregate is not empty
+  E3  underflow
+  E4  [removed]
+  E5  named parameter passed, unnamed expected
+  E6  unnamed parameter passed, named expected</pre>
+
+<dt><a name="Done"
+>Done</a></dt>
+
+<pre>  D1  done</pre>
+
+<dt><a name="Notes"
+>Notes</a></dt>
+
+<pre>  *1  pmc only
+  *2  error unless pmc is aggregate or reference to aggregate
+  *3  pmc or string constant only</pre>
+</dl>
+
+<h2><a name="Examples"
+>Examples</a></h2>
+
+<dl>
+<dt><a name="A:5_&#39;caller&#39;(1,_2)_#_caller_.param_pmc_two_:named(&#39;two&#39;)_;_.param_pmc_one_:named(&#39;one&#39;)_two_=_1_;_one_=_2"
+>A:5 &#39;caller&#39;(1, 2) # caller .param pmc two :named(&#39;two&#39;) ; .param pmc one :named(&#39;one&#39;) two = 1 ; one = 2</a></dt>
+</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

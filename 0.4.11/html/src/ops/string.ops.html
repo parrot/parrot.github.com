@@ -1,0 +1,450 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>String Operations</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">String Operations</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/ops.html">Ops</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>string.ops &#45; String Operations</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Operations that work on strings,
+whether constructing,
+modifying or examining them.
+See also <em lang='und' xml:lang='und'>rx.ops</em>.</p>
+
+<dl>
+<dt><a name="ord(out_INT,_in_STR)"
+><b>ord</b>(out INT,
+in STR)</a></dt><p class="pad"></p>
+
+<dd>Two&#45;argument form returns the 0th character of string $2 in register $1.
+If $2 is empty,
+throws an exception.</dd><p class="pad"></p>
+
+<dt><a name="ord(out_INT,_in_STR,_in_INT)"
+><b>ord</b>(out INT,
+in STR,
+in INT)</a></dt><p class="pad"></p>
+
+<dd>Three&#45;argument form returns character $3 of string $2 in register $1.
+If $2 is empty,
+throws an exception.
+If $3 is greater than the length of string $2,
+throws an exception.
+If $3 is less then zero but greater than the negative of the length,
+counts backwards through the string,
+such that &#45;1 is the last character,
+&#45;2 is the second&#45;to&#45;last character,
+and so on.
+If $3 is less than the negative of the length,
+throws an exception.</dd><p class="pad"></p>
+
+<dt><a name="chr(out_STR,_in_INT)"
+><b>chr</b>(out STR,
+in INT)</a></dt><p class="pad"></p>
+
+<dd>Returns the character specified by the $2 number.</dd><p class="pad"></p>
+
+<dt><a name="chopn(inout_STR,_in_INT)"
+><b>chopn</b>(inout STR,
+in INT)</a></dt><p class="pad"></p>
+
+<dd>Remove $2 characters from the end of the string in $1.
+If $2 is negative,
+cut the string after &#45;$2 characters.</dd><p class="pad"></p>
+
+<dt><a name="chopn(out_STR,_in_STR,_in_INT)"
+><b>chopn</b>(out STR,
+in STR,
+in INT)</a></dt><p class="pad"></p>
+
+<dd>Removes $3 characters from the end of the string in $2 and returns the result in $1.
+If $3 is negative,
+cut the string after &#45;$3 characters.</dd><p class="pad"></p>
+
+<dt><a name="concat(inout_STR,_in_STR)"
+><b>concat</b>(inout STR,
+in STR)</a></dt><p class="pad"></p>
+
+<dt><a name="concat(in_PMC,_in_STR)"
+><b>concat</b>(in PMC,
+in STR)</a></dt><p class="pad"></p>
+
+<dt><a name="concat(in_PMC,_in_PMC)"
+><b>concat</b>(in PMC,
+in PMC)</a></dt><p class="pad"></p>
+
+<dd>Append the string in $2 to the string in $1.
+The <code lang='und' xml:lang='und'>PMC</code> versions are MMD operations.</dd><p class="pad"></p>
+
+<dt><a name="concat(out_STR,_in_STR,_in_STR)"
+><b>concat</b>(out STR,
+in STR,
+in STR)</a></dt><p class="pad"></p>
+
+<dt><a name="concat(in_PMC,_in_PMC,_in_STR)"
+><b>concat</b>(in PMC,
+in PMC,
+in STR)</a></dt><p class="pad"></p>
+
+<dt><a name="concat(in_PMC,_in_PMC,_in_PMC)"
+><b>concat</b>(in PMC,
+in PMC,
+in PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="n_concat(out_PMC,_in_PMC,_in_STR)"
+><b>n_concat</b>(out PMC,
+in PMC,
+in STR)</a></dt><p class="pad"></p>
+
+<dt><a name="n_concat(out_PMC,_in_PMC,_in_PMC)"
+><b>n_concat</b>(out PMC,
+in PMC,
+in PMC)</a></dt><p class="pad"></p>
+
+<dd>Concatenate the strings $3 to $2 and places the result into $1.
+The <code lang='und' xml:lang='und'>PMC</code> versions are MMD operations.
+The <code lang='und' xml:lang='und'>n_</code> variants are creating a new result as usual.
+See also <em lang='und' xml:lang='und'><a href="math.ops.html">src/ops/math.ops</a></em> for the general <code lang='und' xml:lang='und'>infix</code> and <code lang='und' xml:lang='und'>n_infix</code> syntax.</dd><p class="pad"></p>
+
+<dt><a name="repeat(out_STR,_in_STR,_in_INT)"
+><b>repeat</b>(out STR,
+in STR,
+in INT)</a></dt><p class="pad"></p>
+
+<dt><a name="repeat(in_PMC,_in_PMC,_in_INT)"
+><b>repeat</b>(in PMC,
+in PMC,
+in INT)</a></dt><p class="pad"></p>
+
+<dt><a name="repeat(in_PMC,_in_PMC,_in_PMC)"
+><b>repeat</b>(in PMC,
+in PMC,
+in PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="n_repeat(out_PMC,_in_PMC,_in_INT)"
+><b>n_repeat</b>(out PMC,
+in PMC,
+in INT)</a></dt><p class="pad"></p>
+
+<dt><a name="n_repeat(out_PMC,_in_PMC,_in_PMC)"
+><b>n_repeat</b>(out PMC,
+in PMC,
+in PMC)</a></dt><p class="pad"></p>
+
+<dd>Repeats string $2 $3 times and stores result in $1.
+The <code lang='und' xml:lang='und'>PMC</code> versions are MMD operations.</dd><p class="pad"></p>
+
+<dt><a name="length(out_INT,_in_STR)"
+><b>length</b>(out INT,
+in STR)</a></dt><p class="pad"></p>
+
+<dd>Set $1 to the length (in characters) of the string in $2.</dd><p class="pad"></p>
+
+<dt><a name="bytelength(out_INT,_in_STR)"
+><b>bytelength</b>(out INT,
+in STR)</a></dt><p class="pad"></p>
+
+<dd>Set $1 to the length (in bytes) of the string in $2.</dd><p class="pad"></p>
+
+<dt><a name="pin(inout_STR)"
+><b>pin</b>(inout STR)</a></dt><p class="pad"></p>
+
+<dd>Make the memory in $1 immobile.
+This memory will <i>not</i> be moved by the GC,
+and may be safely passed to external libraries.
+(Well,
+as long as they don&#39;t free it) Pinning a string will move the contents.</dd><p class="pad"></p>
+
+<dd>The memory only need be unpinned if you plan on using it for any length of time after its pinning is no longer necessary.</dd><p class="pad"></p>
+
+<dt><a name="unpin(inout_STR)"
+><b>unpin</b>(inout STR)</a></dt><p class="pad"></p>
+
+<dd>Make the memory in $1 movable again.
+This will make the memory in $1 move.</dd><p class="pad"></p>
+
+<dt><a name="substr(out_STR,_in_STR,_in_INT)"
+><b>substr</b>(out STR,
+in STR,
+in INT)</a></dt><p class="pad"></p>
+
+<dt><a name="substr(out_STR,_in_STR,_in_INT,_in_INT)"
+><b>substr</b>(out STR,
+in STR,
+in INT,
+in INT)</a></dt><p class="pad"></p>
+
+<dt><a name="substr(out_STR,_inout_STR,_in_INT,_in_INT,_in_STR)"
+><b>substr</b>(out STR,
+inout STR,
+in INT,
+in INT,
+in STR)</a></dt><p class="pad"></p>
+
+<dt><a name="substr(inout_STR,_in_INT,_in_INT,_in_STR)"
+><b>substr</b>(inout STR,
+in INT,
+in INT,
+in STR)</a></dt><p class="pad"></p>
+
+<dt><a name="substr(out_STR,_invar_PMC,_in_INT,_in_INT)"
+><b>substr</b>(out STR,
+invar PMC,
+in INT,
+in INT)</a></dt><p class="pad"></p>
+
+<dd>Set $1 to the portion of $2 starting at (zero&#45;based) character position $3 and having length $4.
+If no length ($4) is provided,
+it is equivalent to passing in the length of $2.
+This creates a COW copy of $2.</dd><p class="pad"></p>
+
+<dd>Optionally pass in string $5 for replacement.
+If the length of $5 is different from the length specified in $4,
+then $2 will grow or shrink accordingly.
+If $3 is one character position larger than the length of $2,
+then $5 is appended to $2 (and the empty string is returned); this is essentially the same as</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  concat $2, $5</pre>
+
+<dd>Finally, if $3 is negative, then it is taken to count backwards from the end of the string (ie an offset of &#45;1 corresponds to the last character).</dd><p class="pad"></p>
+
+<dd>The third form is optimized for replace only, ignoring the replaced substring and does not waste a register to do the string replace.</dd><p class="pad"></p>
+
+<dt><a name="substr_r(out_STR,_in_STR,_in_INT,_in_INT)"
+><b>substr_r</b>(out STR, in STR, in INT, in INT)</a></dt><p class="pad"></p>
+
+<dd>Make $1 refer to the given part of $2, basically like above, but it is reusing the given destination string and doesn&#39;t care if the source string is changed later. This <i>is changed</i> includes also GC runs, which will move the referenced string. This also means that $1 has to be reset before any GC may happen.</dd><p class="pad"></p>
+
+<dd>This opcode should really be just used to quickly refer to a substring of another part, e.g. for printing and is a temporary hack.</dd><p class="pad"></p>
+
+<dd><b>Handle with care</b></dd><p class="pad"></p>
+
+<dt><a name="index(out_INT,_in_STR,_in_STR)"
+><b>index</b>(out INT, in STR, in STR)</a></dt><p class="pad"></p>
+
+<dt><a name="index(out_INT,_in_STR,_in_STR,_in_INT)"
+><b>index</b>(out INT, in STR, in STR, in INT)</a></dt><p class="pad"></p>
+
+<dd>The index function searches for one string within another, but without the wildcard&#45;like behavior of a full regular&#45;expression pattern match. It returns the position of the first occurrence of $3 in $2 at or after $4. If $4 is omitted, starts searching from the beginning of the string. The return value is based at &#34;0&#34;. If the substring is not found, returns &#34;&#45;1&#34;.</dd><p class="pad"></p>
+
+<dt><a name="sprintf(out_STR,_in_STR,_invar_PMC)"
+><b>sprintf</b>(out STR, in STR, invar PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="sprintf(out_PMC,_invar_PMC,_invar_PMC)"
+><b>sprintf</b>(out PMC, invar PMC, invar PMC)</a></dt><p class="pad"></p>
+
+<dd>#=item <b>sprintf</b>(out STR, in STR) [unimplemented] [[what is this op # supposed to do? &#45;&#45;jrieks]]</dd><p class="pad"></p>
+
+<dd>#=item <b>sprintf</b>(out PMC, invar PMC) [unimplemented] [[what is this # op supposed to do? &#45;&#45;jrieks]]</dd><p class="pad"></p>
+
+<dd>Sets $1 to the result of calling <code lang='und' xml:lang='und'>Parrot_psprintf</code> with the given format ($2) and arguments ($3, which should be an ordered aggregate PMC). In the (unimplemented) versions that don&#39;t include $3, arguments are popped off the user stack.</dd><p class="pad"></p>
+
+<dd>The result is quite similar to using the system <code lang='und' xml:lang='und'>sprintf</code>, but is protected against buffer overflows and the like. There are some differences, especially concerning sizes (which are largely ignored); see <em lang='und' xml:lang='und'>misc.c</em> for details.</dd><p class="pad"></p>
+
+<dt><a name="new(out_STR)"
+><b>new</b>(out STR)</a></dt><p class="pad"></p>
+
+<dt><a name="new(out_STR,_in_INT)"
+><b>new</b>(out STR, in INT)</a></dt><p class="pad"></p>
+
+<dd>Allocate a new empty string, of length $2 (optional), encoding $3 (optional) and type $4. (optional)</dd><p class="pad"></p>
+
+<dt><a name="stringinfo(out_INT,_in_STR,_in_INT)"
+><b>stringinfo</b>(out INT, in STR, in INT)</a></dt><p class="pad"></p>
+
+<dd>Extract some information about string $2 and store it in $1. If a null string is passed, $1 is always set to 0. If an invalid $3 is passed, an exception is thrown. Possible values for $3 are:</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="1_The_location_of_the_string_buffer_header."
+>1 The location of the string buffer header.</a></dt><p class="pad"></p>
+
+<dt><a name="2_The_location_of_the_start_of_the_string."
+>2 The location of the start of the string.</a></dt><p class="pad"></p>
+
+<dt><a name="3_The_length_of_the_string_buffer_(in_bytes)."
+>3 The length of the string buffer (in bytes).</a></dt><p class="pad"></p>
+
+<dt><a name="4_The_flags_attached_to_the_string_(if_any)."
+>4 The flags attached to the string (if any).</a></dt><p class="pad"></p>
+
+<dt><a name="5_The_amount_of_the_string_buffer_used_(in_bytes)."
+>5 The amount of the string buffer used (in bytes).</a></dt><p class="pad"></p>
+
+<dt><a name="6_The_length_of_the_string_(in_characters)."
+>6 The length of the string (in characters).</a></dt><p class="pad"></p>
+</dl>
+
+<dt><a name="upcase(out_STR,_in_STR)"
+><b>upcase</b>(out STR, in STR)</a></dt><p class="pad"></p>
+
+<dd>Uppercase $2 and put the result in $1</dd><p class="pad"></p>
+
+<dt><a name="upcase(inout_STR)"
+><b>upcase</b>(inout STR)</a></dt><p class="pad"></p>
+
+<dd>Uppercase $1 in place</dd><p class="pad"></p>
+
+<dt><a name="downcase(out_STR,_in_STR)"
+><b>downcase</b>(out STR, in STR)</a></dt><p class="pad"></p>
+
+<dd>Downcase $2 and put the result in $1</dd><p class="pad"></p>
+
+<dt><a name="downcase(inout_STR)"
+><b>downcase</b>(inout STR)</a></dt><p class="pad"></p>
+
+<dd>Downcase $1 in place</dd><p class="pad"></p>
+
+<dt><a name="titlecase(out_STR,_in_STR)"
+><b>titlecase</b>(out STR, in STR)</a></dt><p class="pad"></p>
+
+<dd>Titlecase $2 and put the result in $1</dd><p class="pad"></p>
+
+<dt><a name="titlecase(inout_STR)"
+><b>titlecase</b>(inout STR)</a></dt><p class="pad"></p>
+
+<dd>Titlecase $1 in place</dd><p class="pad"></p>
+
+<dt><a name="join(out_STR,_in_STR,_invar_PMC)"
+><b>join</b>(out STR, in STR, invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Create a new string $1 by joining array elements from array $3 with string $2.</dd><p class="pad"></p>
+
+<dt><a name="split(out_PMC,_in_STR,_in_STR)"
+><b>split</b>(out PMC, in STR, in STR)</a></dt><p class="pad"></p>
+
+<dd>Create a new Array PMC $1 by splitting the string $3 into pieces delimited by the string $2. If $2 does not appear in $3, then return $3 as the sole element of the Array PMC. Will return empty strings for delimiters at the beginning and end of $3</dd><p class="pad"></p>
+
+<dd>Note: the string $2 is just a string. If you want a perl&#45;ish split on regular expression, use <code lang='und' xml:lang='und'>PGE::Util</code>&#39;s split from the standard library.</dd><p class="pad"></p>
+
+<dt><a name="charset(out_INT,_in_STR)"
+><b>charset</b>(out INT, in STR)</a></dt><p class="pad"></p>
+
+<dd>Return the charset number of string $2.</dd><p class="pad"></p>
+
+<dt><a name="charsetname(out_STR,_in_INT)"
+><b>charsetname</b>(out STR, in INT)</a></dt><p class="pad"></p>
+
+<dd>Return the name of charset numbered $2.</dd><p class="pad"></p>
+
+<dt><a name="find_charset(out_INT,_in_STR)"
+><b>find_charset</b>(out INT, in STR)</a></dt><p class="pad"></p>
+
+<dd>Return the charset number of the charset named $2. If the charset doesn&#39;t exist, throw an exception.</dd><p class="pad"></p>
+
+<dt><a name="trans_charset(inout_STR,_in_INT)"
+><b>trans_charset</b>(inout STR, in INT)</a></dt><p class="pad"></p>
+
+<dd>Change the string to have the specified charset.</dd><p class="pad"></p>
+
+<dt><a name="trans_charset(out_STR,_in_STR,_in_INT)"
+><b>trans_charset</b>(out STR, in STR, in INT)</a></dt><p class="pad"></p>
+
+<dd>Create a string $1 from $2 with the specified charset.</dd><p class="pad"></p>
+
+<dd>Both functions may throw an exception on information loss.</dd><p class="pad"></p>
+
+<dt><a name="encoding(out_INT,_in_STR)"
+><b>encoding</b>(out INT, in STR)</a></dt><p class="pad"></p>
+
+<dd>Return the encoding number of string $2.</dd><p class="pad"></p>
+
+<dt><a name="encodingname(out_STR,_in_INT)"
+><b>encodingname</b>(out STR, in INT)</a></dt><p class="pad"></p>
+
+<dd>Return the name of encoding numbered $2.</dd><p class="pad"></p>
+
+<dt><a name="find_encoding(out_INT,_in_STR)"
+><b>find_encoding</b>(out INT, in STR)</a></dt><p class="pad"></p>
+
+<dd>Return the encoding number of the encoding named $2. If the encoding doesn&#39;t exist, throw an exception.</dd><p class="pad"></p>
+
+<dt><a name="trans_encoding(inout_STR,_in_INT)"
+><b>trans_encoding</b>(inout STR, in INT)</a></dt><p class="pad"></p>
+
+<dd>Change the string to have the specified encoding.</dd><p class="pad"></p>
+
+<dt><a name="trans_encoding(out_STR,_in_STR,_in_INT)"
+><b>trans_encoding</b>(out STR, in STR, in INT)</a></dt><p class="pad"></p>
+
+<dd>Create a string $1 from $2 with the specified encoding.</dd><p class="pad"></p>
+
+<dd>Both functions may throw an exception on information loss.</dd><p class="pad"></p>
+
+<dt><a name="is_cclass(out_INT,_in_INT,_in_STR,_in_INT)"
+><b>is_cclass</b>(out INT, in INT, in STR, in INT)</a></dt><p class="pad"></p>
+
+<dd>Set $1 to 1 if the codepoint of $3 at position $4 is in the character class(es) given by $2.</dd><p class="pad"></p>
+
+<dt><a name="find_cclass(out_INT,_in_INT,_in_STR,_in_INT,_in_INT)"
+><b>find_cclass</b>(out INT, in INT, in STR, in INT, in INT)</a></dt><p class="pad"></p>
+
+<dd>Set $1 to the offset of the first codepoint matching the character class(es) given by $2 in string $3, starting at offset $4 for up to $5 codepoints. If no matching character is found, set $1 to (offset + count).</dd><p class="pad"></p>
+
+<dt><a name="find_not_cclass(out_INT,_in_INT,_in_STR,_in_INT,_in_INT)"
+><b>find_not_cclass</b>(out INT, in INT, in STR, in INT, in INT)</a></dt><p class="pad"></p>
+
+<dd>Set $1 to the offset of the first codepoint not matching the character class(es) given by $2 in string $3, starting at offset $4 for up to $5 codepoints. If the substring consists entirely of matching characters, set $1 to (offset + count).</dd><p class="pad"></p>
+
+<dt><a name="escape(out_STR,_invar_STR)"
+><b>escape</b>(out STR, invar STR)</a></dt><p class="pad"></p>
+
+<dd>Escape all non&#45;ascii chars to backslashed escape sequences. A string with charset <i>ascii</i> is created as result.</dd><p class="pad"></p>
+
+<dt><a name="compose(out_STR,_in_STR)"
+><b>compose</b>(out STR, in STR)</a></dt><p class="pad"></p>
+
+<dd>Compose (normalize) a string.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Copyright (C) 2001&#45;2004, The Perl Foundation.</p>
+
+<h1><a name="LICENSE"
+>LICENSE <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This program is free software. It is subject to the same license as the Parrot interpreter itself.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

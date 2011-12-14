@@ -1,0 +1,233 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>compilers/imcc/symreg.c</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">compilers/imcc/symreg.c</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>compilers/imcc/symreg.c</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>imcc symbol handling</p>
+
+<p>XXX: SymReg stuff has become overused.
+SymReg should be for symbolic registers,
+reg allocation,
+etc.
+but we are now using it for extensive symbol table management.
+Need to convert much of this over the use Symbol and SymbolTable (see symbol.h and symbol.c)</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_push_namespace"
+><b><code>void push_namespace</b></code></a></dt>
+Begins a new namespace in PASM/PIR,
+named after the given <code>name</code>.
+<dt><a name="void_pop_namespace"
+><b><code>void pop_namespace</b></code></a></dt>
+Ends the current namespace,
+popping back to the previous.
+If the namespace stack is empty,
+throws a syntax error.
+<dt><a name="static_SymReg_*__get_sym_typed"
+><b><code>static SymReg *_get_sym_typed</b></code></a></dt>
+Gets a symbol from the hash,
+with the given <code>name</code> of the specific type <code>t</code>.
+<dt><a name="static_SymReg_*__mk_symreg"
+><b><code>static SymReg *_mk_symreg</b></code></a></dt>
+Makes a new SymReg in the given SymHash from a varname and type.
+<dt><a name="SymReg_*_mk_symreg"
+><b><code>SymReg *mk_symreg</b></code></a></dt>
+Makes a new SymReg in the current unit,
+given a varname and type.
+<dt><a name="char_*_symreg_to_str"
+><b><code>char *symreg_to_str</b></code></a></dt>
+Dumps a SymReg to a printable format.
+<dt><a name="SymReg_*_mk_temp_reg"
+><b><code>SymReg *mk_temp_reg</b></code></a></dt>
+Makes a new unique and temporary SymReg of the specified type <code>t</code>.
+<dt><a name="SymReg_*_mk_pcc_sub"
+><b><code>SymReg *mk_pcc_sub</b></code></a></dt>
+Makes a SymReg representing a PCC sub of the given <code>name</code> with the specified type.
+<dt><a name="void_add_namespace"
+><b><code>void add_namespace</b></code></a></dt>
+Add the current namespace to a sub declaration.
+<dt><a name="void_add_pcc_arg"
+><b><code>void add_pcc_arg</b></code></a></dt>
+Adds a register or constant to the function arg list.
+<dt><a name="void_add_pcc_result"
+><b><code>void add_pcc_result</b></code></a></dt>
+Adds a register or constant to the function&#39;s return list.
+<dt><a name="void_add_pcc_multi"
+><b><code>void add_pcc_multi</b></code></a></dt>
+Adds a :multi signature to the sub.
+<dt><a name="void_add_pcc_sub"
+><b><code>void add_pcc_sub</b></code></a></dt>
+Sets the current sub in the given SymReg to the second SymReg.
+<dt><a name="void_add_pcc_cc"
+><b><code>void add_pcc_cc</b></code></a></dt>
+Adds a continuation (?) to the current sub.
+<dt><a name="SymReg_*_mk_pasm_reg"
+><b><code>SymReg *mk_pasm_reg</b></code></a></dt>
+Makes a SymReg representing a PASM register.
+<dt><a name="static_char_*__mk_fullname"
+><b><code>static char *_mk_fullname</b></code></a></dt>
+Combines the namespace and name together,
+separated by a <code>::</code>.
+If there&#39;s no namespace,
+the name is returned on its own.The returned string must be free()d.
+<dt><a name="SymReg_*_mk_ident"
+><b><code>SymReg *mk_ident</b></code></a></dt>
+Makes a new identifier.
+<dt><a name="SymReg*_mk_ident_ur"
+><b><code>SymReg *mk_ident_ur</b></code></a></dt>
+Creates and returns a SymReg representing a unique (non&#45;volatile) register.
+<dt><a name="static_SymReg_*_mk_pmc_const_2"
+><b><code>static SymReg *mk_pmc_const_2</b></code></a></dt>
+Makes a constant PMC and inserts instructions to access it.
+<dt><a name="SymReg_*_mk_const_ident"
+><b><code>SymReg *mk_const_ident</b></code></a></dt>
+Makes a new identifier constant with value val.
+<dt><a name="SymReg_*__mk_const"
+><b><code>SymReg *_mk_const</b></code></a></dt>
+Makes a new constant (internal use only).
+<dt><a name="SymReg_*_mk_const"
+><b><code>SymReg *mk_const</b></code></a></dt>
+Makes a new constant (and populates the cache of global symbols).
+<dt><a name="static_char_*_add_ns"
+><b><code>static char *add_ns</b></code></a></dt>
+Adds a namespace to the current sub.
+<dt><a name="SymReg_*__mk_address"
+><b><code>SymReg *_mk_address</b></code></a></dt>
+Makes a new address (internal use only).
+<dt><a name="SymReg_*_mk_sub_label"
+><b><code>SymReg *mk_sub_label</b></code></a></dt>
+Makes and stores a new address label for a sub.
+The label gets a fixup entry.
+<dt><a name="SymReg_*_mk_sub_address"
+><b><code>SymReg *mk_sub_address</b></code></a></dt>
+Makes a symbol for a label.
+The symbol gets a fixup entry.
+<dt><a name="SymReg_*_mk_local_label"
+><b><code>SymReg *mk_local_label</b></code></a></dt>
+Makes a local symbol,
+giving it <i>no</i> fixup entry.
+<dt><a name="SymReg_*_mk_label_address"
+><b><code>SymReg *mk_label_address</b></code></a></dt>
+Makes a new label address.
+<dt><a name="SymReg_*_dup_sym"
+><b><code>SymReg *dup_sym</b></code></a></dt>
+Links keys to a keys structure = SymRegwe might havewhat op type pbc.c:build_key() &#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45; int const _kic VTCONST no int reg _ki VTREG no str const _kc VTCONST yes str reg _kc VTREG yes
+<pre> &#34;key&#34; &#39;;&#39; &#34;key&#34; _kc           &#45;&#62; (list of above)   yes
+ &#34;key&#34; &#39;;&#39; $I0   _kc  VTREGKEY &#45;&#62; (list of above)   yes
+
+ The information about which reg should be passed to build_key() is
+ in the instruction.
+
+ A key containing a variable has a special flag VTREGKEY
+ because this key must be considered for life analysis for
+ all the chain members, that are variables.
+
+ An instruction with a keychain looks like this
+
+ e.h. set I0, P[&#34;abc&#34;;0;I1]
+
+ ins&#45;&#62;r[2]  = keychain  &#39;K&#39;
+ keychain&#45;&#62;nextkey = SymReg(VTCONST) &#34;abc&#34;
+             &#45;&#62;nextkey = SymReg(VTCONST) 0
+                &#45;&#62;nextkey = SymReg(VTREG), ...&#45;&#62;reg = VTVAR I1
+                   &#45;&#62;nextkey = 0
+
+ We can&#39;t use the consts or keys in the chain directly,
+ because a different usage would destroy the &#45;&#62;nextkey pointers
+ so these are all copies.
+ XXX and currently not freed</pre>
+
+<dt><a name="SymReg_*_link_keys"
+><b><code>SymReg *link_keys</b></code></a></dt>
+Links keys together in a keychain.
+<dt><a name="void_free_sym"
+><b><code>void free_sym</b></code></a></dt>
+Frees all memory of the specified SymReg. If it has a pcc_sub_t entry, frees all memory of that structure as well.
+<dt><a name="void_create_symhash"
+><b><code>void create_symhash</b></code></a></dt>
+Creates a symbol hash table with space for 16 entries.
+<dt><a name="static_void_resize_symhash"
+><b><code>static void resize_symhash</b></code></a></dt>
+Resizes a symbol hash table.
+<dt><a name="void__store_symreg"
+><b><code>void _store_symreg</b></code></a></dt>
+Stores a symbol in the hash (internal use only).
+<dt><a name="void_store_symreg"
+><b><code>void store_symreg</b></code></a></dt>
+Stores a symbol in the hash.
+<dt><a name="SymReg_*__get_sym"
+><b><code>SymReg *_get_sym</b></code></a></dt>
+Fetches a symbol from the hash (internal use only).
+<dt><a name="SymReg_*_get_sym"
+><b><code>SymReg *get_sym</b></code></a></dt>
+Gets a symbol from the current unit&#39;s symbol table.
+<dt><a name="SymReg_*__find_sym"
+><b><code>SymReg *_find_sym</b></code></a></dt>
+Find a symbol hash or ghash (internal use only);
+<dt><a name="SymReg_*_find_sym"
+><b><code>SymReg *find_sym</b></code></a></dt>
+Finds a symbol hash or ghash in the current unit, if it exists. Otherwise returns NULL.
+<dt><a name="void_clear_sym_hash"
+><b><code>void clear_sym_hash</b></code></a></dt>
+Frees all memory of the symbols in the specified hash table.
+<dt><a name="void_debug_dump_sym_hash"
+><b><code>void debug_dump_sym_hash</b></code></a></dt>
+Prints all identifiers in the specified hash table to stderr.
+<dt><a name="void_clear_locals"
+><b><code>void clear_locals</b></code></a></dt>
+Deletes all local symbols and clears life info from the given IMC_Unit.
+<dt><a name="void_clear_globals"
+><b><code>void clear_globals</b></code></a></dt>
+Clears global symbols.
+<dt><a name="unsigned_int_hash_str"
+><b><code>unsigned int hash_str</b></code></a></dt>
+Computes the hash value for the string argument.</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Miscellaneous functions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Miscellaneous functions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/misc.c &#45; Miscellaneous functions</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Miscellaneous functions,
+mainly the <code lang='und' xml:lang='und'>Parrot_sprintf</code> family.</p>
+
+<p>Uses a generalized formatting algorithm (<em lang='und' xml:lang='und'><a href="spf_render.c.html">src/spf_render.c</a></em>) with a specialized vtable (<em lang='und' xml:lang='und'><a href="spf_vtable.c.html">src/spf_vtable.c</a></em>) to handle argument extraction.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>The naming convention used is:</p>
+
+<dl>
+<dt><a name="Parrot_v?n?sprintf"
+><b><code lang='und' xml:lang='und'>Parrot_v?n?sprintf</b></code></a></dt><p class="pad"></p>
+
+<dd>A (nearly) drop&#45;in replacement for v?n?sprintf.</dd><p class="pad"></p>
+
+<dt><a name="Parrot_v?sprintf_c"
+><b><code lang='und' xml:lang='und'>Parrot_v?sprintf_c</b></code></a></dt><p class="pad"></p>
+
+<dd>Takes a C&#45;string format,
+returns a Parrot string.</dd><p class="pad"></p>
+
+<dt><a name="Parrot_v?sprintf_s"
+><b><code lang='und' xml:lang='und'>Parrot_v?sprintf_s</b></code></a></dt><p class="pad"></p>
+
+<dd>Takes a Parrot string format,
+returns a Parrot string.</dd><p class="pad"></p>
+
+<dd>So the <code lang='und' xml:lang='und'>_</code> means &#34;returns Parrot string&#34; and the other letter indicates the type for the format.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*_Parrot_vsprintf_s"
+><b><code lang='und' xml:lang='und'>STRING *Parrot_vsprintf_s</b></code></a></dt><p class="pad"></p>
+
+<dd>Almost all the other sprintf variants in this file are implemented in terms of this function (see <code lang='und' xml:lang='und'>Parrot_psprintf()</code> for the exception).
+It in turn calls <code lang='und' xml:lang='und'>Parrot_sprintf_format()</code> (see <em lang='und' xml:lang='und'><a href="spf_render.c.html">src/spf_render.c</a></em>).</dd><p class="pad"></p>
+
+<dt><a name="STRING_*_Parrot_vsprintf_c"
+><b><code lang='und' xml:lang='und'>STRING *Parrot_vsprintf_c</b></code></a></dt><p class="pad"></p>
+
+<dd>C string version of <code lang='und' xml:lang='und'>Parrot_vsprintf_s()</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_vsnprintf"
+><b><code lang='und' xml:lang='und'>void Parrot_vsnprintf</b></code></a></dt><p class="pad"></p>
+
+<dd>Similar to <code lang='und' xml:lang='und'>Parrot_vsprintf()</code> but with an option to specify the length (<code lang='und' xml:lang='und'>len</code>) of the returned C string.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*_Parrot_sprintf_s"
+><b><code lang='und' xml:lang='und'>STRING *Parrot_sprintf_s</b></code></a></dt><p class="pad"></p>
+
+<dd>Calls <code lang='und' xml:lang='und'>Parrot_vsprintf_s()</code> with the <code lang='und' xml:lang='und'>va_list</code> obtained from <code lang='und' xml:lang='und'>...</code>.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*_Parrot_sprintf_c"
+><b><code lang='und' xml:lang='und'>STRING *Parrot_sprintf_c</b></code></a></dt><p class="pad"></p>
+
+<dd>C string version of <code lang='und' xml:lang='und'>Parrot_sprintf_s()</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_snprintf"
+><b><code lang='und' xml:lang='und'>void Parrot_snprintf</b></code></a></dt><p class="pad"></p>
+
+<dd>Similar to <code lang='und' xml:lang='und'>Parrot_sprintf()</code> but with an option to specify the length (<code lang='und' xml:lang='und'>len</code>) of the returned C string.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*_Parrot_psprintf"
+><b><code lang='und' xml:lang='und'>STRING *Parrot_psprintf</b></code></a></dt><p class="pad"></p>
+
+<dd>Calls <code lang='und' xml:lang='und'>Parrot_sprintf_format()</code> with the insertion arguments in an <code lang='und' xml:lang='und'>Array</code> PMC.</dd><p class="pad"></p>
+
+<dt><a name="int_Parrot_secret_snprintf"
+><b><code lang='und' xml:lang='und'>int Parrot_secret_snprintf</b></code></a></dt><p class="pad"></p>
+
+<dd>A simulation of <code lang='und' xml:lang='und'>snprintf</code> for systems that do not support it.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>src/misc.h</em>,
+<em lang='und' xml:lang='und'><a href="spf_vtable.c.html">src/spf_vtable.c</a></em>,
+<em lang='und' xml:lang='und'><a href="spf_render.c.html">src/spf_render.c</a></em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>This was once a simple,
+vararg&#45;based implementation that existed completely within this file.
+When the file grew to be nearly 1000 lines long,
+I split it into three.
+&#45;&#45;BD</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

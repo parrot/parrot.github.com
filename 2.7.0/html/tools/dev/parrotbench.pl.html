@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot benchmark</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/tools.html">Tools</a> &raquo; Parrot benchmark
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>parrotbench &#45; Parrot benchmark</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<p>parrotbench.pl [options]</p>
+
+<pre> Options:
+   &#45;b &#45;benchmarks     use benchmarks matching regexes  (multiple)
+   &#45;c &#45;conf           path to configuration file
+   &#45;d &#45;directory      path to benchmarks directory
+   &#45;h &#45;? &#45;help        display this help and exits
+   &#45;list              list available benchmarks and exits
+   &#45;m &#45;method         method of time from times()
+                      1 $cuser + $csystem from times() (default)
+                      2 Real time using POSIX::times()
+   &#45;n &#45;nobench        skip benchmarks matching regexes (multiple)
+   &#45;time              show times instead of percentage</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Benchmark Parrot against other interpreters.</p>
+
+<h1><a name="CONFIGURATION"
+>CONFIGURATION</a></h1>
+
+<p>You must specify paths to executables in a configuration file. That file may be placed as parrotbench.conf in the same directory as parrotbench.pl or otherwise explicitly specified with the &#45;conf option. You may set any command line option in the file with the exception of the configuration file name itself. In the event you have specified an option both in the configuration file and the command line, the command line takes precedence.</p>
+
+<p>Here is an example parrotbench.conf: [global] directory = ../../examples/benchmarks list = 0 help = 0 method = 2 time = 1</p>
+
+<pre>    [regexes]
+    include   = ^gc
+    include   = ^oo
+    exclude   = header
+    exclude   = waves
+
+    [benchmark parrotj]
+    exe       = ../../parrot &#45;R jit
+    type      = .pasm
+    type      = .pir
+
+    [benchmark perl_585_th]
+    exe       = /usr/bin/perl585&#45;th
+    type      = .pl
+
+    [benchmark python]
+    exe       = /usr/local/bin/python
+    type      = .py
+
+    [benchmark ruby]
+    exe       = /usr/bin/ruby
+    type      = .rb</pre>
+
+<h1><a name="BUGS"
+>BUGS</a></h1>
+
+<p>While every effort was made to ensure this script is portable, it is likely that it will break somewhere.</p>
+
+<p>If a benchmark has multiple extensions associated with the same executable, the last one will be used. For instance, with the configuration file above, foo.pir would be selected over foo.pasm</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Joshua Gatcomb, <code>Limbic_Region_2000@Yahoo.com</code></p>
+
+<p>Originally written by:</p>
+
+<p>Sebastian Riedel, <code>sri@oook.de</code></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>
