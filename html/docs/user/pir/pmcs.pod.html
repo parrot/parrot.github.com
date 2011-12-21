@@ -173,14 +173,14 @@ Here&#39;s a table that gives a short description of several interesting and use
 <h3><a name="Example_5:_output_environment"
 >Example 5: output environment</a></h3>
 <pre>    .sub _ :main
-        .local pmc env, iter
+        .local pmc env, it
         .local string key, value
 
         env  = new 'Env'                    # line 3
-        iter = new 'Iterator', env          # line 4
+        it   = iter env                     # line 4
       iterloop:
-        unless iter goto iterend
-        key = shift iter                    # line 8
+        unless it goto iterend
+        key = shift it                      # line 8
         value = env[key]
         print key
         print ":"
@@ -199,7 +199,7 @@ Here&#39;s a table that gives a short description of several interesting and use
 <pre>    .sub _ :main
         .param pmc args
         .local pmc cmdline
-        cmdline = new 'Iterator', args
+        cmdline = iter args
       loop:
         unless cmdline goto end_loop
         $S0 = shift cmdline

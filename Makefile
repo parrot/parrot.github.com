@@ -12,7 +12,7 @@ TOUCH   = $(PERL) -MExtUtils::Command -e touch
 RM_F    = $(PERL) -MExtUtils::Command -e rm_f
 RM_RF   = $(PERL) -MExtUtils::Command -e rm_rf
 PERLDOC_BIN = /usr/bin/perldoc
-VERSION = 3.10.0-devel
+VERSION = 3.11.0-devel
 
 #
 # Targets

@@ -307,7 +307,23 @@ create an exception with severity <b>EXCEPT_exit</b> and throw it.
 Finalize exception handling,
 freeing any information needed to resume the handled exception,
 like inner runloops.
-$1 is the Exception handled or the ExceptionHandler that is handling it.</dl>
+$1 is the Exception handled or the ExceptionHandler that is handling it.
+<dt><a name="pop_upto_eh(in_PMC)"
+><b>pop_upto_eh</b>(in PMC)</a></dt>
+Pops all exception handlers upto the one indicated by $1.
+Like with the finalize op,
+$1 can either be the handled Exception or the ExceptionHandler handling it.
+Also,
+you should not resume Exceptions after pop_upto_eh or finalize has been called.
+This limitation may be fixed in a future version of parrot.
+Also note that the specified exception handler is not popped.
+<dt><a name="peek_exception(out_PMC)"
+><b>peek_exception</b>(out PMC)</a></dt>
+Returns the caught exception without clearing the call object.
+This is currently needed because HLL authors use get_params to fetch the exception,
+but get_params clears the call object.
+So we can&#39;t use get_params in PCT to get the exception object without disturbing the HLL code.
+This op will be removed again when PCT offers another mechansim to get the exception and the HLLs switched to it.</dl>
 
 <h2><a name="Interpreter_operations"
 >Interpreter operations</a></h2>
@@ -377,7 +393,8 @@ CURRENT_LEXPAD
 in INT)</a></dt>
 EXECUTABLE_FULLNAME,
 EXECUTABLE_BASENAME,
-RUNTIME_PREFIX</dl>
+RUNTIME_PREFIX,
+CURRENT_RUNCORE</dl>
 
 <dt><a name="warningson(in_INT)"
 ><b>warningson</b>(in INT)</a></dt>
@@ -425,6 +442,12 @@ OR the category numbers together.
 Turns off errors categories.
 Categories already turned off will stay off.
 See the documentation for <b>errorson</b> for category numbers.
+<dt><a name="set_runcore(in_STR)"
+><b>set_runcore</b>(in STR)</a></dt>
+Switch the current runcore to the one with the specified name.
+Needs to be an op,
+as we need to restart the runops() call.
+You can get the name of the current runcore with the interpinfo op.
 <dt><a name="runinterp(invar_PMC,_in_LABEL)"
 ><b>runinterp</b>(invar PMC,
 in LABEL)</a></dt>
