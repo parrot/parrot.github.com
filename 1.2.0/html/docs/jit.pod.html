@@ -1,0 +1,458 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot JIT Subsystem</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Home</a> &raquo; <a href="../../html/developer.html">Developer Documentation</a> &raquo; Parrot JIT Subsystem
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/jit.pod &#45; Parrot JIT Subsystem</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT</a></h1>
+
+<p>This PDD describes the Parrot Just In Time compilation subsystem.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>The Just In Time,
+or JIT,
+subsystem converts a bytecode file to native machine code instructions and executes the generated instruction sequence directly.</p>
+
+<h1><a name="IMPLEMENTATION"
+>IMPLEMENTATION</a></h1>
+
+<p>Currently works on <b>ALPHA</b>,
+<b>Arm</b>,
+<b>Intel x86</b>,
+<b>PPC</b>,
+and <b>SPARC version 8</b> processor systems,
+on most operating systems.
+Currently only 32&#45;bit INTVALs are supported.</p>
+
+<p>The initial step in generating native code is to invoke <b>Parrot_jit_begin</b>,
+which generally provides architecture specific preamble code.
+For each parrot opcode in the bytecode,
+either a generic or opcode specific sequence of native code is generated.
+The <em>.jit</em> files provide functions that generate native code for specific opcode functions,
+for a given instruction set architecture.
+If a function is not provided for a specific opcode,
+a generic sequence of native code is output which calls the interpreter C function that implements the opcode.
+Such opcode are handled by <b>Parrot_jit_normal_op</b>.</p>
+
+<p>If the opcode can cause a control flow change,
+as in the case of a branch or call opcode,
+an extended or modified version of this generic code is used that tracks changes in the bytecode program counter with changes in the hardware program counter.
+This type of opcode is handled by <b>Parrot_jit_cpcf_op</b>.</p>
+
+<p>While generating native code,
+certain offsets and absolute addresses may not be available.
+This occurs with forward opcode branches,
+as the native code corresponding to the branch target has not yet been generated.
+On some platforms,
+function calls are performed using program&#45;counter relative addresses.
+Since the location of the buffer holding the native code may move as code is generated (due to growing of the buffer),
+these relative addresses may only be calculated once the buffer is guaranteed to no longer move.
+To handle these instances,
+the JIT subsystem uses &#34;fixups&#34;,
+which record locations in native code where adjustments to the native code are required.</p>
+
+<h1><a name="FILES"
+>FILES</a></h1>
+
+<dl>
+<dt><a name="jit/${jitcpuarch}/jit_emit.h"
+>jit/${jitcpuarch}/jit_emit.h</a></dt>
+This file defines <b>Parrot_jit_begin</b>,
+<b>Parrot_jit_dofixup</b>,
+<b>Parrot_jit_normal_op</b>,
+<b>Parrot_jit_cpcf_op</b>,
+<b>Parrot_jit_restart_op</b> and optionally <b>Parrot_jit_vtable*_op</b>.
+In addition,
+this file defines the macros and static functions used in <em>.jit</em> files to produce binary representations of native instructions.For moving registers from processor to parrot and vice versa,
+the <b>Parrot_jit_emit_mov*</b> functions have to be implemented.
+<dt><a name="jit/${jitcpuarch}/core.jit"
+>jit/${jitcpuarch}/core.jit</a></dt>
+The functions to generate native code for core parrot opcodes are specified here.
+To simplify the maintenance of these functions,
+they are specified in a format that is pre&#45;processed by <em>jit2c.pl</em> to produce a valid C source file,
+<em>jit_cpu.c</em>.
+See <a href='#Format_of_.jit_Files'>&#34;Format of .jit Files&#34;</a> below.
+<dt><a name="src/jit.h"
+>src/jit.h</a></dt>
+This file contains definitions of generic structures used by the JIT subsystem.The <b>op_jit</b> array of <b>jit_fn_info_t</b> structures,
+provides for each opcode,
+a pointer to the function that generates native code for the opcode,
+whether the generic <b>Parrot_jit_normal_op</b> or <b>Parrot_jit_cpcf_op</b> functions or an opcode specific function.
+<b>Parrot_jit_restart_op</b> is like <b>Parrot_jit_cpcf_op</b> with the addition to check for a zero program counter.
+The <b>Parrot_jit_vtable*_op</b> functions are defined as <b>Parrot_jit_normal_op</b> or <b>Parrot_jit_cpcf_op</b> and may be implemented to do native vtable calls (s.
+<em>jit/i386/jit_emit.h</em> for an example).The <b>Parrot_jit_fixup</b> structure records the offset in native code where a fixup must be applied,
+the type of fixup required and the specific information needed to perform the parameters of the fixup.
+Currently,
+a fixup parameter is either an <b>opcode_t</b> value or a function pointer.The <b>Parrot_jit_info</b> structure holds data used while producing and executing native code.
+An important piece of data in this structure is the <b>op_map</b> array,
+which maps from opcode addresses to native code addresses.
+<dt><a name="src/jit.c"
+>src/jit.c</a></dt>
+<b>parrot_build_asm</b>() is the main routine of the code generator,
+which loops over the parrot bytecode,
+calling the code generating routines for each opcode while filling in the <b>op_map</b> array.
+This array is used by the JIT subsystem to perform certain types of fixups on native code,
+as well as by the native code itself to convert bytecode program counters values (opcode_t *&#39;s) to hardware program counter values.The bytecode is considered an array of <b>opcode_t</b> sized elements,
+with parallel entries in <b>op_map</b>.
+<b>op_map</b> is initially populated with the offsets into the native code corresponding to the opcodes in the bytecode.
+Once code generation is complete and fixups have been applied,
+the native code offsets are converted to absolute addresses.
+This trades the low up&#45;front cost of converting all offsets once,
+for the unknown cost of repeatedly converting these offsets while executing native code.See <em>src/jit/skeleton/jit_emit.h</em> for details.
+<dt><a name="tools/build/jit2c.pl"
+>tools/build/jit2c.pl</a></dt>
+Preprocesses the .jit files to produce <em>jit_cpu.c</em>.</dl>
+
+<h1><a name="Defines_in_jit_emit.h"
+>Defines in jit_emit.h</a></h1>
+
+<p>The architecture specific <em>jit_emit.h</em> file communicates some defines and tables with <em>jit.c</em> and <em>languages/imcc/imc.c</em>.
+The structure of the file and the defines must therefore follow a specific syntax.</p>
+
+<h2><a name="Overall_structure"
+>Overall structure</a></h2>
+
+<pre>    #if JIT_EMIT
+
+    ... emit code
+
+    #else
+
+    ... defines
+    static const jit_arch_info arch_info = {
+       ... initialization of maps
+       ... and possibly private static functions
+    }
+
+    #endif</pre>
+
+<p>See <em>src/jit/skeleton/jit_emit.h</em> for a more detailed explanation.</p>
+
+<h2><a name="Defines"
+>Defines</a></h2>
+
+<p>XXX most are moved into <code>jit_arch_info</code> now.</p>
+
+<dl>
+<dt><a name="INT_REGISTERS_TO_MAP"
+>INT_REGISTERS_TO_MAP</a></dt>
+This is the amount of integer registers to be mapped to processor registers. The corresponding <b>intval_map[]</b> has to have exactly this amount of register numbers. A register with the value of zero can not be in the list.
+<dt><a name="FLOAT_REGISTERS_TO_MAP"
+>FLOAT_REGISTERS_TO_MAP</a></dt>
+When this is defined, it works like above for floating point registers.
+<dt><a name="PRESERVED_INT_REGS"
+>PRESERVED_INT_REGS</a></dt>
+When this is defined, it&#39;s the amount of integer registers, that are preserved over function calls. These preserved registers have to be first in <b>intval_map</b>. When this is not defined, it is assumed that <b>all</b> registers are preserved over function calls.
+<dt><a name="PRESERVED_FLOAT_REGS"
+>PRESERVED_FLOAT_REGS</a></dt>
+Same for floating point registers.
+<dt><a name="jit_emit_noop(pc)"
+>jit_emit_noop(pc)</a></dt>
+
+<dt><a name="JUMP_ALIGN"
+>JUMP_ALIGN</a></dt>
+If these are defined, <b>JUMP_ALIGN</b> should be a small number stating the desired alignment of jump targets is <b>1 &#60;&#60; JUMP_ALIGN</b>. The <b>jit_emit_noop</b> gets called with the unaligned <b>pc</b> repeatedly, until the <b>pc</b> has the desired alignment. So the function can either emit a one byte <b>noop</b> instruction, or a <b>noop</b> like instruction (sequence) with the desired size, to achieve the necessary padding. The emitted code must not have any side effects.
+<dt><a name="ALLOCATE_REGISTERS_PER_SECTION"
+>ALLOCATE_REGISTERS_PER_SECTION</a></dt>
+Normally <em>jit.c</em> does register allocation per section, but there is a somewhat experimental feature, to allocate registers per basic block.
+<dt><a name="MAP"
+>MAP</a></dt>
+Jit code generated by the <em>imcc</em> JIT optimizer used negative numbers for mapped registers and positive numbers for non mapped parrot registers. To use this feature, the definition of mapped registers can be redefined like so:
+<pre>    #define MAP(i) OMAP(i)
+    #undef MAP
+    #define MAP(i) (i) &#62;= 0 ? 0 : OMAP(i)</pre>
+
+<dt><a name="Parrot_jit_emit_get_base_reg_no(pc)"
+>Parrot_jit_emit_get_base_reg_no(pc)</a></dt>
+This macro should return the register number of the register base pointer.</dl>
+
+<p>See <em>src/jit/i386/jit_emit.h</em> for actual usage of these defines.</p>
+
+<h1><a name="Format_of_.jit_Files"
+>Format of .jit Files</a></h1>
+
+<p>Jit files are interpreted as follows:</p>
+
+<dl>
+<dt><a name="op&#45;name_{_\n_body_\n_}"
+><i>op&#45;name</i> { \n <i>body</i> \n }</a></dt>
+Where <i>op&#45;name</i> is the name of the Parrot opcode, and <i>body</i> consists of C syntax code which may contain any of the identifiers listed in the following section.The closing curly brace has to be in the first column.
+<dt><a name="Comment_lines"
+>Comment lines</a></dt>
+Comments are marked with a <i>;</i> in the first column. These and empty lines are ignored.
+<dt><a name="Identifiers"
+>Identifiers</a></dt>
+In general, prefixing an identifier with <i>&#38;</i> yields an address. The <i>*</i> prefix specifies a value. Since Parrot register values vary during code execution, their values can not be obtained through identifier substitution alone, therefore offsets are used for accessing registers.To obtain register offsets, a set of macros exists, that have <code>OFFS</code> in their names:<b>REG_OFFS_INT(reg_no)</b> ...<b>ROFFS_INT(n)</b> ...<b>INT_CONST[n]</b>Gets replaced by the <code>INTVAL</code> constant specified in the <i>n</i>th argument.<b>NUM_CONST[n]</b>Gets replaced by the <code>FLOATVAL</code> constant specified in the <i>n</i>th argument.<b>MAP[n]</b>The <i>n</i>th integer or floating processor register, mapped in this section.Note: The register with the physical number zero can not be mapped.<b>NATIVECODE</b>Gets replaced by the current native program counter.<b>*CUR_OPCODE[n]</b>Gets replaced by the address of the current opcode in the Parrot bytecode.<b>ISRn</b> <b>FSRn</b>The <i>n</i>th integer or floating point scratch register.
+<dt><a name="TEMPLATE_template&#45;name_{_\n_body_\n_}"
+><b>TEMPLATE</b> <i>template&#45;name</i> { \n <i>body</i> \n }</a></dt>
+Defines a template for similar functions, e.g. all the binary ops taking three variable parameters.
+<dt><a name="template&#45;name_perl&#45;subst_..."
+><i>template&#45;name</i> <i>perl&#45;subst</i> ...</a></dt>
+Take a template and do all substitutions to generate the implementation for this jit function.Example:
+<pre>    TEMPLATE Parrot_set_x_ic {
+    if (MAP[1]) {
+        jit_emit_mov_ri&#60;_N&#62;(NATIVECODE, MAP[1], &#60;typ&#62;_CONST[2]);
+    }
+    else {
+        jit_emit_mov_mi&#60;_N&#62;(NATIVECODE, &#38;INT_REG[1], &#60;typ&#62;_CONST[2]);
+    }
+    }
+
+    Parrot_set_i_ic {
+    Parrot_set_x_ic s/&#60;_N&#62;/_i/ s/&#60;typ&#62;/*INT/
+    }
+
+    Parrot_set_n_ic {
+    Parrot_set_x_ic s/&#60;_N&#62;/_ni/ s/&#60;typ&#62;/&#38;INT/ s/INT_R/NUM_R/
+    }</pre>
+The jit function <b>Parrot_set_i_ic</b> is based on the template <b>Parrot_set_x_ic</b>, the <i>s/x/y/</i> are substitutions on the template body, to generate the actual function body. These substitutions are done before the other substitutions.s. <em>jit/i386/core.jit</em> for more.</dl>
+
+<h2><a name="Naming_convention_for_jit_emit_functions"
+>Naming convention for jit_emit functions</a></h2>
+
+<p>To make it easier to share <em>core.jit</em> files between machines of similar architecture, the jit_emit functions <b>should</b> follow this syntax:</p>
+
+<p>jit_emit_<i>&#60;op</i>&#62;_<i>&#60;args</i>&#62;_<i>&#60;type</i>&#62;</p>
+
+<dl>
+<dt><a name="&#60;op&#62;"
+><i>&#60;op</i>&#62;</a></dt>
+This is the operation like <b>mov</b>, <b>add</b> or <b>bxor</b>. In normal cases this is the PASM name of the op.
+<dt><a name="&#60;args&#62;"
+><i>&#60;args</i>&#62;</a></dt>
+<b>args</b> specify the arguments of the function in the PASM sequence <b>dest</b>, <b>source</b> ... The <b>args</b> consist of one letter per argument:
+<dl>
+<dt><a name="r"
+><b>r</b></a></dt>
+A mapped processor register.
+<dt><a name="m"
+><b>m</b></a></dt>
+A memory operand, the address of the parrot register.
+<dt><a name="i"
+><b>i</b></a></dt>
+An immediate operand, i.e. an integer constant.</dl>
+
+<dt><a name="&#60;type&#62;"
+><i>&#60;type</i>&#62;</a></dt>
+Specifies if this operation works on integer or floating point arguments. If all arguments are of the same type, only one type specifier is needed.
+<dl>
+<dt><a name="i"
+><b>i</b></a></dt>
+An integer argument
+<dt><a name="n"
+><b>n</b></a></dt>
+A float argument.</dl>
+Examples:
+<dl>
+<dt><a name="jit_emit_sub_rm_i"
+><b>jit_emit_sub_rm_i</b></a></dt>
+Subtract integer at memory from integer processor register.
+<dt><a name="jit_emit_mov_ri_ni"
+><b>jit_emit_mov_ri_ni</b></a></dt>
+Move integer constant (immediate) to floating point register.</dl>
+</dl>
+
+<h1><a name="ALPHA_Notes"
+>ALPHA Notes</a></h1>
+
+<p>The access to Parrot registers is done relative to <code>$6</code>, all other memory access is done relative to <code>$27</code>, to access float constants relative to <code>$7</code> so you must preside the instruction with <i>ldah $7,0($27)</i>.</p>
+
+<h1><a name="i386_Notes"
+>i386 Notes</a></h1>
+
+<p>Only 32 bit INTVALs are supported. Long double FLOATVALs are ok.</p>
+
+<p>There are four mapped integer registers <b>%edi</b>, <b>%esi</b>, <b>%ecx</b>, and <b>%edx</b>. The first 2 of these are callee saved, they preserve their value around extern function calls.</p>
+
+<p>Four floating point operations the registers <b>ST1</b> ... <b>ST4</b> are mapped and considered as preserved over function calls.</p>
+
+<p>The register <code>%ebx</code> holds the register frame pointer.</p>
+
+<h1><a name="EXAMPLE"
+>EXAMPLE</a></h1>
+
+<p>Let&#39;s see how this works:</p>
+
+<p><b>Parrot Assembly:</b></p>
+
+<pre> set I0,8
+ set I2,I0
+ print I2
+ end</pre>
+
+<p><b>Parrot Bytecode:</b> (only the bytecode segment is shown)</p>
+
+<pre> +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+ | 73 | 0 | 8 | 72 | 2 | 0 | 21 | 2 | 0 |
+ +&#45;|&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;|&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;|&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;|&#45;+
+   |            |            |        |
+   |            |            |        +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45; end (no arguments)
+   |            |            +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45; print_i (1 argument)
+   |            +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45; set_i_i (2 arguments)
+   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45; set_i_ic (2 arguments)</pre>
+
+<p>Please note that the opcode numbers used might have already changed. Also generated assembly code might be different.</p>
+
+<p><b>Intel x86 assembly version of the Parrot ops:</b></p>
+
+<p><b>Parrot_jit_begin</b></p>
+
+<pre>    0x817ddd0 &#60;jit_func&#62;:   push   %ebp
+    0x817ddd1 &#60;jit_func+1&#62;: mov    %esp,%ebp
+    0x817ddd3 &#60;jit_func+3&#62;: push   %ebx
+    0x817ddd4 &#60;jit_func+4&#62;: push   %esi
+    0x817ddd5 &#60;jit_func+5&#62;: push   %edi
+
+  normal function header till here, now push interpreter
+
+    0x817ddd6 &#60;jit_func+6&#62;: push   $0x8164420
+
+  get jit function table to %ebp and
+  jump to first instruction
+
+    0x817dddb &#60;jit_func+11&#62;:    mov    0xc(%ebp),%eax
+    0x817ddde &#60;jit_func+14&#62;:    mov    $0x81773f0,%ebp
+    0x817dde3 &#60;jit_func+19&#62;:    sub    $0x81774a8,%eax
+    0x817dde9 &#60;jit_func+25&#62;:    jmp    *%ds:0x0(%ebp,%eax,1)</pre>
+
+<p><b>set_i_ic</b></p>
+
+<pre>    0x817ddee &#60;jit_func+30&#62;:    mov    $0x8,%edi</pre>
+
+<p><b>set_i_i</b></p>
+
+<pre>    0x817ddf3 &#60;jit_func+35&#62;:    mov    %edi,%ebx</pre>
+
+<p><b>Parrot_jit_save_registers</b></p>
+
+<pre>    0x817ddf5 &#60;jit_func+37&#62;:    mov    %edi,0x8164420
+    0x817ddfb &#60;jit_func+43&#62;:    mov    %ebx,0x8164428</pre>
+
+<p><b>Parrot_jit_normal_op</b></p>
+
+<pre>    0x817de01 &#60;jit_func+49&#62;:    push   $0x81774c0
+    0x817de06 &#60;jit_func+54&#62;:    call   0x804be00 &#60;Parrot_print_i&#62;
+    0x817de0b &#60;jit_func+59&#62;:    add    $0x4,%esp</pre>
+
+<p><b>Parrot_jit_end</b></p>
+
+<pre>    0x817de0e &#60;jit_func+62&#62;:    add    $0x4,%esp
+    0x817de14 &#60;jit_func+68&#62;:    pop    %edi
+    0x817de16 &#60;jit_func+70&#62;:    pop    %ebx
+    0x817de18 &#60;jit_func+72&#62;:    pop    %esi
+    0x817de1a &#60;jit_func+74&#62;:    pop    %ebp
+    0x817de1c &#60;jit_func+76&#62;:    ret</pre>
+
+<p>Please note the reverse argument direction. PASM and JIT notations use <i>dest,src,src</i>, while <em>gdb</em> and the internal macros in <em>jit_emit.h</em> have <i>src,dest</i>.</p>
+
+<h1><a name="Debugging"
+>Debugging</a></h1>
+
+<p>Above listing was generated by <em>gdb</em>, the GNU debugger, with a little help from Parrot_jit_debug, which generates a symbol file in <i>stabs</i> format, s. <b>info stabs</b> for more (or less :&#45;()</p>
+
+<p>The following script calls <em>ddd</em> (the graphic debugger fronted) and attaches the symbol file, after it got built in <em>parrot_build_asm</em>.</p>
+
+<pre>    # dddp
+    # run ddd parrot with given file
+    # gdb confirmations should be off
+    parrot &#45;o $1.pbc &#45;d1 $1.pasm
+    echo &#34;b runops_jit
+    r &#45;D4 &#45;R jit $1.pbc
+    n
+    add&#45;symbol&#45;file $1.o 0
+    s
+    &#34; &#62; .ddd
+
+    ddd &#45;&#45;command .ddd parrot &#38;</pre>
+
+<p>Run this with e.g. <i>dddp t/op/jit_2</i>, then turn on the register status, <i>step</i> or <i>nexti</i> through the source, or set break points as with any other language.</p>
+
+<p>You can examine parrot registers via the debugger or even set them and you can always step into external opcode and look at <i>*interpreter</i>.</p>
+
+<p>The tests <em>t/op/jit*.t</em> have some test cases for testing register allocation. These tests are written for a mapping of 4 processor registers. If your processor architecture has more mapped registers, reduce them to 4 and run these tests.</p>
+
+<h2><a name="Example_for_a_debug_session"
+>Example for a debug session</a></h2>
+
+<pre>  $ cat j.pasm
+        set I0, 10
+        set N1, 1.1
+        set S2, &#34;abc&#34;
+        print &#34;\n&#34;
+        end
+  $ dddp j</pre>
+
+<p>(ddd shows above source code and assembly (startup code snipped):</p>
+
+<pre>    0x815de46 &#60;jit_func+30&#62;:    mov    $0xa,%ebx
+    0x815de4b &#60;jit_func+35&#62;:    fldl   0x81584c0
+    0x815de51 &#60;jit_func+41&#62;:    fstp   %st(2)
+    0x815de53 &#60;jit_func+43&#62;:    mov    %ebx,0x8158098
+    0x815de59 &#60;jit_func+49&#62;:    fld    %st(1)
+    0x815de5b &#60;jit_func+51&#62;:    fstpl  0x8158120
+    0x815de61 &#60;jit_func+57&#62;:    push   $0x815cd90
+    0x815de66 &#60;jit_func+62&#62;:    call   0x804db90 &#60;Parrot_set_s_sc&#62;
+    0x815de6b &#60;jit_func+67&#62;:    add    $0x4,%esp
+    0x815de6e &#60;jit_func+70&#62;:    push   $0x815cd9c
+    0x815de73 &#60;jit_func+75&#62;:    call   0x804bcd0 &#60;Parrot_print_sc&#62;
+    0x815de78 &#60;jit_func+80&#62;:    add    $0x4,%esp
+    0x815de7b &#60;jit_func+83&#62;:    add    $0x4,%esp
+    0x815de81 &#60;jit_func+89&#62;:    pop    %edi
+    0x815de83 &#60;jit_func+91&#62;:    pop    %ebx
+    0x815de85 &#60;jit_func+93&#62;:    pop    %esi
+    0x815de87 &#60;jit_func+95&#62;:    pop    %ebp
+    0x815de89 &#60;jit_func+97&#62;:    ret
+  (gdb) n
+  (gdb) n
+  (gdb) n
+  (gdb) p I0
+  $1 = 10
+  (gdb) p N1
+  $2 = 1.1000000000000001
+  (gdb) p *S2
+  $3 = {bufstart = 0x815ad30, buflen = 15, flags = 336128, bufused =
+  3, strstart = 0x815ad30 &#34;abc&#34;}
+  (gdb) p &#38;I0
+  $4 = (INTVAL *) 0x8158098</pre>
+
+<p>XXX (p)rinting register contents like shown above is currently not supported.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em><a href="dev/jit_i386.pod.html">docs/dev/jit_i386.pod</a></em>, <em>jit/skeleton/jit_emit.h</em></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

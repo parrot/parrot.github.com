@@ -1,0 +1,446 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot I/O</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot I/O</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>docs/pdds/pdd22_io.pod &#45; Parrot I/O</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Parrot&#39;s I/O subsystem.</p>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>$Revision: $</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>    open P0, &#34;data.txt&#34;, &#34;&#62;&#34;
+    print P0, &#34;sample data\n&#34;
+    close P0
+
+    open P1, &#34;data.txt&#34;, &#34;&#60;&#34;
+    S0 = read P1, 12
+    P2 = getstderr
+    print P2, S0
+    close P1
+
+    ...</pre>
+
+<h1><a name="DEFINITIONS"
+>DEFINITIONS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>A &#34;stream&#34; allows input or output operations on a source/destination such as a file, keyboard, or text console. Streams are also called &#34;filehandles&#34;, though only some of them have anything to do with files.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This is a draft document defining Parrot&#39;s I/O subsystem, for both streams and network I/O. Parrot has both synchronous and asynchronous I/O operations. This section describes the interface, and the <a href='TODO'>IMPLEMENTATION</a> section provides more details on general implementation questions and error handling.</p>
+
+<p>The signatures for the asynchronous operations are nearly identical to the synchronous operations, but the asynchronous operations take an additional argument for a callback, and the only return value from the asynchronous operations is a status object. The callbacks take the status object as their first argument, and any return values as their remaining arguments.</p>
+
+<p>The listing below says little about whether the opcodes return error information. For now assume that they can either return a status object, or return nothing. Error handling is discussed more thoroughly in the implementation section.</p>
+
+<h2><a name="I/O_Stream_Opcodes"
+>I/O Stream Opcodes <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="Opening_and_closing_streams"
+>Opening and closing streams</a></h3>
+
+<ul>
+<li><code lang='und' xml:lang='und'>open</code> opens a stream object based on a string path. It takes an optional string argument specifying the mode of the stream (read, write, append, read/write, etc.), and returns a stream object. Currently the mode of the stream is set with a string argument similar to Perl 5 syntax, but a set of defined constants may fit better with Parrot&#39;s general architecture.</li><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  0    PIOMODE_READ (default)
+  1    PIOMODE_WRITE
+  2    PIOMODE_APPEND
+  3    PIOMODE_READWRITE
+  4    PIOMODE_PIPE (read)
+  5    PIOMODE_PIPEWRITE</pre>
+
+<p>The asynchronous version takes a PMC callback as an additional final argument. When the open operation is complete, it invokes the callback with two arguments: a status object and the opened stream object.</p>
+
+<li><code lang='und' xml:lang='und'>close</code> closes a stream object. It takes a single string object argument and returns a status object.</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument. When the close operation is complete, it invokes the callback, passing it a status object.</p>
+</ul>
+
+<h3><a name="Retrieving_existing_streams"
+>Retrieving existing streams</a></h3>
+
+<p>These opcodes do not have asynchronous variants.</p>
+
+<ul>
+<li><code lang='und' xml:lang='und'>getstdin</code>, <code lang='und' xml:lang='und'>getstdout</code>, and <code lang='und' xml:lang='und'>getstderr</code> return a stream object for standard input, standard output, and standard error.</li><p class="pad"></p>
+
+<li><code lang='und' xml:lang='und'>fdopen</code> converts an existing and already open UNIX integer file descriptor into a stream object. It also takes a string argument to specify the mode.</li><p class="pad"></p>
+</ul>
+
+<h3><a name="Writing_to_streams"
+>Writing to streams</a></h3>
+
+<ul>
+<li><code lang='und' xml:lang='und'>print</code> writes an integer, float, string, or PMC value to a stream. It writes to standard output by default, but optionally takes a PMC argument to select another stream to write to.</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument. When the print operation is complete, it invokes the callback, passing it a status object.</p>
+
+<li><code lang='und' xml:lang='und'>printerr</code> writes an integer, float, string, or PMC value to standard error.</li><p class="pad"></p>
+
+<p>There is no asynchronous variant of <code lang='und' xml:lang='und'>printerr</code>. [It&#39;s just a shortcut. If they want an asynchronous version, they can use <code lang='und' xml:lang='und'>print</code>.]</p>
+</ul>
+
+<h3><a name="Reading_from_streams"
+>Reading from streams</a></h3>
+
+<ul>
+<li><code lang='und' xml:lang='und'>read</code> retrieves a specified number of bytes from a stream into a string. [Note this is bytes, not codepoints.] By default it reads from standard input, but it also takes an alternate stream object source as an optional argument.</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument, and only returns a status object. When the read operation is complete, it invokes the callback, passing it a status object and a string of bytes.</p>
+
+<li><code lang='und' xml:lang='und'>readline</code> retrieves a single line from a stream into a string. Calling <code lang='und' xml:lang='und'>readline</code> flags the stream as operating in line&#45;buffer mode (see <code lang='und' xml:lang='und'>pioctl</code> below).</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument, and only returns a status object. When the readline operation is complete, it invokes the callback, passing it a status object and a string of bytes.</p>
+
+<li><code lang='und' xml:lang='und'>peek</code> retrieves the next byte from a stream into a string, but doesn&#39;t remove it from the stream. By default it reads from standard input, but it also takes a stream object argument for an alternate source.</li><p class="pad"></p>
+
+<p>There is no asynchronous version of <code lang='und' xml:lang='und'>peek</code>. [Does anyone have a line of reasoning why one might be needed? The concept of &#34;next byte&#34; seems to be a synchronous one.]</p>
+</ul>
+
+<h3><a name="Retrieving_and_setting_stream_properties"
+>Retrieving and setting stream properties</a></h3>
+
+<ul>
+<li><code lang='und' xml:lang='und'>seek</code> sets the current file position of a stream object to an integer byte offset from an integer starting position (0 for the start of the file, 1 for the current position, and 2 for the end of the file). It also has a 64&#45;bit variant that sets the byte offset by two integer arguments (one for the first 32 bits of the 64&#45;bit offset, and one for the second 32 bits). [The two&#45;register emulation for 64&#45;bit integers may be deprecated in the future.]</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument. When the seek operation is complete, it invokes the callback, passing it a status object and the stream object it was called on.</p>
+
+<li><code lang='und' xml:lang='und'>tell</code> retrieves the current file position of a stream object. It also has a 64&#45;bit variant that returns the byte offset as two integers (one for the first 32 bits of the 64&#45;bit offset, and one for the second 32 bits). [The two&#45;register emulation for 64&#45;bit integers may be deprecated in the future.]</li><p class="pad"></p>
+
+<p>No asynchronous version.</p>
+
+<li><code lang='und' xml:lang='und'>getfd</code> retrieves the UNIX integer file descriptor of a stream object.</li><p class="pad"></p>
+
+<p>No asynchronous version.</p>
+
+<li><code lang='und' xml:lang='und'>pioctl</code> provides low&#45;level access to the attributes of a stream object. It takes a stream object, an integer flag to select a command, and a single integer argument for the command. It returns an integer indicating the success or failure of the command.</li><p class="pad"></p>
+
+<p>The following constants are defined for the commands that <code lang='und' xml:lang='und'>pioctl</code> can execute:</p>
+
+<pre lang='und' xml:lang='und'>  0    PIOCTL_CMDRESERVED
+           No documentation available.
+  1    PIOCTL_CMDSETRECSEP
+           Set the record separator. [This doesn&#39;t actually work at the
+           moment.]
+  2    PIOCTL_CMDGETRECSEP
+           Get the record separator.
+  3    PIOCTL_CMDSETBUFTYPE
+           Set the buffer type.
+  4    PIOCTL_CMDGETBUFTYPE
+           Get the buffer type
+  5    PIOCTL_CMDSETBUFSIZE
+           Set the buffer size.
+  6    PIOCTL_CMDGETBUFSIZE
+           Get the buffer size.</pre>
+
+<p>The following constants are defined as argument/return values for the buffer&#45;type commands:</p>
+
+<pre lang='und' xml:lang='und'>  0    PIOCTL_NONBUF
+           Unbuffered I/O. Bytes are sent as soon as possible.
+  1    PIOCTL_LINEBUF
+           Line buffered I/O. Bytes are sent when a newline is
+           encountered.
+  2    PIOCTL_BLKBUF
+           Fully buffered I/O. Bytes are sent when the buffer is full.
+           [Called &#34;BLKBUF&#34; because bytes are sent as a block, but line
+           buffering also sends them as a block, so &#34;FULBUF&#34; might make
+           more sense.]</pre>
+
+<p>[This opcode may be deprecated and replaced with methods on stream objects.]</p>
+
+<li><code lang='und' xml:lang='und'>poll</code> polls a stream or socket object for particular types of events (an integer flag) at a frequency set by seconds and microseconds (the final two integer arguments). [At least, that&#39;s what the documentation in src/io/io.c says. In actual fact, the final two arguments seem to be setting the timeout, exactly the same as the corresponding argument to the system version of <code lang='und' xml:lang='und'>poll</code>.]</li><p class="pad"></p>
+
+<p>See the system documentation for <code lang='und' xml:lang='und'>poll</code> to see the constants for event types and return status.</p>
+
+<p>This opcode is inherently synchronous (poll is &#34;synchronous I/O multiplexing&#34;), but it can retreive status information from a stream or socket object whether the object is being used synchronously or asynchronously.</p>
+</ul>
+
+<h3><a name="Deprecated_opcodes"
+>Deprecated opcodes</a></h3>
+
+<ul>
+<li><code lang='und' xml:lang='und'>write</code> prints to standard output but it cannot select another stream. It only accepts a PMC value to write. This is redundant with the <code lang='und' xml:lang='und'>print</code> opcode, so it will be deprecated.</li><p class="pad"></p>
+</ul>
+
+<h2><a name="Filesystem_Opcodes"
+>Filesystem Opcodes <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<ul>
+<li><code lang='und' xml:lang='und'>stat</code> retrieves information about a file on the filesystem. It takes a string filename or an integer argument of a UNIX file descriptor [or an already opened stream object?], and an integer flag for the type of information requested. It returns an integer containing the requested information. The following constants are defined for the type of information requested (see <em lang='und' xml:lang='und'>runtime/parrot/include/stat.pasm</em>):</li><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  0    STAT_EXISTS
+           Whether the file exists.
+  1    STAT_FILESIZE
+           The size of the file.
+  2    STAT_ISDIR
+           Whether the file is a directory.
+  3    STAT_ISDEV
+           Whether the file is a device such as a terminal or a disk.
+  4    STAT_CREATETIME
+           The time the file was created.
+           (Currently just returns &#45;1.)
+  5    STAT_ACCESSTIME
+           The last time the file was accessed.
+  6    STAT_MODIFYTIME
+           The last time the file data was changed.
+  7    STAT_CHANGETIME
+           The last time the file metadata was changed.
+  8    STAT_BACKUPTIME
+           The last time the file was backed up. 
+           (Currently just returns &#45;1.)
+  9    STAT_UID
+           The user ID of the file.
+  10   STAT_GID
+           The group ID of the file.</pre>
+
+<p>The asynchronous version takes an additional final PMC callback argument, and only returns a status object. When the stat operation is complete, it invokes the callback, passing it a status object and an integer containing the status information.</p>
+
+<li><code lang='und' xml:lang='und'>unlink</code> deletes a file from the filesystem. It takes a single string argument of a filename (including the path).</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument. When the unlink operation is complete, it invokes the callback, passing it a status object.</p>
+
+<li><code lang='und' xml:lang='und'>rmdir</code> deletes a directory from the filesystem if that directory is empty. It takes a single string argument of a directory name (including the path).</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument. When the rmdir operation is complete, it invokes the callback, passing it a status object.</p>
+
+<li><code lang='und' xml:lang='und'>opendir</code> opens a stream object for a directory. It takes a single string argument of a directory name (including the path) and returns a stream object.</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument, and only returns a status object. When the opendir operation is complete, it invokes the callback, passing it a status object and a newly created stream object.</p>
+
+<li><code lang='und' xml:lang='und'>readdir</code> reads a single item from an open directory stream object. It takes a single stream object argument and returns a string containing the path and filename/directory name of the current item. (i.e. the directory stream object acts as an iterator.)</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument, and only returns a status object. When the readdir operation is complete, it invokes the callback, passing it a status object and the string result.</p>
+
+<li><code lang='und' xml:lang='und'>telldir</code> returns the current position of <code lang='und' xml:lang='und'>readdir</code> operations on a directory stream object.</li><p class="pad"></p>
+
+<p>No asynchronous version.</p>
+
+<li><code lang='und' xml:lang='und'>seekdir</code> sets the current position of <code lang='und' xml:lang='und'>readdir</code> operations on a directory stream object. It takes a stream object argument and an integer for the position. [The system <code lang='und' xml:lang='und'>seekdir</code> requires that the position argument be the result of a previous <code lang='und' xml:lang='und'>telldir</code> operation.]</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument. When the seekdir operation is complete, it invokes the callback, passing it a status object and the directory stream object it was called on.</p>
+
+<li><code lang='und' xml:lang='und'>rewinddir</code> sets the current position of <code lang='und' xml:lang='und'>readdir</code> operations on a directory stream object back to the beginning of the directory. It takes a stream object argument.</li><p class="pad"></p>
+
+<p>No asynchronous version.</p>
+
+<li><code lang='und' xml:lang='und'>closedir</code> closes a directory stream object. It takes a single stream object argument.</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument. When the closedir operation is complete, it invokes the callback, passing it a status object.</p>
+</ul>
+
+<h2><a name="Network_I/O_Opcodes"
+>Network I/O Opcodes <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Most of these opcodes conform to the standard UNIX interface, but the layer API allows alternate implementations for each.</p>
+
+<ul>
+<li><code lang='und' xml:lang='und'>socket</code> returns a new socket object from a given address family, socket type, and protocol number (all integers). The socket object&#39;s boolean value can be tested for whether the socket was created.</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument, and only returns a status object. When the socket operation is complete, it invokes the callback, passing it a status object and a new socket object.</p>
+
+<li><code lang='und' xml:lang='und'>sockaddr</code> returns an object representing a socket address, generated from a port number (integer) and an address (string).</li><p class="pad"></p>
+
+<p>No asynchronous version.</p>
+
+<li><code lang='und' xml:lang='und'>connect</code> connects a socket object to an address.</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument, and only returns a status object. When the socket operation is complete, it invokes the callback, passing it a status object and the socket object it was called on. [If you want notification when a connect operation is completed, you probably want to do something with that connected socket object.]</p>
+
+<li><code lang='und' xml:lang='und'>recv</code> receives a message from a connected socket object. It returns the message in a string.</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument, and only returns a status object. When the recv operation is complete, it invokes the callback, passing it a status object and a string containing the received message.</p>
+
+<li><code lang='und' xml:lang='und'>send</code> sends a message string to a connected socket object.</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument, and only returns a status object. When the send operation is complete, it invokes the callback, passing it a status object.</p>
+
+<li><code lang='und' xml:lang='und'>sendto</code> sends a message string to an address specified in an address object (first connecting to the address).</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument, and only returns a status object. When the sendto operation is complete, it invokes the callback, passing it a status object.</p>
+
+<li><code lang='und' xml:lang='und'>bind</code> binds a socket object to the port and address specified by an address object (the packed result of <code lang='und' xml:lang='und'>sockaddr</code>).</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument, and only returns a status object. When the bind operation is complete, it invokes the callback, passing it a status object and the socket object it was called on. [If you want notification when a bind operation is completed, you probably want to do something with that bound socket object.]</p>
+
+<li><code lang='und' xml:lang='und'>listen</code> specifies that a socket object is willing to accept incoming connections. The integer argument gives the maximum size of the queue for pending connections.</li><p class="pad"></p>
+
+<p>There is no asynchronous version. <code lang='und' xml:lang='und'>listen</code> marks a set of attributes on the socket object.</p>
+
+<li><code lang='und' xml:lang='und'>accept</code> accepts a new connection on a given socket object, and returns a newly created socket object for the connection.</li><p class="pad"></p>
+
+<p>The asynchronous version takes an additional final PMC callback argument, and only returns a status object. When the accept operation receives a new connection, it invokes the callback, passing it a status object and a newly created socket object for the connection. [While the synchronous <code lang='und' xml:lang='und'>accept</code> has to be called repeatedly in a loop (once for each connection received), the asynchronous version is only called once, but continues to send new connection events until the socket is closed.]</p>
+
+<li><code lang='und' xml:lang='und'>shutdown</code> closes a socket object for reading, for writing, or for all I/O. It takes a socket object argument and an integer argument for the type of shutdown:</li><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  0    PIOSHUTDOWN_READ
+           Close the socket object for reading.
+  1    PIOSHUTDOWN_WRITE
+           Close the socket object for writing.
+  2    PIOSHUTDOWN
+           Close the socket object.</pre>
+</ul>
+
+<h1><a name="IMPLEMENTATION"
+>IMPLEMENTATION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>The Parrot I/O subsystem uses a per&#45;interpreter stack to provide a layer&#45;based approach to I/O. Each layer implements a subset of the <code lang='und' xml:lang='und'>ParrotIOLayerAPI</code> vtable. To find an I/O function, the layer stack is searched downwards until a non&#45;NULL function pointer is found for that particular slot.</p>
+
+<h2><a name="Synchronous_and_Asynchronous_Operations"
+>Synchronous and Asynchronous Operations <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Currently, Parrot only implements synchronous I/O operations. Asynchronous operations are essentially the same as the synchronous operations, but each asynchronous operation runs in its own thread.</p>
+
+<p>Note: this is a deviation from the existing plan, which had all I/O operations run internally as asynchronous, and the synchronous operations as a compatibility layer on top of the asynchronous operations. This conceptual simplification means that all I/O operations are possible without threading support (for example, in a stripped&#45;down version of Parrot running on a PDA). [Asynchronous operations don&#39;t have to use Parrot threads, they could use some alternate threading implementation. But it&#39;s overkill to develop two threading implementations. If Parrot threads turn out to be too heavyweight, we may want to look into a lighter weight variation for asynchronous operations.]</p>
+
+<p>The asynchronous I/O implementation will use Parrot&#39;s I/O layer architecture so some platforms can take advantage of their built&#45;in asynchronous operations instead of using Parrot threads.</p>
+
+<p>Communication between the calling code and the asynchronous operation thread will be handled by a shared status object. The operation thread will update the status object whenever the status changes, and the calling code can check the status object at any time. [Twisted has an interesting variation on this, in that it replaces the status object with the returned result of the asynchronous call when the call is complete. That is probably too confusing, but we might give the status object a reference to the returned result.]</p>
+
+<p>The current strategy for differentating the synchronous calls from asynchronous ones relies on the presence of a callback argument in the asynchronous calls. If we wanted asynchronous calls that don&#39;t supply callbacks (perhaps if the user wants to manually check later if the operation succeded) we would need another strategy to differentiate the two. This is probably enough of a fringe case that we don&#39;t need to provide opcodes for it, provided they can access the functionality via methods on ParrotIO objects.</p>
+
+<h2><a name="Error_Handling"
+>Error Handling <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Currently some of the networking opcodes (<code lang='und' xml:lang='und'>connect</code>, <code lang='und' xml:lang='und'>recv</code>, <code lang='und' xml:lang='und'>send</code>, <code lang='und' xml:lang='und'>poll</code>, <code lang='und' xml:lang='und'>bind</code>, and <code lang='und' xml:lang='und'>listen</code>) return an integer indicating the status of the call, &#45;1 or a system error code if unsuccessful. Other I/O opcodes (such as <code lang='und' xml:lang='und'>getfd</code> and <code lang='und' xml:lang='und'>accept</code>) have various different strategies for error notification, and others have no way of marking errors at all. We want to unify all I/O opcodes so they use a consistent strategy for error notification. There are several options in how we do this.</p>
+
+<h3><a name="Integer_status_codes"
+>Integer status codes</a></h3>
+
+<p>One approach is to have every I/O operation return an integer status code indicating success or failure. This approach has the advantage of being lightweight: returning a single additional integer is cheap. The disadvantage is that it&#39;s not very flexible: the only way to look for errors is to check the integer return value, possibly comparing it to a predefined set of error constants.</p>
+
+<h3><a name="Exceptions"
+>Exceptions</a></h3>
+
+<p>Another option is to have all I/O operations throw exceptions on errors. The advantage is that it keeps the error tracking information out&#45;of&#45;band, so it doesn&#39;t affect the arguments or return values of the calls (some opcodes that have a return value plus an integer status code have odd looking signatures). One disadvantage of this approach is that it forces all users to handle exceptions from I/O operations even if they aren&#39;t using exceptions otherwise.</p>
+
+<p>A more significant disadvantage is that exeptions don&#39;t work well with asynchronous operations. Exception handlers are set for a particular dynamic scope, but with an asynchronous operation, by the time an exception is thrown execution has already left the dynamic scope where the exception handler was set. [Though, this partly depends on how exceptions are implemented.]</p>
+
+<h3><a name="Error_callbacks"
+>Error callbacks</a></h3>
+
+<p>A minor variation on the exceptions option is to pass an error callback into each I/O opcode. This solves the problem of asynchronous operations because the operation has its own custom error handling code rather than relying on an exception handler in its dynamic scope.</p>
+
+<p>The disadvantage is that the user has to define a custom error handler routine for every call. It also doesn&#39;t cope well with cases where multiple different kinds of errors may be returned by a single opcode. (The one error handler would have to cope with all possible types of errors.) There is an easier way.</p>
+
+<h3><a name="Hybrid_solution"
+>Hybrid solution</a></h3>
+
+<p>Another option is to return a status object from each I/O operation. The status object could be used to get an integer status code, string status/error message, or boolean success value. It could also provide a method to throw an exception on error conditions. There could even be a global option (or an option set on a particular I/O object) that tells Parrot to always throw exceptions on errors in synchronous I/O operations, implemented by calling this method on the status object before returning from the I/O opcode.</p>
+
+<p>The advantages are that this works well with asynchronous and synchronous operations, and provides flexibility for multiple different uses. Also, something like a status object will be needed anyway to allow users to check on the status of a particular asynchronous call in progress, so this is a nice unification.</p>
+
+<p>The disadvantage is that a status object involves more overhead than a simple integer status code.</p>
+
+<h2><a name="IPv6_Support"
+>IPv6 Support <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>The transition from IPv4 to IPv6 is in progress, though not likely to be complete anytime soon. Most operating systems today offer at least dual&#45;stack IPv6 implementations, so they can use either IPv4 or IPv6, depending on what&#39;s available. Parrot also needs to support either protocol. For the most part, the network I/O opcodes should internally handle either addressing scheme, without requiring the user to specify which scheme is being used.</p>
+
+<p>IETF recommends defaulting to IPv6 connections and falling back to IPv4 connections when IPv6 fails. This would give us more solid testing of Parrot&#39;s compatibility IPv6, but may be too slow. Either way, it&#39;s a good idea to make setting the default (or selecting one exclusively) an option when compiling Parrot.</p>
+
+<p>The most important issues for Parrot to consider with IPv6 are:</p>
+
+<ul>
+<li>Support 128 bit addresses. IPv6 addresses are colon&#45;separated hexadecimal numbers, such as <code lang='und' xml:lang='und'>20a:95ff:fef5:7e5e</code>.</li><p class="pad"></p>
+
+<li>Any address parsing should be able to support the address separated from a port number or prefix/length by brackets: <code lang='und' xml:lang='und'>[20a:95ff:fef5:7e5e]:80</code> and <code lang='und' xml:lang='und'>[20a:95ff::]/64</code>.</li><p class="pad"></p>
+
+<li>Packed addresses, such as the result of the <code lang='und' xml:lang='und'>sockaddr</code> opcode, should be passed around as an object (or at least a structure) rather than as a string.</li><p class="pad"></p>
+</ul>
+
+<p>See the relevant IETF RFCs: &#34;Application Aspects of IPv6 Transition&#34; (<a href="http://www.ietf.org/rfc/rfc4038.txt">http://www.ietf.org/rfc/rfc4038.txt</a>) and &#34;Basic Socket Interface Extensions for IPv6&#34; (<a href="http://www.ietf.org/rfc/rfc3493.txt">http://www.ietf.org/rfc/rfc3493.txt</a>).</p>
+
+<h2><a name="Excerpt"
+>Excerpt <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>[Below is an excerpt from &#34;Perl 6 and Parrot Essentials&#34;, included to seed discussion.]</p>
+
+<p>Parrot&#39;s base I/O system is fully asynchronous I/O with callbacks and per&#45;request private data. Since this is massive overkill in many cases, we have a plain vanilla synchronous I/O layer that your programs can use if they don&#39;t need the extra power.</p>
+
+<p>Asynchronous I/O is conceptually pretty simple. Your program makes an I/O request. The system takes that request and returns control to your program, which keeps running. Meanwhile the system works on satisfying the I/O request. When the request is satisfied, the system notifies your program in some way. Since there can be multiple requests outstanding, and you can&#39;t be sure exactly what your program will be doing when a request is satisfied, programs that make use of asynchronous I/O can be complex.</p>
+
+<p>Synchronous I/O is even simpler. Your program makes a request to the system and then waits until that request is done. There can be only one request in process at a time, and you always know what you&#39;re doing (waiting) while the request is being processed. It makes your program much simpler, since you don&#39;t have to do any sort of coordination or synchronization.</p>
+
+<p>The big benefit of asynchronous I/O systems is that they generally have a much higher throughput than a synchronous system. They move data around much faster&#45;&#45;in some cases three or four times faster. This is because the system can be busy moving data to or from disk while your program is busy processing data that it got from a previous request.</p>
+
+<p>For disk devices, having multiple outstanding requests&#45;&#45;especially on a busy system&#45;&#45;allows the system to order read and write requests to take better advantage of the underlying hardware. For example, many disk devices have built&#45;in track buffers. No matter how small a request you make to the drive, it always reads a full track. With synchronous I/O, if your program makes two small requests to the same track, and they&#39;re separated by a request for some other data, the disk will have to read the full track twice. With asynchronous I/O, on the other hand, the disk may be able to read the track just once, and satisfy the second request from the track buffer.</p>
+
+<p>Parrot&#39;s I/O system revolves around a request. A request has three parts: a buffer for data, a completion routine, and a piece of data private to the request. Your program issues the request, then goes about its business. When the request is completed, Parrot will call the completion routine, passing it the request that just finished. The completion routine extracts out the buffer and the private data, and does whatever it needs to do to handle the request. If your request doesn&#39;t have a completion routine, then your program will have to explicitly check to see if the request was satisfied.</p>
+
+<p>Your program can choose to sleep and wait for the request to finish, essentially blocking. Parrot will continue to process events while your program is waiting, so it isn&#39;t completely unresponsive. This is how Parrot implements synchronous I/O&#45;&#45;it issues the asynchronous request, then immediately waits for that request to complete.</p>
+
+<p>The reason we made Parrot&#39;s I/O system asynchronous by default was sheer pragmatism. Network I/O is all asynchronous, as is GUI programming, so we knew we had to deal with asynchrony in some form. It&#39;s also far easier to make an asynchronous system pretend to be synchronous than it is the other way around. We could have decided to treat GUI events, network I/O, and file I/O all separately, but there are plenty of systems around that demonstrate what a bad idea that is.</p>
+
+<h1><a name="ATTACHMENTS"
+>ATTACHMENTS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>None.</p>
+
+<h1><a name="FOOTNOTES"
+>FOOTNOTES <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>None.</p>
+
+<h1><a name="REFERENCES"
+>REFERENCES <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>  src/io/io.c
+  src/ops/io.ops
+  include/parrot/io.h
+  runtime/parrot/library/Stream/*
+  src/io/io_unix.c
+  src/io/io_win32.c
+  Perl 5&#39;s IO::AIO
+  Perl 5&#39;s POE</pre>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

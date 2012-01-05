@@ -1,0 +1,318 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>C Structure Class</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">C Structure Class</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="TITLE"
+>TITLE <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>C Structure Class</p>
+
+<h1><a name="STATUS"
+>STATUS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Proposal.</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Leopold Toetsch</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>The ParrotClass PMC is the default implementation (and the meta class) of parrot&#39;s HLL classes.
+It provides attribute access and (TODO) introspection of attribute names.
+It is also handling method dispatch and inheritance.</p>
+
+<p>C structures used all over in parrot (PMCs) and user&#45;visible C structures provided by the <code lang='und' xml:lang='und'>{Un,}ManagedStruct</code> PMC dont&#39;t have this flexibility.</p>
+
+<p>The proposed <code lang='und' xml:lang='und'>CStruct</code> PMC is trying to bridge this gap.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>The <code lang='und' xml:lang='und'>CStruct</code> PMC is the class PMC of classes,
+which are not based on PMC&#45;only attributes but on the general case of a C structure.
+That is,
+the <code lang='und' xml:lang='und'>CStruct</code> is actually the parent class of <code lang='und' xml:lang='und'>ParrotClass</code>,
+which is a PMC&#45;only special case.
+And it is the theoretical ancestor class of all PMCs (including itself :).</p>
+
+<p>The relationship of <code lang='und' xml:lang='und'>CStruct</code> to other PMCs is like this:</p>
+
+<pre lang='und' xml:lang='und'>                PASM/PIR code         C code
+  Class         ParrotClass           CStruct
+  Object        ParrotObject          *ManagedStruct
+                                      (other PMCs) </pre>
+
+<p>That is, it is the missing piece of already existing PMCs. The current *ManagedStruct PMCs are providing the class and object functionality in one and the same PMC (as BTW all other existing PMCs are doing). But this totally prevents proper inheritance and reusability of such PMCs.</p>
+
+<p>The <code lang='und' xml:lang='und'>CStruct</code> class provides the necessary abstract backings to get rid of current limitations.</p>
+
+<h1><a name="SYNTAX_BITS"
+>SYNTAX BITS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Constructing_a_CStruct"
+>Constructing a CStruct <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>A typical C structure:</p>
+
+<pre lang='und' xml:lang='und'>  struct foo {
+    int a;
+    char b;
+  };</pre>
+
+<p>could be created in PIR with:</p>
+
+<pre lang='und' xml:lang='und'>  cs = subclass &#39;CStruct&#39;, &#39;foo&#39;   # or maybe  cs = new_c_class &#39;foo&#39;
+  addattribute cs, &#39;a&#39;
+  addattribute cs, &#39;b&#39;</pre>
+
+<p>The semantics of a C struture are the same as of a Parrot Class. But we need the types of the attributes too:</p>
+
+<p>Handwavingly TBD 1)</p>
+
+<p>with ad&#45;hoc existing syntax:</p>
+
+<pre lang='und' xml:lang='und'>  .include &#34;datatypes.pasm&#34;
+  cs[&#39;a&#39;] = .DATATYPE_INT
+  cs[&#39;b&#39;] = .DATATYPE_CHAR</pre>
+
+<p>Handwavingly TBD 2)</p>
+
+<p>with new variants of the <code lang='und' xml:lang='und'>addattribute</code> opcode:</p>
+
+<pre lang='und' xml:lang='und'>  addattribute cs, &#39;a&#39;, .DATATYPE_INT
+  addattribute cs, &#39;b&#39;, .DATATYPE_CHAR</pre>
+
+<p>Probably desired and with not much effort TBD 3):</p>
+
+<pre lang='und' xml:lang='und'>  addattribute(s) cs, &#60;&#60;&#39;DEF&#39;
+    int a;
+    char b;
+  DEF   </pre>
+
+<p>The possible plural in the opcode name would match semantics, but it is not necessary. The syntax is just using Parrot&#39;s here documents to define all the attributes and types.</p>
+
+<pre lang='und' xml:lang='und'>  addattribute(s) cs, &#60;&#60;&#39;DEF&#39;
+    int &#34;a&#34;;
+    char &#34;b&#34;;
+  DEF   </pre>
+
+<p>The generalization of quoted attribute names would of course be possible too, but isn&#39;t likely needed.</p>
+
+<h2><a name="Syntax_variant"
+>Syntax variant <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  cs = subclass &#39;CStruct&#39;, &#60;&#60;&#39;DEF
+    struct foo {
+      int a;
+      char b;
+    };
+  DEF</pre>
+
+<p>I.e. create all in one big step.</p>
+
+<h2><a name="Object_creation_and_attribute_usage"
+>Object creation and attribute usage <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>This is straight forward and conforming to current ParrotObjects:</p>
+
+<pre lang='und' xml:lang='und'>  o = new &#39;foo&#39;                 # a ManagedStruct instance
+  setattribute o, &#39;a&#39;, 4711
+  setattribute o, &#39;b&#39;, 22
+  ...</pre>
+
+<p>The only needed extension would be <code lang='und' xml:lang='und'>{get,set}attribute</code> variants with natural types.</p>
+
+<p>Even (with nice to have IMCC syntax sugar):</p>
+
+<pre lang='und' xml:lang='und'>  o.a = 4711    # setattribute
+  o.b = 22
+  $I0 = o.a     # getattribute</pre>
+
+<h2><a name="Nested_Structures"
+>Nested Structures <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  foo_cs = subclass &#39;CStruct&#39;, &#39;foo&#39;
+  addattribute(s) foo_cs, &#60;&#60;&#39;DEF&#39;
+    int a;
+    char b;
+  DEF   
+  bar_cs = subclass &#39;CStruct&#39;, &#39;bar&#39;
+  addattribute(s) bar_cs, &#60;&#60;&#39;DEF&#39;
+    double x;
+    foo cfoo;              # contained foo structure
+    foo *fptr;             # a pointer to a foo struct
+  DEF   
+  o = new &#39;bar&#39;
+  setattribute o, &#39;x&#39;, 3.14                   # C&#45;ish equivalent:
+  setattribute o, [&#39;cfoo&#39;; &#39;a&#39;], 4711         # o.foo.a = 4711
+  setattribute o, [&#39;fptr&#39;; &#39;b&#39;], 255          # o.fptr&#45;&#62;b = 255</pre>
+
+<p>Attribute access is similar to current *ManagedStruct&#39;s hash syntax but with a syntax matching ParrotObjects.</p>
+
+<h2><a name="Array_Structures_Elements"
+>Array Structures Elements <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  foo_cs = subclass &#39;CStruct&#39;, &#39;foo&#39;
+  addattribute(s) foo_cs, &#60;&#60;&#39;DEF&#39;
+    int a;
+    char b[100];
+  DEF   </pre>
+
+<p>Access to array elements automatically does bounds checking.</p>
+
+<h2><a name="Possible_future_extensions"
+>Possible future extensions <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  cs = subclass &#39;CStruct&#39;, &#39;todo&#39;
+  addattribute(s) foo_cs, &#60;&#60;&#39;DEF&#39;
+    union {              # union keyword
+      int a;
+      double b;
+    } u;  
+    char b[100]  :ro;    # attributes like r/o     
+  DEF   </pre>
+
+<h2><a name="Managed_vs._Unmanaged_Structs"
+>Managed vs. Unmanaged Structs <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>The term &#34;managed&#34; in current structure usage defines the owner of the structure memory. <code lang='und' xml:lang='und'>ManagedStruct</code> means that parrot is the owner of the memory and that GC will eventually free the structure memory. This is typically used when C structures are created in parrot and passed into external C code.</p>
+
+<p><code lang='und' xml:lang='und'>UnManagedStruct</code> means that there&#39;s some external owner of the structure memory. Such structures are typically return results of external code.</p>
+
+<p>E.g.:</p>
+
+<pre lang='und' xml:lang='und'>  $P0 = some_c_func()          # UnManagedStruct result
+  assign $P0, foo_cs           # assign a structure class to it 
+
+  o = new &#39;foo_cs&#39;             # ManagedStruct instance
+  setattribute o, &#39;a&#39;, 100
+  setattribute o, [&#39;b&#39;; 99], 255  # set last elem</pre>
+
+<h1><a name="RATIONAL"
+>RATIONAL <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Parrot as the planned interpreter glue language should have access to all possible C libraries and structures. It has to abstract the low&#45;level bindings in a HLL independant way and should still be able to communicate all information &#34;upstairs&#34; to the HLL users.</p>
+
+<p>But it&#39;s not HLL usage only, parrot itself is already suffering from a lack of abstraction at the PMC level.</p>
+
+<h2><a name="Inheritance"
+>Inheritance <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>I&#39;ve implemented an OO&#45;ified HTTP server named <em lang='und' xml:lang='und'>httpd2.pir</em>. The <code lang='und' xml:lang='und'>HTTP::Connection</code> class ought to be a subclass of <code lang='und' xml:lang='und'>ParrotIO</code> (we don&#39;t have a base socket class, but ParrotIO would do it for now). This kind of inheritance isn&#39;t possible. The implementation is now a connection <b>hasa</b> ParrotIO, instead of <b>isa</b>. It&#39;s of course losing all inheritance with that which leads to delegation code and work arounds.</p>
+
+<p>The same workarounds are all over <em lang='und' xml:lang='und'>SDL/*</em> classes. There are <i>layout</i> helpers and raw structure accessores and what not. Please read the code. It&#39;s really not a problem of the implementation (which is totally fine) it&#39;s just the lack of usability of parrot (when it comes to native structures (or PMCs)).</p>
+
+<p>All these experiments to use a C structure or a PMC as base class are ending with a <code lang='und' xml:lang='und'>has</code> relationship instead of the natural <code lang='und' xml:lang='und'>isa</code>. Any useful OO&#45;ish abstraction is lost and is leading to clumsy code, and &#45; no &#45; implementing interfaces/traits/mixins can&#39;t help here, as these are all based on the abstraction, which is described here.</p>
+
+<h2><a name="Inheritance_and_attribute_access"
+>Inheritance and attribute access <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>This proposal alone doesn&#39;t solve all inheritance problems. It is also needed that the memory layout of PMCs and ParrotObjects deriving from PMCs is the same. E.g.</p>
+
+<pre lang='und' xml:lang='und'>  cl = subclass &#39;Integer&#39;, &#39;MyInt&#39;</pre>
+
+<p>The <code lang='und' xml:lang='und'>int_val</code> attribute of the core <code lang='und' xml:lang='und'>Integer</code> type is located in the <code lang='und' xml:lang='und'>cache</code> union of the PMC. The integer item in the subclass is hanging off the <code lang='und' xml:lang='und'>data</code> array of attributes and worse it is a PMC too, not a natural int. This not only causes additional indirections (see <em lang='und' xml:lang='und'>deleg_pmc.pmc</em>) but also negatively impacts <code lang='und' xml:lang='und'>Integer</code> PMCs, as all access to the <code lang='und' xml:lang='und'>int_val</code> has to be indirected through <code lang='und' xml:lang='und'>get_integer()</code> or <code lang='und' xml:lang='und'>set_integer_native()</code> to be able to deal with subclassed integers.</p>
+
+<p>Again the implementation of above is: MyInt <b>hasa</b> Integer, instead of the desired <b>isa</b> int_val.</p>
+
+<p>With the abstraction of a <code lang='und' xml:lang='und'>CStruct</code> describing the <code lang='und' xml:lang='und'>Integer</code> PMC and with differently sized PMCs, we can create an object layout, where the <code lang='und' xml:lang='und'>int_val</code> attribute of <code lang='und' xml:lang='und'>Integer</code> and <code lang='und' xml:lang='und'>MyInt</code> are at the same location and of the same type.</p>
+
+<p>Given this (internal) definition of the <code lang='und' xml:lang='und'>Integer</code> PMC:</p>
+
+<pre lang='und' xml:lang='und'>  intpmc_cl = subclass &#39;CStruct&#39;, &#39;Integer&#39;
+  addattribute(s) intpmc_cl, &#60;&#60;&#39;DEF&#39;
+    INTVAL int_val;            # PMC internals are hidden
+  DEF   </pre>
+
+<p>we can transparently subclass it as <code lang='und' xml:lang='und'>MyInt</code>, as all the needed information is present in the <code lang='und' xml:lang='und'>CStruct intpmc_cl</code> class.</p>
+
+<h2><a name="Introspection,_PMCs_and_more"
+>Introspection, PMCs and more <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  cc = subclass &#39;CStruct&#39;, &#39;Complex&#39;
+  addattribute(s) cc, &#60;&#60;&#39;DEF&#39;
+    FLOATVAL re; 
+    FLOATVAL im; 
+  DEF   </pre>
+
+<p>This is the (hypothetical) description of a <code lang='und' xml:lang='und'>Complex</code> PMC class. An equivalent syntax can be translated by the PMC compiler to achieve the same result.</p>
+
+<p>This definition of the attributes of that PMC automagically provides access to all the information stored in the PMC. All such access is currently hand&#45;crafted in the <em lang='und' xml:lang='und'>complex.pmc</em>. Not only that this accessor code could be abandoned (and unified with common syntax), all possible classes inheriting from that PMC could use this information.</p>
+
+<h1><a name="Implementation"
+>Implementation <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p><code lang='und' xml:lang='und'>CStruct</code> is basically yet another PMC and can be implemented and put to functionality without any interference with existing code. It is also orthogonal with possible PMC layout changes.</p>
+
+<p>The internals of <code lang='und' xml:lang='und'>CStruct</code> can vastly reuse code from <em lang='und' xml:lang='und'><a href="../../../src/objects.c.html">src/objects.c</a></em> to deal with inheritance or object instantiation. The main difference is that attributes have additionally a type attached to it and consequently that the attribute offsets are calculated differently depending on type, alignment, and padding. These calculations are already done in <em lang='und' xml:lang='und'>unmanagedstruct.pmc</em>.</p>
+
+<p><code lang='und' xml:lang='und'>CStruct</code> classes can be attached to existing PMCs gradually (and by far not all PMCs need that abstract backing). But think e.g. of the <code lang='und' xml:lang='und'>Sub</code> PMC. Attaching a <code lang='und' xml:lang='und'>CStruct</code> to it, would instantly give access to all it&#39;s attributes and vastly simplify introspection.</p>
+
+<p>Only the final step (&#34;Inheritance and attribute access&#34;) needs all parts to play together.</p>
+
+<h1><a name="All_together_now"
+>All together now <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Differently_sized_PMCs"
+>Differently sized PMCs</a></dt><p class="pad"></p>
+
+<dd>Provide the flexible PMC layout.</dd><p class="pad"></p>
+
+<dt><a name="CStruct_classes"
+>CStruct classes</a></dt><p class="pad"></p>
+
+<dd>Are describing the structure of PMCs (or any C structure).</dd><p class="pad"></p>
+
+<dt><a name="R/O_vtables"
+>R/O vtables</a></dt><p class="pad"></p>
+
+<dd>Prohibit modification of readonly PMCs like the <code lang='und' xml:lang='und'>Sub</code> PMC. These are already coded within the <code lang='und' xml:lang='und'>STM</code> project.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>pddXX_pmc.pod (proposal for a flexible PMC layout)</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

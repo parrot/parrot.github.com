@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Parrot extension representing SDL Events</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot extension representing SDL Events</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/libs.html">Libraries</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>SDL::Event &#45; Parrot extension representing SDL Events</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>    # load this library
+    load_bytecode &#39;library/SDL/Event.pir&#39;
+
+    # create a new SDL::Event object
+    .local pmc event
+    event = new &#39;SDL::Event&#39;
+
+    # ... create a new event_handler and its hander_args
+
+    # start the event loop
+    event.&#39;process_events&#39;( event_handler, handler_args )
+
+    # or handle one event at a time in your own loop
+    event.&#39;handle_event&#39;( event_handler, handler_args )</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>SDL::Event encapsulates event information for SDL. This may change internally as we migrate to Parrot events, but most of the interesting information happens in SDL::EventHandler instead, so go read that first.</p>
+
+<p>You may discover that you don&#39;t really care about this class beyond what you&#39;ve already learned from the SYNOPSIS already.</p>
+
+<h1><a name="METHODS"
+>METHODS <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>The SDL::Event object has the following methods:</p>
+
+<dl>
+<dt><a name="init()"
+>init()</a></dt><p class="pad"></p>
+
+<dd>Initializes the internal attributes of this object. Trust me, you need to do this, at least for now.</dd><p class="pad"></p>
+
+<dd>The name of this method may change, per discussion on p6i. It may even go away.</dd><p class="pad"></p>
+
+<dt><a name="event()"
+>event()</a></dt><p class="pad"></p>
+
+<dd>Returns the underlying <code lang='und' xml:lang='und'>SDL_Event</code> structure. You probably don&#39;t need to use this directly, unless you&#39;re working with raw SDL calls.</dd><p class="pad"></p>
+
+<dt><a name="event_type(_event_type_)"
+>event_type( event_type )</a></dt><p class="pad"></p>
+
+<dd>Given the number of an incoming event type, returns a string name representing that event. The possible event names live in the <code lang='und' xml:lang='und'>SDL_Event.h</code> library; they&#39;re all lower cased here. For example, a key down event will have the name <code lang='und' xml:lang='und'>key_down</code>.</dd><p class="pad"></p>
+
+<dd>If you pass an unknown event type identifier, you&#39;ll receive a string containing <code lang='und' xml:lang='und'>unknown</code>.</dd><p class="pad"></p>
+
+<dd><b>Note:</b> Arguably, this should operate on the current event, instead of requiring an argument. This may change in the future.</dd><p class="pad"></p>
+
+<dt><a name="event_keyname()"
+>event_keyname()</a></dt><p class="pad"></p>
+
+<dd>Returns a string representing the name of the key for the current event. Note that the list of available keys is rather limited at the moment. There&#39;s also no error checking that the current event is even a key event.</dd><p class="pad"></p>
+
+<dd>On the other hand, you probably should define an event handler instead of using these methods directly.</dd><p class="pad"></p>
+
+<dd>If this method does not recognize the current key, it will return the string <code lang='und' xml:lang='und'>unknown</code> instead.</dd><p class="pad"></p>
+
+<dt><a name="process_events(_event_handler,_handler_args,_[_check_interval_]_)"
+>process_events( event_handler, handler_args, [ check_interval ] )</a></dt><p class="pad"></p>
+
+<dd>Given an <code lang='und' xml:lang='und'>event_handler</code> object (either subclassing <code lang='und' xml:lang='und'>SDL::EventHandler</code> or implementing its necessary methods) and a <code lang='und' xml:lang='und'>Hash</code> of arguments to pass to all event handlers, loops around SDL&#39;s event loop and calls appropriate methods in <code lang='und' xml:lang='und'>event_handler</code> corresponding to what happens.</dd><p class="pad"></p>
+
+<dd>That is, if SDL reports a key down, this will call the <code lang='und' xml:lang='und'>key_down</code> method of <code lang='und' xml:lang='und'>event_handler</code>, passing <code lang='und' xml:lang='und'>handler_args</code>.</dd><p class="pad"></p>
+
+<dd>If you pass a numeric value as <code lang='und' xml:lang='und'>check_interval</code>, this will poll for events every <code lang='und' xml:lang='und'>check_interval</code> seconds. This makes it possible to check for events in your main thread, without breaking Parrot&#39;s own event loop (used for timers, for example). This is an optional parameter and can be any number of seconds or fractions thereof.</dd><p class="pad"></p>
+
+<dd>For now, this will return if it detects a quit event. This may not be what you want and it may change in the future. It won&#39;t return otherwise. Arguably, it should, somehow.</dd><p class="pad"></p>
+
+<dt><a name="handle_event(_event_handler,_handler_args_)"
+>handle_event( event_handler, handler_args )</a></dt><p class="pad"></p>
+
+<dd>Given an <code lang='und' xml:lang='und'>event_handler</code> object (either subclass <a href='TODO'>SDL::EventHandler</a> or reimplement the appropriate methods yourself) and a <code lang='und' xml:lang='und'>Hash</code> PMC of data to pass to all handler calls, handles <i>one</i> event, if any are present. If there are no events pending, this will return directly.</dd><p class="pad"></p>
+
+<dd>This returns nothing interesting. Perhaps it should return true or false depending on whether it handled an event. Perhaps not.</dd><p class="pad"></p>
+
+<dd>Use this method inside your own loop structure.</dd><p class="pad"></p>
+
+<dt><a name="dispatch_event(_event,_event_handler,_handler_args_)"
+>dispatch_event( event, event_handler, handler_args )</a></dt><p class="pad"></p>
+
+<dd>Dispatches an event. You shouldn&#39;t call this directly. Instead, call <code lang='und' xml:lang='und'>handle_event()</code> or <code lang='und' xml:lang='und'>process_events()</code>.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Written and maintained by chromatic, &#60;chromatic at wgz dot org&#62;, with some design from Allison Randal. Please send patches, feedback, and suggestions to the Perl 6 Internals mailing list.</p>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Copyright (C) 2004&#45;2008, The Perl Foundation.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

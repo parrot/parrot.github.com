@@ -1,0 +1,160 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Probe for OpenGL, GLU, and GLUT libraries</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Probe for OpenGL, GLU, and GLUT libraries</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/config.html">Configuration</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>config/auto/opengl.pm &#45; Probe for OpenGL,
+GLU,
+and GLUT libraries</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Determines whether the platform supports OpenGL,
+GLU and GLUT.
+The optimal result at this time is to find OpenGL 2.1,
+GLU 1.3,
+and GLUT API version 4.</p>
+
+<p>You will typically need to install the headers and libraries required for compiling OpenGL/GLU/GLUT applications as a separate step in addition to the base development tools for your platform.
+The following sections detail the steps needed to add OpenGL support for each platform for which we have received this information &#45;&#45; details for additional platforms are welcome!</p>
+
+<h2><a name="Mac_OS_X"
+>Mac OS X <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>You will need to install the <em lang='und' xml:lang='und'>OpenGL Framework</em> and the <em lang='und' xml:lang='und'>GLUT Framework</em>.
+With these in place,
+everything else should be autodetected.
+Mac OS X uses a proprietary GLUT variant that supports more functions than standard GLUT 3.7,
+but fewer than <em lang='und' xml:lang='und'>freeglut</em>.</p>
+
+<h2><a name="Linux"
+>Linux <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Linux distributions typically use <em lang='und' xml:lang='und'>freeglut</em> (<a href='http://freeglut.sourceforge.net/'><a href="http://freeglut.sourceforge.net/">http://freeglut.sourceforge.net/</a></a>) for GLUT support,
+and <em lang='und' xml:lang='und'>Mesa</em> (<a href='http://www.mesa3d.org/'><a href="http://www.mesa3d.org/">http://www.mesa3d.org/</a></a>) for GLU support.
+Either the Mesa headers (for open source drivers) or the vendor headers (for closed source drivers) can be used for core OpenGL/GLX support.
+Here are the package names for various distributions; installing each of these will typically pull in a number of prerequisites as well:</p>
+
+<h3><a name="Debian/Ubuntu/etc."
+>Debian/Ubuntu/etc.</a></h3>
+
+<dl>
+<dt><a name="GLUT"
+>GLUT</a></dt><p class="pad"></p>
+
+<dd><em lang='und' xml:lang='und'>freeglut3&#45;dev</em></dd><p class="pad"></p>
+
+<dt><a name="GLU"
+>GLU</a></dt><p class="pad"></p>
+
+<dd><em lang='und' xml:lang='und'>libglu1&#45;mesa&#45;dev</em></dd><p class="pad"></p>
+
+<dt><a name="OpenGL/GLX_(open_source_drivers)"
+>OpenGL/GLX (open source drivers)</a></dt><p class="pad"></p>
+
+<dd><em lang='und' xml:lang='und'>libgl1&#45;mesa&#45;dev</em></dd><p class="pad"></p>
+
+<dt><a name="OpenGL/GLX_(NVIDIA_drivers)"
+>OpenGL/GLX (NVIDIA drivers)</a></dt><p class="pad"></p>
+
+<dd><em lang='und' xml:lang='und'>nvidia&#45;glx&#45;dev</em></dd><p class="pad"></p>
+</dl>
+
+<h3><a name="Fedora/RedHat/CentOS/etc."
+>Fedora/RedHat/CentOS/etc.</a></h3>
+
+<dl>
+<dt><a name="GLUT"
+>GLUT</a></dt><p class="pad"></p>
+
+<dd><em lang='und' xml:lang='und'>freeglut&#45;devel</em></dd><p class="pad"></p>
+
+<dt><a name="GLU"
+>GLU</a></dt><p class="pad"></p>
+
+<dd><em lang='und' xml:lang='und'>mesa&#45;libGLU&#45;devel</em></dd><p class="pad"></p>
+
+<dt><a name="OpenGL/GLX_(open_source_drivers)"
+>OpenGL/GLX (open source drivers)</a></dt><p class="pad"></p>
+
+<dd><em lang='und' xml:lang='und'>mesa&#45;libGL&#45;devel</em></dd><p class="pad"></p>
+
+<dt><a name="OpenGL/GLX_(NVIDIA_drivers)"
+>OpenGL/GLX (NVIDIA drivers)</a></dt><p class="pad"></p>
+
+<dd><em lang='und' xml:lang='und'>nvidia&#45;devel</em> (?)</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Windows"
+>Windows <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>On Windows,
+Parrot supports three different compiler environments,
+each of which has different requirements for OpenGL support:</p>
+
+<h3><a name="MSVC"
+>MSVC</a></h3>
+
+<dl>
+<dt><a name="OpenGL/GLU/WGL"
+>OpenGL/GLU/WGL</a></dt><p class="pad"></p>
+
+<dd><em lang='und' xml:lang='und'>Windows SDK for Windows Server 2008 and .NET Framework 3.5</em></dd><p class="pad"></p>
+
+<dt><a name="GLUT"
+>GLUT</a></dt><p class="pad"></p>
+
+<dd><em lang='und' xml:lang='und'>GLUT for Win32</em> (<a href='http://www.xmission.com/~nate/glut.html'><a href="http://www.xmission.com/~nate/glut.html">http://www.xmission.com/~nate/glut.html</a></a>)</dd><p class="pad"></p>
+</dl>
+
+<h3><a name="MinGW"
+>MinGW</a></h3>
+
+<pre lang='und' xml:lang='und'> XXXX: No details yet</pre>
+
+<h3><a name="cygwin"
+>cygwin</a></h3>
+
+<pre lang='und' xml:lang='und'> XXXX: No details yet</pre>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,107 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Timer</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Timer
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/timer.pmc &#45; Timer</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    new P0, &#39;Timer&#39;
+    set P0[.PARROT_TIMER_SEC],     I_seconds       # whole seconds
+    set P0[.PARROT_TIMER_USEC],    I_micro seconds # and/or micro seconds
+    set P0[.PARROT_TIMER_NSEC],    N_seconds_frac  # or fraction in seconds
+    set P0[.PARROT_TIMER_REPEAT],  I_repeat        # 0 = one shot ...
+    set P0[.PARROT_TIMER_HANDLER], P_sub           # set handler sub PMC
+    invoke P0                                      # start timer
+    set P0[.PARROT_TIMER_RUNNING], 1               # same
+
+    new P0, &#39;Timer&#39;, P1                            # set everything
+
+    set I0, P0[.PARROT_TIMER_SEC]                  # query current timer status
+    set N0, P0[.PARROT_TIMER_NSEC]
+    ...
+    set P0[.PARROT_TIMER_RUNNING], 0               # turn timer off</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This is the Timer base class</p>
+
+<p>Running timers are kept in a linked list. Each timer has a tick count, which gets decremented if the system timer expires. If the tick count reaches zero, the timer handler gets invoked via Parrot&#39;s event handling code.</p>
+
+<p>The Timer resolution is operating system dependent. It&#39;s only guaranteed that the Timer will fire some time after the programmed interval.</p>
+
+<p>The Timer stops after invoking the handler (repeat + 1) times. To create a Timer that will run forever, set &#34;repeat&#34; to &#45;1. Turning the Timer off preserves set values; the Timer is not destroyed.</p>
+
+<p>When setting both <code>PARROT_TIMER_SEC</code> and <code>PARROT_TIMER_USEC</code> it must be done in that sequence, whole seconds first. If a timer is constructed with an initializer and it should be run immediately, the <code>PARROT_TIMER_RUNNING</code> value has to be in the last key of the initializer.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes the timer.
+<dt><a name="void_init_pmc(PMC_*init)"
+><b><code>void init_pmc(PMC *init)</b></code></a></dt>
+See <em>docs/pdds/pdd02_vtables.pod</em> for initializers.
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+Create a copy of the timer, resetting status, id, and birthtime.
+<dt><a name="void_destroy()"
+><b><code>void destroy()</b></code></a></dt>
+Destroys the timer.
+<dt><a name="INTVAL_get_integer_keyed_int(INTVAL_key)"
+><b><code>INTVAL get_integer_keyed_int(INTVAL key)</b></code></a></dt>
+Returns the timer info for <code>key</code>.
+<dt><a name="PMC_*get_pmc_keyed_int(INTVAL_key)"
+><b><code>PMC *get_pmc_keyed_int(INTVAL key)</b></code></a></dt>
+Returns the PMC associated with <code>key</code>.
+<dt><a name="FLOATVAL_get_number_keyed_int(INTVAL_key)"
+><b><code>FLOATVAL get_number_keyed_int(INTVAL key)</b></code></a></dt>
+Returns the number associated with <code>key</code>.
+<dt><a name="void_set_integer_keyed_int(INTVAL_key,_INTVAL_value)"
+><b><code>void set_integer_keyed_int(INTVAL key, INTVAL value)</b></code></a></dt>
+Sets the value associated with <code>key</code> to <code>value</code>.
+<dt><a name="void_set_pmc_keyed_int(INTVAL_key,_PMC_*value)"
+><b><code>void set_pmc_keyed_int(INTVAL key, PMC *value)</b></code></a></dt>
+Sets the PMC associated with <code>key</code> to <code>*value</code>.
+<dt><a name="opcode_t_*invoke(void_*next)"
+><b><code>opcode_t *invoke(void *next)</b></code></a></dt>
+Adds the timer to the event queue.
+<dt><a name="void_set_number_keyed_int(INTVAL_key,_FLOATVAL_value)"
+><b><code>void set_number_keyed_int(INTVAL key, FLOATVAL value)</b></code></a></dt>
+Sets the floating&#45;point value associated with <code>key</code> to <code>value</code>.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

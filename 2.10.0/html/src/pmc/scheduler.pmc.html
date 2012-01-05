@@ -1,0 +1,124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - The concurrency scheduler</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; The concurrency scheduler
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/scheduler.pmc &#45; The concurrency scheduler</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Implements the core concurrency scheduler.</p>
+
+<h2><a name="Vtable_Functions"
+>Vtable Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes a concurrency scheduler object.
+<dt><a name="void_init_pmc(PMC_*data)"
+><b><code>void init_pmc(PMC *data)</b></code></a></dt>
+Initializes a new Scheduler with a <code>Hash</code> PMC with any or all of the keys:
+<dl>
+<dt><a name="id"
+><b><code>id</b></code></a></dt>
+An <code>Integer</code> representing the unique identifier for this scheduler.</dl>
+
+<dt><a name="void_push_pmc(PMC_*value)"
+><b><code>void push_pmc(PMC *value)</b></code></a></dt>
+Inserts a task into the task list,
+giving it a task ID one higher than the current maximum,
+and a birthtime of the current time.
+<dt><a name="PMC_*pop_pmc()"
+><b><code>PMC *pop_pmc()</b></code></a></dt>
+Retrieves the next task from the task list.
+If the task index is invalid,
+recalculates it before retrieving the next task.
+<dt><a name="INTVAL_get_integer()"
+><b><code>INTVAL get_integer()</b></code></a></dt>
+Retrieves the number of pending tasks in the scheduler&#39;s task list.
+<dt><a name="void_delete_keyed_int(INTVAL_key)"
+><b><code>void delete_keyed_int(INTVAL key)</b></code></a></dt>
+Removes the task with the given task ID from the task list.
+<dt><a name="PMC_*share_ro()"
+><b><code>PMC *share_ro()</b></code></a></dt>
+Sets this PMC as shared.
+<dt><a name="void_destroy()"
+><b><code>void destroy()</b></code></a></dt>
+Frees the scheduler&#39;s underlying struct.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Marks any referenced strings and PMCs as live.
+<dt><a name="void_visit(PMC_*info)"
+><b><code>void visit(PMC *info)</b></code></a></dt>
+Visits the contents of the scheduler (used by freeze/thaw).<code>*info</code> is the visit info (see <em>include/parrot/pmc_freeze.h</em>).
+<dt><a name="void_freeze(PMC_*info)"
+><b><code>void freeze(PMC *info)</b></code></a></dt>
+Archives the scheduler.
+<dt><a name="void_thaw(PMC_*info)"
+><b><code>void thaw(PMC *info)</b></code></a></dt>
+Unarchives the scheduler.
+<dt><a name="void_thawfinish(PMC_*info)"
+><b><code>void thawfinish(PMC *info)</b></code></a></dt>
+Finishes thawing the scheduler.</dl>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="METHOD_add_handler(PMC_*handler)"
+><b><code>METHOD add_handler(PMC *handler)</b></code></a></dt>
+Adds a handler to the scheduler.
+<dt><a name="METHOD_delete_handler(STRING_*type_:optional,_INTVAL_have_type_:opt_flag)"
+><b><code>METHOD delete_handler(STRING *type :optional, INTVAL have_type :opt_flag)</b></code></a></dt>
+Deletes a handler from the scheduler.
+<dt><a name="METHOD_find_handler(PMC_*task)"
+><b><code>METHOD find_handler(PMC *task)</b></code></a></dt>
+Searchs for a handler for the given task.
+If no handler is found,
+returns PMCNULL.
+<dt><a name="METHOD_count_handlers(STRING_*type_:optional,_INTVAL_have_type_:opt_flag)"
+><b><code>METHOD count_handlers(STRING *type :optional, INTVAL have_type :opt_flag)</b></code></a></dt>
+Returns the number of handlers currently held by the scheduler.
+If a type argument is passed,
+only counts handlers of that type (<code>event</code>,
+<code>exception</code>).
+If no type argument is passed,
+counts all handlers.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em><a href="../../docs/pdds/pdd25_concurrency.pod.html">docs/pdds/pdd25_concurrency.pod</a></em>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

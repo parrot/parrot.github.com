@@ -1,0 +1,250 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/cardinal.html">Cardinal</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<p>class cardinal::Grammar::Actions;</p>
+
+<p>method TOP($/) { my $past := PAST::Block.new( :blocktype(&#39;declaration&#39;),
+:node( $/ ) ); $past.push( $( $&#60;comp_stmt&#62; ) ); make $past; }</p>
+
+<p>method comp_stmt($/) { make $( $&#60;stmts&#62; ); }</p>
+
+<p>method stmts($/) { my $past := PAST::Stmts.new( :node($/) ); for $&#60;stmt&#62; { $past.push($($_)); } make $past; }</p>
+
+<p>method basic_stmt($/,
+$key) { make $( $/{$key} ); }</p>
+
+<p>method stmt($/) { my $past := $( $&#60;basic_stmt&#62; ); for $&#60;stmt_mod&#62; { my $modifier := $( $_ ); $modifier.push($past); $past := $modifier; } make $past; }</p>
+
+<p>method stmt_mod($/) { my $op; if $&#60;sym&#62; eq &#39;until&#39; { ## there is no :pasttype(&#39;until&#39;); this is called repeat_until $op := &#39;repeat_until&#39;; } else { ## if,
+while and unless are valid :pasttypes.
+$op := ~$&#60;sym&#62;; } make PAST::Op.new( $( $&#60;expr&#62; ),
+:pasttype($op),
+:node($/) );</p>
+
+<p>}</p>
+
+<p>method expr($/) { my $past := $( $&#60;basic_expr&#62; ); if $&#60;expr&#62; { my $op; if ~$&#60;op&#62;[0] eq &#39;and&#39; { $op := &#39;if&#39;; } else { $op := &#39;unless&#39;; } make PAST::Op.new( $past,
+$( $&#60;expr&#62;[0] ),
+:pasttype($op),
+:node($/) ); } else { make $past; } }</p>
+
+<p>method basic_expr($/,
+$key) { make $( $/{$key} ); }</p>
+
+<p>method not_expr($/) { make PAST::Op.new( $( $&#60;expr&#62; ),
+:pirop(&#39;not&#39;),
+:node($/) ); }</p>
+
+<p>## not entirely sure what alias does,
+but this is a guess...
+method alias($/) { my $fname := $( $&#60;fname&#62;[0] ); my $alias := $( $&#60;fname&#62;[1] ); make PAST::Op.new( $alias,
+$fname,
+:pasttype(&#39;bind&#39;),
+:node($/) ); }</p>
+
+<p>method begin($/) { my $past := $( $&#60;comp_stmt&#62; ); my $sub := PAST::Compiler.compile( $past ); $sub(); ## XXX what to do here?
+empty block?
+stolen from rakudo.
+make PAST::Block.new( :node($/) ); }</p>
+
+<p>method end($/) { my $past := PAST::Block.new( $( $&#60;comp_stmt&#62; ),
+:node($/) ); $past.blocktype(&#39;declaration&#39;); my $sub := PAST::Compiler.compile( $past ); PIR q&#60; $P0 = get_hll_global [&#39;cardinal&#39;],
+&#39;@?END_BLOCKS&#39; &#62;; PIR q&#60; $P1 = find_lex &#39;$sub&#39; &#62;; PIR q&#60; push $P0,
+$P1 &#62;; make $past; }</p>
+
+<p>method assignment($/) { my $lhs := $( $&#60;mlhs&#62; ); my $rhs := $( $&#60;mrhs&#62; ); make PAST::Op.new( $lhs,
+$rhs,
+:pasttype(&#39;bind&#39;),
+:node($/) ); }</p>
+
+<p>method mlhs($/) { make $( $&#60;mlhs_item&#62; ); }</p>
+
+<p>method mlhs_item($/,
+$key) { make $( $/{$key} ); }</p>
+
+<p>method lhs($/,
+$key) { make $( $/{$key} ); }</p>
+
+<p>method member_variable($/) { make $( $&#60;primary&#62; ); # XXX fix field.
+}</p>
+
+<p>method indexed_variable($/) { make $( $&#60;primary&#62; ); # XXX fix index }</p>
+
+<p>method variable($/,
+$key) { make $( $/{$key} ); }</p>
+
+<p>method varname($/,
+$key) { make $( $/{$key} ); }</p>
+
+<p>method global($/) { make PAST::Var.new( :name(~$/),
+:scope(&#39;package&#39;),
+:viviself(&#39;Undef&#39;),
+:node($/) ); }</p>
+
+<p>method instance_variable($/) { make PAST::Var.new( :name(~$/),
+:scope(&#39;attribute&#39;),
+:viviself(&#39;Undef&#39;),
+:node($/) ); }</p>
+
+<p>method local_variable($/) { make PAST::Var.new( :name(~$/),
+:scope(&#39;package&#39;),
+:node($/) ); }</p>
+
+<p>method if_stmt($/) { my $cond := +$&#60;expr&#62; &#45; 1; my $past := PAST::Op.new( $( $&#60;expr&#62;[$cond] ),
+$( $&#60;comp_stmt&#62;[$cond] ),
+:pasttype(&#39;if&#39;),
+:node( $/ ) ); if ( $&#60;else&#62; ) { $past.push( $( $&#60;else&#62;[0] ) ); } while ($cond != 0) { $cond := $cond &#45; 1; $past := PAST::Op.new( $( $&#60;expr&#62;[$cond] ),
+$( $&#60;comp_stmt&#62;[$cond] ),
+$past,
+:pasttype(&#39;if&#39;),
+:node( $/ ) ); } make $past; }</p>
+
+<p>method unless_stmt($/) { my $cond := $( $&#60;expr&#62; ); my $body := $( $&#60;comp_stmt&#62; ); my $past := PAST::Op.new( $cond,
+$body,
+:pasttype(&#39;unless&#39;),
+:node($/) ); if $&#60;else&#62; { $past.push( $( $&#60;else&#62;[0] ) ); } make $past; }</p>
+
+<p>method else($/) { make $( $&#60;comp_stmt&#62; ); }</p>
+
+<p>method ensure($/) { make $( $&#60;comp_stmt&#62; ); }</p>
+
+<p>method while_stmt($/) { my $cond := $( $&#60;expr&#62; ); my $body := $( $&#60;comp_stmt&#62; ); make PAST::Op.new( $cond,
+$body,
+:pasttype(~$&#60;sym&#62;),
+:node($/) ); }</p>
+
+<p>method module($/) { my $past := PAST::Block.new( $( $&#60;comp_stmt&#62; ),
+:node($/) ); my $name := $( $&#60;module_identifier&#62; ); $past.namespace( $name.name() ); $past.blocktype(&#39;declaration&#39;); make $past; }</p>
+
+<p>method begin_end($/) { my $past := $( $&#60;comp_stmt&#62; ); $past := PAST::Block.new( $past,
+:node($/) ); # XXX handle resque and ensure clauses make $past; }</p>
+
+<p>method functiondef($/) { my $name := $( $&#60;fname&#62; ); my $past := $( $&#60;argdecl&#62; ); $past.name($name.name()); my $body := $( $&#60;comp_stmt&#62; ); $past.push($body); make $past; }</p>
+
+<p>method argdecl($/) { my $past := PAST::Block.new( :blocktype(&#39;declaration&#39;),
+:node($/) ); for $&#60;identifier&#62; { my $param := $( $_ ); $param.scope(&#39;parameter&#39;); $past.push($param); } if $&#60;slurpy_param&#62; { $past.push( $( $&#60;slurpy_param&#62;[0] ) ); }</p>
+
+<pre lang='und' xml:lang='und'>    if $&#60;block_param&#62; {
+
+    }
+    make $past;
+}</pre>
+
+<p>method slurpy_param($/) { my $past := $( $&#60;identifier&#62; ); $past.slurpy(1); $past.scope(&#39;parameter&#39;); make $past; }</p>
+
+<p>method block_param($/) { my $past := $( $&#60;identifier&#62; ); # XXX make $past; }</p>
+
+<p>method fname($/, $key) { make $( $/{$key} ); }</p>
+
+<p>method identifier($/) { make PAST::Var.new( :name(~$&#60;ident&#62;), :scope(&#39;package&#39;), :node($/) ); }</p>
+
+<p>method module_identifier($/) { make PAST::Var.new( :name(~$/), :scope(&#39;package&#39;), :node($/) ); }</p>
+
+<p>method mrhs($/) { make $( $&#60;args&#62; ); }</p>
+
+<p>method command($/, $key) { make $( $/{$key} ); }</p>
+
+<p>method call($/) { my $op := $( $&#60;operation&#62; ); my $past := $( $&#60;call_args&#62; );</p>
+
+<pre lang='und' xml:lang='und'>    if $&#60;primary&#62; {
+        my $invocant := $( $&#60;primary&#62;[0] );
+        # XXX what&#39;s the diff. between &#34;.&#34; and &#34;::&#34;, in $&#60;op&#62;[0] ?
+        $past.unshift($invocant);
+    }
+
+    $past.unshift($op);
+    make $past;
+}</pre>
+
+<p>method super_call($/) { my $past := $( $&#60;call_args&#62; ); ## how to invoke super.xxx ? make $past; }</p>
+
+<p>method not_command($/) { make PAST::Op.new( $( $&#60;command&#62; ), :pirop(&#39;not&#39;), :node($/) ); }</p>
+
+<p>method operation($/) { make $( $&#60;identifier&#62; ); }</p>
+
+<p>method call_args($/) { make $( $&#60;args&#62; ); }</p>
+
+<p>method args($/) { my $past := PAST::Op.new( :pasttype(&#39;call&#39;), :node($/) ); for $&#60;arg&#62; { $past.push( $($_) ); } make $past; }</p>
+
+<p>method basic_primary($/, $key) { make $( $/{$key} ); }</p>
+
+<p>method primary($/) { my $past := $( $&#60;basic_primary&#62; );</p>
+
+<pre lang='und' xml:lang='und'>    # XXX check this out:
+    for $&#60;post_primary_expr&#62; {
+        my $postexpr := $( $_ );
+        $postexpr.unshift($past);
+        $past := $postexpr;
+    }
+    make $past;
+}</pre>
+
+<p>method post_primary_expr($/, $key) { make $( $/{$key} ); }</p>
+
+<p>method scope_identifier($/) { make $( $&#60;identifier&#62; ); # XXX handle :: operator. }</p>
+
+<p>method literal($/, $key) { make $( $/{$key} ); }</p>
+
+<p>method pcomp_stmt($/) { make $( $&#60;comp_stmt&#62; ); }</p>
+
+<p>method array($/) { my $past; ## XXX the &#34;new&#34; method should be invoked on the &#34;Array&#34; class (use get_class) ## but that doesn&#39;t work yet. my $getclass := PAST::Op.new( :inline(&#39; %r = new &#34;Array&#34;&#39;), :node($/) ); if $&#60;args&#62; { $past := $( $&#60;args&#62;[0] ); $past.unshift( $getclass ); $past.name(&#39;new&#39;); $past.pasttype(&#39;callmethod&#39;); } else { $past := PAST::Op.new( $getclass, :name(&#39;new&#39;), :pasttype(&#39;callmethod&#39;), :node($/) ); } make $past; }</p>
+
+<p>method hash($/) { # XXX handle class stuff my $past; my $getclass := PAST::Op.new( :inline(&#39; %r = new &#34;Hash&#34;&#39;), :node($/) ); $past := PAST::Op.new( $getclass, :name(&#39;new&#39;), :pasttype(&#39;callmethod&#39;), :node($/) ); make $past; }</p>
+
+<p>method assocs($/) { for $&#60;assoc&#62; {</p>
+
+<pre lang='und' xml:lang='und'>    }
+    # XXX
+}</pre>
+
+<p>method assoc($/) { # XXX }</p>
+
+<p>method float($/) { make PAST::Val.new( :value( ~$/ ), :returns(&#39;Float&#39;), :node($/) ); }</p>
+
+<p>method integer($/) { make PAST::Val.new( :value( ~$/ ), :returns(&#39;Integer&#39;), :node($/) ); }</p>
+
+<p>method string($/) { make PAST::Val.new( :value( $($&#60;string_literal&#62;) ), :node($/) ); }</p>
+
+<p>method arg($/, $key) { ## Handle the operator table ## if ($key eq &#39;end&#39;) { make $($&#60;expr&#62;); } else { my $past := PAST::Op.new( :name($&#60;type&#62;), :pasttype($&#60;top&#62;&#60;pasttype&#62;), :pirop($&#60;top&#62;&#60;pirop&#62;), :lvalue($&#60;top&#62;&#60;lvalue&#62;), :node($/) ); for @($/) { $past.push( $($_) ); } make $past; } }</p>
+
+<p># Local Variables: # mode: cperl # cperl&#45;indent&#45;level: 4 # fill&#45;column: 100 # End: # vim: expandtab shiftwidth=4:</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

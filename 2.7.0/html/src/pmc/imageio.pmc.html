@@ -1,0 +1,131 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - ImageIO PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; ImageIO PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/imageio.pmc &#45; ImageIO PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Freezes and thaws other PMCs.</p>
+
+<h1><a name="FUNCTIONS"
+>FUNCTIONS</a></h1>
+
+<dl>
+<dt><a name="static_opcode_t_*_GET_VISIT_CURSOR(const_PMC_*pmc)"
+><b><code>static opcode_t * GET_VISIT_CURSOR(const PMC *pmc)</b></code></a></dt>
+
+<dt><a name="static_void_SET_VISIT_CURSOR(PMC_*pmc,_const_char_*cursor)"
+><b><code>static void SET_VISIT_CURSOR(PMC *pmc, const char *cursor)</b></code></a></dt>
+
+<dt><a name="static_void_INC_VISIT_CURSOR(PMC_*pmc,_UINTVAL_inc)"
+><b><code>static void INC_VISIT_CURSOR(PMC *pmc, UINTVAL inc)</b></code></a></dt>
+
+<dt><a name="static_void_create_buffer(PARROT_INTERP,_PMC_*pmc,_PMC_*info)"
+><b><code>static void create_buffer(PARROT_INTERP, PMC *pmc, PMC *info)</b></code></a></dt>
+
+<dt><a name="static_void_ensure_buffer_size(PARROT_INTERP,_PMC_*io,_size_t_len)"
+><b><code>static void ensure_buffer_size(PARROT_INTERP, PMC *io, size_t len)</b></code></a></dt>
+Checks the size of the buffer to see if it can accommodate <code>len</code> more bytes.
+If not,
+expands the buffer.
+<dt><a name="static_INTVAL_INFO_HAS_DATA(const_PMC_*io)"
+><b><code>static INTVAL INFO_HAS_DATA(const PMC *io)</b></code></a></dt>
+
+<dt><a name="static_PMC*_id_list_get(PARROT_INTERP,_const_PMC_*io,_UINTVAL_id)"
+><b><code>static PMC* id_list_get(PARROT_INTERP, const PMC *io, UINTVAL id)</b></code></a></dt>
+
+<dt><a name="static_PMC_*_visit_todo_list_thaw(PARROT_INTERP,_PMC*_info)"
+><b><code>static PMC * visit_todo_list_thaw(PARROT_INTERP, PMC* info)</b></code></a></dt>
+
+<dt><a name="static_void_visit_todo_list_freeze(PARROT_INTERP,_PMC*_pmc,_PMC*_info)"
+><b><code>static void visit_todo_list_freeze(PARROT_INTERP, PMC* pmc, PMC* info)</b></code></a></dt>
+</dl>
+
+<h1><a name="VTABLES"
+>VTABLES</a></h1>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes the PMC.
+<dt><a name="void_destroy()"
+><b><code>void destroy()</b></code></a></dt>
+Destroys the PMC.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Marks the PMC as alive.
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+Returns the content of the image as a string.
+<dt><a name="VTABLE_PMC_*get_pmc()"
+><b><code>VTABLE PMC *get_pmc()</b></code></a></dt>
+Gets the result PMC after a thaw.
+<dt><a name="VTABLE_PMC_*get_iter()"
+><b><code>VTABLE PMC *get_iter()</b></code></a></dt>
+Get the <code>todo</code> list for this freeze/thaw for iterating over.
+<dt><a name="VTABLE_INTVAL_get_integer()"
+><b><code>VTABLE INTVAL get_integer()</b></code></a></dt>
+Returns the flags describing the visit action.
+<dt><a name="VTABLE_void_push_integer(INTVAL_v)"
+><b><code>VTABLE void push_integer(INTVAL v)</b></code></a></dt>
+Pushes the integer <code>v</code> onto the end of the image.
+<dt><a name="VTABLE_void_push_float(FLOATVAL_v)"
+><b><code>VTABLE void push_float(FLOATVAL v)</b></code></a></dt>
+Pushes the float <code>v</code> onto the end of the image.
+<dt><a name="VTABLE_void_push_string(STRING_*v)"
+><b><code>VTABLE void push_string(STRING *v)</b></code></a></dt>
+Pushes the string <code>*v</code> onto the end of the image.
+<dt><a name="VTABLE_void_push_pmc(PMC_*v)"
+><b><code>VTABLE void push_pmc(PMC *v)</b></code></a></dt>
+Pushes a reference to pmc <code>*v</code> onto the end of the image.
+If <code>*v</code> hasn&#39;t been seen yet,
+it is also pushed onto the todo list.
+<dt><a name="void_set_pointer(void_*value)"
+><b><code>void set_pointer(void *value)</b></code></a></dt>
+Sets the constant table of this ImageIO PMC.
+<dt><a name="VTABLE_INTVAL_shift_integer()"
+><b><code>VTABLE INTVAL shift_integer()</b></code></a></dt>
+Removes and returns an integer from the start of the image.
+<dt><a name="VTABLE_FLOATVAL_shift_float()"
+><b><code>VTABLE FLOATVAL shift_float()</b></code></a></dt>
+Removes and returns an number from the start of the image.
+<dt><a name="VTABLE_STRING*_shift_string()"
+><b><code>VTABLE STRING* shift_string()</b></code></a></dt>
+Removes and returns a string from the start of the image.
+<dt><a name="static_PMC_*shift_pmc()"
+><b><code>static PMC *shift_pmc()</b></code></a></dt>
+Removes and returns a reference to a pmc from the start of the image.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

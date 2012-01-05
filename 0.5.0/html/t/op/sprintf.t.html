@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>sprintf tests</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">sprintf tests</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/tests.html">Tests</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>t/op/sprintf.t &#45;&#45; sprintf tests</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>These tests are based on sprintf tests from perl 5.9.4.</p>
+
+<p>Tests sprintf,
+excluding handling of 64&#45;bit integers or long doubles (if supported),
+of machine&#45;specific short and long integers,
+machine&#45;specific floating point exceptions (infinity,
+not&#45;a&#45;number ...),
+of the effects of locale,
+and of features specific to multi&#45;byte characters (under the utf8 pragma and such).</p>
+
+<p>Individual tests are stored in the <code lang='und' xml:lang='und'>sprintf_tests</code> file in the same directory; There is one test per line.
+In each test,
+there are three required fields:</p>
+
+<dl>
+<dt><a name="printf_template"
+>printf template</a></dt><p class="pad"></p>
+
+<dt><a name="data_to_be_formatted_(as_a_parrot_expression)"
+>data to be formatted (as a parrot expression)</a></dt><p class="pad"></p>
+
+<dt><a name="expected_result_of_formatting"
+>expected result of formatting</a></dt><p class="pad"></p>
+</dl>
+
+<p>Optional fields contain</p>
+
+<dl>
+<dt><a name="a_comment"
+>a comment</a></dt><p class="pad"></p>
+</dl>
+
+<p>Each field is separated by one or more tabs.
+If formatting requires more than one data item (for example,
+if variable field widths are used),
+the Parrot data expression should return a reference to an array having the requisite number of elements.
+Even so,
+subterfuge is sometimes required: see tests for %n and %p.</p>
+
+<p>XXX: FIXME: TODO: Tests that are expected to fail on a certain OS can be marked as such by trailing the comment with a skip: section.
+Skips are tags separated by space consisting of a $^O optionally trailed with :osvers.
+In the latter case,
+all os&#45;levels below that are expected to fail.
+A special tag &#39;all&#39; is allowed for todo tests that should fail on any system</p>
+
+<p>&#62;%G&#62; &#62;1234567e96&#60; &#62;1.23457E+102&#60; &#62;exponent too big skip: os390&#60; &#62;%.0g&#60; &#62;&#45;0.0&#60; &#62;&#45;0&#60; &#62;No minus skip: MSWin32 VMS hpux:10.20&#60; &#62;%d&#60; &#62;4&#60; &#62;1&#60; &#62;4 != 1 skip: all&#60;</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>    % prove t/op/sprintf.t</pre>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

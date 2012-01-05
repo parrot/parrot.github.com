@@ -1,0 +1,226 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>compilers/imcc/cfg.c</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">compilers/imcc/cfg.c</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>compilers/imcc/cfg.c</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>A basic block is the longest sequence of instructions that we are sure will be executed sequentially: no branches,
+no labels.</p>
+
+<p>The control&#45;flow graph is a directed graph that reflects the flow of execution between blocks.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_int_check_invoke_type"
+><b><code lang='und' xml:lang='und'>static int check_invoke_type</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="void_find_basic_blocks"
+><b><code lang='und' xml:lang='und'>void find_basic_blocks</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="static_void_bb_check_set_addr"
+><b><code lang='und' xml:lang='und'>static void bb_check_set_addr</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="void_build_cfg"
+><b><code lang='und' xml:lang='und'>void build_cfg</b></code></a></dt><p class="pad"></p>
+
+<dd>Once the basic blocks have been computed,
+build_cfg computes the dependencies between them.</dd><p class="pad"></p>
+
+<dt><a name="static_void_bb_findadd_edge"
+><b><code lang='und' xml:lang='und'>static void bb_findadd_edge</b></code></a></dt><p class="pad"></p>
+
+<dd>find the placement of the label,
+and link the two nodes</dd><p class="pad"></p>
+
+<dt><a name="int_blocks_are_connected"
+><b><code lang='und' xml:lang='und'>int blocks_are_connected</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="static_void_bb_add_edge"
+><b><code lang='und' xml:lang='und'>static void bb_add_edge</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="static_void_bb_remove_edge"
+><b><code lang='und' xml:lang='und'>static void bb_remove_edge</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="static_void_free_edge"
+><b><code lang='und' xml:lang='und'>static void free_edge</b></code></a></dt><p class="pad"></p>
+
+<dd>Free the memory of an IMC_Unit&#39;s edge list.</dd><p class="pad"></p>
+
+<dt><a name="int_edge_count"
+><b><code lang='und' xml:lang='und'>int edge_count</b></code></a></dt><p class="pad"></p>
+
+<dd>Count the number of edges in the specified IMC_Unit.</dd><p class="pad"></p>
+
+<dt><a name="void_life_analysis"
+><b><code lang='und' xml:lang='und'>void life_analysis</b></code></a></dt><p class="pad"></p>
+
+<dd>Driver routine to call analyse_life_symbol for each reglist in the specified IMC_Unit.</dd><p class="pad"></p>
+
+<dt><a name="static_void_analyse_life_symbol"
+><b><code lang='und' xml:lang='und'>static void analyse_life_symbol</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="void_free_life_info"
+><b><code lang='und' xml:lang='und'>void free_life_info</b></code></a></dt><p class="pad"></p>
+
+<dd>Free memory of the life analysis info structures.</dd><p class="pad"></p>
+
+<dt><a name="static_void_analyse_life_block"
+><b><code lang='und' xml:lang='und'>static void analyse_life_block</b></code></a></dt><p class="pad"></p>
+
+<dd>analyse_life_block studies the state of the var r in the block bb.</dd><p class="pad"></p>
+
+<dd>Its job is to set the flags LF_use,
+or LF_read,
+and record the intervals inside the block where the var is alive.</dd><p class="pad"></p>
+
+<dt><a name="static_void_propagate_need"
+><b><code lang='und' xml:lang='und'>static void propagate_need</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="void_compute_dominators"
+><b><code lang='und' xml:lang='und'>void compute_dominators</b></code></a></dt><p class="pad"></p>
+
+<dd>Computes the dominators tree of the CFG.
+Basic block A dominates B,
+if each path to B passes through A</dd><p class="pad"></p>
+
+<dd>s.
+gcc:flow.c compute_dominators</dd><p class="pad"></p>
+
+<dt><a name="void_compute_dominance_frontiers"
+><b><code lang='und' xml:lang='und'>void compute_dominance_frontiers</b></code></a></dt><p class="pad"></p>
+
+<dd>Algorithm to find dominance frontiers described in paper &#34;A Simple,
+Fast Dominance Algorithm&#34;,
+Cooper et al.
+(2001)</dd><p class="pad"></p>
+
+<dt><a name="static_void_free_dominators"
+><b><code lang='und' xml:lang='und'>static void free_dominators</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="static_void_free_dominance_frontiers"
+><b><code lang='und' xml:lang='und'>static void free_dominance_frontiers</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="static_void_sort_loops"
+><b><code lang='und' xml:lang='und'>static void sort_loops</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="void_find_loops"
+><b><code lang='und' xml:lang='und'>void find_loops</b></code></a></dt><p class="pad"></p>
+
+<dd>Searches for loops in the CFG.
+We search for edges that go from a node to one of its dominators.</dd><p class="pad"></p>
+
+<dt><a name="int_natural_preheader"
+><b><code lang='und' xml:lang='und'>int natural_preheader</b></code></a></dt><p class="pad"></p>
+
+<dd>For loop_info,
+finds the natural preheader of the loop,
+if any,
+and returns its index,
+otherwise returns &#45;1.
+A natural preheader exists if there is only one predecessor to the loop header outside of the loop body,
+and if it always transfers control directly to the header.</dd><p class="pad"></p>
+
+<dt><a name="static_void_mark_loop"
+><b><code lang='und' xml:lang='und'>static void mark_loop</b></code></a></dt><p class="pad"></p>
+
+<dd>Increases the loop_depth of all the nodes in a loop</dd><p class="pad"></p>
+
+<dt><a name="static_void_free_loops"
+><b><code lang='und' xml:lang='und'>static void free_loops</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="void_search_predecessors_not_in"
+><b><code lang='und' xml:lang='und'>void search_predecessors_not_in</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="static_void_init_basic_blocks"
+><b><code lang='und' xml:lang='und'>static void init_basic_blocks</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="void_clear_basic_blocks"
+><b><code lang='und' xml:lang='und'>void clear_basic_blocks</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="static_Basic_block*_make_basic_block"
+><b><code lang='und' xml:lang='und'>static Basic_block *make_basic_block</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="Life_range_*_make_life_range"
+><b><code lang='und' xml:lang='und'>Life_range *make_life_range</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

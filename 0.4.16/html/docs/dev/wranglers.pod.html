@@ -1,0 +1,370 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Tips for Ticket Wranglers</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Tips for Ticket Wranglers</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>docs/dev/wranglers.pod &#45; Tips for Ticket Wranglers</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This document attempts to outline a set of &#34;best practices&#34; for dealing with tickets in Parrot&#39;s RT system.
+It is targeted at Parrot developers and &#34;Ticket Wranglers&#34; and is <i>not</i> intended as advice or instruction for end users.
+Ticket filing procedures for end users are documented in <em lang='und' xml:lang='und'><a href="../submissions.pod.html">docs/submissions.pod</a></em>.</p>
+
+<h1><a name="WHAT_IS_A_TICKET_WRANGLER?"
+>WHAT IS A TICKET WRANGLER? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>A developer with sufficient permissions to modify the tickets in Parrot&#39;s RT system.
+All Parrot developers are expected to pitch in and help keep the ticket tracker in a healthy state.
+<i>This means you!</i></p>
+
+<h1><a name="WHERE_IS_IT?"
+>WHERE IS IT? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The Parrot ticket tracker is currently the same as the <i>Perlbug</i> system used for Perl5 Development.
+It is available at <a href='https://rt.perl.org'>https://rt.perl.org</a>.
+The Parrot issues are in the queue <i>parrot</i>.</p>
+
+<h1><a name="TICKET_HANDLING_PROCEDURES"
+>TICKET HANDLING PROCEDURES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="New_Tickets"
+>New Tickets <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Where <i>New</i> refers to a pre&#45;existing ticket sitting in the Parrot queue with a status of <code lang='und' xml:lang='und'>new</code>.</p>
+
+<h3><a name="Bug_Triage"
+>Bug Triage</a></h3>
+
+<p>Involves deciding whether the ticket is a real bug,
+a feature request,
+a duplicate or spam.</p>
+
+<p>It is especially important that all <code lang='und' xml:lang='und'>new</code> bugs which are marked [TODO],
+[PATCH] or [CAGE] be checked that they really are bugs of the given class.
+This is because some bugs,
+such as [TODO] and [CAGE] get their status set to <code lang='und' xml:lang='und'>open</code> to indicate that something should be done,
+rather than something is being done.</p>
+
+<dl>
+<dt><a name="Is_this_spam?"
+>Is this spam?</a></dt><p class="pad"></p>
+
+<dd>Assign the issue to the queue <i>spam</i>.
+Note that if this is successful,
+you will no longer have permissions to view the ticket.</dd><p class="pad"></p>
+
+<dt><a name="Is_this_a_duplication_of_an_existing_ticket?"
+>Is this a duplication of an existing ticket?</a></dt><p class="pad"></p>
+
+<dd>RT doesn&#39;t handle that case in a graceful manner.
+Set the relationship &#39;dependent on&#39; to the duplicate issue.
+Add a comment to the ticket along the lines of &#34;Duplicate of Ticket #123&#34; and change the Tag field to &#34;duplicate&#34;.
+Also,
+change the status to &#34;rejected&#34;.</dd><p class="pad"></p>
+
+<dt><a name="Is_there_enough_information?"
+>Is there enough information?</a></dt><p class="pad"></p>
+
+<dd>If not,
+ask for more input.</dd><p class="pad"></p>
+
+<dt><a name="Is_it_a_[TODO]_ticket?"
+>Is it a [TODO] ticket?</a></dt><p class="pad"></p>
+
+<dd>Is the subject line in the format <code lang='und' xml:lang='und'>&#34;[TODO] subsystem &#45; issue</code>?</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>[TODO]</code> tickets should have their status changed to <code lang='und' xml:lang='und'>open</code> to prevent them from appearing in a listing of <code lang='und' xml:lang='und'>new</code> tickets.</dd><p class="pad"></p>
+
+<dt><a name="Is_it_a_[PATCH]_ticket?"
+>Is it a [PATCH] ticket?</a></dt><p class="pad"></p>
+
+<dd>Is the subject line in the format <code lang='und' xml:lang='und'>&#34;[PATCH] subsystem &#45; issue</code>?</dd><p class="pad"></p>
+
+<dd>Make sure that there is actually a patch attached to the ticket.
+If you&#39;ve applied a patch,
+be sure to include the revision in your response when closing the ticket.</dd><p class="pad"></p>
+
+<dt><a name="*_Is_it_a_[CAGE]_bug?"
+>* Is it a [CAGE] bug?</a></dt><p class="pad"></p>
+
+<dd>Is the subject line in the format <code lang='und' xml:lang='und'>&#34;[CAGE] subsystem &#45; issue</code>?</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>[CAGE]</code> bugs should have their status changed to <code lang='und' xml:lang='und'>open</code> to prevent them from appearing in a listing of <code lang='und' xml:lang='und'>new</code> bugs.</dd><p class="pad"></p>
+
+<dt><a name="*_Assign_the_bug_to_someone_if_at_all_possible."
+>* Assign the bug to someone if at all possible.</a></dt><p class="pad"></p>
+</dl>
+
+<h2><a name="TODO_Tickets"
+>TODO Tickets <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="Claim_ownership_or_interest_(_CC_)_of_the_ticket."
+>Claim ownership or interest ( CC ) of the ticket.</a></dt><p class="pad"></p>
+
+<dd>This way you will receive further correspondence about the ticket.</dd><p class="pad"></p>
+
+<dt><a name="Run_the_test_suite"
+>Run the test suite</a></dt><p class="pad"></p>
+
+<dt><a name="make_manitest"
+>make manitest</a></dt><p class="pad"></p>
+
+<dt><a name="add_the_patch_author_to_CREDITS_or_update_the_author&#39;s_entry"
+>add the patch author to CREDITS or update the author&#39;s entry</a></dt><p class="pad"></p>
+
+<dt><a
+>add correspondence to the ticket stating that the patch was applied and include the svn revision number in your response.</a></dt><p class="pad"></p>
+
+<dt><a name="make_sure_that_the_ticket&#39;s_&#39;Tag&#39;_includes_&#39;Patch&#39;"
+>make sure that the ticket&#39;s &#39;Tag&#39; includes &#39;Patch&#39;</a></dt><p class="pad"></p>
+
+<dt><a name="set_the_ticket&#39;s_&#39;Patch_Status&#39;_to_&#39;Applied&#39;"
+>set the ticket&#39;s &#39;Patch Status&#39; to &#39;Applied&#39;</a></dt><p class="pad"></p>
+
+<dt><a name="set_the_ticket&#39;s_&#39;Status&#39;_to_&#39;resolved&#39;"
+>set the ticket&#39;s &#39;Status&#39; to &#39;resolved&#39;</a></dt><p class="pad"></p>
+</dl>
+
+<h2><a name="Old_Tickets"
+>Old Tickets <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>If the ticket is more then <i>1 month</i> old then it&#39;s considered <i>old</i>.</p>
+
+<dl>
+<dt><a name="Ping_the_requestor"
+>Ping the requestor</a></dt><p class="pad"></p>
+
+<dd>Give the requestor at least <i>1 week</i> to respond.
+If no response is received then add a comment to the ticket saying that it is stalled because of no response from the requestor.
+Change the status to <code lang='und' xml:lang='und'>stalled</code>.</dd><p class="pad"></p>
+
+<dd>If it&#39;s a [PATCH] ticket,
+it&#39;s possible that the patch was applied but the ticket/patch status was never changed.
+Also,
+not all list traffic regarding a ticket ends up in RT.
+It&#39;s best to look at the SVN repo to attempt to determine if the ticket was resolved.</dd><p class="pad"></p>
+
+<dt><a name="Review_of_stalled_tickets"
+>Review of stalled tickets</a></dt><p class="pad"></p>
+
+<dd>Sometimes tickets are marked <code lang='und' xml:lang='und'>stalled</code> because there&#39;s no hope if fixing them soon.
+Sometimes,
+no response is available from the requestor,
+or it can&#39;t be verified.
+Periodically,
+these tickets should be reviewed,
+and when possible,
+moved back to <code lang='und' xml:lang='und'>open</code> or <code lang='und' xml:lang='und'>closed</code>,
+as appropriate.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="TIPS_FOR_CORRESPONDENCE"
+>TIPS FOR CORRESPONDENCE <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Don&#39;t_be_a_Butthead"
+>Don&#39;t be a Butthead <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Remember that every word you type into the ticket tracker is <i>On The Record</i>.
+Try not to say anything that could offend or hurt the feelings of <i>anyone</i>.
+That includes the ticket submitter and other developers.
+When,
+as a Parrot developer with commit rights,
+you send correspondence you are representing the Parrot project and by proxy TPF.
+If in doubt,
+either send the message privately or not at all.</p>
+
+<h2><a name="Say_thank_you!"
+>Say thank you! <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Try to add a little token of appreciation to every message you send in response to a ticket.
+Ticket requestors are doing labor for free!
+The least you can do is let them know that you appreciate their efforts.</p>
+
+<p>Something like:</p>
+
+<pre lang='und' xml:lang='und'>    Thanks,
+
+    Thanks for following up.
+
+    Thanks for reporting.
+
+    Thanks for X!</pre>
+
+<p>Can work wonders. If you can make someone feel good about themselves maybe they&#39;ll submit another ticket/patch/whatever or perhaps some day become a Parrot developer.</p>
+
+<h2><a name="Don&#39;t_say_&#34;problem&#34;"
+>Don&#39;t say &#34;problem&#34; <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Supposedly it&#39;s better customer relations to use <i>issue(s)</i> instead of the <i>problem(s)</i>. Don&#39;t ask me why...</p>
+
+<h2><a name="Make_it_clear_why_the_ticket_status_changed"
+>Make it clear why the ticket status changed <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Always note why the ticket is having it&#39;s status changed. Particularly if it is being closed or rejected. Nothing will irritate people more then letting them think that their ticket was unimportant or ignored.</p>
+
+<h2><a name="Example_Correspondence"
+>Example Correspondence <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>    Hi,
+
+    Can you retest for this ticket with the latest sources from SVN and confirm
+    that this still an open issue?
+
+    Thanks,
+
+    &#45;J</pre>
+
+<p>or</p>
+
+<pre lang='und' xml:lang='und'>    Hi,
+
+    Would you mind retesting with the latest sources from SVN?
+
+    Thanks,
+
+    &#45;J</pre>
+
+<p>or</p>
+
+<pre lang='und' xml:lang='und'>    Hi,
+
+    Can you resubmit this patch different against SVN trunk?
+
+    Thanks,
+
+    &#45;J</pre>
+
+<p>or</p>
+
+<pre lang='und' xml:lang='und'>    Patch applied as rXXX.  Thanks for submitting.
+
+    &#45;J</pre>
+
+<p>or</p>
+
+<pre lang='und' xml:lang='und'>    No response for requestor.  Ticket being marked as &#39;rejected&#39;.
+    Thanks for reporting.
+
+    &#45;J</pre>
+
+<p>or</p>
+
+<pre lang='und' xml:lang='und'>    This doesn&#39;t appear to be an issue anymore.
+    Thanks for submitting
+
+    &#45;J</pre>
+
+<p>or</p>
+
+<pre lang='und' xml:lang='und'>    Marking this ticket as &#39;resolved&#39; because it seems to have fixed itself.
+    Thanks for following up.
+
+    &#45;J</pre>
+
+<h1><a name="SVN_USAGE_TIPS"
+>SVN USAGE TIPS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Commit_messages"
+>Commit messages <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="Put_a_subsystem_identifier_out_the_front"
+>Put a subsystem identifier out the front</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  [tcl]: commit message</pre>
+
+<dt><a name="If_related_to_an_RT_ticket,_use_the_ticket_title"
+>If related to an RT ticket, use the ticket title</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  [tcl]: #37301: [BUG] 9262: env tests failing on win32</pre>
+
+<dt><a name="Add_a_&#34;Courtesy_of_&#60;foo&#62;&#34;_if_supplied_by_someone_else"
+>Add a &#34;Courtesy of &#60;foo&#62;&#34; if supplied by someone else</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  Courtesy of A. U. Thor &#60;author@cpan.org&#62;</pre>
+
+<dt><a name="Detailed_commit_messages_are_preferred"
+>Detailed commit messages are preferred</a></dt><p class="pad"></p>
+
+<dd>Make it clear what your intent is when committing. It makes future maintenance much easier.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  [PGE]:
+  * Switched &#34;PGE::Regex&#34; to be &#34;PGE::Grammar&#34;, to be more accurate.
+  * Moved default rules from PGE::Regex into PGE::Match.
+  * Updated various languages and tools to match.</pre>
+
+<dt><a name="Commit_file_names"
+>Commit file names</a></dt><p class="pad"></p>
+
+<dd>You don&#39;t need to include the filename in the commit message as that&#39;s part of the commit itself. However, if your commit affects multiple directories, you may mention that, especially if it&#39;s part of a group of commits.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  [PDD07]: whitespace &#45;&#45; part 5
+  ~ removed trailing spaces and tabs from t/exit/, t/dynpmc/, t/dynoplibs/</pre>
+
+<dt><a name="Group_similar_commits_by_parts"
+>Group similar commits by parts</a></dt><p class="pad"></p>
+
+<dd>If all commits are much the same and require basically the same commit message, it can be useful to number the commit messages. For example:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  [tools]: smartlink functionality &#45;&#45; part 3
+  ~ added regex attribute to Keyphrase class
+  ~ filled in some more SmartLinkServer attribute init code
+  ~ expanded LinkTree class functionality
+  still TODO: merge smartlink and spec info, emit html, improve cmdline option code</pre>
+
+<dd>You may optionally include items that are still todo, as it helps make your intentions clear.</dd><p class="pad"></p>
+
+<dt><a name="More_ideas"
+>More ideas</a></dt><p class="pad"></p>
+
+<dd>Look at past commit messages, and <a href='http://cia.navi.cx/stats/project/parrot'><a href="http://cia.navi.cx/stats/project/parrot">http://cia.navi.cx/stats/project/parrot</a></a> for more best practices.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Joshua Hoblitt (JHOBLITT) <code lang='und' xml:lang='und'>jhoblitt@cpan.org</code></p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

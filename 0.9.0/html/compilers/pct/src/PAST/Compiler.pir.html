@@ -1,0 +1,254 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>PAST Compiler</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">PAST Compiler</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>PAST::Compiler &#45; PAST Compiler</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>PAST::Compiler implements a basic compiler for PAST nodes.
+By default PAST::Compiler transforms a PAST tree into POST.</p>
+
+<h2><a name="Signature_Flags"
+>Signature Flags <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p>Throughout the compiler PAST uses a number of 1&#45;character &#34;flags&#34; to indicate allowable register types and conversions.
+This helps the compiler generate more efficient code and know what sorts of conversions are allowed (or desired).
+The basic flags are:</p>
+
+<pre>    P,S,I,N   PMC, string, int, or num register
+    s         string register or constant
+    i         int register or constant
+    n         num register or constant
+    r         any register result
+    v         void (no result)
+    *         any result type except void
+    +         PMC, int register, num register, or numeric constant
+    ~         PMC, string register, or string constant
+    :         argument (same as &#39;*&#39;), possibly with :named or :flat</pre>
+
+<p>These flags are used to describe signatures and desired return types for various operations. For example, if an opcode is specified with a signature of <code>I~P*</code>, then the opcode places its result in an int register, its first child is coerced into some sort of string value, its second child is coerced into a PMC register, and the third and subsequent children can return any value type.</p>
+
+<h2><a name="Compiler_methods"
+>Compiler methods <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="to_post(node_[,_&#39;option&#39;=&#62;option,_...])"
+>to_post(node [, &#39;option&#39;=&#62;option, ...])</a></dt>
+Compile the abstract syntax tree given by <code>past</code> into POST.
+<dt><a name="escape(str)"
+>escape(str)</a></dt>
+Return <code>str</code> as a PIR constant string.
+<dt><a name="unique([STR_fmt])"
+>unique([STR fmt])</a></dt>
+Generate a unique number that can be used as an identifier. If <code>fmt</code> is provided, then it will be used as a prefix to the unique number.
+<dt><a name="uniquereg(rtype)"
+>uniquereg(rtype)</a></dt>
+Generate a unique register based on <code>rtype</code>, where <code>rtype</code> is one of the signature flags described above.
+<dt><a name="coerce(post,_rtype)"
+>coerce(post, rtype)</a></dt>
+Return a POST tree that coerces the result of <code>post</code> to have a return value compatible with <code>rtype</code>. <code>rtype</code> can also be a specific register, in which case the result of <code>post</code> is forced into that register (with conversions as needed).
+<dt><a name="post_children(node_[,_&#39;signature&#39;=&#62;signature]_)"
+>post_children(node [, &#39;signature&#39;=&#62;signature] )</a></dt>
+Return the POST representation of evaluating all of <code>node</code>&#39;s children in sequence. The <code>signature</code> option is a string of flags as described in &#34;Signature Flags&#34; above. Since we&#39;re just evaluating children nodes, the first character of <code>signature</code> (return value type) is ignored. Thus a <code>signature</code> of <code>v~P*</code> says that the first child needs to be something in string context, the second child should be a PMC, and the third and subsequent children can be any value they wish.</dl>
+
+<h2><a name="Methods_on_PAST::Node_arguments"
+>Methods on <code>PAST::Node</code> arguments <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p>The methods below are used to transform PAST nodes into their POST equivalents.</p>
+
+<h3><a name="Defaults"
+>Defaults</a></h3>
+
+<dl>
+<dt><a name="as_post(node)_(General)"
+>as_post(node) (General)</a></dt>
+Return a POST representation of <code>node</code>. Note that <code>post</code> is a multimethod based on the type of its first argument, this is the method that is called when no other methods match.
+<dt><a name="as_post(Any)"
+>as_post(Any)</a></dt>
+This is the &#34;fallback&#34; method for any unrecognized node types. We use this to throw a more useful exception in case any non&#45;PAST nodes make it into the tree.
+<dt><a name="as_post(Undef)"
+>as_post(Undef)</a></dt>
+Return an empty POST node that can be used to hold a (PMC) result.
+<dt><a name="as_post(Integer)"
+>as_post(Integer)</a></dt>
+
+<dt><a name="as_post(Float)"
+>as_post(Float)</a></dt>
+
+<dt><a name="as_post(String)"
+>as_post(String)</a></dt>
+Handle Integer, Float, and String nodes in the PAST tree, by generating a constant or an appropriate register setting.
+<dt><a name="as_vivipost(String_class)"
+>as_vivipost(String class)</a></dt>
+Generate POST to create a new object of type <code>class</code>. This is typically invoked by the various vivification methods below (e.g., in a PAST::Var node to default a variable to a given type).
+<dt><a name="as_vivipost(PAST::Node_node)"
+>as_vivipost(PAST::Node node)</a></dt>
+
+<dt><a name="as_post(PAST::Node_node)"
+>as_post(PAST::Node node)</a></dt>
+Return the POST representation of executing <code>node</code>&#39;s children in sequence. The result of the final child is used as the result of this node.N.B.: This method is also the one that is invoked for converting nodes of type <code>PAST::Stmts</code>.</dl>
+
+<h3><a name="PAST::Control"
+><code>PAST::Control</code></a></h3>
+
+<dl>
+<dt><a name="as_post(PAST::Control_node)"
+>as_post(PAST::Control node)</a></dt>
+Return the POST representation of a <code>PAST::Control</code>.</dl>
+
+<h3><a name="PAST::Block"
+><code>PAST::Block</code></a></h3>
+
+<dl>
+<dt><a name="as_post(PAST::Block_node)"
+>as_post(PAST::Block node)</a></dt>
+Return the POST representation of a <code>PAST::Block</code>.</dl>
+
+<h3><a name="PAST::Op"
+><code>PAST::Op</code></a></h3>
+
+<dl>
+<dt><a name="as_post(PAST::Op_node)"
+>as_post(PAST::Op node)</a></dt>
+Return the POST representation of a <code>PAST::Op</code> node. Normally this is handled by redispatching to a method corresponding to the node&#39;s &#34;pasttype&#34; attribute.
+<dt><a name="pirop(PAST::Op_node)"
+>pirop(PAST::Op node)</a></dt>
+Return the POST representation of a <code>PAST::Op</code> node with a &#39;pasttype&#39; of &#39;pirop&#39;.
+<dt><a name="call(PAST::Op_node)"
+>call(PAST::Op node)</a></dt>
+Return the POST representation of a <code>PAST::Op</code> node for calling a sub.
+<dt><a name="callmethod(PAST::Op_node)"
+>callmethod(PAST::Op node)</a></dt>
+Return the POST representation of a <code>PAST::Op</code> node to invoke a method on a PMC.
+<dt><a name="if(PAST::Op_node)"
+>if(PAST::Op node)</a></dt>
+
+<dt><a name="unless(PAST::Op_node)"
+>unless(PAST::Op node)</a></dt>
+Return the POST representation of <code>PAST::Op</code> nodes with a &#39;pasttype&#39; of if/unless.
+<dt><a name="loop_gen(...)"
+>loop_gen(...)</a></dt>
+Generate a standard loop with NEXT/LAST/REDO exception handling.
+<dt><a name="while(PAST::Op_node)"
+>while(PAST::Op node)</a></dt>
+
+<dt><a name="until(PAST::Op_node)"
+>until(PAST::Op node)</a></dt>
+
+<dt><a name="repeat_while(PAST::Op_node)"
+>repeat_while(PAST::Op node)</a></dt>
+
+<dt><a name="repeat_until(PAST::Op_node)"
+>repeat_until(PAST::Op node)</a></dt>
+Return the POST representation of a <code>while</code> or <code>until</code> loop.
+<dt><a name="for(PAST::Op_node)"
+>for(PAST::Op node)</a></dt>
+Return the POST representation of the <code>for</code> loop given by <code>node</code>.
+<dt><a name="list(PAST::Op_node)"
+>list(PAST::Op node)</a></dt>
+Build a list from the children. The type of list constructed is determined by the <code>returns</code> attribute, which defaults to <code>ResizablePMCArray</code> if not set.
+<dt><a name="stmts(PAST::Op_node)"
+>stmts(PAST::Op node)</a></dt>
+Treat the node like a PAST::Stmts node &#45;&#45; i.e., invoke all the children and return the value of the last one.
+<dt><a name="null(PAST::Op_node)"
+>null(PAST::Op node)</a></dt>
+A &#34;no&#45;op&#34; node &#45;&#45; none of the children are processed, and no statements are generated.
+<dt><a name="return(PAST::Op_node)"
+>return(PAST::Op node)</a></dt>
+Generate a return exception, using the first child (if any) as a return value.
+<dt><a name="try(PAST::Op_node)"
+>try(PAST::Op node)</a></dt>
+Return the POST representation of a <code>PAST::Op</code> node with a &#39;pasttype&#39; of bind. The first child is the code to be surrounded by an exception handler, the second child (if any) is the code to process the handler.
+<dt><a name="chain(PAST::Op_node)"
+>chain(PAST::Op node)</a></dt>
+A short&#45;circuiting chain of operations. In a sequence of nodes with pasttype &#39;chain&#39;, the right operand of a node serves as the left operand of its parent. Each node is evaluated only once, and the first false result short&#45;circuits the chain. In other words, <code>$x &#60; $y &#60; $z</code> is true only if $x &#60; $y and $y &#60; $z, but $y only gets evaluated once.
+<dt><a name="def_or(PAST::Op_node)"
+>def_or(PAST::Op node)</a></dt>
+The short&#45;circuiting default operator (e.g., Perl 6&#39;s <code>infix:&#60;//&#62;</code>). Returns its first child if its defined, otherwise it evaluates and returns the second child. (N.B.: This particular pasttype is a candidate for being refactored out using thunks of some sort.)
+<dt><a name="xor(PAST::Op_node)"
+>xor(PAST::Op node)</a></dt>
+A short&#45;circuiting exclusive&#45;or operation. Each child is evaluated, if exactly one child evaluates to true then its value is returned, otherwise return Undef. Short&#45;circuits with Undef as soon as a second child is found that evaluates as true.
+<dt><a name="bind(PAST::Op_node)"
+>bind(PAST::Op node)</a></dt>
+Return the POST representation of a <code>PAST::Op</code> node with a &#39;pasttype&#39; of bind.
+<dt><a name="copy(PAST::Op_node)"
+>copy(PAST::Op node)</a></dt>
+Implement a &#39;copy&#39; assignment (at least until we get the &#39;copy&#39; opcode &#45;&#45; see RT#47828).
+<dt><a name="inline(PAST::Op_node)"
+>inline(PAST::Op node)</a></dt>
+Return the POST representation of a <code>PAST::Op</code> node with a &#39;pasttype&#39; of inline.</dl>
+
+<h3><a name="PAST::Var"
+><code>PAST::Var</code></a></h3>
+
+<dl>
+<dt><a name="as_post(PAST::Var_node)"
+>as_post(PAST::Var node)</a></dt>
+Return the POST representation of a <code>PAST::Var</code>. Generally we redispatch to an appropriate handler based on the node&#39;s &#39;scope&#39; attribute.</dl>
+
+<h3><a name="PAST::Val"
+><code>PAST::Val</code></a></h3>
+
+<dl>
+<dt><a name="as_post(PAST::Val_node_[,_&#39;rtype&#39;=&#62;rtype])"
+>as_post(PAST::Val node [, &#39;rtype&#39;=&#62;rtype])</a></dt>
+Return the POST representation of the constant value given by <code>node</code>. The <code>rtype</code> parameter advises the method whether the value may be returned directly as a PIR constant or needs to have a PMC generated containing the constant value.</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Patrick Michaud &#60;pmichaud@pobox.com&#62; is the author and maintainer. Please send patches and suggestions to the Parrot porters or Perl 6 compilers mailing lists.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>2006&#45;11&#45;20 Patrick Michaud added first draft of POD documentation. 2006&#45;11&#45;27 Significant refactor into separate modules.</p>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Copyright (C) 2006&#45;2008, The Perl Foundation.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

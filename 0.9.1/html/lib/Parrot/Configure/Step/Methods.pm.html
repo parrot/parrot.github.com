@@ -1,0 +1,142 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Methods for selected configuration steps</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Contents</a> &raquo; <a href="../../../../../html/perl.html">Perl Modules</a> &raquo; Methods for selected configuration steps
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>Parrot::Configure::Step::Methods &#45; Methods for selected configuration steps</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>The Parrot::Configure::Step::Methods module provides methods inherited by Parrot::Configure::Step which are used internally by the <code>runstep()</code> method of more than one configuration step class but which are not intended for general use in all configuration step classes.</p>
+
+<p>The methods in this module should not be considered part of the public interface of Parrot::Configure::Step.
+They merely refactor code which at one point was repeated in multiple configuration step classes and which need access to the data in the Parrot::Configure::Step object.</p>
+
+<p>Since the methods are not part of the public interface,
+their names should begin with an underscore &#39;<code>_</code>&#39;.</p>
+
+<h1><a name="METHODS"
+>METHODS</a></h1>
+
+<h2><a name="_handle_darwin_for_fink()"
+><code>_handle_darwin_for_fink()</code></a></h2>
+
+<pre>    $self&#45;&#62;_handle_darwin_for_fink($conf, $libs, $osname, $file);</pre>
+
+<p>Currently used in configuration step classes auto::gmp, auto::readline and auto::gdbm.</p>
+
+<p>Modifies settings for <code>linkflags</code>, <code>ldflags</code> and <code>ccflags</code> in the Parrot::Configure object&#39;s data structure.</p>
+
+<h2><a name="_handle_darwin_for_macports()"
+><code>_handle_darwin_for_macports()</code></a></h2>
+
+<pre>    $self&#45;&#62;_handle_darwin_for_macports($conf, $libs, $osname, $file);</pre>
+
+<p>Currently used in configuration step classes auto::gmp, auto::readline and auto::opengl.</p>
+
+<p>Modifies settings for <code>linkflags</code>, <code>ldflags</code> and <code>ccflags</code> in the Parrot::Configure object&#39;s data structure.</p>
+
+<p>Potentially expandable to cover all BSD&#45;ports systems &#45;&#45; but as yet there has been no demand.</p>
+
+<h2><a name="_select_lib()"
+><code>_select_lib()</code></a></h2>
+
+<pre>    $self&#45;&#62;_select_lib( {
+        conf            =&#62; $conf,
+        osname          =&#62; $osname,
+        cc              =&#62; $cc,
+        win32_gcc       =&#62; &#39;&#45;lalpha32 &#45;lalpha32 &#45;lopenalpha32&#39;,
+        win32_nongcc    =&#62; &#39;alpha.lib&#39;,
+        cygwin          =&#62; &#39;&#45;lalpha32 &#45;lXalpha32&#39;, # optional
+        darwin          =&#62; &#39;alphadarwin.lib&#39;,
+        default         =&#62; &#39;&#45;lalpha&#39;,
+    } );</pre>
+
+<p><b>Purpose</b>: In a number of configuration step classes, the class&#39;s <code>runstep()</code> method adds libraries to the single whitespace&#45;delimited string found in the Parrot::Configure object&#39;s <code>libs</code> attribute. The libraries to be added are either OS&#45;specific or OS/C&#45;compiler&#45;specific. This method enables the developer of a configuration step class to define a default value for such a flag &#45;&#45; usually the value that is appropriate to Unix&#45;like systems &#45;&#45; and, optionally, to define non&#45;default values for certain OSes or OS/C&#45;compiler combinations. We currently support settings for:</p>
+
+<ul>
+<li>MSWin32 with <em>gcc</em> as the C&#45;compiler.</li>
+
+<li>MSWin32 with any C&#45;compiler other than <em>gcc</em>.</li>
+
+<li>Cygwin to override Mingw.</li>
+
+<li>Darwin.</li>
+</ul>
+
+<p><b>Arguments</b>: Reference to a hash. Four of the hash&#39;s key&#45;value pairs are required:</p>
+
+<ul>
+<li><code>conf</code></li>
+
+<p>The Parrot::Configure object. Supplied within <code>runstep()</code>.</p>
+
+<li><code>osname</code></li>
+
+<p>The name of the operating system. Supplied within <code>runstep()</code>.</p>
+
+<li><code>cc</code></li>
+
+<p>The name of the C&#45;compiler. Supplied within <code>runstep()</code>.</p>
+
+<li><code>default</code></li>
+
+<p>Libraries to be added where no OS&#45;specific or OS/C&#45;compiler&#45;specific libraries are to be added. Single whitespace&#45;delimited string.</p>
+</ul>
+
+<p>These optional settings are currently supported and, if provided, will supersede the value in <code>default</code>.</p>
+
+<ul>
+<li><code>win32_gcc</code></li>
+
+<p>Libraries to be added where OS is mswin32 or cygwin and C&#45;compiler is <em>gcc</em>. Single whitespace&#45;delimited string.</p>
+
+<li><code>win32_nongcc</code></li>
+
+<p>Libraries to be added where OS is mswin32 and C&#45;compiler is not <em>gcc</em>. Single whitespace&#45;delimited string.</p>
+
+<li><code>cygwin</code></li>
+
+<p>Optional libraries to be added where OS is cygwin. This overrides <code>win32_gcc</code> if defined. Single whitespace&#45;delimited string.</p>
+
+<li><code>darwin</code></li>
+
+<p>Libraries to be added where OS is Darwin. Do not supply a value if the value you need is the same as <code>default</code>. Single whitespace&#45;delimited string.</p>
+</ul>
+
+<p><b>Return Value</b>: Returns true value upon success.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p>Parrot::Configure::Step.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

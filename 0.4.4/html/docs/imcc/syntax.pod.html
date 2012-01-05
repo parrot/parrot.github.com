@@ -1,0 +1,466 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>syntax</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">syntax</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/imcc.html">IMCC</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>IMCC &#45; syntax</p>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="0.1_initial"
+>0.1 initial</a></dt><p class="pad"></p>
+</dl>
+
+<h1><a name="OVERVIEW"
+>OVERVIEW <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This document describes the IMCC syntax.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h1><a name="Comments_and_empty_lines"
+>Comments and empty lines <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Comments start with <b>#</b> and last until the following newline.
+These and empty lines are ignored.</p>
+
+<h1><a name="Statements"
+>Statements <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>A valid imcc program consists of a sequence of <i>statements</i>.
+A <i>statement</i> is terminated by a newline (&#60;NL&#62;).</p>
+
+<h2><a name="General_statement_format"
+>General statement format <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  [label:] [instruction] &#60;NL&#62;</pre>
+
+<h2><a name="Labels"
+>Labels <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Optional label for the given instruction, can stand on its own line. Global labels start with an underscore, local labels shouldn&#39;t. A label must conform to the syntax of <b>identifier</b> described below.</p>
+
+<h1><a name="INSTRUCTIONS"
+>INSTRUCTIONS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Terms_used_here"
+>Terms used here <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="&#60;identifier&#62;"
+>&#60;identifier&#62;</a></dt><p class="pad"></p>
+
+<dd>Start with a letter or underscore, then may contain additionally digits and <b>::</b>.</dd><p class="pad"></p>
+
+<dd>Example:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    a
+    _a
+    A42
+    a::b_c</pre>
+
+<dt><a name="&#60;type&#62;"
+>&#60;type&#62;</a></dt><p class="pad"></p>
+
+<dd><b>int</b>, <b>float</b>, <b>string</b>, <b>pmc</b> or a valid parrot PMC type like <b>Array</b>.</dd><p class="pad"></p>
+
+<dt><a name="&#60;reg&#62;"
+>&#60;reg&#62;</a></dt><p class="pad"></p>
+
+<dd>A PASM register In, Sn, Nn, Pn, or a IMCC temporary register $In, $Sn, $Nn, $Pn, where <b>n</b> consists of digit(s) only.</dd><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;"
+>&#60;var&#62;</a></dt><p class="pad"></p>
+
+<dd>A local <b>identifier</b> or a <b>reg</b> or a constant (when allowed).</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Constants"
+>Constants <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="&#39;char_constant&#39;"
+>&#39;char constant&#39;</a></dt><p class="pad"></p>
+
+<dd>Are delimited by <b>&#39;</b>. They are taken to be <code lang='und' xml:lang='und'>ascii</code> encoded. No escape sequences are processed.</dd><p class="pad"></p>
+
+<dt><a name="&#34;string_constants&#34;"
+>&#34;string constants&#34;</a></dt><p class="pad"></p>
+
+<dd>Are delimited by <b>&#34;</b>. A <b>&#34;</b> inside a string must be escaped by <b>\&#34;</b>. Only 7&#45;bit ASCII is accepted in string constants; to use characters outside thar range, specify an encoding in the way below.</dd><p class="pad"></p>
+
+<dt><a name="&#60;&#60;&#34;heredoc&#34;,_&#60;&#60;&#39;heredoc&#39;"
+>&#60;&#60;&#34;heredoc&#34;, &#60;&#60;&#39;heredoc&#39;</a></dt><p class="pad"></p>
+
+<dd>Heredocs work like single or double quoted strings. All lines up to the terminating delimiter is slurped into the string. The delimiter has to be on its own line with no trailing whitespace.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  $S0 = &#60;&#60;&#39;EOT&#39;
+  ...
+ EOT
+
+  function(&#60;&#60;&#34;END_OF_HERE&#34;, arg)
+  ...
+ END_OF_HERE</pre>
+
+<dd>Only one heredoc can be active per statement line.</dd><p class="pad"></p>
+
+<dt><a name="charset:&#34;string_constant&#34;"
+>charset:&#34;string constant&#34;</a></dt><p class="pad"></p>
+
+<dd>Like above with a chracter set attached to the string. Valid character sets are currently: <code lang='und' xml:lang='und'>ascii</code> (the default), <code lang='und' xml:lang='und'>binary</code>, <code lang='und' xml:lang='und'>unicode</code> (with UTF&#45;8 as the default encoding), and <code lang='und' xml:lang='und'>iso&#45;8859&#45;1</code>.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="String_escape_sequences"
+>String escape sequences <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Inside double&#45;quoted strings the following escape sequences are processed.</p>
+
+<pre lang='und' xml:lang='und'>  \xhh        1..2 hex digits
+  \ooo        1..3 oct digits
+  \cX         control char X
+  \x{h..h}    1..8 hex digits
+  \uhhhh      4 hex digits
+  \Uhhhhhhhh  8 hex digits
+  \a, \b, \t, \n, \v, \f, \r, \e, \\</pre>
+
+<dl>
+<dt><a name="encoding:charset:&#34;string_constant&#34;"
+>encoding:charset:&#34;string constant&#34;</a></dt><p class="pad"></p>
+
+<dd>Like above with an extra encoding attached to the string. For eample:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  set S0, utf8:unicode:&#34;&#194;&#171;&#34;</pre>
+
+<dd>The encoding and charset gets attaced to the string, no further processing is done, specifically escape sequences are not honored.</dd><p class="pad"></p>
+
+<dt><a name="numeric_constants"
+>numeric constants</a></dt><p class="pad"></p>
+
+<dd><b>0x</b> and <b>0b</b> denote hex and binary constants.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Directive_instructions"
+>Directive instructions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name=".pragma_n_operators"
+>.pragma n_operators</a></dt><p class="pad"></p>
+
+<dd>Convert arithmethic infix operators to n_infix operations. The unary opcodes <code lang='und' xml:lang='und'>abs</code>, <code lang='und' xml:lang='und'>not</code>, <code lang='und' xml:lang='und'>bnot</code>, <code lang='und' xml:lang='und'>bnots</code>, and <code lang='und' xml:lang='und'>neg</code> are also changed to use a <b>n_</b> prefix.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> .pragma n_operators 1
+ .sub foo
+   ...
+   $P0 = $P1 + $P2           # n_add $P0, $P1, $P2
+   $P2 = abs $P0             # n_abs $P2, $P0</pre>
+
+<dt><a name=".HLL_&#34;hll_name&#34;,_&#34;hll_lib&#34;"
+>.HLL &#34;hll_name&#34;, &#34;hll_lib&#34;</a></dt><p class="pad"></p>
+
+<dd>Define the HLL for the current file. If the string <code lang='und' xml:lang='und'>hll_lib</code> isn&#39;t empty this <b>compile time pragma</b> also loads the shared lib for the HLL, so that integer type constants are working for creating new PMCs.</dd><p class="pad"></p>
+
+<dt><a name=".HLL_map_.CoreType,_.UserType"
+>.HLL_map .CoreType, .UserType</a></dt><p class="pad"></p>
+
+<dd>Whenever Parrot has to create PMCs inside C code on behalf of the running user program it consults the current type mapping for the executing HLL and creates a PMC of type <i>.UserType</i> instead of <i>.CoreType</i>, if such a mapping is defined.</dd><p class="pad"></p>
+
+<dd>E.g. with this code snippet ...</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  .sub _my_init :immediate
+    $P0 = loadlib &#39;dynlexpad&#39;
+  .end
+
+  .HLL &#34;Foo&#34;, &#34;&#34;
+  .HLL_map .LexPad, .DynLexPad
+
+  .sub main :main
+    ...</pre>
+
+<dd>... all subroutines for language <i>Foo</i> would use a dynamic lexpad pmc.</dd><p class="pad"></p>
+
+<dt><a name=".sub_&#60;identifier&#62;"
+>.sub &#60;identifier&#62;</a></dt><p class="pad"></p>
+
+<dt><a name=".end"
+>.end</a></dt><p class="pad"></p>
+
+<dd>Define a <i>compilation unit</i> with the label <b>identifier:</b>.</dd><p class="pad"></p>
+
+<dt><a name=".emit"
+>.emit</a></dt><p class="pad"></p>
+
+<dt><a name=".eom"
+>.eom</a></dt><p class="pad"></p>
+
+<dd>Define a <i>compilation unit</i> containing PASM code.</dd><p class="pad"></p>
+
+<dt><a name=".local_&#60;type&#62;_&#60;identifier&#62;_[:unique_reg]"
+>.local &#60;type&#62; &#60;identifier&#62; [:unique_reg]</a></dt><p class="pad"></p>
+
+<dt><a name=".sym_&#60;type&#62;_&#60;identifier&#62;_[:unique_reg]"
+>.sym &#60;type&#62; &#60;identifier&#62; [:unique_reg]</a></dt><p class="pad"></p>
+
+<dd>Define a local name <b>identifier</b> for this <i>compilation unit</i> and of the given <b>type</b>. You can define multiple identifiers of the same type by separating them with commas:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  .sym int i, j</pre>
+
+<dd>The optional <code lang='und' xml:lang='und'>:unique_reg</code> modifier will force the register allocator to associate the identifier with a unique register for the duration of the compilation unit.</dd><p class="pad"></p>
+
+<dt><a name=".lex_&#60;identifier&#62;,_&#60;reg&#62;"
+>.lex &#60;identifier&#62;, &#60;reg&#62;</a></dt><p class="pad"></p>
+
+<dd>Declare a lexical variable that is an alias for a PMC register. The PIR compiler calls this method in response to a .lex STRING, PREG directive. For example, given this preamble:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    .lex &#34;$a&#34;, $P0
+    $P1 = new Integer
+
+    These two opcodes have an identical effect:
+
+    $P0 = $P1
+    store_lex &#34;$a&#34;, $P1
+
+    And these two opcodes also have an identical effect:
+
+    $P1 = $P0
+    $P1 = find_lex &#34;$a&#34;</pre>
+
+<dt><a name=".const_&#60;type&#62;_&#60;identifier&#62;_=_&#60;const&#62;"
+>.const &#60;type&#62; &#60;identifier&#62; = &#60;const&#62;</a></dt><p class="pad"></p>
+
+<dd>Define a named constant of style <i>type</i> and value <i>const</i>.</dd><p class="pad"></p>
+
+<dt><a name=".namespace_&#60;identifier&#62;"
+>.namespace &#60;identifier&#62;</a></dt><p class="pad"></p>
+
+<dd>Open a new scope block. This &#34;namespace&#34; is not the same as the .namespace [ &#60;identifier&#62; ] syntax, which is used for storing subroutines in a particular namespace in the global symboltable. This directive is useful in cases such as (pseudocode):</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  local x = 1;
+  print(x);       # prints 1
+  do              # open a new namespace/scope block
+    local x = 2;  # this x hides the previous x
+    print(x);     # prints 2
+  end             # close the current namespace
+  print(x);       # prints 1 again</pre>
+
+<dd>All types of common language constructs such as if, for, while, repeat and such that have nested scopes, can use this directive.</dd><p class="pad"></p>
+
+<dt><a name=".endnamespace_&#60;identifier&#62;"
+>.endnamespace &#60;identifier&#62;</a></dt><p class="pad"></p>
+
+<dd>Closes the scope block that was opened with .namespace &#60;identifier&#62;.</dd><p class="pad"></p>
+
+<dt><a name=".namespace_[_&#60;identifier&#62;_]"
+>.namespace [ &#60;identifier&#62; ]</a></dt><p class="pad"></p>
+
+<dt><a name=".namespace_[_&#60;identifier&#62;_;_&#60;identifier&#62;_]"
+>.namespace [ &#60;identifier&#62; ; &#60;identifier&#62; ]</a></dt><p class="pad"></p>
+
+<dd>Defines the namespace from this point onwards. By default the program is not in any namespace. If you specify more than one, separated by semicolons, it creates nested namespaces, by storing the inner namespace object with a <code lang='und' xml:lang='und'>\0</code> prefix in the outer namespace&#39;s global pad.</dd><p class="pad"></p>
+
+<dt><a name=".pcc_*"
+>.pcc_*</a></dt><p class="pad"></p>
+
+<dd>Directives used for Parrot Calling Conventions.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Directives_for_subroutine_parameters_and_return"
+>Directives for subroutine parameters and return <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name=".param_&#60;type&#62;_&#60;identifier&#62;_[:&#60;flag&#62;_...]"
+>.param &#60;type&#62; &#60;identifier&#62; [:&#60;flag&#62; ...]</a></dt><p class="pad"></p>
+
+<dd>At the top of a subroutine, declare a local variable, in the mannter of <b>.local</b>, into which parameter(s) of the current subroutine should be stored. Available flags: <code lang='und' xml:lang='und'>:slurpy</code>, <code lang='und' xml:lang='und'>:optional</code>, <code lang='und' xml:lang='und'>:opt_flag</code> and <code lang='und' xml:lang='und'>:unique_reg</code>.</dd><p class="pad"></p>
+
+<dt><a name=".param_&#60;reg&#62;_[:&#60;flag&#62;_...]"
+>.param &#60;reg&#62; [:&#60;flag&#62; ...]</a></dt><p class="pad"></p>
+
+<dd>At the top of a subroutine, specify where parameter(s) of the current subroutine should be stored. Available flags: <code lang='und' xml:lang='und'>:slurpy</code>, <code lang='und' xml:lang='und'>:optional</code>, <code lang='und' xml:lang='und'>:opt_flag</code> and <code lang='und' xml:lang='und'>:unique_reg</code>.</dd><p class="pad"></p>
+
+<dt><a name=".return_&#60;var&#62;_[:&#60;flag&#62;_...]"
+>.return &#60;var&#62; [:&#60;flag&#62; ...]</a></dt><p class="pad"></p>
+
+<dd>Between <b>.pcc_begin_return</b> and <b>.pcc_end_return</b>, specify one or more of the return value(s) of the current subroutine. Available flags: <code lang='und' xml:lang='und'>:flat</code>.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Directives_for_making_a_PCC_call"
+>Directives for making a PCC call <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name=".arg_&#60;var&#62;_[:&#60;flag&#62;_...]"
+>.arg &#60;var&#62; [:&#60;flag&#62; ...]</a></dt><p class="pad"></p>
+
+<dd>Between <b>.pcc_begin</b> and <b>.pcc_call</b>, specify an argument to be passed. Available flags: <code lang='und' xml:lang='und'>:flat</code>.</dd><p class="pad"></p>
+
+<dt><a name=".result_&#60;var&#62;_[:&#60;flag&#62;_...]"
+>.result &#60;var&#62; [:&#60;flag&#62; ...]</a></dt><p class="pad"></p>
+
+<dd>Between <b>.pcc_call</b> and <b>.pcc_end</b>, specify where one or more return value(s) should be stored. Available flags: <code lang='und' xml:lang='und'>:slurpy</code>, <code lang='und' xml:lang='und'>:optional</code>, and <code lang='und' xml:lang='und'>:opt_count</code>.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Parameter_Passing_Flags"
+>Parameter Passing Flags <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>See <a href='TODO#pdd03_calling_conventions.pod'>PDD03</a> for a description of the meaning of the flag bits bits <code lang='und' xml:lang='und'>SLURPY</code>, <code lang='und' xml:lang='und'>OPTIONAL</code>, <code lang='und' xml:lang='und'>OPT_FLAG</code>, and <code lang='und' xml:lang='und'>FLAT</code>, which correspond to the claling convention flags <code lang='und' xml:lang='und'>:slurpy</code>, <code lang='und' xml:lang='und'>:optional</code>, <code lang='und' xml:lang='und'>:opt_flag</code>, and <code lang='und' xml:lang='und'>:flat</code>.</p>
+
+<p>[TODO &#45; once these flag bits are solidified by long&#45;term use, then we may choose to copy appropriate bits of the documentation to here.]</p>
+
+<h2><a name="Instructions"
+>Instructions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Instructions may be a valid PASM instruction or anything listed here below:</p>
+
+<dl>
+<dt><a name="goto_&#60;identifier&#62;"
+>goto &#60;identifier&#62;</a></dt><p class="pad"></p>
+
+<dd><b>branch</b> &#60;identifier&#62;.</dd><p class="pad"></p>
+
+<dt><a name="if_&#60;var&#62;_goto_&#60;identifier&#62;"
+>if &#60;var&#62; goto &#60;identifier&#62;</a></dt><p class="pad"></p>
+
+<dt><a name="unless_&#60;var&#62;_goto_&#60;identifier&#62;"
+>unless &#60;var&#62; goto &#60;identifier&#62;</a></dt><p class="pad"></p>
+
+<dd>Translate to <b>if x, identifier</b> or <b>unless ..</b>.</dd><p class="pad"></p>
+
+<dt><a name="if_&#60;var&#62;_&#60;relop&#62;_&#60;var&#62;_goto_&#60;identifier&#62;"
+>if &#60;var&#62; &#60;relop&#62; &#60;var&#62; goto &#60;identifier&#62;</a></dt><p class="pad"></p>
+
+<dd>The <b>relop</b> <b>&#60;, &#60;=, ==, != &#62;= &#62;</b> translate to the PASM opcodes <b>lt</b>, <b>le</b>, <b>eq</b>, <b>ne</b>, <b>ge</b> or <b>gt</b> <b>var</b>, <b>var</b>, <b>identifier</b>.</dd><p class="pad"></p>
+
+<dt><a name="unless_&#60;var&#62;_&#60;relop&#62;_&#60;var&#62;_goto_&#60;identifier&#62;"
+>unless &#60;var&#62; &#60;relop&#62; &#60;var&#62; goto &#60;identifier&#62;</a></dt><p class="pad"></p>
+
+<dd>Like above, but branch if condition isn&#39;t met.</dd><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;_=_&#60;var&#62;"
+>&#60;var&#62; = &#60;var&#62;</a></dt><p class="pad"></p>
+
+<dd><b>set var, var</b></dd><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;_=_&#60;unary&#62;_&#60;var&#62;"
+>&#60;var&#62; = &#60;unary&#62; &#60;var&#62;</a></dt><p class="pad"></p>
+
+<dd>The <b>unary</b>s <b>!</b>, <b>&#45;</b> and <b>~</b> generate <b>not</b>, <b>neg</b> and <b>bnot</b> ops.</dd><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;_=_&#60;var&#62;_&#60;binary&#62;_&#60;var&#62;"
+>&#60;var&#62; = &#60;var&#62; &#60;binary&#62; &#60;var&#62;</a></dt><p class="pad"></p>
+
+<dd>The <b>binary</b>s <b>+</b>, <b>&#45;</b>, <b>*</b>, <b>/</b>, <b>%</b> and <b>**</b> generate <b>add</b>, <b>sub</b>, <b>mul</b>, <b>div</b>, <b>mod</b> and <b>pow</b> arithmetic ops. <b>binary</b> <b>.</b> is <b>concat</b> and valid for string arguments.</dd><p class="pad"></p>
+
+<dd><b>&#60;&#60;</b> and <b>&#62;&#62;</b> are arithmetic shifts <b>shl</b> and <b>shr</b>. <b>&#62;&#62;&#62;</b> is the logical shift <b>lsr</b>.</dd><p class="pad"></p>
+
+<dd><b>&#38;&#38;</b>, <b>||</b> and <b>~~</b> are logic <b>and</b>, <b>or</b> and <b>xor</b>.</dd><p class="pad"></p>
+
+<dd><b>&#38;</b>, <b>|</b> and <b>~</b> are binary <b>band</b>, <b>bor</b> and <b>bxor</b>.</dd><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;_=_&#60;var&#62;_[_&#60;var&#62;_]"
+>&#60;var&#62; = &#60;var&#62; [ &#60;var&#62; ]</a></dt><p class="pad"></p>
+
+<dd>This generates either a keyed <b>set</b> operation or <b>substr var, var, var, 1</b> for string arguments and an integer key.</dd><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;_[_&#60;var&#62;_]_=_&#60;var&#62;"
+>&#60;var&#62; [ &#60;var&#62; ] = &#60;var&#62;</a></dt><p class="pad"></p>
+
+<dd>A keyed <b>set</b> operation or the assign <b>substr</b> op with a length of 1.</dd><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;_=_new_&#60;type&#62;"
+>&#60;var&#62; = new &#60;type&#62;</a></dt><p class="pad"></p>
+
+<dd><b>new var, .type</b></dd><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;_=_new_&#60;type&#62;,_&#60;var&#62;"
+>&#60;var&#62; = new &#60;type&#62;, &#60;var&#62;</a></dt><p class="pad"></p>
+
+<dd><b>new var, .type, var</b></dd><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;_=_defined_&#60;var&#62;"
+>&#60;var&#62; = defined &#60;var&#62;</a></dt><p class="pad"></p>
+
+<dd><b>defined var, var</b></dd><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;_=_defined_&#60;var&#62;_[_&#60;var&#62;_]"
+>&#60;var&#62; = defined &#60;var&#62; [ &#60;var&#62; ]</a></dt><p class="pad"></p>
+
+<dd><b>defined var, var[var]</b> the keyed op.</dd><p class="pad"></p>
+
+<dt><a name="global_&#34;string&#34;_=_&#60;var&#62;"
+>global &#34;string&#34; = &#60;var&#62;</a></dt><p class="pad"></p>
+
+<dd><b>store_global &#34;string&#34;, var</b></dd><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;_=_global_&#34;string&#34;"
+>&#60;var&#62; = global &#34;string&#34;</a></dt><p class="pad"></p>
+
+<dd><b>find_global var, &#34;string&#34;</b></dd><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;_=_clone_&#60;var&#62;"
+>&#60;var&#62; = clone &#60;var&#62;</a></dt><p class="pad"></p>
+
+<dd><b>clone var, var</b></dd><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;_=_addr_&#60;var&#62;"
+>&#60;var&#62; = addr &#60;var&#62;</a></dt><p class="pad"></p>
+
+<dd><b>set_addr var, var</b></dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>parsing.pod</em>, <em lang='und' xml:lang='und'>calling_conventions.pod</em></p>
+
+<h1><a name="FILES"
+>FILES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>imcc.l</em>, <em lang='und' xml:lang='und'>imcc.y</em></p>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Leopold Toetsch &#60;lt@toetsch.at&#62;</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Slice PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Slice PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/slice.pmc &#45; Slice PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>These are the vtable functions for the slice PMC class.</p>
+
+<p>A Slice PMC isa Key PMC,
+holding a chain of start and/or end values for slice ranges.
+Private flags define the meaning of the values:</p>
+
+<pre>  [ s .. e ]    s .. KEY_start_slice_FLAG; e .. KEY_end_slice_FLAG
+  [ x,     ]    KEY_start_slice_FLAG | KEY_end_slice_FLAG
+  [  .. e  ]    KEY_inf_slice_FLAG   | KEY_end_slice_FLAG
+  [ s ..   ]    KEY_start_slice_FLAG | KEY_inf_slice_FLAG</pre>
+
+<p>Infinite ranges are currently implemented for Array and PerlString only.</p>
+
+<p>Run</p>
+
+<pre>  $ parrot &#45;d2000 slice.pasm</pre>
+
+<p>to see slice constant flags.</p>
+
+<p>During initialization above key chain gets converted to parrot_range_t structures.</p>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="INTVAL_get_integer()"
+><b><code>INTVAL get_integer()</b></code></a></dt>
+Get the next integer key from the current slice range.
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+Get the next string key from the current slice range.
+<dt><a name="PMC_*slice(PMC_*key)"
+><b><code>PMC *slice(PMC *key)</b></code></a></dt>
+
+<dt><a name="PMC_*get_iter()"
+><b><code>PMC *get_iter()</b></code></a></dt>
+A slice can serve as its own iterator, yielding values [start .. end&#45;1]. This is used for implementing Pythons xrange()
+<dt><a name="PMC_*nextkey_keyed(PMC_*agg,_INTVAL_what)"
+><b><code>PMC *nextkey_keyed(PMC *agg, INTVAL what)</b></code></a></dt>
+Prepare slice PMC SELF for iteration over the passed aggregate or advance to next position in the range, depending on what.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,1215 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PDD 17: Polymorphic Containers</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; PDD 17: Polymorphic Containers
+                </div>
+
+<h1><a name="PDD_17:_Polymorphic_Containers"
+>PDD 17: Polymorphic Containers</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>This PDD describes the internal structure and behavior of the Polymorphic Container (PMC) data type.</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<p>PMCs implement all internal data types more complex than a simple integer,
+float,
+or string,
+and also the data types of high&#45;level languages.
+Nothing outside the core of Parrot (in fact,
+nothing outside the data type&#39;s vtable routines) should infer anything about a PMC.</p>
+
+<p>This does mean,
+though,
+that you need to either know what functions are available and what they do,
+or have some method of finding out.
+Parrot defines a standard set of functions that each PMC provides.
+More complex features are constructed out of these fundamental building blocks.</p>
+
+<dl>
+<dt><a name="&#45;_PMCs_contain_both_state_and_behavior"
+>&#45; PMCs contain both state and behavior</a></dt>
+
+<dt><a name="&#45;_PMCs_can_inherit_from_other_PMCs"
+>&#45; PMCs can inherit from other PMCs</a></dt>
+
+<dt><a name="&#45;_PMCs_can_be_composed_of_low&#45;level_roles"
+>&#45; PMCs can be composed of low&#45;level roles</a></dt>
+
+<dt><a name="&#45;_High&#45;level_objects_can_subclass_low&#45;level_PMCs"
+>&#45; High&#45;level objects can subclass low&#45;level PMCs</a></dt>
+</dl>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<h3><a name="Internal_structure"
+>Internal structure</a></h3>
+
+<p>All PMCs have the form:</p>
+
+<pre>    struct PMC {
+        Parrot_UInt flags;
+        VTABLE *vtable;
+        DPOINTER *data;
+        PMC *_metadata;
+    }</pre>
+
+<p><code>flags</code> holds a set of flags associated with the PMC; these are documented in <em>include/parrot/pobj.h</em>, and are generally only used within the Parrot internals.</p>
+
+<p><code>vtable</code> holds a pointer to the <b>vtable</b> associated with the PMC. This points to a set of functions, with interfaces described in <a href='#Vtable_Functions'>&#34;Vtable Functions&#34;</a> that implement the basic behaviour of the PMC (i.e. how it behaves under addition, subtraction, cloning etc.)</p>
+
+<p><code>data</code> holds a pointer to the core data associated with the PMC. This may be null.</p>
+
+<p><code>_metadata</code> holds internal PMC metadata (properties). See the setprop/getprop ops in <em><a href="../ops/pmc.pod.html">docs/ops/pmc.pod</a></em>.</p>
+
+<p><code>_synchronize</code> is for access synchronization between shared PMCs.</p>
+
+<p>PMCs are used to implement the basic data types of the high level languages running on top of Parrot. For instance, a Perl 5 <code>SV</code> will map onto one (or more) types of PMC, while particular Python datatypes will map onto different types of PMC.</p>
+
+<h3><a name="Defining_PMCs"
+>Defining PMCs</a></h3>
+
+<p>PMCs are declared by the <code>pmclass</code> keyword:</p>
+
+<pre>  pmclass &#60;name&#62; [ &#60;modifier&#62; ... ] {
+  }</pre>
+
+<p>The modifiers specify core features, such as:</p>
+
+<dl>
+<dt><a name="abstract"
+>abstract</a></dt>
+The PMC cannot be instantiated. (By convention, abstract classes are given lower&#45;case names.)
+<dt><a name="no_init"
+>no_init</a></dt>
+Don&#39;t generate class initialization code (don&#39;t set up a vtable for the PMC). Used with <code>abstract</code>.
+<dt><a name="dynpmc"
+>dynpmc</a></dt>
+The PMC is a dynamic PMC, so generate special class initialization code suitable for dynamic loading at runtime.
+<dt><a name="singleton"
+>singleton</a></dt>
+The PMC is a singleton, created in the constant PMC pool.
+<dt><a name="no_ro"
+>no_ro</a></dt>
+Don&#39;t create a second read&#45;only vtable for the PMC. (Used, for example, by STM&#39;s <code>share_ro()</code>.)
+<dt><a name="is_shared"
+>is_shared</a></dt>
+The PMC is shared (across threads).
+<dt><a name="extends"
+>extends</a></dt>
+Inherit from another PMC. Takes one argument, the name of the PMC to inherit from.
+<dt><a name="does"
+>does</a></dt>
+Compose a role. Takes one argument, the name of the role to compose. [NOTE: this modifier has been taken from the older feature <code>does</code> which is now called <code>provides</code>.]
+<dt><a name="resolves"
+>resolves</a></dt>
+Resolve a conflicting vtable function, method, or attribute from a composed role by using the same named vtable function, method, or attribute from the current <code>pmclass</code> or <code>prole</code>.
+<dt><a name="provides"
+>provides</a></dt>
+The PMC satisfies a particular low&#45;level interface, which gives some assurances on how and where a PMC can be used.Roles composed with <code>does</code> may also define <code>provides</code> for one or more interfaces. (They generally define at least a <code>provides</code> corresponding to their own name.)
+<ul>
+<li><code>array</code> is an aggregate PMC with numerically&#45;keyed elements</li>
+
+<li><code>hash</code> is an aggregate PMC with string&#45;keyed elements</li>
+
+<li><code>library</code> corresponds to a dynamic library</li>
+
+<li><code>ref</code> references another PMC</li>
+
+<li><code>string</code> behaves similarly to the base string type</li>
+
+<li><code>integer</code> behaves similarly to the base int type</li>
+
+<li><code>float</code> behaves similarly to the base number type</li>
+
+<li><code>boolean</code> does true/false only.</li>
+
+<li><code>scalar</code> (only used by the sample src/dynpmc/foo.pmc)</li>
+
+<li><code>event</code> can be used with event queue</li>
+</ul>
+
+<dt><a name="hll"
+>hll</a></dt>
+Declare the PMC in an HLL namespace other than the default HLL &#39;parrot&#39;. Takes one argument, the name of the HLL.
+<dt><a name="maps"
+>maps</a></dt>
+Map the current PMC to a core PMC type for code declared in a particular HLL. May only be used together with the <code>hll</code> modifier.</dl>
+
+<h4><a name="Defining_attributes"
+>Defining attributes</a></h4>
+
+<p>The attributes of a PMC (both public and private) live in a custom struct for the PMC, stored in the <code>data</code> member of the <code>PMC</code> struct. The standard way of declaring attributes is with <code>ATTR</code> within the body of a <code>pmclass</code> or <code>prole</code> declaration.</p>
+
+<pre>  ATTR &#60;type&#62; &#60;name&#62; [ :&#60;modifier&#62; ... ];</pre>
+
+<p>This declaration is used to generate the data struct for the PMC (named &#34;Parrot_&#60;pmcname&#62;_attributes&#34;). The data struct incorporates any attributes declared in a composed role or inherited class. Composed attributes are inserted at the end of the generated struct. Inherited attributes are inserted at the top of the generated struct, so the struct members shared by the parent and child are in the same position, and code compiled for direct struct access to the parent can also perform the same direct struct access on the child.</p>
+
+<p>The declaration is also used to generate accessor macros, <code>GET_ATTR_attrname</code> and <code>SET_ATTR_attrname</code>, to set up helper information for the <code>inspect</code> vtable function, and to provide attribute access through the default <code>get_attr</code> and <code>set_attr</code> vtable functions.</p>
+
+<p>It&#39;s also possible to define and store the PMC&#39;s data struct manually, but the standard declaration syntax must be used in roles, in PMCs that compose roles, and in PMCs that will be subclassed by high&#45;level classes (this means all core PMCs, and most non&#45;core PMCs).</p>
+
+<p>Low&#45;level PMCs that use multiple inheritance (<code>pmclass</code> declarations with more than one <code>extends</code> entry) have to be careful with the contents of their structs. There&#39;s no problem if the two parents have identical data struct members. But, if the two parents have different data struct members, any vtable functions inherited from the parents will not be able to directly access the parents&#39; struct members or use the accessor macros. The solution is to either override those vtable functions that directly access data struct members in the child PMC, define the parents as roles instead of classes, or declare the multiply inheriting child in PIR or an HLL.</p>
+
+<h4><a name="Defining_vtable_functions"
+>Defining vtable functions</a></h4>
+
+<p>Vtable functions are defined as C functions within the body of the <code>pmclass</code> declaration, and are marked with <code>VTABLE</code>.</p>
+
+<pre>  VTABLE STRING *get_string() {...}
+  VTABLE void set_string_native(STRING *value) {...}</pre>
+
+<p>Within the body of vtable functions, several shortcuts are provided:</p>
+
+<dl>
+<dt><a name="INTERP"
+>INTERP</a></dt>
+The current interpreter object.
+<dt><a name="SELF"
+>SELF</a></dt>
+The current invocant by dynamic type.
+<dt><a name="STATICSELF"
+>STATICSELF</a></dt>
+The current invocant by static type.
+<dt><a name="SUPER"
+>SUPER</a></dt>
+Calls the current method in the nearest superclass, using the dynamic type of <code>SELF</code>.
+<dt><a name="STATICSUPER"
+>STATICSUPER</a></dt>
+Calls the current method in the nearest superclass, using the static type of <code>SELF</code>.</dl>
+
+<h4><a name="Methods"
+>Methods</a></h4>
+
+<p>Methods are declared in the body of the <code>pmclass</code> or <code>prole</code> declaration with <code>METHOD</code>.</p>
+
+<pre>  METHOD inspect(STRING *what :optional, int got_what :opt_flag) {...}</pre>
+
+<h3><a name="PMCs_and_Namespaces"
+>PMCs and Namespaces</a></h3>
+
+<p>Like high&#45;level classes, low&#45;level PMCs are tied to a corresponding namespace. By default this is a namespace with the same name as the PMC in the &#39;parrot&#39; HLL, but the <code>hll</code> modifier in the <code>pmclass</code> declaration selects a different HLL.</p>
+
+<p>Accessing a core PMC type from within an HLL other than &#39;parrot&#39; requires the same steps as accessing a class from another HLL, first retrieving the namespace object, and then instantiating from that namespace.</p>
+<pre>  $P0 = get_root_namespace ['parrot'; 'Integer']
+  $P1 = new $P0
+</pre>
+<p>HLLs can choose to provide direct access to Parrot&#39;s core PMC types by aliasing them within the HLL namespace.</p>
+
+<h3><a name="Inheritance"
+>Inheritance</a></h3>
+
+<p>PMCs can inherit behavior and state from other PMCs. Inheritance is performed in the <code>pmclass</code> declaration using the <code>extends</code> keyword.</p>
+
+<pre>  pmclass Foo extends Bar {
+  }</pre>
+
+<h3><a name="Composition"
+>Composition</a></h3>
+
+<p>Composition is another form of code reuse in PMCs. Unlike inheritance, composed roles aren&#39;t complete stand&#45;alone PMCs, they are just bundles of behavior and state that can be used within the composing PMC. As such, roles are never instantiated directly, and are never translated to C directly. They have no core structs, though they define attributes to be added to the PMC they are composed into.</p>
+
+<p>When a PMC that uses a role is translated to C, the role provides vtable functions, methods, and attributes that will be added to the generated C code for that PMC. Composed vtable functions, methods, and attributes are not permitted to have the same name as corresponding features defined in the composing PMC. This is called a conflict, and must be explicitly resolved in the composing PMC. When composed features have the same name as inherited vtable functions, methods, or attributes, the composed feature overrides the inherited feature, just as it would if defined in the composing PMC.</p>
+
+<p>Roles are defined using the <code>prole</code> keyword.</p>
+
+<pre>  prole &#60;name&#62; &#60;modifiers&#62; {
+  }</pre>
+
+<p>Roles can compose other roles, but they can&#39;t inherit.</p>
+
+<p>Role attributes are defined using the same format as PMC attributes.</p>
+
+<p>Core roles live in src/role and have a file extension of <code>.pr</code>.</p>
+
+<p>Roles are composed into a PMC with the <code>does</code> modifier.</p>
+
+<h3><a name="PMCs_and_high&#45;level_objects"
+>PMCs and high&#45;level objects</a></h3>
+
+<p>High&#45;level objects, as specified in PDD15, need to be able to inherit from PMCs. Subclassing a low&#45;level PMC from a high&#45;level class makes an entry in the high&#45;level class&#39;s list of parents.</p>
+
+<p>For PDD15 objects, there is a corresponding instance of the <code>Class</code> PMC. For a low&#45;level PMC, however, the class definition is written in C and compiled away. There needs to be something placed in the parents list for a PDD15 class, that can provide access to the low&#45;level PMC&#39;s vtable and methods, and define the storage that the low&#45;level PMC will need within the high&#45;level object. That something is the <code>PMCProxy</code> PMC. Like a PDD15 class, it is stored as the <code>class</code> element in the namespace associated with a PMC, provides introspection facilities and can sit in an inheritance hierarchy.</p>
+
+<p>The PMCProxy PMCs are only created when needed for subclassing a low&#45;level PMC, to avoid a large load of unused PMCProxy objects. When created, they are cached in the class slot of the namespace corresponding to the low&#45;level PMC, so they are only created once.</p>
+
+<p>Therefore, subclassing a PMC looks, at a PIR level, like subclassing a high level class.</p>
+<pre>  $P0 = get_class 'Hash'
+  $P1 = newclass 'MyClass'
+  addparent $P1, $P0     # The new class inherits from the Hash PMC
+</pre>
+<p>Or, more briefly:</p>
+<pre>  $P1 = subclass 'Hash', 'MyClass'
+</pre>
+<p>PMCs store state in a very different way to PDD15 objects. When a method inherited from a PMC is called on a PDD15 object, that method needs to access the attributes of the inherited low&#45;level PMC. Further, if multiple PMCs are inherited from, they may each have attributes with the same name, that need to be correctly &#34;visible&#34; to the PDD 15 object according to the laws of inheritance. Users of Parrot at a PIR level should not have to care about such issues.</p>
+
+<p>To enable attributes from the low&#45;level PMC to act as full inherited attributes in the child class, the PMCProxy class will create a set of PDD 15 attributes that correspond in type and name to the attributes declared with <code>ATTR</code> in the declaration body of the low&#45;level PMC, as if each had been added with <code>add_attribute</code>. It will also override the <code>GET_ATTR_attrname</code> and <code>SET_ATTR_attrname</code> functions to point to the PDD 15 attributes (with automatic boxing and unboxing for the PMC values) rather than to members of a C struct.</p>
+
+<p>The PMCProxy will also scan the low&#45;level PMC for methods declared with <code>METHOD</code> and insert them in the proxy class as if each had been declared with <code>add_method</code> (possibly with a shim to standardize calling conventions, but hopefully the calling conventions are similar enough between C&#45;defined and PIR&#45;defined methods not to need a shim). The PMCProxy will maintain a link to the low&#45;level PMC&#39;s vtable, and use it for any vtable calls that aren&#39;t overridden by the proxy class itself.</p>
+
+<p>As a result, a low&#45;level PMC used as a parent of a PDD 15 class will never be instantiated directly. It will only be used as a source for attribute names and types, methods, and a vtable.</p>
+
+<p>When a method is called on an object whose class has low&#45;level PMC parents, the call is made exactly as it would be for PDD 15 parents. The invocant is always the PDD 15 object. Any method or vtable calls made within the low&#45;level PMC are dispatched on the PDD 15 object invocant. This allows the PDD 15 object to intelligently handle method and vtable overrides within multiple parents and itself.</p>
+
+<p>If a low&#45;level PMC expects to be overridden by high&#45;level classes (which means all the core low&#45;level PMC types), it must respect the standard interface.</p>
+
+<h2><a name="Definitions"
+>Definitions</a></h2>
+
+<h3><a name="Vtable_Functions"
+>Vtable Functions</a></h3>
+
+<p>Vtables decouple the interface and implementation of various object functions. The actual vtable structure contains pointers to functions that implement the methods for that particular PMC. All pointers must point to valid functions with appropriate prototypes.</p>
+
+<p>In C code, the first parameter to any vtable routine is the current interpreter. The second parameter is the PMC itself.</p>
+
+<p>The following list details each of the vtable functions, their prototypes, and their behavior.</p>
+
+<h4><a name="Core_Vtable_Functions"
+>Core Vtable Functions</a></h4>
+
+<dl>
+<dt><a name="init"
+>init</a></dt>
+
+<pre>  void init(INTERP, PMC *self)</pre>
+Called when a PMC is first instantiated. It takes an unused PMC parameter and turns it into a PMC of the appropriate class.
+<dt><a name="init_pmc"
+>init_pmc</a></dt>
+
+<pre>  void init_pmc(INTERP, PMC *self, PMC *initializer)</pre>
+Alternative entry point called when a PMC is first instantiated. Accepts a PMC parameter used to initialize the given object. Interpretation of the PMC initializer is left open, each PMC is free to choose its own implementation. A null value passed as the initializer parameter is allowed.NOTE: It is strongly suggested that init_pmc(PMCNULL) be equivalent to init(), though there will of necessity be exceptions.
+<dt><a name="instantiate"
+>instantiate</a></dt>
+
+<pre>  PMC* instantiate(INTERP, PMC *self, PMC *init)</pre>
+Creates a new PMC object of the type of the class and calls init_pmc(), passing in the initialization argument, <i>init</i>, which is usually a hash. This opcode is most often used with high&#45;level classes, but low&#45;level PMCs may instantiate an object of their own type.
+<dt><a name="inspect"
+>inspect</a></dt>
+
+<pre>  PMC* inspect(INTERP, PMC *self)</pre>
+Return a hash of all characteristics of the <i>self</i> PMC available for introspection.
+<pre>  PMC* inspect_str(INTERP, PMC *self, STRING *what)</pre>
+Return a PMC value for one characteristic of the <i>self</i> PMC, selected by string name. Returns PMCNULL if the characteristic doesn&#39;t exist.
+<dt><a name="morph"
+>morph</a></dt>
+
+<pre>  void morph(INTERP, PMC *self, INTVAL type)</pre>
+Turn the PMC into a PMC of type <i>type</i>. If the morphing can&#39;t be done in any reasonable way &#45;&#45; for instance if an integer is asked to turn into an Array &#45;&#45; then the PMC is first destroyed, then recreated as an empty PMC of the new type.This method is primarily used when the interpreter has need of coercing a PMC to a particular type, and isn&#39;t meant as a general purpose casting tool. Compilers should only emit valid morphing operations.
+<dt><a name="mark"
+>mark</a></dt>
+
+<pre>  void mark(INTERP, PMC *self)</pre>
+Called when the GC is tracing live PMCs. If this method is called then the code must mark all strings and PMCs that it contains as live, otherwise they may be collected.This method is only called if the GC has detected that this PMC is both alive and has a custom mark routine as indicated by the custom mark PMC flag. (Most normal PMCs don&#39;t need a custom mark routine.)If a PMC has this flag set, then it is responsible for marking all buffers and PMCs under its control as alive. If it does not, those PMCs or buffers may be collected later. This method does <i>not</i> have to call the <code>mark</code> method on any PMCs it marks&#45;&#45;the GC system takes care of that. (So no need to recurse into aggregate PMCs or anything of the sort).This method may allocate no memory from Parrot, nor may it alter Parrot&#39;s internal structures. It should have no side&#45;effects from the C level either. This routine may not throw an exception.
+<dt><a name="destroy"
+>destroy</a></dt>
+
+<pre>  void destroy(INTERP, PMC *self)</pre>
+Called when the PMC is destroyed. This method is called by the GC when it determines that a PMC is dead and that the PMC has marked itself as having a destroy method (an active finalizer).When this method finishes, the PMC will be marked as dead. As such you should make sure that you don&#39;t leave any references to it in any Parrot structure by the end of the method.This method may not throw an exception. It will be ignored if it does.
+<dt><a name="clone"
+>clone</a></dt>
+
+<pre>  PMC* clone(INTERP, PMC *self)</pre>
+Return a clone of a PMC.
+<dt><a name="defined"
+>defined</a></dt>
+
+<pre>  INTVAL defined(INTERP, PMC *self)</pre>
+Return a true value if the PMC is defined, false otherwise.
+<dt><a name="get_class"
+>get_class</a></dt>
+
+<pre>  PMC* get_class(INTERP, PMC *self)</pre>
+Return the class object for this PMC. For high&#45;level objects, this is a <code>Class</code> object (or other high&#45;level class object). For low&#45;level PMCs, this returns a <code>PMCProxy</code> object.
+<dt><a name="get_namespace"
+>get_namespace</a></dt>
+
+<pre>  PMC* get_namespace(INTERP, PMC *self)</pre>
+Return the namespace object for this PMC.
+<dt><a name="freeze"
+>freeze</a></dt>
+
+<pre>  void freeze(INTERP, PMC *self, visit_info* info)</pre>
+Freeze the PMC to an archived string format (a bytecode string constant that can be saved in a packfile).
+<dt><a name="thaw"
+>thaw</a></dt>
+
+<pre>  void thaw  (INTERP, PMC *self, visit_info* info)</pre>
+Thaw a PMC from an archived string format (a bytecode string constant that can be saved in a packfile).
+<dt><a name="thawfinish"
+>thawfinish</a></dt>
+
+<pre>  void thawfinish (INTERP, PMC *self, visit_info* info)</pre>
+Called after the PMC has been thawed to perform any finalization steps.
+<dt><a name="visit"
+>visit</a></dt>
+
+<pre>  void visit (INTERP, PMC *self, visit_info* info)</pre>
+Used by <code>freeze</code> and <code>thaw</code> to visit the contents of the PMC.
+<dt><a name="share"
+>share</a></dt>
+
+<pre>  void share(INTERP, PMC *self)
+
+  PMC* share_ro(INTERP, PMC *self)</pre>
+Mark a PMC as shared and read&#45;only.[NOTE: these seem to be used interchangeably, should be distinguished or merged.]</dl>
+
+<h4><a name="Accessors"
+>Accessors</a></h4>
+
+<dl>
+<dt><a name="getprop"
+>getprop</a></dt>
+
+<pre>  PMC* getprop(INTERP, PMC *self, STRING *key)</pre>
+Return the value from the property hash of <i>self</i> keyed by <i>key</i>. The key should not be null.
+<dt><a name="setprop"
+>setprop</a></dt>
+
+<pre>  void setprop(INTERP, PMC *self, STRING *key, PMC *value)</pre>
+Set the value in the property hash of <i>self</i> that is keyed by <i>key</i> to the value of <i>value</i>. The key should not be null.
+<dt><a name="delprop"
+>delprop</a></dt>
+
+<pre>  void delprop(INTERP, PMC *self, STRING *key)</pre>
+Delete the value from the property hash of <i>self</i> keyed by <i>key</i>. The key should not be null.
+<dt><a name="getprops"
+>getprops</a></dt>
+
+<pre>  PMC* getprops(INTERP, PMC *self)</pre>
+Return the entire property hash for <i>self</i>.
+<dt><a name="type"
+>type</a></dt>
+
+<pre>  INTVAL type(INTERP, PMC *self)</pre>
+Return the type of the PMC. Type is a unique number associated with the PMC when the PMC&#39;s class is loaded. Negative numbers are considered interpreter&#45;specific, non&#45;public types.
+<dt><a name="name"
+>name</a></dt>
+
+<pre>  STRING* name(INTERP, PMC *self)</pre>
+Return the name of the class for the PMC.
+<dt><a name="get_integer"
+>get_integer</a></dt>
+
+<pre>  INTVAL get_integer(INTERP, PMC *self)</pre>
+Return the native integer value of the PMC.
+<dt><a name="get_number"
+>get_number</a></dt>
+
+<pre>  FLOATVAL get_number(INTERP, PMC *self)</pre>
+Return the native floating&#45;point value of the PMC.
+<dt><a name="get_string"
+>get_string</a></dt>
+
+<pre>  STRING* get_string(INTERP, PMC *self)</pre>
+Return the native string value of the PMC. This may be in any encoding, chosen by the PMC.
+<dt><a name="get_repr"
+>get_repr</a></dt>
+
+<pre>  STRING* get_repr(INTERP, PMC *self)</pre>
+Return a string representation of the PMC. [NOTE: redundant with <code>get_string</code>, candidate for deprecation.]
+<dt><a name="get_bool"
+>get_bool</a></dt>
+
+<pre>  INTVAL get_bool(INTERP, PMC *self)</pre>
+Return the true/false value of the PMC (the constant TRUE or the constant FALSE). The definition of truth for a given PMC will depend on the type of the PMC. For a scalar, it may be as simple as returning false when the PMC has a value 0 or &#34;&#34;, and returning true when the PMC has any other value.
+<dt><a name="get_pmc"
+>get_pmc</a></dt>
+
+<pre>  PMC* get_pmc(INTERP, PMC *self)</pre>
+Return the PMC value for this PMC. This is useful in circumstances where the thing being accessed may return something other than its own value. For example, an array might return a reference to itself. Any PMC may return a value different from the PMC that <code>get_pmc</code> is being called on.
+<dt><a name="set_integer_native"
+>set_integer_native</a></dt>
+
+<pre>  void set_integer_native(INTERP, PMC *self, INTVAL value)</pre>
+Set the integer value of this PMC from a native integer value (integer register/constant).
+<dt><a name="set_integer_same"
+>set_integer_same</a></dt>
+
+<pre>  void set_integer_same(INTERP, PMC *self, PMC *value)</pre>
+Set the value of this PMC from the integer value of another PMC. The value PMC is guaranteed to be of the same type as the <i>self</i> PMC, so optimizations may be made.
+<dt><a name="set_number_native"
+>set_number_native</a></dt>
+
+<pre>  void set_number_native(INTERP, PMC *self, FLOATVAL value)</pre>
+Set the value of this PMC from a native floating&#45;point value (float register/constant).
+<dt><a name="set_number_same"
+>set_number_same</a></dt>
+
+<pre>  void set_number_same(INTERP, PMC *self, PMC *value)</pre>
+Set the value of this PMC from the floating&#45;point value another PMC. The value PMC is guaranteed to be of the same type as the <i>self</i> PMC, so optimizations may be made.
+<dt><a name="get_pointer"
+>get_pointer</a></dt>
+
+<pre>  void* get_pointer(INTERP, PMC *self)</pre>
+Returns a pointer value for the PMC. Useful for PMCs that hold pointers to arbitrary data. The details of the data (type, location etc.) depend on the PMC.
+<dt><a name="set_bignum_int"
+>set_bignum_int</a></dt>
+
+<pre>  void set_bignum_int(INTERP, PMC *self, INTVAL value)</pre>
+Morph the PMC to a BIGNUM PMC, and set the extended&#45;precision value from a native integer.
+<dt><a name="set_string_native"
+>set_string_native</a></dt>
+
+<pre>  void set_string_native(INTERP, PMC *self, STRING *value)</pre>
+Set the value of this PMC from a native string value (string register/constant).
+<dt><a name="assign_string_native"
+>assign_string_native</a></dt>
+
+<pre>  void assign_string_native(INTERP, PMC *self, STRING *value)</pre>
+Set the value of this PMC to a copied native string value (string register/constant).
+<dt><a name="set_string_same"
+>set_string_same</a></dt>
+
+<pre>  void set_string_same(INTERP, PMC *self, PMC *value)</pre>
+Set the value of this PMC from the string value of another PMC. The value PMC is guaranteed to be of the same type as the <i>self</i> PMC, so optimizations may be made.
+<dt><a name="set_bool"
+>set_bool</a></dt>
+
+<pre>  void set_bool(INTERP, PMC *self, INTVAL value)</pre>
+Set the boolean state of the PMC to TRUE if the native integer value passed in is TRUE, or FALSE if the value is FALSE. The definition of truth is left open to the particular PMC. For a scalar, it may be as simple as setting false when a 0 value is passed in, and seting true when any other value is passed in.
+<dt><a name="assign_pmc"
+>assign_pmc</a></dt>
+
+<pre>  void assign_pmc(INTERP, PMC *self, PMC *value)</pre>
+Set the value of the PMC in <i>self</i> to the value of the PMC in <i>value</i> by copying the value.
+<dt><a name="set_pmc"
+>set_pmc</a></dt>
+
+<pre>  void set_pmc(INTERP, PMC *self, PMC *value)</pre>
+Make the PMC in <i>self</i> refer to the PMC passed as <i>value</i>.
+<dt><a name="set_pointer"
+>set_pointer</a></dt>
+
+<pre>  void set_pointer(INTERP, PMC *self, void* value)</pre>
+Set the pointer value of the PMC Useful for PMCs that hold pointers to arbitrary data. The details of the data (type, location etc.) depend on the PMC.</dl>
+
+<h4><a name="Aggregate_Vtable_Functions"
+>Aggregate Vtable Functions</a></h4>
+
+<p>Many of the following functions have a *_keyed form, a *_keyed_int form, and a *_keyed_str form. The keyed forms take a PMC *, INTVAL, or STRING * key as a parameter. The PMC * parameter is null (PMCNULL) if there is no key for that PMC; this means that that argument is unkeyed.</p>
+
+<p>In some cases, the caller must provide a non&#45;null key. Those cases are explicitly stated below. In the other cases, you may have to implement the keyed vtable functions and check for a null <i>self</i> key even if you are implementing a non&#45;aggregate type. If the <i>self</i> key is non&#45;null and the PMC class is a non&#45;aggregate type, the _keyed_* methods should throw an exception.</p>
+
+<p>If you do not implement the *_keyed_int and *_keyed_str functions, the default will convert the INTVAL or STRING * into a key PMC * and call the corresponding *_keyed functions.</p>
+
+<dl>
+<dt><a name="elements"
+>elements</a></dt>
+
+<pre>  INTVAL elements(INTERP, PMC *self)</pre>
+Return the number of elements in the PMC.
+<dt><a name="get_integer_keyed"
+>get_integer_keyed</a></dt>
+
+<pre>  INTVAL get_integer_keyed(INTERP, PMC *self, PMC *key)
+  INTVAL get_integer_keyed_int(INTERP, PMC *self, INTVAL key)
+  INTVAL get_integer_keyed_str(INTERP, PMC *self, STRING *key)</pre>
+Return the integer value for the element indexed by a PMC, integer, or string key. The key is guaranteed not to be null for this function.
+<dt><a name="get_number_keyed"
+>get_number_keyed</a></dt>
+
+<pre>  FLOATVAL get_number_keyed(INTERP, PMC *self, PMC *key)
+  FLOATVAL get_number_keyed_int(INTERP, PMC *self, INTVAL key)
+  FLOATVAL get_number_keyed_str(INTERP, PMC *self, STRING *key)</pre>
+Return the native floating&#45;point value for the element indexed by a PMC, integer, or string key. The key is guaranteed not to be null for this function.
+<dt><a name="get_string_keyed"
+>get_string_keyed</a></dt>
+
+<pre>  STRING* get_string_keyed(INTERP, PMC *self, PMC *key)
+  STRING* get_string_keyed_int(INTERP, PMC *self, INTVAL key)
+  STRING* get_string_keyed_str(INTERP, PMC *self, STRING *key)</pre>
+Return the string value for the element indexed by a PMC, integer, or string key. The key is guaranteed not to be null for this function.
+<dt><a name="get_pmc_keyed"
+>get_pmc_keyed</a></dt>
+
+<pre>  PMC* get_pmc_keyed(INTERP, PMC *self, PMC *key)
+  PMC* get_pmc_keyed_int(INTERP, PMC *self, INTVAL key)
+  PMC* get_pmc_keyed_str(INTERP, PMC *self, STRING *key)</pre>
+Return the PMC value for the element indexed by a PMC, integer, or string key. The key is guaranteed not to be null for this function.
+<dt><a name="get_pointer_keyed"
+>get_pointer_keyed</a></dt>
+
+<pre>  void* get_pointer_keyed(INTERP, PMC *self, PMC *key)
+  void* get_pointer_keyed_int(INTERP, PMC *self, INTVAL key)
+  void* get_pointer_keyed_str(INTERP, PMC *self, STRING *key)</pre>
+Return the pointer value for the element indexed by a PMC, integer, or string key. The details of the data (type, location etc.) depend on the PMC.
+<dt><a name="set_integer_keyed"
+>set_integer_keyed</a></dt>
+
+<pre>  void set_integer_keyed(INTERP, PMC *self, PMC *key, INTVAL value)
+  void set_integer_keyed_int(INTERP, PMC *self, INTVAL key, INTVAL value)
+  void set_integer_keyed_str(INTERP, PMC *self, STRING *key, INTVAL value)</pre>
+Set the integer value of the element indexed by a PMC, integer, or string key. The key is guaranteed not to be null for this function.
+<dt><a name="set_number_keyed"
+>set_number_keyed</a></dt>
+
+<pre>  void set_number_keyed(INTERP, PMC *self, PMC *key, FLOATVAL value)
+  void set_number_keyed_int(INTERP, PMC *self, INTVAL key, FLOATVAL value)
+  void set_number_keyed_str(INTERP, PMC *self, STRING *key, FLOATVAL value)</pre>
+Set the floating&#45;point value of the element indexed by a PMC, integer, or string key. The key is guaranteed not to be null for this function.
+<dt><a name="set_string_keyed"
+>set_string_keyed</a></dt>
+
+<pre>  void set_string_keyed(INTERP, PMC *self, PMC *key, STRING *value)
+  void set_string_keyed_int(INTERP, PMC *self, INTVAL key, STRING *value)
+  void set_string_keyed_str(INTERP, PMC *self, STRING *key, STRING *value)</pre>
+Set the string value of the element indexed by a PMC, integer, or string key. The key is guaranteed not to be null for this function.
+<dt><a name="set_pmc_keyed"
+>set_pmc_keyed</a></dt>
+
+<pre>  void set_pmc_keyed(INTERP, PMC *self, PMC *key, PMC *value)
+  void set_pmc_keyed_int(INTERP, PMC *self, INTVAL key, PMC *value)
+  void set_pmc_keyed_str(INTERP, PMC *self, STRING *key, PMC *value)</pre>
+Set the PMC value of the element indexed by a PMC, integer, or string key by copying the value of another PMC.
+<dt><a name="set_pointer_keyed"
+>set_pointer_keyed</a></dt>
+
+<pre>  void set_pointer_keyed(INTERP, PMC *self, PMC *key, void* value)
+  void set_pointer_keyed_int(INTERP, PMC *self, INTVAL key, void* value)
+  void set_pointer_keyed_str(INTERP, PMC *self, STRING *key, void* value)</pre>
+Set the pointer value of the element indexed by a PMC, integer, or string key.
+<dt><a name="pop_integer"
+>pop_integer</a></dt>
+
+<pre>  INTVAL pop_integer(INTERP, PMC *self)</pre>
+Return the integer value of the last item on the list, removing that item.
+<dt><a name="pop_float"
+>pop_float</a></dt>
+
+<pre>  FLOATVAL pop_float(INTERP, PMC *self)</pre>
+Return the floating&#45;point value of the last item on the list, removing that item.
+<dt><a name="pop_string"
+>pop_string</a></dt>
+
+<pre>  STRING* pop_string(INTERP, PMC *self)</pre>
+Return the string value of the last item on the list, removing that item.
+<dt><a name="pop_pmc"
+>pop_pmc</a></dt>
+
+<pre>  PMC* pop_pmc(INTERP, PMC *self)</pre>
+Return the PMC value of the last item on the list, removing that item.
+<dt><a name="push_integer"
+>push_integer</a></dt>
+
+<pre>  void push_integer(INTERP, PMC *self, INTVAL value)</pre>
+Add the passed in integer value to the end of the list.
+<dt><a name="push_float"
+>push_float</a></dt>
+
+<pre>  void push_float(INTERP, PMC *self, FLOATVAL value)</pre>
+Add the passed in floating&#45;point number to the end of the list.
+<dt><a name="push_string"
+>push_string</a></dt>
+
+<pre>  void push_string(INTERP, PMC *self, STRING *value)</pre>
+Add the passed in string to the end of the list.
+<dt><a name="push_pmc"
+>push_pmc</a></dt>
+
+<pre>  void push_pmc(INTERP, PMC *self, PMC *value)</pre>
+Add the passed in PMC to the end of the list.
+<dt><a name="shift_integer"
+>shift_integer</a></dt>
+
+<pre>  INTVAL shift_integer(INTERP, PMC *self)</pre>
+Return the integer value of the first item on the list, removing that item.
+<dt><a name="shift_float"
+>shift_float</a></dt>
+
+<pre>  FLOATVAL shift_float(INTERP, PMC *self)</pre>
+Return the floating&#45;point value of the first item on the list, removing that item.
+<dt><a name="shift_string"
+>shift_string</a></dt>
+
+<pre>  STRING* shift_string(INTERP, PMC *self)</pre>
+Return the string value of the first item on the list, removing that item.
+<dt><a name="shift_pmc"
+>shift_pmc</a></dt>
+
+<pre>  PMC* shift_pmc(INTERP, PMC *self)</pre>
+Return the PMC value of the first item on the list, removing that item.
+<dt><a name="unshift_integer"
+>unshift_integer</a></dt>
+
+<pre>  void unshift_integer(INTERP, PMC *self, INTVAL value)</pre>
+Add the passed in integer value to the beginning of the list.
+<dt><a name="unshift_float"
+>unshift_float</a></dt>
+
+<pre>  void unshift_float(INTERP, PMC *self, FLOATVAL value)</pre>
+Add the passed in floating&#45;point number to the beginning of the list.
+<dt><a name="unshift_string"
+>unshift_string</a></dt>
+
+<pre>  void unshift_string(INTERP, PMC *self, STRING *value)</pre>
+Add the passed in string to the beginning of the list.
+<dt><a name="unshift_pmc"
+>unshift_pmc</a></dt>
+
+<pre>  void unshift_pmc(INTERP, PMC *self, PMC *value)</pre>
+Add the passed in PMC to the beginning of the list.
+<dt><a name="splice"
+>splice</a></dt>
+
+<pre>  void splice(INTERP, PMC *self, PMC *value, INTVAL offset, INTVAL count)</pre>
+Replace some number of PMCs (specified by the integer <i>count</i>) at offset <i>offset</i> from the beginning of <i>self</i> with the PMCs in the aggregate <i>value</i>.
+<dt><a name="exists_keyed"
+>exists_keyed</a></dt>
+
+<pre>  INTVAL exists_keyed(INTERP, PMC *self, PMC *key)
+  INTVAL exists_keyed_int(INTERP, PMC *self, INTVAL key)
+  INTVAL exists_keyed_str(INTERP, PMC *self, STRING *key)</pre>
+Check if the element indexed by a PMC, integer, or string key exists.
+<dt><a name="defined_keyed"
+>defined_keyed</a></dt>
+
+<pre>  INTVAL defined_keyed(INTERP, PMC *self, PMC *key)
+  INTVAL defined_keyed_int(INTERP, PMC *self, INTVAL key)
+  INTVAL defined_keyed_str(INTERP, PMC *self, STRING *key)</pre>
+Check if the element indexed by a PMC, integer, or string key is defined.
+<dt><a name="delete_keyed"
+>delete_keyed</a></dt>
+
+<pre>  void delete_keyed(INTERP, PMC *self, PMC *key)
+  void delete_keyed_int(INTERP, PMC *self, INTVAL key)
+  void delete_keyed_str(INTERP, PMC *self, STRING *key)</pre>
+Delete the element indexed by a PMC, integer, or string key.</dl>
+
+<h4><a name="Math_Vtable_Functions"
+>Math Vtable Functions</a></h4>
+
+<dl>
+<dt><a name="add"
+>add</a></dt>
+
+<pre>  void add(INTERP, PMC *self, PMC *value, PMC *dest)
+  void add_int(INTERP, PMC *self, INTVAL value, PMC *dest)
+  void add_float(INTERP, PMC *self, FLOATVAL value, PMC *dest)
+
+  void i_add(INTERP, PMC *self, PMC *value)
+  void i_add_int(INTERP, PMC *self, INTVAL value)
+  void i_add_float(INTERP, PMC *self, FLOATVAL value)</pre>
+Add the value of <i>self</i> to the value of a PMC, native integer, or native floating&#45;point number and store the result in a PMC <i>dest</i>. Note that <i>dest</i> may be the same PMC as <i>self</i>; in that case optimizations may be made. The <code>i_</code> variants perform an inplace operation, modifying the value of <i>self</i>.
+<dt><a name="subtract"
+>subtract</a></dt>
+
+<pre>  PMC* subtract(INTERP, PMC *self, PMC *value, PMC *dest)
+  PMC* subtract_int(INTERP, PMC *self, INTVAL value, PMC *dest)
+  PMC* subtract_float(INTERP, PMC *self, FLOATVAL value, PMC *dest)
+
+  void i_subtract(INTERP, PMC *self, PMC *value)
+  void i_subtract_int(INTERP, PMC *self, INTVAL value)
+  void i_subtract_float(INTERP, PMC *self, FLOATVAL value)</pre>
+Subtract the value of a PMC, native integer, or native floating&#45;point number from a PMC and store the result in <i>dest</i>. If <i>dest</i> is null create a result PMC of an appropriate type. Note that <i>dest</i> may be the same PMC as <i>self</i>; in that case optimizations may be made. The <code>i_</code> variants perform an inplace operation, modifying the value of <i>self</i>.
+<dt><a name="increment"
+>increment</a></dt>
+
+<pre>  void increment(INTERP, PMC *self)</pre>
+Increment the value of a PMC by 1.
+<dt><a name="decrement"
+>decrement</a></dt>
+
+<pre>  void decrement(INTERP, PMC *self)</pre>
+Decrement the value of a PMC by 1.
+<dt><a name="multiply"
+>multiply</a></dt>
+
+<pre>  void multiply(INTERP, PMC *self, PMC *value, PMC *dest)
+  void multiply_int(INTERP, PMC *self, INTVAL value, PMC *dest)
+  void multiply_float(INTERP, PMC *self, FLOATVAL value, PMC *dest)
+
+  void i_multiply(INTERP, PMC *self, PMC *value)
+  void i_multiply_int(INTERP, PMC *self, INTVAL value)
+  void i_multiply_float(INTERP, PMC *self, FLOATVAL value)</pre>
+Multiply a PMC, native integer, or floating&#45;point value by the value of the PMC <i>self</i> and store the result in the <i>dest</i> PMC. Note that <i>dest</i> may be the same PMC as <i>self</i>; in that case optimizations may be made. The <code>i_</code> variants perform an inplace operation, modifying the value of <i>self</i>.
+<dt><a name="divide"
+>divide</a></dt>
+
+<pre>  void divide(INTERP, PMC *self, PMC *value, PMC *dest)
+  void divide_int(INTERP, PMC *self, INTVAL value, PMC *dest)
+  void divide_float(INTERP, PMC *self, FLOATVAL value, PMC *dest)
+
+  void i_divide(INTERP, PMC *self, PMC *value)
+  void i_divide_int(INTERP, PMC *self, INTVAL value)
+  void i_divide_float(INTERP, PMC *self, FLOATVAL value)</pre>
+Divide the value of the <i>self</i> PMC by a PMC, native integer, or native floating&#45;point number and store the result in <i>dest</i>. Note that <i>dest</i> may be the same PMC as <i>self</i>; in that case optimizations may be made. The <code>i_</code> variants perform an inplace operation, modifying the value of <i>self</i>.
+<dt><a name="floor_divide"
+>floor_divide</a></dt>
+
+<pre>  PMC* floor_divide(INTERP, PMC *self, PMC *value, PMC *dest)
+  PMC* floor_divide_int(INTERP, PMC *self, INTVAL value, PMC *dest)
+  PMC* floor_divide_float(INTERP, PMC *self, FLOATVAL value, PMC *dest)
+
+  void i_floor_divide(INTERP, PMC *self, PMC *value)
+  void i_floor_divide_int(INTERP, PMC *self, INTVAL value)
+  void i_floor_divide_float(INTERP, PMC *self, FLOATVAL value)</pre>
+Divide the PMC&#39;s value number by <i>value</i> and return the result in <i>dest</i>. The result is the <code>floor()</code> of the division i.e. the next whole integer towards &#45;inf. If the denominator is zero, a &#39;Divide by zero&#39; exception is thrown. The <code>i_</code> variants perform an inplace operation, modifying the value of <i>self</i>.
+<dt><a name="modulus"
+>modulus</a></dt>
+
+<pre>  void modulus(INTERP, PMC *self, PMC *value, PMC *dest)
+  void modulus_int(INTERP, PMC *self, INTVAL value, PMC *dest)
+  void modulus_float(INTERP, PMC *self, FLOATVAL value, PMC *dest)
+
+  void i_modulus(INTERP, PMC *self, PMC *value)
+  void i_modulus_int(INTERP, PMC *self, INTVAL value)
+  void i_modulus_float(INTERP, PMC *self, FLOATVAL value)</pre>
+Divide the value of the <i>self</i> PMC by the value of a PMC, native integer, or native floating&#45;point number and store the remainder in <i>dest</i>. Note that <i>dest</i> may be the same PMC as <i>self</i>; in that case optimizations may be made. The <code>i_</code> variants perform an inplace operation, modifying the value of <i>self</i>.
+<dt><a name="cmodulus"
+>cmodulus</a></dt>
+
+<pre>  void cmodulus(INTERP, PMC *self, PMC *value, PMC *dest)
+  void cmodulus_int(INTERP, PMC *self, INTVAL value, PMC *dest)
+  void cmodulus_float(INTERP, PMC *self, FLOATVAL value, PMC *dest)
+
+  void i_cmodulus(INTERP, PMC *self, PMC *value)
+  void i_cmodulus_int(INTERP, PMC *self, INTVAL value)
+  void i_cmodulus_float(INTERP, PMC *self, FLOATVAL value)</pre>
+Divide the value of the <i>self</i> PMC by the value of a PMC, native integer, or native floating&#45;point number and store the remainder in <i>dest</i>. Note that <i>dest</i> may be the same PMC as <i>self</i>; in that case optimizations may be made. The <code>i_</code> variants perform an inplace operation, modifying the value of <i>self</i>.Note that <code>modulus</code> uses Knuth&#39;s &#34;corrected mod&#34; algorithm, as implemented in <em><a href="../../src/utils.c.html">src/utils.c</a></em>, while <code>cmodulus</code> uses the C&#45;style fmod function.
+<dt><a name="pow"
+>pow</a></dt>
+
+<pre>  PMC* pow(INTERP, PMC *self, PMC *value, PMC *dest)
+  PMC* pow_int(INTERP, PMC *self, INTVAL value, PMC *dest)
+  PMC* pow_float(INTERP, PMC *self, FLOATVAL value, PMC *dest)
+
+  void i_pow(INTERP, PMC *self, PMC *value)
+  void i_pow_int(INTERP, PMC *self, INTVAL value)
+  void i_pow_float(INTERP, PMC *self, FLOATVAL value)</pre>
+Return the value of <i>self</i> raised to the power of <i>value</i>. The <code>i_</code> variants perform an inplace operation, modifying the value of <i>self</i>.
+<dt><a name="absolute"
+>absolute</a></dt>
+
+<pre>  PMC* absolute(INTERP, PMC *self, PMC *dest)
+  void i_absolute(INTERP, PMC *self)</pre>
+Return the absolute value of <i>self</i>. The <code>i_</code> variant performs an inplace operation, modifying the value of <i>self</i>.
+<dt><a name="neg"
+>neg</a></dt>
+
+<pre>  void neg(INTERP, PMC *self, PMC *dest)
+  void i_neg(INTERP, PMC *self)</pre>
+Negate the sign of <i>self</i> and store the result in <i>dest</i>. Note that <i>self</i> and <i>dest</i> may refer to the same PMC, in which case optimizations may be made. The <code>i_</code> variant performs an inplace operation, modifying the value of <i>self</i>.</dl>
+
+<h4><a name="Logical_Vtable_Functions"
+>Logical Vtable Functions</a></h4>
+
+<dl>
+<dt><a name="bitwise_or"
+>bitwise_or</a></dt>
+
+<pre>  void bitwise_or(INTERP, PMC *self, PMC *value, PMC *dest)
+  void bitwise_or_int(INTERP, PMC *self, INTVAL value, PMC *dest)
+  void i_bitwise_or(INTERP, PMC *self, PMC *value)
+  void i_bitwise_or_int(INTERP, PMC *self, INTVAL value)</pre>
+Calculate the bitwise&#45;OR of the value of the <i>self</i> PMC and the value of a PMC or native integer and store the result in <i>dest</i>. Note that <i>dest</i> may be the same PMC as <i>self</i>; in that case optimizations may be made. [Question: what happens when the <i>self</i> and <i>value</i> PMCs aren&#39;t integers?]The <code>i_</code> variants perform an inplace operation and store the result in <i>self</i>.
+<dt><a name="bitwise_and"
+>bitwise_and</a></dt>
+
+<pre>  PMC* bitwise_and(INTERP, PMC *self, PMC *value, PMC *dest)
+  PMC* bitwise_and_int(INTERP, PMC *self, INTVAL value, PMC *dest)
+  void i_bitwise_and(INTERP, PMC *self, PMC *value)
+  void i_bitwise_and_int(INTERP, PMC *self, INTVAL value)</pre>
+Return the result of a bitwise AND on the passed in <i>value</i> and the <i>self</i> PMC. The <code>i_</code> variants perform an inplace operation and store the result in <i>self</i>.
+<dt><a name="bitwise_xor"
+>bitwise_xor</a></dt>
+
+<pre>  PMC* bitwise_xor(INTERP, PMC *self, PMC *value, PMC *dest)
+  PMC* bitwise_xor_int(INTERP, PMC *self, INTVAL value, PMC *dest)
+  void i_bitwise_xor(INTERP, PMC *self, PMC *value)
+  void i_bitwise_xor_int(INTERP, PMC *self, INTVAL value)</pre>
+Return the result of a bitwise XOR on the passed in <i>value</i> and the <i>self</i> PMC. The <code>i_</code> variants perform an inplace operation and store the result in <i>self</i>.
+<dt><a name="bitwise_ors"
+>bitwise_ors</a></dt>
+
+<pre>  PMC* bitwise_ors(INTERP, PMC *self, PMC *value, PMC *dest)
+  PMC* bitwise_ors_str(INTERP, PMC *self, STRING *value, PMC *dest)
+  void i_bitwise_ors(INTERP, PMC *self, PMC *value)
+  void i_bitwise_ors_str(INTERP, PMC *self, STRING *value)</pre>
+Return the result of a bitwise OR over an entire string on the passed in <i>value</i> and the <i>self</i> PMC. The <code>i_</code> variants perform an inplace operation and store the result in <i>self</i>.
+<dt><a name="bitwise_ands"
+>bitwise_ands</a></dt>
+
+<pre>  PMC* bitwise_ands(INTERP, PMC *self, PMC *value, PMC *dest)
+  PMC* bitwise_ands_str(INTERP, PMC *self, STRING *value, PMC *dest)
+  void i_bitwise_ands(INTERP, PMC *self, PMC *value)
+  void i_bitwise_ands_str(INTERP, PMC *self, STRING *value)</pre>
+Return the result of a bitwise AND over an entire string on the passed in <i>value</i> and the <i>self</i> PMC. The <code>i_</code> variants perform an inplace operation and store the result in <i>self</i>.
+<dt><a name="bitwise_xors"
+>bitwise_xors</a></dt>
+
+<pre>  PMC* bitwise_xors(INTERP, PMC *self, PMC *value, PMC *dest)
+  PMC* bitwise_xors_str(INTERP, PMC *self, STRING *value, PMC *dest)
+  void i_bitwise_xors(INTERP, PMC *self, PMC *value)
+  void i_bitwise_xors_str(INTERP, PMC *self, STRING *value)</pre>
+Return the result of a bitwise XOR over an entire string on the passed in <i>value</i> and the <i>self</i> PMC. The <code>i_</code> variants perform an inplace operation and store the result in <i>self</i>.
+<dt><a name="bitwise_not"
+>bitwise_not</a></dt>
+
+<pre>  PMC* bitwise_not(INTERP, PMC *self, PMC *dest)
+  void i_bitwise_not(INTERP, PMC *self)</pre>
+Returns the bitwise negation of the <i>self</i> PMC. The <code>i_</code> variant performs an inplace operation, storing the result in <i>self</i>.
+<dt><a name="bitwise_nots"
+>bitwise_nots</a></dt>
+
+<pre>  PMC* bitwise_nots(INTERP, PMC *self, PMC *dest)
+  void i_bitwise_nots(INTERP, PMC *self)</pre>
+Returns the bitwise negation of the string <i>self</i> PMC. The <code>i_</code> variant performs an inplace operation, storing the result in <i>self</i>.
+<dt><a name="bitwise_shl"
+>bitwise_shl</a></dt>
+
+<pre>  PMC* bitwise_shl(INTERP, PMC *self, PMC *value, PMC *dest)
+  PMC* bitwise_shl_int(INTERP, PMC *self, INTVAL value, PMC *dest)
+  void i_bitwise_shl(INTERP, PMC *self, PMC *value)
+  void i_bitwise_shl_int(INTERP, PMC *self, INTVAL value)</pre>
+Return the value of the <i>self</i> PMC bitwise shifted left by the amount specified in <i>value</i>, shifting in zeroes on the right (arithmetic/logical bitwise shift). A negative <i>value</i> shifts right. The <code>i_</code> variants perform an inplace operation, storing the result in <i>self</i>.The result may be promoted to a <code>BigInt</code>.
+<dt><a name="bitwise_shr"
+>bitwise_shr</a></dt>
+
+<pre>  PMC* bitwise_shr(INTERP, PMC *self, PMC *value, PMC *dest)
+  PMC* bitwise_shr_int(INTERP, PMC *self, INTVAL value, PMC *dest)
+  void i_bitwise_shr(INTERP, PMC *self, PMC *value)
+  void i_bitwise_shr_int(INTERP, PMC *self, INTVAL value)</pre>
+Return the value of the <i>self</i> PMC bitwise shifted right by the amount specified in <i>value</i>, shifting in copies of the sign bit on the left (arithmetic bitwise shift). A negative <i>value</i> shifts left. The <code>i_</code> variants perform an inplace operation, storing the result in <i>self</i>.The result may be promoted to a <code>BigInt</code> (when <i>value</i> is negative).
+<dt><a name="bitwise_lsr"
+>bitwise_lsr</a></dt>
+
+<pre>  PMC* bitwise_lsr(INTERP, PMC *self, PMC *value, PMC *dest)
+  PMC* bitwise_lsr_int(INTERP, PMC *self, INTVAL value, PMC *dest)
+  void i_bitwise_lsr(INTERP, PMC *self, PMC *value)
+  void i_bitwise_lsr_int(INTERP, PMC *self, INTVAL value)</pre>
+Return the value of the <i>self</i> PMC bitwise shifted right by the amount specified in <i>value</i>, shifting in zeroes on the left (logical bitwise shift). A negative <i>value</i> shifts left. The <code>i_</code> variants perform an inplace operation, storing the result in <i>self</i>.
+<dt><a name="is_equal"
+>is_equal</a></dt>
+
+<pre>  INTVAL is_equal(INTERP, PMC *self, PMC *value)
+  INTVAL is_equal_num(INTERP, PMC *self, PMC *value)
+  INTVAL is_equal_string(INTERP, PMC *self, PMC *value)</pre>
+Return an integer value (1/0) indicating if the <i>self</i> PMC is equal to the <i>value</i> PMC. The <code>_num</code> version tests for numeric equality, while the <code>_string</code> version tests for string equality.
+<dt><a name="is_same"
+>is_same</a></dt>
+
+<pre>  INTVAL is_same(INTERP, PMC *self, PMC *value)</pre>
+Return an integer value (1/0) indicating if <i>self</i> is the same as <i>value</i> (with &#34;sameness&#34; determined by each PMC).
+<dt><a name="cmp"
+>cmp</a></dt>
+
+<pre>  INTVAL cmp(INTERP, PMC *self, PMC *value)
+  INTVAL cmp_num(INTERP, PMC *self, PMC *value)
+  INTVAL cmp_string(INTERP, PMC *self, PMC *value)</pre>
+Returns the integer result of comparing the values of <i>self</i> and <i>value</i> (0 for equal, 1 if <i>self</i> is greater, &#45;1 if <i>value</i> is greater). The <code>_num</code> version performs a numeric comparison, while the <code>_string</code> version performs a string comparison.</dl>
+
+<h4><a name="String_Vtable_Functions"
+>String Vtable Functions</a></h4>
+
+<dl>
+<dt><a name="concatenate"
+>concatenate</a></dt>
+
+<pre>  PMC* concatenate(INTERP, PMC *self, PMC *value, PMC *dest)
+  PMC* concatenate_str(INTERP, PMC *self, STRING *value, PMC *dest)
+  void i_concatenate(INTERP, PMC *self, PMC *value)
+  void i_concatenate_str(INTERP, PMC *self, STRING *value)</pre>
+Concatenate <i>self</i> with a PMC or string value and return the result. The <code>i_</code> variant performs an inplace concatenation, modifying the value of <i>self</i>.
+<dt><a name="repeat"
+>repeat</a></dt>
+
+<pre>  PMC* repeat(INTERP, PMC *self, PMC *value, PMC *dest)
+  PMC* repeat_int(INTERP, PMC *self, INTVAL value, PMC *dest)
+  void i_repeat(INTERP, PMC *self, PMC *value)
+  void i_repeat_int(INTERP, PMC *self, INTVAL value)</pre>
+Return the result of repeating the value in <i>self</i> the number of times indicated in <i>value</i>. The <code>i_</code> variants perform an inplace operation, modifying the value of <i>self</i>.
+<dt><a name="substr"
+>substr</a></dt>
+
+<pre>  void substr(INTERP, PMC *self, INTVAL offset, INTVAL length, PMC *dest)
+  STRING* substr_str(INTERP, PMC *self, INTVAL offset, INTVAL length)</pre>
+Extracts the string starting at <i>offset</i> with size <i>length</i> and return it as a PMC in <i>dest</i> or as a string return value.</dl>
+
+<h4><a name="Code_Vtable_Functions"
+>Code Vtable Functions</a></h4>
+
+<dl>
+<dt><a name="invoke"
+>invoke</a></dt>
+
+<pre>  opcode_t* invoke(INTERP, PMC *self, void* next)</pre>
+Invoke the code object <i>self</i>.</dl>
+
+<h4><a name="Class/Object_Vtable_Functions"
+>Class/Object Vtable Functions</a></h4>
+
+<dl>
+<dt><a name="can"
+>can</a></dt>
+
+<pre>  INTVAL can(INTERP, PMC *self, STRING *method)</pre>
+Return a true value if the PMC has a method named <i>method</i>, return 0 otherwise.
+<dt><a name="isa"
+>isa</a></dt>
+
+<pre>  INTVAL isa(INTERP, PMC *self, STRING *classname)</pre>
+Return a true value if the PMC inherits from the class named <i>classname</i>, return 0 otherwise.
+<dt><a name="does"
+>does</a></dt>
+
+<pre>  INTVAL does(INTERP, PMC *self, STRING *role)</pre>
+Return a true value if the PMC <code>does</code> (composes) or <code>performs</code> (satisfies the interface of) the role named <i>role</i>, return 0 otherwise.
+<dt><a name="get_attr"
+>get_attr</a></dt>
+
+<pre>  PMC* get_attr_str(INTERP, PMC *self, STRING *idx)</pre>
+Retrieve an attribute value from the PMC (instance object).
+<dt><a name="set_attr"
+>set_attr</a></dt>
+
+<pre>  void set_attr_str(INTERP, PMC *self, STRING *idx, PMC *value)</pre>
+Store an attribute value in the PMC (instance object).
+<dt><a name="add_parent"
+>add_parent</a></dt>
+
+<pre>  void add_parent(INTERP, PMC *self, PMC *parent)</pre>
+Add a parent to the PMC (class object), establishing an inheritance relation.
+<dt><a name="remove_parent"
+>remove_parent</a></dt>
+
+<pre>  void remove_parent(INTERP, PMC *self, PMC *parent)</pre>
+Remove a parent from a PMC (class object).Not all object metamodels will support removing parents.
+<dt><a name="add_role"
+>add_role</a></dt>
+
+<pre>  void add_role(INTERP, PMC *self, PMC *role)</pre>
+Add a role to the PMC (class object), establishing a composition relation.
+<dt><a name="remove_role"
+>remove_role</a></dt>
+
+<pre>  void remove_role(INTERP, PMC *self, PMC *role)</pre>
+Remove a role from the PMC (class object).Not all object metamodels will support removing roles.
+<dt><a name="add_attribute"
+>add_attribute</a></dt>
+
+<pre>  void add_attribute(INTERP, PMC *self, STRING *name, PMC *type)</pre>
+Add an attribute to the PMC (class object).
+<dt><a name="remove_attribute"
+>remove_attribute</a></dt>
+
+<pre>  void remove_attribute(INTERP, PMC *self, STRING *name)</pre>
+Remove an attribute from the PMC (class object).Not all object metamodels will support removing attributes.
+<dt><a name="add_method"
+>add_method</a></dt>
+
+<pre>  void add_method(INTERP, PMC *self, STRING *method_name, PMC *sub_pmc)</pre>
+Add a method to the PMC (class object).
+<dt><a name="remove_method"
+>remove_method</a></dt>
+
+<pre>  void remove_method(INTERP, PMC *self, STRING *method_name)</pre>
+Remove a method from the PMC (class object).Not all object metamodels will support removing methods.
+<dt><a name="add_vtable_override"
+>add_vtable_override</a></dt>
+
+<pre>  void add_vtable_override(INTERP, PMC *self, STRING *vtable_name,
+                           PMC *sub_pmc)</pre>
+Add a vtable override to the PMC (class object).
+<pre>  void remove_vtable_override(INTERP, PMC *self, STRING *vtable_name)</pre>
+Remove a vtable override from the PMC (class object).
+<dt><a name="find_method"
+>find_method</a></dt>
+
+<pre>  PMC* find_method(INTERP, PMC *self, STRING *method_name)</pre>
+Return a subroutine PMC for the passed method name. This subroutine PMC may be cached, so the method <i>must</i> return an equivalent sub PMC each time, or be capable of dealing with the returned sub PMCs being reused. [Why should it be cached? Can you turn off caching? What if you want to override find_method to generate methods on the fly?]</dl>
+
+<h3><a name="Core_PMCs"
+>Core PMCs</a></h3>
+
+<p>Parrot has a number of core PMC types that all programs can guarantee will be available to them. (With the possible exception of Parrot programs executing on an embedded device or other restricted environment)</p>
+
+<h4><a name="Scalar_types"
+>Scalar types</a></h4>
+
+<dl>
+<dt><a name="Undef"
+>Undef</a></dt>
+This is the generic no&#45;value type. It has a numeric value of zero, a string value of empty string, and a boolean value of false. It will, on assignment, turn itself into a PMC of the source type, or if assigned a basic type will turn itself into one of the wrapper PMC types (detailed below) for the basic types.
+<dt><a name="Integer"
+>Integer</a></dt>
+The PMC wrapper for Parrot&#39;s low&#45;level integer type. Always an integer, with other types auto&#45;converted to an integer when stored into this PMC. The range and behaviour of the Integer PMC is identical to the platform low&#45;level integer.The boolean value for an Integer is false if zero, otherwise true.Floating point, string, and bignum values assigned to an Integer PMC round to the nearest integer. Floats, or strings which resolve to numbers, cap at the platform maximum or minimum integer value.Integer PMCs take on a value of 1 if a boolean true is assigned, and a value of 0 if a boolean false is assigned.If an out&#45;of&#45;range value is assigned to an Integer PMC, the PMC will throw an exception if exact math is enabled.
+<dt><a name="Float"
+>Float</a></dt>
+The PMC wrapper for Parrot&#39;s low&#45;level floating&#45;point type. Always a float, with other types autoconverted to a float when stored into this PMC.The boolean value for a Float is false if exactly zero, otherwise true.When converted to an integer, floats round to the closest integer, capping at the platform maximum or minimum integer value.When converting to a string, floats use the platform default snprintf format.
+<dt><a name="String"
+>String</a></dt>
+The PMC wrapper for Parrot&#39;s low&#45;level string type. Always a simple string, with other types autoconverted to a string when stored into this PMC.The boolean value for a String is false if empty or the string &#39;0&#39; (a one character string holding a zero) otherwise true. This PMC autoconverts to an integer or float when its integer or float value is fetched.
+<dt><a name="Boolean"
+>Boolean</a></dt>
+A true/false value. Returns 0 for false, 1 for true when fetched as an integer or float, empty string for false and &#39;1&#39; for true when fetched as a string.
+<dt><a name="BigInt"
+>BigInt</a></dt>
+An arbitrary precision integer.
+<dt><a name="BigNum"
+>BigNum</a></dt>
+The PMC wrapper for Parrot&#39;s low&#45;level BigNum type. {{ NOTE: this type doesn&#39;t seem to exist. }}
+<dt><a name="Complex"
+>Complex</a></dt>
+A complex number, consisting of a real part and an imaginary part. {{ NOTE: is this a complete and useful implementation of complex numbers? }}
+<dt><a name="Class"
+>Class</a></dt>
+The PMC for Parrot&#39;s class.
+<dt><a name="Object"
+>Object</a></dt>
+The PMC for Parrot&#39;s base object type.
+<dt><a name="Ref"
+>Ref</a></dt>
+The PMC that represents a reference to another PMC. Delegates all functions to the referred&#45;to PMC.
+<dt><a name="AggregateElementRef"
+>AggregateElementRef</a></dt>
+This PMC represents a reference to an element contained in an aggregate PMC type, such as an array or hash. It is initialized with the key being referenced and the aggregate PMC containing that key.Note that assigning to the reference PMC will be equivalent to a keyed set on the referenced aggregate PMC &#45; that is, it modifies the element rather than doing a v&#45;table call on the element itself. It is important to be aware of this when assigning a PMC through this reference; it is not the same behaviour as the Ref PMC.
+<dt><a name="WeakRegisterRef"
+>WeakRegisterRef</a></dt>
+This PMC represents a weak reference to a register. Should the reference live beyond the context containing the register that it references, any attempt to use the reference will throw an exception.A weak register reference can only be created by the <code>register_ref</code> opcode. Any assignment to the register will behave like a set instruction. That is, when assigning a PMC using a WeakRegisterRef PMC, the register will be updated to reference that PMC rather than calling the assign v&#45;table call on the PMC in that register. This is not the same behaviour as the Ref PMC.
+<dt><a name="Exception"
+>Exception</a></dt>
+The base class for all exceptions. Currently based on <code>ResizablePMCArray</code>, but that&#39;s likely to change.</dl>
+
+<h4><a name="Array_types"
+>Array types</a></h4>
+
+<p>Note that for the following types you can set the size of the array by using the VTABLE_set_integer_native() function. Assigning an integer to the array as a whole sets the array to that size.</p>
+
+<p>Size&#45;changing operations (such as push, pop, shift, unshift, and splice) on statically&#45;sized arrays will throw an exception.</p>
+
+<p>ResizablePMCArray returns Undef for unset elements (so does the new object model, because it uses ResizablePMCArray for storage), but Hash returns PMCNULL. Standardize all core aggregate PMC types on the singleton PMCNULL.</p>
+
+<dl>
+<dt><a name="Array"
+>Array</a></dt>
+The base class for all array types (a statically sized array for any arbitrary type). New array types can be derived from the base Array. In user code it is recommended to use one of the specific array types below, rather than the base type.
+<dt><a name="FixedBooleanArray"
+>FixedBooleanArray</a></dt>
+A statically sized array which holds only Boolean values.
+<dt><a name="ResizableBooleanArray"
+>ResizableBooleanArray</a></dt>
+A dynamically sized array which holds only Boolean values.
+<dt><a name="FixedIntegerArray"
+>FixedIntegerArray</a></dt>
+A statically sized array which holds only Integer values.
+<dt><a name="ResizableIntegerArray"
+>ResizableIntegerArray</a></dt>
+A dynamically sized array which holds only Integer values.
+<dt><a name="FixedFloatArray"
+>FixedFloatArray</a></dt>
+A statically sized array which holds only Float values.
+<dt><a name="ResizableFloatArray"
+>ResizableFloatArray</a></dt>
+A dynamically sized array which holds only Float values.
+<dt><a name="FixedPMCArray"
+>FixedPMCArray</a></dt>
+A statically sized array which holds only PMC values.
+<dt><a name="ResizablePMCArray"
+>ResizablePMCArray</a></dt>
+A dynamically sized array which holds only PMC values.
+<dt><a name="FixedStringArray"
+>FixedStringArray</a></dt>
+A statically sized array which holds only String values.
+<dt><a name="ResizableStringArray"
+>ResizableStringArray</a></dt>
+A dynamically sized array which holds only String values.</dl>
+
+<h4><a name="Hash_types"
+>Hash types</a></h4>
+
+<dl>
+<dt><a name="Hash"
+>Hash</a></dt>
+A container with key&#45;value semantics. The values are PMCs.
+<dt><a name="Env"
+>Env</a></dt>
+Env is a singleton PMC class, that is there is only one Env PMC in any interpreter. This PMC gives access to the process&#39; environment variables&#45;&#45;reading from it returns the value of the named process environment variable, while writing to it sets the value of a process environment variable. For example, to retrieve the current value of TERM (the terminal type on most Unix systems):
+<pre>   new P1, &#39;Env&#39;
+   set S1, P1[&#39;TERM&#39;]</pre>
+Note that an embedding system may override this behavior.
+<dt><a name="NameSpace"
+>NameSpace</a></dt>
+Stores one level of a namespace. Every slot in a namespace contains either another namespace (the next level down), or a variable or subroutine/method.
+<dt><a name="OrderedHash"
+>OrderedHash</a></dt>
+A hash that also preserves the order of elements, providing the interface of both a hash and an array.
+<dt><a name="AddrRegistry"
+>AddrRegistry</a></dt>
+Simulates reference counting for dead&#45;object detection and garbage collection.</dl>
+
+<h4><a name="Subroutine_types"
+>Subroutine types</a></h4>
+
+<dl>
+<dt><a name="Sub"
+>Sub</a></dt>
+A fundamental subroutine object, and base class for other subroutine PMC types.
+<dt><a name="Closure"
+>Closure</a></dt>
+A closure: subroutine object plus captured lexical scope.
+<dt><a name="Continuation"
+>Continuation</a></dt>
+A continuation: a subroutine object that captures the interpreter&#39;s context at the point where the continuation was constructed.
+<dt><a name="Coroutine"
+>Coroutine</a></dt>
+A coroutine: a continuation object that can stop part way through execution and restart at the point where it left off the next time it&#39;s called.
+<dt><a name="Eval"
+>Eval</a></dt>
+An extension of <code>Sub</code> that provides dynamic code evaluation and execution.
+<dt><a name="ExceptionHandler"
+>ExceptionHandler</a></dt>
+A code object for handling exceptions.
+<dt><a name="MultiSub"
+>MultiSub</a></dt>
+A container for multiply dispatched subroutines.
+<dt><a name="NCI"
+>NCI</a></dt>
+A native call interface wrapper around a C function.
+<dt><a name="Bound_NCI"
+>Bound_NCI</a></dt>
+An internal NCI method call bound to a particular call instance.
+<dt><a name="Compiler"
+>Compiler</a></dt>
+A subroutine implementing a language compiler. (Derived from NCI.)</dl>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p><em><a href="../pmc2c.pod.html">docs/pmc2c.pod</a></em></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

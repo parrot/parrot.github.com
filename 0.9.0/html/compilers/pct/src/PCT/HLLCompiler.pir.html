@@ -1,0 +1,179 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>base class for compiler objects</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">base class for compiler objects</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>PCT::HLLCompiler &#45; base class for compiler objects</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>This file implements a <code>HLLCompiler</code> class of objects used for creating HLL compilers.
+It provides the standard methods required for all compilers,
+as well as some standard scaffolding for running compilers from a command line.</p>
+
+<h2><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="attr(string_attrname,_pmc_value,_int_has_value)"
+>attr(string attrname,
+pmc value,
+int has_value)</a></dt>
+Helper method for accessors &#45;&#45; gets/sets an attribute given by <code>attrname</code> based on <code>has_value</code>.
+<dt><a name="panic(message_:slurpy)"
+>panic(message :slurpy)</a></dt>
+Helper method to throw an exception (with a message).
+<dt><a name="language(string_name)"
+>language(string name)</a></dt>
+Register this object as the compiler for <code>name</code> using the <code>compreg</code> opcode.
+<dt><a name="stages([stages])"
+>stages([stages])</a></dt>
+Accessor for the <code>stages</code> attribute.
+<dt><a name="parsegrammar([string_grammar])"
+>parsegrammar([string grammar])</a></dt>
+Accessor for the <code>parsegrammar</code> attribute.
+<dt><a name="parseactions([actions])"
+>parseactions([actions])</a></dt>
+Accessor for the <code>parseactions</code> attribute.
+<dt><a name="astgrammar([grammar])"
+>astgrammar([grammar])</a></dt>
+Accessor for the <code>astgrammar</code> attribute.
+<dt><a name="commandline_banner([string_value])"
+>commandline_banner([string value])</a></dt>
+Set the command&#45;line banner for this compiler to <code>value</code>.
+The banner is displayed at the beginning of interactive mode.
+<dt><a name="commandline_prompt([string_value])"
+>commandline_prompt([string value])</a></dt>
+Set the command&#45;line prompt for this compiler to <code>value</code>.
+The prompt is displayed in interactive mode at each point where the compiler is ready for code to be compiled and executed.
+<dt><a name="removestage(string_stagename)"
+>removestage(string stagename)</a></dt>
+Delete a stage from the compilation process queue.
+<dt><a name="addstage(string_stagename_[,_&#34;option&#34;_=&#62;_value,_..._])"
+>addstage(string stagename [,
+&#34;option&#34; =&#62; value,
+...
+])</a></dt>
+Add a stage to the compilation process queue.
+Takes either a &#34;before&#34; or &#34;after&#34; named argument,
+which gives the relative ordering of the stage to be added.
+If &#34;before&#34; and &#34;after&#34; aren&#39;t specified,
+the new stage is inserted at the end of the queue.It&#39;s possible to add multiple stages of the same name: for example,
+you might repeat a stage like &#34;optimize_tree&#34; or &#34;display_benchmarks&#34; after each transformation.
+If you have multiple stages of the same name,
+and add a new stage before or after that repeated stage,
+the new stage will be added at every instance of the repeated stage.
+<dt><a name="compile(pmc_code_[,_&#34;option&#34;_=&#62;_value,_..._])"
+>compile(pmc code [,
+&#34;option&#34; =&#62; value,
+...
+])</a></dt>
+Compile <code>source</code> (possibly modified by any provided options) by iterating through any stages identified for this compiler.
+If a <code>target</code> option is provided,
+then halt the iteration when the stage corresponding to target has been reached.
+<dt><a name="parse(source_[,_&#34;option&#34;_=&#62;_value,_...])"
+>parse(source [,
+&#34;option&#34; =&#62; value,
+...])</a></dt>
+Parse <code>source</code> using the compiler&#39;s <code>parsegrammar</code> according to any options and return the resulting parse tree.
+<dt><a name="past(source_[,_&#34;option&#34;_=&#62;_value,_...])"
+>past(source [,
+&#34;option&#34; =&#62; value,
+...])</a></dt>
+Transform <code>source</code> into PAST using the compiler&#39;s <code>astgrammar</code> according to any options,
+and return the resulting ast.
+<dt><a name="post(source_[,_adverbs_:slurpy_:named])"
+>post(source [,
+adverbs :slurpy :named])</a></dt>
+Transform PAST <code>source</code> into POST.
+<dt><a name="eval(code_[,_&#34;option&#34;_=&#62;_value,_...])"
+>eval(code [,
+&#34;option&#34; =&#62; value,
+...])</a></dt>
+Compile and execute the given <code>code</code> taking into account any options provided.
+<dt><a name="interactive([&#34;encoding&#34;_=&#62;_encoding]_[,_&#34;option&#34;_=&#62;_value,_...])"
+>interactive([&#34;encoding&#34; =&#62; encoding] [,
+&#34;option&#34; =&#62; value,
+...])</a></dt>
+Runs an interactive compilation session &#45;&#45; reads lines of input from the standard input and evaluates each.
+The <code>encoding</code> option specifies the encoding to use for the input (e.g.,
+&#34;utf8&#34;).
+<dt><a name="EXPORTALL(source,_destination)"
+>EXPORTALL(source,
+destination)</a></dt>
+Export all namespace entries from the default export namespace for source (source::EXPORT::ALL) to the destination namespace.
+<dt><a name="evalfiles(files_[,_args]_[,_&#34;encoding&#34;_=&#62;_encoding]_[,_&#34;option&#34;_=&#62;_value,_...])"
+>evalfiles(files [,
+args] [,
+&#34;encoding&#34; =&#62; encoding] [,
+&#34;option&#34; =&#62; value,
+...])</a></dt>
+Compile and evaluate a file or files.
+The <code>files</code> argument may be either a single filename or an array of files to be processed as a single compilation unit.
+The <code>encoding</code> option specifies the encoding to use when reading the files,
+and any remaining options are passed to the evaluator.
+<dt><a name="process_args(PMC_args)"
+>process_args(PMC args)</a></dt>
+Performs option processing of command&#45;line args
+<dt><a name="command_line(PMC_args)"
+>command_line(PMC args)</a></dt>
+Generic method for compilers invoked from a shell command line.
+<dt><a name="parse_name(string_name)"
+>parse_name(string name)</a></dt>
+Split <code>name</code> into its component namespace parts,
+as required by pdd21.
+The default is simply to split the name based on double&#45;colon separators.
+<dt><a name="usage()"
+>usage()</a></dt>
+A usage method.
+<dt><a name="version()"
+>version()</a></dt>
+Display compiler version information.</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Patrick R.
+Michaud &#60;pmichaud@pobox.com&#62;</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

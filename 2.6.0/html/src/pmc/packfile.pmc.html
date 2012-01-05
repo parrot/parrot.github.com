@@ -1,0 +1,161 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Packfile PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Packfile PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/packfile.pmc &#45; Packfile PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This class implements a Packfile object,
+as specified in PDD13.
+This object is the top level parser and serializer for *.pbc files.</p>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initialize the structure.
+(Create a blank PackFile object.)
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Marks the Packfile as alive.
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+Return raw serialized PBC file data.
+<dt><a name="void_set_string_native(STRING_*str)"
+><b><code>void set_string_native(STRING *str)</b></code></a></dt>
+Parse raw serialized PBC file data into the Packfile data structure.
+<dt><a name="INTVAL_get_integer_keyed_str(STRING_*key)"
+><b><code>INTVAL get_integer_keyed_str(STRING *key)</b></code></a></dt>
+Fetch an integer keyed value from the packfile object.
+Valid keys are:
+<dl>
+<dt><a name="wordsize"
+>wordsize</a></dt>
+
+<dt><a name="byteorder"
+>byteorder</a></dt>
+
+<dt><a name="fptype"
+>fptype</a></dt>
+
+<dt><a name="version_major"
+>version_major</a></dt>
+
+<dt><a name="version_minor"
+>version_minor</a></dt>
+
+<dt><a name="version_patch"
+>version_patch</a></dt>
+
+<dt><a name="bytecode_major"
+>bytecode_major</a></dt>
+
+<dt><a name="bytecode_minor"
+>bytecode_minor</a></dt>
+
+<dt><a name="uuid_type"
+>uuid_type</a></dt>
+
+<dt><a name="uuid_length"
+>uuid_length</a></dt>
+</dl>
+
+<dt><a name="STRING_*get_string_keyed_str(STRING_*key)"
+><b><code>STRING *get_string_keyed_str(STRING *key)</b></code></a></dt>
+Fetch a string keyed value from the packfile object.
+Valid keys are:
+<dl>
+<dt><a name="uuid"
+>uuid</a></dt>
+</dl>
+
+<dt><a name="INTVAL_get_integer_keyed(PMC_*key)"
+><b><code>INTVAL get_integer_keyed(PMC *key)</b></code></a></dt>
+Fetch a keyed integer value from the packfile object.
+Dispatches to get_integer_keyed_str.
+<dt><a name="STRING_*get_string_keyed(PMC_*key)"
+><b><code>STRING *get_string_keyed(PMC *key)</b></code></a></dt>
+Fetch a keyed string value from the packfile object.
+Dispatches to get_string_keyed_str.
+<dt><a name="void_set_integer_keyed_str(STRING_*key,_INTVAL_value)"
+><b><code>void set_integer_keyed_str(STRING *key, INTVAL value)</b></code></a></dt>
+Set an integer keyed value to the specified value.
+Valid keys are:
+<dl>
+<dt><a name="version_major"
+>version_major</a></dt>
+
+<dt><a name="version_minor"
+>version_minor</a></dt>
+
+<dt><a name="version_patch"
+>version_patch</a></dt>
+
+<dt><a name="uuid_type"
+>uuid_type</a></dt>
+</dl>
+
+<dt><a name="void_set_integer_keyed(PMC_*key,_INTVALval)"
+><b><code>void set_integer_keyed(PMC *key, INTVALval)</b></code></a></dt>
+Set a keyed integer value in the packfile object.
+Dispatches to set_integer_keyed_str.
+<dt><a name="*_get_string_keyed_str_(v&#45;table)"
+>* <b><code>get_string_keyed_str</b></code> (v&#45;table)</a></dt>
+Used to get data about fields in the header that have a string value.
+Valid keys are:
+<dl>
+<dt><a name="uuid"
+>uuid</a></dt>
+</dl>
+
+<dt><a name="void_set_string_keyed(PMC_*key,_STRING_*val)"
+><b><code>void set_string_keyed(PMC *key, STRING *val)</b></code></a></dt>
+Set a keyed string value in the packfile object.
+Dispatches to set_string_keyed_str.
+<dt><a name="STRING_*_pack()"
+><b><code>STRING * pack()</b></code></a></dt>
+Return raw serialized PBC file data.
+Synonym for get_string.
+<dt><a name="STRING_*_unpack()"
+><b><code>STRING * unpack()</b></code></a></dt>
+Parse raw serialized PBC file data into the Packfile data structure.
+Synonym for set_string.
+<dt><a name="PMC_*get_directory()"
+><b><code>PMC *get_directory()</b></code></a></dt>
+Fetch the PackfileDirectory PMC that represents the directory segment at the start of the packfile.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

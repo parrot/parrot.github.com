@@ -1,0 +1,142 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/chitchat.html">ChitChat</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<p>grammar ChitChat::Grammar is PCT::Grammar;</p>
+
+<p>token TOP { &#60;ws&#62; [ | &#60;exprs&#62; | &#60;methods&#62; | &#39;!&#39; ]+ &#60;ws&#62; [ $ || &#60;panic: &#39;Syntax error&#39;&#62; ] {*} }</p>
+
+<p>token whitespace { \h | \v | &#60;comment&#62; }</p>
+
+<p>token ws { &#60;whitespace&#62;* }</p>
+
+<p>token comment { &#39;&#34;&#39; &#60;&#45;[&#34;]&#62;* &#39;&#34;&#39; }</p>
+
+<p>rule methods { &#39;!&#39; &#60;id&#62; &#39;class&#39;?
+&#39;methodsFor:&#39; &#60;string&#62; &#39;!&#39; [&#60;method&#62; &#39;!&#39;]?
+&#39;!&#39; }</p>
+
+<p>rule method { &#60;message&#62; &#60;pragma&#62;?
+&#60;temps&#62;?
+&#60;exprs&#62; }</p>
+
+<p>token message { &#60;id&#62; | &#60;binsel&#62; &#60;.ws&#62; &#60;id&#62; | [&#60;keysel&#62; &#60;.ws&#62; &#60;id&#62;]+ }</p>
+
+<p>token pragma { &#39;&#60;&#39; &#60;keymsg&#62; &#39;&#62;&#39; }</p>
+
+<p>rule temps { &#39;|&#39; [&#60;id&#62; ]* &#39;|&#39; }</p>
+
+<p>token unit { | &#60;id&#62; {*} #= id | &#60;literal&#62; {*} #= literal | &#60;block&#62; {*} #= block | &#60;arrayconstructor&#62; {*} #= arrayconstructor | &#39;(&#39; &#60;expr&#62; &#39;)&#39; {*} #= expr }</p>
+
+<p>rule unaryexpr { &#60;unit&#62; [&#60;!keysel&#62;&#60;id&#62; ]+ {*} }</p>
+
+<p>token primary { &#60;!unaryexpr&#62; &#60;unit&#62; {*} | &#60;unaryexpr&#62; {*} }</p>
+
+<p>rule exprs { [ | &#60;expr&#62; [ &#39;.&#39; &#60;expr&#62;]* [&#39;.&#39; &#39;^&#39; &#60;expr&#62;]?
+&#39;.&#39;?
+| &#39;^&#39; &#60;expr&#62; &#39;.&#39;?
+] {*} }</p>
+
+<p>rule expr { [&#60;id&#62; [&#39;:=&#39;|&#39;_&#39;]]* &#60;expr2&#62; {*} }</p>
+
+<p>rule expr2 {[ &#60;msgexpr&#62; [ &#39;;&#39; &#60;cascade&#62; ]* | &#60;primary&#62; ] {*} }</p>
+
+<p>token msgexpr { | &#60;keyexpr&#62; {*} #= keyexpr | &#60;binexpr&#62; {*} #= binexpr | &#60;unaryexpr&#62; {*} #= unaryexpr }</p>
+
+<p>token cascade { &#60;id&#62; | &#60;binmsg&#62; | &#60;keymsg&#62; }</p>
+
+<p>rule binexpr { &#60;primary&#62; &#60;binmsg&#62; [&#60;binmsg&#62; ]* {*} }</p>
+
+<p>rule binmsg { &#60;binsel&#62; &#60;primary&#62; }</p>
+
+<p>token binsel { &#60;binchar&#62;**{1..2} }</p>
+
+<p>rule keyexpr { &#60;keyexpr2&#62; &#60;keymsg&#62; {*} }</p>
+
+<p>token keyexpr2 { &#60;!binexpr&#62; &#60;primary&#62; {*} | &#60;binexpr&#62; {*} }</p>
+
+<p>rule keymsg { [&#60;keysel&#62; &#60;keyexpr2&#62; ]+ {*} }</p>
+
+<p>token keysel { &#60;id&#62; &#39;:&#39; }</p>
+
+<p>rule block { &#39;[&#39; [[&#39;:&#39; &#60;id&#62;]* &#39;|&#39;]?
+&#60;temps&#62;?
+&#60;exprs&#62; &#39;]&#39; }</p>
+
+<p>token arrayconstructor { &#39;{&#39; &#60;exprs&#62; &#39;}&#39; }</p>
+
+<p>token literal { | &#60;number&#62; {*} #= number | &#60;string&#62; {*} #= string | &#60;charconst&#62; {*} #= charconst | &#60;symconst&#62; {*} #= symconst | &#60;arrayconst&#62; {*} #= arrayconst | &#60;binding&#62; {*} #= binding | &#60;eval&#62; {*} #= eval }</p>
+
+<p>token arrayconst { &#39;#&#39; &#60;array&#62; | &#39;#&#39; &#60;bytearray&#62; }</p>
+
+<p>token bytearray { &#39;[&#39; &#60;number&#62;* &#39;]&#39; }</p>
+
+<p>rule array { &#39;(&#39; [ &#60;literal&#62; | &#60;array&#62; | &#60;bytearray&#62; | &#60;arraysym&#62; ]* &#39;)&#39; }</p>
+
+<p>token number { [&#60;.digit&#62;+ &#39;r&#39;]?
+&#39;&#45;&#39;?
+&#60;.alnum&#62;+ [&#39;.&#39; &#60;.alnum&#62;+]?
+[&#60;exp&#62; &#39;&#45;&#39;?
+&#60;dig&#62;+]?
+}</p>
+
+<p>token string { \&#39; $&#60;text&#62;:=&#60;&#45;[&#39;]&#62;* \&#39; {*} }</p>
+
+<p>token charconst { &#39;$&#39; .
+}</p>
+
+<p>token symconst { &#39;#&#39;&#60;symbol&#62; | &#39;#&#39;&#60;string&#62; }</p>
+
+<p>token arraysym { [&#60;id&#62; | &#39;:&#39;]* }</p>
+
+<p>token exp { &#60;[deqs]&#62; }</p>
+
+<p>token binding { &#39;#{&#39; [&#60;id&#62; &#39;.&#39;]* &#60;id&#62; &#39;}&#39; }</p>
+
+<p>token symbol { &#60;id&#62; | &#60;binsel&#62; | &#60;keysel&#62;**{1..2} }</p>
+
+<p>rule eval { &#39;##(&#39; &#60;temps&#62;?
+&#60;exprs&#62; &#39;)&#39; }</p>
+
+<p>token id { &#60;.alpha&#62; [ &#60;.alpha&#62; | &#60;.digit&#62; ]* }</p>
+
+<p>token binchar { &#60;[+\&#45;*/~,&#60;&#62;=&#38;&#194;&#180;?\\%]&#62; }</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

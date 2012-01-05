@@ -1,0 +1,314 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Status of Lua on Parrot</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Status of Lua on Parrot</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/lua.html">Lua</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="TITLE"
+>TITLE <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Status of Lua on Parrot</p>
+
+<h1><a name="Introduction"
+>Introduction <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Lua is an extension programming language designed to support general procedural programming with data description facilities.
+It also offers good support for object&#45;oriented programming,
+functional programming,
+and data&#45;driven programming.
+Lua is intended to be used as a powerful,
+light&#45;weight scripting language for any program that needs one.</p>
+
+<p>The homepage is <a href='http://www.lua.org/'><a href="http://www.lua.org/">http://www.lua.org/</a></a>.</p>
+
+<p>The reference manual is available on <a href='http://www.lua.org/manual/'><a href="http://www.lua.org/manual/">http://www.lua.org/manual/</a></a>.</p>
+
+<p>This implementation is aligned with Lua 5.1 specifications.</p>
+
+<h1><a name="PIR_Compiler/Interpreter"
+>PIR Compiler/Interpreter <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p><code lang='und' xml:lang='und'>lua.pbc</code> is the interpreter/compiler,
+see <em lang='und' xml:lang='und'><a href="../src/lua51.pir.html">languages/lua/src/lua51.pir</a></em> &#38; <em lang='und' xml:lang='und'><a href="../lua.pir.html">languages/lua/lua.pir</a></em>.</p>
+
+<p><code lang='und' xml:lang='und'>lua.pbc</code> is written in PIR and generates PIR from Lua sources.
+<code lang='und' xml:lang='und'>lua.pbc</code> uses the following Parrot compiler toolchain components :</p>
+
+<dl>
+<dt><a name="PGE"
+>PGE</a></dt><p class="pad"></p>
+
+<dd>The Lua grammar is described in <em lang='und' xml:lang='und'><a href="../src/lua51.pg.html">languages/lua/src/lua51.pg</a></em>.</dd><p class="pad"></p>
+
+<dd>The PIR code is emitted by <code lang='und' xml:lang='und'>CodeString</code>.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>PGE</code> is also used by the Lua pattern compiler in <em lang='und' xml:lang='und'><a href="../src/lib/luaregex.pir.html">languages/lua/src/lib/luaregex.pir</a></em>.</dd><p class="pad"></p>
+
+<dt><a name="TGE"
+>TGE</a></dt><p class="pad"></p>
+
+<dd>Two stages of tree transformation are used <em lang='und' xml:lang='und'><a href="../src/PASTGrammar.tg.html">languages/lua/src/PASTGrammar.tg</a></em> &#38; <em lang='und' xml:lang='und'><a href="../src/POSTGrammar.tg.html">languages/lua/src/POSTGrammar.tg</a></em>.</dd><p class="pad"></p>
+
+<dt><a name="PAST"
+>PAST</a></dt><p class="pad"></p>
+
+<dd>The AST is represented with <em lang='und' xml:lang='und'><a href="../../../compilers/pct/src/PAST/Node.pir.html">compilers/pct/src/PAST/Node.pir</a></em>.</dd><p class="pad"></p>
+
+<dt><a name="POST"
+>POST</a></dt><p class="pad"></p>
+
+<dd>The OST is represented with <em lang='und' xml:lang='und'><a href="../../../compilers/pct/src/POST/Node.pir.html">compilers/pct/src/POST/Node.pir</a></em>.</dd><p class="pad"></p>
+
+<dt><a name="HLLCompiler"
+>HLLCompiler</a></dt><p class="pad"></p>
+
+<dd>This Lua compiler extends the base class <em lang='und' xml:lang='und'><a href="../../../compilers/pct/src/PCT/HLLCompiler.pir.html">compilers/pct/src/PCT/HLLCompiler.pir</a></em>.</dd><p class="pad"></p>
+</dl>
+
+<p>The lexicography part could be checked with <em lang='und' xml:lang='und'><a href="../test_lex.pir.html">languages/lua/test_lex.pir</a></em>.</p>
+
+<p>The code generation could be examined with <em lang='und' xml:lang='und'><a href="../luap.pir.html">languages/lua/luap.pir</a></em>.</p>
+
+<h2><a name="KNOWN_PROBLEMS"
+>KNOWN PROBLEMS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>in <em lang='und' xml:lang='und'><a href="../t/closure.t.html">languages/lua/t/closure.t</a></em> :</p>
+
+<pre lang='und' xml:lang='und'>    a = {}
+    local x = 20
+    for i=1,10 do
+        local y = 0
+        a[i] = function () y=y+1; return x+y end
+    end
+
+    print(a[1]())
+    print(a[1]())
+    print(a[2]())
+
+    &#45;&#45;[[
+    The loop creates ten closures (that is, ten instances of the anonymous
+    function). Each of these closures uses a different y variable, while all
+    of them share the same x.
+    ]]</pre>
+
+<p><code lang='und' xml:lang='und'>y</code> variable is not different.</p>
+
+<h1><a name="Perl_Compiler_(deprecated)"
+>Perl Compiler (deprecated) <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This compiler is written in Perl5 :</p>
+
+<ul>
+<li>lexer</li><p class="pad"></p>
+
+<p>Implemented with Perl5 regex</p>
+
+<p><em lang='und' xml:lang='und'>languages/lua/src/yapp/Lua/lexer.pm</em></p>
+
+<li>parser</li><p class="pad"></p>
+
+<p>Implemented with Parse::Yapp.</p>
+
+<p>It supports the full grammar described in <em lang='und' xml:lang='und'><a href="lua51.bnf.html">languages/lua/doc/lua51.bnf</a></em>.</p>
+
+<p>Only one <code lang='und' xml:lang='und'>error</code> rule, so the syntax error diagnostic is minimalist.</p>
+
+<p><em lang='und' xml:lang='und'>languages/lua/src/yapp/Lua/lua51.yp</em></p>
+
+<li>code generation</li><p class="pad"></p>
+
+<p><em lang='und' xml:lang='und'>languages/lua/src/yapp/Lua/build.pm</em></p>
+
+<li>symbole table</li><p class="pad"></p>
+
+<p><em lang='und' xml:lang='und'>languages/lua/src/yapp/Lua/symbtab.pm</em></p>
+
+<li>opcode representation</li><p class="pad"></p>
+
+<p><em lang='und' xml:lang='und'>languages/lua/src/yapp/Lua/opcode.pm</em></p>
+
+<li>opcode emission</li><p class="pad"></p>
+
+<p><em lang='und' xml:lang='und'>languages/lua/src/yapp/Lua/pir.pm</em></p>
+</ul>
+
+<h1><a name="Lua_Types"
+>Lua Types <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>There are eight basic types in Lua, each of them is implemented by a PMC.</p>
+
+<ul>
+<li>nil <em lang='und' xml:lang='und'><a href="../src/pmc/luanil.pmc.html">languages/lua/src/pmc/luanil.pmc</a></em></li><p class="pad"></p>
+
+<li>boolean <em lang='und' xml:lang='und'><a href="../src/pmc/luaboolean.pmc.html">languages/lua/src/pmc/luaboolean.pmc</a></em></li><p class="pad"></p>
+
+<li>number <em lang='und' xml:lang='und'><a href="../src/pmc/luanumber.pmc.html">languages/lua/src/pmc/luanumber.pmc</a></em></li><p class="pad"></p>
+
+<li>string <em lang='und' xml:lang='und'><a href="../src/pmc/luastring.pmc.html">languages/lua/src/pmc/luastring.pmc</a></em></li><p class="pad"></p>
+
+<li>function <em lang='und' xml:lang='und'><a href="../src/pmc/luafunction.pmc.html">languages/lua/src/pmc/luafunction.pmc</a></em></li><p class="pad"></p>
+
+<li>userdata <em lang='und' xml:lang='und'><a href="../src/pmc/luauserdata.pmc.html">languages/lua/src/pmc/luauserdata.pmc</a></em></li><p class="pad"></p>
+
+<p>This type allows OO extension.</p>
+
+<p>Currently, <code lang='und' xml:lang='und'>file</code> in I/O library is an <code lang='und' xml:lang='und'>userdata</code>.</p>
+
+<li>thread <em lang='und' xml:lang='und'><a href="../src/pmc/luathread.pmc.html">languages/lua/src/pmc/luathread.pmc</a></em></li><p class="pad"></p>
+
+<p>This type is used to implement coroutines. The current implementation use the library <em lang='und' xml:lang='und'><a href="../../../runtime/parrot/library/Parrot/Coroutine.pir.html">runtime/parrot/library/Parrot/Coroutine.pir</a></em>.</p>
+
+<li>table <em lang='und' xml:lang='und'><a href="../src/pmc/luatable.pmc.html">languages/lua/src/pmc/luatable.pmc</a></em></li><p class="pad"></p>
+
+<p>This type is <i>the</i> data structure of the language.</p>
+</ul>
+
+<p><em lang='und' xml:lang='und'><a href="../src/pmc/luaany.pmc.html">languages/lua/src/pmc/luaany.pmc</a></em> provides an abstract base class for all Lua types.</p>
+
+<p><em lang='und' xml:lang='und'><a href="../src/pmc/lua.pmc.html">languages/lua/src/pmc/lua.pmc</a></em> is a singleton PMC what holds some static methods.</p>
+
+<h2><a name="TODO"
+>TODO <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Arguments passing in <code lang='und' xml:lang='und'>invoke</code> method of <code lang='und' xml:lang='und'>table</code>. Where are there ?</p>
+
+<h2><a name="IMPROVEMENT"
+>IMPROVEMENT <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p><code lang='und' xml:lang='und'>table</code> with a mixed array and hash (like Lua 5).</p>
+
+<h1><a name="Lua_Standard_Libraries"
+>Lua Standard Libraries <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Lua 5.1 defines the following standard libraries:</p>
+
+<ul>
+<li>basic library <em lang='und' xml:lang='und'><a href="../src/lib/luabasic.pir.html">languages/lua/src/lib/luabasic.pir</a></em></li><p class="pad"></p>
+
+<li>coroutine manipulation <em lang='und' xml:lang='und'><a href="../src/lib/luacoroutine.pir.html">languages/lua/src/lib/luacoroutine.pir</a></em></li><p class="pad"></p>
+
+<li>package library <em lang='und' xml:lang='und'><a href="../src/lib/luapackage.pir.html">languages/lua/src/lib/luapackage.pir</a></em></li><p class="pad"></p>
+
+<li>string manipulation <em lang='und' xml:lang='und'><a href="../src/lib/luastring.pir.html">languages/lua/src/lib/luastring.pir</a></em></li><p class="pad"></p>
+
+<li>table manipulation <em lang='und' xml:lang='und'><a href="../src/lib/luatable.pir.html">languages/lua/src/lib/luatable.pir</a></em></li><p class="pad"></p>
+
+<li>mathematical functions <em lang='und' xml:lang='und'><a href="../src/lib/luamath.pir.html">languages/lua/src/lib/luamath.pir</a></em></li><p class="pad"></p>
+
+<li>input and output <em lang='und' xml:lang='und'><a href="../src/lib/luaio.pir.html">languages/lua/src/lib/luaio.pir</a></em>, <em lang='und' xml:lang='und'><a href="../src/lib/luafile.pir.html">languages/lua/src/lib/luafile.pir</a></em></li><p class="pad"></p>
+
+<li>operating system facilities <em lang='und' xml:lang='und'><a href="../src/lib/luaos.pir.html">languages/lua/src/lib/luaos.pir</a></em></li><p class="pad"></p>
+
+<li>debug facilities <em lang='und' xml:lang='und'><a href="../src/lib/luadebug.pir.html">languages/lua/src/lib/luadebug.pir</a></em></li><p class="pad"></p>
+</ul>
+
+<p><em lang='und' xml:lang='und'><a href="../src/lib/luaaux.pir.html">languages/lua/src/lib/luaaux.pir</a></em> is the equivalent of Auxiliary Library.</p>
+
+<p><em lang='und' xml:lang='und'><a href="../src/lib/luaregex.pir.html">languages/lua/src/lib/luaregex.pir</a></em> implements a regex compiler using PGE.</p>
+
+<h2><a name="TODO"
+>TODO <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Complete some of these libraries.</p>
+
+<h1><a name="Extension_Libraries"
+>Extension Libraries <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>These libraries are loaded dynamically with the Lua function <code lang='und' xml:lang='und'>require</code>.</p>
+
+<ul>
+<li>alarm library <em lang='und' xml:lang='und'><a href="../src/lib/alarm.pir.html">languages/lua/src/lib/alarm.pir</a></em></li><p class="pad"></p>
+
+<li>base64 library <em lang='und' xml:lang='und'><a href="../src/lib/base64.pir.html">languages/lua/src/lib/base64.pir</a></em></li><p class="pad"></p>
+
+<li>big number library <em lang='und' xml:lang='und'><a href="../src/lib/bc.pir.html">languages/lua/src/lib/bc.pir</a></em></li><p class="pad"></p>
+
+<li>bitwise operation library <em lang='und' xml:lang='und'><a href="../src/lib/bitlib.pir.html">languages/lua/src/lib/bitlib.pir</a></em></li><p class="pad"></p>
+
+<li>complex library <em lang='und' xml:lang='und'><a href="../src/lib/complex.pir.html">languages/lua/src/lib/complex.pir</a></em></li><p class="pad"></p>
+
+<li>Lua File System library <em lang='und' xml:lang='und'><a href="../src/lib/lfs.pir.html">languages/lua/src/lib/lfs.pir</a></em></li><p class="pad"></p>
+
+<li>LPeg library <em lang='und' xml:lang='und'><a href="../src/lib/lpeg.pir.html">languages/lua/src/lib/lpeg.pir</a></em></li><p class="pad"></p>
+
+<li>markdown library <em lang='und' xml:lang='und'><a href="../src/lib/markdown.pir.html">languages/lua/src/lib/markdown.pir</a></em></li><p class="pad"></p>
+
+<li>mathx library <em lang='und' xml:lang='und'><a href="../src/lib/mathx.pir.html">languages/lua/src/lib/mathx.pir</a></em></li><p class="pad"></p>
+
+<li>md5 &#38; sha1 library <em lang='und' xml:lang='und'><a href="../src/lib/md5.pir.html">languages/lua/src/lib/md5.pir</a></em></li><p class="pad"></p>
+
+<li>random library <em lang='und' xml:lang='und'><a href="../src/lib/random.pir.html">languages/lua/src/lib/random.pir</a></em></li><p class="pad"></p>
+
+<li>struct library <em lang='und' xml:lang='und'><a href="../src/lib/struct.pir.html">languages/lua/src/lib/struct.pir</a></em></li><p class="pad"></p>
+
+<li>uuid library <em lang='und' xml:lang='und'><a href="../src/lib/uuid.pir.html">languages/lua/src/lib/uuid.pir</a></em></li><p class="pad"></p>
+</ul>
+
+<h1><a name="Next_Milestones"
+>Next Milestones <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Debugging &#38; stabilisation.</p>
+
+<h2><a name="FEEDBACK"
+>FEEDBACK <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>I try to summarize all my feedback, here : <a href='http://www.nntp.perl.org/group/perl.perl6.internals/2007/10/msg40493.html'><a href="http://www.nntp.perl.org/group/perl.perl6.internals/2007/10/msg40493.html">http://www.nntp.perl.org/group/perl.perl6.internals/2007/10/msg40493.html</a></a>.</p>
+
+<h1><a name="Related_Projects"
+>Related Projects <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Klaas&#45;Jan Stol works on 2 projects :</p>
+
+<ul>
+<li>Monkey, an implementation of Lua on Parrot</li><p class="pad"></p>
+
+<p>A Lua to PIR compiler implemented in C</p>
+
+<li>lua2pir</li><p class="pad"></p>
+
+<p>A Lua bytecode to PIR compiler</p>
+</ul>
+
+<p>See <a href='http://kjs.home.fmf.nl/'><a href="http://kjs.home.fmf.nl/">http://kjs.home.fmf.nl/</a></a>.</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Francois Perrad.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

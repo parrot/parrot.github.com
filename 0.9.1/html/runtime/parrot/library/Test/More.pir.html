@@ -1,0 +1,134 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot extension for testing modules</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Contents</a> &raquo; <a href="../../../../../html/libs.html">Libraries</a> &raquo; Parrot extension for testing modules
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>Test::More &#45; Parrot extension for testing modules</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    # load this library
+    load_bytecode &#39;library/Test/More.pbc&#39;
+
+    # get the testing functions
+    .local pmc exports, curr_namespace, test_namespace
+    curr_namespace = get_namespace
+    test_namespace = get_namespace [ &#39;Test&#39;; &#39;More&#39; ]
+    exports        = split &#39; &#39;, &#39;plan diag ok nok is is_deeply like isa_ok skip isnt todo&#39;
+
+    test_namespace.&#39;export_to&#39;(curr_namespace, exports)
+
+    # set a test plan
+    plan( 12 )
+
+    # run your tests
+    ok( 1 )
+    ok( 0, &#39;failing test with diagnostic&#39; )
+
+    is( 100, 100 )
+    is( 200, 100, &#39;failing integer compare with diagnostic&#39; )
+
+    is( 1.001, 1.001, &#39;passing float compare with diagnostic&#39; )
+    is( 8.008, 4.004 )
+
+    is( &#39;foo&#39;, &#39;foo&#39;, &#39;passing string compare with diagnostic&#39; )
+    is( &#39;foo&#39;, &#39;bar&#39;, &#39;failing string compare with diagnostic&#39; )
+
+    is( some_pmc, another_pmc, &#39;pmc comparison uses &#34;eq&#34; op&#39; )
+
+    diag( &#39;this may take a while&#39; )
+    is_deeply( some_deep_pmc, another_deep_pmc, &#39;deep structure comparison&#39; )
+
+    like( &#39;foo&#39;, &#39;f o**{2}&#39;, &#39;passing regex compare with diagnostic&#39; )
+    skip(1, &#39;reason for skipping&#39;)
+    todo(0, &#39;this is a failed test&#39;, &#39;reason for todo&#39;)
+
+    $P0 = get_class &#34;Squirrel&#34;
+    $P0.new()
+
+    isa_ok($P0, &#34;Squirrel&#34;, &#34;new Squirrel&#34;)</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p><code>Test::More</code> is a pure&#45;Parrot library for testing modules. It provides the <code>ok()</code>, <code>is()</code>, <code>isnt()</code>, <code>is_deeply()</code>, and <code>like()</code> comparison functions for you. It also provides the <code>plan()</code> and <code>diag()</code> helper functions. It uses <code>Test::Builder</code>, a simple, single backend for multiple test modules to use within your tests.</p>
+
+<h1><a name="FUNCTIONS"
+>FUNCTIONS</a></h1>
+
+<p>This class defines the following functions:</p>
+
+<dl>
+<dt><a name="plan(_number_or_no_plan_)"
+><b><code>plan( number_or_no_plan )</b></code></a></dt>
+Declares the number of tests you plan to run, either an integer greater than zero or the string <code>no_plan</code>. This will throw an exception if you have already declared a plan or if you pass an invalid argument.
+<dt><a name="ok(_passed,_description_)"
+><b><code>ok( passed, description )</b></code></a></dt>
+Records a test as pass or fail depending on the truth of the integer <code>passed</code>, recording it with the optional test description in <code>description</code>.
+<dt><a name="nok(_passed,_description_)"
+><b><code>nok( passed, description )</b></code></a></dt>
+Records a test as pass or fail depending on the falsehood of the integer <code>passed</code>, recording it with the optional test description in <code>description</code>.
+<dt><a name="is(_left,_right,_description_)"
+><b><code>is( left, right, description )</b></code></a></dt>
+Compares the parameters passed as <code>left</code> and <code>right</code>, passing if they are equal and failing otherwise. This will report the results with the optional test description in <code>description</code>.This is a multi&#45;method, with separate implementations for int&#45;int, float&#45;float, string&#45;string, and PMC&#45;PMC comparisons. The latter uses the <code>eq</code> opcode for comparison.If there is a mismatch, the current implementation takes the type of <code>left</code> as the proper type for the comparison, converting any numeric arguments to floats. Note that there is a hard&#45;coded precision check to avoid certain rounding errors. It&#39;s not entirely robust, but it&#39;s not completely awful either.Patches very welcome. Multi&#45;dispatch is a bit tricky here.This probably doesn&#39;t handle all of the comparisons you want, but it&#39;s easy to add more.
+<dt><a name="isnt(_left,_right,_description_)"
+><b><code>isnt( left, right, description )</b></code></a></dt>
+Like <code>is</code>, but succeeds if the arguments <i>don&#39;t</i> match.
+<dt><a name="diag(_diagnostic_)"
+><b><code>diag( diagnostic )</b></code></a></dt>
+Prints <code>diagnostic</code> to the screen, without affecting test comparisons.
+<dt><a name="is_deeply(_left,_right,_description_)"
+><b><code>is_deeply( left, right, description )</b></code></a></dt>
+Compares the data structures passed as <code>left</code> and <code>right</code>. If data structures are passed, <code>is_deeply</code> does a deep comparison by walking each structure. It passes if they are equal and fails otherwise. This will report the results with the optional test description in <code>description</code>.This only handles comparisons of array&#45;like structures. It shouldn&#39;t be too hard to extend it for hash&#45;like structures, too.
+<dt><a name="like(_target,_pattern,_description_)"
+><b><code>like( target, pattern, description )</b></code></a></dt>
+Similar to is, but using the Parrot Grammar Engine to compare the string passed as <code>target</code> to the pattern passed as <code>pattern</code>. It passes if the pattern matches and fails otherwise. This will report the results with the optional test description in <code>description</code>.
+<dt><a name="skip(_how_many,_why_)"
+><b><code>skip( how_many, why )</b></code></a></dt>
+Pass a number of tests, but with a comment that marks the test was actually skipped. Arguments are optional.
+<dt><a name="todo(_passed,_description,_reason_)"
+><b><code>todo( passed, description, reason )</b></code></a></dt>
+Records a test as pass or fail (like <code>ok</code>, but marks it as TODO so it always appears as a success. This also records the optional <code>description</code> of the test and the <code>reason</code> you have marked it as TODO.
+<dt><a name="isa_ok(_object,_class_name,_object_name_)"
+><b><code>isa_ok( object, class_name, object_name )</b></code></a></dt>
+Pass if the object <code>isa</code> class of the given class name. The object name passed in is not a full description, but a name to be included in the description. The description is presented as &#34;&#60;object_name&#62; isa &#60;class&#62;&#34;.Good input: &#34;<code>new MyObject</code>&#34;, &#34;<code>return from bar()</code>&#34;Bad input: &#34;<code>test that the return from Foo is correct type</code>&#34;</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Written and maintained by chromatic, <code>chromatic at wgz dot org</code>, based on the Perl 6 port he wrote, based on the original Perl 5 version he wrote with ideas from Michael G. Schwern. Please send patches, feedback, and suggestions to the Perl 6 internals mailing list.</p>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT</a></h1>
+
+<p>Copyright (C) 2005&#45;2008, Parrot Foundation.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

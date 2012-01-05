@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Run configuration and build tests along with F&#60;Configure.pl&#62;</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Contents</a> &raquo; <a href="../../../../../html/perl.html">Perl Modules</a> &raquo; Run configuration and build tests along with F&#60;Configure.pl&#62;
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>Parrot::Configure::Options::Test &#45; Run configuration and build tests along with <em><a href="../../../../Configure.pl.html">Configure.pl</a></em></p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<p>In <em><a href="../../../../Configure.pl.html">Configure.pl</a></em>:</p>
+
+<pre>    use Parrot::Configure::Options;
+    use Parrot::Configure::Options::Test;
+    use Parrot::Configure::Options::Test::Prepare qw(
+        get_preconfiguration_tests
+        get_postconfiguration_tests
+    );
+
+    $args = process_options( {
+        argv            =&#62; [ @ARGV ],
+        mode            =&#62; q{configure},
+    } );
+
+    $opttest = Parrot::Configure::Options::Test&#45;&#62;new($args);
+
+    $opttest&#45;&#62;run_configure_tests( get_preconfiguration_tests() );
+
+    $opttest&#45;&#62;run_build_tests( get_postconfiguration_tests() );</pre>
+
+<p>On command line:</p>
+
+<pre>    # run tests of configuration tools, then configure
+    perl Configure.pl  &#45;&#45;test=configure
+
+    # configure, then run tests of build tools
+    perl Configure.pl  &#45;&#45;test=build
+
+    # run tests of configuration tools, then configure,
+    # then run tests of build tools
+    perl Configure.pl  &#45;&#45;test</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Test suites have been constructed which test those of Parrot&#39;s configuration and build tools that are written in Perl 5. These tests are not necessarily run when you invoke <em>make test</em>. In any event, running these tests as part of <em>make test</em> is, in a certain sense, running them too late. If you have successfully called <em><a href="../../../../Configure.pl.html">Configure.pl</a></em> and <em>make</em>, you have implicitly demonstrated that the configuration and build tools work (for the most part), so running tests of those tools post&#45;<em>make</em> is somewhat redundant.</p>
+
+<p>On the other hand, tests of the configuration tools <i>are</i> meaningful if run <i>before</i> <em><a href="../../../../Configure.pl.html">Configure.pl</a></em> is invoked and, similarly, tests of the build tools <i>are</i> meaningful if run <i>before</i> <em>make</em> is invoked. Parrot::Configure::Options::Test provides functionality for running such tests.</p>
+
+<h1><a name="SUBROUTINES"
+>SUBROUTINES</a></h1>
+
+<h2><a name="new()"
+><code>new()</code></a></h2>
+
+<ul>
+<li>Purpose</li>
+
+<p>Parrot::Configure::Options::Test constructor.</p>
+
+<li>Arguments</li>
+
+<p>One argument: The hash reference which is the return value of <code>Parrot::Configure::Options::process_options()</code>.</p>
+
+<li>Return Value</li>
+
+<p>Parrot::Configure::Options::Test object.</p>
+
+<li>Comment</li>
+</ul>
+
+<h2><a name="run_configure_tests()"
+><code>run_configure_tests()</code></a></h2>
+
+<ul>
+<li>Purpose</li>
+
+<p>Run tests of Parrot&#39;s configuration tools.</p>
+
+<li>Arguments</li>
+
+<p>List of test files, typically supplied by <code>Parrot::Configure::Options::Test::Prepare::get_preconfiguration_tests()</code>.</p>
+
+<li>Return Value</li>
+
+<p>None.</p>
+</ul>
+
+<h2><a name="run_build_tests()"
+><code>run_build_tests()</code></a></h2>
+
+<ul>
+<li>Purpose</li>
+
+<p>Run tests of Parrot&#39;s build tools. Also, run tests of certain aspects of the configuration process which, for legacy reasons, must run after <em><a href="../../../../Configure.pl.html">Configure.pl</a></em> has completed execution.</p>
+
+<li>Arguments</li>
+
+<p>List of test files, typically supplied by <code>Parrot::Configure::Options::Test::Prepare::get_postconfiguration_tests()</code>.</p>
+
+<li>Return Value</li>
+
+<p>None.</p>
+</ul>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>James E Keenan, in response to request by Jerry Gay in <a href="http://rt.perl.org/rt3/Ticket/Display.html?id=42690.">http://rt.perl.org/rt3/Ticket/Display.html?id=42690.</a></p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em><a href="../../../../Configure.pl.html">Configure.pl</a></em>. <em><a href="../Options.pm.html">lib/Parrot/Configure/Options.pm</a></em>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

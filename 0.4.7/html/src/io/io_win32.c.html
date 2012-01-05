@@ -1,0 +1,186 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Win32 IO layer</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Win32 IO layer</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/io/name.c &#45; Win32 IO layer</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This is the Parrot OS&#45;specific IO layer for Win32 platforms.</p>
+
+<h2><a name="References"
+>References <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Win32 System Programming,
+2nd Edition.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a
+><b><code lang='und' xml:lang='und'>static INTVAL flags_to_win32(INTVAL flags, DWORD *fdwAccess, DWORD *fdwShareMode, DWORD *fdwCreate)</b></code></a></dt><p class="pad"></p>
+
+<dd>Convert to platform&#45;specific bit open flags.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_PIO_win32_init(theINTERP,_ParrotIOLayer_*layer)"
+><b><code lang='und' xml:lang='und'>static INTVAL PIO_win32_init(theINTERP, ParrotIOLayer *layer)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets up the standard <code lang='und' xml:lang='und'>std*</code> IO handles.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_win32_getblksize(PIOHANDLE_fd)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_win32_getblksize(PIOHANDLE fd)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns <code lang='und' xml:lang='und'>PIO_BLKSIZE</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static ParrotIO *PIO_win32_open(theINTERP, ParrotIOLayer *layer, const char *spath, INTVAL flags)</b></code></a></dt><p class="pad"></p>
+
+<dd>Calls <code lang='und' xml:lang='und'>CreateFile()</code> to open <code lang='und' xml:lang='und'>*spath</code> with the Win32 translation of <code lang='und' xml:lang='und'>flags</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static ParrotIO *PIO_win32_fdopen(theINTERP, ParrotIOLayer *layer, PIOHANDLE fd, INTVAL flags)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new <code lang='und' xml:lang='und'>ParrotIO</code> with <code lang='und' xml:lang='und'>fd</code> as its file descriptor.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_PIO_win32_close(theINTERP,_ParrotIOLayer_*layer,_ParrotIO_*io)"
+><b><code lang='und' xml:lang='und'>static INTVAL PIO_win32_close(theINTERP, ParrotIOLayer *layer, ParrotIO *io)</b></code></a></dt><p class="pad"></p>
+
+<dd>Calls <code lang='und' xml:lang='und'>CloseHandle()</code> to close <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_win32_isatty(PIOHANDLE_fd)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_win32_isatty(PIOHANDLE fd)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns whether <code lang='und' xml:lang='und'>fd</code> is a console/tty.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_PIO_win32_flush(theINTERP,_ParrotIOLayer_*layer,_ParrotIO_*io)"
+><b><code lang='und' xml:lang='und'>static INTVAL PIO_win32_flush(theINTERP, ParrotIOLayer *layer, ParrotIO *io)</b></code></a></dt><p class="pad"></p>
+
+<dd>Calls <code lang='und' xml:lang='und'>FlushFileBuffers()</code> to flush <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor.</dd><p class="pad"></p>
+
+<dt><a name="static_size_t_PIO_win32_read(theINTERP,_ParrotIOLayer_*layer,_ParrotIO_*io,_STRING_**_buf)"
+><b><code lang='und' xml:lang='und'>static size_t PIO_win32_read(theINTERP, ParrotIOLayer *layer, ParrotIO *io, STRING ** buf)</b></code></a></dt><p class="pad"></p>
+
+<dd>Calls <code lang='und' xml:lang='und'>ReadFile()</code> to read up to <code lang='und' xml:lang='und'>len</code> bytes from <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor to the memory starting at <code lang='und' xml:lang='und'>buffer</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_size_t_PIO_win32_write(theINTERP,_ParrotIOLayer_*layer,_ParrotIO_*io,_STRING_*)"
+><b><code lang='und' xml:lang='und'>static size_t PIO_win32_write(theINTERP, ParrotIOLayer *layer, ParrotIO *io, STRING *)</b></code></a></dt><p class="pad"></p>
+
+<dd>Calls <code lang='und' xml:lang='und'>WriteFile()</code> to write <code lang='und' xml:lang='und'>len</code> bytes from the memory starting at <code lang='und' xml:lang='und'>buffer</code> to <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static PIOOFF_T PIO_win32_seek(theINTERP, ParrotIOLayer *l, ParrotIO *io, PIOOFF_T off, INTVAL whence)</b></code></a></dt><p class="pad"></p>
+
+<dd>Hard seek.</dd><p class="pad"></p>
+
+<dd>Calls <code lang='und' xml:lang='und'>SetFilePointer()</code> to move the read/write position of <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor to <code lang='und' xml:lang='und'>off</code> bytes relative to the location specified by <code lang='und' xml:lang='und'>whence</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_PIOOFF_T_PIO_win32_tell(theINTERP,_ParrotIOLayer_*l,_ParrotIO_*io)"
+><b><code lang='und' xml:lang='und'>static PIOOFF_T PIO_win32_tell(theINTERP, ParrotIOLayer *l, ParrotIO *io)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the current read/write position of <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*_PIO_sockaddr_in(theINTERP,_unsigned_short_port,_STRING_*_addr)"
+><b><code lang='und' xml:lang='und'>STRING *PIO_sockaddr_in(theINTERP, unsigned short port, STRING *addr)</b></code></a></dt><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>PIO_sockaddr_in()</code> is not part of the layer and so must be <code lang='und' xml:lang='und'>extern</code>.</dd><p class="pad"></p>
+
+<dd>XXX: We can probably just write our own routines (<code lang='und' xml:lang='und'>htons()</code>,
+<code lang='und' xml:lang='und'>inet_aton()</code>,
+etc.) and take this out of platform specific compilation</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static ParrotIO *PIO_win32_socket(theINTERP, ParrotIOLayer *layer, int fam, int type, int proto)</b></code></a></dt><p class="pad"></p>
+
+<dd>Uses <code lang='und' xml:lang='und'>socket()</code> to create a socket with the specified address family,
+socket type and protocol number.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_PIO_win32_connect(theINTERP,_ParrotIOLayer_*layer,_ParrotIO_*io,_STRING_*r)"
+><b><code lang='und' xml:lang='und'>static INTVAL PIO_win32_connect(theINTERP, ParrotIOLayer *layer, ParrotIO *io, STRING *r)</b></code></a></dt><p class="pad"></p>
+
+<dd>Connects <code lang='und' xml:lang='und'>*io</code>&#39;s socket to address <code lang='und' xml:lang='und'>*r</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_PIO_win32_send(theINTERP,_ParrotIOLayer_*layer,_ParrotIO_*_io,_STRING_*s)"
+><b><code lang='und' xml:lang='und'>static INTVAL PIO_win32_send(theINTERP, ParrotIOLayer *layer, ParrotIO *io, STRING *s)</b></code></a></dt><p class="pad"></p>
+
+<dd>Send the message <code lang='und' xml:lang='und'>*s</code> to <code lang='und' xml:lang='und'>*io</code>&#39;s connected socket.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_PIO_win32_recv(theINTERP,_ParrotIOLayer_*layer,_ParrotIO_*_io,_STRING_**s)"
+><b><code lang='und' xml:lang='und'>static INTVAL PIO_win32_recv(theINTERP, ParrotIOLayer *layer, ParrotIO *io, STRING **s)</b></code></a></dt><p class="pad"></p>
+
+<dd>Receives a message in <code lang='und' xml:lang='und'>**s</code> from <code lang='und' xml:lang='und'>*io</code>&#39;s connected socket.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_PIO_win32_bind(theINTERP,_ParrotIOLayer_*layer,_ParrotIO_*io,_STRING_*l)"
+><b><code lang='und' xml:lang='und'>static INTVAL PIO_win32_bind(theINTERP, ParrotIOLayer *layer, ParrotIO *io, STRING *l)</b></code></a></dt><p class="pad"></p>
+
+<dd>Binds <code lang='und' xml:lang='und'>*io</code>&#39;s socket to the local address and port specified by <code lang='und' xml:lang='und'>*l</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_PIO_win32_listen(theINTERP,_ParrotIOLayer_*layer,_ParrotIO_*io,_INTVAL_sec)"
+><b><code lang='und' xml:lang='und'>static INTVAL PIO_win32_listen(theINTERP, ParrotIOLayer *layer, ParrotIO *io, INTVAL sec)</b></code></a></dt><p class="pad"></p>
+
+<dd>Listen for new connections.
+This is only applicable to <code lang='und' xml:lang='und'>STREAM</code> or <code lang='und' xml:lang='und'>SEQ</code> sockets.</dd><p class="pad"></p>
+
+<dt><a name="static_ParrotIO_*_PIO_win32_accept(theINTERP,_ParrotIOLayer_*layer,_ParrotIO_*io)"
+><b><code lang='und' xml:lang='und'>static ParrotIO *PIO_win32_accept(theINTERP, ParrotIOLayer *layer, ParrotIO *io)</b></code></a></dt><p class="pad"></p>
+
+<dd>Accept a new connection and return a newly created <code lang='und' xml:lang='und'>ParrotIO</code> socket.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'><a href="io_buf.c.html">src/io/io_buf.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io_passdown.c.html">src/io/io_passdown.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io_stdio.c.html">src/io/io_stdio.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io_unix.c.html">src/io/io_unix.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io.c.html">src/io/io.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io_private.h.html">src/io/io_private.h</a></em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Initially written by Melvin Smith.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

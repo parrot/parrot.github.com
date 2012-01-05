@@ -1,0 +1,83 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>test harness for Parrot abc</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Contents</a> &raquo; <a href="../../../../html/languages.html">Language Implementations</a> &raquo; <a href="../../../../html/abc.html">abc</a> &raquo; test harness for Parrot abc
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>languages/abc/t/01&#45;tests.t &#45; test harness for Parrot abc</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This file is the current implementation for the abc test harness.
+The tests are actually in simple text files,
+this harness given this list of tests sources,
+executes all the tests.</p>
+
+<p>The test source is a plain text file divided in three columns.
+The columns are separated by three white spaces <code>\s{3,}</code> or at least one tab <code>\t+</code>.
+The three columns are:</p>
+
+<dl>
+<dt><a name="expression"
+><b>expression</b></a></dt>
+The exact expression that is passed to the abc compiler as source code.
+This input is pasted as a double quotes delimted string into PIR code.
+This means that you can use \n to indicate newlines.
+<dt><a name="expected"
+><b>expected</b></a></dt>
+The expected result for the compiled source.
+Note that you can (and probably should) use <code>\n</code> in the expected result to represent newlines.
+<dt><a name="description"
+><b>description</b></a></dt>
+This should be a string describing the test that is being made.</dl>
+
+<p>Since this is supposed to be a temporary harness.
+We&#39;re expecting to be able to capture the result of the compilation to write this file in PIR.
+The skip and todo tests are defined in the test source file itself,
+so that later when the harness is changed we don&#39;t have to bother to convert the skip/todo tests list.
+So,
+you can simply set a test to be todo or skipped by adding the <code>SKIP</code> or <code>TODO</code> keywords in the begin of the test description.
+For example:</p>
+
+<p>1+2+3 6 SKIP no add operation yet 1&#45;2&#45;3 6 TODO no minus operation yet</p>
+
+<p><b>NOTE:</b> to add more source test files remember to update the <code>@files</code> array in this file.</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<p>$ prove languages/abc/t/01&#45;tests.t</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Nuno &#39;smash&#39; Carvalho &#60;mestre.smash@gmail.com&#62;</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

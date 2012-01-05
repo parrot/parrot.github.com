@@ -1,0 +1,1261 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Freeze and thaw functionality</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Freeze and thaw functionality</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/pmc_freeze.c &#45; Freeze and thaw functionality</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Freeze uses the <code lang='und' xml:lang='und'>next_for_GC pointer()</code> to remember seen PMCs.
+PMCs are written as IDs (or tags),
+which are calculated from their arena address.
+This PMC number is multiplied by four.
+The 2 low bits indicate a seen PMC or a PMC of the same type as the previous one respectively.</p>
+
+<p>Thawing PMCs uses a list with (maximum) size of the amount of PMCs to keep track of retrieved PMCs.</p>
+
+<p>The individual information of PMCs is frozen/thawed by their vtables.</p>
+
+<p>To avoid recursion,
+the whole functionality is driven by <code lang='und' xml:lang='und'>pmc&#45;&#62;vtable&#45;&#62;visit</code>,
+which is called for the first PMC initially.
+Container PMCs call a &#34;todo&#45;callback&#34; for all contained PMCs.
+The individual action vtable (freeze/thaw) is then called for all todo&#45;PMCs.</p>
+
+<p>In the current implementation <code lang='und' xml:lang='und'>IMAGE_IO</code> is a stand&#45;in for some kind of serializer PMC which will eventually be written.
+It associates a Parrot <code lang='und' xml:lang='und'>STRING</code> with a vtable.</p>
+
+<p>*/</p>
+
+<p>#include &#34;parrot/parrot.h&#34;</p>
+
+<p>/* default.pmc thawing of properties */ void Parrot_default_thaw(Interp* ,
+PMC* pmc,
+visit_info *info);</p>
+
+<p>/* XXX This should be in a header file.
+*/ extern void Parrot_default_thawfinish(PARROT_INTERP,
+PMC* pmc,
+visit_info *info);</p>
+
+<p>/* HEADERIZER HFILE: include/parrot/pmc_freeze.h */ /* HEADERIZER BEGIN: static */</p>
+
+<p>static void add_pmc_next_for_GC( SHIM_INTERP,
+NOTNULL(PMC *pmc),
+NOTNULL(visit_info *info) ) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static void add_pmc_todo_list( PARROT_INTERP,
+NULLOK(PMC *pmc),
+NOTNULL(visit_info *info) ) __attribute__nonnull__(1) __attribute__nonnull__(3);</p>
+
+<p>static void cleanup_next_for_GC( PARROT_INTERP ) __attribute__nonnull__(1);</p>
+
+<p>static void cleanup_next_for_GC_pool( NOTNULL(Small_Object_Pool *pool) ) __attribute__nonnull__(1);</p>
+
+<p>static void create_image( PARROT_INTERP,
+NULLOK(PMC *pmc),
+NOTNULL(visit_info *info) ) __attribute__nonnull__(1) __attribute__nonnull__(3);</p>
+
+<p>PARROT_INLINE static void do_action( PARROT_INTERP,
+NULLOK(PMC *pmc),
+NOTNULL(visit_info *info),
+int seen,
+UINTVAL id ) __attribute__nonnull__(1) __attribute__nonnull__(3);</p>
+
+<p>PARROT_INLINE static void do_thaw( PARROT_INTERP,
+NOTNULL(PMC* pmc),
+NOTNULL(visit_info *info) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>PARROT_INLINE static void freeze_pmc( PARROT_INTERP,
+NULLOK(PMC *pmc),
+NOTNULL(visit_info *info),
+int seen,
+UINTVAL id ) __attribute__nonnull__(1) __attribute__nonnull__(3);</p>
+
+<p>static void ft_init( PARROT_INTERP,
+NOTNULL(visit_info *info) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static UINTVAL id_from_pmc( PARROT_INTERP,
+NOTNULL(PMC* pmc) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>PARROT_INLINE static int next_for_GC_seen( PARROT_INTERP,
+NULLOK(PMC *pmc),
+NOTNULL(visit_info *info),
+NOTNULL(UINTVAL *id) ) __attribute__nonnull__(1) __attribute__nonnull__(3) __attribute__nonnull__(4);</p>
+
+<p>static void op_append( PARROT_INTERP,
+NOTNULL(STRING *s),
+opcode_t b,
+size_t len ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>PARROT_INLINE static void op_check_size( PARROT_INTERP,
+NOTNULL(STRING *s),
+size_t len ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void pmc_add_ext( PARROT_INTERP,
+NOTNULL(PMC *pmc) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void push_ascii_integer( PARROT_INTERP,
+NOTNULL(IMAGE_IO *io),
+INTVAL v ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void push_ascii_number( PARROT_INTERP,
+NOTNULL(IMAGE_IO *io),
+FLOATVAL v ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void push_ascii_pmc( PARROT_INTERP,
+NOTNULL(IMAGE_IO *io),
+NOTNULL(const PMC* v) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static void push_ascii_string( PARROT_INTERP,
+NOTNULL(IMAGE_IO *io),
+NOTNULL(STRING *s) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static void push_opcode_integer( PARROT_INTERP,
+NOTNULL(IMAGE_IO *io),
+INTVAL v ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void push_opcode_number( PARROT_INTERP,
+NOTNULL(IMAGE_IO *io),
+FLOATVAL v ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void push_opcode_pmc( PARROT_INTERP,
+NOTNULL(IMAGE_IO *io),
+NOTNULL(PMC* v) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static void push_opcode_string( PARROT_INTERP,
+NOTNULL(IMAGE_IO *io),
+NOTNULL(STRING *v) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL static PMC* run_thaw( PARROT_INTERP,
+NOTNULL(STRING* image),
+visit_enum_type what ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static INTVAL shift_ascii_integer( SHIM_INTERP,
+NOTNULL(IMAGE_IO *io) ) __attribute__nonnull__(2);</p>
+
+<p>static FLOATVAL shift_ascii_number( SHIM_INTERP,
+NOTNULL(IMAGE_IO *io) ) __attribute__nonnull__(2);</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL static PMC* shift_ascii_pmc( SHIM_INTERP,
+NOTNULL(IMAGE_IO *io) ) __attribute__nonnull__(2);</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL static STRING* shift_ascii_string( PARROT_INTERP,
+NOTNULL(IMAGE_IO *io) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static INTVAL shift_opcode_integer( SHIM_INTERP,
+NOTNULL(IMAGE_IO *io) ) __attribute__nonnull__(2);</p>
+
+<p>static FLOATVAL shift_opcode_number( SHIM_INTERP,
+NOTNULL(IMAGE_IO *io) ) __attribute__nonnull__(2);</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL static PMC* shift_opcode_pmc( PARROT_INTERP,
+NOTNULL(IMAGE_IO *io) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL static STRING* shift_opcode_string( PARROT_INTERP,
+NOTNULL(IMAGE_IO *io) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void str_append( PARROT_INTERP,
+NOTNULL(STRING *s),
+NOTNULL(const void *b),
+size_t len ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>PARROT_INLINE PARROT_CANNOT_RETURN_NULL static PMC* thaw_create_pmc( PARROT_INTERP,
+NOTNULL(const visit_info *info),
+INTVAL type ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>PARROT_INLINE static int thaw_pmc( PARROT_INTERP,
+NOTNULL(visit_info *info),
+NOTNULL(UINTVAL *id),
+NOTNULL(INTVAL *type) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3) __attribute__nonnull__(4);</p>
+
+<p>static void todo_list_init( PARROT_INTERP,
+NOTNULL(visit_info *info) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>PARROT_INLINE static int todo_list_seen( PARROT_INTERP,
+NOTNULL(PMC *pmc),
+NOTNULL(visit_info *info),
+NOTNULL(UINTVAL *id) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3) __attribute__nonnull__(4);</p>
+
+<p>static void visit_loop_next_for_GC( PARROT_INTERP,
+NOTNULL(PMC *current),
+NOTNULL(visit_info *info) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static void visit_loop_todo_list( PARROT_INTERP,
+NULLOK(PMC *current),
+NOTNULL(visit_info *info) ) __attribute__nonnull__(1) __attribute__nonnull__(3);</p>
+
+<p>static void visit_next_for_GC( PARROT_INTERP,
+NOTNULL(PMC* pmc),
+NOTNULL(visit_info* info) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static void visit_todo_list( PARROT_INTERP,
+NOTNULL(PMC* pmc),
+NOTNULL(visit_info* info) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static void visit_todo_list_thaw( PARROT_INTERP,
+NOTNULL(PMC* old),
+NOTNULL(visit_info* info) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>/* HEADERIZER END: static */</p>
+
+<p>/* * define this to 1 for testing */ #ifndef FREEZE_ASCII # define FREEZE_ASCII 0 #endif</p>
+
+<p>/* * normal freeze can use next_for_GC ptrs or a seen hash */ #define FREEZE_USE_NEXT_FOR_GC 0</p>
+
+<p>/* * when thawing a string longer then this size,
+we first do a * DOD run and then block DOD/GC &#45; the system can&#39;t give us more headers */ #define THAW_BLOCK_DOD_SIZE 100000</p>
+
+<p>/* * preallocate freeze image for aggregates with this estimation */ #if FREEZE_ASCII # define FREEZE_BYTES_PER_ITEM 17 #else # define FREEZE_BYTES_PER_ITEM 9 #endif</p>
+
+<p>/*</p>
+
+<h2><a name="Image_Stream_Functions"
+>Image Stream Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>FUNCDOC: str_append</p>
+
+<p>Appends <code lang='und' xml:lang='und'>len</code> bytes from buffer <code lang='und' xml:lang='und'>*b</code> to string <code lang='und' xml:lang='und'>*s</code>.</p>
+
+<p>Plain ascii &#45; for testing only:</p>
+
+<p>For speed reasons we mess around with the string buffers directly.</p>
+
+<p>No encoding of strings,
+no transcoding.</p>
+
+<p>*/</p>
+
+<p>static void str_append(PARROT_INTERP,
+NOTNULL(STRING *s),
+NOTNULL(const void *b),
+size_t len) { const size_t used = s&#45;&#62;bufused; const int need_free = (int)PObj_buflen(s) &#45; used &#45; len; /* * grow by factor 1.5 or such */ if (need_free &#60;= 16) { size_t new_size = (size_t) (PObj_buflen(s) * 1.5); if (new_size &#60; PObj_buflen(s) &#45; need_free + 512) new_size = PObj_buflen(s) &#45; need_free + 512; Parrot_reallocate_string(interp,
+s,
+new_size); PARROT_ASSERT(PObj_buflen(s) &#45; used &#45; len &#62;= 15); } mem_sys_memcopy((void *)((ptrcast_t)s&#45;&#62;strstart + used),
+b,
+len); s&#45;&#62;bufused += len; s&#45;&#62;strlen += len; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: push_ascii_integer</p>
+
+<p>Pushes an ASCII version of the integer <code lang='und' xml:lang='und'>v</code> onto the end of the <code lang='und' xml:lang='und'>*io</code> &#34;stream&#34;.</p>
+
+<p>*/</p>
+
+<p>static void push_ascii_integer(PARROT_INTERP,
+NOTNULL(IMAGE_IO *io),
+INTVAL v) { char buffer[128]; sprintf(buffer,
+&#34;%d &#34;,
+(int) v); str_append(interp,
+io&#45;&#62;image,
+buffer,
+strlen(buffer)); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: push_ascii_number</p>
+
+<p>Pushes an ASCII version of the number <code lang='und' xml:lang='und'>v</code> onto the end of the <code lang='und' xml:lang='und'>*io</code> &#34;stream&#34;.</p>
+
+<p>*/</p>
+
+<p>static void push_ascii_number(PARROT_INTERP,
+NOTNULL(IMAGE_IO *io),
+FLOATVAL v) { char buffer[128]; sprintf(buffer,
+&#34;%g &#34;,
+(double) v); str_append(interp,
+io&#45;&#62;image,
+buffer,
+strlen(buffer)); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: push_ascii_string</p>
+
+<p>Pushes an ASCII version of the string <code lang='und' xml:lang='und'>*s</code> onto the end of the <code lang='und' xml:lang='und'>*io</code> &#34;stream&#34;.</p>
+
+<p>For testing only &#45; no encodings and such.</p>
+
+<p>XXX no string delimiters &#45; so no space allowed.</p>
+
+<p>*/</p>
+
+<p>static void push_ascii_string(PARROT_INTERP,
+NOTNULL(IMAGE_IO *io),
+NOTNULL(STRING *s)) { const UINTVAL length = string_length(interp,
+s); char * const buffer = (char *)malloc(4*length); char *cursor = buffer; UINTVAL idx = 0;</p>
+
+<pre lang='und' xml:lang='und'>    /* temporary&#45;&#45;write out in UTF&#45;8 */
+    for (idx = 0; idx &#60; length; ++idx) {
+        *cursor++ = (unsigned char)string_index(interp, s, idx);
+    }
+
+    str_append(interp, io&#45;&#62;image, buffer, cursor &#45; buffer);
+    str_append(interp, io&#45;&#62;image, &#34; &#34;, 1);
+
+    free(buffer);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: push_ascii_pmc</p>
+
+<p>Pushes an ASCII version of the PMC <code lang='und' xml:lang='und'>*v</code> onto the end of the <code lang='und' xml:lang='und'>*io</code> &#34;stream&#34;.</p>
+
+<p>*/</p>
+
+<p>static void push_ascii_pmc(PARROT_INTERP, NOTNULL(IMAGE_IO *io), NOTNULL(const PMC* v)) { char buffer[128]; sprintf(buffer, &#34;%p &#34;, (const void *)v); str_append(interp, io&#45;&#62;image, buffer, strlen(buffer)); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: shift_ascii_integer</p>
+
+<p>Removes and returns an integer from the start of the <code lang='und' xml:lang='und'>*io</code> &#34;stream&#34;.</p>
+
+<p>*/</p>
+
+<p>static INTVAL shift_ascii_integer(SHIM_INTERP, NOTNULL(IMAGE_IO *io)) { char * const start = (char*)io&#45;&#62;image&#45;&#62;strstart; char *p = start; const INTVAL i = strtoul(p, &#38;p, 10);</p>
+
+<pre lang='und' xml:lang='und'>    ++p;
+    PARROT_ASSERT(p &#60;= start + io&#45;&#62;image&#45;&#62;bufused);
+    io&#45;&#62;image&#45;&#62;strstart = p;
+    io&#45;&#62;image&#45;&#62;bufused &#45;= (p &#45; start);
+    PARROT_ASSERT((int)io&#45;&#62;image&#45;&#62;bufused &#62;= 0);
+    return i;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: shift_ascii_number</p>
+
+<p>Removes and returns an number from the start of the <code lang='und' xml:lang='und'>*io</code> &#34;stream&#34;.</p>
+
+<p>*/</p>
+
+<p>static FLOATVAL shift_ascii_number(SHIM_INTERP, NOTNULL(IMAGE_IO *io)) { char * const start = (char*)io&#45;&#62;image&#45;&#62;strstart; char *p = start; const FLOATVAL f = (FLOATVAL) strtod(p, &#38;p);</p>
+
+<pre lang='und' xml:lang='und'>    ++p;
+    PARROT_ASSERT(p &#60;= start + io&#45;&#62;image&#45;&#62;bufused);
+    io&#45;&#62;image&#45;&#62;strstart = p;
+    io&#45;&#62;image&#45;&#62;bufused &#45;= (p &#45; start);
+    PARROT_ASSERT((int)io&#45;&#62;image&#45;&#62;bufused &#62;= 0);
+    return f;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: shift_ascii_string</p>
+
+<p>Removes and returns an string from the start of the <code lang='und' xml:lang='und'>*io</code> &#34;stream&#34;.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL static STRING* shift_ascii_string(PARROT_INTERP, NOTNULL(IMAGE_IO *io)) { STRING *s;</p>
+
+<pre lang='und' xml:lang='und'>    char * const start = (char*)io&#45;&#62;image&#45;&#62;strstart;
+    char *p = start;
+
+    while (*p != &#39; &#39;)
+        ++p;
+    ++p;
+    PARROT_ASSERT(p &#60;= start + io&#45;&#62;image&#45;&#62;bufused);
+    io&#45;&#62;image&#45;&#62;strstart = p;
+    io&#45;&#62;image&#45;&#62;bufused &#45;= (p &#45; start);
+    PARROT_ASSERT((int)io&#45;&#62;image&#45;&#62;bufused &#62;= 0);
+    s = string_make(interp, start, p &#45; start &#45; 1, &#34;iso&#45;8859&#45;1&#34;, 0);
+/*    s = string_make(interp, start, p &#45; start &#45; 1, &#34;UTF&#45;8&#34;, 0); */
+    return s;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: shift_ascii_pmc</p>
+
+<p>Removes and returns a PMC from the start of the <code lang='und' xml:lang='und'>*io</code> &#34;stream&#34;.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL static PMC* shift_ascii_pmc(SHIM_INTERP, NOTNULL(IMAGE_IO *io)) { char * const start = (char*)io&#45;&#62;image&#45;&#62;strstart; char *p = start; const unsigned long i = strtoul(p, &#38;p, 16); ++p; PARROT_ASSERT(p &#60;= start + io&#45;&#62;image&#45;&#62;bufused); io&#45;&#62;image&#45;&#62;strstart = p; io&#45;&#62;image&#45;&#62;bufused &#45;= (p &#45; start); PARROT_ASSERT((int)io&#45;&#62;image&#45;&#62;bufused &#62;= 0); return (PMC*) i; }</p>
+
+<p>/*</p>
+
+<h2><a name="opcode_t_IO_Functions"
+><code lang='und' xml:lang='und'>opcode_t</code> IO Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>FUNCDOC: op_check_size</p>
+
+<p>Checks the size of the &#34;stream&#34; buffer to see if it can accommodate <code lang='und' xml:lang='und'>len</code> more bytes. If not then the buffer is expanded.</p>
+
+<p>*/</p>
+
+<p>PARROT_INLINE static void op_check_size(PARROT_INTERP, NOTNULL(STRING *s), size_t len) { const size_t used = s&#45;&#62;bufused; const int need_free = (int)PObj_buflen(s) &#45; used &#45; len; /* * grow by factor 1.5 or such */ if (need_free &#60;= 16) { size_t new_size = (size_t) (PObj_buflen(s) * 1.5); if (new_size &#60; PObj_buflen(s) &#45; need_free + 512) new_size = PObj_buflen(s) &#45; need_free + 512; Parrot_reallocate_string(interp, s, new_size); PARROT_ASSERT(PObj_buflen(s) &#45; used &#45; len &#62;= 15); } #ifndef DISABLE_GC_DEBUG Parrot_go_collect(interp); #endif }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: op_append</p>
+
+<p>Appends the opcode <code lang='und' xml:lang='und'>b</code> to the string <code lang='und' xml:lang='und'>*s</code>.</p>
+
+<p>*/</p>
+
+<p>static void op_append(PARROT_INTERP, NOTNULL(STRING *s), opcode_t b, size_t len) { op_check_size(interp, s, len); *((opcode_t *)((ptrcast_t)s&#45;&#62;strstart + s&#45;&#62;bufused)) = b; s&#45;&#62;bufused += len; s&#45;&#62;strlen += len; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: push_opcode_integer</p>
+
+<p>Pushes the integer <code lang='und' xml:lang='und'>v</code> onto the end of the <code lang='und' xml:lang='und'>*io</code> &#34;stream&#34;.</p>
+
+<p>XXX assumes sizeof (opcode_t) == sizeof (INTVAL).</p>
+
+<p>*/</p>
+
+<p>static void push_opcode_integer(PARROT_INTERP, NOTNULL(IMAGE_IO *io), INTVAL v) { PARROT_ASSERT(sizeof (opcode_t) == sizeof (INTVAL)); op_append(interp, io&#45;&#62;image, (opcode_t)v, sizeof (opcode_t)); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: push_opcode_number</p>
+
+<p>Pushes the number <code lang='und' xml:lang='und'>v</code> onto the end of the <code lang='und' xml:lang='und'>*io</code> &#34;stream&#34;.</p>
+
+<p>*/</p>
+
+<p>static void push_opcode_number(PARROT_INTERP, NOTNULL(IMAGE_IO *io), FLOATVAL v) { const size_t len = PF_size_number() * sizeof (opcode_t); STRING * const s = io&#45;&#62;image; const size_t used = s&#45;&#62;bufused;</p>
+
+<pre lang='und' xml:lang='und'>    op_check_size(interp, s, len);
+    PF_store_number((opcode_t *)((ptrcast_t)s&#45;&#62;strstart + used), &#38;v);
+
+    s&#45;&#62;bufused += len;
+    s&#45;&#62;strlen  += len;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: push_opcode_string</p>
+
+<p>Pushes the string <code lang='und' xml:lang='und'>*v</code> onto the end of the <code lang='und' xml:lang='und'>*io</code> &#34;stream&#34;.</p>
+
+<p>*/</p>
+
+<p>static void push_opcode_string(PARROT_INTERP, NOTNULL(IMAGE_IO *io), NOTNULL(STRING *v)) { const size_t len = PF_size_string(v) * sizeof (opcode_t); STRING * const s = io&#45;&#62;image; const size_t used = s&#45;&#62;bufused;</p>
+
+<pre lang='und' xml:lang='und'>    op_check_size(interp, s, len);
+    PF_store_string((opcode_t *)((ptrcast_t)s&#45;&#62;strstart + used), v);
+    s&#45;&#62;bufused += len;
+    s&#45;&#62;strlen += len;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: push_opcode_pmc</p>
+
+<p>Pushes the PMC <code lang='und' xml:lang='und'>*v</code> onto the end of the <code lang='und' xml:lang='und'>*io</code> &#34;stream&#34;.</p>
+
+<p>*/</p>
+
+<p>static void push_opcode_pmc(PARROT_INTERP, NOTNULL(IMAGE_IO *io), NOTNULL(PMC* v)) { op_append(interp, io&#45;&#62;image, (opcode_t)v, sizeof (opcode_t)); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: shift_opcode_integer</p>
+
+<p>Removes and returns an integer from the start of the <code lang='und' xml:lang='und'>*io</code> &#34;stream&#34;.</p>
+
+<p>TODO &#45; The shift functions aren&#39;t portable yet. We need to have a packfile header for wordsize and endianess.</p>
+
+<p>*/</p>
+
+<p>static INTVAL shift_opcode_integer(SHIM_INTERP, NOTNULL(IMAGE_IO *io)) { const char * const start = (char*)io&#45;&#62;image&#45;&#62;strstart; const INTVAL i = PF_fetch_integer(io&#45;&#62;pf, (opcode_t**) &#38;io&#45;&#62;image&#45;&#62;strstart);</p>
+
+<pre lang='und' xml:lang='und'>    io&#45;&#62;image&#45;&#62;bufused &#45;= ((char*)io&#45;&#62;image&#45;&#62;strstart &#45; start);
+    PARROT_ASSERT((int)io&#45;&#62;image&#45;&#62;bufused &#62;= 0);
+    return i;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: shift_opcode_pmc</p>
+
+<p>Removes and returns an PMC from the start of the <code lang='und' xml:lang='und'>*io</code> &#34;stream&#34;.</p>
+
+<p>Note that this actually reads a PMC id, not a PMC.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL static PMC* shift_opcode_pmc(PARROT_INTERP, NOTNULL(IMAGE_IO *io)) { INTVAL i = shift_opcode_integer(interp, io); return (PMC *)i; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: shift_opcode_number</p>
+
+<p>Removes and returns an number from the start of the <code lang='und' xml:lang='und'>*io</code> &#34;stream&#34;.</p>
+
+<p>*/</p>
+
+<p>static FLOATVAL shift_opcode_number(SHIM_INTERP, NOTNULL(IMAGE_IO *io)) { const char * const start = (const char*)io&#45;&#62;image&#45;&#62;strstart; const FLOATVAL f = PF_fetch_number(io&#45;&#62;pf, (opcode_t**) &#38;io&#45;&#62;image&#45;&#62;strstart);</p>
+
+<pre lang='und' xml:lang='und'>    io&#45;&#62;image&#45;&#62;bufused &#45;= ((char*)io&#45;&#62;image&#45;&#62;strstart &#45; start);
+    PARROT_ASSERT((int)io&#45;&#62;image&#45;&#62;bufused &#62;= 0);
+    return f;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: shift_opcode_string</p>
+
+<p>Removes and returns a string from the start of the <code lang='und' xml:lang='und'>*io</code> &#34;stream&#34;.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL static STRING* shift_opcode_string(PARROT_INTERP, NOTNULL(IMAGE_IO *io)) { char * const start = (char*)io&#45;&#62;image&#45;&#62;strstart; STRING * const s = PF_fetch_string(interp, io&#45;&#62;pf, (opcode_t**) &#38;io&#45;&#62;image&#45;&#62;strstart);</p>
+
+<pre lang='und' xml:lang='und'>    io&#45;&#62;image&#45;&#62;bufused &#45;= ((char*)io&#45;&#62;image&#45;&#62;strstart &#45; start);
+    PARROT_ASSERT((int)io&#45;&#62;image&#45;&#62;bufused &#62;= 0);
+    return s;
+}</pre>
+
+<p>/*</p>
+
+<h2><a name="Helper_Functions"
+>Helper Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>FUNCDOC: pmc_add_ext</p>
+
+<p>Adds a <code lang='und' xml:lang='und'>PMC_EXT</code> to <code lang='und' xml:lang='und'>*pmc</code>.</p>
+
+<p>*/</p>
+
+<p>static void pmc_add_ext(PARROT_INTERP, NOTNULL(PMC *pmc)) { if (pmc&#45;&#62;vtable&#45;&#62;flags &#38; VTABLE_PMC_NEEDS_EXT) add_pmc_ext(interp, pmc); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: cleanup_next_for_GC_pool</p>
+
+<p>Sets all the <code lang='und' xml:lang='und'>next_for_GC</code> pointers to <code lang='und' xml:lang='und'>NULL</code>.</p>
+
+<p>*/</p>
+
+<p>static void cleanup_next_for_GC_pool(NOTNULL(Small_Object_Pool *pool)) { Small_Object_Arena *arena;</p>
+
+<pre lang='und' xml:lang='und'>    for (arena = pool&#45;&#62;last_Arena; arena; arena = arena&#45;&#62;prev) {
+        PMC *p = (PMC *)arena&#45;&#62;start_objects;
+        UINTVAL i;
+
+        for (i = 0; i &#60; arena&#45;&#62;used; i++) {
+            if (!PObj_on_free_list_TEST(p)) {
+                if (p&#45;&#62;pmc_ext)
+                    PMC_next_for_GC(p) = PMCNULL;
+            }
+            p++;
+        }
+    }
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: cleanup_next_for_GC</p>
+
+<p>Cleans up the <code lang='und' xml:lang='und'>next_for_GC</code> pointers.</p>
+
+<p>*/</p>
+
+<p>static void cleanup_next_for_GC(PARROT_INTERP) { cleanup_next_for_GC_pool(interp&#45;&#62;arena_base&#45;&#62;pmc_pool); cleanup_next_for_GC_pool(interp&#45;&#62;arena_base&#45;&#62;constant_pmc_pool); }</p>
+
+<p>/* * this function setup stuff may be replaced by a real PMC * in the future * TODO add read/write header functions, e.g. vtable&#45;&#62;init_pmc */</p>
+
+<p>#if FREEZE_ASCII static image_funcs ascii_funcs = { push_ascii_integer, push_ascii_pmc, push_ascii_string, push_ascii_number, shift_ascii_integer, shift_ascii_pmc, shift_ascii_string, shift_ascii_number }; #else static image_funcs opcode_funcs = { push_opcode_integer, push_opcode_pmc, push_opcode_string, push_opcode_number, shift_opcode_integer, shift_opcode_pmc, shift_opcode_string, shift_opcode_number }; #endif</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: ft_init</p>
+
+<p>Initializes the freeze/thaw subsystem.</p>
+
+<p>*/</p>
+
+<p>static void ft_init(PARROT_INTERP, NOTNULL(visit_info *info)) { STRING *s = info&#45;&#62;image; PackFile *pf;</p>
+
+<pre lang='und' xml:lang='und'>    /* We want to store a 16&#45;byte aligned header, but the actual
+     * header may be shorter. */
+    const unsigned int header_length = PACKFILE_HEADER_BYTES +
+        (PACKFILE_HEADER_BYTES % 16 ?
+         16 &#45; PACKFILE_HEADER_BYTES % 16 : 0);
+
+    info&#45;&#62;image_io = mem_allocate_typed(IMAGE_IO);
+    info&#45;&#62;image_io&#45;&#62;image = s = info&#45;&#62;image;
+#if FREEZE_ASCII
+    info&#45;&#62;image_io&#45;&#62;vtable = &#38;ascii_funcs;
+#else
+    info&#45;&#62;image_io&#45;&#62;vtable = &#38;opcode_funcs;
+#endif
+    pf = info&#45;&#62;image_io&#45;&#62;pf = PackFile_new(interp, 0);
+    if (info&#45;&#62;what == VISIT_FREEZE_NORMAL ||
+        info&#45;&#62;what == VISIT_FREEZE_AT_DESTRUCT) {
+
+        op_check_size(interp, s, header_length);
+        mem_sys_memcopy(s&#45;&#62;strstart, pf&#45;&#62;header, PACKFILE_HEADER_BYTES);
+        s&#45;&#62;bufused += header_length;
+        s&#45;&#62;strlen += header_length;
+    }
+    else {
+        if (string_length(interp, s) &#60; header_length) {
+            real_exception(interp, NULL, E_IOError,
+                    &#34;bad string to thaw&#34;);
+        }
+        mem_sys_memcopy(pf&#45;&#62;header, s&#45;&#62;strstart, PACKFILE_HEADER_BYTES);
+        PackFile_assign_transforms(pf);
+        s&#45;&#62;bufused &#45;= header_length;
+        LVALUE_CAST(char *, s&#45;&#62;strstart) += header_length;
+    }
+
+    info&#45;&#62;last_type = &#45;1;
+    info&#45;&#62;id_list = pmc_new(interp, enum_class_Array);
+    info&#45;&#62;id = 0;
+    info&#45;&#62;extra_flags = EXTRA_IS_NULL;
+    info&#45;&#62;container = NULL;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: todo_list_init</p>
+
+<p>Initializes the <code lang='und' xml:lang='und'>*info</code> lists.</p>
+
+<p>*/</p>
+
+<p>static void todo_list_init(PARROT_INTERP, NOTNULL(visit_info *info)) { info&#45;&#62;visit_pmc_now = visit_todo_list; info&#45;&#62;visit_pmc_later = add_pmc_todo_list; /* we must use PMCs here, so that they get marked properly */ info&#45;&#62;todo = pmc_new(interp, enum_class_Array); info&#45;&#62;seen = Parrot_new_INTVAL_hash(interp, 0);</p>
+
+<pre lang='und' xml:lang='und'>    ft_init(interp, info);
+}</pre>
+
+<p>PARROT_INLINE static void freeze_pmc(PARROT_INTERP, NULLOK(PMC *pmc), NOTNULL(visit_info *info), int seen, UINTVAL id) { IMAGE_IO * const io = info&#45;&#62;image_io; INTVAL type;</p>
+
+<pre lang='und' xml:lang='und'>    if (PMC_IS_NULL(pmc)) {
+        /* NULL + seen bit */
+        VTABLE_push_pmc(interp, io, (PMC*) 1);
+        return;
+    }
+    type = pmc&#45;&#62;vtable&#45;&#62;base_type;
+
+    if (PObj_is_object_TEST(pmc))
+        type = enum_class_ParrotObject;
+    if (seen) {
+        if (info&#45;&#62;extra_flags) {
+            id |= 3;
+            VTABLE_push_pmc(interp, io, (PMC*)id);
+            VTABLE_push_integer(interp, io, info&#45;&#62;extra_flags);
+            return;
+        }
+        id |= 1;         /* mark bit 0 if this PMC is known */
+    }
+    else if (type == info&#45;&#62;last_type) {
+        id |= 2;         /* mark bit 1 and don&#39;t write type */
+    }
+    VTABLE_push_pmc(interp, io, (PMC*)id);
+    if (! (id &#38; 3)) {    /* else write type */
+        VTABLE_push_integer(interp, io, type);
+        info&#45;&#62;last_type = type;
+    }
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: thaw_pmc</p>
+
+<p>Freeze and thaw a PMC (id).</p>
+
+<p>For example, the ASCII representation of the <code lang='und' xml:lang='und'>Array</code></p>
+
+<pre lang='und' xml:lang='und'>    P0 = [P1=666, P2=777, P0]</pre>
+
+<p>may look like this:</p>
+
+<pre lang='und' xml:lang='und'>    0xdf4 30 3 0xdf8 33 666 0xdf2 777 0xdf5</pre>
+
+<p>where 30 is <code lang='und' xml:lang='und'>class_enum_Array</code>, 33 is <code lang='und' xml:lang='und'>class_enum_Integer</code>, the type of the second <code lang='und' xml:lang='und'>Integer</code> is suppressed, the repeated P0 has bit 0 set.</p>
+
+<p>*/</p>
+
+<p>PARROT_INLINE static int thaw_pmc(PARROT_INTERP, NOTNULL(visit_info *info), NOTNULL(UINTVAL *id), NOTNULL(INTVAL *type)) { PMC *n; IMAGE_IO * const io = info&#45;&#62;image_io; int seen = 0;</p>
+
+<pre lang='und' xml:lang='und'>    info&#45;&#62;extra_flags = EXTRA_IS_NULL;
+    n = VTABLE_shift_pmc(interp, io);
+    if (((UINTVAL) n &#38; 3) == 3) {
+        /* pmc has extra data */
+        info&#45;&#62;extra_flags = VTABLE_shift_integer(interp, io);
+    }
+    else if ((UINTVAL) n &#38; 1) {     /* seen PMCs have bit 0 set */
+        seen = 1;
+    }
+    else if ((UINTVAL) n &#38; 2) { /* prev PMC was same type */
+        *type = info&#45;&#62;last_type;
+    }
+    else {                       /* type follows */
+        info&#45;&#62;last_type = *type = VTABLE_shift_integer(interp, io);
+        if (*type &#60;= 0)
+            real_exception(interp, NULL, 1, &#34;Unknown PMC type to thaw %d&#34;, (int) *type);
+        if (*type &#62;= interp&#45;&#62;n_vtable_max ||
+            !interp&#45;&#62;vtables[*type]) {
+            /* that ought to be a class */
+            *type = enum_class_ParrotClass;
+        }
+    }
+    *id = (UINTVAL) n;
+    return seen;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: do_action</p>
+
+<p>Called from <code lang='und' xml:lang='und'>visit_next_for_GC()</code> and <code lang='und' xml:lang='und'>visit_todo_list()</code> to perform the action specified in <code lang='und' xml:lang='und'>info&#45;&#62;what</code>.</p>
+
+<p>Currently only <code lang='und' xml:lang='und'>VISIT_FREEZE_NORMAL</code> is implemented.</p>
+
+<p>*/</p>
+
+<p>PARROT_INLINE static void do_action(PARROT_INTERP, NULLOK(PMC *pmc), NOTNULL(visit_info *info), int seen, UINTVAL id) { switch (info&#45;&#62;what) { case VISIT_FREEZE_AT_DESTRUCT: case VISIT_FREEZE_NORMAL: freeze_pmc(interp, pmc, info, seen, id); if (pmc) info&#45;&#62;visit_action = pmc&#45;&#62;vtable&#45;&#62;freeze; break; default: real_exception(interp, NULL, 1, &#34;Illegal action %ld&#34;, (long)info&#45;&#62;what); } }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: thaw_create_pmc</p>
+
+<p>Called from <code lang='und' xml:lang='und'>do_thaw()</code> to attach the vtable etc. to <code lang='und' xml:lang='und'>*pmc</code>.</p>
+
+<p>*/</p>
+
+<p>PARROT_INLINE PARROT_CANNOT_RETURN_NULL static PMC* thaw_create_pmc(PARROT_INTERP, NOTNULL(const visit_info *info), INTVAL type) { PMC *pmc; switch (info&#45;&#62;what) { case VISIT_THAW_NORMAL: pmc = pmc_new_noinit(interp, type); break; case VISIT_THAW_CONSTANTS: pmc = constant_pmc_new_noinit(interp, type); break; default: real_exception(interp, NULL, 1, &#34;Illegal visit_next type&#34;); } return pmc; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: do_thaw</p>
+
+<p>Called by <code lang='und' xml:lang='und'>visit_todo_list_thaw()</code> to thaw and return a PMC.</p>
+
+<p><code lang='und' xml:lang='und'>seen</code> is false if this is the first time the PMC has been encountered.</p>
+
+<p>*/</p>
+
+<p>PARROT_INLINE static void do_thaw(PARROT_INTERP, NOTNULL(PMC* pmc), NOTNULL(visit_info *info)) { UINTVAL id; INTVAL type; PMC ** pos; int must_have_seen; type = 0; /* it&#39;s set below, avoid compiler warning. */ must_have_seen = thaw_pmc(interp, info, &#38;id, &#38;type);</p>
+
+<pre lang='und' xml:lang='und'>    id &#62;&#62;= 2;
+
+    if (!id) {
+        /* got a NULL PMC */
+        pmc = PMCNULL;
+        if (!info&#45;&#62;thaw_result)
+            info&#45;&#62;thaw_result = pmc;
+        else
+            *info&#45;&#62;thaw_ptr = pmc;
+        return;
+    }
+
+    pos = (PMC **)list_get(interp, (List *)PMC_data(info&#45;&#62;id_list), id, enum_type_PMC);
+    if (pos == (void*)&#45;1)
+        pos = NULL;
+    else if (pos) {
+        pmc = *(PMC**)pos;
+        if (!pmc)
+            pos = NULL;
+    }
+    if (pos) {
+        if (info&#45;&#62;extra_flags == EXTRA_IS_PROP_HASH) {
+            Parrot_default_thaw(interp, pmc, info);
+            return;
+        }
+        /* else maybe VTABLE_thaw ... but there is no other extra stuff */</pre>
+
+<p>#if FREEZE_USE_NEXT_FOR_GC /* * the next_for_GC method doesn&#39;t keep track of repeated scalars * and such, as these are lacking the next_for_GC pointer, so * these are just duplicated with their data. * But we track these when thawing, so that we don&#39;t create dups */ if (!must_have_seen) { /* so we must consume the bytecode */ VTABLE_thaw(interp, pmc, info); } #else PARROT_ASSERT(must_have_seen); #endif /* * that&#39;s a duplicate if (info&#45;&#62;container) DOD_WRITE_BARRIER(interp, info&#45;&#62;container, NULL, pmc); */ *info&#45;&#62;thaw_ptr = pmc; return; }</p>
+
+<pre lang='und' xml:lang='und'>    PARROT_ASSERT(!must_have_seen);
+    pmc = thaw_create_pmc(interp, info, type);
+
+    VTABLE_thaw(interp, pmc, info);
+    if (info&#45;&#62;extra_flags == EXTRA_CLASS_EXISTS) {
+        pmc = (PMC *)info&#45;&#62;extra;
+        info&#45;&#62;extra = NULL;
+        info&#45;&#62;extra_flags = 0;
+    }
+    if (!info&#45;&#62;thaw_result)
+        info&#45;&#62;thaw_result = pmc;
+    else {
+        if (info&#45;&#62;container) {
+            DOD_WRITE_BARRIER(interp, info&#45;&#62;container, NULL, pmc);
+        }
+        *info&#45;&#62;thaw_ptr = pmc;
+    }
+    list_assign(interp, (List *)PMC_data(info&#45;&#62;id_list), id, pmc, enum_type_PMC);
+    /* remember nested aggregates depth first */
+    if (pmc&#45;&#62;pmc_ext)
+        list_unshift(interp, (List *)PMC_data(info&#45;&#62;todo), pmc, enum_type_PMC);
+}</pre>
+
+<p>static UINTVAL id_from_pmc(PARROT_INTERP, NOTNULL(PMC* pmc)) { UINTVAL id = 1; /* first PMC in first arena */ Small_Object_Arena *arena; Small_Object_Pool *pool; ptrdiff_t ptr_diff;</p>
+
+<pre lang='und' xml:lang='und'>    pmc = (PMC*)PObj_to_ARENA(pmc);
+    pool = interp&#45;&#62;arena_base&#45;&#62;pmc_pool;
+    for (arena = pool&#45;&#62;last_Arena; arena; arena = arena&#45;&#62;prev) {
+        ptr_diff = (ptrdiff_t)pmc &#45; (ptrdiff_t)arena&#45;&#62;start_objects;
+        if (ptr_diff &#62;= 0 &#38;&#38; ptr_diff &#60;
+                (ptrdiff_t)(arena&#45;&#62;used * pool&#45;&#62;object_size)) {
+            PARROT_ASSERT(ptr_diff % pool&#45;&#62;object_size == 0);
+            id += ptr_diff / pool&#45;&#62;object_size;
+            return id &#60;&#60; 2;
+        }
+        id += arena&#45;&#62;total_objects;
+    }
+    pool = interp&#45;&#62;arena_base&#45;&#62;constant_pmc_pool;
+    for (arena = pool&#45;&#62;last_Arena; arena; arena = arena&#45;&#62;prev) {
+        ptr_diff = (ptrdiff_t)pmc &#45; (ptrdiff_t)arena&#45;&#62;start_objects;
+        if (ptr_diff &#62;= 0 &#38;&#38; ptr_diff &#60;
+                (ptrdiff_t)(arena&#45;&#62;used * pool&#45;&#62;object_size)) {
+            PARROT_ASSERT(ptr_diff % pool&#45;&#62;object_size == 0);
+            id += ptr_diff / pool&#45;&#62;object_size;
+            return id &#60;&#60; 2;
+        }
+        id += arena&#45;&#62;total_objects;
+    }
+
+    real_exception(interp, NULL, 1, &#34;Couldn&#39;t find PMC in arenas&#34;);
+    return &#45;1;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: add_pmc_next_for_GC</p>
+
+<p>Remembers the PMC for later processing.</p>
+
+<p>*/</p>
+
+<p>static void add_pmc_next_for_GC(SHIM_INTERP, NOTNULL(PMC *pmc), NOTNULL(visit_info *info)) { if (pmc&#45;&#62;pmc_ext) { PMC_next_for_GC(info&#45;&#62;mark_ptr) = pmc; info&#45;&#62;mark_ptr = PMC_next_for_GC(pmc) = pmc; } }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: next_for_GC_seen</p>
+
+<p>Remembers next child to visit via the <code lang='und' xml:lang='und'>next_for_GC pointer</code> generate a unique ID per PMC and freeze the ID (not the PMC address) so thaw the hash&#45;lookup can be replaced by an array lookup then which is a lot faster.</p>
+
+<p>*/</p>
+
+<p>PARROT_INLINE static int next_for_GC_seen(PARROT_INTERP, NULLOK(PMC *pmc), NOTNULL(visit_info *info), NOTNULL(UINTVAL *id)) { int seen = 0; if (PMC_IS_NULL(pmc)) { *id = 0; return 1; }</p>
+
+<pre lang='und' xml:lang='und'>    /*
+     * we can only remember PMCs with a next_for_GC pointer
+     * which is located in pmc_ext
+     */
+    if (pmc&#45;&#62;pmc_ext) {
+        /* already seen? */
+        if (!PMC_IS_NULL(PMC_next_for_GC(pmc))) {
+            seen = 1;
+            goto skip;
+        }
+        /* put pmc at the end of the list */
+        PMC_next_for_GC(info&#45;&#62;mark_ptr) = pmc;
+        /* make end self&#45;referential */
+        info&#45;&#62;mark_ptr = PMC_next_for_GC(pmc) = pmc;
+    }
+skip:
+    *id = id_from_pmc(interp, pmc);
+    return seen;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: add_pmc_todo_list</p>
+
+<p>Remembers the PMC to be processed later.</p>
+
+<p>*/</p>
+
+<p>static void add_pmc_todo_list(PARROT_INTERP, NULLOK(PMC *pmc), NOTNULL(visit_info *info)) { list_push(interp, (List *)PMC_data(info&#45;&#62;todo), pmc, enum_type_PMC); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: todo_list_seen</p>
+
+<p>Returns true if the PMC was seen, otherwise it put it on the todo list, generates an ID (tag) for PMC, offset by 4 as are addresses, low bits are flags.</p>
+
+<p>*/</p>
+
+<p>PARROT_INLINE static int todo_list_seen(PARROT_INTERP, NOTNULL(PMC *pmc), NOTNULL(visit_info *info), NOTNULL(UINTVAL *id)) { HashBucket * const b = parrot_hash_get_bucket(interp, (Hash *)PMC_struct_val(info&#45;&#62;seen), pmc);</p>
+
+<pre lang='und' xml:lang='und'>    if (b) {
+        *id = (UINTVAL) b&#45;&#62;value;
+        return 1;
+    }
+
+    info&#45;&#62;id += 4;      /* next id to freeze */
+    *id = info&#45;&#62;id;
+    parrot_hash_put(interp, (Hash *)PMC_struct_val(info&#45;&#62;seen), pmc, (void*)*id);
+    /* remember containers */
+    if (pmc&#45;&#62;pmc_ext)
+        list_unshift(interp, (List *)PMC_data(info&#45;&#62;todo), pmc, enum_type_PMC);
+    return 0;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: visit_next_for_GC</p>
+
+<p><code lang='und' xml:lang='und'>visit_child</code> callbacks:</p>
+
+<p>Checks if the PMC was seen, generate an ID for it if not, then do the appropriate action.</p>
+
+<p>*/</p>
+
+<p>static void visit_next_for_GC(PARROT_INTERP, NOTNULL(PMC* pmc), NOTNULL(visit_info* info)) { UINTVAL id; const int seen = next_for_GC_seen(interp, pmc, info, &#38;id);</p>
+
+<pre lang='und' xml:lang='und'>    real_exception(interp, NULL, 1, &#34;todo convert to depth first&#34;);
+    do_action(interp, pmc, info, seen, id);
+    /*
+     * TODO probe for class methods that override the default.
+     * To avoid overhead, we could have an array[class_enums]
+     * which (after first find_method) has a bit, if a user
+     * callback is there.
+     */
+    if (!seen)
+        (info&#45;&#62;visit_action)(interp, pmc, info);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: visit_todo_list</p>
+
+<p>Checks the seen PMC via the todo list.</p>
+
+<p>*/</p>
+
+<p>static void visit_todo_list(PARROT_INTERP, NOTNULL(PMC* pmc), NOTNULL(visit_info* info)) { UINTVAL id; int seen;</p>
+
+<pre lang='und' xml:lang='und'>    if (PMC_IS_NULL(pmc)) {
+        seen = 1;
+        id = 0;
+    }
+    else
+        seen = todo_list_seen(interp, pmc, info, &#38;id);
+    do_action(interp, pmc, info, seen, id);
+    if (!seen)
+        (info&#45;&#62;visit_action)(interp, pmc, info);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: visit_todo_list_thaw</p>
+
+<p>Callback for thaw &#45; action first.</p>
+
+<p>Todo&#45;list and seen handling is all in <code lang='und' xml:lang='und'>do_thaw()</code>.</p>
+
+<p>*/</p>
+
+<p>static void visit_todo_list_thaw(PARROT_INTERP, NOTNULL(PMC* old), NOTNULL(visit_info* info)) { do_thaw(interp, old, info); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: visit_loop_next_for_GC</p>
+
+<p>Put first item on todo list, then run as long as there are items to be done.</p>
+
+<p>*/</p>
+
+<p>static void visit_loop_next_for_GC(PARROT_INTERP, NOTNULL(PMC *current), NOTNULL(visit_info *info)) { visit_next_for_GC(interp, current, info); if (current&#45;&#62;pmc_ext) { PMC *prev = NULL;</p>
+
+<pre lang='und' xml:lang='und'>        while (current != prev) {
+            VTABLE_visit(interp, current, info);
+            prev = current;
+            current = PMC_next_for_GC(current);
+        }
+    }
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: visit_loop_todo_list</p>
+
+<p>The thaw loop.</p>
+
+<p>*/</p>
+
+<p>static void visit_loop_todo_list(PARROT_INTERP, NULLOK(PMC *current), NOTNULL(visit_info *info)) { List * const todo = (List *)PMC_data(info&#45;&#62;todo); PMC *finish_list_pmc; int i, n; List *finish_list = NULL; /* gcc &#45;O3 warning */ int finished_first = 0;</p>
+
+<pre lang='und' xml:lang='und'>    const int thawing =  info&#45;&#62;what == VISIT_THAW_CONSTANTS ||
+            info&#45;&#62;what == VISIT_THAW_NORMAL;
+    if (thawing) {
+        /*
+         * create a list that contains PMCs that need thawfinish
+         */
+        finish_list_pmc = pmc_new(interp, enum_class_Array);
+        finish_list = (List *)PMC_data(finish_list_pmc);
+    }
+
+    (info&#45;&#62;visit_pmc_now)(interp, current, info);
+    /*
+     * can&#39;t cache upper limit, visit may append items
+     */
+again:
+    for (; (int)list_length(interp, todo);) {
+        current = *(PMC**)list_shift(interp, todo, enum_type_PMC);
+        if (!current) {
+            real_exception(interp, NULL, 1,
+                    &#34;NULL current PMC in visit_loop_todo_list&#34;);
+        }
+        VTABLE_visit(interp, current, info);
+        if (thawing) {
+            if (current == info&#45;&#62;thaw_result)
+                finished_first = 1;
+            if (current&#45;&#62;vtable &#38;&#38; current&#45;&#62;vtable&#45;&#62;thawfinish !=
+                    Parrot_default_thawfinish)
+                list_unshift(interp, finish_list, current, enum_type_PMC);
+        }
+    }
+
+    if (thawing) {
+        /*
+         * if image isn&#39;t consumed, there are some extra data to thaw
+         */
+        if (info&#45;&#62;image&#45;&#62;bufused &#62; 0) {
+            (info&#45;&#62;visit_pmc_now)(interp, NULL, info);
+            goto again;
+        }
+        /*
+         * on thawing call thawfinish for each processed PMC
+         */
+        if (!finished_first) {
+            /*
+             * the first create PMC might not be in the list,
+             * if it has no pmc_ext
+             */
+            list_unshift(interp, finish_list,
+                    info&#45;&#62;thaw_result, enum_type_PMC);
+        }
+        n = (int)list_length(interp, finish_list);
+        for (i = 0; i &#60; n ; ++i) {
+            current = *(PMC**)list_get(interp, finish_list, i,
+                    enum_type_PMC);
+            if (!PMC_IS_NULL(current))
+                VTABLE_thawfinish(interp, current, info);
+        }
+    }
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: create_image</p>
+
+<p>Allocate image to some estimated size.</p>
+
+<p>*/</p>
+
+<p>static void create_image(PARROT_INTERP, NULLOK(PMC *pmc), NOTNULL(visit_info *info)) { INTVAL len; if (!PMC_IS_NULL(pmc) &#38;&#38; (VTABLE_does(interp, pmc, string_from_literal(interp, &#34;array&#34;)) || VTABLE_does(interp, pmc, string_from_literal(interp, &#34;hash&#34;)))) { const INTVAL items = VTABLE_elements(interp, pmc); /* * TODO check e.g. first item of aggregate and estimate size */ len = items * FREEZE_BYTES_PER_ITEM; } else len = FREEZE_BYTES_PER_ITEM;</p>
+
+<pre lang='und' xml:lang='und'>    info&#45;&#62;image = string_make_empty(interp, enum_stringrep_one, len);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: run_thaw</p>
+
+<p>Performs thawing. <code lang='und' xml:lang='und'>what</code> indicates what to be thawed.</p>
+
+<p>Thaw could use the <code lang='und' xml:lang='und'>next_for_GC</code> pointers as todo&#45;list too, but this would need 2 runs through the arenas to clean the <code lang='und' xml:lang='und'>next_for_GC</code> pointers.</p>
+
+<p>For now it seems cheaper to use a list for remembering contained aggregates. We could of course decide dynamically, which strategy to use, e.g.: given a big image, the first thawed item is a small aggregate. This implies, it probably contains (or some big strings) more nested containers, for which the <code lang='und' xml:lang='und'>next_for_GC</code> approach could be a win.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL static PMC* run_thaw(PARROT_INTERP, NOTNULL(STRING* image), visit_enum_type what) { visit_info info; int dod_block = 0; const UINTVAL bufused = image&#45;&#62;bufused;</p>
+
+<pre lang='und' xml:lang='und'>    info.image = image;
+    /*
+     * if we are thawing a lot of PMCs, its cheaper to do
+     * a DOD run first and then block DOD &#45; the limit should be
+     * chosen so that no more then one DOD run would be triggered
+     *
+     * XXX
+     *
+     * md5_3.pir shows a segfault during thawing the config hash
+     * info&#45;&#62;thaw_ptr becomes invalid &#45; seems that the hash got
+     * collected under us.
+     */
+    if (1 || (string_length(interp, image) &#62; THAW_BLOCK_DOD_SIZE)) {
+        Parrot_do_dod_run(interp, 1);
+        Parrot_block_DOD(interp);
+        Parrot_block_GC(interp);
+        dod_block = 1;
+    }
+
+    info.what = what;   /* _NORMAL or _CONSTANTS */
+    todo_list_init(interp, &#38;info);
+    info.visit_pmc_now = visit_todo_list_thaw;
+    info.visit_pmc_later = add_pmc_todo_list;
+
+    info.thaw_result = NULL;
+    /*
+     * run thaw loop
+     */
+    visit_loop_todo_list(interp, NULL, &#38;info);
+    /*
+     * thaw does &#34;consume&#34; the image string by incrementing strstart
+     * and decrementing bufused &#45; restore that
+     */
+    LVALUE_CAST(char *, image&#45;&#62;strstart) &#45;= bufused;
+    image&#45;&#62;bufused = bufused;
+    PARROT_ASSERT(image&#45;&#62;strstart &#62;= (char *)PObj_bufstart(image));
+
+    if (dod_block) {
+        Parrot_unblock_DOD(interp);
+        Parrot_unblock_GC(interp);
+    }
+    PackFile_destroy(interp, info.image_io&#45;&#62;pf);
+    mem_sys_free(info.image_io);
+    return info.thaw_result;
+}</pre>
+
+<p>/*</p>
+
+<h2><a name="Public_Interface"
+>Public Interface <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>FUNCDOC: Parrot_freeze_at_destruct</p>
+
+<p>This function must not consume any resources (except the image itself). It uses the <code lang='und' xml:lang='und'>next_for_GC</code> pointer, so its not reentrant and must not be interrupted by a DOD run.</p>
+
+<p>*/</p>
+
+<p>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL STRING* Parrot_freeze_at_destruct(PARROT_INTERP, NOTNULL(PMC* pmc)) { visit_info info;</p>
+
+<pre lang='und' xml:lang='und'>    Parrot_block_DOD(interp);
+    cleanup_next_for_GC(interp);
+    info.what = VISIT_FREEZE_AT_DESTRUCT;
+    info.mark_ptr = pmc;
+    info.thaw_ptr = NULL;
+    info.visit_pmc_now = visit_next_for_GC;
+    info.visit_pmc_later = add_pmc_next_for_GC;
+    create_image(interp, pmc, &#38;info);
+    ft_init(interp, &#38;info);
+
+    visit_loop_next_for_GC(interp, pmc, &#38;info);
+
+    Parrot_unblock_DOD(interp);
+    PackFile_destroy(interp, info.image_io&#45;&#62;pf);
+    mem_sys_free(info.image_io);
+    return info.image;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_freeze</p>
+
+<p>Freeze using either method.</p>
+
+<p>*/</p>
+
+<p>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL STRING* Parrot_freeze(PARROT_INTERP, NOTNULL(PMC* pmc)) { #if FREEZE_USE_NEXT_FOR_GC /* * we could do a DOD run here before, to free resources */ return Parrot_freeze_at_destruct(interp, pmc); #else /* * freeze using a todo list and seen hash * Please note that both have to be PMCs, so that trace_system_stack * can call mark on the PMCs */ visit_info info;</p>
+
+<pre lang='und' xml:lang='und'>    info.what = VISIT_FREEZE_NORMAL;
+    create_image(interp, pmc, &#38;info);
+    todo_list_init(interp, &#38;info);
+
+    visit_loop_todo_list(interp, pmc, &#38;info);
+
+    PackFile_destroy(interp, info.image_io&#45;&#62;pf);
+    mem_sys_free(info.image_io);
+    return info.image;
+#endif
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_thaw</p>
+
+<p>Thaw a PMC, called from the <code lang='und' xml:lang='und'>thaw</code> opcode.</p>
+
+<p>*/</p>
+
+<p>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL PMC* Parrot_thaw(PARROT_INTERP, NOTNULL(STRING* image)) { return run_thaw(interp, image, VISIT_THAW_NORMAL); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_thaw_constants</p>
+
+<p>Thaw the constants. This is used by PackFile for unpacking PMC constants.</p>
+
+<p>*/</p>
+
+<p>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL PMC* Parrot_thaw_constants(PARROT_INTERP, NOTNULL(STRING* image)) { return run_thaw(interp, image, VISIT_THAW_CONSTANTS); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_clone</p>
+
+<p>There are for sure shortcuts to clone faster, e.g. always thaw the image immediately or use a special callback. But for now we just thaw a frozen PMC.</p>
+
+<p>*/</p>
+
+<p>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL PMC* Parrot_clone(PARROT_INTERP, NOTNULL(PMC* pmc)) { return Parrot_thaw(interp, Parrot_freeze(interp, pmc)); }</p>
+
+<p>/*</p>
+
+<h1><a name="TODO"
+>TODO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>The seen&#45;hash version for freezing might go away sometimes.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Lot of discussion on p6i and <em lang='und' xml:lang='und'><a href="../docs/dev/pmc_freeze.pod.html">docs/dev/pmc_freeze.pod</a></em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Initial version by leo 2003.11.03 &#45; 2003.11.07.</p>
+
+<p>*/</p>
+
+<p>/* * Local variables: * c&#45;file&#45;style: &#34;parrot&#34; * End: * vim: expandtab shiftwidth=4: */</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

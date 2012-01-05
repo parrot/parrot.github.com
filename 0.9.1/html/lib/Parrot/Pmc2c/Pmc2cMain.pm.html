@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Functions called within F&#60;tools/build/pmc2c.pl&#62;</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Contents</a> &raquo; <a href="../../../../html/perl.html">Perl Modules</a> &raquo; Functions called within F&#60;tools/build/pmc2c.pl&#62;
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>Parrot::Pmc2c::Pmc2cMain &#45; Functions called within <em><a href="../../../tools/build/pmc2c.pl.html">tools/build/pmc2c.pl</a></em></p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    use Parrot::Pmc2c::Pmc2cMain;</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Parrot::Pmc2c::Pmc2cMain holds subroutines called within <em><a href="../../../tools/build/pmc2c.pl.html">tools/build/pmc2c.pl</a></em>.</p>
+
+<h1><a name="FUNCTIONS"
+>FUNCTIONS</a></h1>
+
+<h2><a name="Publicly_Available_Methods"
+>Publicly Available Methods</a></h2>
+
+<h3><a name="new()"
+><code>new()</code></a></h3>
+
+<pre>    $self = Parrot::Pmc2c::Pmc2cMain&#45;&#62;new( {
+        include =&#62; \@include,
+        opt     =&#62; \%opt,
+        args    =&#62; \@args,
+    } );</pre>
+
+<p><b>Purpose:</b> Parrot::Pmc2c::Pmc2cMain constructor.</p>
+
+<p><b>Arguments:</b> Reference to a hash holding 3 required keys:</p>
+
+<ul>
+<li><code>include</code></li>
+
+<p>Array reference. Array passed holds list of paths in which various methods should try to locate files.</p>
+
+<li><code>opt</code></li>
+
+<p>Hash reference. Holds results of processing of options to <code>pmc2c.pl()</code>.</p>
+
+<li><code>args</code></li>
+
+<p>Array reference. In most cases, the array passed will hold the elements of <code>@ARGV</code> remaining after options processing.</p>
+</ul>
+
+<p><b>Return Values:</b> Parrot::Pmc2c::Pmc2cMain object. Will <code>die</code> with error message if arguments are defective.</p>
+
+<h3><a name="dump_vtable()"
+><code>dump_vtable()</code></a></h3>
+
+<pre>    $self&#45;&#62;dump_vtable(&#34;$Bin/../../src/vtable.tbl&#34;);</pre>
+
+<p><b>Purpose:</b> Create a <em>.dump</em> file for the default vtable (from which all PMCs inherit).</p>
+
+<p><b>Arguments:</b> Scalar holding filename of vtable.</p>
+
+<p><b>Return Values:</b> Scalar holding path to <em>.dump</em> file.</p>
+
+<p><b>Comments:</b> In earlier version of <em>pmc2c.pl</em>, this subroutine returned <code>undef</code> upon success. This was changed to more Perl&#45;ish <code>1</code>.</p>
+
+<p>If the caller of this subroutine has <code>chdir</code>&#45;ed to a tempdir before this subroutine is called &#45;&#45; as ought to be the case during testing of build tools &#45;&#45; then <em>vtable.dump</em> will be created within that tempdir. Otherwise, <em>vtable.dump</em> is created in the caller&#39;s working directory. When the caller is <em>make</em>, that directory is the top&#45;level Parrot directory.</p>
+
+<h3><a name="dump_pmc()"
+><code>dump_pmc()</code></a></h3>
+
+<p>see <code>lib/Parrot/Pmc2c/Dumper</code>.</p>
+
+<h3><a name="read_dump()"
+><code>read_dump()</code></a></h3>
+
+<pre>  $self&#45;&#62;read_dump(&#39;filename&#39;);</pre>
+
+<p><b>Purpose:</b> A <em>.dump</em> file is the result of a call to <code>dump_pmc()</code> and consists of a binary dump of a hash reference, Storable&#45;style. <code>read_dump()</code> reads in the <em>.dump</em> file, recreates the data structure and returns a new hash reference holding the data structure.</p>
+
+<p><b>Arguments:</b> Scalar holding name of file whose structure is to be dumped. The method will only process <em>foo.dump</em> files, but you can also pass <code>&#39;foo.c&#39;</code> or <code>&#39;foo.pmc&#39;</code> as the argument and it will analyze the corresponding <em>foo.dump</em> file.</p>
+
+<p><b>Return Values:</b> Reference to hash holding recreated data structure.</p>
+
+<p><b>Comment:</b> If the appropriate <em>.dump</em> file cannot be located, program will die with error message (see <code>find_file()</code> above). Called internally by <code>gen_c()</code>, <code>gen_parent_list()</code>, <code>dump_pmc()</code>.</p>
+
+<h3><a name="gen_c()"
+><code>gen_c()</code></a></h3>
+
+<pre>    $return_value = $self&#45;&#62;gen_c();</pre>
+
+<p><b>Purpose:</b> Generate the C source code file for each of the files passed in, using the directories passed in to search for the PMC dump files.</p>
+
+<p><b>Arguments:</b> None.</p>
+
+<p><b>Return Values:</b> Returns <code>1</code> upon success.</p>
+
+<p><b>Comment:</b> Internally calls <code>Parrot::Pmc2c::Library::new()</code> and <code>write_all_files()</code>. In earlier version of <em>pmc2c.pl</em>, this subroutine returned <code>undef</code> upon success. This was changed to more Perl&#45;ish <code>1</code>.</p>
+
+<h2><a name="Subroutines"
+>Subroutines</a></h2>
+
+<p>These are auxiliary subroutines called inside the methods described above.</p>
+
+<h3><a name="find_file()"
+><code>find_file()</code></a></h3>
+
+<pre>    $path = $self&#45;&#62;find_file($file, $die_unless_found_flag);</pre>
+
+<p><b>Purpose:</b> Return the full path to <code>$file</code>. (Search in the directories listed in the <code>include</code> key in the hash passed by reference to the constructor). Optionally, die with an error message if that file cannot be found.</p>
+
+<p><b>Arguments:</b> Two arguments. Required: string holding name of the file sought. Optional: a flag variable which, if set to a true value, will cause program to die if file is not located.</p>
+
+<p><b>Return Values:</b> Upon success, string holding a path. Upon failure, <code>undef</code> (unless <code>$die_unless_found_flag</code> is set to a true value, in which case program <code>die</code>s).</p>
+
+<p><b>Comment:</b> Called inside <code>read_dump()</code> and <code>dump_pmc()</code>.</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Leopold Toetsch wrote <em>pmc2c.pl</em>. It was cleaned up by Matt Diephouse. James E Keenan extracted the subroutines into <em><a href="Pmc2cMain.pm.html">lib/Parrot/Pmc2c/Pmc2cMain.pm</a></em> and wrote the accompanying test suite.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em><a href="../../../tools/build/pmc2c.pl.html">tools/build/pmc2c.pl</a></em>, Parrot::Pmc2c, Parrot::Pmc2c::Library.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

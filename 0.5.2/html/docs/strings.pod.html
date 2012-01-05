@@ -1,0 +1,306 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Strings</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Strings</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>docs/strings.pod &#45; Parrot Strings</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>This document describes how Parrot abstracts the programmer&#39;s interface to string types.</p>
+
+<h1><a name="OVERVIEW"
+>OVERVIEW <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>For various reasons,
+some of which relate to the sequence&#45;of&#45;integer abstraction,
+and some of which relate to &#34;infinite&#34; strings and arrays,
+Parrot Strings are represented by a list of chunks,
+where each chunk is a sequence of integers of the same size or representation,
+but different chunks can have different integer sizes or representations.
+The Parrot String API hides this from any module that wishes to work at the abstract string level.
+In particular,
+it must hide this from the regex engine,
+which works on pure sequences in the abstract.</p>
+
+<p>So Parrot Strings are a wizzy internationalized equivalent of the old standard C library&#39;s string.h functions.</p>
+
+<h1><a name="The_Parrot_String_API"
+>The Parrot String API <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>All strings used in the Parrot core should use the Parrot <code lang='und' xml:lang='und'>STRING</code> structure; Parrot programmers should not deal with <code lang='und' xml:lang='und'>char *</code> or other string&#45;like types outside of this abstraction without very good reason.</p>
+
+<h1><a name="Interface_functions_on_STRINGs"
+>Interface functions on <code lang='und' xml:lang='und'>STRING</code>s <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>In fact,
+programmers should hardly ever even access members of the <code lang='und' xml:lang='und'>STRING</code> structure directly.
+The reason for this is that the interpretation of the data inside the structure will be a function of the data&#39;s encoding.
+The idea is that Parrot&#39;s strings are encoding&#45;aware so your functions don&#39;t need to be; if you break the abstraction,
+you suddenly have to start worrying about what the data actually means.</p>
+
+<h2><a name="String_Constructors"
+>String Constructors <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>The most basic way of creating a string is through the function <code lang='und' xml:lang='und'>string_make_direct</code>:</p>
+
+<pre lang='und' xml:lang='und'>    STRING* string_make_direct(Interp*     interp,
+                               const void* buffer,
+                               UINTVAL     buflen,
+                               ENCODING*   encoding,
+                               CHARSET*    charset,
+                               UINTVAL     flags)</pre>
+
+<p>In here you pass a pointer to a buffer of a given encoding, and the number of bytes in that buffer to examine, the encoding, the charset, and the initial values of the <code lang='und' xml:lang='und'>flags</code>. These should usually be zero. In return, you&#39;ll get a brand new Parrot string. This string will have its own private copy of the buffer, so you don&#39;t need to keep it.</p>
+
+<p>Additionally there several convenience functions, that are wrapping string_make_direct. See <em lang='und' xml:lang='und'><a href="../src/string.c.html">src/string.c</a></em> for details.</p>
+
+<ul>
+<li><i>Hint</i>: Nothing stops you doing</li><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    string_make_direct(interp, NULL, 0, ...</pre>
+</ul>
+
+<p>If you already have a string, you can make a copy of it by calling</p>
+
+<pre lang='und' xml:lang='und'>    STRING* string_copy(Interp *, STRING* s)</pre>
+
+<p>This is itself implemented in terms of <code lang='und' xml:lang='und'>string_make</code>.</p>
+
+<h2><a name="String_Manipulation_Functions"
+>String Manipulation Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Unless otherwise stated, all lengths, offsets, and so on, are given in characters; you are not allowed to care about the byte representation of a string, so it doesn&#39;t make sense to give the values in bytes.</p>
+
+<p>To find out the length of a string, use</p>
+
+<pre lang='und' xml:lang='und'>    INTVAL string_length(const STRING *s)</pre>
+
+<p>You <i>may</i> explicitly use <code lang='und' xml:lang='und'>s&#45;&#62;strlen</code> for this since it is such a useful operation.</p>
+
+<p>To concatenate two strings &#45; that is, to add the contents of string <code lang='und' xml:lang='und'>b</code> to the end of string <code lang='und' xml:lang='und'>a</code>, use:</p>
+
+<pre lang='und' xml:lang='und'>    STRING* string_concat(Interp *, STRING* a, STRING *b, INTVAL flag)</pre>
+
+<p><code lang='und' xml:lang='und'>a</code> is updated, and is also returned as a convenience. If the flag is set to a non&#45;zero value, then <code lang='und' xml:lang='und'>b</code> will be transcoded to <code lang='und' xml:lang='und'>a</code>&#39;s encoding before concatenation if the strings are of different encodings. You almost certainly don&#39;t want to stick, say, a UTF&#45;32 string on the end of a Big&#45;5 string.</p>
+
+<p>To repeat a string, (ie, turn &#39;xyz&#39; into &#39;xyzxyzxyz&#39;) use:</p>
+
+<pre lang='und' xml:lang='und'>    STRING* string_repeat(Interp *, const STRING* s, UINTVAL n, STRING** d)</pre>
+
+<p>Which will repeat string <i>s</i> n times and store the result into <i>d</i>, which it also returns. If <i>*d</i> or <i>**d</i> is NULL, a new string will be allocated to hold the result. <i>s</i> is not modified by this operation. If <i>d</i> is not of the same type as <i>s</i>, it will be upgraded appropriately.</p>
+
+<p>Chopping <code lang='und' xml:lang='und'>n</code> characters off the end of a string is achieved with the unlikely&#45;sounding</p>
+
+<pre lang='und' xml:lang='und'>    STRING* string_chopn(STRING* s, INTVAL n)</pre>
+
+<p>To retrieve a substring of the string, call</p>
+
+<pre lang='und' xml:lang='und'>    STRING* string_substr(Interp*,
+                          STRING*    src,
+                          INTVAL     offset,
+                          INTVAL     length,
+                          STRING**   dest)</pre>
+
+<p>The result will be placed in <code lang='und' xml:lang='und'>dest</code>. (Passing in <code lang='und' xml:lang='und'>dest</code> avoids allocating a new string at runtime. If <code lang='und' xml:lang='und'>*dest</code> is a null pointer, a new string structure is created with the same encoding as <code lang='und' xml:lang='und'>src</code>.)</p>
+
+<p>To retrieve a single character of the string, call</p>
+
+<pre lang='und' xml:lang='und'>    INTVAL string_ord(const STRING* s, INTVAL n)</pre>
+
+<p>The result will be returned from the function. It checks for the existence of <code lang='und' xml:lang='und'>s</code>, and tests for <code lang='und' xml:lang='und'>n</code> being out of range. Currently it applies the method that perl uses on arrays to handle negative indices. That is to say, negative values count backwards from the end of the string. For example, index &#45;1 is the last character in the string, &#45;2 is the next&#45;to&#45;last, and so on.</p>
+
+<p>If <code lang='und' xml:lang='und'>s</code> is null or <code lang='und' xml:lang='und'>s</code> is zero&#45;length, it throws an exception. If <code lang='und' xml:lang='und'>n</code> is out of range, it also throws an exception.</p>
+
+<p>To compare two strings, use:</p>
+
+<pre lang='und' xml:lang='und'>    INTVAL string_compare(Interp *, STRING* s1, STRING* s2)</pre>
+
+<p>The value returned will be less than, equal to, or greater than zero depending on whether <code lang='und' xml:lang='und'>s1</code> is less than, equal to, or greater than <code lang='und' xml:lang='und'>s2</code>.</p>
+
+<p>Strings whose encodings are not the same can be compared &#45; in this case a UTF&#45;32 copy will be made of each string and these copies will be compared.</p>
+
+<p>To test a string for truth, use:</p>
+
+<pre lang='und' xml:lang='und'>    INTVAL string_bool(STRING* s);</pre>
+
+<p>A string is false if it</p>
+
+<pre lang='und' xml:lang='und'> o  is not yet allocated
+ o  has zero length
+ o  consists of one digit character whose numeric value (as
+    decided by its character type) is zero.</pre>
+
+<p>Otherwise the string will be true.</p>
+
+<p>To format output into a string, use</p>
+
+<pre lang='und' xml:lang='und'>    STRING* string_nprintf(Interp*,
+                           STRING*   dest,
+                           INTVAL    len,
+                           char*     format,
+                           ...)</pre>
+
+<p><code lang='und' xml:lang='und'>dest</code> may be a null pointer, in which case a new string will be created. If <code lang='und' xml:lang='und'>len</code> is zero, the behaviour becomes more <code lang='und' xml:lang='und'>sprintf</code>ish than <code lang='und' xml:lang='und'>snprintf</code>&#45;like.</p>
+
+<h1><a name="Notes_for_Implementers"
+>Notes for Implementers <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Termination"
+>Termination <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>The character buffer pointed to by *strstart is not expected to be terminated by a NULL byte and functions which provide the string API will not add one. Any functions which access the buffer directly and which require a terminating NULL byte must place one there themselves and also be very careful about NULL bytes within the used portion of the character buffer. In particular, if <code lang='und' xml:lang='und'>bufused == buflen</code> more space must be allocated to hold a terminating byte.</p>
+
+<h1><a name="Elements_of_the_STRING_structure"
+>Elements of the <code lang='und' xml:lang='und'>STRING</code> structure <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Those implementing the <code lang='und' xml:lang='und'>STRING</code> API will obviously need to know about how the <code lang='und' xml:lang='und'>STRING</code> structure works. You can find the definition of this structure in <em lang='und' xml:lang='und'>pobj.h</em>:</p>
+
+<pre lang='und' xml:lang='und'>    struct parrot_string_t {
+        pobj_t obj;
+        UINTVAL bufused;
+        void *strstart;
+        UINTVAL strlen;
+        const ENCODING *encoding;
+        const CHARTYPE *type;
+        INTVAL language;
+    };</pre>
+
+<p>Let&#39;s look at each element of this structure in turn.</p>
+
+<h2><a name="obj.u.b.bufstart"
+><code lang='und' xml:lang='und'>obj.u.b.bufstart</code> <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>This pointer points to the buffer which holds the string, encoded in whatever is the string&#39;s specified encoding. Because of this, you should not make any assumptions about what&#39;s in the buffer, and hence you shouldn&#39;t try and access it directly.</p>
+
+<h2><a name="obj.u.b.buflen"
+><code lang='und' xml:lang='und'>obj.u.b.buflen</code> <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>This is used for memory allocation; it tells you the currently allocated size of the buffer in bytes.</p>
+
+<h2><a name="obj.flags"
+><code lang='und' xml:lang='und'>obj.flags</code> <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>This is a general holding area for string flags. The exact flags required have not yet been determined.</p>
+
+<h2><a name="bufused"
+><code lang='und' xml:lang='und'>bufused</code> <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p><code lang='und' xml:lang='und'>bufused</code> on the other hand, contains the number of bytes out of the allocated buffer which are actually in use. This, together with <code lang='und' xml:lang='und'>buflen</code>, is used by the buffer growing algorithm to determine when and by how much to grow the allocation buffer.</p>
+
+<h2><a name="strstart"
+><code lang='und' xml:lang='und'>strstart</code> <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>This stores the actual start of the string. In the case of COW strings holding references to portions of a larger string, (for example, in regex match variables), this is a pointer into the start of the string.</p>
+
+<h2><a name="strlen"
+><code lang='und' xml:lang='und'>strlen</code> <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>This is the length of the string in characters, as you would expect to find from <code lang='und' xml:lang='und'>length $string</code> in Perl. Again, because string buffers may be in one of a number of encodings, this must be computed by the appropriate encoding. <code lang='und' xml:lang='und'>string_compute_strlen(STRING)</code> updates this value, calling the encoding&#39;s <code lang='und' xml:lang='und'>characters()</code> function.</p>
+
+<h2><a name="encoding"
+><code lang='und' xml:lang='und'>encoding</code> <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>This specifies the encoding used to encode the characters in the data. There are currently four character encodings used in Parrot: singlebyte, UTF&#45;8, UTF&#45;16 and UTF&#45;32. UTF&#45;16 and UTF&#45;32 should use the native endianness of the machine.</p>
+
+<h2><a name="type"
+><code lang='und' xml:lang='und'>type</code> <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>This specifies the character set for the string. There are currently two character sets in Parrot: US ASCII and Unicode. Each character set has a default encoding. The default character set is US ASCII.</p>
+
+<h2><a name="language"
+><code lang='und' xml:lang='und'>language</code> <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>This field is currently unused; however, it can be used to hold a pointer to the correct vtable for foreign strings.</p>
+
+<h1><a name="Non&#45;user&#45;visible_String_Manipulation_Functions"
+>Non&#45;user&#45;visible String Manipulation Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>If you&#39;ve read this far, I hope you&#39;re a Parrot implementer. If you&#39;re not helping construct the Parrot core itself, you probably want to look away now.</p>
+
+<p>The first two functions to note are</p>
+
+<pre lang='und' xml:lang='und'>    INTVAL string_compute_strlen(STRING* s)</pre>
+
+<p>and</p>
+
+<pre lang='und' xml:lang='und'>    INTVAL string_max_bytes(STRING *s, INTVAL iv)</pre>
+
+<p>The first updates the contents of <code lang='und' xml:lang='und'>&#60;s&#45;</code>strlen&#62;&#62; by contemplating the buffer <code lang='und' xml:lang='und'>strstart</code> and working out how many characters it contains. The second is given a number of characters which we assume are going to be added into the string at some point; it returns the maximum number of bytes that need to be allocated to admit that number of characters. For fixed&#45;width encodings, this is trivial &#45; the singlebyte encoding, for instance, encodes one byte per character, so <code lang='und' xml:lang='und'>string_max_bytes()</code> simply returns the <code lang='und' xml:lang='und'>INTVAL</code> it is passed; calling <code lang='und' xml:lang='und'>string_max_bytes()</code> on a UTF&#45;8 string, on the other hand, returns three times the value that it is passed because a UTF&#45;8 character may occupy up to three bytes.</p>
+
+<p>To grow a string to a specified size, use</p>
+
+<pre lang='und' xml:lang='und'>    void string_grow(Interp *, STRING *s, INTVAL newsize)</pre>
+
+<p>The size is given in characters; <code lang='und' xml:lang='und'>string_max_bytes()</code> is called to turn this into a size in bytes, and then the buffer is grown to accommodate (at least) that many bytes.</p>
+
+<h1><a name="Transcoding"
+>Transcoding <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>The fact that Parrot strings are encoding&#45;abstracted really has to bottom out at some point, and it&#39;s usually when two strings of different encodings interact. When we try to append one type of string to another, we have the option of turning the later string into a string that matches the first string&#39;s encoding. This process, translating a string from one encoding into another, is called &#34;transcoding&#34;.</p>
+
+<p>In Parrot, transcoding is implemented by <code lang='und' xml:lang='und'>Parrot_CharType_Transcode</code> functions which take two character sets (<code lang='und' xml:lang='und'>CHARTYPE</code>) and a character (<code lang='und' xml:lang='und'>Parrot_UInt</code>) and returns the character converted from the first to the second character set.</p>
+
+<p>Each <code lang='und' xml:lang='und'>CHARTYPE</code> has a number of transcoders associated with it, of which those to and from Unicode are explicitly singled out because of their expected frequent use. The <code lang='und' xml:lang='und'>transcoders</code> array is currently not used.</p>
+
+<h2><a name="Foreign_Encodings"
+>Foreign Encodings <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Fill this in later; if anyone wants to implement new encodings at this stage they must be mad.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'><a href="../src/string.c.html">src/string.c</a></em>, <em lang='und' xml:lang='und'>include/parrot/string.h</em>, <em lang='und' xml:lang='und'>include/parrot/string_funcs.h</em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="4_October_2003"
+>4 October 2003</a></dt><p class="pad"></p>
+
+<dd>Revised to reflect changes since Buffer/PMC unification.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/dotnet.html">.Net</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="The_.NET_Metadata_To_PIR_Translator"
+>The .NET Metadata To PIR Translator <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Much data about .NET classes along with their fields and methods are stored in tables,
+collectively known as metadata,
+outside of the instruction stream.
+A number of PMCs (documented in <a href='TODO'>pmcs.pod</a>) are used to access this metadata.</p>
+
+<h2><a name="Interface"
+>Interface <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>This subsystem represents itself as a single sub that takes a single parameter,
+the filename of the EXE or DLL file with CLI metadata inside it that needs to be translated.
+It returns the PIR of the translated file.
+The sub is simply named &#34;dotnet_to_pir&#34;.</p>
+
+<pre lang='und' xml:lang='und'>  pir = dotnet_to_pir(filename)</pre>
+
+<p>This is contained in the file &#34;src/translator.pir&#34;.</p>
+
+<h2><a name="Guts"
+>Guts <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>This section describes the internals of the metadata translator.</p>
+
+<h3><a name="Flow"
+>Flow</a></h3>
+
+<h4><a name="Assemblies,_Classes,_Fields_and_Methods"
+>Assemblies, Classes, Fields and Methods</a></h4>
+
+<pre lang='und' xml:lang='und'>                   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+                   |        dotnet_to_pir       |
+                   |       (translator.pir)     |
+                   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;||&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+                                ||
+                               _||_
+                               \  /
+                   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;\/&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+                   |         trans_class        |
+                   |       (translator.pir)     |
+                   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;||&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+                                ||
+                 ==================================
+                ||                                ||
+               _||_                              _||_
+               \  /                              \  /
+      +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;\/&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+          +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;\/&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+      |     trans_field      |          |     trans_method     |
+      |   (translator.pir)   |          |     (method.pir)     |
+      +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+          +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;||&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+                                                  ||
+                                                 _||_
+                                                 \  /
+                                                  \/
+                                               See below</pre>
+
+<h4><a name="Method_Translation_Details"
+>Method Translation Details</a></h4>
+
+<pre lang='und' xml:lang='und'>                             See above
+                                ||
+                               _||_
+                               \  /
+                   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;\/&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+                   |         trans_method       |&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;|\ Instruction
+                   |         (method.pir)       |&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;|/ Translator
+                   +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;||&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+                                ||
+                 ==================================
+                ||                                ||
+               _||_                              _||_
+               \  /                              \  /
+      +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;\/&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+          +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;\/&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+      | trans_method_params  |          | trans_method_locals  |
+      |     (method.pir)     |          |     (method.pir)     |
+      +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;||&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+          +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;||&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+                ||                                ||
+               _||_                              _||_
+               \  /                              \  /
+      +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;\/&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+          +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;\/&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+      |    get_signature_    |          |    get_signature_    |
+      |   RetType_or_Param   |          |        Local         |
+      |    (signature.pir)   |          |    (signature.pir)   |
+      +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+          +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<h3><a name="Files"
+>Files</a></h3>
+
+<p>The translator source consists of a number of PIR files.</p>
+
+<h4><a name="translator.pir"
+>translator.pir</a></h4>
+
+<p>This contains the main dotnet_to_pir sub that initiates the translation process. It also contains translate_class, which drives translation of a .NET class, and translate_field, which translates a field.</p>
+
+<h4><a name="method.pir"
+>method.pir</a></h4>
+
+<p>This contains routines related to translating methods along with their local variables and parameters. The sub translate_method drives this, using a couple of utility functions. It also makes use of signature translation routines in signature.pir.</p>
+
+<h4><a name="signature.pir"
+>signature.pir</a></h4>
+
+<p>This contains routines that parse parts of signature blobs and build some simple data structures out of them.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

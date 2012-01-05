@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/plumhead.html">Plumhead</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<p>class Plumhead::Grammar::Actions;</p>
+
+<p># The method TOP is invoked per default by the HLLCompiler method TOP($/) { make PAST::Block.new( $( $&#60;program&#62; ),
+:name(&#39;Plum&#45;Headed Parakeet&#39;),
+:node($/) ); }</p>
+
+<p>method program($/) { my $past := PAST::Stmts.new( :node($/) ); for $&#60;sea_or_code&#62; { $past.push( $($_) ); } make $past; }</p>
+
+<p>method sea_or_code($/,$key) { make $( $/{$key} ); }</p>
+
+<p># The surrounding HTML is printed out method SEA($/) { make PAST::Op.new( PAST::Val.new( :value(~$/),
+:returns(&#39;String&#39;) ),
+:pasttype(&#39;call&#39;),
+:name(&#39;echo&#39;),
+:node($/) ); }</p>
+
+<p># loop over the statements in the PHP section method code($/) { my $past := PAST::Stmts.new( :node($/),
+:name(&#39;code&#39;) ); for $&#60;statement&#62; { $past.push( $($_) ); } make $past; }</p>
+
+<p>method statement($/,$key) { if $key eq &#39;ECHO&#39; { make PAST::Op.new( $( $/[0]&#60;expression&#62; ),
+:pasttype(&#39;call&#39;),
+:name(&#39;echo&#39;),
+:node($/) ); } elsif $key eq &#39;VAR_DUMP&#39; { make PAST::Op.new( $( $&#60;expression&#62; ),
+:pasttype(&#39;call&#39;),
+:name(&#39;var_dump&#39;),
+:node($/) ); } elsif $key eq &#39;IF&#39; { my $past_if_block := PAST::Stmts.new( ); for $&#60;statement&#62; { $past_if_block.push( $($_) ); } make PAST::Op.new( $( $&#60;relational_expression&#62; ),
+$past_if_block,
+:pasttype(&#39;if&#39;),
+:node($/) ); } elsif $key eq &#39;inline_sea&#39; { make PAST::Op.new( PAST::Val.new( :value(~$&#60;inline_sea&#62;&#60;SEA_empty_allowed&#62;),
+:returns(&#39;String&#39;) ),
+:pasttype(&#39;call&#39;),
+:name(&#39;echo&#39;),
+:node($/) ); } }</p>
+
+<p>method relational_expression($/) { if $&#60;rel_op_clause&#62; { my %name; %name{&#39;==&#39;} := &#39;infix:eq&#39;; %name{&#39;!=&#39;} := &#39;infix:ne&#39;; my $rel_op_clause := $/{&#39;rel_op_clause&#39;}{&#39;REL_OP&#39;}; my $op := ~$rel_op_clause{&#39;REL_OP&#39;}; my $name := %name{ $op } || &#34;infix:&#34; ~ $op; make PAST::Op.new( $( $&#60;expression&#62; ),
+$( $rel_op_clause{&#39;expression&#39;} ),
+:node($/),
+:name($name) ); } else { make $( $&#60;expression&#62; ); } }</p>
+
+<p>method expression($/,$key) { make $( $/{$key} ); }</p>
+
+<p>method bitwise_expression($/) { my $past := $( $&#60;adding_expression&#62; ); if $&#60;bitwise_tail&#62; { for $&#60;bitwise_tail&#62; { my $past_prev := $past; my %name; %name{&#39;&#38;&#39;} := &#39;infix:+&#38;&#39;; %name{&#39;|&#39;} := &#39;infix:+|&#39;; %name{&#39;^&#39;} := &#39;infix:+^&#39;; my $name := %name{ $_&#60;BITWISE_OP&#62; }; $past := PAST::Op.new( $past_prev,
+$( $_&#60;adding_expression&#62; ),
+:name($name) ); } } make $past; }</p>
+
+<p>method adding_expression($/) { my $past := $( $&#60;multiplying_expression&#62; ); if $&#60;adding_tail&#62; { for $&#60;adding_tail&#62; { my $past_prev := $past; my $pir_op := $_&#60;ADD_OP&#62; eq &#39;+&#39; ??
+&#39;n_add&#39; !!
+&#39;n_sub&#39;; $past := PAST::Op.new( $past_prev,
+$( $_&#60;multiplying_expression&#62; ),
+:pirop($pir_op) ); } } make $past; }</p>
+
+<p>method multiplying_expression($/) { # make PAST::Val( :name(&#39;kkkk&#39;),
+:value($/) ); my $past := $( $&#60;unary_expression&#62; ); if $&#60;multiplicand&#62; { for $&#60;multiplicand&#62; { my $past_prev := $past; my %pirop; %pirop{&#39;*&#39;} := &#39;n_mul&#39;; %pirop{&#39;/&#39;} := &#39;n_div&#39;; %pirop{&#39;%&#39;} := &#39;n_mod&#39;; my $pir_op := %pirop{ $_&#60;MUL_OP&#62; }; $past := PAST::Op.new( $past_prev,
+$( $_&#60;multiplying_expression&#62; ),
+:pirop($pir_op) ); } } make $past; }</p>
+
+<p>method unary_expression($/) { if $&#60;UNARY_MINUS&#62; { make PAST::Op.new( $( $&#60;postfix_expression&#62; ),
+:name(&#39;prefix:&#45;&#39;),
+:pirop(&#39;n_neg&#39;),
+:node($/) ); } else { make $( $&#60;postfix_expression&#62; ); } }</p>
+
+<p>method concat_expression($/) { make $( $&#60;string&#62; ); }</p>
+
+<p>method postfix_expression($/,$key) { make $( $/{$key} ); }</p>
+
+<p>method string($/,$key) { make $( $/{$key} ); }</p>
+
+<p>method INTEGER($/) { make PAST::Val.new( :value( ~$/ ),
+:returns(&#39;Integer&#39;),
+:node($/) ); }</p>
+
+<p>method NUMBER($/) { make PAST::Val.new( :value( +$/ ),
+:returns(&#39;Float&#39;),
+:node($/) ); }</p>
+
+<p>method SINGLEQUOTE_STRING($/) { make PAST::Val.new( :value( $($&#60;string_literal&#62;) ),
+:returns(&#39;String&#39;),
+:node($/) ); }</p>
+
+<p>method DOUBLEQUOTE_STRING($/) { make PAST::Val.new( :value( $($&#60;string_literal&#62;) ),
+:returns(&#39;String&#39;),
+:node($/) ); }</p>
+
+<p># Local Variables: # mode: cperl # cperl&#45;indent&#45;level: 4 # fill&#45;column: 100 # End: # vim: expandtab shiftwidth=4:</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

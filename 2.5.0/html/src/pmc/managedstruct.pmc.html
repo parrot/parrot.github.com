@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - DESCRIPTION</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; DESCRIPTION
+                </div>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>src/pmc/managedstruct.pmc &#45; Memory&#45;managed C struct</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p><code>ManagedStruct</code> extends <code>UnManagedStruct</code> to provide a class to hold C <code>struct</code> values that Parrot is responsible for disposing of.</p>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes an empty struct.
+<dt><a name="void_init_pmc(PMC_*value)"
+><b><code>void init_pmc(PMC *value)</b></code></a></dt>
+Initializes the struct with <code>*value</code>.
+<dt><a name="void_destroy()"
+><b><code>void destroy()</b></code></a></dt>
+Destroys the struct,
+freeing the allocated memory.If the &#34;custom_free_func&#34; attribute is set,
+it is called to free the pointer.
+Otherwise,
+mem_gc_free() is used.
+<dt><a name="void_set_integer_native(INTVAL_value)"
+><b><code>void set_integer_native(INTVAL value)</b></code></a></dt>
+(Re)allocates <code>value</code> bytes for the struct.
+<dt><a name="PMC_*_clone()"
+><b><code>PMC * clone()</b></code></a></dt>
+Creates a clone of this PMC; clones any unmanaged memory it holds too.If the &#34;custom_clone_func&#34; attribute is set,
+it is called to clone the PMC.
+Otherwise,
+a basic (shallow copy) clone is performed,
+as there&#39;s no general way of knowing how to make a deep copy of the pointer contents.</dl>
+
+<h1><a name="HISTORY"
+>HISTORY</a></h1>
+
+<p>Initial revision by sean 2002/08/04.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

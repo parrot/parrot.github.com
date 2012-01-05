@@ -1,0 +1,345 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot Subroutines</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Parrot Subroutines
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>Subs &#45; Parrot Subroutines</p>
+
+<h1><a name="VERSION"
+>VERSION</a></h1>
+
+<p>$Revision$</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT</a></h1>
+
+<p>This document describes how to define,
+call,
+and return from Parrot subroutine objects and other invokables.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Parrot comes with different subroutine and related classes which implement CPS (Continuation Passing Style) and PCC (Parrot Calling Conventions) <em><a href="../pdds/pdd03_calling_conventions.pod.html">docs/pdds/pdd03_calling_conventions.pod</a></em>.</p>
+
+<h2><a name="Class_Tree"
+>Class Tree</a></h2>
+
+<p>These are all of the built&#45;in classes that are directly callable,
+or &#34;invokable&#34;:</p>
+
+<pre>  Sub
+    Closure
+    Coroutine
+    Eval
+  Continuation
+    ExceptionHandler</pre>
+
+<p>By &#34;invokable&#34; we mean that they can be supplied as the first argument to the <code>invoke</code>, <code>invokecc</code>, or <code>tailcall</code> instructions. Generally speaking, invokable objects are divided into two subtypes: <code>Sub</code> and classes that are built on it create a new context when invoked, and <code>Continuation</code> classes return control to an existing context that was captured when the <code>Continuation</code> was created.</p>
+
+<p>There are (of course) two classes that straddle this distinction:</p>
+
+<ol>
+<li>Invoking a <code>Closure</code> object creates a new context for the sub it refers to directly, but it also captures an &#34;outer&#34; context that provides bindings for the immediately&#45;enclosing lexical scope (and, if that context is itself is for a <code>Closure</code>, the subsequent scopes working outwards).</li>
+
+<p>[add a <code>newclosure</code> example? &#45;&#45; rgr, 6&#45;Apr&#45;08.]</p>
+
+<li>A <code>Coroutine</code> acts like a normal sub when called initially, and can also return normally, but acts like a continuation when exited via the <code>yield</code> instruction and re&#45;entered by re&#45;invoking.</li>
+
+<p>[need a reference to a <code>coroutine</code> example. &#45;&#45; rgr, 6&#45;Apr&#45;08.]</p>
+</ol>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<h2><a name="Creating_subs"
+>Creating subs</a></h2>
+
+<p>Subs are created by IMCC (the PIR compiler) via the <b>.sub</b> directive. Unless the <code>:anon</code> pragma is included, they are stored in the constant table associated with the bytecode and can be fetched with the <b>get_hll_global</b> and <b>get_root_global</b> opcodes. Within the PIR source, they can also be put in registers with a <code>.const &#39;Sub&#39;</code> declaration:</p>
+<pre>    .const 'Sub' rsub = 'random_sub'
+</pre>
+<p>This uses <code>find_sub_not_null</code> under the hood to look up the sub named &#34;random_sub&#34;.</p>
+
+<p>Here&#39;s an example of fetching a sub from another namespace:</p>
+<pre>    .sub main :main
+	get_hll_global $P0, ['Other'; 'Namespace'], "the_sub"
+	$P0()
+	print "back\n"
+    .end
+
+    .namespace ['Other'; 'Namespace']
+
+    .sub the_sub
+	print "in sub\n"
+    .end
+</pre>
+<p>Note that <code>the_sub</code> could be defined in a different bytecode or PIR source file from <code>main</code>.</p>
+
+<h2><a name="Program_entry_point"
+>Program entry point</a></h2>
+
+<p>One subroutine in the first executed source or bytecode file may be flagged as the &#34;main&#34; subroutine, where execution starts.</p>
+<pre>  .sub the_main_event :main
+     # ...
+  .end
+</pre>
+<p>In the absence of a <b>:main</b> entry Parrot starts execution at the first statement. Any <code>:main</code> directives in a subsequent PIR or bytecode file that are loaded under program control are ignored.</p>
+
+<p>Note that if the first executed source or bytecode file contains more than one sub flagged as <code>:main</code>, Parrot currently picks the <i>last</i> such sub to start execution. This is arguably a bug, so users should not depend upon it.</p>
+
+<h2><a name="Load&#45;time_initialization"
+>Load&#45;time initialization</a></h2>
+
+<p>If a subroutine is marked as <b>:load</b> this subroutine is run, before the <b>load_bytecode</b> opcode returns.</p>
+
+<p>e.g.</p>
+<pre>  .sub main :main
+     print "in main\n"
+     load_bytecode "library_code.pir"
+     print "back to main\n"
+  .end
+
+  # library_code.pir
+
+  .sub _my_lib_init :load
+     print "initializing library\n"
+  .end
+</pre>
+<p>If a subroutine is marked as <b>:init</b> this subroutine is run before the <b>:main</b> or the first subroutine in the source file runs. Unlike <b>:main</b> subs, <b>:init</b> subs are also run when compiling from memory. <b>:load</b> subs are run only in any source or bytecode files loaded subsequently.</p>
+
+<p>These markers are called &#34;pragmas&#34;, and are defined fully in <a href='TODO#pdds%2Fpdd19_pir.pod'>&#34;pdds/pdd19_pir.pod&#34; in docs</a>. The following table summarizes the behavior of the five pragmas that cause Parrot to run a sub implicitly:</p>
+
+<pre>                &#45;&#45;&#45;&#45;&#45;&#45; Executed when &#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;
+                compiling to    &#45;&#45; loading &#45;&#45;
+  Sub Pragma    disk  memory    first   after
+  ==========    ====  ======    =====   =====
+   :immediate   yes   yes       no      no        
+   :postcomp    yes   no        no      no        
+   :load        no    no        no      yes       
+   :init        no    yes       yes     no        
+   :main        no    no        yes     no        </pre>
+
+<p>The same load&#45;time behavior applies regardless of whether the loaded file is PIR source or bytecode. Note that it is possible to mark a sub with both <b>:load</b> and <b>:init</b>.</p>
+
+<h2><a name="Defining_subs"
+>Defining subs</a></h2>
+
+<p>A sub is defined by a block of code starting with <code>.sub</code> and ending with <code>.end</code>. Parameters which the sub can be called with are defined by <code>.param</code>:</p>
+<pre>    .sub do_something
+      .param pmc a_pmc
+      .param string some_string
+      #do something
+    .end
+</pre>
+<p>The set of <code>.param</code> instructions are converted to a single <code>get_params</code> instruction. The compiler will decide which registers to use.</p>
+<pre>    get_params '(0,0)', $P0, $S0
+</pre>
+<p>A parameter can be declared optional with the <code>:optional</code> command. If an optional parameter is followed by parameter declared <code>:opt_flag</code>, this parameter will store an integer indicating whether the optional parameter was used.</p>
+<pre>    .param string maybe :optional
+    .param int has_maybe :opt_flag
+    unless has_maybe goto no_maybe
+    #do something with maybe
+    no_maybe:
+    #don't use maybe
+</pre>
+<p>A sub can accept an arbitrary number of parameters by declaring a <code>:slurpy</code> parameter. This creates a pmc containing an array of all parameters passed to the sub, these can be accessed like so:</p>
+<pre>    .param pmc all_params :slurpy
+
+    $P0 = all_params[0]
+    $S0 = all_params[1]
+</pre>
+<p>A slurpy parameter can also be defined after a set of positional parameters, in which case it will only hold any additional parameters passed.</p>
+
+<p>A parameter may also be declared <code>:named</code>, giving them a string which can be used when calling the sub to explicitly assign a parameter, ignoring position.</p>
+<pre>    .param int counter :named("counter")
+</pre>
+<p>This can be combined with <code>:optional</code> as well as <code>:opt_flag</code>, so that the parameter need only be passed when necessary.</p>
+
+<p>If a parameter is declared with <code>:slurpy</code> and <code>:named</code> (with no string), it creates an associative array containing all named parameters which can be accessed like so:</p>
+<pre>    .param pmc all_params :slurpy :named
+    $S0 = all_params['name']
+    $I0 = all_params['counter']
+</pre>
+<h2><a name="Calling_the_sub"
+>Calling the sub</a></h2>
+
+<p>PIR sub invocation syntax is similar to HLL syntax:</p>
+<pre>    $P0 = do_something($P1, $S3)
+</pre>
+<p>This is syntactic sugar for the following four bytecode instructions:</p>
+<pre>    # Establish arguments.
+    set_args '(0,0)', $P1, $S3
+    # Find the sub.
+    $P8 = find_sub_not_null "do_something"
+    # Establish return values.
+    get_results '(0)', $P0
+    # Call the sub in $P8, implicitly creating a return continuation.
+    invokecc $P8
+</pre>
+<p>The sub name could be replaced with a PMC register, in which case the <code>find_sub_not_null</code> instruction would not be needed. If the return values from the sub were ignored (by dropping the <code>$P0 =</code> part), the <code>get_results</code> instruction would be omitted. However, <code>set_args</code> is emitted even in the case of a call without arguments.</p>
+
+<p>The first operands to the <code>set_args</code> and <code>get_results</code> instructions are actually placeholders for an integer array that describes the register types. For example, the &#39;(0,0)&#39; for <code>set_args</code> is replaced internally with <code>[2, 1]</code>, which means &#34;two arguments, of type PMC and string&#34;. Note that return values get the same register type coercion as sub parameters. This is all described in much more detail in <a href='TODO#pdds%2Fpdd03_calling_conventions.pod'>&#34;pdds/pdd03_calling_conventions.pod&#34; in docs</a>.</p>
+
+<p>Named parameters can be explicity called in one of two ways:</p>
+<pre>    $P5 = do_something($I6 :named("counter"), $S4 :named("name"))
+    #or equivalently
+    $P5 = do_something("counter" => $I6, "name" => $S4)
+</pre>
+<p>To receive multiple values, put the register names in parentheses:</p>
+<pre>    ($P10, $P11) = do_something($P1, $S3)
+
+    ($P10, $P11) = do_something($P1, $S3)
+</pre>
+<p>To test whether a value was returned, declare it <code>:optional</code>, and follow it with an integer register declared <code>:opt_val</code>:</p>
+<pre>    ($P10 :optional, $I10 :opt_val) = do_something($P1, $S3)
+</pre>
+<p>A <code>:slurpy</code> value can be declared, as in parameter declarations, to catch an arbitrary number of return values:</p>
+<pre>    ($P12, $P13 :slurpy) = do_something($P1, $S3)
+</pre>
+<p>Note that the parameters stored in a <code>:slurpy</code>, or <code>:slurpy</code> <code>:named</code> array can be used as parameters for another call using the <code>:flat</code> declaration:</p>
+<pre>    ($P14, $P15) = do_something($P13 :flat)
+</pre>
+<p>Subs may also return <code>:named</code> values, which can be explicitly accessed similar to parameter declarations:</p>
+<pre>    ($I11 :named("counter"), $S4 :named("name")) = do_something($P1, $S3)
+</pre>
+<p>All of these affect only the signature provided via <code>get_results</code>.</p>
+
+<p>[not sure what this is for, leaving it alone for now &#45;aninhumer]</p>
+<pre>    # Call the sub in $P8, with continuation (created earlier) in $P9.
+    invoke $P8, $P9
+</pre>
+<h2><a name="Returning_from_a_sub"
+>Returning from a sub</a></h2>
+
+<p>PIR supports a convenient syntax for returning any number of values from a sub or closure:</p>
+<pre>    .sub main 
+      .return ($P0, $I1, $S3)
+    .end
+</pre>
+<p>Integer, float, and string constants are also accepted. This is translated to:</p>
+<pre>    set_returns '(0,0,0)', $P0, $I1, $S3
+    returncc	# return by calling the current continuation
+</pre>
+<p>As for <code>set_args</code>, the &#39;(0,0,0)&#39; is actually a placeholder for an integer array that describes the register types; it is replaced internally with <code>[2, 0, 1]</code>, which means &#34;three arguments, of type PMC, integer, and string&#34;.</p>
+
+<p>All of the declarations allowed for calls to a sub can also be used with return values. (<code>:named</code>, <code>:flat</code>)</p>
+
+<p>Another way to return from a sub is to use tail&#45;calling, which calls a new sub with the current continuation, so that the new sub returns directly to the caller of the old sub (i.e. without first returning to the old sub). This passes the three values to <code>another_sub</code> via tail&#45;calling:</p>
+<pre>    .sub main
+      .tailcall another_sub($P0, $I1, $S3)
+    .end
+</pre>
+<p>This is translated into a <code>set_args</code> instruction for the call, but with <code>tailcall</code> instead of <code>invokecc</code>:</p>
+<pre>    set_args '(0,0,0)', $P0, $I1, $S3
+    $P8 = find_sub_not_null "another_sub"
+    tailcall $P8
+</pre>
+<p>As for calling, the sub name could be replaced with a PMC register, in which case the <code>find_sub_not_null</code> instruction would not be needed.</p>
+
+<p>If needed, the current continuation can be extracted and called explicitly as follows:</p>
+<pre>    ## This is what defines .INTERPINFO_CURRENT_CONT.
+    .include 'interpinfo.pasm'
+    ## Store our return continuation as exit_cont.
+    .local pmc exit_cont
+    exit_cont = interpinfo .INTERPINFO_CURRENT_CONT
+    ## Invoke it explicitly:
+    invokecc exit_cont
+    ## ... or equivalently:
+    tailcall exit_cont
+</pre>
+<p>To return values, use <code>set_args</code> as before.</p>
+
+<h2><a name="All_together_now"
+>All together now</a></h2>
+
+<p>The following complete example illustrates the typical call/return pattern:</p>
+<pre>    .sub main :main
+	print "in main\n"
+        the_sub()
+	print "back to main\n"
+    .end
+
+    .sub the_sub
+	print "in sub\n"
+    .end
+</pre>
+<p>Notice that we are not passing or returning values here.</p>
+
+<p>[example of passing values. this could get pretty elaborate; look for other examples first. &#45;&#45; rgr, 6&#45;Apr&#45;08.]</p>
+
+<p>If a short subroutine is called several times, for instance inside a loop, the creation of the return continuation can be done outside the loop:</p>
+<pre>    .sub main :main
+	    ## Initialize the sub and the return cont.
+	    .local pmc cont
+	    cont = new 'Continuation'
+	    set_addr cont, ret_label
+	    .const .Sub rsub = 'random_sub'
+	    ## Loop initialization.
+	    .local int loop_max, i
+	    loop_max = 1000000
+	    i = 0
+
+	    ## Main loop.
+    again:
+	    set_args '(0)', i
+	    invoke rsub, cont
+    ret_label:
+	    ## This is where "cont" returns.
+	    inc i
+	    if i < loop_max goto again
+    .end
+
+    .sub random_sub
+	    .param int foo
+	    ## do_something
+    .end
+</pre>
+<p>If the sub returns values, the <code>get_results</code> must be <b>after</b> <code>ret_label</code> in order to receive them.</p>
+
+<p>Since this is much more obscure than the PIR calling syntax, it should only be done if there is a measurable performance advantage. Even in this trivial example, calling &#34;rsub(i)&#34; is only about a third slower on x86.</p>
+
+<h1><a name="FILES"
+>FILES</a></h1>
+
+<p><em><a href="../../src/pmc/sub.pmc.html">src/pmc/sub.pmc</a></em>, <em>src/pmc/closure.pmc</em>, <em><a href="../../src/pmc/continuation.pmc.html">src/pmc/continuation.pmc</a></em>, <em><a href="../../src/pmc/coroutine.pmc.html">src/pmc/coroutine.pmc</a></em>, <em><a href="../../src/sub.c.html">src/sub.c</a></em>, <em><a href="../../t/pmc/sub.t.html">t/pmc/sub.t</a></em></p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em><a href="../pdds/pdd03_calling_conventions.pod.html">docs/pdds/pdd03_calling_conventions.pod</a></em> <em><a href="../pdds/pdd19_pir.pod.html">docs/pdds/pdd19_pir.pod</a></em></p>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Leopold Toetsch &#60;lt@toetsch.at&#62;</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

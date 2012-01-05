@@ -1,0 +1,316 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Writing PIR</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; <a href="../../../../html/developer.html">Developer Documentation</a> &raquo; Writing PIR
+                </div>
+
+<h1><a name="Writing_PIR"
+>Writing PIR</a></h1>
+
+<p>PIR (Parrot Intermediate Representation) is a way to program the parrot virtual machine that is easier to use than PASM (Parrot Assembler).
+PASM notation is like any other assembler&#45;like format and can be used directly,
+but it is more verbose and gives too much power to the user.
+PIR abstracts common operations and conventions into a syntax that more closely resembles a high&#45;level language.
+PIR allows the programmer to write code that more naturally expresses their intent without worrying about setting up the exact details that PASM requires to function properly.</p>
+
+<p>This article will show the basics on programming in PIR.
+More advanced topics will appear in later articles.</p>
+
+<h2><a name="Getting_Parrot"
+>Getting Parrot</a></h2>
+
+<p>In order to test the PIR and PASM code in this article,
+a parrot virtual machine is needed (henceforth just &#34;parrot&#34;).
+Parrot is available from <a href='http://parrot.org'><a href="http://parrot.org">http://parrot.org</a></a>.
+Just download the latest release,
+or checkout the current development version from the SVN tree.
+The programs in this article were tested with Parrot 0.8.1.</p>
+
+<p>Parrot is very easy to compile on unix&#45;like and Microsoft Windows operating systems: just run <code>perl Configure.pl &#38;&#38; make</code> in the root directory of the parrot source and,
+if everything works correctly,
+a <code>parrot</code> executable should appear.
+At the moment of writing,
+the <code>make install</code> target does not work properly,
+so in this and other articles it is assumed that the parrot executable is invoked from the parrot root directory.</p>
+
+<p>If you do not want to compile your own Parrot you can download a pre&#45;compiled binary from <a href="http://www.parrot.org/source.html.">http://www.parrot.org/source.html.</a></p>
+
+<h2><a name="Parrot_Virtual_Machine_overview"
+>Parrot Virtual Machine overview</a></h2>
+
+<p>Before we get started with the examples,
+here&#39;s a quick overview of parrot&#39;s architecture.</p>
+
+<p>Parrot is a register&#45;based virtual machine.
+It provides 4 types of registers.
+The register types are:</p>
+
+<dl>
+<dt><a name="I_&#45;_integer"
+>I &#45; integer</a></dt>
+
+<dt><a name="N_&#45;_floating_point"
+>N &#45; floating point</a></dt>
+
+<dt><a name="S_&#45;_string"
+>S &#45; string</a></dt>
+
+<dt><a name="P_&#45;_polymorphic_container_(PMC)"
+>P &#45; polymorphic container (PMC)</a></dt>
+</dl>
+
+<p>In order to designate a register in PASM,
+use the character indicating the type (<code>I</code>,
+<code>N</code>,
+<code>S</code> or <code>P</code>) and the register number.
+For instance,
+in order to use register 10 of type integer,
+you&#39;d write <code>I10</code>.
+In this series of articles,
+we will mainly focus on programming PIR.</p>
+
+<p>In PIR,
+you would type the <code>$</code> character in front of the register,
+to indicate a <i>virtual</i> register.
+For instance,
+the integer registers are <code>$I0</code>,
+<code>$I1</code> and so on.
+The PMC registers hold arbitrary data objects and are parrot&#39;s mechanism for implementing more complex behavior than the ones that can be expressed using the other 3 register types alone.</p>
+
+<p>A virtual register is mapped to an actual register by the register allocator.
+You can use as many registers as you want,
+and the register allocator will allocate them as needed.</p>
+
+<p>PMCs will be covered in more detail in a future article.
+Examples in this article will focus on the first 3 register types.</p>
+
+<h2><a name="Simple_Operators"
+>Simple Operators</a></h2>
+
+<p>Let me start with a simple and typical example:</p>
+<pre>  .sub main :main
+       print "hello world\n"
+  .end
+</pre>
+<p>To run it,
+save the code in a <code>hello.pir</code> file and pass it to the parrot virtual machine:</p>
+
+<pre>   ./parrot hello.pir</pre>
+
+<p>Note that I am using a relative path to parrot given that I didn&#39;t install it into the system.</p>
+
+<p>The keywords starting with a dot (<code>.sub</code> and <code>.end</code>) are PIR directives. They are used together to define subroutines. After the <code>.sub</code> keyword I use the name of the subroutine. The keyword that starts with a colon (<code>:main</code>) is a pragma that tells parrot that this is the main body of the program and that it should start by executing this subroutine. By the way, I could use <code>.sub foo :main</code> and Parrot will use the <code>foo</code> subroutine as the main body of the program. The actual name of the subroutine does not matter as long as it has the <code>:main</code> pragma. If you don&#39;t specify the &#60;:main&#62; pragma on any subroutine, then parrot will start executing the first subroutine in the source file. The full set of pragmas are defined in <a href='TODO#pdds%2Fpdd19_pir.pod'>&#34;pdds/pdd19_pir.pod&#34; in docs</a>.</p>
+
+<p>Before going into more details about subroutines and calling conventions, let&#39;s compare some PIR syntax to the equivalent PASM.</p>
+
+<p>If I want to add two integer registers using PASM I would use the Parrot <code>set</code> opcode to put values into registers, and the <code>add</code> opcode to add them, like this:</p>
+<pre>   set $I1, 5
+   set $I2, 3
+   add $I0, $I1, $I2   # $I0 yields 5+3
+</pre>
+<p>PIR includes infix operators for these common opcodes. I could write this same code as</p>
+<pre>   $I1 = 5
+   $I2 = 3
+   $I0 = $I1 + $I2
+</pre>
+<p>There are the four arithmetic operators as you should be expecting, as well as the six different comparison operators, which return a boolean value:</p>
+<pre>   $I1 = 5
+   $I2 = 3
+   $I0 = $I1 <= $I2   # $I0 yields 0 (false)
+</pre>
+<p>I can also use the short accumulation&#45;like operators, like <code>+=</code>.</p>
+
+<p>Another PIR perk is that local variable names may be declared and used instead of register names. For that I just need to declare the variable using the <code>.local</code> keyword with any of the four data types available on PIR: <code>int</code>, <code>string</code>, <code>num</code> and <code>pmc</code>:</p>
+<pre>   .local int size
+   size = 5
+</pre>
+<p>Note that all registers, both numbered and named, are consolidated by the Parrot register allocator, assigning these &#34;virtual registers&#34; to actual registers as needed. The register allocator even coalesces two virtual names onto the same physical register when it can prove that they have non&#45;overlapping lifetimes, so there is no need to be stingy with register names. To see the actual registers used, use <code>pbc_disassemble</code> on the <code>*.pbc</code> output. You can generate a Parrot Byte Code (PBC) file as follows:</p>
+
+<pre>   ./parrot &#45;o foo.pbc &#45;&#45;output&#45;pbc foo.pir</pre>
+
+<p>Then, use <code>pbc_disassemble</code> in order to disassemble it:</p>
+
+<pre>   ./pbc_disassemble foo.pbc</pre>
+
+<h2><a name="Branching"
+>Branching</a></h2>
+
+<p>Another simplification of PASM are branches. Basically, when I want to test a condition and jump to another place in the code, I would write the following PASM code:</p>
+<pre>   le I1, I2, LESS_EQ
+   # ...
+ LESS_EQ:
+</pre>
+<p>Meaning, if <code>$I1</code> is less or equal than <code>$I2</code>, jump to label <code>LESS_EQ</code>. In PIR I would write it in a more legible way:</p>
+<pre>   if $I1 <= $I2 goto LESS_EQ
+   # ...
+ LESS_EQ:
+</pre>
+<p>PIR includes the <code>unless</code> keyword as well.</p>
+
+<h2><a name="Calling_Functions"
+>Calling Functions</a></h2>
+
+<p>Subroutines can easily be created using the <code>.sub</code> keyword shown before. If you do not need parameters, it is just as simple as I show in the following code:</p>
+<pre>  .sub main :main
+     hello()
+  .end
+
+  .sub hello
+    print "Hello World\n"
+  .end
+</pre>
+<p>Now, I want to make my <code>hello</code> subroutine a little more useful, such that I can greet other people. For that I will use the <code>.param</code> keyword to define the parameters <code>hello</code> can handle:</p>
+<pre>  .sub main :main
+     hello("leo")
+     hello("chip")
+  .end
+
+  .sub hello
+     .param string person
+     print "Hello "
+     print person
+     print "\n"
+  .end
+</pre>
+<p>If I need more parameters I just need to add more <code>.param</code> lines.</p>
+
+<p>To return values from PIR subroutines I use the <code>.return</code> keyword, followed by one or more arguments, just like this:</p>
+<pre>  .sub _
+    .return (10, 20, 30)
+  .end
+</pre>
+<p>The calling subroutine can accept these values. If you want to retrieve only one value (or only the first value, in case multiple values are returned), write this:</p>
+<pre>  $I0 = compute_it($I8, $I9)
+</pre>
+<p>To accept multiple values from such a function, use a parenthesized results list:</p>
+<pre>  ($I1, $I2, $I3) = compute_it($I8, $I9)
+</pre>
+<h2><a name="Factorial_Example"
+>Factorial Example</a></h2>
+
+<p>Now, for a little more complicated example, let me show how I would code Factorial subroutine:</p>
+<pre>  .sub main :main
+     $I1 = factorial(5)
+     print $I1
+     print "\n"
+  .end
+
+  .sub factorial
+     .param int i
+     if i > 1 goto recur
+     .return (1)
+  recur:
+     $I1 = i - 1
+     $I2 = factorial($I1)
+     $I2 *= i
+     .return ($I2)
+  .end
+</pre>
+<p>This example also shows that PIR subroutines may be recursive just as in a high&#45;level language.</p>
+
+<h2><a name="Named_Arguments"
+>Named Arguments</a></h2>
+
+<p>As some other languages as Python and Perl support named arguments, PIR supports them as well.</p>
+
+<p>As before, I need to use <code>.param</code> for each named argument, but you need to specify a flag indicating the parameter is named:</p>
+<pre>  .sub func
+    .param int a :named("foo")
+  .end
+</pre>
+<p>The subroutine will receive an integer named &#34;foo&#34;, and inside of the subroutine that integer will be known as &#34;a&#34;.</p>
+
+<p>When calling the function, I need to pass the names of the arguments. For that there are two syntaxes:</p>
+<pre>  func( 10 :named("foo") )    # or
+  func( "foo" => 10 )
+</pre>
+<p>Note that with named arguments, you may rearrange the order of your parameters at will.</p>
+<pre>  .sub foo
+    .param string a :named('name')
+    .param int    b :named('age')
+    .param string c :named('gender')
+    # ...
+  .end
+</pre>
+<p>This subroutine may be called in any of the following ways:</p>
+<pre>  foo( "Fred", 35, "m" )
+  foo( "gender" => "m", "name" => "Fred", "age" => 35 )
+  foo( "age" => 35, "gender" => "m", "name" => "Fred" )
+  foo( "m" :named("gender"), 35 :named("age"), "name" => "Fred" )
+</pre>
+<p>and any other permutation you can think of as long as you use the named argument syntax. Note that any positional parameters must be passed before the named parameters. So, the following is allowed:</p>
+<pre>  .sub main
+    .param int a
+    .param int b :named("age")
+    # ...
+  .end
+</pre>
+<p>Whereas the following is not:</p>
+<pre>  .sub main
+    .param int a :named("name")
+    .param int b # cannot declare positional parameter after a named parameter
+    # ...
+  .end
+</pre>
+<p>It&#39;s also possible to use named syntax when returning values from subroutines. Into the <code>.return</code> command I&#39;ll use:</p>
+<pre>  .return ( "bar" => 20, "foo" => 10)
+</pre>
+<p>and when calling the function, I will do:</p>
+<pre>  ("foo" => $I0, "bar" => $I1) = func()
+</pre>
+<p>And <code>$I0</code> will yield 10, and <code>$I1</code> will yield 20, as expected.</p>
+
+<h2><a name="Concluding"
+>Concluding</a></h2>
+
+<p>To conclude this first article on PIR and to let you test what you learned, let me show you how to do input on PASM (hence, also in PIR). There is a <code>read</code> opcode to read from standard input. Just pass it a string register or variable where you wish the characters read to be placed and the number of characters you wish to read:</p>
+<pre>  .loadlib 'io_ops'
+  ...
+  read $S1, 100
+</pre>
+<p>This line will read 100 characters (or until the end of the line) and put the read string into <code>$S1</code>. In case you need a number, just assign the string to the correct register type:</p>
+<pre>  .loadlib 'io_ops'
+  read $S1, 100
+  ...
+  $I1 = $S1
+</pre>
+<p>With the PIR syntax shown in this article you should be able to start writing simple programs. Next article we will look into available Polymorphic Containers (PMCs), and how they can be used.</p>
+
+<h2><a name="Author"
+>Author</a></h2>
+
+<p>Alberto Sim&#195;&#181;es</p>
+
+<h2><a name="Thanks"
+>Thanks</a></h2>
+
+<ul>
+<li>Jonathan Scott Duff</li>
+</ul>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

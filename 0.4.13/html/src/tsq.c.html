@@ -1,0 +1,302 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Thread&#45;safe queues</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Thread&#45;safe queues</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/tsq.c &#45; Thread&#45;safe queues</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>*/</p>
+
+<p>#include &#34;parrot/parrot.h&#34; #include &#60;assert.h&#62;</p>
+
+<p>/* HEADER: include/parrot/tsq.h */</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: pop_entry</p>
+
+<p>Does a synchronized removal of the head entry off the queue and returns it.</p>
+
+<p>*/</p>
+
+<p>QUEUE_ENTRY * pop_entry(QUEUE *queue /*NN*/) { QUEUE_ENTRY *returnval; queue_lock(queue); returnval = nosync_pop_entry(queue); queue_unlock(queue); return returnval; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: peek_entry</p>
+
+<p>This does no locking,
+so the result might have changed by the time you get the entry,
+but a synchronized <code lang='und' xml:lang='und'>pop_entry()</code> will check again and return <code lang='und' xml:lang='und'>NULL</code> if the queue is empty.</p>
+
+<p>*/</p>
+
+<p>QUEUE_ENTRY * peek_entry(QUEUE *queue /*NN*/) { return queue&#45;&#62;head; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: nosync_pop_entry</p>
+
+<p>Grab an entry off the queue with no synchronization.
+Internal only,
+because it&#39;s darned evil and shouldn&#39;t be used outside the module.
+It&#39;s in here so we don&#39;t have to duplicate pop code.</p>
+
+<p>*/</p>
+
+<p>QUEUE_ENTRY * nosync_pop_entry(QUEUE *queue /*NN*/) { QUEUE_ENTRY *returnval; if (!queue&#45;&#62;head) { return NULL; } returnval = queue&#45;&#62;head; if (queue&#45;&#62;head == queue&#45;&#62;tail) { queue&#45;&#62;head = NULL; queue&#45;&#62;tail = NULL; } else { queue&#45;&#62;head = queue&#45;&#62;head&#45;&#62;next; } returnval&#45;&#62;next = NULL; return returnval; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: wait_for_entry</p>
+
+<p>Does a synchronized removal of the head entry off the queue,
+waiting if necessary until there is an entry,
+and then returns it.</p>
+
+<p>*/</p>
+
+<p>QUEUE_ENTRY * wait_for_entry(QUEUE *queue /*NN*/) { QUEUE_ENTRY *returnval;</p>
+
+<pre lang='und' xml:lang='und'>    queue_lock(queue);
+    while (queue&#45;&#62;head == NULL) {
+        queue_wait(queue);
+    }
+    returnval = nosync_pop_entry(queue);
+    queue_unlock(queue);
+    return returnval;</pre>
+
+<p>}</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: push_entry</p>
+
+<p>Does a synchronized insertion of <code lang='und' xml:lang='und'>entry</code> onto the tail of the queue.</p>
+
+<p>*/</p>
+
+<p>void push_entry(QUEUE *queue /*NN*/, QUEUE_ENTRY *entry) { queue_lock(queue); /* Is there something in the queue? */ if (queue&#45;&#62;tail) { queue&#45;&#62;tail&#45;&#62;next = entry; queue&#45;&#62;tail = entry; } else { queue&#45;&#62;head = entry; queue&#45;&#62;tail = entry; } queue_signal(queue); /* assumes only one waiter */ queue_unlock(queue); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: unshift_entry</p>
+
+<p>Does a synchronized insertion of <code lang='und' xml:lang='und'>entry</code> into the head of the queue.</p>
+
+<p>*/</p>
+
+<p>void unshift_entry(QUEUE *queue /*NN*/, QUEUE_ENTRY *entry) { QUEUE_ENTRY *cur;</p>
+
+<pre lang='und' xml:lang='und'>    queue_lock(queue);
+    cur = queue&#45;&#62;head;
+    if (!cur) {
+        /* empty just set head */
+        queue&#45;&#62;head = entry;
+        queue&#45;&#62;tail = entry;
+    }
+    else {
+        queue&#45;&#62;head = entry;
+        entry&#45;&#62;next = cur;
+    }
+    queue_signal(queue);
+    queue_unlock(queue);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: nosync_insert_entry</p>
+
+<p>Inserts a timed event according to <code lang='und' xml:lang='und'>abstime</code>. The caller has to hold the queue mutex.</p>
+
+<p>*/</p>
+
+<p>void nosync_insert_entry(QUEUE *queue /*NN*/, QUEUE_ENTRY *entry /*NN*/) { QUEUE_ENTRY *cur = queue&#45;&#62;head; QUEUE_ENTRY *prev; parrot_event *event; FLOATVAL abs_time;</p>
+
+<pre lang='und' xml:lang='und'>    assert(entry&#45;&#62;type == QUEUE_ENTRY_TYPE_TIMED_EVENT);
+    /*
+     * empty queue &#45; just insert
+     */
+    if (!cur) {
+        queue&#45;&#62;head = entry;
+        queue&#45;&#62;tail = entry;
+        return;
+    }
+
+    prev     = NULL;
+    event    = (parrot_event *)entry&#45;&#62;data;
+    abs_time = event&#45;&#62;u.timer_event.abs_time;
+
+    while (cur &#38;&#38; cur&#45;&#62;type == QUEUE_ENTRY_TYPE_TIMED_EVENT) {
+        const parrot_event * const cur_event = (parrot_event *)cur&#45;&#62;data;
+        if (abs_time &#62; cur_event&#45;&#62;u.timer_event.abs_time) {
+            prev = cur;
+            cur = cur&#45;&#62;next;
+        }
+        else
+            break;
+    }
+    if (!prev)
+        queue&#45;&#62;head = entry;
+    else {
+        prev&#45;&#62;next = entry;
+        if (prev == queue&#45;&#62;tail)
+            queue&#45;&#62;tail = entry;
+    }
+    entry&#45;&#62;next = cur;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: insert_entry</p>
+
+<p>Does a synchronized insert of <code lang='und' xml:lang='und'>entry</code>.</p>
+
+<p>*/</p>
+
+<p>void insert_entry(QUEUE *queue /*NN*/, QUEUE_ENTRY *entry /*NN*/) { queue_lock(queue); nosync_insert_entry(queue, entry); queue_signal(queue); queue_unlock(queue); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: queue_lock</p>
+
+<p>Locks the queue&#39;s mutex.</p>
+
+<p>*/</p>
+
+<p>void queue_lock(QUEUE *queue /*NN*/) { LOCK(queue&#45;&#62;queue_mutex); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: queue_unlock</p>
+
+<p>Unlocks the queue&#39;s mutex.</p>
+
+<p>*/</p>
+
+<p>void queue_unlock(QUEUE *queue /*NN*/) { UNLOCK(queue&#45;&#62;queue_mutex); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: queue_broadcast</p>
+
+<p>This function wakes up <i>every</i> thread waiting on the queue.</p>
+
+<p>*/</p>
+
+<p>void queue_broadcast(QUEUE *queue /*NN*/) { COND_BROADCAST(queue&#45;&#62;queue_condition); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: queue_signal</p>
+
+<p>XXX Needs a description</p>
+
+<p>*/</p>
+
+<p>void queue_signal(QUEUE *queue /*NN*/) { COND_SIGNAL(queue&#45;&#62;queue_condition); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: queue_wait</p>
+
+<p>Instructs the queue to wait.</p>
+
+<p>*/</p>
+
+<p>void queue_wait(QUEUE *queue /*NN*/) { COND_WAIT(queue&#45;&#62;queue_condition, queue&#45;&#62;queue_mutex); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: queue_timedwait</p>
+
+<p>Instructs the queue to wait for <code lang='und' xml:lang='und'>abs_time</code> seconds (?).</p>
+
+<p>*/</p>
+
+<p>void queue_timedwait(QUEUE *queue /*NN*/, struct timespec *abs_time /*NN*/) { COND_TIMED_WAIT(queue&#45;&#62;queue_condition, queue&#45;&#62;queue_mutex, abs_time); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: queue_init</p>
+
+<p>Initializes the queue, setting <code lang='und' xml:lang='und'>prio</code> as the queue&#39;s priority.</p>
+
+<p>*/</p>
+
+<p>QUEUE* queue_init(UINTVAL prio) { QUEUE * const queue = mem_allocate_typed(QUEUE);</p>
+
+<pre lang='und' xml:lang='und'>    queue&#45;&#62;head = queue&#45;&#62;tail = NULL;
+    queue&#45;&#62;max_prio = prio;
+    COND_INIT(queue&#45;&#62;queue_condition);
+    MUTEX_INIT(queue&#45;&#62;queue_mutex);
+    return queue;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: queue_destroy</p>
+
+<p>Destroys the queue, raising an exception if it is not empty.</p>
+
+<p>*/</p>
+
+<p>void queue_destroy(QUEUE *queue /*NN*/) { if (peek_entry(queue)) internal_exception(1, &#34;Queue not empty on destroy&#34;); COND_DESTROY(queue&#45;&#62;queue_condition); MUTEX_DESTROY(queue&#45;&#62;queue_mutex); mem_sys_free(queue); }</p>
+
+<p>/*</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/tsq.h</em>.</p>
+
+<p>*/</p>
+
+<p>/* * Local variables: * c&#45;file&#45;style: &#34;parrot&#34; * End: * vim: expandtab shiftwidth=4: */</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,350 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>PMC Operations</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">PMC Operations</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/ops.html">Ops</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>pmc.ops &#45; PMC Operations</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Operations that deal with PMCs,
+including creation and destruction,
+manipulation,
+and introspection.</p>
+
+<h2><a name="Creation_and_Types"
+>Creation and Types <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>These operations are used to create PMCs and examine type information.</p>
+
+<dl>
+<dt><a name="new(out_PMC,_in_INT)"
+><b>new</b>(out PMC,
+in INT)</a></dt><p class="pad"></p>
+
+<dt><a name="new(out_PMC,_in_INT,_invar_PMC)"
+><b>new</b>(out PMC,
+in INT,
+invar PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="new(out_PMC,_in_STR)"
+><b>new</b>(out PMC,
+in STR)</a></dt><p class="pad"></p>
+
+<dt><a name="new(out_PMC,_in_STR,_invar_PMC)"
+><b>new</b>(out PMC,
+in STR,
+invar PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="new(out_PMC,_inconst_PMC)"
+><b>new</b>(out PMC,
+inconst PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="new(out_PMC,_inconst_PMC,_invar_PMC)"
+><b>new</b>(out PMC,
+inconst PMC,
+invar PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="new(out_PMC,_in_PMC)"
+><b>new</b>(out PMC,
+in PMC)</a></dt><p class="pad"></p>
+
+<dd>Create a new PMC of class $2; look in <em lang='und' xml:lang='und'>core_pmcs.h</em> for the base vtable types.
+The assembler allows you to specify PMCs by type name,
+by key for names in nested namespace,
+as well as by integer &#45; you should do this for compatibility,
+to avoid problems if the base types get reassigned.
+For example:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  new P0, .ResizableBooleanArray</pre>
+
+<dd>Optionally a PMC may be passed to the constructor. It&#39;s up to the class what to do with the intializer. See PDD02 for more.</dd><p class="pad"></p>
+
+<dt><a name="typeof(out_STR,_invar_PMC)"
+><b>typeof</b>(out STR, invar PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="typeof(out_INT,_invar_PMC)"
+><b>typeof</b>(out INT, invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Return the type of PMC in $2.</dd><p class="pad"></p>
+
+<dt><a name="typeof(out_INT,_invar_PMC,_in_KEY)"
+><b>typeof</b>(out INT, invar PMC, in KEY)</a></dt><p class="pad"></p>
+
+<dt><a name="typeof(out_INT,_invar_PMC,_in_INTKEY)"
+><b>typeof</b>(out INT, invar PMC, in INTKEY)</a></dt><p class="pad"></p>
+
+<dd>Return the type of the entry in aggregate PMC in $2 at key $3.</dd><p class="pad"></p>
+
+<dt><a name="typeof(out_STR,_in_INT)"
+><b>typeof</b>(out STR, in INT)</a></dt><p class="pad"></p>
+
+<dd>Return the (native) Parrot type of datatype $2.</dd><p class="pad"></p>
+
+<dt><a name="find_type(out_INT,_in_STR)"
+><b>find_type</b>(out INT, in STR)</a></dt><p class="pad"></p>
+
+<dt><a name="find_type(out_INT,_in_PMC)"
+><b>find_type</b>(out INT, in PMC)</a></dt><p class="pad"></p>
+
+<dd>Find the PMC type or Parrot datatype by name.</dd><p class="pad"></p>
+
+<dt><a name="valid_type(out_INT,_in_INT)"
+><b>valid_type</b>(out INT, in INT)</a></dt><p class="pad"></p>
+
+<dd>Check if the PMC type or Parrot datatype $2 is valid.</dd><p class="pad"></p>
+
+<dt><a name="get_repr(out_STR,_invar_PMC)"
+><b>get_repr</b>(out STR, invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Set $1 to a string representation of $2</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Basic_Operations"
+>Basic Operations <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>A few simple and common PMC operations.</p>
+
+<dl>
+<dt><a name="find_method(out_PMC,_invar_PMC,_in_STR)"
+><b>find_method</b>(out PMC, invar PMC, in STR)</a></dt><p class="pad"></p>
+
+<dd>Looks up method $3 in $2&#39;s vtable, placing the corresponding method PMC in $1.</dd><p class="pad"></p>
+
+<dt><a name="defined(out_INT,_invar_PMC)"
+><b>defined</b>(out INT, invar PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="defined(out_INT,_invar_PMC,_in_INTKEY)"
+><b>defined</b>(out INT, invar PMC, in INTKEY)</a></dt><p class="pad"></p>
+
+<dt><a name="defined(out_INT,_invar_PMC,_in_KEY)"
+><b>defined</b>(out INT, invar PMC, in KEY)</a></dt><p class="pad"></p>
+
+<dd>Test PMC for definedness.</dd><p class="pad"></p>
+
+<dt><a name="exists(out_INT,_invar_PMC,_in_INTKEY)"
+><b>exists</b>(out INT, invar PMC, in INTKEY)</a></dt><p class="pad"></p>
+
+<dt><a name="exists(out_INT,_invar_PMC,_in_KEY)"
+><b>exists</b>(out INT, invar PMC, in KEY)</a></dt><p class="pad"></p>
+
+<dd>Tests whether KEY or INTKEY exists in the aggregate PMC. Places the answer in INT.</dd><p class="pad"></p>
+
+<dt><a name="delete(invar_PMC,_in_KEY)"
+><b>delete</b>(invar PMC, in KEY)</a></dt><p class="pad"></p>
+
+<dt><a name="delete(invar_PMC,_in_INTKEY)"
+><b>delete</b>(invar PMC, in INTKEY)</a></dt><p class="pad"></p>
+
+<dd>Delete the specified entry $2 from aggregate $1.</dd><p class="pad"></p>
+
+<dt><a name="elements(out_INT,_invar_PMC)"
+><b>elements</b>(out INT, invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Returns the number of items in aggregate $2</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Fast_access_ops"
+>Fast access ops <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The fast access ops are shortcuts to common operations implemented invar PMCs.</p>
+
+<dl>
+<dt><a name="push(invar_PMC,_in_INT)"
+><b>push</b>(invar PMC, in INT)</a></dt><p class="pad"></p>
+
+<dt><a name="push(invar_PMC,_in_NUM)"
+><b>push</b>(invar PMC, in NUM)</a></dt><p class="pad"></p>
+
+<dt><a name="push(invar_PMC,_in_STR)"
+><b>push</b>(invar PMC, in STR)</a></dt><p class="pad"></p>
+
+<dt><a name="push(invar_PMC,_invar_PMC)"
+><b>push</b>(invar PMC, invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Push $2 onto the end of the aggregate PMC $1, if that operation is defined.</dd><p class="pad"></p>
+
+<dt><a name="pop(out_INT,_invar_PMC)"
+><b>pop</b>(out INT, invar PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="pop(out_NUM,_invar_PMC)"
+><b>pop</b>(out NUM, invar PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="pop(out_STR,_invar_PMC)"
+><b>pop</b>(out STR, invar PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="pop(out_PMC,_invar_PMC)"
+><b>pop</b>(out PMC, invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Pop off last entry in the aggregate $2, placing the result in $1.</dd><p class="pad"></p>
+
+<dt><a name="unshift(invar_PMC,_in_INT)"
+><b>unshift</b>(invar PMC, in INT)</a></dt><p class="pad"></p>
+
+<dt><a name="unshift(invar_PMC,_in_NUM)"
+><b>unshift</b>(invar PMC, in NUM)</a></dt><p class="pad"></p>
+
+<dt><a name="unshift(invar_PMC,_in_STR)"
+><b>unshift</b>(invar PMC, in STR)</a></dt><p class="pad"></p>
+
+<dt><a name="unshift(invar_PMC,_invar_PMC)"
+><b>unshift</b>(invar PMC, invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Unshift $2 onto the front of the aggregate PMC $1.</dd><p class="pad"></p>
+
+<dt><a name="shift(out_INT,_invar_PMC)"
+><b>shift</b>(out INT, invar PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="shift(out_NUM,_invar_PMC)"
+><b>shift</b>(out NUM, invar PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="shift(out_STR,_invar_PMC)"
+><b>shift</b>(out STR, invar PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="shift(out_PMC,_invar_PMC)"
+><b>shift</b>(out PMC, invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Shift off the first entry in the aggregate $2 and places it in $1.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Properties"
+>Properties <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Ops to deal with PMC properties.</p>
+
+<dl>
+<dt><a name="setprop(invar_PMC,_in_STR,_invar_PMC)"
+><b>setprop</b>(invar PMC, in STR, invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Set property $2 to value $3 for PMC $1.</dd><p class="pad"></p>
+
+<dt><a name="getprop(out_PMC,_in_STR,_invar_PMC)"
+><b>getprop</b>(out PMC, in STR, invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Get property $2 of PMC $3 and put it in $1.</dd><p class="pad"></p>
+
+<dt><a name="delprop(invar_PMC,_in_STR)"
+><b>delprop</b>(invar PMC, in STR)</a></dt><p class="pad"></p>
+
+<dd>Delete property $2 from PMC $1.</dd><p class="pad"></p>
+
+<dt><a name="prophash(out_PMC,_invar_PMC)"
+><b>prophash</b>(out PMC, invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Get a hash for the properties invar PMC $2 and put it in $1. If the property hash doesn&#39;t exist, the <code lang='und' xml:lang='und'>Null</code> PMC is returned.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Freeze,_thaw_and_friends"
+>Freeze, thaw and friends <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Ops to PMC freeze, thaw.</p>
+
+<dl>
+<dt><a name="freeze(out_STR,_invar_PMC)"
+><b>freeze</b>(out STR, invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Set $1 to the frozen image of $2.</dd><p class="pad"></p>
+
+<dt><a name="thaw(out_PMC,_in_STR)"
+><b>thaw</b>(out PMC, in STR)</a></dt><p class="pad"></p>
+
+<dd>Set $1 to a newly created PMC from the image $2.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Vtable_MMD_manipulation_functions"
+>Vtable MMD manipulation functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>These functions manipulate the vtable MMD function table.</p>
+
+<p>These functions allow bytecode to register subs or methods and query which sub or method would get called for a particular vtable operation. This way you&#39;re not required to drop to C to register a new method variant for addition or subtraction, or one of the other binary MMD operations.</p>
+
+<dl>
+<dt><a name="mmdvtregister(in_INT,_in_INT,_in_INT,_invar_PMC)"
+><b>mmdvtregister</b>(in INT, in INT, in INT, invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Register method $4 as the MMD method for vtable entry $1 for classes $2 and $3.</dd><p class="pad"></p>
+
+<dt><a name="mmdvtfind(out_PMC,_in_INT,_in_INT,_in_INT)"
+><b>mmdvtfind</b>(out PMC, in INT, in INT, in INT)</a></dt><p class="pad"></p>
+
+<dd>Find the sub that would be called for vtable entry $2 for types $3 and $4.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Misc_PMC_related_ops"
+>Misc PMC related ops <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="register(invar_PMC)"
+><b>register</b>(invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Add a reference of PMC $1 to the interpreter&#39;s root set of PMCs. This is needed for extensions to make sure that the PMC is properly marked during DOD, if that PMC is not known to Parrot&#39;s core elsewhere.</dd><p class="pad"></p>
+
+<dd>A PMC can be registered multiple times. If it&#39;s unregistered and the registration count reaches zero, it will be destroyed during the next DOD run.</dd><p class="pad"></p>
+
+<dt><a name="unregister(invar_PMC)"
+><b>unregister</b>(invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Remove one reference of $1.</dd><p class="pad"></p>
+
+<dt><a name="hash(out_INT,_invar_PMC)"
+><b>hash</b>(out INT, invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Set $1 to the hash value of $2.</dd><p class="pad"></p>
+
+<dt><a name="get_mro(out_PMC,_invar_PMC)"
+><b>get_mro</b>(out PMC, invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Set $1 to the mro array of the PMC $2. Please note that this is a direct reference so messing with it can do harm to the method lookup.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Copyright (C) 2001&#45;2007, The Perl Foundation.</p>
+
+<h1><a name="LICENSE"
+>LICENSE <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This program is free software. It is subject to the same license as the Parrot interpreter itself.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

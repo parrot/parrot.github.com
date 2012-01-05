@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Allocate and deallocate tracked resources</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Allocate and deallocate tracked resources</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/resources.c &#45; Allocate and deallocate tracked resources</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Parrot_Memory_Management_Code"
+>Parrot Memory Management Code <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_void_*_alloc_new_block(Interp_*interpreter,_size_t_size,_struct_Memory_Pool_*pool)"
+><b><code lang='und' xml:lang='und'>static void *alloc_new_block(Interp *interpreter, size_t size, struct Memory_Pool *pool)</b></code></a></dt><p class="pad"></p>
+
+<dd>Allocate a new memory block.
+We allocate the larger of however much was asked for or the default size,
+whichever&#39;s larger.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void *mem_allocate(Interp *interpreter, size_t *req_size, struct Memory_Pool *pool, size_t align_1)</b></code></a></dt><p class="pad"></p>
+
+<dd>Allocates memory for headers.</dd><p class="pad"></p>
+
+<dd>Alignment problems: <code lang='und' xml:lang='und'>align_1</code> sets the size,
+but not the alignment of the memory block we are about to allocate.
+The alignment of <i>this</i> block is currently determined by the <code lang='und' xml:lang='und'>align_1</code> sent in by the <i>previous</i> allocation.
+See <a href='http://archive.develooper.com/perl6&#45;internals%40perl.org/msg12310.html'><a href="http://archive.develooper.com/perl6&#45;internals%40perl.org/msg12310.html">http://archive.develooper.com/perl6&#45;internals%40perl.org/msg12310.html</a></a> for details.
+Currently,
+we work around it by forcing all the <code lang='und' xml:lang='und'>*ALIGNMENT</code> <code lang='und' xml:lang='und'>#define</code>s in <em lang='und' xml:lang='und'>&#60;include/parrot/<i>file</i>.h&#62;</em> to be the same.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Compaction_Code"
+>Compaction Code <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_void_compact_pool(Interp_*interpreter,_struct_Memory_Pool_*pool)"
+><b><code lang='und' xml:lang='und'>static void compact_pool(Interp *interpreter, struct Memory_Pool *pool)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compact the buffer pool.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_go_collect(Interp_*interpreter)"
+><b><code lang='und' xml:lang='und'>void Parrot_go_collect(Interp *interpreter)</b></code></a></dt><p class="pad"></p>
+
+<dd>Go do a GC run.
+This only scans the string pools and compacts them,
+it doesn&#39;t check for string liveness.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Parrot_Re/Allocate_Code"
+>Parrot Re/Allocate Code <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_*_Parrot_reallocate(Interp_*interpreter,_void_*from,_size_t_tosize)"
+><b><code lang='und' xml:lang='und'>void *Parrot_reallocate(Interp *interpreter, void *from, size_t tosize)</b></code></a></dt><p class="pad"></p>
+
+<dd>Takes an interpreter,
+a buffer pointer,
+and a new size.
+The buffer pointer is in as a <code lang='und' xml:lang='und'>void *</code> because we may take a <code lang='und' xml:lang='und'>STRING</code> or something,
+and C doesn&#39;t subclass.</dd><p class="pad"></p>
+
+<dt><a name="void_*_Parrot_reallocate_string(Interp_*interpreter,_STRING_*str,_size_t_tosize)"
+><b><code lang='und' xml:lang='und'>void *Parrot_reallocate_string(Interp *interpreter, STRING *str, size_t tosize)</b></code></a></dt><p class="pad"></p>
+
+<dd>Takes an interpreter,
+a <code lang='und' xml:lang='und'>STRING</code> pointer,
+and a new size.
+The destination may be bigger,
+since we round up to the allocation quantum.</dd><p class="pad"></p>
+
+<dt><a name="void_*_Parrot_allocate(Interp_*interpreter,_void_*buffer,_size_t_size)"
+><b><code lang='und' xml:lang='und'>void *Parrot_allocate(Interp *interpreter, void *buffer, size_t size)</b></code></a></dt><p class="pad"></p>
+
+<dd>Allocate exactly as much memory as they asked for.</dd><p class="pad"></p>
+
+<dt><a name="void_*_Parrot_allocate_zeroed(Interp_*interpreter,_void_*buffer,_size_t_size)"
+><b><code lang='und' xml:lang='und'>void *Parrot_allocate_zeroed(Interp *interpreter, void *buffer, size_t size)</b></code></a></dt><p class="pad"></p>
+
+<dd>Just calls <code lang='und' xml:lang='und'>Parrot_allocate()</code>,
+which also returns zeroed memory.</dd><p class="pad"></p>
+
+<dt><a name="void_*_Parrot_allocate_string(Interp_*interpreter,_STRING_*str,_size_t_size)"
+><b><code lang='und' xml:lang='und'>void *Parrot_allocate_string(Interp *interpreter, STRING *str, size_t size)</b></code></a></dt><p class="pad"></p>
+
+<dd>Allocate at least as much memory as they asked for.
+We round the amount up to the allocation quantum.</dd><p class="pad"></p>
+
+<dt><a name="static_struct_Memory_Pool_*_new_memory_pool(size_t_min_block,_compact_f_compact)"
+><b><code lang='und' xml:lang='und'>static struct Memory_Pool *new_memory_pool(size_t min_block, compact_f compact)</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a new memory pool.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_initialize_memory_pools(Interp_*interpreter)"
+><b><code lang='und' xml:lang='und'>void Parrot_initialize_memory_pools(Interp *interpreter)</b></code></a></dt><p class="pad"></p>
+
+<dd>Initialize the managed memory pools.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_destroy_memory_pools(Interp_*interpreter)"
+><b><code lang='und' xml:lang='und'>void Parrot_destroy_memory_pools(Interp *interpreter)</b></code></a></dt><p class="pad"></p>
+
+<dd>Destroys the memory pools.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/resources.h</em>,
+<em lang='und' xml:lang='und'><a href="memory.c.html">src/memory.c</a></em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Initial version by Dan on 2001.10.2.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

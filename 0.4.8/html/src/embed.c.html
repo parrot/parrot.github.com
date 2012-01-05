@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>The Parrot embedding interface</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">The Parrot embedding interface</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/embed.c &#45; The Parrot embedding interface</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>This file implements the Parrot embedding interface.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="Parrot_Interp_Parrot_new(Parrot_Interp_parent)"
+><b><code lang='und' xml:lang='und'>Parrot_Interp Parrot_new(Parrot_Interp parent)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new Parrot interpreter.</dd><p class="pad"></p>
+
+<dd>The first created interpreter (<code lang='und' xml:lang='und'>parent</code> is <code lang='und' xml:lang='und'>NULL</code>) is the last one to get destroyed.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_init(Interp_*interp)"
+><b><code lang='und' xml:lang='und'>void Parrot_init(Interp *interp)</b></code></a></dt><p class="pad"></p>
+
+<dd>Initializes the new interpreter.
+This function only has effect the first time it is called.
+Therefore Parrot_init() doesn&#39;t have to be called on an interpreter returned from Parrot_new().</dd><p class="pad"></p>
+
+<dd>Use this function when you intend to enter the run loop,
+which automatically sets the top of stack pointer.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_init_stacktop(Interp_*interp,_void_*stack_top)"
+><b><code lang='und' xml:lang='und'>void Parrot_init_stacktop(Interp *interp, void *stack_top)</b></code></a></dt><p class="pad"></p>
+
+<dd>Like above.
+Additionally sets the stack top,
+so that Parrot objects created in inner stack frames will be visible during DODs stack walking code.
+<b>stack_top</b> should be the address of an automatic variable in the caller&#39;s stack frame.
+All unanchored Parrot objects (PMCs) must live in inner stack frames so that they are not destroyed during DOD runs.</dd><p class="pad"></p>
+
+<dd>Use this function when you call into Parrot before entering a run loop.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_set_flag(Interp_*interp,_Parrot_Interp_flag_flag)"
+><b><code lang='und' xml:lang='und'>void Parrot_set_flag(Interp *interp, Parrot_Interp_flag flag)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets a flag in the interpreter specified by <code lang='und' xml:lang='und'>flag</code>,
+any of <code lang='und' xml:lang='und'>PARROT_BOUNDS_FLAG</code>,
+or <code lang='und' xml:lang='und'>PARROT_PROFILE_FLAG</code> to enable profiling,
+and bounds checking respectively or <code lang='und' xml:lang='und'>PARROT_THR_TYPE_1</code>,
+<code lang='und' xml:lang='und'>PARROT_THR_TYPE_2</code>,
+or <code lang='und' xml:lang='und'>PARROT_THR_TYPE_3</code> to disable thread communication and variable sharing,
+disable variable sharing but enable thread communication,
+or to enable variable sharing.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_set_debug(Interp_*interp,_UINTVAL_flag)"
+><b><code lang='und' xml:lang='und'>void Parrot_set_debug(Interp *interp, UINTVAL flag)</b></code></a></dt><p class="pad"></p>
+
+<dd>Set a debug flag: <code lang='und' xml:lang='und'>PARROT_DEBUG_FLAG</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_set_trace(Interp_*interp,_UINTVAL_flag)"
+><b><code lang='und' xml:lang='und'>void Parrot_set_trace(Interp *interp, UINTVAL flag)</b></code></a></dt><p class="pad"></p>
+
+<dd>Set a trace flag: <code lang='und' xml:lang='und'>PARROT_TRACE_FLAG</code></dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_clear_flag(Interp_*,_Parrot_Interp_flag_flag)"
+><b><code lang='und' xml:lang='und'>void Parrot_clear_flag(Interp *, Parrot_Interp_flag flag)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="void_Parrot_clear_debug(Interp_*,_UINTVAL_flag)"
+><b><code lang='und' xml:lang='und'>void Parrot_clear_debug(Interp *, UINTVAL flag)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="void_Parrot_clear_trace(Interp_*,_UINTVAL_flag)"
+><b><code lang='und' xml:lang='und'>void Parrot_clear_trace(Interp *, UINTVAL flag)</b></code></a></dt><p class="pad"></p>
+
+<dd>Clears a flag in the interpreter.</dd><p class="pad"></p>
+
+<dt><a name="Parrot_Int_Parrot_test_flag(Interp*,_Parrot_Interp_flag_flag)"
+><b><code lang='und' xml:lang='und'>Parrot_Int Parrot_test_flag(Interp*, Parrot_Interp_flag flag)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="UINTVAL_Parrot_test_debug(Interp*,_UINTVAL_flag)"
+><b><code lang='und' xml:lang='und'>UINTVAL Parrot_test_debug(Interp*, UINTVAL flag)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="UINTVAL_Parrot_test_trace(Interp*,_UINTVAL_flag)"
+><b><code lang='und' xml:lang='und'>UINTVAL Parrot_test_trace(Interp*, UINTVAL flag)</b></code></a></dt><p class="pad"></p>
+
+<dd>Test the interpreter flags specified in <code lang='und' xml:lang='und'>flag</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_set_run_core(Interp_*interp,_Parrot_Run_core_t_core)"
+><b><code lang='und' xml:lang='und'>void Parrot_set_run_core(Interp *interp, Parrot_Run_core_t core)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the specified run core.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_setwarnings(Interp_*interp,_Parrot_warnclass_wc)"
+><b><code lang='und' xml:lang='und'>void Parrot_setwarnings(Interp *interp, Parrot_warnclass wc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Activates the given warnings.</dd><p class="pad"></p>
+
+<dt><a name="struct_PackFile_*_Parrot_readbc(Interp_*interp,_const_char_*filename)"
+><b><code lang='und' xml:lang='und'>struct PackFile *Parrot_readbc(Interp *interp, const char *filename)</b></code></a></dt><p class="pad"></p>
+
+<dd>Read in a bytecode,
+unpack it into a <code lang='und' xml:lang='und'>PackFile</code> structure,
+and do fixups.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_loadbc(Interp_*interp,_struct_PackFile_*pf)"
+><b><code lang='und' xml:lang='und'>void Parrot_loadbc(Interp *interp, struct PackFile *pf)</b></code></a></dt><p class="pad"></p>
+
+<dd>Loads the <code lang='und' xml:lang='und'>PackFile</code> returned by <code lang='und' xml:lang='und'>Parrot_readbc()</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_PMC*_setup_argv(Interp_*interp,_int_argc,_char_**_argv)"
+><b><code lang='und' xml:lang='und'>static PMC *setup_argv(Interp *interp, int argc, char ** argv)</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates and returns <code lang='und' xml:lang='und'>ARGS</code> array PMC.</dd><p class="pad"></p>
+
+<dt><a name="static_int_prof_sort_f(const_void_*a,_const_void_*b)"
+><b><code lang='und' xml:lang='und'>static int prof_sort_f(const void *a, const void *b)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sort function for profile data.
+Sorts by time.</dd><p class="pad"></p>
+
+<dt><a name="static_const_char_*_op_name(Parrot_Interp_interp,_int_k)"
+><b><code lang='und' xml:lang='und'>static const char *op_name(Parrot_Interp interp, int k)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the name of the opcode.</dd><p class="pad"></p>
+
+<dt><a name="static_FLOATVAL_calibrate(Parrot_Interp_interp)"
+><b><code lang='und' xml:lang='und'>static FLOATVAL calibrate(Parrot_Interp interp)</b></code></a></dt><p class="pad"></p>
+
+<dd>With this calibration,
+reported times of <code lang='und' xml:lang='und'>parrot &#45;p</code> almost match those measured with time <code lang='und' xml:lang='und'>parrot &#45;b</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_void_print_profile(Interp*,_int_status,_void_*p)"
+><b><code lang='und' xml:lang='und'>static void print_profile(Interp*, int status, void *p)</b></code></a></dt><p class="pad"></p>
+
+<dd>Prints out a profile listing.</dd><p class="pad"></p>
+
+<dt><a name="static_void_print_debug(Interp*,_int_status,_void_*p)"
+><b><code lang='und' xml:lang='und'>static void print_debug(Interp*, int status, void *p)</b></code></a></dt><p class="pad"></p>
+
+<dd>Prints GC info.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_runcode(Interp_*interp,_int_argc,_char_*argv[])"
+><b><code lang='und' xml:lang='und'>void Parrot_runcode(Interp *interp, int argc, char *argv[])</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets up <code lang='und' xml:lang='und'>ARGV</code> and runs the ops.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_debug(Interp_*interp,_int_argc,_char_**argv)"
+><b><code lang='und' xml:lang='und'>void Parrot_debug(Interp *interp, int argc, char **argv)</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the interpreter&#39;s bytecode in debugging mode.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_disassemble(Interp_*interp)"
+><b><code lang='und' xml:lang='und'>void Parrot_disassemble(Interp *interp)</b></code></a></dt><p class="pad"></p>
+
+<dd>Disassembles and prints out the interpreter&#39;s bytecode.</dd><p class="pad"></p>
+
+<dd>This is used by the Parrot disassembler.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_run_native(Parrot_Interp_interp,_native_func_t_func)"
+><b><code lang='und' xml:lang='und'>void Parrot_run_native(Parrot_Interp interp, native_func_t func)</b></code></a></dt><p class="pad"></p>
+
+<dd>Run the C function <code lang='und' xml:lang='und'>func</code> through the program <code lang='und' xml:lang='und'>[enternative, end]</code>.
+This ensures that the function is run with the same setup as in other run loops.</dd><p class="pad"></p>
+
+<dd>This function is used in some of the source tests in <em lang='und' xml:lang='und'>t/src</em> which use the interpreter outside a runloop.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/embed.h</em> and <em lang='und' xml:lang='und'><a href="../docs/embed.pod.html">docs/embed.pod</a></em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Initial version by Brent Dax on 2002.1.28.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

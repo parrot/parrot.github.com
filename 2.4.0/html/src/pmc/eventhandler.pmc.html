@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - a handler for events</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; a handler for events
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/eventhandler.pmc &#45; a handler for events</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>A PMC that captures the state of the interpreter to invoke when handling an Event.</p>
+
+<h2><a name="Vtable_Functions"
+>Vtable Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes an empty <code>EventHandler</code>.
+Add attributes to it if you want it to do anything.
+<dt><a name="void_init_pmc(PMC_*data)"
+><b><code>void init_pmc(PMC *data)</b></code></a></dt>
+Initializes a new EventHandler with either a <code>Sub</code> PMC (or descendant) or a <code>Hash</code> PMC.
+With the latter,
+the keys should be any or all of:
+<dl>
+<dt><a name="code"
+><b><code>code</b></code></a></dt>
+a <code>Sub</code> (or descendant) PMC containing code to invoke when handling the event
+<dt><a name="interp"
+><b><code>interp</b></code></a></dt>
+a <code>ParrotInterpreter</code> PMC in which to invoke the code PMC
+<dt><a name="type"
+><b><code>type</b></code></a></dt>
+a STRING recording the type of event to handle
+<dt><a name="priority"
+><b><code>priority</b></code></a></dt>
+the minimum threshhold of priority which the event must meet or exceed for the handler to care</dl>
+
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Marks this PMC and any of its contents as live.
+<dt><a name="void_set_string(STRING_*type)"
+><b><code>void set_string(STRING *type)</b></code></a></dt>
+Sets the <code>type</code> attribute of this event handler to the passed&#45;in string.
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+Retrieves the <code>type</code> attribute of this event handler.
+<dt><a name="void_set_integer_native(INTVAL_priority)"
+><b><code>void set_integer_native(INTVAL priority)</b></code></a></dt>
+Sets the minimum interesting priority for this event handler.
+<dt><a name="void_set_pmc(PMC_*interpreter)"
+><b><code>void set_pmc(PMC *interpreter)</b></code></a></dt>
+Sets the passed&#45;in <code>ParrotInterpreter</code> as the active interpreter in which to handle the registered events.
+<dt><a name="PMC_*get_attr_str(STRING_*name)"
+><b><code>PMC *get_attr_str(STRING *name)</b></code></a></dt>
+
+<dt><a name="opcode_t_*invoke(void_*next)"
+><b><code>opcode_t *invoke(void *next)</b></code></a></dt>
+Runs the contained code,
+if any; this is what handles the event.</dl>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="METHOD_can_handle(PMC_*event)"
+><b><code>METHOD can_handle(PMC *event)</b></code></a></dt>
+Report whether the event handler can handle a particular type of event.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

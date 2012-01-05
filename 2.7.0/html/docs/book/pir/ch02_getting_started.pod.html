@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Getting Started</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; Getting Started
+                </div>
+
+<h1><a name="Getting_Started"
+>Getting Started</a></h1>
+
+<p>The simplest way to install Parrot is to use a pre&#45;compiled binary for your operating system or distribution.
+Packages are available for many systems,
+including Debian,
+Ubuntu,
+Fedora,
+Mandriva,
+FreeBSD,
+Cygwin,
+and MacPorts.
+The Parrot website lists all known packages.<a href="http://www.parrot.org/download">http://www.parrot.org/download</a> A binary installer for Windows is also available from the Parrot Win32 project on SourceForge.<a href="http://parrotwin32.sourceforge.net/">http://parrotwin32.sourceforge.net/</a> If packages aren&#39;t available on your system,
+you can download a source tarball for the latest supported release from <a href="http://www.parrot.org/release/supported">http://www.parrot.org/release/supported</a>.</p>
+
+<p>You need a C compiler and a make utility to build Parrot from source code &#45;&#45; usually <code>gcc</code> and <code>make</code>,
+but Parrot can build with standard compiler toolchains on different operating systems.
+Perl 5.8 is also a prerequiste for configuring and building Parrot.</p>
+
+<p><!--
+	INDEX: compiling
+--> If you have these dependencies installed,
+build the core virtual machine and compiler toolkit and run the standard test suite with the commands:</p>
+
+<pre>  $ perl Configure.pl
+  $ make
+  $ make test</pre>
+
+<p><!--
+	INDEX: installation
+--> By default, Parrot installs to directories <em>bin/</em>, <em>lib/</em>, and <em>include/</em> under <em>/usr/local</em>. If you have privileges to write to these directories, install Parrot with:</p>
+
+<pre>  $ make install</pre>
+
+<p>To install Parrot in a different location, use the <code>&#45;&#45;prefix</code> option to <em><a href="../../../Configure.pl.html">Configure.pl</a></em>:</p>
+
+<pre>    $ perl Configure.pl &#45;&#45;prefix=/home/me/parrot</pre>
+
+<p>Setting the prefix to <em>/home/me/parrot</em> installs the Parrot executable in <em>/home/me/parrot/bin/parrot</em>.</p>
+
+<p>If you intend to develop a language on Parrot, install the Parrot developer tools as well:</p>
+
+<pre>  $ make install&#45;dev</pre>
+
+<p><!--
+	INDEX: .pir files
+--> Once you&#39;ve installed Parrot, create a test file called <em>news.pir</em>.Files containing PIR code use the <em>.pir</em> extension.</p>
+<pre>  .sub 'news'
+    say "Here is the news for Parrots."
+  .end
+</pre>
+<p>Now run this file with:</p>
+
+<pre>  $ parrot news.pir</pre>
+
+<p>which will print:</p>
+
+<pre>  Here is the news for Parrots.</pre>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

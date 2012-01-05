@@ -1,0 +1,2330 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot debugging</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot debugging</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/debug.c &#45; Parrot debugging</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>This file implements Parrot debugging and is used by <code lang='und' xml:lang='und'>pdb</code>,
+the Parrot debugger,
+and the <code lang='und' xml:lang='und'>debug</code> ops.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>*/</p>
+
+<p>#include &#60;stdio.h&#62; #include &#60;stdlib.h&#62; #include &#34;parrot/parrot.h&#34; #include &#34;interp_guts.h&#34; #include &#34;parrot/oplib.h&#34; #include &#34;trace.h&#34; #include &#34;parrot/debug.h&#34; #include &#34;parrot/oplib/ops.h&#34;</p>
+
+<p>/* Not sure how we want to handle this sort of cross&#45;project header */ PARROT_API void IMCC_warning(PARROT_INTERP,
+NOTNULL(const char *fmt),
+...); extern void imcc_init(PARROT_INTERP);</p>
+
+<p>/* HEADERIZER HFILE: include/parrot/debug.h */</p>
+
+<p>/* HEADERIZER BEGIN: static */</p>
+
+<p>static void dump_string( PARROT_INTERP,
+NULLOK(const STRING *s) ) __attribute__nonnull__(1);</p>
+
+<p>static int GDB_B( PARROT_INTERP,
+NOTNULL(char *s) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL static const char* GDB_P( PARROT_INTERP,
+NOTNULL(const char *s) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>PARROT_CAN_RETURN_NULL PARROT_WARN_UNUSED_RESULT static char const * nextarg( NOTNULL(char const *command) ) __attribute__nonnull__(1);</p>
+
+<p>PARROT_CAN_RETURN_NULL PARROT_WARN_UNUSED_RESULT static const char * parse_command( NOTNULL(const char *command),
+NOTNULL(unsigned long *cmdP) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>PARROT_CANNOT_RETURN_NULL PARROT_WARN_UNUSED_RESULT static const char * parse_int( NOTNULL(const char *str),
+NOTNULL(int *intP) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>PARROT_CANNOT_RETURN_NULL PARROT_WARN_UNUSED_RESULT static const char* parse_key( PARROT_INTERP,
+NOTNULL(const char *str),
+NOTNULL(PMC **keyP) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>PARROT_CAN_RETURN_NULL PARROT_WARN_UNUSED_RESULT static const char * parse_string( PARROT_INTERP,
+NOTNULL(const char *str),
+NOTNULL(STRING **strP) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>PARROT_CANNOT_RETURN_NULL static const char * skip_command( NOTNULL(const char *str) ) __attribute__nonnull__(1);</p>
+
+<p>PARROT_CANNOT_RETURN_NULL PARROT_WARN_UNUSED_RESULT static const char * skip_ws( NOTNULL(const char *str) ) __attribute__nonnull__(1);</p>
+
+<p>/* HEADERIZER END: static */</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: nextarg</p>
+
+<p>Returns the position just past the current argument in the PASM instruction <code lang='und' xml:lang='und'>command</code>.
+This is not the same as <code lang='und' xml:lang='und'>skip_command()</code>,
+which is intended for debugger commands.
+This function is used for <code lang='und' xml:lang='und'>eval</code>.</p>
+
+<p>*/</p>
+
+<p>PARROT_CAN_RETURN_NULL PARROT_WARN_UNUSED_RESULT static char const * nextarg(NOTNULL(char const *command)) { /* as long as the character pointed to by command is not NULL,
+* and it is either alphanumeric,
+a comma or a closing bracket,
+* continue looking for the next argument.
+*/ while (*command &#38;&#38; (isalnum((unsigned char) *command) || *command == &#39;,&#39; || *command == &#39;]&#39;)) command++;</p>
+
+<pre lang='und' xml:lang='und'>    /* eat as much space as possible */
+    while (*command &#38;&#38; isspace((unsigned char) *command))
+        command++;
+
+    return command;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: skip_ws</p>
+
+<p>Returns the pointer past any whitespace.</p>
+
+<p>*/</p>
+
+<p>PARROT_CANNOT_RETURN_NULL PARROT_WARN_UNUSED_RESULT static const char * skip_ws(NOTNULL(const char *str)) { /* as long as str is not NULL and it contains space, skip it */ while (*str &#38;&#38; isspace((unsigned char) *str)) str++;</p>
+
+<pre lang='und' xml:lang='und'>    return str;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: skip_command</p>
+
+<p>Returns the pointer past the current debugger command. (This is an alternative to the <code lang='und' xml:lang='und'>skip_command()</code> macro above.)</p>
+
+<p>*/</p>
+
+<p>PARROT_CANNOT_RETURN_NULL static const char * skip_command(NOTNULL(const char *str)) { /* while str is not null and it contains a command (no spaces), * skip the character */ while (*str &#38;&#38; !isspace((unsigned char) *str)) str++;</p>
+
+<pre lang='und' xml:lang='und'>    /* eat all space after that */
+    while (*str &#38;&#38; isspace((unsigned char) *str))
+        str++;
+
+    return str;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: parse_int</p>
+
+<p>Parse an <code lang='und' xml:lang='und'>int</code> out of a string and return a pointer to just after the <code lang='und' xml:lang='und'>int</code>. The output parameter <code lang='und' xml:lang='und'>intP</code> contains the parsed value.</p>
+
+<p>*/</p>
+
+<p>PARROT_CANNOT_RETURN_NULL PARROT_WARN_UNUSED_RESULT static const char * parse_int(NOTNULL(const char *str), NOTNULL(int *intP)) { char *end;</p>
+
+<pre lang='und' xml:lang='und'>    *intP = strtol(str, &#38;end, 0);
+
+    return end;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: parse_string</p>
+
+<p>Parse a double&#45;quoted string out of a C string and return a pointer to just after the string. The parsed string is converted to a Parrot <code lang='und' xml:lang='und'>STRING</code> and placed in the output parameter <code lang='und' xml:lang='und'>strP</code>.</p>
+
+<p>*/</p>
+
+<p>PARROT_CAN_RETURN_NULL PARROT_WARN_UNUSED_RESULT static const char * parse_string(PARROT_INTERP, NOTNULL(const char *str), NOTNULL(STRING **strP)) { const char *string_start;</p>
+
+<pre lang='und' xml:lang='und'>    /* if this is not a quoted string, there&#39;s nothing to parse */
+    if (*str != &#39;&#34;&#39;)
+        return NULL;
+
+    /* skip the quote */
+    str++;
+
+    string_start = str;
+
+    /* parse while there&#39;s no closing quote */
+    while (*str &#38;&#38; *str != &#39;&#34;&#39;) {
+        /* skip any potentially escaped quotes */
+        if (*str == &#39;\\&#39; &#38;&#38; str[1])
+            str += 2;
+        else
+            str++;
+    }
+
+    /* create the output STRING */
+    *strP = string_make(interp, string_start, str &#45; string_start, NULL, 0);
+
+    /* skip the closing quote */
+    if (*str)
+        str++;
+
+    return str;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: parse_key</p>
+
+<p>Parse an aggregate key out of a string and return a pointer to just after the key. Currently only string and integer keys are allowed.</p>
+
+<p>*/</p>
+
+<p>PARROT_CANNOT_RETURN_NULL PARROT_WARN_UNUSED_RESULT static const char* parse_key(PARROT_INTERP, NOTNULL(const char *str), NOTNULL(PMC **keyP)) { /* clear output parameter */ *keyP = NULL;</p>
+
+<pre lang='und' xml:lang='und'>    /* make sure it&#39;s a key */
+    if (*str != &#39;[&#39;)
+        return NULL;
+
+    /* Skip [ */
+    str++;
+
+    /* if this is a string key, create a Parrot STRING */
+    if (*str == &#39;&#34;&#39;) {
+        STRING *parrot_string;
+        str   = parse_string(interp, str, &#38;parrot_string);
+        *keyP = key_new_string(interp, parrot_string);
+    }
+    /* if this is a numeric key */
+    else if (isdigit((unsigned char) *str)) {
+        int value;
+        str   = parse_int(str, &#38;value);
+        *keyP = key_new_integer(interp, (INTVAL) value);
+    }
+    /* unsupported case; neither a string nor a numeric key */
+    else {
+        return NULL;
+    }
+
+    /* hm, but if this doesn&#39;t match, it&#39;s probably an error */
+    if (*str != &#39;]&#39;)
+        return NULL;
+
+    /* skip the closing brace on the key */
+    return ++str;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: parse_command</p>
+
+<p>Convert the command at the beginning of a string into a numeric value that can be used as a switch key for fast lookup.</p>
+
+<p>*/</p>
+
+<p>PARROT_CAN_RETURN_NULL PARROT_WARN_UNUSED_RESULT static const char * parse_command(NOTNULL(const char *command), NOTNULL(unsigned long *cmdP)) { int i; unsigned long c = 0;</p>
+
+<pre lang='und' xml:lang='und'>    if (*command == &#39;\0&#39;) {
+        *cmdP = c;
+        return NULL;
+    }
+
+    for (i = 0; *command &#38;&#38; isalpha((unsigned char) *command); command++, i++)
+        c += (tolower((unsigned char) *command) + (i + 1)) * ((i + 1) * 255);
+
+    /* Nonempty and did not start with a letter */
+    if (c == 0)
+        c = &#45;1;
+
+    *cmdP = c;
+
+    return command;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_get_command</p>
+
+<p>Get a command from the user input to execute.</p>
+
+<p>It saves the last command executed (in <code lang='und' xml:lang='und'>pdb&#45;&#62;last_command</code>), so it first frees the old one and updates it with the current one.</p>
+
+<p>Also prints the next line to run if the program is still active.</p>
+
+<p>The user input can&#39;t be longer than 255 characters.</p>
+
+<p>The input is saved in <code lang='und' xml:lang='und'>pdb&#45;&#62;cur_command</code>.</p>
+
+<p>*/</p>
+
+<p>void PDB_get_command(PARROT_INTERP) { unsigned int i; int ch; char *c; PDB_t * const pdb = interp&#45;&#62;pdb;</p>
+
+<pre lang='und' xml:lang='und'>    /* flush the buffered data */
+    fflush(stdout);
+
+    /* not used any more */
+    if (pdb&#45;&#62;last_command &#38;&#38; *pdb&#45;&#62;cur_command) {
+        mem_sys_free(pdb&#45;&#62;last_command);
+        pdb&#45;&#62;last_command = NULL;
+    }
+
+    /* update the last command */
+    if (pdb&#45;&#62;cur_command &#38;&#38; *pdb&#45;&#62;cur_command)
+        pdb&#45;&#62;last_command = pdb&#45;&#62;cur_command;
+
+    /* if the program is stopped and running show the next line to run */
+    if ((pdb&#45;&#62;state &#38; PDB_STOPPED) &#38;&#38; (pdb&#45;&#62;state &#38; PDB_RUNNING)) {
+        PDB_line_t *line = pdb&#45;&#62;file&#45;&#62;line;
+
+        while (pdb&#45;&#62;cur_opcode != line&#45;&#62;opcode)
+            line = line&#45;&#62;next;
+
+        PIO_eprintf(interp, &#34;%li  &#34;, line&#45;&#62;number);
+        c = pdb&#45;&#62;file&#45;&#62;source + line&#45;&#62;source_offset;
+
+        while (c &#38;&#38; (*c != &#39;\n&#39;))
+            PIO_eprintf(interp, &#34;%c&#34;, *(c++));
+    }
+
+    i = 0;
+
+    /* XXX who frees that */
+    c = (char *)mem_sys_allocate(255);
+
+    PIO_eprintf(interp, &#34;\n(pdb) &#34;);
+
+    /* skip leading whitespace */
+    do {
+        ch = fgetc(stdin);
+    } while (isspace((unsigned char)ch) &#38;&#38; ch != &#39;\n&#39;);
+
+    /* generate string (no more than 255 chars) */
+    while (ch != EOF &#38;&#38; ch != &#39;\n&#39; &#38;&#38; (i &#60; 255)) {
+        c[i++] = ch;
+        ch     = fgetc(stdin);
+    }
+
+    c[i] = &#39;\0&#39;;
+
+    if (ch == &#45;1)
+        strcpy(c, &#34;quit&#34;);
+
+    pdb&#45;&#62;cur_command = c;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_script_file</p>
+
+<p>Interprets the contents of a file as user input commands</p>
+
+<p>*/</p>
+
+<p>void PDB_script_file(PARROT_INTERP, NOTNULL(const char *command)) { char buf[1024]; const char *ptr = (const char *)&#38;buf; int line = 0; FILE *fd;</p>
+
+<pre lang='und' xml:lang='und'>    command = nextarg(command);
+
+    fd = fopen(command, &#34;r&#34;);
+    if (!fd) {
+        IMCC_warning(interp, &#34;script_file: &#34;
+            &#34;Error reading script file %s.\n&#34;,
+            command);
+        return;
+    }
+
+    while(!feof(fd)) {
+        line++;
+        buf[0]=&#39;\0&#39;;
+        fgets(buf, 1024, fd);
+
+        /* skip spaces */
+        for(ptr=(char *)&#38;buf;*ptr&#38;&#38;isspace((unsigned char)*ptr);ptr=ptr+1);
+
+        /* avoid null blank and commented lines */
+        if (*buf == &#39;\0&#39; || *buf == &#39;#&#39;)
+            continue;
+
+        buf[strlen(buf)&#45;1]=&#39;\0&#39;;
+        /* TODO: handle command error and print out script line
+         *       PDB_run_command should return non&#45;void value?
+         *       stop execution of script if fails
+         * TODO: avoid this verbose output? add &#45;v flag? */
+        if (PDB_run_command(interp, buf)) {
+            IMCC_warning(interp, &#34;script_file: &#34;
+                &#34;Error interpreting command at line %d (%s).\n&#34;,
+                line, command);
+                break;
+        }
+    }
+    fclose(fd);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_run_command</p>
+
+<p>Run a command.</p>
+
+<p>Hash the command to make a simple switch calling the correct handler.</p>
+
+<p>*/</p>
+
+<p>PARROT_IGNORABLE_RESULT int PDB_run_command(PARROT_INTERP, NOTNULL(const char *command)) { unsigned long c; PDB_t * const pdb = interp&#45;&#62;pdb; const char * const original_command = command;</p>
+
+<pre lang='und' xml:lang='und'>    /* keep a pointer to the command, in case we need to report an error */
+
+    /* get a number from what the user typed */
+    command = parse_command(original_command, &#38;c);
+
+    if (command)
+        skip_command(command);
+    else
+        return 0;
+
+    switch (c) {
+        case c_script_file:
+            PDB_script_file(interp, command);
+            break;
+        case c_disassemble:
+            PDB_disassemble(interp, command);
+            break;
+        case c_load:
+            PDB_load_source(interp, command);
+            break;
+        case c_l:
+        case c_list:
+            PDB_list(interp, command);
+            break;
+        case c_b:
+        case c_break:
+            PDB_set_break(interp, command);
+            break;
+        case c_w:
+        case c_watch:
+            PDB_watchpoint(interp, command);
+            break;
+        case c_d:
+        case c_delete:
+            PDB_delete_breakpoint(interp, command);
+            break;
+        case c_disable:
+            PDB_disable_breakpoint(interp, command);
+            break;
+        case c_enable:
+            PDB_enable_breakpoint(interp, command);
+            break;
+        case c_r:
+        case c_run:
+            PDB_init(interp, command);
+            PDB_continue(interp, NULL);
+            break;
+        case c_c:
+        case c_continue:
+            PDB_continue(interp, command);
+            break;
+        case c_p:
+        case c_print:
+            PDB_print(interp, command);
+            break;
+        case c_n:
+        case c_next:
+            PDB_next(interp, command);
+            break;
+        case c_t:
+        case c_trace:
+            PDB_trace(interp, command);
+            break;
+        case c_e:
+        case c_eval:
+            PDB_eval(interp, command);
+            break;
+        case c_info:
+            PDB_info(interp);
+            break;
+        case c_h:
+        case c_help:
+            PDB_help(interp, command);
+            break;
+        case c_q:
+        case c_quit:
+            pdb&#45;&#62;state |= PDB_EXIT;
+            break;
+        case 0:
+            if (pdb&#45;&#62;last_command)
+                PDB_run_command(interp,pdb&#45;&#62;last_command);
+            break;
+        default:
+            PIO_eprintf(interp,
+                        &#34;Undefined command: \&#34;%s\&#34;.  Try \&#34;help\&#34;.&#34;, original_command);
+            return 1;
+    }
+    return 0;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_next</p>
+
+<p>Execute the next N operation(s).</p>
+
+<p>Inits the program if needed, runs the next N &#62;= 1 operations and stops.</p>
+
+<p>*/</p>
+
+<p>void PDB_next(PARROT_INTERP, NULLOK(const char *command)) { unsigned long n = 1; PDB_t * const pdb = interp&#45;&#62;pdb;</p>
+
+<pre lang='und' xml:lang='und'>    /* Init the program if it&#39;s not running */
+    if (!(pdb&#45;&#62;state &#38; PDB_RUNNING))
+        PDB_init(interp, command);
+
+    command = nextarg(command);
+    /* Get the number of operations to execute if any */
+    if (command &#38;&#38; isdigit((unsigned char) *command))
+        n = atol(command);
+
+    /* Erase the stopped flag */
+    pdb&#45;&#62;state &#38;= ~PDB_STOPPED;
+
+    /* Execute */
+    for (; n &#38;&#38; pdb&#45;&#62;cur_opcode; n&#45;&#45;)
+        DO_OP(pdb&#45;&#62;cur_opcode, pdb&#45;&#62;debugee);
+
+    /* Set the stopped flag */
+    pdb&#45;&#62;state |= PDB_STOPPED;
+
+    /* If program ended */
+
+    /*
+     * FIXME this doesn&#39;t handle resume opcodes
+     */
+    if (!pdb&#45;&#62;cur_opcode)
+        (void)PDB_program_end(interp);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_trace</p>
+
+<p>Execute the next N operations; if no number is specified, it defaults to 1.</p>
+
+<p>*/</p>
+
+<p>void PDB_trace(PARROT_INTERP, NULLOK(const char *command)) { unsigned long n = 1; PDB_t * const pdb = interp&#45;&#62;pdb; Interp *debugee;</p>
+
+<pre lang='und' xml:lang='und'>    /* if debugger is not running yet, initialize */
+    if (!(pdb&#45;&#62;state &#38; PDB_RUNNING))
+        PDB_init(interp, command);
+
+    command = nextarg(command);
+    /* if the number of ops to run is specified, convert to a long */
+    if (command &#38;&#38; isdigit((unsigned char) *command))
+        n = atol(command);
+
+    /* clear the PDB_STOPPED flag, we&#39;ll be running n ops now */
+    pdb&#45;&#62;state &#38;= ~PDB_STOPPED;
+    debugee     = pdb&#45;&#62;debugee;
+
+    /* execute n ops */
+    for (; n &#38;&#38; pdb&#45;&#62;cur_opcode; n&#45;&#45;) {
+        trace_op(debugee,
+                debugee&#45;&#62;code&#45;&#62;base.data,
+                debugee&#45;&#62;code&#45;&#62;base.data +
+                debugee&#45;&#62;code&#45;&#62;base.size,
+                debugee&#45;&#62;pdb&#45;&#62;cur_opcode);
+        DO_OP(pdb&#45;&#62;cur_opcode, debugee);
+    }
+
+    /* we just stopped */
+    pdb&#45;&#62;state |= PDB_STOPPED;
+
+    /* If program ended */
+    if (!pdb&#45;&#62;cur_opcode)
+        (void)PDB_program_end(interp);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_cond</p>
+
+<p>Analyzes a condition from the user input.</p>
+
+<p>*/</p>
+
+<p>PARROT_CAN_RETURN_NULL PDB_condition_t * PDB_cond(PARROT_INTERP, NOTNULL(const char *command)) { PDB_condition_t *condition; int i, reg_number; char str[255];</p>
+
+<pre lang='und' xml:lang='und'>    /* Return if no more arguments */
+    if (!(command &#38;&#38; *command)) {
+        PIO_eprintf(interp, &#34;No condition specified\n&#34;);
+        return NULL;
+    }
+
+    /* Allocate new condition */
+    condition = mem_allocate_typed(PDB_condition_t);
+
+    switch (*command) {
+        case &#39;i&#39;:
+        case &#39;I&#39;:
+            condition&#45;&#62;type = PDB_cond_int;
+            break;
+        case &#39;n&#39;:
+        case &#39;N&#39;:
+            condition&#45;&#62;type = PDB_cond_num;
+            break;
+        case &#39;s&#39;:
+        case &#39;S&#39;:
+            condition&#45;&#62;type = PDB_cond_str;
+            break;
+        case &#39;p&#39;:
+        case &#39;P&#39;:
+            condition&#45;&#62;type = PDB_cond_pmc;
+            break;
+        default:
+            PIO_eprintf(interp, &#34;First argument must be a register\n&#34;);
+            mem_sys_free(condition);
+            return NULL;
+    }
+
+    /* get the register number */
+    condition&#45;&#62;reg = atoi(++command);
+
+    /* the next argument might have no spaces between the register and the
+     * condition. */
+    command++;
+
+    /* XXX Does /this/ have to do with the fact that PASM registers used to have
+     * maximum of 2 digits? If so, there should be a while loop, I think.
+     */
+    if (condition&#45;&#62;reg &#62; 9)
+        command++;
+
+    if (*command == &#39; &#39;)
+        skip_command(command);
+
+    /* Now the condition */
+    switch (*command) {
+        case &#39;&#62;&#39;:
+            if (*(command + 1) == &#39;=&#39;)
+                condition&#45;&#62;type |= PDB_cond_ge;
+            else if (*(command + 1) == &#39; &#39;)
+                condition&#45;&#62;type |= PDB_cond_gt;
+            else
+                goto INV_COND;
+            break;
+        case &#39;&#60;&#39;:
+            if (*(command + 1) == &#39;=&#39;)
+                condition&#45;&#62;type |= PDB_cond_le;
+            else if (*(command + 1) == &#39; &#39;)
+                condition&#45;&#62;type |= PDB_cond_lt;
+            else
+                goto INV_COND;
+            break;
+        case &#39;=&#39;:
+            if (*(command + 1) == &#39;=&#39;)
+                condition&#45;&#62;type |= PDB_cond_eq;
+            else
+                goto INV_COND;
+            break;
+        case &#39;!&#39;:
+            if (*(command + 1) == &#39;=&#39;)
+                condition&#45;&#62;type |= PDB_cond_ne;
+            else
+                goto INV_COND;
+            break;
+        default:
+INV_COND:   PIO_eprintf(interp, &#34;Invalid condition\n&#34;);
+            mem_sys_free(condition);
+            return NULL;
+    }
+
+    /* if there&#39;s an &#39;=&#39;, skip it */
+    if (*(command + 1) == &#39;=&#39;)
+        command += 2;
+    else
+        command++;
+
+    if (*command == &#39; &#39;)
+        skip_command(command);
+
+    /* return if no more arguments */
+    if (!(command &#38;&#38; *command)) {
+        PIO_eprintf(interp, &#34;Can&#39;t compare a register with nothing\n&#34;);
+        mem_sys_free(condition);
+        return NULL;
+    }
+
+    if (isalpha((unsigned char)*command)) {
+        /* It&#39;s a register &#45; we first check that it&#39;s the correct type */
+        switch (*command) {
+            case &#39;i&#39;:
+            case &#39;I&#39;:
+                if (!(condition&#45;&#62;type &#38; PDB_cond_int))
+                    goto WRONG_REG;
+                break;
+            case &#39;n&#39;:
+            case &#39;N&#39;:
+                if (!(condition&#45;&#62;type &#38; PDB_cond_num))
+                    goto WRONG_REG;
+                break;
+            case &#39;s&#39;:
+            case &#39;S&#39;:
+                if (!(condition&#45;&#62;type &#38; PDB_cond_str))
+                    goto WRONG_REG;
+                break;
+            case &#39;p&#39;:
+            case &#39;P&#39;:
+                if (!(condition&#45;&#62;type &#38; PDB_cond_pmc))
+                    goto WRONG_REG;
+                break;
+            default:
+WRONG_REG:      PIO_eprintf(interp, &#34;Register types don&#39;t agree\n&#34;);
+                mem_sys_free(condition);
+                return NULL;
+        }
+
+        /* Now we check and store the register number */
+        reg_number = (int)atoi(++command);
+
+        if (reg_number &#60; 0) {
+            PIO_eprintf(interp, &#34;Out&#45;of&#45;bounds register\n&#34;);
+            mem_sys_free(condition);
+            return NULL;
+        }
+
+        condition&#45;&#62;value         = mem_allocate_typed(int);
+        *(int *)condition&#45;&#62;value = reg_number;
+    }
+    /* If the first argument was an integer */
+    else if (condition&#45;&#62;type &#38; PDB_cond_int) {
+        /* This must be either an integer constant or register */
+        condition&#45;&#62;value             = mem_allocate_typed(INTVAL);
+        *(INTVAL *)condition&#45;&#62;value  = (INTVAL)atoi(command);
+        condition&#45;&#62;type             |= PDB_cond_const;
+    }
+    else if (condition&#45;&#62;type &#38; PDB_cond_num) {
+        condition&#45;&#62;value               = mem_allocate_typed(FLOATVAL);
+        *(FLOATVAL *)condition&#45;&#62;value  = (FLOATVAL)atof(command);
+        condition&#45;&#62;type               |= PDB_cond_const;
+    }
+    else if (condition&#45;&#62;type &#38; PDB_cond_str) {
+        for (i = 1; ((command[i] != &#39;&#34;&#39;) &#38;&#38; (i &#60; 255)); i++)
+            str[i &#45; 1] = command[i];
+        str[i &#45; 1] = &#39;\0&#39;;
+        condition&#45;&#62;value = string_make(interp,
+            str, i &#45; 1, NULL, PObj_external_FLAG);
+        condition&#45;&#62;type |= PDB_cond_const;
+    }
+    else if (condition&#45;&#62;type &#38; PDB_cond_pmc) {
+        /* XXX Need to figure out what to do in this case.
+         * For the time being, we just bail. */
+        PIO_eprintf(interp, &#34;Can&#39;t compare PMC with constant\n&#34;);
+        mem_sys_free(condition);
+        return NULL;
+    }
+
+    /* We&#39;re not part of a list yet */
+    condition&#45;&#62;next = NULL;
+
+    return condition;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_watchpoint</p>
+
+<p>Set a watchpoint.</p>
+
+<p>*/</p>
+
+<p>void PDB_watchpoint(PARROT_INTERP, NOTNULL(const char *command)) { PDB_t * const pdb = interp&#45;&#62;pdb; PDB_condition_t * const condition = PDB_cond(interp, command);</p>
+
+<pre lang='und' xml:lang='und'>    if (!condition)
+        return;
+
+    /* Add it to the head of the list */
+    if (pdb&#45;&#62;watchpoint)
+        condition&#45;&#62;next = pdb&#45;&#62;watchpoint;
+
+    pdb&#45;&#62;watchpoint = condition;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_set_break</p>
+
+<p>Set a break point, the source code file must be loaded.</p>
+
+<p>*/</p>
+
+<p>void PDB_set_break(PARROT_INTERP, NOTNULL(const char *command)) { PDB_t * const pdb = interp&#45;&#62;pdb; PDB_breakpoint_t *newbreak = NULL; PDB_breakpoint_t *sbreak; PDB_condition_t *condition; PDB_line_t *line; long i;</p>
+
+<pre lang='und' xml:lang='und'>    command = nextarg(command);
+    /* If no line number was specified, set it at the current line */
+    if (command &#38;&#38; *command) {
+        const long ln = atol(command);
+
+        /* Move to the line where we will set the break point */
+        line = pdb&#45;&#62;file&#45;&#62;line;
+
+        for (i = 1; ((i &#60; ln) &#38;&#38; (line&#45;&#62;next)); i++)
+            line = line&#45;&#62;next;
+
+        /* Abort if the line number provided doesn&#39;t exist */
+        if (!line&#45;&#62;next) {
+            PIO_eprintf(interp,
+                &#34;Can&#39;t set a breakpoint at line number %li\n&#34;, ln);
+            return;
+        }
+    }
+    else {
+        /* Get the line to set it */
+        line = pdb&#45;&#62;file&#45;&#62;line;
+
+        while (line&#45;&#62;opcode != pdb&#45;&#62;cur_opcode) {
+            line = line&#45;&#62;next;
+            if (!line) {
+                PIO_eprintf(interp,
+                   &#34;No current line found and no line number specified\n&#34;);
+                return;
+            }
+        }
+    }
+
+    /* Skip lines that are not related to an opcode */
+    while (!line&#45;&#62;opcode)
+        line = line&#45;&#62;next;
+
+    /* Allocate the new break point */
+    newbreak = mem_allocate_typed(PDB_breakpoint_t);
+
+    if (command) {
+        skip_command(command);
+    }
+    else {
+        real_exception(interp, NULL, 1, &#34;NULL command passed to PDB_set_break&#34;);
+    }
+    condition = NULL;
+
+    /* if there is another argument to break, besides the line number,
+     * it should be an &#39;if&#39;, so we call another handler. */
+    if (command &#38;&#38; *command) {
+        skip_command(command);
+        if ((condition = PDB_cond(interp, command)))
+            newbreak&#45;&#62;condition = condition;
+    }
+
+    /* If there are no other arguments, or if there isn&#39;t a valid condition,
+       then condition will be NULL */
+    if (!condition)
+        newbreak&#45;&#62;condition = NULL;
+
+    /* Set the address where to stop */
+    newbreak&#45;&#62;pc   = line&#45;&#62;opcode;
+
+    /* No next breakpoint */
+    newbreak&#45;&#62;next = NULL;
+
+    /* Don&#39;t skip (at least initially) */
+    newbreak&#45;&#62;skip = 0;
+
+    /* Add the breakpoint to the end of the list */
+    i      = 0;
+    sbreak = pdb&#45;&#62;breakpoint;
+
+    if (sbreak) {
+        while (sbreak&#45;&#62;next)
+            sbreak = sbreak&#45;&#62;next;
+
+        newbreak&#45;&#62;prev = sbreak;
+        sbreak&#45;&#62;next   = newbreak;
+        i              = sbreak&#45;&#62;next&#45;&#62;id = sbreak&#45;&#62;id + 1;
+    }
+    else {
+        newbreak&#45;&#62;prev  = NULL;
+        pdb&#45;&#62;breakpoint = newbreak;
+        i               = pdb&#45;&#62;breakpoint&#45;&#62;id = 0;
+    }
+
+    PIO_eprintf(interp, &#34;Breakpoint %li at line %li\n&#34;, i, line&#45;&#62;number);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_init</p>
+
+<p>Init the program.</p>
+
+<p>*/</p>
+
+<p>void PDB_init(PARROT_INTERP, SHIM(const char *command)) { PDB_t * const pdb = interp&#45;&#62;pdb;</p>
+
+<pre lang='und' xml:lang='und'>    /* Restart if we are already running */
+    if (pdb&#45;&#62;state &#38; PDB_RUNNING)
+        PIO_eprintf(interp, &#34;Restarting\n&#34;);
+
+    /* Add the RUNNING state */
+    pdb&#45;&#62;state |= PDB_RUNNING;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_continue</p>
+
+<p>Continue running the program. If a number is specified, skip that many breakpoints.</p>
+
+<p>*/</p>
+
+<p>void PDB_continue(PARROT_INTERP, NULLOK(const char *command)) { PDB_t *pdb = interp&#45;&#62;pdb;</p>
+
+<pre lang='und' xml:lang='und'>    /* Skip any breakpoint? */
+    if (command &#38;&#38; *command) {
+        long ln;
+        if (!pdb&#45;&#62;breakpoint) {
+            PIO_eprintf(interp, &#34;No breakpoints to skip\n&#34;);
+            return;
+        }
+
+        command = nextarg(command);
+        ln = atol(command);
+        PDB_skip_breakpoint(interp, ln);
+    }
+
+    /* Run while no break point is reached */
+    while (!PDB_break(interp))
+        DO_OP(pdb&#45;&#62;cur_opcode, pdb&#45;&#62;debugee);
+}</pre>
+
+<p>/*</p>
+
+<p>PDB_find_breakpoint(PARROT_INTERP, const char *command)&#62;</p>
+
+<p>Find breakpoint number N; returns <code lang='und' xml:lang='und'>NULL</code> if the breakpoint doesn&#39;t exist or if no breakpoint was specified.</p>
+
+<p>*/</p>
+
+<p>PARROT_CAN_RETURN_NULL PARROT_WARN_UNUSED_RESULT PDB_breakpoint_t * PDB_find_breakpoint(PARROT_INTERP, NOTNULL(const char *command)) { command = nextarg(command); if (isdigit((unsigned char) *command)) { const long n = atol(command); PDB_breakpoint_t *breakpoint = interp&#45;&#62;pdb&#45;&#62;breakpoint;</p>
+
+<pre lang='und' xml:lang='und'>        while (breakpoint &#38;&#38; breakpoint&#45;&#62;id != n)
+            breakpoint = breakpoint&#45;&#62;next;
+
+        if (!breakpoint) {
+            PIO_eprintf(interp, &#34;No breakpoint number %ld&#34;, n);
+            return NULL;
+        }
+
+        return breakpoint;
+    }
+    else {
+        /* Report an appropriate error */
+        if (*command)
+            PIO_eprintf(interp, &#34;Not a valid breakpoint&#34;);
+        else
+            PIO_eprintf(interp, &#34;No breakpoint specified&#34;);
+
+        return NULL;
+    }
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_disable_breakpoint</p>
+
+<p>Disable a breakpoint; it can be reenabled with the enable command.</p>
+
+<p>*/</p>
+
+<p>void PDB_disable_breakpoint(PARROT_INTERP, NOTNULL(const char *command)) { PDB_breakpoint_t * const breakpoint = PDB_find_breakpoint(interp, command);</p>
+
+<pre lang='und' xml:lang='und'>    /* if the breakpoint exists, disable it. */
+    if (breakpoint)
+        breakpoint&#45;&#62;skip = &#45;1;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_enable_breakpoint</p>
+
+<p>Reenable a disabled breakpoint; if the breakpoint was not disabled, has no effect.</p>
+
+<p>*/</p>
+
+<p>void PDB_enable_breakpoint(PARROT_INTERP, NOTNULL(const char *command)) { PDB_breakpoint_t * const breakpoint = PDB_find_breakpoint(interp, command);</p>
+
+<pre lang='und' xml:lang='und'>    /* if the breakpoint exists, and it was disabled, enable it. */
+    if (breakpoint &#38;&#38; breakpoint&#45;&#62;skip == &#45;1)
+        breakpoint&#45;&#62;skip = 0;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_delete_breakpoint</p>
+
+<p>Delete a breakpoint.</p>
+
+<p>*/</p>
+
+<p>void PDB_delete_breakpoint(PARROT_INTERP, NOTNULL(const char *command)) { PDB_breakpoint_t * const breakpoint = PDB_find_breakpoint(interp, command);</p>
+
+<pre lang='und' xml:lang='und'>    if (breakpoint) {
+        PDB_line_t *line = interp&#45;&#62;pdb&#45;&#62;file&#45;&#62;line;
+
+        while (line&#45;&#62;opcode != breakpoint&#45;&#62;pc)
+            line = line&#45;&#62;next;
+
+        /* Delete the condition structure, if there is one */
+        if (breakpoint&#45;&#62;condition) {
+            PDB_delete_condition(interp, breakpoint);
+            breakpoint&#45;&#62;condition = NULL;
+        }
+
+        /* Remove the breakpoint from the list */
+        if (breakpoint&#45;&#62;prev &#38;&#38; breakpoint&#45;&#62;next) {
+            breakpoint&#45;&#62;prev&#45;&#62;next = breakpoint&#45;&#62;next;
+            breakpoint&#45;&#62;next&#45;&#62;prev = breakpoint&#45;&#62;prev;
+        }
+        else if (breakpoint&#45;&#62;prev &#38;&#38; !breakpoint&#45;&#62;next) {
+            breakpoint&#45;&#62;prev&#45;&#62;next = NULL;
+        }
+        else if (!breakpoint&#45;&#62;prev &#38;&#38; breakpoint&#45;&#62;next) {
+            breakpoint&#45;&#62;next&#45;&#62;prev  = NULL;
+            interp&#45;&#62;pdb&#45;&#62;breakpoint = breakpoint&#45;&#62;next;
+        }
+        else {
+            interp&#45;&#62;pdb&#45;&#62;breakpoint = NULL;
+        }
+
+        /* Kill the breakpoint */
+        mem_sys_free(breakpoint);
+    }
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_delete_condition</p>
+
+<p>Delete a condition associated with a breakpoint.</p>
+
+<p>*/</p>
+
+<p>void PDB_delete_condition(SHIM_INTERP, NOTNULL(PDB_breakpoint_t *breakpoint)) { if (breakpoint&#45;&#62;condition&#45;&#62;value) { if (breakpoint&#45;&#62;condition&#45;&#62;type &#38; PDB_cond_str) { /* &#39;value&#39; is a string, so we need to be careful */ PObj_external_CLEAR((STRING*)breakpoint&#45;&#62;condition&#45;&#62;value); PObj_on_free_list_SET((STRING*)breakpoint&#45;&#62;condition&#45;&#62;value); /* it should now be properly garbage collected after we destroy the condition */ } else { /* &#39;value&#39; is a float or an int, so we can just free it */ mem_sys_free(breakpoint&#45;&#62;condition&#45;&#62;value); breakpoint&#45;&#62;condition&#45;&#62;value = NULL; } }</p>
+
+<pre lang='und' xml:lang='und'>    mem_sys_free(breakpoint&#45;&#62;condition);
+    breakpoint&#45;&#62;condition = NULL;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_skip_breakpoint</p>
+
+<p>Skip <code lang='und' xml:lang='und'>i</code> times all breakpoints.</p>
+
+<p>*/</p>
+
+<p>void PDB_skip_breakpoint(PARROT_INTERP, long i) { interp&#45;&#62;pdb&#45;&#62;breakpoint_skip = i ? i&#45;1 : i; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_program_end</p>
+
+<p>End the program.</p>
+
+<p>*/</p>
+
+<p>char PDB_program_end(PARROT_INTERP) { PDB_t * const pdb = interp&#45;&#62;pdb;</p>
+
+<pre lang='und' xml:lang='und'>    /* Remove the RUNNING state */
+    pdb&#45;&#62;state &#38;= ~PDB_RUNNING;
+
+    PIO_eprintf(interp, &#34;Program exited.\n&#34;);
+    return 1;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_check_condition</p>
+
+<p>Returns true if the condition was met.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT char PDB_check_condition(PARROT_INTERP, NOTNULL(PDB_condition_t *condition)) { if (condition&#45;&#62;type &#38; PDB_cond_int) { INTVAL i, j; /* * TODO verify register is in range */ i = REG_INT(interp, condition&#45;&#62;reg);</p>
+
+<pre lang='und' xml:lang='und'>        if (condition&#45;&#62;type &#38; PDB_cond_const)
+            j = *(INTVAL *)condition&#45;&#62;value;
+        else
+            j = REG_INT(interp, *(int *)condition&#45;&#62;value);
+
+        if (((condition&#45;&#62;type &#38; PDB_cond_gt) &#38;&#38; (i &#62;  j)) ||
+            ((condition&#45;&#62;type &#38; PDB_cond_ge) &#38;&#38; (i &#62;= j)) ||
+            ((condition&#45;&#62;type &#38; PDB_cond_eq) &#38;&#38; (i == j)) ||
+            ((condition&#45;&#62;type &#38; PDB_cond_ne) &#38;&#38; (i != j)) ||
+            ((condition&#45;&#62;type &#38; PDB_cond_le) &#38;&#38; (i &#60;= j)) ||
+            ((condition&#45;&#62;type &#38; PDB_cond_lt) &#38;&#38; (i &#60;  j)))
+                return 1;
+
+        return 0;
+    }
+    else if (condition&#45;&#62;type &#38; PDB_cond_num) {
+        FLOATVAL k,  l;
+
+        k = REG_NUM(interp, condition&#45;&#62;reg);
+
+        if (condition&#45;&#62;type &#38; PDB_cond_const)
+            l = *(FLOATVAL *)condition&#45;&#62;value;
+        else
+            l = REG_NUM(interp, *(int *)condition&#45;&#62;value);
+
+        if (((condition&#45;&#62;type &#38; PDB_cond_gt) &#38;&#38; (k &#62;  l)) ||
+            ((condition&#45;&#62;type &#38; PDB_cond_ge) &#38;&#38; (k &#62;= l)) ||
+            ((condition&#45;&#62;type &#38; PDB_cond_eq) &#38;&#38; (k == l)) ||
+            ((condition&#45;&#62;type &#38; PDB_cond_ne) &#38;&#38; (k != l)) ||
+            ((condition&#45;&#62;type &#38; PDB_cond_le) &#38;&#38; (k &#60;= l)) ||
+            ((condition&#45;&#62;type &#38; PDB_cond_lt) &#38;&#38; (k &#60;  l)))
+                return 1;
+
+        return 0;
+    }
+    else if (condition&#45;&#62;type &#38; PDB_cond_str) {
+        STRING  *m, *n;
+
+        m = REG_STR(interp, condition&#45;&#62;reg);
+
+        if (condition&#45;&#62;type &#38; PDB_cond_const)
+            n = (STRING *)condition&#45;&#62;value;
+        else
+            n = REG_STR(interp, *(int *)condition&#45;&#62;value);
+
+        if (((condition&#45;&#62;type &#38; PDB_cond_gt) &#38;&#38;
+                (string_compare(interp, m, n) &#62;  0)) ||
+            ((condition&#45;&#62;type &#38; PDB_cond_ge) &#38;&#38;
+                (string_compare(interp, m, n) &#62;= 0)) ||
+            ((condition&#45;&#62;type &#38; PDB_cond_eq) &#38;&#38;
+                (string_compare(interp, m, n) == 0)) ||
+            ((condition&#45;&#62;type &#38; PDB_cond_ne) &#38;&#38;
+                (string_compare(interp, m, n) != 0)) ||
+            ((condition&#45;&#62;type &#38; PDB_cond_le) &#38;&#38;
+                (string_compare(interp, m, n) &#60;= 0)) ||
+            ((condition&#45;&#62;type &#38; PDB_cond_lt) &#38;&#38;
+                (string_compare(interp, m, n) &#60;  0)))
+                    return 1;
+
+        return 0;
+    }
+
+    return 0;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_break</p>
+
+<p>Returns true if we have to stop running.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT char PDB_break(PARROT_INTERP) { PDB_t * const pdb = interp&#45;&#62;pdb; PDB_breakpoint_t *breakpoint = pdb&#45;&#62;breakpoint; PDB_condition_t *watchpoint = pdb&#45;&#62;watchpoint;</p>
+
+<pre lang='und' xml:lang='und'>    /* Check the watchpoints first. */
+    while (watchpoint) {
+        if (PDB_check_condition(interp, watchpoint)) {
+            pdb&#45;&#62;state |= PDB_STOPPED;
+            return 1;
+        }
+
+        watchpoint = watchpoint&#45;&#62;next;
+    }
+
+    /* If program ended */
+    if (!pdb&#45;&#62;cur_opcode)
+        return PDB_program_end(interp);
+
+    /* If the program is STOPPED allow it to continue */
+    if (pdb&#45;&#62;state &#38; PDB_STOPPED) {
+        pdb&#45;&#62;state &#38;= ~PDB_STOPPED;
+        return 0;
+    }
+
+    /* If we have to skip breakpoints, do so. */
+    if (pdb&#45;&#62;breakpoint_skip) {
+        pdb&#45;&#62;breakpoint_skip&#45;&#45;;
+        return 0;
+    }
+
+    while (breakpoint) {
+        /* if we are in a break point */
+        if (pdb&#45;&#62;cur_opcode == breakpoint&#45;&#62;pc) {
+            if (breakpoint&#45;&#62;skip &#60; 0)
+                return 0;
+
+            /* Check if there is a condition for this breakpoint */
+            if ((breakpoint&#45;&#62;condition) &#38;&#38;
+                (!PDB_check_condition(interp, breakpoint&#45;&#62;condition)))
+                    return 0;
+
+            /* Add the STOPPED state and stop */
+            pdb&#45;&#62;state |= PDB_STOPPED;
+            return 1;
+        }
+        breakpoint = breakpoint&#45;&#62;next;
+    }
+
+    return 0;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_escape</p>
+
+<p>Escapes <code lang='und' xml:lang='und'>&#34;</code>, <code lang='und' xml:lang='und'>\r</code>, <code lang='und' xml:lang='und'>\n</code>, <code lang='und' xml:lang='und'>\t</code>, <code lang='und' xml:lang='und'>\a</code> and <code lang='und' xml:lang='und'>\\</code>.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL char * PDB_escape(NOTNULL(const char *string), INTVAL length) { const char *end; char *_new, *fill;</p>
+
+<pre lang='und' xml:lang='und'>    length = length &#62; 20 ? 20 : length;
+    end    = string + length;
+
+    /* Return if there is no string to escape*/
+    if (!string)
+        return NULL;
+
+    fill = _new = (char *)mem_sys_allocate(length * 2 + 1);
+
+    for (; string &#60; end; string++) {
+        switch (*string) {
+            case &#39;\0&#39;:
+                *(fill++) = &#39;\\&#39;;
+                *(fill++) = &#39;0&#39;;
+                break;
+            case &#39;\n&#39;:
+                *(fill++) = &#39;\\&#39;;
+                *(fill++) = &#39;n&#39;;
+                break;
+            case &#39;\r&#39;:
+                *(fill++) = &#39;\\&#39;;
+                *(fill++) = &#39;r&#39;;
+                break;
+            case &#39;\t&#39;:
+                *(fill++) = &#39;\\&#39;;
+                *(fill++) = &#39;t&#39;;
+                break;
+            case &#39;\a&#39;:
+                *(fill++) = &#39;\\&#39;;
+                *(fill++) = &#39;a&#39;;
+                break;
+            case &#39;\\&#39;:
+                *(fill++) = &#39;\\&#39;;
+                *(fill++) = &#39;\\&#39;;
+                break;
+            case &#39;&#34;&#39;:
+                *(fill++) = &#39;\\&#39;;
+                *(fill++) = &#39;&#34;&#39;;
+                break;
+            default:
+                *(fill++) = *string;
+                break;
+        }
+    }
+
+    *fill = &#39;\0&#39;;
+
+    return _new;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_unescape</p>
+
+<p>Do inplace unescape of <code lang='und' xml:lang='und'>\r</code>, <code lang='und' xml:lang='und'>\n</code>, <code lang='und' xml:lang='und'>\t</code>, <code lang='und' xml:lang='und'>\a</code> and <code lang='und' xml:lang='und'>\\</code>.</p>
+
+<p>*/</p>
+
+<p>int PDB_unescape(NOTNULL(char *string)) { int l = 0;</p>
+
+<pre lang='und' xml:lang='und'>    for (; *string; string++) {
+        l++;
+
+        if (*string == &#39;\\&#39;) {
+            char *fill;
+            int i;
+
+            switch (string[1]) {
+                case &#39;n&#39;:
+                    *string = &#39;\n&#39;;
+                    break;
+                case &#39;r&#39;:
+                    *string = &#39;\r&#39;;
+                    break;
+                case &#39;t&#39;:
+                    *string = &#39;\t&#39;;
+                    break;
+                case &#39;a&#39;:
+                    *string = &#39;\a&#39;;
+                    break;
+                case &#39;\\&#39;:
+                    *string = &#39;\\&#39;;
+                    break;
+                default:
+                    continue;
+            }
+
+            fill = string;
+
+            for (i = 1; fill[i + 1]; i++)
+                fill[i] = fill[i + 1];
+
+            fill[i] = &#39;\0&#39;;
+        }
+    }
+
+    return l;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_disassemble_op</p>
+
+<p>Disassembles <code lang='und' xml:lang='und'>op</code>.</p>
+
+<p>*/</p>
+
+<p>size_t PDB_disassemble_op(PARROT_INTERP, NOTNULL(char *dest), int space, NOTNULL(op_info_t *info), NOTNULL(opcode_t *op), NULLOK(PDB_file_t *file), NULLOK(opcode_t *code_start), int full_name) { int j; int size = 0;</p>
+
+<pre lang='und' xml:lang='und'>    /* Write the opcode name */
+    const char * const p = full_name ? info&#45;&#62;full_name : info&#45;&#62;name;
+    strcpy(dest, p);
+    size += strlen(p);
+
+    dest[size++] = &#39; &#39;;
+
+    /* Concat the arguments */
+    for (j = 1; j &#60; info&#45;&#62;op_count; j++) {
+        char      buf[256];
+        INTVAL    i = 0;
+        FLOATVAL  f;
+        PMC      *k;
+
+        PARROT_ASSERT(size + 2 &#60; space);
+
+        switch (info&#45;&#62;types[j&#45;1]) {
+        case PARROT_ARG_I:
+            dest[size++] = &#39;I&#39;;
+            goto INTEGER;
+        case PARROT_ARG_N:
+            dest[size++] = &#39;N&#39;;
+            goto INTEGER;
+        case PARROT_ARG_S:
+            dest[size++] = &#39;S&#39;;
+            goto INTEGER;
+        case PARROT_ARG_P:
+            dest[size++] = &#39;P&#39;;
+            goto INTEGER;
+        case PARROT_ARG_IC:
+            /* If the opcode jumps and this is the last argument,
+               that means this is a label */
+            if ((j == info&#45;&#62;op_count &#45; 1) &#38;&#38;
+                (info&#45;&#62;jump &#38; PARROT_JUMP_RELATIVE))
+            {
+                if (file) {
+                    dest[size++] = &#39;L&#39;;
+                    i            = PDB_add_label(file, op, op[j]);
+                }
+                else if (code_start) {
+                    dest[size++] = &#39;O&#39;;
+                    dest[size++] = &#39;P&#39;;
+                    i            = op[j] + (op &#45; code_start);
+                }
+                else {
+                    if (op[j] &#62; 0)
+                        dest[size++] = &#39;+&#39;;
+                    i = op[j];
+                }
+            }
+
+            /* Convert the integer to a string */
+            INTEGER:
+            if (i == 0)
+                i = (INTVAL) op[j];
+
+            PARROT_ASSERT(size + 20 &#60; space);
+
+            sprintf(&#38;dest[size], INTVAL_FMT, i);
+            size += strlen(&#38;dest[size]);
+
+            /* If this is a constant dispatch arg to an &#34;infix&#34; op, then show
+               the corresponding symbolic op name. */
+            if (j == 1 &#38;&#38; info&#45;&#62;types[j&#45;1] == PARROT_ARG_IC
+                &#38;&#38; (strcmp(info&#45;&#62;name, &#34;infix&#34;) == 0
+                    || strcmp(info&#45;&#62;name, &#34;n_infix&#34;) == 0)) {
+                PARROT_ASSERT(size + 20 &#60; space);
+
+                sprintf(&#38;dest[size], &#34; [%s]&#34;,
+                        /* [kludge: the &#34;2+&#34; skips the leading underscores.  &#45;&#45;
+                           rgr, 6&#45;May&#45;07.] */
+                        2 + Parrot_MMD_method_name(interp, op[j]));
+                size += strlen(&#38;dest[size]);
+            }
+            break;
+        case PARROT_ARG_NC:
+            /* Convert the float to a string */
+            f = interp&#45;&#62;code&#45;&#62;const_table&#45;&#62;constants[op[j]]&#45;&#62;u.number;
+            Parrot_snprintf(interp, buf, sizeof (buf), FLOATVAL_FMT, f);
+            strcpy(&#38;dest[size], buf);
+            size += strlen(buf);
+            break;
+        case PARROT_ARG_SC:
+            dest[size++] = &#39;&#34;&#39;;
+            if (interp&#45;&#62;code&#45;&#62;const_table&#45;&#62;constants[op[j]]&#45;&#62;
+                    u.string&#45;&#62;strlen)
+            {
+                char * const escaped =
+                    PDB_escape(interp&#45;&#62;code&#45;&#62;const_table&#45;&#62;
+                           constants[op[j]]&#45;&#62;u.string&#45;&#62;strstart,
+                           interp&#45;&#62;code&#45;&#62;const_table&#45;&#62;
+                           constants[op[j]]&#45;&#62;u.string&#45;&#62;strlen);
+                if (escaped) {
+                    strcpy(&#38;dest[size],escaped);
+                    size += strlen(escaped);
+                    mem_sys_free(escaped);
+                }
+            }
+            dest[size++] = &#39;&#34;&#39;;
+            break;
+        case PARROT_ARG_PC:
+            Parrot_snprintf(interp, buf, sizeof (buf), &#34;PMC_CONST(%d)&#34;, op[j]);
+            strcpy(&#38;dest[size], buf);
+            size += strlen(buf);
+            break;
+        case PARROT_ARG_K:
+            dest[size&#45;1] = &#39;[&#39;; Parrot_snprintf(interp, buf, sizeof (buf),
+                            &#34;P&#34; INTVAL_FMT, op[j]);
+            strcpy(&#38;dest[size], buf);
+            size += strlen(buf);
+            dest[size++] = &#39;]&#39;;
+            break;
+        case PARROT_ARG_KC:
+            dest[size&#45;1] = &#39;[&#39;;
+            k            = interp&#45;&#62;code&#45;&#62;const_table&#45;&#62;constants[op[j]]&#45;&#62;u.key;
+            while (k) {
+                switch (PObj_get_FLAGS(k)) {
+                case 0:
+                    break;
+                case KEY_integer_FLAG:
+                    Parrot_snprintf(interp, buf, sizeof (buf),
+                                    INTVAL_FMT, PMC_int_val(k));
+                    strcpy(&#38;dest[size], buf);
+                    size += strlen(buf);
+                    break;
+                case KEY_number_FLAG:
+                    Parrot_snprintf(interp, buf, sizeof (buf),
+                                    FLOATVAL_FMT, PMC_num_val(k));
+                    strcpy(&#38;dest[size], buf);
+                    size += strlen(buf);
+                    break;
+                case KEY_string_FLAG:
+                    dest[size++] = &#39;&#34;&#39;;
+                    {
+                        char *temp;
+                        temp = string_to_cstring(interp, PMC_str_val(k));
+                        strcpy(&#38;dest[size], temp);
+                        string_cstring_free(temp);
+                    }
+                    size += string_length(interp, PMC_str_val(k));
+                    dest[size++] = &#39;&#34;&#39;;
+                    break;
+                case KEY_integer_FLAG|KEY_register_FLAG:
+                    Parrot_snprintf(interp, buf, sizeof (buf),
+                                    &#34;I&#34; INTVAL_FMT, PMC_int_val(k));
+                    strcpy(&#38;dest[size], buf);
+                    size += strlen(buf);
+                    break;
+                case KEY_number_FLAG|KEY_register_FLAG:
+                    Parrot_snprintf(interp, buf, sizeof (buf),
+                                    &#34;N&#34; INTVAL_FMT, PMC_int_val(k));
+                    strcpy(&#38;dest[size], buf);
+                    size += strlen(buf);
+                    break;
+                case KEY_string_FLAG|KEY_register_FLAG:
+                    Parrot_snprintf(interp, buf, sizeof (buf),
+                                    &#34;S&#34; INTVAL_FMT, PMC_int_val(k));
+                    strcpy(&#38;dest[size], buf);
+                    size += strlen(buf);
+                    break;
+                case KEY_pmc_FLAG|KEY_register_FLAG:
+                    Parrot_snprintf(interp, buf, sizeof (buf),
+                                    &#34;P&#34; INTVAL_FMT, PMC_int_val(k));
+                    strcpy(&#38;dest[size], buf);
+                    size += strlen(buf);
+                    break;
+                default:
+                    dest[size++] = &#39;?&#39;;
+                    break;
+                }
+                k = PMC_data_typed(k, PMC *);
+                if (k)
+                    dest[size++] = &#39;;&#39;;
+            }
+            dest[size++] = &#39;]&#39;;
+            break;
+        case PARROT_ARG_KI:
+            dest[size &#45; 1] = &#39;[&#39;;
+            Parrot_snprintf(interp, buf, sizeof (buf), &#34;I&#34; INTVAL_FMT, op[j]);
+            strcpy(&#38;dest[size], buf);
+            size += strlen(buf);
+            dest[size++] = &#39;]&#39;;
+            break;
+        case PARROT_ARG_KIC:
+            dest[size &#45; 1] = &#39;[&#39;;
+            Parrot_snprintf(interp, buf, sizeof (buf), INTVAL_FMT, op[j]);
+            strcpy(&#38;dest[size], buf);
+            size += strlen(buf);
+            dest[size++] = &#39;]&#39;;
+            break;
+        default:
+            real_exception(interp, NULL, 1, &#34;Unknown opcode type&#34;);
+        }
+
+        if (j != info&#45;&#62;op_count &#45; 1)
+            dest[size++] = &#39;,&#39;;
+    }
+
+    dest[size] = &#39;\0&#39;;
+    return ++size;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_disassemble</p>
+
+<p>Disassemble the bytecode.</p>
+
+<p>*/</p>
+
+<p>void PDB_disassemble(PARROT_INTERP, SHIM(const char *command)) { PDB_t *pdb = interp&#45;&#62;pdb; PDB_file_t *pfile; PDB_line_t *pline, *newline; PDB_label_t *label; opcode_t *code_end; opcode_t *pc = interp&#45;&#62;code&#45;&#62;base.data;</p>
+
+<pre lang='und' xml:lang='und'>    const unsigned int default_size = 32768;
+    size_t space;  /* How much space do we have? */
+    size_t size, alloced, n;
+
+    pfile = mem_allocate_typed(PDB_file_t);
+    pline = mem_allocate_typed(PDB_line_t);
+
+    /* If we already got a source, free it */
+    if (pdb&#45;&#62;file)
+        PDB_free_file(interp);
+
+    pline&#45;&#62;number        = 1;
+    pfile&#45;&#62;line          = pline;
+    pfile&#45;&#62;label         = NULL;
+    pfile&#45;&#62;size          = 0;
+    pfile&#45;&#62;source        = (char *)mem_sys_allocate(default_size);
+    pline&#45;&#62;source_offset = 0;
+
+    alloced              = space = default_size;
+    code_end             = pc + interp&#45;&#62;code&#45;&#62;base.size;
+
+    while (pc != code_end) {
+        /* Grow it early */
+        if (space &#60; default_size) {
+            alloced += default_size;
+            space   += default_size;
+            pfile&#45;&#62;source = (char *)mem_sys_realloc(pfile&#45;&#62;source, alloced);
+        }
+
+        size = PDB_disassemble_op(interp, pfile&#45;&#62;source + pfile&#45;&#62;size,
+                space, &#38;interp&#45;&#62;op_info_table[*pc], pc, pfile, NULL, 1);
+        space       &#45;= size;
+        pfile&#45;&#62;size += size;
+        pfile&#45;&#62;source[pfile&#45;&#62;size &#45; 1] = &#39;\n&#39;;
+
+        /* Store the opcode of this line */
+        pline&#45;&#62;opcode = pc;
+        n             = interp&#45;&#62;op_info_table[*pc].op_count;
+
+        ADD_OP_VAR_PART(interp, interp&#45;&#62;code, pc, n);
+        pc += n;
+
+        /* Prepare for next line */
+        newline              = mem_allocate_typed(PDB_line_t);
+        newline&#45;&#62;label       = NULL;
+        newline&#45;&#62;next        = NULL;
+        newline&#45;&#62;number      = pline&#45;&#62;number + 1;
+        pline&#45;&#62;next          = newline;
+        pline                = newline;
+        pline&#45;&#62;source_offset = pfile&#45;&#62;size;
+    }
+
+    /* Add labels to the lines they belong to */
+    label = pfile&#45;&#62;label;
+
+    while (label) {
+        /* Get the line to apply the label */
+        pline = pfile&#45;&#62;line;
+
+        while (pline &#38;&#38; pline&#45;&#62;opcode != label&#45;&#62;opcode)
+            pline = pline&#45;&#62;next;
+
+        if (!(pline)) {
+            PIO_eprintf(interp,
+                        &#34;Label number %li out of bounds.\n&#34;, label&#45;&#62;number);
+            /* TODO: free allocated memory */
+            return;
+        }
+
+        pline&#45;&#62;label = label;
+
+        label        = label&#45;&#62;next;
+    }
+
+    pdb&#45;&#62;state |= PDB_SRC_LOADED;
+    pdb&#45;&#62;file   = pfile;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_add_label</p>
+
+<p>Add a label to the label list.</p>
+
+<p>*/</p>
+
+<p>long PDB_add_label(NOTNULL(PDB_file_t *file), NOTNULL(opcode_t *cur_opcode), opcode_t offset) { PDB_label_t *_new; PDB_label_t *label = file&#45;&#62;label;</p>
+
+<pre lang='und' xml:lang='und'>    /* See if there is already a label at this line */
+    while (label) {
+        if (label&#45;&#62;opcode == cur_opcode + offset)
+            return label&#45;&#62;number;
+        label = label&#45;&#62;next;
+    }
+
+    /* Allocate a new label */
+    label        = file&#45;&#62;label;
+    _new         = mem_allocate_typed(PDB_label_t);
+    _new&#45;&#62;opcode = cur_opcode + offset;
+    _new&#45;&#62;next   = NULL;
+
+    if (label) {
+        while (label&#45;&#62;next)
+            label = label&#45;&#62;next;
+
+        _new&#45;&#62;number = label&#45;&#62;number + 1;
+        label&#45;&#62;next  = _new;
+    }
+    else {
+        file&#45;&#62;label  = _new;
+        _new&#45;&#62;number = 1;
+    }
+
+    return _new&#45;&#62;number;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_free_file</p>
+
+<p>Frees any allocated source files.</p>
+
+<p>*/</p>
+
+<p>void PDB_free_file(PARROT_INTERP) { PDB_file_t *file = interp&#45;&#62;pdb&#45;&#62;file;</p>
+
+<pre lang='und' xml:lang='und'>    while (file) {
+        /* Free all of the allocated line structures */
+        PDB_line_t *line = file&#45;&#62;line;
+        PDB_label_t *label;
+        PDB_file_t  *nfile;
+
+        while (line) {
+            PDB_line_t * const nline = line&#45;&#62;next;
+            mem_sys_free(line);
+            line  = nline;
+        }
+
+        /* Free all of the allocated label structures */
+        label = file&#45;&#62;label;
+
+        while (label) {
+            PDB_label_t * const nlabel = label&#45;&#62;next;
+
+            mem_sys_free(label);
+            label  = nlabel;
+        }
+
+        /* Free the remaining allocated portions of the file structure */
+        if (file&#45;&#62;sourcefilename)
+            mem_sys_free(file&#45;&#62;sourcefilename);
+
+        if (file&#45;&#62;source)
+            mem_sys_free(file&#45;&#62;source);
+
+        nfile = file&#45;&#62;next;
+        mem_sys_free(file);
+        file  = nfile;
+    }
+
+    /* Make sure we don&#39;t end up pointing at garbage memory */
+    interp&#45;&#62;pdb&#45;&#62;file = NULL;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_load_source</p>
+
+<p>Load a source code file.</p>
+
+<p>*/</p>
+
+<p>void PDB_load_source(PARROT_INTERP, NOTNULL(const char *command)) { FILE *file; char f[255]; int i, c; PDB_file_t *pfile; PDB_line_t *pline, *newline; PDB_t *pdb = interp&#45;&#62;pdb; opcode_t *pc = pdb&#45;&#62;cur_opcode; unsigned long size = 0;</p>
+
+<pre lang='und' xml:lang='und'>    /* If there was a file already loaded or the bytecode was
+       disassembled, free it */
+    if (pdb&#45;&#62;file)
+        PDB_free_file(interp);
+
+    /* Get the name of the file */
+    for (i = 0; command[i]; i++)
+        f[i] = command[i];
+
+    f[i] = &#39;\0&#39;;
+
+    /* open the file */
+    file = fopen(f,&#34;r&#34;);
+
+    /* abort if fopen failed */
+    if (!file) {
+        PIO_eprintf(interp, &#34;Unable to load %s\n&#34;, f);
+        return;
+    }
+
+    pfile = mem_allocate_zeroed_typed(PDB_file_t);
+    pline = mem_allocate_zeroed_typed(PDB_line_t);
+
+    pfile&#45;&#62;source = (char *)mem_sys_allocate(1024);
+    pfile&#45;&#62;line   = pline;
+    pline&#45;&#62;number = 1;
+
+    while ((c = fgetc(file)) != EOF) {
+        /* Grow it */
+        if (++size == 1024) {
+            pfile&#45;&#62;source = (char *)mem_sys_realloc(pfile&#45;&#62;source,
+                                            (size_t)pfile&#45;&#62;size + 1024);
+            size = 0;
+        }
+        pfile&#45;&#62;source[pfile&#45;&#62;size] = (char)c;
+
+        pfile&#45;&#62;size++;
+
+        if (c == &#39;\n&#39;) {
+            /* If the line has an opcode move to the next one,
+               otherwise leave it with NULL to skip it. */
+            if (PDB_hasinstruction(pfile&#45;&#62;source + pline&#45;&#62;source_offset)) {
+                size_t n;
+                pline&#45;&#62;opcode = pc;
+                n             = interp&#45;&#62;op_info_table[*pc].op_count;
+                ADD_OP_VAR_PART(interp, interp&#45;&#62;code, pc, n);
+                pc += n;
+            }
+            newline              = mem_allocate_zeroed_typed(PDB_line_t);
+            newline&#45;&#62;number      = pline&#45;&#62;number + 1;
+            pline&#45;&#62;next          = newline;
+            pline                = newline;
+            pline&#45;&#62;source_offset = pfile&#45;&#62;size;
+            pline&#45;&#62;opcode        = NULL;
+            pline&#45;&#62;label         = NULL;
+        }
+    }
+
+    pdb&#45;&#62;state |= PDB_SRC_LOADED;
+    pdb&#45;&#62;file   = pfile;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_hasinstruction</p>
+
+<p>Return true if the line has an instruction.</p>
+
+<p>XXX TODO:</p>
+
+<ul>
+<li>This should take the line, get an instruction, get the opcode for that instruction and check that is the correct one.</li><p class="pad"></p>
+
+<li>Decide what to do with macros if anything.</li><p class="pad"></p>
+</ul>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_PURE_FUNCTION char PDB_hasinstruction(NOTNULL(const char *c)) { char h = 0;</p>
+
+<pre lang='und' xml:lang='und'>    /* as long as c is not NULL, we&#39;re not looking at a comment (#...) or a &#39;\n&#39;... */
+    while (*c &#38;&#38; *c != &#39;#&#39; &#38;&#38; *c != &#39;\n&#39;) {
+        /* ... and c is alphanumeric or a quoted string then the line contains
+         * an instruction. */
+        if (isalnum((unsigned char) *c) || *c == &#39;&#34;&#39;) {
+            h = 1;
+        }
+        else if (*c == &#39;:&#39;) {
+            /* this is a label. XXX right? */
+            h = 0;
+        }
+
+        c++;
+    }
+
+    return h;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_list</p>
+
+<p>Show lines from the source code file.</p>
+
+<p>*/</p>
+
+<p>void PDB_list(PARROT_INTERP, NOTNULL(const char *command)) { char *c; long line_number; unsigned long i; PDB_line_t *line; PDB_t *pdb = interp&#45;&#62;pdb; unsigned long n = 10;</p>
+
+<pre lang='und' xml:lang='und'>    if (!pdb&#45;&#62;file) {
+        PIO_eprintf(interp, &#34;No source file loaded\n&#34;);
+        return;
+    }
+
+    command = nextarg(command);
+    /* set the list line if provided */
+    if (isdigit((unsigned char) *command)) {
+        line_number = atol(command) &#45; 1;
+        if (line_number &#60; 0)
+            pdb&#45;&#62;file&#45;&#62;list_line = 0;
+        else
+            pdb&#45;&#62;file&#45;&#62;list_line = (unsigned long) line_number;
+
+        skip_command(command);
+    }
+    else {
+        pdb&#45;&#62;file&#45;&#62;list_line = 0;
+    }
+
+    /* set the number of lines to print */
+    if (isdigit((unsigned char) *command)) {
+        n = atol(command);
+        skip_command(command);
+    }
+
+    /* if n is zero, we simply return, as we don&#39;t have to print anything */
+    if (n == 0)
+        return;
+
+    line = pdb&#45;&#62;file&#45;&#62;line;
+
+    for (i = 0; i &#60; pdb&#45;&#62;file&#45;&#62;list_line &#38;&#38; line&#45;&#62;next; i++)
+        line = line&#45;&#62;next;
+
+    i = 1;
+    while (line&#45;&#62;next) {
+        PIO_eprintf(interp, &#34;%li  &#34;,pdb&#45;&#62;file&#45;&#62;list_line + i);
+        /* If it has a label print it */
+        if (line&#45;&#62;label)
+            PIO_eprintf(interp, &#34;L%li:\t&#34;,line&#45;&#62;label&#45;&#62;number);
+
+        c = pdb&#45;&#62;file&#45;&#62;source + line&#45;&#62;source_offset;
+
+        while (*c != &#39;\n&#39;)
+            PIO_eprintf(interp, &#34;%c&#34;,*(c++));
+
+        PIO_eprintf(interp, &#34;\n&#34;);
+
+        line = line&#45;&#62;next;
+
+        if (i++ == n)
+            break;
+    }
+
+    if (&#45;&#45;i != n)
+        pdb&#45;&#62;file&#45;&#62;list_line = 0;
+    else
+        pdb&#45;&#62;file&#45;&#62;list_line += n;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_eval</p>
+
+<p><code lang='und' xml:lang='und'>eval</code>s an instruction.</p>
+
+<p>*/</p>
+
+<p>void PDB_eval(PARROT_INTERP, NOTNULL(const char *command)) { /* This code is almost certainly wrong. The Parrot debugger needs love. */ opcode_t *run = PDB_compile(interp, command);</p>
+
+<pre lang='und' xml:lang='und'>    if (run)
+        DO_OP(run,interp);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_compile</p>
+
+<p>Compiles instructions with the PASM compiler.</p>
+
+<p>Appends an <code lang='und' xml:lang='und'>end</code> op.</p>
+
+<p>This may be called from <code lang='und' xml:lang='und'>PDB_eval</code> above or from the compile opcode which generates a malloced string.</p>
+
+<p>*/</p>
+
+<p>PARROT_CAN_RETURN_NULL opcode_t * PDB_compile(PARROT_INTERP, NOTNULL(const char *command)) { STRING *buf; const char *end = &#34;\nend\n&#34;; STRING *key = const_string(interp, &#34;PASM&#34;); PMC *compreg_hash = VTABLE_get_pmc_keyed_int(interp, interp&#45;&#62;iglobals, IGLOBALS_COMPREG_HASH); PMC *compiler = VTABLE_get_pmc_keyed_str(interp, compreg_hash, key);</p>
+
+<pre lang='und' xml:lang='und'>    if (!VTABLE_defined(interp, compiler)) {
+        fprintf(stderr, &#34;Couldn&#39;t find PASM compiler&#34;);
+        return NULL;
+    }
+
+    buf = Parrot_sprintf_c(interp, &#34;%s%s&#34;, command, end);
+
+    return VTABLE_invoke(interp, compiler, buf);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_extend_const_table</p>
+
+<p>Extend the constant table.</p>
+
+<p>*/</p>
+
+<p>int PDB_extend_const_table(PARROT_INTERP) { int k = ++interp&#45;&#62;code&#45;&#62;const_table&#45;&#62;const_count;</p>
+
+<pre lang='und' xml:lang='und'>    /* Update the constant count and reallocate */
+    if (interp&#45;&#62;code&#45;&#62;const_table&#45;&#62;constants) {
+        interp&#45;&#62;code&#45;&#62;const_table&#45;&#62;constants =
+            (PackFile_Constant **)mem_sys_realloc(interp&#45;&#62;code&#45;&#62;const_table&#45;&#62;constants,
+                            k * sizeof (PackFile_Constant *));
+    }
+    else {
+        interp&#45;&#62;code&#45;&#62;const_table&#45;&#62;constants =
+            (PackFile_Constant **)mem_sys_allocate(k * sizeof (PackFile_Constant *));
+    }
+
+    /* Allocate a new constant */
+    interp&#45;&#62;code&#45;&#62;const_table&#45;&#62;constants[&#45;&#45;k] =
+        PackFile_Constant_new(interp);
+
+    return k;
+}</pre>
+
+<p>/*</p>
+
+<p>Dumps the buflen, flags, bufused, strlen, and offset associated with a string and the string itself.</p>
+
+<p>*/</p>
+
+<p>static void dump_string(PARROT_INTERP, NULLOK(const STRING *s)) { if (!s) return;</p>
+
+<pre lang='und' xml:lang='und'>    PIO_eprintf(interp, &#34;\tBuflen  =\t%12ld\n&#34;, PObj_buflen(s));
+    PIO_eprintf(interp, &#34;\tFlags   =\t%12ld\n&#34;, PObj_get_FLAGS(s));
+    PIO_eprintf(interp, &#34;\tBufused =\t%12ld\n&#34;, s&#45;&#62;bufused);
+    PIO_eprintf(interp, &#34;\tStrlen  =\t%12ld\n&#34;, s&#45;&#62;strlen);
+    PIO_eprintf(interp, &#34;\tOffset  =\t%12ld\n&#34;,
+                    (char*) s&#45;&#62;strstart &#45; (char*) PObj_bufstart(s));
+    PIO_eprintf(interp, &#34;\tString  =\t%S\n&#34;, s);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_print_user_stack</p>
+
+<p>Print an entry from the user stack.</p>
+
+<p>*/</p>
+
+<p>void PDB_print_user_stack(PARROT_INTERP, NOTNULL(const char *command)) { Stack_Entry_t *entry; long depth = 0; Stack_Chunk_t * const chunk = CONTEXT(interp&#45;&#62;ctx)&#45;&#62;user_stack;</p>
+
+<pre lang='und' xml:lang='und'>    command = nextarg(command);
+    if (*command)
+        depth = atol(command);
+
+    entry = stack_entry(interp, chunk, (INTVAL)depth);
+
+    if (!entry) {
+        PIO_eprintf(interp, &#34;No such entry on stack\n&#34;);
+        return;
+    }
+
+    switch (entry&#45;&#62;entry_type) {
+        case STACK_ENTRY_INT:
+            PIO_eprintf(interp, &#34;Integer\t=\t%8vi\n&#34;, UVal_int(entry&#45;&#62;entry));
+            break;
+        case STACK_ENTRY_FLOAT:
+            PIO_eprintf(interp, &#34;Float\t=\t%8.4vf\n&#34;, UVal_num(entry&#45;&#62;entry));
+            break;
+        case STACK_ENTRY_STRING:
+            PIO_eprintf(interp, &#34;String =\n&#34;);
+            dump_string(interp, UVal_str(entry&#45;&#62;entry));
+            break;
+        case STACK_ENTRY_PMC:
+            PIO_eprintf(interp, &#34;PMC =\n%PS\n&#34;, UVal_ptr(entry&#45;&#62;entry));
+            break;
+        case STACK_ENTRY_POINTER:
+            PIO_eprintf(interp, &#34;POINTER\n&#34;);
+            break;
+        case STACK_ENTRY_DESTINATION:
+            PIO_eprintf(interp, &#34;DESTINATION\n&#34;);
+            break;
+        default:
+            PIO_eprintf(interp, &#34;Invalid stack_entry_type!\n&#34;);
+            break;
+    }
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_print</p>
+
+<p>Print interp registers.</p>
+
+<p>*/</p>
+
+<p>void PDB_print(PARROT_INTERP, NOTNULL(const char *command)) { const char * const s = GDB_P(interp&#45;&#62;pdb&#45;&#62;debugee, command); PIO_eprintf(interp, &#34;%s\n&#34;, s); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_info</p>
+
+<p>Print the interpreter info.</p>
+
+<p>*/</p>
+
+<p>void PDB_info(PARROT_INTERP) { PIO_eprintf(interp, &#34;Total memory allocated = %ld\n&#34;, interpinfo(interp, TOTAL_MEM_ALLOC)); PIO_eprintf(interp, &#34;DOD runs = %ld\n&#34;, interpinfo(interp, DOD_RUNS)); PIO_eprintf(interp, &#34;Lazy DOD runs = %ld\n&#34;, interpinfo(interp, LAZY_DOD_RUNS)); PIO_eprintf(interp, &#34;Collect runs = %ld\n&#34;, interpinfo(interp, COLLECT_RUNS)); PIO_eprintf(interp, &#34;Collect memory = %ld\n&#34;, interpinfo(interp, TOTAL_COPIED)); PIO_eprintf(interp, &#34;Active PMCs = %ld\n&#34;, interpinfo(interp, ACTIVE_PMCS)); PIO_eprintf(interp, &#34;Extended PMCs = %ld\n&#34;, interpinfo(interp, EXTENDED_PMCS)); PIO_eprintf(interp, &#34;Timely DOD PMCs = %ld\n&#34;, interpinfo(interp, IMPATIENT_PMCS)); PIO_eprintf(interp, &#34;Total PMCs = %ld\n&#34;, interpinfo(interp, TOTAL_PMCS)); PIO_eprintf(interp, &#34;Active buffers = %ld\n&#34;, interpinfo(interp, ACTIVE_BUFFERS)); PIO_eprintf(interp, &#34;Total buffers = %ld\n&#34;, interpinfo(interp, TOTAL_BUFFERS)); PIO_eprintf(interp, &#34;Header allocations since last collect = %ld\n&#34;, interpinfo(interp, HEADER_ALLOCS_SINCE_COLLECT)); PIO_eprintf(interp, &#34;Memory allocations since last collect = %ld\n&#34;, interpinfo(interp, MEM_ALLOCS_SINCE_COLLECT)); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_help</p>
+
+<p>Print the help text. &#34;Help&#34; with no arguments prints a list of commands. &#34;Help xxx&#34; prints information on command xxx.</p>
+
+<p>*/</p>
+
+<p>void PDB_help(PARROT_INTERP, NOTNULL(const char *command)) { unsigned long c; const char *temp = command;</p>
+
+<pre lang='und' xml:lang='und'>    command = parse_command(command, &#38;c);
+
+    switch (c) {
+        case c_disassemble:
+            PIO_eprintf(interp,&#34;No documentation yet&#34;);
+            break;
+        case c_load:
+            PIO_eprintf(interp,&#34;No documentation yet&#34;);
+            break;
+        case c_list:
+            PIO_eprintf(interp,
+            &#34;List the source code.\n\n\
+Optionally specify the line number to begin the listing from and the number\n\
+of lines to display.\n&#34;);
+            break;
+        case c_run:
+            PIO_eprintf(interp,
+            &#34;Run (or restart) the program being debugged.\n\n\
+Arguments specified after \&#34;run\&#34; are passed as command line arguments to\n\
+the program.\n&#34;);
+            break;
+        case c_break:
+            PIO_eprintf(interp,
+&#34;Set a breakpoint at a given line number (which must be specified).\n\n\
+Optionally, specify a condition, in which case the breakpoint will only\n\
+activate if the condition is met. Conditions take the form:\n\n\
+           if [REGISTER] [COMPARISON] [REGISTER or CONSTANT]\n\n\
+\
+For example:\n\n\
+           break 10 if I4 &#62; I3\n\n\
+           break 45 if S1 == \&#34;foo\&#34;\n\n\
+The command returns a number which is the breakpoint identifier.&#34;);
+            break;
+        case c_script_file:
+PIO_eprintf(interp, &#34;Interprets a file.\n\
+Usage:\n\
+(pdb) script file.script\n&#34;);
+            break;
+        case c_watch:
+            PIO_eprintf(interp,&#34;No documentation yet&#34;);
+            break;
+        case c_delete:
+            PIO_eprintf(interp,
+&#34;Delete a breakpoint.\n\n\
+The breakpoint to delete must be specified by its breakpoint number.\n\
+Deleted breakpoints are gone completely. If instead you want to\n\
+temporarily disable a breakpoint, use \&#34;disable\&#34;.\n&#34;);
+            break;
+        case c_disable:
+            PIO_eprintf(interp,
+&#34;Disable a breakpoint.\n\n\
+The breakpoint to disable must be specified by its breakpoint number.\n\
+Disabled breakpoints are not forgotten, but have no effect until re&#45;enabled\n\
+with the \&#34;enable\&#34; command.\n&#34;);
+            break;
+        case c_enable:
+            PIO_eprintf(interp,&#34;Re&#45;enable a disabled breakpoint.\n&#34;);
+            break;
+        case c_continue:
+            PIO_eprintf(interp,
+&#34;Continue the program execution.\n\n\
+Without arguments, the program runs until a breakpoint is found\n\
+(or until the program terminates for some other reason).\n\n\
+If a number is specified, then skip that many breakpoints.\n\n\
+If the program has terminated, then \&#34;continue\&#34; will do nothing;\n\
+use \&#34;run\&#34; to re&#45;run the program.\n&#34;);
+            break;
+        case c_next:
+            PIO_eprintf(interp,
+&#34;Execute a specified number of instructions.\n\n\
+If a number is specified with the command (e.g. \&#34;next 5\&#34;), then\n\
+execute that number of instructions, unless the program reaches a\n\
+breakpoint, or stops for some other reason.\n\n\
+If no number is specified, it defaults to 1.\n&#34;);
+            break;
+        case c_eval:
+            PIO_eprintf(interp,&#34;No documentation yet&#34;);
+            break;
+        case c_trace:
+            PIO_eprintf(interp,
+&#34;Similar to \&#34;next\&#34;, but prints additional trace information.\n\
+This is the same as the information you get when running Parrot with\n\
+the &#45;t option.\n&#34;);
+            break;
+        case c_print:
+            PIO_eprintf(interp,&#34;Print register: e.g. p I2\n&#34;);
+            break;
+        case c_info:
+            PIO_eprintf(interp,
+                    &#34;Print information about the current interpreter\n&#34;);
+            break;
+        case c_quit:
+            PIO_eprintf(interp, &#34;Exit the debugger.\n&#34;);
+            break;
+        case c_help:
+            PIO_eprintf(interp, &#34;Print a list of available commands.\n&#34;);
+            break;
+        case 0:
+            /* C89: strings need to be 509 chars or less */
+            PIO_eprintf(interp, &#34;\
+List of commands:\n\
+    disassemble  &#45;&#45; disassemble the bytecode\n\
+    load         &#45;&#45; load a source code file\n\
+    list     (l) &#45;&#45; list the source code file\n\
+    run      (r) &#45;&#45; run the program\n\
+    break    (b) &#45;&#45; add a breakpoint\n\
+    script   (f) &#45;&#45; interprets a file as user commands\n\
+    watch    (w) &#45;&#45; add a watchpoint\n\
+    delete   (d) &#45;&#45; delete a breakpoint\n\
+    disable      &#45;&#45; disable a breakpoint\n\
+    enable       &#45;&#45; reenable a disabled breakpoint\n\
+    continue (c) &#45;&#45; continue the program execution\n&#34;);
+            PIO_eprintf(interp, &#34;\
+    next     (n) &#45;&#45; run the next instruction\n\
+    eval     (e) &#45;&#45; run an instruction\n\
+    trace    (t) &#45;&#45; trace the next instruction\n\
+    print    (p) &#45;&#45; print the interpreter registers\n\
+    stack    (s) &#45;&#45; examine the stack\n\
+    info         &#45;&#45; print interpreter information\n\
+    quit     (q) &#45;&#45; exit the debugger\n\
+    help     (h) &#45;&#45; print this help\n\n\
+Type \&#34;help\&#34; followed by a command name for full documentation.\n\n&#34;);
+            break;
+        default:
+            PIO_eprintf(interp, &#34;Unknown command: \&#34;%s\&#34;.&#34;, temp);
+            break;
+    }
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PDB_backtrace</p>
+
+<p>Prints a backtrace of the interp&#39;s call chain.</p>
+
+<p>*/</p>
+
+<p>void PDB_backtrace(PARROT_INTERP) { STRING *str; PMC *old = PMCNULL; int rec_level = 0;</p>
+
+<pre lang='und' xml:lang='und'>    /* information about the current sub */
+    PMC              *sub = interpinfo_p(interp, CURRENT_SUB);
+    parrot_context_t *ctx = CONTEXT(interp&#45;&#62;ctx);
+
+    if (!PMC_IS_NULL(sub)) {
+        str = Parrot_Context_infostr(interp, ctx);
+        if (str)
+            PIO_eprintf(interp, &#34;%Ss\n&#34;, str);
+    }
+
+    /* backtrace: follow the continuation chain */
+    while (1) {
+        Parrot_cont *sub_cont;
+        sub = ctx&#45;&#62;current_cont;
+
+        if (!sub)
+            break;
+
+        sub_cont = PMC_cont(sub);
+
+        if (!sub_cont)
+            break;
+
+        str = Parrot_Context_infostr(interp, sub_cont&#45;&#62;to_ctx);
+
+        if (!str)
+            break;
+
+        /* recursion detection */
+        if (!PMC_IS_NULL(old) &#38;&#38; PMC_cont(old) &#38;&#38;
+            PMC_cont(old)&#45;&#62;to_ctx&#45;&#62;current_pc ==
+            PMC_cont(sub)&#45;&#62;to_ctx&#45;&#62;current_pc &#38;&#38;
+            PMC_cont(old)&#45;&#62;to_ctx&#45;&#62;current_sub ==
+            PMC_cont(sub)&#45;&#62;to_ctx&#45;&#62;current_sub) {
+                ++rec_level;
+        }
+        else if (rec_level != 0) {
+            PIO_eprintf(interp, &#34;... call repeated %d times\n&#34;, rec_level);
+            rec_level = 0;
+        }
+
+        /* print the context description */
+        if (rec_level == 0)
+            PIO_eprintf(interp, &#34;%Ss\n&#34;, str);
+
+        /* get the next Continuation */
+        ctx = PMC_cont(sub)&#45;&#62;to_ctx;
+        old = sub;
+
+        if (!ctx)
+            break;
+    }
+
+    if (rec_level != 0)
+        PIO_eprintf(interp, &#34;... call repeated %d times\n&#34;, rec_level);
+}</pre>
+
+<p>/* * GDB functions * * GDB_P gdb&#62; pp $I0 print register I0 value * * TODO more, more */</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL static const char* GDB_P(PARROT_INTERP, NOTNULL(const char *s)) { int t, n; switch (*s) { case &#39;I&#39;: t = REGNO_INT; break; case &#39;N&#39;: t = REGNO_NUM; break; case &#39;S&#39;: t = REGNO_STR; break; case &#39;P&#39;: t = REGNO_PMC; break; default: return &#34;no such reg&#34;; } if (s[1] &#38;&#38; isdigit((unsigned char)s[1])) n = atoi(s + 1); else return &#34;no such reg&#34;;</p>
+
+<pre lang='und' xml:lang='und'>    if (n &#62;= 0 &#38;&#38; n &#60; CONTEXT(interp&#45;&#62;ctx)&#45;&#62;n_regs_used[t]) {
+        switch (t) {
+            case REGNO_INT:
+                return string_from_int(interp, REG_INT(interp, n))&#45;&#62;strstart;
+            case REGNO_NUM:
+                return string_from_num(interp, REG_NUM(interp, n))&#45;&#62;strstart;
+            case REGNO_STR:
+                return REG_STR(interp, n)&#45;&#62;strstart;
+            case REGNO_PMC:
+                /* prints directly */
+                trace_pmc_dump(interp, REG_PMC(interp, n));
+                return &#34;&#34;;
+        }
+    }
+    return &#34;no such reg&#34;;
+}</pre>
+
+<p>/* TODO move these to debugger interpreter */ static PDB_breakpoint_t *gdb_bps;</p>
+
+<p>/* * GDB_pb gdb&#62; pb 244 # set breakpoint at opcode 244 * * XXX We can&#39;t remove the breakpoint yet, executing the next ins * most likely fails, as the length of the debug&#45;brk stmt doesn&#39;t * match the old opcode * Setting a breakpoint will also fail, if the bytecode os r/o * */ static int GDB_B(PARROT_INTERP, NOTNULL(char *s)) { int nr; opcode_t *pc; PDB_breakpoint_t *bp, *newbreak;</p>
+
+<pre lang='und' xml:lang='und'>    if ((unsigned long)s &#60; 0x10000) {
+        /* HACK alarm  pb 45 is passed as the integer not a string */
+        /* TODO check if in bounds */
+        pc = interp&#45;&#62;code&#45;&#62;base.data + (unsigned long)s;
+
+        if (!gdb_bps) {
+            nr             = 0;
+            newbreak       = mem_allocate_typed(PDB_breakpoint_t);
+            newbreak&#45;&#62;prev = NULL;
+            newbreak&#45;&#62;next = NULL;
+            gdb_bps        = newbreak;
+        }
+        else {
+            /* create new one */
+            for (nr = 0, bp = gdb_bps; ; bp = bp&#45;&#62;next, ++nr) {
+                if (bp&#45;&#62;pc == pc)
+                    return nr;
+
+                if (!bp&#45;&#62;next)
+                    break;
+            }
+
+            ++nr;
+            newbreak       = mem_allocate_typed(PDB_breakpoint_t);
+            newbreak&#45;&#62;prev = bp;
+            newbreak&#45;&#62;next = NULL;
+            bp&#45;&#62;next       = newbreak;
+        }
+
+        newbreak&#45;&#62;pc = pc;
+        newbreak&#45;&#62;id = *pc;
+        *pc          = PARROT_OP_trap;
+
+        return nr;
+    }
+
+    return &#45;1;
+}</pre>
+
+<p>/*</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/debug.h</em>, <em lang='und' xml:lang='und'><a href="pdb.c.html">src/pdb.c</a></em> and <em lang='und' xml:lang='und'>ops/debug.ops</em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Initial_version_by_Daniel_Grunblatt_on_2002.5.19."
+>Initial version by Daniel Grunblatt on 2002.5.19.</a></dt><p class="pad"></p>
+
+<dt><a name="Start_of_rewrite_&#45;_leo_2005.02.16"
+>Start of rewrite &#45; leo 2005.02.16</a></dt><p class="pad"></p>
+
+<dd>The debugger now uses its own interpreter. User code is run in Interp *debugee. We have:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  debug_interp&#45;&#62;pdb&#45;&#62;debugee&#45;&#62;debugger
+    ^                            |
+    |                            v
+    +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45; := &#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<dd>Debug commands are mostly run inside the <code lang='und' xml:lang='und'>debugger</code>. User code runs of course in the <code lang='und' xml:lang='und'>debugee</code>.</dd><p class="pad"></p>
+</dl>
+
+<p>*/</p>
+
+<p>/* * Local variables: * c&#45;file&#45;style: &#34;parrot&#34; * End: * vim: expandtab shiftwidth=4: */</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

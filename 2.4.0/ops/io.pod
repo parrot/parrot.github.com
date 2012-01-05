@@ -1,0 +1,244 @@
+=head1 NAME
+
+io.ops - I/O Opcodes
+
+
+=cut
+
+=head1 DESCRIPTION
+
+Parrot's IO API
+
+
+=cut
+
+=head2 Parrot IO API Operations
+
+
+=over 4
+
+
+=cut
+
+=item B<close>(invar PMC)
+
+Close IO object $1
+
+
+=cut
+
+=item B<fdopen>(out PMC, in INT, in STR)
+
+Create ParrotIO object in $1 as a copy of file descriptor $2.
+
+
+=cut
+
+=item B<getstdin>(out PMC)
+
+Create a new ParrotIO object for the stdin file descriptor and
+store it in $1
+
+=item B<getstdout>(out PMC)
+
+Create a new ParrotIO object for the stdout file descriptor and
+store it in $1
+
+=item B<getstderr>(out PMC)
+
+Create a new ParrotIO object for the stderr file descriptor and
+store it in $1
+
+
+=cut
+
+=item B<setstdin>(invar PMC)
+
+Sets the standard input for a bare C<read> op to go to the supplied PMC.
+Call C<getstdin> first if you care about retaining the previous PMC.
+
+=item B<setstdout>(invar PMC)
+
+Sets the standard output for a bare C<print> op to go to the supplied PMC.
+Call C<getstdout> first if you care about retaining the previous PMC.
+
+=item B<setstderr>(invar PMC)
+
+Sets the standard error for a bare C<printerr> op to go to the supplied PMC.
+Call C<getstderr> first if you care about retaining the previous PMC.
+
+
+=cut
+
+=item B<open>(out PMC, in STR, in STR)
+
+Open URL (file, address, database, in core image) named $2 with
+a mode string in $3 and create an IO object in $1.
+
+The mode consists of a string of characters specified in any order:
+
+ r : read
+ w : write
+ a : append (Note: you must specify "wa", not just "a")
+ p : pipe
+
+=item B<open>(out PMC, in STR)
+
+Open URL (file, address, database, in core image) named $2 with
+read mode and create an IO object in $1.
+
+
+=cut
+
+=item B<print>(in INT)
+
+=item B<print>(in NUM)
+
+=item B<print>(invar PMC)
+
+=item B<print>(in STR)
+
+Print $1 to standard output.
+
+
+=cut
+
+=item B<say>(in INT)
+
+=item B<say>(in NUM)
+
+=item B<say>(invar PMC)
+
+=item B<say>(in STR)
+
+Print $1 to standard output with a trailing newline.
+
+
+=cut
+
+=item B<printerr>(in INT)
+
+=item B<printerr>(in NUM)
+
+=item B<printerr>(in STR)
+
+=item B<printerr>(invar PMC)
+
+Print $1 to standard error.
+
+
+=cut
+
+=item B<print>(invar PMC, in INT)
+
+=item B<print>(invar PMC, in NUM)
+
+=item B<print>(invar PMC, in STR)
+
+=item B<print>(invar PMC, invar PMC)
+
+Print $2 on the IO stream object $1.
+
+
+=cut
+
+=item B<read>(out STR, in INT)
+
+Read up to N bytes from standard input stream
+
+=item B<read>(out STR, invar PMC, in INT)
+
+Read up to N bytes from IO PMC stream.
+
+
+=cut
+
+=item B<readline>(out STR, invar PMC)
+
+Read a line up to EOL from filehandle $2.
+This switches the filehandle to linebuffer-mode.
+
+
+=cut
+
+=item B<peek>(out STR)
+
+Returns the next byte from standard input, but does not
+remove it from the stream.
+
+=item B<peek>(out STR, invar PMC)
+
+Reads the next byte from an IO PMC, but does not
+remove it from the stream.
+
+
+=cut
+
+=item B<stat>(out INT, in STR, in INT)
+
+=item B<stat>(out INT, in INT, in INT)
+
+Stat the file. Return stat element $3 for file $2 into $1. The queryable
+items currently are:
+
+ EXISTS     0
+ FILESIZE   1
+ ISDIR      2
+ ISDEV      3
+ CREATETIME 4 (Time file was created)
+ ACCESSTIME 5 (Time file was last accessed)
+ MODIFYTIME 6 (Time file data was changed)
+ CHANGETIME 7 (Time file metadata was changed)
+ BACKUPTIME 8 (Time of last backup)
+ UID        9
+ GID        10
+
+
+
+=cut
+
+=item B<seek>(invar PMC, in INT, in INT)
+
+seek:
+Set file position to offset $2 on IO stream $1. 'whence' is
+indicated by the value in $3. The valid values for 'whence' are:
+
+ Value      Meaning
+ 0          Seek from the beginning of the file
+ 1          Seek from the current position
+ 2          Seek from the end of the file
+
+[ Note: the above values for 'whence' is just an educated guess
+at this point ]
+
+=item B<seek>(invar PMC, in INT, in INT, in INT)
+
+64bit seek:
+Set file position to offset ($2 << 32 | $3) on IO stream $1. 'whence' is
+indicated by the value in $4. This allows 64-bit seeks with only 32-bit
+INTVALS.
+
+
+=cut
+
+=item B<tell>(out INT, invar PMC)
+
+tell:
+Get the current file position of stream $2 and store it in $1.
+On systems where INTVAL is 32bit the result will be truncated if the
+position is beyond 2 GiB
+
+=item B<tell>(out INT, out INT, invar PMC)
+
+64bit tell:
+Get the current file positon of stream $3 in two parts of 32-bit each
+($1 = pos >> 32, $2 = pos & 0xffffffff).
+
+
+=cut
+
+=back
+
+
+=cut
+

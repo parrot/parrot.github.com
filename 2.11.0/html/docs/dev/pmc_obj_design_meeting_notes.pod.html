@@ -1,0 +1,194 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot PMC/Object Design Meeting Notes</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Parrot PMC/Object Design Meeting Notes
+                </div>
+
+<h1><a name="Parrot_PMC/Object_Design_Meeting_Notes"
+>Parrot PMC/Object Design Meeting Notes</a></h1>
+
+<p>During the Chicago Hackathon 2006,
+Jerry Gay,
+Matt Diephouse,
+chromatic,
+Leo Toetch,
+Jonathan Worthington and Chip Salzenberg (arriving late) met to discuss problems and proposed solutions for Parrot PMCs and objects.
+Previous to the meeting,
+wiki pages were set up to gather a list of problems,
+they can be found at <a href='http://rakudo.org/hackathon&#45;chicago/index.cgi?object'><a href="http://rakudo.org/hackathon&#45;chicago/index.cgi?object">http://rakudo.org/hackathon&#45;chicago/index.cgi?object</a></a> and <a href='http://rakudo.org/hackathon&#45;chicago/index.cgi?pmc'><a href="http://rakudo.org/hackathon&#45;chicago/index.cgi?pmc">http://rakudo.org/hackathon&#45;chicago/index.cgi?pmc</a></a>.
+A log of the discussion that took place can be found at <a href='http://www.parrotcode.org/misc/parrotsketch&#45;logs/irclog.parrotsketch&#45;200611/irclog.parrotsketch.20061112'><a href="http://www.parrotcode.org/misc/parrotsketch&#45;logs/irclog.parrotsketch&#45;200611/irclog.parrotsketch.20061112">http://www.parrotcode.org/misc/parrotsketch&#45;logs/irclog.parrotsketch&#45;200611/irclog.parrotsketch.20061112</a></a>.</p>
+
+<p>This summary has been compiled from these sources,
+and from other conversations that were not recorded.</p>
+
+<h2><a name="List_of_problems_and_proposed_solutions_for_PMCs:"
+>List of problems and proposed solutions for PMCs:</a></h2>
+
+<dl>
+<dt><a name="Not_all_PMCs_properly_serialize_properties_by_calling_the_default_implementation"
+>Not all PMCs properly serialize properties by calling the default implementation</a></dt>
+This is one of many troubles with properties.
+Also,
+properties were invented at a time when it looked like Perl 6 needed them,
+however this suspected use case has so far proven incorrect.
+A general property system means every PMC might get properties at runtime,
+so all PMCs share the burden all the time of an uncommonly&#45;used &#34;feature&#34;.
+Furthermore,
+a property as currently implemented is one full&#45;blown hash per object,
+typically to store a single value.
+The same effect can easily be achieved by using one AddrRegistry Hash to store values in it.
+Finally,
+if some class system needs properties,
+it can implement it itself.<b>Recommendation</b>: Deprecate property support in PMCs.
+We may put them back in later,
+but if we do,
+it will be for a good reason.Allison: What is the proposed alternate strategy for altering the attribute structure of an object at runtime?
+I&#39;m still not in favor of removing properties.
+The distinction isn&#39;t a high&#45;level one,
+it&#39;s a low&#45;level implementation distinction.
+Would it help if we call them &#34;static attributes&#34; and &#34;dynamic attributes&#34;?
+<dt><a name="Attributes_use_external_data_slot_(pmc_ext)"
+>Attributes use external data slot (pmc_ext)</a></dt>
+When attributes are used on a PMC,
+they are stored in the single external data segment associated with a PMC.
+This prevents the use of attributes and storage of non&#45;attribute data in the PMC external data segment,
+limiting their usefulness to all but the most simple PMC types.<b>Recommendation</b>: Implement differently&#45;sized PMCs.
+The proposed pddXX_pmc.pod has been reviewed,
+and the implementation of a prototype solution has been requested.
+Work on this prototype is targeted to begin in trunk after the 0.4.7 release.Allison: Agreed.
+<dt><a name="DYNSELF_is_the_common_case,_but_the_common_case_should_be_SELF"
+>DYNSELF is the common case,
+but the common case should be SELF</a></dt>
+The DYNSELF macro is closer to the true OO concept of &#39;self&#39;; if anything is worthy of the name SELF,
+it is DYNSELF.
+DYNSELF does dispatching,
+while SELF statically calls the method in the current class.<b>Recommendation</b>: Throughout the source,
+rename SELF to STATIC_SELF,
+and rename DYNSELF to SELF.
+Additionally,
+direct access to VTABLE functions should be reviewed,
+and SELF should be used where possible to increase clarity and maintainability (this is a good CAGE task.) Also,
+this should become a coding standard for PMCs.Allison: OK on the rename of DYNSELF to SELF,
+but we need a better name than STATIC_SELF.
+Where is the non&#45;dispatching version likely to be used and why?<b>Att:</b> SELF is just a synonym for <i>pmc</i> &#45; the object &#45; above is talking about SELF.method() and alikes.
+See <em>lib/Parrot/Pmc2c.pm</em>.
+<dt><a name="composition_is_almost_non&#45;existent_(roles_would_be_nice)"
+>composition is almost non&#45;existent (roles would be nice)</a></dt>
+The current class composition uses interfaces,
+which seems inadequate.
+Roles may make better composition units,
+but may not make supporting Perl 5 OO easier.
+Leo,
+chromatic,
+Matt,
+and Jonathan traded ideas on the subject.
+It seems more investigation and discussion is in order.<b>Recommendation</b>: Leo,
+chromatic,
+Matt,
+and Jonathan should exchange ideas on the subject in a meeting within the next two weeks.
+Hopefully this exchange of ideas will lead to clarity on a proposed solution to a class composition model.Allison: Definitely in favor of a composition model.
+<dt><a name="split_VTABLE_functions_into_related_categories"
+>split VTABLE functions into related categories</a></dt>
+Someone had mentioned the idea of splitting the PMC vtable functions into groups of related functions that you could choose to implement or not implement.
+All keyed vtable functions would go in one group,
+for example.Leo pointed to a p2 thread on the topic: <a href='http://groups.google.at/group/perl.perl6.internals/browse_thread/thread/9ea5d132cb6a328b/4b83e54a13116d7c?lnk=st&#38;q=interface+vtable+Toetsch&#38;rnum=2#4b83e54a13116d7c'><a href="http://groups.google.at/group/perl.perl6.internals/browse_thread/thread/9ea5d132cb6a328b/4b83e54a13116d7c?lnk=st&#38;q=interface+vtable+Toetsch&#38;rnum=2#4b83e54a13116d7c">http://groups.google.at/group/perl.perl6.internals/browse_thread/thread/9ea5d132cb6a328b/4b83e54a13116d7c?lnk=st&#38;q=interface+vtable+Toetsch&#38;rnum=2#4b83e54a13116d7c</a></a>Others thought this idea sounded intriguing,
+and that it was worth pursuing.<b>Recommendation</b>: Elaboration on this idea is required in order to focus thought on design considerations.
+No timeframe has been set.Allison: Yes,
+needs a more complete proposal.</dl>
+
+<h2><a name="List_of_problems_and_proposed_solutions_for_objects:"
+>List of problems and proposed solutions for objects:</a></h2>
+
+<dl>
+<dt><a name="Class_namespace_is_global"
+>Class namespace is global</a></dt>
+At present it is not possible for a HLL to define a classname that has already been used by another HLL.
+(Example: PGE/Perl 6 cannot define a class named &#39;Closure&#39; because Parrot already has one.) Chip and chromatic discussed this before the meeting,
+and Chip has a solution &#39;almost ready.&#39;Discussion moved into class/namespace relationships,
+and metaclasses as it relates to method dispatch order,
+and the potential to incorporate roles instead of metaclasses,
+which brought the tangent back to previous discussion on class composition,
+before the discussion was tabled.)<b>Recommendation</b>: Chip,
+based on prior thought,
+as well as this discussion,
+will detail his plan.
+We know it includes a registry of class names for each HLL,
+but more will be revealed soon.Allison: das ist gut.
+<dt><a name="PMC_vtable_entries_don&#39;t_work_in_subclasses_(or_subsubclasses)"
+>PMC vtable entries don&#39;t work in subclasses (or subsubclasses)</a></dt>
+Currently things are handled by deleg_pmc.pmc and default.pmc.
+Unfortunately,
+it appears that calls to vtable entries in default.pmc take place before delegation to a superclass.
+Patrick proposes that this be switched somehow; e.g,
+inheritance should be preferred over default vtable entries.
+See <a href='https://rt.perl.org/rt3//Ticket/Display.html?id=39329'>https://rt.perl.org/rt3//Ticket/Display.html?id=39329</a>.<b>Recommendation</b>: Inherit from default.pmc unless you have a parent.
+Always check inheritance when dispatching,
+if necessary.
+Chip will look specifically at Capture PMCs and attempt to provide a solution without architectural changes,
+enabling Patrick&#39;s work to continue.Allison: das ist gut.
+Also looks like a good point for potential architectural changes in the updated objects PDD.
+<dt><a name="PMC_methods_aren&#39;t_inherited_by_ParrotObject_pmcs"
+>PMC methods aren&#39;t inherited by ParrotObject pmcs</a></dt>
+A METHOD defined in a PMC won&#39;t work unless it&#39;s been specifically coded to work in a PIR&#45;based subclass.
+See <a href='http://xrl.us/s7ns'><a href="http://xrl.us/s7ns">http://xrl.us/s7ns</a></a>.<b>Recommendation</b>: All direct data access should go through accessors,
+except for within the accessors themselves.
+This involves a code review of all core and custom PMCs,
+which has been recommended above as well.
+This may require further discussion,
+as Patrick did not seem confident that this statement was sufficient to resolve the situation.Patrick&#39;s after&#45;meeting response: The unresolved issue I&#39;m seeing is that every PMC has to be aware of the possibility that SELF is a ParrotObject instead of the PMC type.
+For example,
+src/pmc/capture.pmc currently has its methods as
+<pre>    METHOD PMC* get_array() {
+        PMC* capt = SELF;
+        /* XXX:  This workaround is for when we get here as
+                 part of a subclass of Capture */
+        if (PObj_is_object_TEST(SELF))
+            capt = get_attrib_num(PMC_data(SELF), 0);
+        CAPTURE_array_CREATE(INTERP, capt);
+        return CAPTURE_array(capt);
+    }</pre>
+It&#39;s the &#34;if (PObj_is_object_TEST(SELF))&#34; clause that bugs me &#45;&#45; does every PMC METHOD have to have something like this in order for subclassing to work properly? That feels wrong. And I don&#39;t see how the solution of &#34;all direct data access goes through accessors&#34; applies to this particular situation... although I could just be reading it wrong. &#45;&#45;PmAllison: ParrotObjects and PMCs were intended to be completely substitutable. Clearly they aren&#39;t yet, but the solution to the problem is not to add more and more checks for whether a particular PMC is an Object, but to give ParrotObjects and low&#45;level PMCs the ability to be subclassed through a single standard interface (even if each has completely different code behind the interface making it work).
+<dt><a name="getattribute/setattribute_efficiency"
+>getattribute/setattribute efficiency</a></dt>
+Dan used to often remark that sequences like the following were &#34;very slow&#34;:<pre> $P0 = getattribute obj, "foo"
+ $P1 = getattribute obj, "bar"
+ $P2 = getattribute obj, "baz"
+</pre>Instead, Dan suggested always using classoffset to obtain attributes:<pre> $I0 = classoffset obj, "FooClass"
+ $P0 = getattribute obj, $I0 # which attr is this?
+ inc $I0
+ $P0 = getattribute obj, $I0 # and that?
+ inc $I0
+ $P0 = getattribute obj, $I0
+</pre>Unfortunately, this doesn&#39;t seem to be very practical in many respects. Can we at least get a declaration from the designers about the appropriate style to use for object attributes? I much prefer the former to the latter, and if it&#39;s a question of efficiency we should make the former more efficient somehow.The latter takes 2 opcodes, which is per se suboptimal, The former is much more readable, just one opcode and optimizable and never subject of any caching effects of the offset (e.g. what happens, if the getattribute has some nasty side&#45;effects like adding new attributes?)Oh well, and classoffset does of course not work for Hash&#45;like or other objects.<b>Recommendation</b>: Best practice is to use named attribute access. Optimizations, if necessary, will be addressed closer to 1.0. Issues with classoffset and hash&#45;like objects will be addressed in the future as necessary.Allison: Agreed.</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Jerry Gay <a href='mailto:jerry.gay@gmail.com'>mailto:jerry.gay@gmail.com</a></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/dynapmc.html">Dynamic PMCs</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="OVERVIEW"
+>OVERVIEW <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This is a build directory for custom PMCs with a sample foo.pmc providing the Foo PMC class.</p>
+
+<h1><a name="CREATING_A_DYNAMIC_PMC"
+>CREATING A DYNAMIC PMC <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<ol>
+<li>Edit/create your foo.pmc source &#45; For details on creating PMCs,
+see <em lang='und' xml:lang='und'><a href="../../tools/dev/gen_class.pl.html">tools/dev/gen_class.pl</a></em></li><p class="pad"></p>
+
+<p>There are some differences you have to be aware of when creating dynamic PMCs.</p>
+
+<p>When declaring the dynamic PMC,
+you must specify the <code lang='und' xml:lang='und'>dynpmc</code> flag,
+as in:</p>
+
+<pre lang='und' xml:lang='und'>        pmclass TclString extends TclObject dynpmc ... { ... }</pre>
+
+<p>Note that regular (non&#45;dynamic) PMCs have a type id <code lang='und' xml:lang='und'>enum_class_PMCNAME</code>, but dynamic PMCs obviously cannot use the same thing. Instead, a dynamically&#45;chosen value is assigned at runtime &#45; so, when you refer to the type of the class , you must dynamically determine the PMC type. So, while <code lang='und' xml:lang='und'>scalar</code> (a builtin) has the luxury of knowing at compile time what the class number of its child <code lang='und' xml:lang='und'>String</code> is &#45;&#45; for example:</p>
+
+<pre lang='und' xml:lang='und'>        if (type == enum_class_String) { ...</pre>
+
+<p>a dynamic PMC such as <code lang='und' xml:lang='und'>TclInt</code> must instead perform a runtime lookup of its corresponding <code lang='und' xml:lang='und'>TclString</code> PMC, resulting in the more complicated:</p>
+
+<pre lang='und' xml:lang='und'>  static INTVAL dynpmc_TclString;
+
+  pmclass TclInt extends TclObject extends Integer dynpmc group tcl_group {
+
+    void class_init() {
+      if (pass) {
+        dynpmc_TclString = Parrot_PMC_typenum(interp,&#34;TclString&#34;);
+      }
+    }
+  }</pre>
+
+<p>Finally, if you have a group of PMCs that are interdependent, use the <code lang='und' xml:lang='und'>group GROUPNAME</code> syntax to trigger a group library to be built. You will use the group name as the name of the library to load using the PASM op <code lang='und' xml:lang='und'>loadlib</code>.</p>
+
+<pre lang='und' xml:lang='und'>        pmclass Match extends Hash dynpmc group match_group { ... }</pre>
+
+<p>and then in your .pir or .pasm file:</p>
+
+<pre lang='und' xml:lang='und'>        loadlib $P0, &#34;match_group&#34;</pre>
+
+<li>Edit <code lang='und' xml:lang='und'>../../config/gen/makefiles/dynpmc.in</code> and append your PMC(s) to the build target. The dynpmc.in file is processed by Configure.pl to create the real makefiles. So, invoke the configure script, then make:</li><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>        $ perl Configure.pl
+        $ make</pre>
+
+<li>If anything changes inside parrot, be sure to:</li><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>        $ make dynpmc&#45;clean</pre>
+</ol>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

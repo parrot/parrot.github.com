@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/basic.html">BASIC</a> | <a href="../../../../html/basic_compiler.html">BASIC Compiler</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<p>I can&#39;t test this on windows,
+and it&#39;s currently broken.
+Please fix it.</p>
+
+<p>.const int SIZEOF_CONSOLE_SCREEN_BUFFER_INFO = 22 .const int SIZEOF_DWORD = 4 .sub _win32_setup # void win32_setup(void) loadlib P1,
+&#34;kernel32.dll&#34; dlfunc P0,
+P1,
+&#34;GetStdHandle&#34;,
+&#34;pi&#34; set I0,
+1 set I5,
+&#45;11 invoke store_global &#34;kernel32&#34;,
+P1 store_global &#34;Win32handle&#34;,
+P5 set I0,
+1 set I5,
+&#45;10 invoke store_global &#34;Win32Inputhandle&#34;,
+P5 $P0= new .PerlHash store_global &#34;Win32console&#34;,
+$P0 _WIN32_CONSOLE_INFO() .end .sub _win32_shutdown # void win32_shutdown(void) .end .sub _WIN32_CONSOLE_INFO # void WIN32_CONSOLE_INFO(void) find_global P1,
+&#34;kernel32&#34; dlfunc P0,
+P1,
+&#34;GetConsoleScreenBufferInfo&#34;,
+&#34;ipp&#34; find_global P5,
+&#34;Win32handle&#34; P6=new .ManagedStruct set P6,
+SIZEOF_CONSOLE_SCREEN_BUFFER_INFO set I0,
+1 invoke set P5,
+P6 find_global P0,
+&#34;Win32console&#34;</p>
+
+<pre lang='und' xml:lang='und'>        $I1 = _UMS_GET_SHORT(0,P5) # 0==dwSize.X
+        set P0[&#34;xbuf&#34;], $I1
+
+        $I1 = _UMS_GET_SHORT(2,P5) # 0==dwSize.X
+        set P0[&#34;ybuf&#34;], $I1
+
+        $I1 = _UMS_GET_SHORT(4,P5)
+        inc $I1
+        set P0[&#34;curx&#34;], $I1
+
+        $I1 = _UMS_GET_SHORT(4,P5)
+        inc $I1
+        set P0[&#34;cury&#34;], $I1
+
+        set $I1, P5[8]
+        set P0[&#34;attr&#34;], $I1     # wAttributes
+.end
+.sub _UMS_GET_SHORT             # int value ums_get_short(int offset, ManagedStruct buf)
+        .param int offset
+        .param ManagedStruct buf
+        set $I2, buf[offset]
+        inc offset
+        set $I3, buf[offset]
+        shl $I3, $I3, 8
+        add $I3, $I3, $I2
+        .return($I3)
+.end
+.sub _win32_screen_clear        # void _WIN32_SCREEN_CLEAR(void)
+        _WIN32_CONSOLE_CLEAR()
+        _WIN32_CONSOLE_HOME()
+.end
+.sub _WIN32_CONSOLE_HOME        # void Win32_console_home(void)
+        find_global P2, &#34;kernel32&#34;
+        dlfunc P0, P2, &#34;SetConsoleCursorPosition&#34;, &#34;ipi&#34;
+        set I0, 1
+        find_global P5, &#34;Win32handle&#34;
+        set I5, 0
+        invoke
+.end</pre>
+
+<p>.sub _WIN32_CONSOLE_CLEAR # void Win32_console_clear(void) find_global P1, &#34;Win32console&#34; find_global P2, &#34;kernel32&#34; dlfunc P0, P2, &#34;FillConsoleOutputCharacterA&#34;, &#34;ipcilp&#34; set I0, 1 find_global P5, &#34;Win32handle&#34; P6=new .ManagedStruct set P6, SIZEOF_DWORD set I5, 32 # Char (space) set I1, P1[&#34;xbuf&#34;] set I2, P1[&#34;ybuf&#34;] mul I6, I1, I2 # Length set I7, 0 # Coords invoke # Now, re&#45;fill screen with whatever attribute is currently # in effect. dlfunc P0, P2, &#34;FillConsoleOutputAttribute&#34;, &#34;ipiilp&#34; set I0, 1 find_global P5, &#34;Win32handle&#34; P6= new .ManagedStruct set P6, SIZEOF_DWORD set I5, P1[&#34;attr&#34;] # Attrib set I1, P1[&#34;xbuf&#34;] set I2, P1[&#34;ybuf&#34;] mul I6, I1, I2 # Length set I7, 0 # Coords invoke .end .sub _WIN32_SCREEN_FINDPOS # void Win32_screen_findpos(void) _WIN32_CONSOLE_INFO() .end .sub _WIN32_SCREEN_GETXCUR # int win32_screen_getxcur(void) find_global P1, &#34;Win32console&#34; set $I0, P1[&#34;curx&#34;] .return($I0) .end .sub _WIN32_SCREEN_GETYCUR # int win32_screen_getycur(void) find_global P1, &#34;Win32console&#34; set $I0, P1[&#34;cury&#34;] .return($I0) .end .sub _WIN32_SCREEN_SETXCUR # void win32_screen_setxcur(int x) .param int x .local int y _WIN32_SCREEN_FINDPOS() y = _WIN32_SCREEN_GETYCUR() _WIN32_SCREEN_LOCATE(x,y) .end .sub _WIN32_SCREEN_SETYCUR # void win32_screen_setycur(int y) .param int y .local int x _WIN32_SCREEN_FINDPOS() x = _WIN32_SCREEN_GETXCUR() _WIN32_SCREEN_LOCATE(x,y) .end .sub _WIN32_SCREEN_LOCATE # void win32_screen_locate(int x, int y) .param int x .param int y dec x dec y set I5, x shl I5, I5, 16 add I5, I5, y find_global P1, &#34;Win32console&#34; find_global P2, &#34;kernel32&#34; dlfunc P0, P2, &#34;SetConsoleCursorPosition&#34;, &#34;ipi&#34; set I0, 1 find_global P5, &#34;Win32handle&#34; invoke .end</p>
+
+<p>#SCREEN Mode 0 Syntax: COLOR [foreground][,[background][,border]] # &#166; foreground is the text color (range = 0&#45;31, with 16&#45;31 blinking) # &#166; background is the screen color (range = 0&#45;7) # &#166; border is the color surrounding the screen (range = 0&#45;15) # 0 = black 4 = red 8 = grey 12 = light red # 1 = blue 5 = magenta 9 = light blue 13 = light magenta # 2 = green 6 = brown 10 = light green 14 = yellow # 3 = cyan 7 = white 11 = light cyan 15 = bright white .const int FOREGROUND_BLUE = 1 .const int FOREGROUND_GREEN = 2 .const int FOREGROUND_RED = 4 .const int FOREGROUND_INTENSITY = 8 .const int BACKGROUND_BLUE = 16 .const int BACKGROUND_GREEN = 32 .const int BACKGROUND_RED = 64 .const int BACKGROUND_INTENSITY = 128 #WIN32_SCREEN_GETFORE: # set P1, P24[&#34;console&#34;] # set I0, P1[&#34;attr&#34;] # band I0, I0, 15 # ret #WIN32_SCREEN_GETBACK: # set P1, P24[&#34;console&#34;] # set I0, P1[&#34;attr&#34;] # shr I0, I0, 4 # ret # # Call with the foreground in I0 # # background in I1 # # &#34;border&#34; is not obeyed here. .sub _WIN32_SCREEN_COLOR # void Win32_screen_color(int fore, int back) .param int fore .param int back shl I5, back, 4 add I5, I5, fore find_global P2, &#34;kernel32&#34; dlfunc P0, P2, &#34;SetConsoleTextAttribute&#34;, &#34;ipi&#34; find_global P5, &#34;Win32handle&#34; set I0, 1 invoke _WIN32_CONSOLE_INFO() # refresh this. .end .const int SIZEOF_INPUT_RECORD = 20 .const int NUMBER_OF_EVENTS = 128 # buffer is INPUT_RECORD * EVENTS .const int INPUT_BUFFER = 2560 .sub _WIN32_INKEY # string Win32_inkey(void) set S0, &#34;&#34; set I9, 0 find_global P1, &#34;kernel32&#34; dlfunc P0, P1, &#34;SetConsoleMode&#34;, &#34;ipi&#34; set I0, 1 find_global P5, &#34;Win32Inputhandle&#34; set I5, 0 invoke INKEY: dlfunc P9, P1, &#34;PeekConsoleInputA&#34;, &#34;ippip&#34; dlfunc P10, P1, &#34;ReadConsoleInputA&#34;, &#34;ippip&#34; find_global P5, &#34;Win32Inputhandle&#34; P6=new .ManagedStruct P7=new .ManagedStruct set P6, INPUT_BUFFER set P7, SIZEOF_DWORD</p>
+
+<pre lang='und' xml:lang='und'>        # Are there any events?
+        set P0, P9      # Peek
+        set I0, 1
+        set I5, NUMBER_OF_EVENTS        # sizeof read buffer
+        invoke
+
+        # Peek down the event queue to see if there&#39;s a key event
+        set I0, P7[0]   # Number of events.
+        eq I0, 0, NO_EVENTS
+        set I5, &#45;1
+NEXT_EVENT:
+        inc I5
+        eq I5, I0, END_EVENTS
+        mul I7, I5, SIZEOF_INPUT_RECORD
+        set I1, P6[I7]
+        ne I1, 1, NEXT_EVENT
+
+        # Got a key event, was it a key down?
+        add I8, I7, SIZEOF_DWORD
+        set I1, P6[I8]
+        ne I1, 1, NEXT_EVENT    # Nope, a key up
+
+        # Is it a special&#45;key thingy? (shift, alt...)
+        add I8, I7, 14
+        set I1, P6[I8]
+        eq I1, 0, NEXT_EVENT
+
+        # Cool.  Grab the key.
+        set I9, I1
+        chr S0, I9
+
+        # I6 is the event we&#39;re interested in!
+        # 
+        # There *was* a key event.  Pull everything up to that event
+        #
+        inc I5
+        set P0, P10     # ReadConsoleInput
+        set I0, 1
+        find_global P5, &#34;Win32Inputhandle&#34;
+        invoke
+        branch END</pre>
+
+<p>NO_EVENTS: END_EVENTS: END: .return(S0) .end</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

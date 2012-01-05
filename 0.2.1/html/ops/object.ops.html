@@ -1,0 +1,309 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>object.ops</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">object.ops</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/ops.html">Ops</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>object.ops</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Parrot&#39;s library of object ops</p>
+
+<dl>
+<dt><a name="callmethod()"
+><b>callmethod</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="callmethod(in_STR)"
+><b>callmethod</b>(in STR)</a></dt><p class="pad"></p>
+
+<dd>Call a method on an object.
+If a method name is provided,
+we find the PMC for the named method and put it into the sub/method slot.
+If no name is provided,
+then we assume that the method PMC and method name are already in their proper places.
+We assume that all other registers are correctly set up,
+as per the Parrot calling conventions.
+Throws a Method_Not_Found_Exception for a non&#45;existent method.</dd><p class="pad"></p>
+
+<dt><a name="callmethodcc()"
+><b>callmethodcc</b>()</a></dt><p class="pad"></p>
+
+<dt><a name="callmethodcc(in_STR)"
+><b>callmethodcc</b>(in STR)</a></dt><p class="pad"></p>
+
+<dd>Make a method call,
+automatically generating a return continuation.
+If a method name is passed in we look up the method PMC for the object and put it in the method slot.
+If a method name isn&#39;t provided then we assume that things are already properly set up.
+Note that the return continuation is placed in P1.
+Throws a Method_Not_Found_Exception for a non&#45;existent method.</dd><p class="pad"></p>
+
+<dt><a name="tailcallmethod_(unimplemented)"
+><b>tailcallmethod</b> <b>(unimplemented)</b></a></dt><p class="pad"></p>
+
+<dt><a name="tailcallmethod(in_STR)"
+><b>tailcallmethod</b>(in STR)</a></dt><p class="pad"></p>
+
+<dd>Make a tailcall to method $1.
+If no method name is given,
+we assume everything is already set up properly.</dd><p class="pad"></p>
+
+<dt><a name="fetchmethod(out_PMC,_in_PMC,_in_STR)"
+><b>fetchmethod</b>(out PMC,
+in PMC,
+in STR)</a></dt><p class="pad"></p>
+
+<dd>Find the method $3 for object $2 and put it in $1.
+Throws a Method_Not_Found_Exception for a non&#45;existent method.
+The returned PMC may be outdated,
+when the call is actually performed and changes to the underlying classes where made.</dd><p class="pad"></p>
+
+<dt><a name="can(out_INT,_in_PMC,_in_STR)"
+><b>can</b>(out INT,
+in PMC,
+in STR)</a></dt><p class="pad"></p>
+
+<dd>Sets $1 to true or false,
+depending on whether $2 &#45;&#62;can the method in $3.</dd><p class="pad"></p>
+
+<dt><a name="does(out_INT,_in_PMC,_in_STR)"
+><b>does</b>(out INT,
+in PMC,
+in STR)</a></dt><p class="pad"></p>
+
+<dd>Sets $1 to true or false,
+depending on whether $2 &#45;&#62;does the interface in $3.</dd><p class="pad"></p>
+
+<dt><a name="isa(out_INT,_in_PMC,_in_STR)"
+><b>isa</b>(out INT,
+in PMC,
+in STR)</a></dt><p class="pad"></p>
+
+<dd>Sets $1 to true or false,
+depending on whether $2 isa $3.</dd><p class="pad"></p>
+
+<dt><a name="newclass(out_PMC,_in_STR)"
+><b>newclass</b>(out PMC,
+in STR)</a></dt><p class="pad"></p>
+
+<dd>Creates a new Parrot&#45;style class,
+named $2,
+and puts the new PMC for it into $1.
+(This is a real out&#45;&#45;the contents of $1 are ignored and the pointer for the new PMC is put in there).</dd><p class="pad"></p>
+
+<dt><a name="subclass(out_PMC,_in_PMC)"
+><b>subclass</b>(out PMC,
+in PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="subclass(out_PMC,_in_PMC,_in_STR)"
+><b>subclass</b>(out PMC,
+in PMC,
+in STR)</a></dt><p class="pad"></p>
+
+<dt><a name="subclass(out_PMC,_in_STR)"
+><b>subclass</b>(out PMC,
+in STR)</a></dt><p class="pad"></p>
+
+<dt><a name="subclass(out_PMC,_in_STR,_in_STR)"
+><b>subclass</b>(out PMC,
+in STR,
+in STR)</a></dt><p class="pad"></p>
+
+<dd>Create a new class,
+put in $1,
+that is a subclass of $2.
+$3,
+if available,
+is the name of the new class&#45;&#45;if not,
+the subclass is an anonymous subclass.</dd><p class="pad"></p>
+
+<dd>$1 is replaced&#45;&#45;a new PMC for the subclass is generated and put in it.</dd><p class="pad"></p>
+
+<dt><a name="findclass(out_INT,_in_STR)"
+><b>findclass</b>(out INT,
+in STR)</a></dt><p class="pad"></p>
+
+<dd>Returns 1 if the class exists,
+0 if it does not.</dd><p class="pad"></p>
+
+<dt><a name="getclass(out_PMC,_in_STR)"
+><b>getclass</b>(out PMC,
+in STR)</a></dt><p class="pad"></p>
+
+<dd>Find the PMC for a class,
+by name.
+Note that this is a one&#45;level hash,
+so for classes that have some structure you need to impose that structure externally.</dd><p class="pad"></p>
+
+<dd>Parrot&#39;s conventions are that level separators are noted with the NULL character,
+so Perl&#39;s Foo::Bar would be Foo\0Bar.</dd><p class="pad"></p>
+
+<dt><a name="singleton(in_PMC)_(unimplemented)"
+><b>singleton</b>(in PMC) <b>(unimplemented)</b></a></dt><p class="pad"></p>
+
+<dd>Take the object in $1 and put it into its own singleton class,
+which is an anonymous subclass of the object&#39;s current class.</dd><p class="pad"></p>
+
+<dt><a name="class(out_PMC,_in_PMC)"
+><b>class</b>(out PMC,
+in PMC)</a></dt><p class="pad"></p>
+
+<dd>Get the class PMC for the object in $2 and put it in $1.</dd><p class="pad"></p>
+
+<dt><a name="classname(out_STR,_in_PMC)"
+><b>classname</b>(out STR,
+in PMC)</a></dt><p class="pad"></p>
+
+<dd>Get the class name for the class in $2 and put it in $1.</dd><p class="pad"></p>
+
+<dt><a name="addparent(in_PMC,_in_PMC)"
+><b>addparent</b>(in PMC,
+in PMC)</a></dt><p class="pad"></p>
+
+<dd>Add class $2 to the list of parent classes for $1.</dd><p class="pad"></p>
+
+<dt><a name="removeparent(in_PMC,_in_PMC)"
+><b>removeparent</b>(in PMC,
+in PMC)</a></dt><p class="pad"></p>
+
+<dd>Remove class $2 from class $1&#39;s list of parents.</dd><p class="pad"></p>
+
+<dt><a name="addattribute(in_PMC,_in_STR)"
+><b>addattribute</b>(in PMC,
+in STR)</a></dt><p class="pad"></p>
+
+<dd>Add the attribute named $2 to the class $1.</dd><p class="pad"></p>
+
+<dt><a name="removeattribute(in_PMC,_in_STR)_(unimplemented)"
+><b>removeattribute</b>(in PMC,
+in STR) <b>(unimplemented)</b></a></dt><p class="pad"></p>
+
+<dt><a name="removeattribute(in_PMC,_in_INT)_(unimplemented)"
+><b>removeattribute</b>(in PMC,
+in INT) <b>(unimplemented)</b></a></dt><p class="pad"></p>
+
+<dd>Remove attribute $2 from class $1,
+specified either by name or offset.</dd><p class="pad"></p>
+
+<dt><a name="getattribute(out_PMC,_in_PMC,_in_INT)"
+><b>getattribute</b>(out PMC,
+in PMC,
+in INT)</a></dt><p class="pad"></p>
+
+<dt><a name="getattribute(out_PMC,_in_PMC,_in_STR)"
+><b>getattribute</b>(out PMC,
+in PMC,
+in STR)</a></dt><p class="pad"></p>
+
+<dd>Get attribute number $3 from object $2 and put the result in $1.
+String attribute names have to be fully qualified.</dd><p class="pad"></p>
+
+<dt><a name="setattribute(in_PMC,_in_INT,_in_PMC)"
+><b>setattribute</b>(in PMC,
+in INT,
+in PMC)</a></dt><p class="pad"></p>
+
+<dt><a name="setattribute(in_PMC,_in_STR,_in_PMC)"
+><b>setattribute</b>(in PMC,
+in STR,
+in PMC)</a></dt><p class="pad"></p>
+
+<dd>Set attribute $2 of object $1 to $3</dd><p class="pad"></p>
+
+<dt><a name="classoffset(out_INT,_in_PMC,_in_STR)"
+><b>classoffset</b>(out INT,
+in PMC,
+in STR)</a></dt><p class="pad"></p>
+
+<dd>Returns the offset of the first attribute for class $3 in object $2.
+Throws an exception if $3 isn&#39;t in $2&#39;s hierarchy.</dd><p class="pad"></p>
+
+<dt><a name="adddoes(in_PMC,_in_STR)_(unimplemented)"
+><b>adddoes</b>(in PMC,
+in STR) <b>(unimplemented)</b></a></dt><p class="pad"></p>
+
+<dd>Add $2 to the list of interfaces that this class claims to implement.</dd><p class="pad"></p>
+
+<dt><a name="removedoes(in_PMC,_in_STR)_(unimplemented)"
+><b>removedoes</b>(in PMC,
+in STR) <b>(unimplemented)</b></a></dt><p class="pad"></p>
+
+<dd>Remove $2 from the list of interfaces that this class claims to implement.</dd><p class="pad"></p>
+
+<dt><a name="makemmd(in_PMC,_in_INT)_(unimplemented)"
+><b>makemmd</b>(in PMC,
+in INT) <b>(unimplemented)</b></a></dt><p class="pad"></p>
+
+<dd>Makes vtable entry $2 use Parrot&#39;s multimethod dispatch system</dd><p class="pad"></p>
+
+<dt><a name="mmdfunc(in_INT,_in_PMC,_in_PMC,_in_PMC)_(unimplemented)"
+><b>mmdfunc</b>(in INT,
+in PMC,
+in PMC,
+in PMC) <b>(unimplemented)</b></a></dt><p class="pad"></p>
+
+<dd>Make $4 the function called when MMD function $1 is called for types $2 and $3.</dd><p class="pad"></p>
+
+<dt><a name="mmddispatch(out_PMC,_in_INT,_in_PMC,_in_PMC)_(unimplemented)"
+><b>mmddispatch</b>(out PMC,
+in INT,
+in PMC,
+in PMC) <b>(unimplemented)</b></a></dt><p class="pad"></p>
+
+<dd>Do a multimethod dispatch for binary MMD function $2 on PMCs $3 and $4,
+and put the result in $1.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Copyright (C) 2001&#45;2004 The Perl Foundation.
+All rights reserved.</p>
+
+<h1><a name="LICENSE"
+>LICENSE <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>This program is free software.
+It is subject to the same license as the Parrot interpreter itself.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

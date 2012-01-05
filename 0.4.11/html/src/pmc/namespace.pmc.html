@@ -1,0 +1,246 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>NameSpace PMC</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">NameSpace PMC</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/pmc.html">PMCs</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/pmc/namespace.pmc &#45; NameSpace PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>These are the vtable functions for the namespace PMC.</p>
+
+<h2><a name="Data"
+>Data <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  PMC_struct_val       ... the hash, bucket&#45;&#62;value is either a
+                           var/sub or a namespace, of a FixedPMCarray
+                           of 2 PMCs (namespace, sub/var) slots
+  PMC_pmc_val          ... parent namespace
+  PMC_data             ... Namespace information struct (name, class/role)</pre>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code lang='und' xml:lang='und'>void init()</b></code></a></dt><p class="pad"></p>
+
+<dd>Initialize a <code lang='und' xml:lang='und'>NameSpace</code> PMC by calling <code lang='und' xml:lang='und'>Hash.init</code> and clearing other fields.</dd><p class="pad"></p>
+
+<dt><a name="void_mark()"
+><b><code lang='und' xml:lang='und'>void mark()</b></code></a></dt><p class="pad"></p>
+
+<dd>Marks the namespace as live.</dd><p class="pad"></p>
+
+<dt><a name="void_destroy()"
+><b><code lang='und' xml:lang='und'>void destroy()</b></code></a></dt><p class="pad"></p>
+
+<dd>Frees the namespace info struct.</dd><p class="pad"></p>
+
+<dt><a name="void_set_pmc_keyed_str(STRING_*key,_PMC_*value)"
+><b><code lang='und' xml:lang='und'>void set_pmc_keyed_str(STRING *key, PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets <code lang='und' xml:lang='und'>*value</code> as the namespace item for <code lang='und' xml:lang='und'>*key</code>. This is part of the raw interface. If the PMC <code lang='und' xml:lang='und'>value</code> is exactly a NameSpace, <code lang='und' xml:lang='und'>SELF</code> will be set as the parent of that namespace and the name <code lang='und' xml:lang='und'>key</code> of <code lang='und' xml:lang='und'>value</code> is stored too.</dd><p class="pad"></p>
+
+<dt><a name="void_set_pmc_keyed(PMC_*key,_PMC_*value)"
+><b><code lang='und' xml:lang='und'>void set_pmc_keyed(PMC *key, PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>If <code lang='und' xml:lang='und'>key</code> is a simple key, it works like above. If <code lang='und' xml:lang='und'>key</code> is an array of strings or a chained key, add all components to the namespace.</dd><p class="pad"></p>
+
+<dt><a name="PMC*_get_pmc_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>PMC *get_pmc_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the given namespace or PMCNULL. <code lang='und' xml:lang='und'>key</code> is either an array of strings, or a possibly nested key.</dd><p class="pad"></p>
+
+<dt><a name="PMC*_get_pmc_keyed_str(PMC_*key)"
+><b><code lang='und' xml:lang='und'>PMC *get_pmc_keyed_str(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the given namespace item or PMCNULL. If the named item is either a NameSpace or a var, the NameSpace is returned.</dd><p class="pad"></p>
+
+<dt><a name="void*_get_pointer_keyed_str(STRING_*key)"
+><b><code lang='und' xml:lang='und'>void *get_pointer_keyed_str(STRING *key)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="void*_get_pointer_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>void *get_pointer_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the given namespace item or PMCNULL. If the named item is either a NameSpace or a var, the var is returned.</dd><p class="pad"></p>
+
+<dd>TOTAL KLUDGE. ON THE CHOPPING BLOCK.</dd><p class="pad"></p>
+
+<dt><a name="STRING*_get_string()"
+><b><code lang='und' xml:lang='und'>STRING *get_string()</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the name of this namespace part.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="METHOD_void_PMC*_add_namespace(STRING_*name,_PMC_*namespace)"
+><b><code lang='und' xml:lang='und'>METHOD void PMC *add_namespace(STRING *name, PMC *namespace)</b></code></a></dt><p class="pad"></p>
+
+<dd>Stores the given namespace under this namespace, with the given name. Throws an invalid type exception if <code lang='und' xml:lang='und'>namespace</code> is not a NameSpace PMC or subclass.</dd><p class="pad"></p>
+
+<dd>*/</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    METHOD void add_namespace(STRING *name, PMC *namespace) {
+        STRING *s_ns = CONST_STRING(INTERP, &#34;NameSpace&#34;);
+        if (!VTABLE_isa(INTERP, namespace, s_ns))
+            real_exception(INTERP, NULL, E_TypeError,
+                &#34;Invalid type %d in add_namespace()&#34;,
+                namespace&#45;&#62;vtable&#45;&#62;base_type);
+
+        VTABLE_set_pmc_keyed_str(INTERP, SELF, name, namespace);
+        return;
+    }</pre>
+
+<dd>/*</dd><p class="pad"></p>
+
+<dd>/*</dd><p class="pad"></p>
+
+<dt><a name="METHOD_void_PMC*_add_sub(STRING_*name,_PMC_*sub)"
+><b><code lang='und' xml:lang='und'>METHOD void PMC *add_sub(STRING *name, PMC *sub)</b></code></a></dt><p class="pad"></p>
+
+<dd>Stores the given sub under this namespace, with the given name. Throws an invalid type exception if <code lang='und' xml:lang='und'>sub</code> is not a Sub PMC or subclass.</dd><p class="pad"></p>
+
+<dd>*/</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    METHOD void add_sub(STRING *name, PMC *sub) {
+        STRING *s_sub = CONST_STRING(INTERP, &#34;Sub&#34;);
+        if (!VTABLE_isa(INTERP, sub, s_sub))
+            real_exception(INTERP, NULL, E_TypeError,
+                &#34;Invalid type %d in add_sub()&#34;, sub&#45;&#62;vtable&#45;&#62;base_type);
+
+        VTABLE_set_pmc_keyed_str(INTERP, SELF, name, sub);
+        return;
+    }</pre>
+
+<dd>/*</dd><p class="pad"></p>
+
+<dd>/*</dd><p class="pad"></p>
+
+<dt><a name="METHOD_void_PMC*_add_var(STRING_*name,_PMC_*var)"
+><b><code lang='und' xml:lang='und'>METHOD void PMC *add_var(STRING *name, PMC *var)</b></code></a></dt><p class="pad"></p>
+
+<dd>Stores the given sub under this namespace, with the given name.</dd><p class="pad"></p>
+
+<dd>*/</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    METHOD void add_var(STRING *name, PMC *var) {
+        VTABLE_set_pmc_keyed_str(INTERP, SELF, name, var);
+        return;
+    }</pre>
+
+<dd>/*</dd><p class="pad"></p>
+
+<dt><a name="METHOD_PMC*_get_name()"
+><b><code lang='und' xml:lang='und'>METHOD PMC *get_name()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the name of the namespace as an array of strings.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  $P2 = $P3.&#39;get_name&#39;()
+  $S0 = join &#39;::&#39;, $P2            # &#39;::Foo::Bar&#39;</pre>
+
+<dt><a name="METHOD_PMC*_find_namespace(STRING*_name)"
+><b><code lang='und' xml:lang='und'>METHOD PMC *find_namespace(STRING *name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the namespace with the given name.</dd><p class="pad"></p>
+
+<dt><a name="METHOD_PMC*_find_sub(STRING*_name)"
+><b><code lang='und' xml:lang='und'>METHOD PMC *find_sub(STRING *name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the Sub PMC with the given name.</dd><p class="pad"></p>
+
+<dt><a name="METHOD_PMC*_find_var(STRING*_name)"
+><b><code lang='und' xml:lang='und'>METHOD PMC *find_var(STRING *name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the PMC with the given name.</dd><p class="pad"></p>
+
+<dt><a name="METHOD_PMC*_del_namespace(STRING*_name)"
+><b><code lang='und' xml:lang='und'>METHOD PMC *del_namespace(STRING *name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Deletes the contained NameSpace PMC with the given name. Throws an invalid type exception if the item to delete is not a NameSpace PMC or subclass, and does not delete the PMC.</dd><p class="pad"></p>
+
+<dt><a name="METHOD_PMC*_del_sub(STRING*_name)"
+><b><code lang='und' xml:lang='und'>METHOD PMC *del_sub(STRING *name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Deletes the contained Sub PMC with the given name. Throws an invalid type exception if the item to delete is not a Sub PMC or subclass, and does not delete the PMC.</dd><p class="pad"></p>
+
+<dt><a name="METHOD_PMC*_del_var(STRING*_name)"
+><b><code lang='und' xml:lang='und'>METHOD PMC *del_var(STRING *name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Deletes the contained variable&#45;like PMC with the given name.</dd><p class="pad"></p>
+
+<dt><a name="METHOD_PMC*_get_sym(STRING*_name)"
+><b><code lang='und' xml:lang='und'>METHOD PMC *get_sym(STRING *name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the symbol (var or sub) with the given name. This can be used to retrieve symbols, if a NameSpace with the same name exists.</dd><p class="pad"></p>
+
+<dt><a name="METHOD_void_export_to(PMC*_dest,_PMC*_what)"
+><b><code lang='und' xml:lang='und'>METHOD void export_to(PMC *dest, PMC *what)</b></code></a></dt><p class="pad"></p>
+
+<dd>Export items from this NameSpace into the <code lang='und' xml:lang='und'>dest</code> NameSpace. <code lang='und' xml:lang='und'>what</code> is an array of (string) names to be exported.</dd><p class="pad"></p>
+
+<dt><a name="METHOD_PMC*_get_parent()"
+><b><code lang='und' xml:lang='und'>METHOD PMC *get_parent()</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the parent NameSpace or PMCNULL, if none.</dd><p class="pad"></p>
+
+<dt><a name="PCCMETHOD_PMC*_get_class()"
+><b><code lang='und' xml:lang='und'>PCCMETHOD PMC *get_class()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the class or role PMC that is associated with this namespace.</dd><p class="pad"></p>
+
+<dt><a name="PCCMETHOD_void_set_class(PMC_*class_or_role)"
+><b><code lang='und' xml:lang='und'>PCCMETHOD void set_class(PMC *class_or_role)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the class or role PMC that is associated with this namespace.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'><a href="../../docs/pdds/pdd21_namespaces.pod.html">docs/pdds/pdd21_namespaces.pod</a></em></p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

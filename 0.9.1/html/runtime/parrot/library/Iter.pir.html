@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>A PIR&#45;based Iterator Object</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Contents</a> &raquo; <a href="../../../../html/libs.html">Libraries</a> &raquo; A PIR&#45;based Iterator Object
+                </div>
+
+<h1><a name="TITLE"
+>TITLE</a></h1>
+
+<p>Iter &#45;&#45; A PIR&#45;based Iterator Object</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>An iterator with an object&#45;oriented interface,
+written in PIR.
+Currently implemented only for Array type PMCs.
+Expect Hash support shortly.</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    load_bytecode &#39;Iter.pir&#39;
+    .local pmc iter
+               iter = new &#39;Iter&#39;
+
+    ## initialize the iterator
+    iter.&#39;start&#39;(your_aggregate)
+
+    ## advance to the next item in the iterator
+    iter.&#39;next&#39;()
+
+    ## check for exhaustion
+    $I0 = iter.&#39;exhausted&#39;()
+    if $I0 goto done
+
+    ## get the value from the iterator
+    $P0 = iter.&#39;value&#39;()
+
+    ## alternate interface to advance and get the value
+    $P0 = iter.&#39;nextval&#39;()</pre>
+
+<h2><a name="Iter_Methods"
+><code>Iter</code> Methods</a></h2>
+
+<dl>
+<dt><a name=".&#39;start&#39;(PMC_aggregate)"
+><b><code>.&#39;start&#39;(PMC aggregate)</b></code></a></dt>
+Initialize the iterator. Must pass a PMC aggregate, or an exception is thrown.
+<dt><a name=".&#39;next&#39;()"
+><b><code>.&#39;next&#39;()</b></code></a></dt>
+Sets the internal <code>value</code> attribute to the value of the next item from the iterator. Sets the internal <code>exhausted</code> attribute if the iterator is exhausted.
+<dt><a name=".&#39;exhausted&#39;()"
+><b><code>.&#39;exhausted&#39;()</b></code></a></dt>
+Returns true (1) if the iterator is exhausted. Returns false (0) otherwise.
+<dt><a name=".&#39;value&#39;()"
+><b><code>.&#39;value&#39;()</b></code></a></dt>
+Returns the current value from the iterator. Returns PMCNULL if exhausted.
+<dt><a name=".&#39;nextval&#39;()"
+><b><code>.&#39;nextval&#39;()</b></code></a></dt>
+Executes <code>.&#39;next&#39;()</code>, and returns <code>.&#39;value&#39;()</code>.</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Jerry Gay a.k.a. particle</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

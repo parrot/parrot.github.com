@@ -1,0 +1,189 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - A Parrot Overview</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Home</a> &raquo; A Parrot Overview
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/overview.pod &#45; A Parrot Overview</p>
+
+<h1><a name="The_Parrot_Interpreter"
+>The Parrot Interpreter</a></h1>
+
+<p>This document is an introduction to the structure of and the concepts used by the Parrot shared bytecode compiler/interpreter system.
+We will primarily concern ourselves with the interpreter,
+since this is the target platform for which all compiler frontends should compile their code.</p>
+
+<h1><a name="The_Software_CPU"
+>The Software CPU</a></h1>
+
+<p>Like all interpreter systems of its kind,
+the Parrot interpreter is a virtual machine; this is another way of saying that it is a software CPU.
+However,
+unlike other VMs,
+the Parrot interpreter is designed to more closely mirror hardware CPUs.</p>
+
+<p>For instance,
+the Parrot VM will have a register architecture,
+rather than a stack architecture.
+It will also have extremely low&#45;level operations,
+more similar to Java&#39;s than the medium&#45;level ops of Perl and Python and the like.</p>
+
+<p>The reasoning for this decision is primarily that by resembling the underlying hardware to some extent,
+it&#39;s possible to compile down Parrot bytecode to efficient native machine language.</p>
+
+<p>Moreover,
+many programs in high&#45;level languages consist of nested function and method calls,
+sometimes with lexical variables to hold intermediate results.
+Under non&#45;JIT settings,
+a stack&#45;based VM will be popping and then pushing the same operands many times,
+while a register&#45;based VM will simply allocate the right amount of registers and operate on them,
+which can significantly reduce the amount of operations and CPU time.</p>
+
+<p>To be more specific about the software CPU,
+it will contain a large number of registers.
+The current design provides for four groups of N registers; each group will hold a different data type: integers,
+floating&#45;point numbers,
+strings,
+and PMCs.
+(Polymorphic Containers,
+detailed below.)</p>
+
+<p>Registers will be stored in register frames,
+which can be pushed and popped onto the register stack.
+For instance,
+a subroutine or a block might need its own register frame.</p>
+
+<h1><a name="The_Operations"
+>The Operations</a></h1>
+
+<p>The Parrot interpreter has a large number of very low level instructions,
+and it is expected that high&#45;level languages will compile down to a medium&#45;level language before outputting pure Parrot machine code.</p>
+
+<p>Operations will be represented by several bytes of Parrot machine code; the first <code>INTVAL</code> will specify the operation number,
+and the remaining arguments will be operator&#45;specific.
+Operations will usually be targeted at a specific data type and register type; so,
+for instance,
+the <code>dec_i_c</code> takes two <code>INTVAL</code>s as arguments,
+and decrements contents of the integer register designated by the first <code>INTVAL</code> by the value in the second <code>INTVAL</code>.
+Naturally,
+operations which act on <code>FLOATVAL</code> registers will use <code>FLOATVAL</code>s for constants; however,
+since the first argument is almost always a register <b>number</b> rather than actual data,
+even operations on string and PMC registers will take an <code>INTVAL</code> as the first argument.</p>
+
+<p>As in Perl,
+Parrot ops will return the pointer to the next operation in the bytecode stream.
+Although ops will have a predetermined number and size of arguments,
+it&#39;s cheaper to have the individual ops skip over their arguments returning the next operation,
+rather than looking up in a table the number of bytes to skip over for a given opcode.</p>
+
+<p>There will be global and private opcode tables; that is to say,
+an area of the bytecode can define a set of custom operations that it will use.
+These areas will roughly map to the subroutines of the original source; each precompiled module will have its own opcode table.</p>
+
+<p>For a closer look at Parrot ops,
+see <em>docs/pdds/pdd06_pasm.pod</em>.</p>
+
+<h1><a name="PMCs"
+>PMCs</a></h1>
+
+<p>PMCs are roughly equivalent to the <code>SV</code>,
+<code>AV</code> and <code>HV</code> (and more complex types) defined in Perl 5,
+and almost exactly equivalent to <code>PythonObject</code> types in Python.
+They are a completely abstracted data type; they may be string,
+integer,
+code or anything else.
+As we will see shortly,
+they can be expected to behave in certain ways when instructed to perform certain operations &#45; such as incrementing by one,
+converting their value to an integer,
+and so on.</p>
+
+<p>The fact of their abstraction allows us to treat PMCs as,
+roughly speaking,
+a standard API for dealing with data.
+If we&#39;re executing Perl code,
+we can manufacture PMCs that behave like Perl scalars,
+and the operations we perform on them will do Perlish things; if we execute Python code,
+we can manufacture PMCs with Python operations,
+and the same underlying bytecode will now perform Pythonic activities.</p>
+
+<p>For documentation on the specific PMCs that ship with Parrot,
+see the <em>docs/pmc</em> directory.</p>
+
+<h1><a name="Vtables"
+>Vtables</a></h1>
+
+<p>The way we achieve this abstraction is to assign to each PMC a set of function pointers that determine how it ought to behave when asked to do various things.
+In a sense,
+you can regard a PMC as an object in an abstract virtual class; the PMC needs a set of methods to be defined in order to respond to method calls.
+These sets of methods are called <b>vtables</b>.</p>
+
+<p>A vtable is,
+more strictly speaking,
+a structure which expects to be filled with function pointers.
+The PMC contains a pointer to the vtable structure which implements its behavior.
+Hence,
+when we ask a PMC for its length,
+we&#39;re essentially calling the <code>length</code> method on the PMC; this is implemented by looking up the <code>length</code> slot in the vtable that the PMC points to,
+and calling the resulting function pointer with the PMC as argument: essentially,</p>
+
+<pre>    (pmc&#45;&#62;vtable&#45;&#62;length)(pmc);</pre>
+
+<p>If our PMC is a string and has a vtable which implements Perl&#45;like string operations, this will return the length of the string. If, on the other hand, the PMC is an array, we might get back the number of elements in the array. (If that&#39;s what we want it to do.)</p>
+
+<p>Similarly, if we call the increment operator on a Perl string, we should get the next string in alphabetic sequence; if we call it on a Python value, we may well get an error to the effect that Python doesn&#39;t have an increment operator suggesting a bug in the compiler front&#45;end. Or it might use a &#34;super&#45;compatible Python vtable&#34; doing the right thing anyway to allow sharing data between Python programs and other languages more easily.</p>
+
+<p>At any rate, the point is that vtables allow us to separate out the basic operations common to all programming languages &#45; addition, length, concatenation, and so on &#45; from the specific behavior demanded by individual languages. Perl 6 will be Perl by passing Parrot a set of Perlish vtables; Parrot will equally be able to run Python, Tcl, Ruby or whatever by linking in a set of vtables which implement the behaviors of values in those languages. Combining this with the custom opcode tables mentioned above, you should be able to see how Parrot is essentially a language independent base for building runtimes for bytecompiled languages.</p>
+
+<p>One interesting thing about vtables is that you can construct them dynamically. You can find out more about vtables in <em><a href="vtables.pod.html">docs/vtables.pod</a></em>.</p>
+
+<h1><a name="String_Handling"
+>String Handling</a></h1>
+
+<p>Parrot provides a programmer&#45;friendly view of strings. The Parrot string handling subsection handles all the work of memory allocation, expansion, and so on behind the scenes. It also deals with some of the encoding headaches that can plague Unicode&#45;aware languages.</p>
+
+<p>This is done primarily by a similar vtable system to that used by PMCs; each encoding will specify functions such as the maximum number of bytes to allocate for a character, the length of a string in characters, the offset of a given character in a string, and so on. They will, of course, provide a transcoding function either to the other encodings or just to Unicode for use as a pivot.</p>
+
+<p>The string handling API is explained in <em>docs/strings.pod</em>.</p>
+
+<h1><a name="Bytecode_format"
+>Bytecode format</a></h1>
+
+<p>We have already explained the format of the main stream of bytecode; operations will be followed by arguments packed in such a format as the individual operations require. This makes up the third section of a Parrot bytecode file; frozen representations of Parrot programs have the following structure.</p>
+
+<p>Firstly, a magic number is presented to identify the bytecode file as Parrot code. Next comes the fixup segment, which contains pointers to global variable storage and other memory locations required by the main opcode segment. On disk, the actual pointers will be zeroed out, and the bytecode loader will replace them by the memory addresses allocated by the running instance of the interpreter.</p>
+
+<p>Similarly, the next segment defines all string and PMC constants used in the code. The loader will reconstruct these constants, fixing references to the constants in the opcode segment with the addresses of the newly reconstructed data.</p>
+
+<p>As we know, the opcode segment is next. This is optionally followed by a code segment for debugging purposes, which contains a munged form of the original program file.</p>
+
+<p>The bytecode format is fully documented in <em><a href="parrotbyte.pod.html">docs/parrotbyte.pod</a></em>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

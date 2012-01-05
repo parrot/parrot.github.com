@@ -1,0 +1,167 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Interpreter &#45; Run Ops and Methods</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Interpreter &#45; Run Ops and Methods</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/inter_run.c &#45; Parrot Interpreter &#45; Run Ops and Methods</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Various functions that call the run loop.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_runops(PARROT_INTERP,_size_t_offs)"
+><b><code lang='und' xml:lang='und'>void runops(PARROT_INTERP, size_t offs)</b></code></a></dt><p class="pad"></p>
+
+<dd>Run parrot ops.
+Set exception handler and/or resume after exception.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_IGNORABLE_RESULT PARROT_CANNOT_RETURN_NULL parrot_context_t *Parrot_runops_fromc(PARROT_INTERP, NOTNULL(PMC *sub))</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the Parrot ops,
+called from C code.
+The function arguments are already setup according to Parrot calling conventions,
+the <code lang='und' xml:lang='und'>sub</code> argument is an invocable <code lang='und' xml:lang='und'>Sub</code> PMC.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL static parrot_context_t *runops_args(PARROT_INTERP, NOTNULL(PMC *sub), NOTNULL(PMC *obj), SHIM(STRING *meth), ARGIN(const char *sig), va_list ap)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_IGNORABLE_RESULT PARROT_CAN_RETURN_NULL void *Parrot_run_meth_fromc(PARROT_INTERP, NOTNULL(PMC *sub), NOTNULL(PMC *obj), SHIM(STRING *meth))</b></code></a></dt><p class="pad"></p>
+
+<dd>Run a method sub from C.
+The function arguments are already setup according to Parrot calling conventions,
+the <code lang='und' xml:lang='und'>sub</code> argument is an invocable <code lang='und' xml:lang='und'>Sub</code> PMC.</dd><p class="pad"></p>
+
+<dd>If registers a PMC return values,
+it is returned.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_IGNORABLE_RESULT PARROT_CAN_RETURN_NULL PMC *Parrot_runops_fromc_args(PARROT_INTERP, NOTNULL(PMC *sub), ARGIN(const char *sig), ...)</b></code></a></dt><p class="pad"></p>
+
+<dd>Run parrot ops,
+called from C code,
+function arguments are passed as <code lang='und' xml:lang='und'>va_args</code> according to the signature.
+The <code lang='und' xml:lang='und'>sub</code> argument is an invocable <code lang='und' xml:lang='und'>Sub</code> PMC.</dd><p class="pad"></p>
+
+<dd>Signatures are similar to NCI:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    v ... void return
+    I ... INTVAL (not Interpreter)
+    N ... NUMVAL
+    S ... STRING*
+    P ... PMC*</pre>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_IGNORABLE_RESULT PARROT_CAN_RETURN_NULL void *Parrot_runops_fromc_args_event(PARROT_INTERP, NOTNULL(PMC *sub), ARGIN(const char *sig), ...)</b></code></a></dt><p class="pad"></p>
+
+<dd>Run code from within event handlers. This variant deals with some reentrency issues. It also should do sanity checks, if e.g. the handler subroutine didn&#39;t return properly.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_IGNORABLE_RESULT INTVAL Parrot_runops_fromc_args_reti(PARROT_INTERP, NOTNULL(PMC *sub), ARGIN(const char *sig), ...)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_IGNORABLE_RESULT FLOATVAL Parrot_runops_fromc_args_retf(PARROT_INTERP, NOTNULL(PMC *sub), ARGIN(const char *sig), ...)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_IGNORABLE_RESULT PARROT_CAN_RETURN_NULL void *Parrot_run_meth_fromc_args(PARROT_INTERP, NOTNULL(PMC *sub), NOTNULL(PMC *obj), NOTNULL(STRING *meth), ARGIN(const char *sig), ...)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_IGNORABLE_RESULT INTVAL Parrot_run_meth_fromc_args_reti(PARROT_INTERP, NOTNULL(PMC *sub), NOTNULL(PMC *obj), NOTNULL(STRING *meth), ARGIN(const char *sig), ...)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_IGNORABLE_RESULT FLOATVAL Parrot_run_meth_fromc_args_retf(PARROT_INTERP, NOTNULL(PMC *sub), NOTNULL(PMC *obj), NOTNULL(STRING *meth), ARGIN(const char *sig), ...)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_IGNORABLE_RESULT PARROT_CAN_RETURN_NULL void *Parrot_runops_fromc_arglist(PARROT_INTERP, NOTNULL(PMC *sub), ARGIN(const char *sig), va_list args)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_IGNORABLE_RESULT INTVAL Parrot_runops_fromc_arglist_reti(PARROT_INTERP, NOTNULL(PMC *sub), ARGIN(const char *sig), va_list args)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_IGNORABLE_RESULT FLOATVAL Parrot_runops_fromc_arglist_retf(PARROT_INTERP, NOTNULL(PMC *sub), ARGIN(const char *sig), va_list args)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_IGNORABLE_RESULT PARROT_CAN_RETURN_NULL void *Parrot_run_meth_fromc_arglist(PARROT_INTERP, NOTNULL(PMC *sub), NOTNULL(PMC *obj), NOTNULL(STRING *meth), ARGIN(const char *sig), va_list args)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_IGNORABLE_RESULT PARROT_CAN_RETURN_NULL INTVAL Parrot_run_meth_fromc_arglist_reti(PARROT_INTERP, NOTNULL(PMC *sub), NOTNULL(PMC *obj), NOTNULL(STRING *meth), ARGIN(const char *sig), va_list args)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_IGNORABLE_RESULT FLOATVAL Parrot_run_meth_fromc_arglist_retf(PARROT_INTERP, NOTNULL(PMC *sub), NOTNULL(PMC *obj), NOTNULL(STRING *meth), ARGIN(const char *sig), va_list args)</b></code></a></dt><p class="pad"></p>
+
+<dd>RT#48260: Not yet documented!!!</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/interpreter.h</em>, <em lang='und' xml:lang='und'><a href="interpreter.c.html">src/interpreter.c</a></em>.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

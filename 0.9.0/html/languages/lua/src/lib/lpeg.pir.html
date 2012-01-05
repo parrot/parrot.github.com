@@ -1,0 +1,300 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Parsing Expression Grammar for Lua, version 0.9</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parsing Expression Grammar for Lua, version 0.9</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/lua.html">Lua</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>lib/lpeg.pir &#45; Parsing Expression Grammar for Lua,
+version 0.9</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>See original on <a href='http://www.inf.puc&#45;rio.br/~roberto/lpeg.html'><a href="http://www.inf.puc&#45;rio.br/~roberto/lpeg.html">http://www.inf.puc&#45;rio.br/~roberto/lpeg.html</a></a></p>
+
+<h2><a name="Introduction"
+>Introduction <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p>See on <a href='http://www.inf.puc&#45;rio.br/~roberto/lpeg.html#intro'><a href="http://www.inf.puc&#45;rio.br/~roberto/lpeg.html#intro">http://www.inf.puc&#45;rio.br/~roberto/lpeg.html#intro</a></a></p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="lpeg.match_(pattern,_subject_[,_init])"
+><b><code>lpeg.match (pattern, subject [, init])</b></code></a></dt>
+The matching function.
+It attempts to match the given pattern against the subject string.
+If the match succeeds,
+returns the index in the subject of the first character after the match,
+or the values of <a href='#Captures'>captured values</a> (if the pattern captured any value).An optional numeric argument <code>init</code> makes the match starts at that position in the subject string.
+As usual in Lua libraries,
+a negative value counts from the end.Unlike typical pattern&#45;matching functions,
+<code>match</code> works only in <i>anchored</i> mode; that is,
+it tries to match the pattern with a prefix of the given subject string (at position <code>init</code>),
+not with an arbitrary substring of the subject.
+So,
+if we want to find a pattern anywhere in a string,
+we must either write a loop in Lua or write a pattern that matches anywhere.
+This second approach is easy and quite efficient; see <a href='#Some_Examples'>examples</a>.NOT YET IMPLEMENTED.
+<dt><a name="lpeg.print_(pattern)"
+><b><code>lpeg.print (pattern)</b></code></a></dt>
+UNDOCUMENTED.
+<dt><a name="lpeg.span_(string)"
+><b><code>lpeg.span (string)</b></code></a></dt>
+NOT YET IMPLEMENTED.
+<dt><a name="lpeg.type_(value)"
+><b><code>lpeg.type (value)</b></code></a></dt>
+If the given value is a pattern,
+returns the string <code>&#34;pattern&#34;</code>.
+Otherwise returns <b>nil</b>.
+<dt><a name="lpeg.version_()"
+><b><code>lpeg.version ()</b></code></a></dt>
+Returns a string with the running version of LPEG.</dl>
+
+<h2><a name="Basic_Constructions"
+>Basic Constructions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p>The following operations build patterns.
+All operations that expect a pattern as an argument may receive also strings,
+tables,
+numbers,
+booleans,
+or functions,
+which are translated to patterns according to the rules of function <code>lpeg.P</code>.</p>
+
+<dl>
+<dt><a name="lpeg.P_(value)"
+><b><code>lpeg.P (value)</b></code></a></dt>
+Converts the given value into a proper pattern,
+according to the following rules:* If the argument is a pattern,
+it is returned unmodified.* If the argument is a string,
+it is translated to a pattern that matches literally the string.* If the argument is a non&#45;negative number <i>n</i>,
+the result is a pattern that matches exactly <i>n</i> characters.* If the argument is a negative number <i>&#45;n</i>,
+the result is a pattern that succeeds only if the input string does not have <i>n</i> characters: It is equivalent to the unary minus operation applied over the pattern corresponding to the (non&#45;negative) value <i>n</i>.* If the argument is a boolean,
+the result is a pattern that always succeeds or always fails (according to the boolean value),
+without consuming any input.* If the argument is a table,
+it is interpreted as a grammar (see <a href='#Grammars'>&#34;Grammars&#34;</a>).* If the argument is a function,
+returns a pattern equivalent to a match&#45;time capture over the empty string.NOT YET IMPLEMENTED (see getpatt).
+<dt><a name="lpeg.R_({range})"
+><b><code>lpeg.R ({range})</b></code></a></dt>
+Returns a pattern that matches any single character belonging to one of the given <i>ranges</i>.
+Each <code>range</code> is a string <i>xy</i> of length 2,
+representing all characters with code between the codes of <i>x</i> and <i>y</i> (both inclusive).As an example,
+the pattern <code>lpeg.R(&#34;09&#34;)</code> matches any digit,
+and <code>lpeg.R(&#34;az&#34;, &#34;AZ&#34;)</code> matches any ASCII letter.NOT YET IMPLEMENTED.
+<dt><a name="lpeg.S_(string)"
+><b><code>lpeg.S (string)</b></code></a></dt>
+Returns a pattern that matches any single character that appears in the given string.
+(The <code>S</code> stands for <i>Set</i>.)As an example,
+the pattern <code>lpeg.S(&#34;+&#45;*/&#34;)</code> matches any arithmetic operator.Note that,
+if <i>s</i> is a character (that is,
+a string of length 1),
+then <code>lpeg.P(s)</code> is equivalent to <code>lpeg.S(s)</code> which is equivalent to <code>lpeg.R(s..s)</code>.
+Note also that both <code>lpeg.S(&#34;&#34;)</code> and <code>lpeg.R()</code> are patterns that always fail.NOT YET IMPLEMENTED.
+<dt><a name="lpeg.V_(v)"
+><b><code>lpeg.V (v)</b></code></a></dt>
+This operation creates a non&#45;terminal (a <i>variable</i>) for a grammar.
+The created non&#45;terminal refers to the rule indexed by <code>v</code> in the enclosing grammar.
+(See <a href='#Grammars'>&#34;Grammars&#34;</a> for details.)NOT YET IMPLEMENTED.
+<dt><a name="locale_([table])"
+><b><code>locale ([table])</b></code></a></dt>
+Returns a table with patterns for matching some character classes according to the current locale.
+The table has fields named <code>alnum</code>,
+<code>alpha</code>,
+<code>cntrl</code>,
+<code>digit</code>,
+<code>graph</code>,
+<code>lower</code>,
+<code>print</code>,
+<code>punct</code>,
+<code>space</code>,
+<code>upper</code>,
+and <code>xdigit</code>,
+each one containing a correspondent pattern.
+Each pattern matches any single character that belongs to its class.If called with an argument <code>table</code>,
+then it creates those fields inside the given table and returns that table.NOT YET IMPLEMENTED.
+<dt><a name="#patt"
+><b><code>#patt</b></code></a></dt>
+Returns a pattern that matches only if the input string matches <code>patt</code>,
+but without consuming any input,
+independently of success or failure.
+(This pattern is equivalent to <i>&#38;patt</i> in the original PEG notation.)When it succeeds,
+<code>#patt</code> produces all captures produced by <code>patt</code>.NOT YET IMPLEMENTED.
+<dt><a name="&#45;patt"
+><b><code>&#45;patt</b></code></a></dt>
+Returns a pattern that matches only if the input string does not match <code>patt</code>.
+It does not consume any input,
+independently of success or failure.
+(This pattern is equivalent to <i>!patt</i> in the original PEG notation.)As an example,
+the pattern <code>&#45;lpeg.P(1)</code> matches only the end of string.This pattern never produces any captures,
+because either <code>patt</code> fails or <code>&#45;patt</code> fails.
+(A failing pattern never produces captures.)NOT YET IMPLEMENTED.
+<dt><a name="patt1_+_patt2"
+><b><code>patt1 + patt2</b></code></a></dt>
+Returns a pattern equivalent to an <i>ordered choice</i> of <code>patt1</code> and <code>patt2</code>.
+(This is denoted by <i>patt1 / patt2</i> in the original PEG notation,
+not to be confused with the <code>/</code> operation in LPeg.) It matches either <code>patt1</code> or <code>patt2</code>,
+with no backtracking once one of them succeeds.
+The identity element for this operation is the pattern <code>lpeg.P(false)</code>,
+which always fails.If both <code>patt1</code> and <code>patt2</code> are character sets,
+this operation is equivalent to set union:
+<pre> lower = lpeg.R(&#34;az&#34;)
+ upper = lpeg.R(&#34;AZ&#34;)
+ letter = lower + upper</pre>
+NOT YET IMPLEMENTED.
+<dt><a name="patt1_&#45;_patt2"
+><b><code>patt1 &#45; patt2</b></code></a></dt>
+Returns a pattern equivalent to <i>!patt2 patt1</i>. This pattern asserts that the input does not match <code>patt2</code> and then matches <code>patt1</code>.If both <code>patt1</code> and <code>patt2</code> are character sets, this operation is equivalent to set difference. Note that <code>&#45;patt</code> is equivalent to <code>&#34;&#34; &#45; patt</code> (or <code>0 &#45; patt</code>). If <code>patt</code> is a character set, <code>1 &#45; patt</code> is its complement.NOT YET IMPLEMENTED.
+<dt><a name="patt1_*_patt2"
+><b><code>patt1 *patt2</b></code></a></dt>
+Returns a pattern that matches <code>patt1</code> and then matches <code>patt2</code>, starting where <code>patt1</code> finished. The identity element for this operation is the pattern <code>lpeg.P(true)</code>, which always succeeds.(LPeg uses the <code>*</code> operator [instead of the more obvious <code>..</code>] both because it has the right priority and because in formal languages it is common to use a dot for denoting concatenation.)NOT YET IMPLEMENTED.
+<dt><a name="patt^n"
+><b><code>patt^n</b></code></a></dt>
+If <code>n</code> is nonnegative, this pattern is equivalent to <i>pattn patt*</i>. It matches at least <code>n</code> occurrences of <code>patt</code>.Otherwise, when <code>n</code> is negative, this pattern is equivalent to <i>(patt?)&#45;n</i>. That is, it matches at most <code>&#45;n</code> occurrences of <code>patt</code>.In particular, <code>patt^0</code> is equivalent to <i>patt*</i>, <code>patt^1</code> is equivalent to <i>patt+</i>, and <code>patt^&#45;1</code> is equivalent to <i>patt?</i> in the original PEG notation.In all cases, the resulting pattern is greedy with no backtracking. That is, it matches only the longest possible sequence of matches for <code>patt</code>.In all cases, the resulting pattern is greedy with no backtracking (also called a <i>possessive</i> repetition). That is, it matches only the longest possible sequence of matches for <code>patt</code>.NOT YET IMPLEMENTED.</dl>
+
+<h2><a name="Grammars"
+>Grammars <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p>With the use of Lua variables, it is possible to define patterns incrementally, with each new pattern using previously defined ones. However, this technique does not allow the definition of recursive patterns. For recursive patterns, we need real grammars.</p>
+
+<p>LPeg represents grammars with tables, where each entry is a rule.</p>
+
+<p>The call <code>lpeg.V(v)</code> creates a pattern that represents the nonterminal (or <i>variable</i>) with index <code>v</code> in a grammar. Because the grammar still does not exist when this function is evaluated, the result is an <i>open reference</i> to the respective rule.</p>
+
+<p>A table is <i>fixed</i> when it is converted to a pattern (either by calling <code>lpeg.P</code> or by using it wherein a pattern is expected). Then every open reference created by <code>lpeg.V(v)</code> is corrected to refer to the rule indexed by <code>v</code> in the table.</p>
+
+<p>When a table is fixed, the result is a pattern that matches its <i>initial rule</i>. The entry with index 1 in the table defines its initial rule. If that entry is a string, it is assumed to be the name of the initial rule. Otherwise, LPeg assumes that the entry 1 itself is the initial rule.</p>
+
+<p>As an example, the following grammar matches strings of a&#39;s and b&#39;s that have the same number of a&#39;s and b&#39;s:</p>
+
+<pre> equalcount = lpeg.P{
+  &#34;S&#34;;   &#45;&#45; initial rule name
+  S = &#34;a&#34; * lpeg.V&#34;B&#34; + &#34;b&#34; * lpeg.V&#34;A&#34; + &#34;&#34;,
+  A = &#34;a&#34; * lpeg.V&#34;S&#34; + &#34;b&#34; * lpeg.V&#34;A&#34; * lpeg.V&#34;A&#34;,
+  B = &#34;b&#34; * lpeg.V&#34;S&#34; + &#34;a&#34; * lpeg.V&#34;B&#34; * lpeg.V&#34;B&#34;,
+ } * &#45;1</pre>
+
+<h2><a name="Captures"
+>Captures <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p>Captures specify what a match operation should return (the so called <i>semantic information</i>). LPeg offers several kinds of captures, which produces values based on matches and combine them to produce new values.</p>
+
+<p>A capture pattern produces its values every time it succeeds. For instance, a capture inside a loop produces as many values as matched by the loop. A capture produces a value only when it succeeds. For instance, the pattern <code>lpeg.C(lpeg.P&#34;a&#34;^&#45;1)</code> produces the empty string when there is no <code>&#34;a&#34;</code> (because the pattern <code>&#34;a&#34;?</code> succeeds), while the pattern <code>lpeg.C(&#34;a&#34;)^&#45;1</code> does not produce any value when there is no <code>&#34;a&#34;</code> (because the pattern <code>&#34;a&#34;</code> fails).</p>
+
+<p>Usually, LPEG evaluates all captures only after (and if) the entire match succeeds. At <i>match time</i> it only gathers enough information to produce the capture values later. As a particularly important consequence, most captures cannot affect the way a pattern matches a subject. The only exception to this rule is the so&#45;called <i>match&#45;time capture</i>. When a match&#45;time capture matches, it forces the immediate evaluation of all its nested captures and then calls its corresponding function, which tells whether the match succeeds and also what values are produced.</p>
+
+<dl>
+<dt><a name="lpeg.C_(patt)"
+><b><code>lpeg.C (patt)</b></code></a></dt>
+Creates a <i>simple capture</i>, which captures the substring of the subject that matches <code>patt</code>. The captured value is a string. If <code>patt</code> has other captures, their values are returned after this one.NOT YET IMPLEMENTED (see capture_aux).
+<dt><a name="lpeg.Carg_(n)"
+><b><code>lpeg.Carg (n)</b></code></a></dt>
+Creates an <i>argument capture</i>. This pattern matches the empty string and produces the value given as the nth extra argument given in the call to <code>lpeg.match</code>.NOT YET IMPLEMENTED.
+<dt><a name="lpeg.Cb_(name)"
+><b><code>lpeg.Cb (name)</b></code></a></dt>
+Creates a <i>back capture</i>. This pattern matches the empty string and produces the values produced by the <i>most recent</i> group capture named <code>name</code>.<i>Most recent</i> means the last <i>complete outermost</i> group capture with the given name. A <i>Complete</i> capture means that the entire pattern corresponding to the capture has matched. An <i>Outermost</i> capture means that the capture is not inside another complete capture.NOT YET IMPLEMENTED.
+<dt><a name="lpeg.Cc_({value})"
+><b><code>lpeg.Cc ({value})</b></code></a></dt>
+Creates a <i>constant capture</i>. This pattern matches the empty string and produces all given values as its captured values.NOT YET IMPLEMENTED.
+<dt><a name="lpeg.Cf_(patt,_func)"
+><b><code>lpeg.Cf (patt, func)</b></code></a></dt>
+Creates an <i>fold capture</i>. If <code>patt</code> produces a list of captures <i>C1 C2 ... Cn</i>, this capture will produce the value <i>func(...func(func(C1, C2), C3)..., Cn)</i>, that is, it will <i>fold</i> (or <i>accumulate</i>, or <i>reduce</i>) the captures from <code>patt</code> using function &#60;func&#62;.This capture assumes that <code>patt</code> should produce at least one capture with at least one value (of any type), which becomes the initial value of an <i>accumulator</i>. (If you need a specific initial value, you may prefix a constant capture to <code>patt</code>.) For each subsequent capture LPeg calls <code>func</code> with this accumulator as the first argument and all values produced by the capture as extra arguments; the value returned by this call becomes the new value for the accumulator. The final value of the accumulator becomes the captured value.As an example, the following pattern matches a list of numbers separated by commas and returns their addition:
+<pre> &#45;&#45; matches a numeral and captures its value
+ number = lpeg.R&#34;09&#34;^1 / tonumber
+ &#45;&#45;
+ &#45;&#45; matches a list of numbers, captures their values
+ list = number * (&#34;,&#34; * number)^0
+ &#45;&#45;
+ &#45;&#45; auxiliary function to add two numbers
+ function add (acc, newvalue) return acc + newvalue end
+ &#45;&#45;
+ &#45;&#45; folds the list of numbers adding them
+ sum = lpeg.Cf(list, add)
+ &#45;&#45;
+ &#45;&#45; example of use
+ print(sum:match(&#34;10,30,43&#34;))   &#45;&#45;&#62; 83</pre>
+NOT YET IMPLEMENTED (see capture_aux).
+<dt><a name="lpeg.Cg_(patt_[,_name])"
+><b><code>lpeg.Cg (patt [, name])</b></code></a></dt>
+Creates a <i>group capture</i>. It groups all values returned by <code>patt</code> into a single capture. The group may be anonymous (if no name is given) or named with the given name.An anonymous group serves to join values from several captures into a single capture. A named group has a different behavior. In most situations, a named group returns no values at all. Its values are only relevant for a following back capture or when used inside a table capture.NOT YET IMPLEMENTED (see capture_aux).
+<dt><a name="lpeg.Cp_()"
+><b><code>lpeg.Cp ()</b></code></a></dt>
+Creates a <i>position capture</i>. It matches the empty string and captures the position in the subject where the match occurs. The captured value is a number.NOT YET IMPLEMENTED.
+<dt><a name="lpeg.Cs_(patt)"
+><b><code>lpeg.Cs (patt)</b></code></a></dt>
+Creates a <i>substitution capture</i>, which captures the substring of the subject that matches <code>patt</code>, with <i>substitutions</i>. For any capture inside <code>patt</code> with a value, the substring that matched the capture is replaced by the capture value (which should be a string). The final captured value is the string resulting from all replacements.NOT YET IMPLEMENTED (see capture_aux).
+<dt><a name="lpeg.Ct_(patt)"
+><b><code>lpeg.Ct (patt)</b></code></a></dt>
+Creates a <i>table capture</i>. This capture creates a table and puts all values from all anonymous captures made by <code>patt</code> inside this table in successive integer keys, starting at 1. Moreover, for each named capture group created by <code>patt</code>, the first value of the group is put into the table with the group name as its key. The captured value is only the table.NOT YET IMPLEMENTED (see capture_aux).
+<dt><a name="patt_/_string"
+><b><code>patt / string</b></code></a></dt>
+Creates a <i>string capture</i>. It creates a capture string based on <code>string</code>. The captured value is a copy of <code>string</code>, except that the character <code>%</code> works as an escape character: any sequence in <code>string</code> of the form <i>%n</i>, with <i>n</i> between 1 and 9, stands for the match of the <i>n</i>&#45;th capture in <code>patt</code>. The sequence <code>%0</code> stands for the whole match. The sequence <code>%%</code> stands for a single <code>%</code>.
+<dt><a name="patt_/_table"
+><b><code>patt / table</b></code></a></dt>
+Creates a <i>query capture</i>. It indexes the given table using as key the first value captured by <code>patt</code>, or the whole match if <code>patt</code> produced no value. The value at that index is the final value of the capture. If the table does not have that key, there is no captured value.
+<dt><a name="patt_/_function"
+><b><code>patt / function</b></code></a></dt>
+Creates a <i>function capture</i>. It calls the given function passing all captures made by <code>patt</code> as arguments, or the whole match if <code>patt</code> made no capture. The values returned by the <code>function</code> are the final values of the capture. In particular, if <code>function</code> returns no value, there is no captured value.NOT YET IMPLEMENTED (see capture_aux).
+<dt><a name="lpeg.Cmt_(patt,_function)"
+><b><code>lpeg.Cmt (patt, function)</b></code></a></dt>
+Creates a <i>match&#45;time capture</i>. Unlike all other captures, this one is evaluated immediately when a match occurs. It forces the immediate evaluation of all its nested captures and then calls <code>function</code>.The function gets as arguments the entire subject, the current position (after the match of <code>patt</code>), plus any capture values produced by <code>patt</code>.The first value returned by <code>function</code> defines how the match happens. If the call returns a number, the match succeeds and the returned number becomes the new current position. (Assuming a subject <i>s</i> and current position <i>i</i>, the returned number must be in the range <i>[i, len(s) + 1]</i>.) If the call returns <b>false</b>, <b>nil</b>, or no value, the match fails.Any extra values returned by the function become the values produced by the capture.NOT YET IMPLEMENTED.</dl>
+
+<h2><a name="Some_Examples"
+>Some Examples <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p><a href='http://www.inf.puc&#45;rio.br/~roberto/lpeg.html#ex'><a href="http://www.inf.puc&#45;rio.br/~roberto/lpeg.html#ex">http://www.inf.puc&#45;rio.br/~roberto/lpeg.html#ex</a></a></p>
+
+<h1><a name="LINKS"
+>LINKS <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Parsing_Expression_Grammars"
+>Parsing Expression Grammars</a></dt>
+<a href='http://pdos.csail.mit.edu/%7Ebaford/packrat/'><a href="http://pdos.csail.mit.edu/%7Ebaford/packrat/">http://pdos.csail.mit.edu/%7Ebaford/packrat/</a></a>
+<dt><a name="Wikipedia_Entry_for_PEG"
+>Wikipedia Entry for PEG</a></dt>
+<a href='http://en.wikipedia.org/wiki/Parsing_expression_grammar'><a href="http://en.wikipedia.org/wiki/Parsing_expression_grammar">http://en.wikipedia.org/wiki/Parsing_expression_grammar</a></a>
+<dt><a name="Parsing_Expression_Grammars:_A_Recognition&#45;Based_Syntactic_Foundation"
+>Parsing Expression Grammars: A Recognition&#45;Based Syntactic Foundation</a></dt>
+<a href='http://pdos.csail.mit.edu/%7Ebaford/packrat/popl04/peg&#45;popl04.pdf'><a href="http://pdos.csail.mit.edu/%7Ebaford/packrat/popl04/peg&#45;popl04.pdf">http://pdos.csail.mit.edu/%7Ebaford/packrat/popl04/peg&#45;popl04.pdf</a></a></dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

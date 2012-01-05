@@ -1,0 +1,210 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Events</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Events</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>docs/pdds/draft/pdd24_events.pod &#45; Parrot Events</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This document defines the requirements and implementation strategy for Parrot&#39;s event subsystem.</p>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>$Revision$</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Description of the subject.</p>
+
+<h1><a name="DEFINITIONS"
+>DEFINITIONS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Definitions of important terms.
+(optional)</p>
+
+<h1><a name="IMPLEMENTATION"
+>IMPLEMENTATION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>[Excerpt from Perl 6 and Parrot Essentials to seed discussion.]</p>
+
+<p>An event is a notification that something has happened: the user has manipulated a GUI element,
+an I/O request has completed,
+a signal has been triggered,
+or a timer has expired.
+Most systems these days have an event handler (often two or three,
+which is something of a problem),
+because handling events is so fundamental to modern GUI programming.
+Unfortunately,
+the event handling system is not integrated,
+or poorly integrated,
+with the I/O system,
+leading to nasty code and unpleasant workarounds to try and make a program responsive to network,
+file,
+and GUI events simultaneously.
+Parrot presents a unified event handling system,
+integrated with its I/O system,
+which makes it possible to write cross&#45;platform programs that work well in a complex environment.</p>
+
+<p>Parrot&#39;s events are fairly simple.
+An event has an event type,
+some event data,
+an event handler,
+and a priority.
+Each thread has an event queue,
+and when an event happens it&#39;s put into the right thread&#39;s queue (or the default thread queue in those cases where we can&#39;t tell which thread an event was destined for) to wait for something to process it.</p>
+
+<p>Any operation that would potentially block drains the event queue while it waits,
+as do a number of the cleanup opcodes that Parrot uses to tidy up on scope exit.
+Parrot doesn&#39;t check each opcode for an outstanding event for pure performance reasons,
+as that check gets expensive quickly.
+Still,
+Parrot generally ensures timely event handling,
+and events shouldn&#39;t sit in a queue for more than a few milliseconds unless event handling has been explicitly disabled.</p>
+
+<p>When Parrot does extract an event from the event queue,
+it calls that event&#39;s event handler,
+if it has one.
+If an event doesn&#39;t have a handler,
+Parrot instead looks for a generic handler for the event type and calls it instead.
+If for some reason there&#39;s no handler for the event type,
+Parrot falls back to the generic event handler,
+which throws an exception when it gets an event it doesn&#39;t know how to handle.
+You can override the generic event handler if you want Parrot to do something else with unhandled events,
+perhaps silently discarding them instead.</p>
+
+<p>Because events are handled in mainline code,
+they don&#39;t have the restrictions commonly associated with interrupt&#45;level code.
+It&#39;s safe and acceptable for an event handler to throw an exception,
+allocate memory,
+or manipulate thread or global state safely.
+Event handlers can even acquire locks if they need to,
+though it&#39;s not a good idea to have an event handler blocking on lock acquisition.</p>
+
+<p>Parrot uses the priority on events for two purposes.
+First,
+the priority is used to order the events in the event queue.
+Events for a particular priority are handled in a FIFO manner,
+but higher&#45;priority events are always handled before lower&#45;priority events.
+Parrot also allows a user program or event handler to set a minimum event priority that it will handle.
+If an event with a priority lower than the current minimum arrives,
+it won&#39;t be handled,
+instead sitting in the queue until the minimum priority level is dropped.
+This allows an event handler that&#39;s dealing with a high&#45;priority event to ignore lower&#45;priority events.</p>
+
+<p>User code generally doesn&#39;t need to deal with prioritized events,
+so programmers should adjust event priorities with care.
+Adjusting the default priority of an event,
+or adjusting the current minimum priority level,
+is a rare occurrence.
+It&#39;s almost always a mistake to change them,
+but the capability is there for those rare occasions where it&#39;s the correct thing to do.</p>
+
+<h2><a name="Signals"
+>Signals <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Signals are a special form of event,
+based on the Unix signal mechanism.
+Parrot presents them as mildly special,
+as a remnant of Perl&#39;s Unix heritage,
+but under the hood they&#39;re not treated any differently from any other event.</p>
+
+<p>The Unix signaling mechanism is something of a mash,
+having been extended and worked on over the years by a small legion of undergrad programmers.
+At this point,
+signals can be divided into two categories,
+those that are fatal,
+and those that aren&#39;t.</p>
+
+<p>Fatal signals are things like SIGKILL,
+which unconditionally kills a process,
+or SIGSEGV,
+which indicates that the process has tried to access memory that isn&#39;t part of your process.
+There&#39;s no good way for Parrot to catch these signals,
+so they remain fatal and will kill your process.
+On some systems it&#39;s possible to catch some of the fatal signals,
+but Parrot code itself operates at too high a level for a user program to do anything with them&#45;&#45;they must be handled with special&#45;purpose code written in C or some other low&#45;level language.
+Parrot itself may catch them in special circumstances for its own use,
+but that&#39;s an implementation detail that isn&#39;t exposed to a user program.</p>
+
+<p>Non&#45;fatal signals are things like SIGCHLD,
+indicating that a child process has died,
+or SIGINT,
+indicating that the user has hit <code lang='und' xml:lang='und'>^C</code> on the keyboard.
+Parrot turns these signals into events and puts them in the event queue.
+Your program&#39;s event handler for the signal will be called as soon as Parrot gets to the event in the queue,
+and your code can do what it needs to with it.</p>
+
+<p>SIGALRM,
+the timer expiration signal,
+is treated specially by Parrot.
+Generated by an expiring alarm() system call,
+this signal is normally used to provide timeouts for system calls that would otherwise block forever,
+which is very useful.
+The big downside to this is that on most systems there can only be one outstanding alarm() request,
+and while you can get around this somewhat with the setitimer call (which allows up to three pending alarms) it&#39;s still quite limited.</p>
+
+<p>Since Parrot&#39;s IO system is fully asynchronous and never blocks&#45;&#45;even what looks like a blocking request still drains the event queue&#45;&#45;the alarm signal isn&#39;t needed for this.
+Parrot instead grabs SIGALRM for its own use,
+and provides a fully generic timer system which allows any number of timer events,
+each with their own callback functions and private data,
+to be outstanding.</p>
+
+<h1><a name="ATTACHMENTS"
+>ATTACHMENTS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>None.</p>
+
+<h1><a name="FOOTNOTES"
+>FOOTNOTES <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>None.</p>
+
+<h1><a name="REFERENCES"
+>REFERENCES <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>None.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

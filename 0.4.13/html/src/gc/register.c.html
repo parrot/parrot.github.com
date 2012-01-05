@@ -1,0 +1,540 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Register handling routines</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Register handling routines</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/register.c &#45; Register handling routines</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Parrot has 4 register sets,
+one for each of its basic types.
+The amount of registers in each set varies depending on the use counts of the respective subroutine and is determined by the PASM/PIR compiler in the register allocation pass (<em lang='und' xml:lang='und'>imcc/reg_alloc.c</em>).</p>
+
+<p>There is one register stack to support the <code lang='und' xml:lang='und'>saveall</code> and <code lang='und' xml:lang='und'>restoreall</code> opcodes.
+The former copies all registers to a newly allocated storage and points the register base pointers to this storage.
+In <code lang='und' xml:lang='und'>Parrot_pop_regs</code> the register base pointers are restored to the previous values and the allocated register memory is discarded.</p>
+
+<h2><a name="Context_and_Register_Allocation_Functions"
+>Context and Register Allocation Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>*/</p>
+
+<p>#include &#34;parrot/parrot.h&#34; #include &#34;parrot/register.h&#34;</p>
+
+<p>/* HEADER: include/parrot/register.h */</p>
+
+<p>/* * Context and register frame layout * * +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;++&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;+ * | context || N | I | P | S + * +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;++&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;+ * ^ ^ ^ ^ * | | ctx.bp ctx.bp_ps * ctx.state opt * padding * * Registers are addressed as usual via the register base pointer ctx.bp.
+* * The macro CONTEXT() hides these details * */</p>
+
+<p>/* * Context and register frame allocation * * There are two allocation strategies: chunked memory and malloced * with a free list.
+* * CHUNKED_CTX_MEM = 1 * * <code lang='und' xml:lang='und'>ctx_mem.data</code> is a pointer to an allocated chunk of memory.
+* The pointer <code lang='und' xml:lang='und'>ctx_mem.free</code> holds the next usable * location.
+With (full) continuations the <code lang='und' xml:lang='und'>ctx_mem.free</code> pointer can&#39;t be * moved below the <code lang='und' xml:lang='und'>ctx_mem.threshold</code>,
+which is the highest context pointer * of all active continuations.
+* [the code for this is incomplete; it had suffered some bit&#45;rot and was * getting in the way of maintaining the other case.
+&#45;&#45; rgr,
+4&#45;Feb&#45;06.] * * TODO GC has to lower this threshold when collecting continuations.
+* * CHUNKED_CTX_MEM = 0 * * Context/register memory is malloced.
+<code lang='und' xml:lang='und'>ctx_mem.free</code> is used as a free * list of reusable items.
+*/</p>
+
+<p>#define CTX_ALLOC_SIZE 0x20000</p>
+
+<p>#define ALIGNED_CTX_SIZE (((sizeof (Parrot_Context) + NUMVAL_SIZE &#45; 1) \ / NUMVAL_SIZE) * NUMVAL_SIZE)</p>
+
+<p>/* * Round register allocation size up to the nearest multiple of 8.
+A * granularity of 8 is arbitrary,
+it could have been some bigger power of 2.
+A * &#34;slot&#34; is an index into the free_list array.
+Each slot in free_list has a * linked list of pointers to already allocated contexts available for (re)use.
+* The slot where an available context is stored corresponds to the size of the * context.
+*/</p>
+
+<p>#define SLOT_CHUNK_SIZE 8</p>
+
+<p>#define ROUND_ALLOC_SIZE(size) ((((size) + SLOT_CHUNK_SIZE &#45; 1) \ / SLOT_CHUNK_SIZE) * SLOT_CHUNK_SIZE) #define CALCULATE_SLOT_NUM(size) ((size) / SLOT_CHUNK_SIZE)</p>
+
+<p>#if CHUNKED_CTX_MEM # error &#34;Non&#45;working code removed.&#34; #endif</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: destroy_context</p>
+
+<p>Free allocated context memory</p>
+
+<p>*/</p>
+
+<p>void destroy_context(Interp *interp /*NN*/) { int slot; Parrot_Context *context;</p>
+
+<pre lang='und' xml:lang='und'>    /* clear active contexts all the way back to the initial context */
+    context = CONTEXT(interp&#45;&#62;ctx);
+    while (context) {
+        Parrot_Context * const prev = context&#45;&#62;caller_ctx;
+        mem_sys_free(context);
+        context = prev;
+    }
+
+    /* clear freed contexts */
+    for (slot = 0; slot &#60; interp&#45;&#62;ctx_mem.n_free_slots; ++slot) {
+        void *ptr = interp&#45;&#62;ctx_mem.free_list[slot];
+        while (ptr) {
+            void * const next = *(void **) ptr;
+            mem_sys_free(ptr);
+            ptr = next;
+        }
+    }
+    mem_sys_free(interp&#45;&#62;ctx_mem.free_list);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: create_initial_context</p>
+
+<p>Create initial interpreter context.</p>
+
+<p>*/</p>
+
+<p>void create_initial_context(Interp *interp /*NN*/) { static INTVAL num_regs[] ={32,32,32,32};</p>
+
+<pre lang='und' xml:lang='und'>    /* Create some initial free_list slots. */</pre>
+
+<p>#define INITIAL_FREE_SLOTS 8 interp&#45;&#62;ctx_mem.n_free_slots = INITIAL_FREE_SLOTS; interp&#45;&#62;ctx_mem.free_list = (void **)mem_sys_allocate_zeroed(INITIAL_FREE_SLOTS * sizeof (void *));</p>
+
+<pre lang='und' xml:lang='und'>    /*
+     * For now create context with 32 regs each. Some src tests (and maybe other
+     * extenders) are assuming the presence of these registers
+     */
+    Parrot_alloc_context(interp, num_regs);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: parrot_gc_context</p>
+
+<p>Cleanup dead context memory. Called by the garbage collector.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void parrot_gc_context(Interp *interp /*NN*/) { #if CHUNKED_CTX_MEM parrot_context_t ctx;</p>
+
+<pre lang='und' xml:lang='und'>    if (!interp&#45;&#62;ctx_mem.threshold)
+        return;
+    LVALUE_CAST(char *, ctx.bp) = interp&#45;&#62;ctx_mem.threshold &#45;
+        sizeof (struct parrot_regs_t);
+    /* TODO */
+#endif
+}</pre>
+
+<p>static void clear_regs(Interp *interp /*NN*/, parrot_context_t *ctx /*NN*/) { int i;</p>
+
+<pre lang='und' xml:lang='und'>    /* NULL out registers &#45; P/S have to be NULL for GC
+     *
+     * if the architecture has 0x := NULL and 0.0 we could memset too
+     */
+    ctx&#45;&#62;bp.regs_i = interp&#45;&#62;ctx.bp.regs_i;
+    ctx&#45;&#62;bp_ps.regs_s = interp&#45;&#62;ctx.bp_ps.regs_s;
+    for (i = 0; i &#60; ctx&#45;&#62;n_regs_used[REGNO_PMC]; i++) {
+        CTX_REG_PMC(ctx, i) = PMCNULL;
+    }
+    for (i = 0; i &#60; ctx&#45;&#62;n_regs_used[REGNO_STR]; i++) {
+        CTX_REG_STR(ctx, i) = NULL;
+    }
+
+    if (Interp_debug_TEST(interp, PARROT_REG_DEBUG_FLAG)) {
+        /* depending on &#45;D40 we set int, num to garbage different garbage
+         * TODO remove this code for parrot 1.0
+         */
+        for (i = 0; i &#60; ctx&#45;&#62;n_regs_used[REGNO_INT]; i++) {
+            CTX_REG_INT(ctx, i) = &#45;999;
+        }
+        for (i = 0; i &#60; ctx&#45;&#62;n_regs_used[REGNO_NUM]; i++) {
+            CTX_REG_NUM(ctx, i) = &#45;99.9;
+        }
+    }
+    else {
+        for (i = 0; i &#60; ctx&#45;&#62;n_regs_used[REGNO_INT]; i++) {
+            CTX_REG_INT(ctx, i) = &#45;888;
+        }
+        for (i = 0; i &#60; ctx&#45;&#62;n_regs_used[REGNO_NUM]; i++) {
+            CTX_REG_NUM(ctx, i) = &#45;88.8;
+        }
+    }
+}</pre>
+
+<p>static void init_context(Interp *interp /*NN*/, parrot_context_t *ctx /*NN*/, const parrot_context_t *old /*NULLOK*/) { ctx&#45;&#62;ref_count = 0; /* TODO 1 &#45; Exceptions !!! */ ctx&#45;&#62;current_results = NULL; ctx&#45;&#62;results_signature = NULL; ctx&#45;&#62;lex_pad = PMCNULL; ctx&#45;&#62;outer_ctx = NULL; ctx&#45;&#62;current_cont = NULL; ctx&#45;&#62;current_object = NULL; /* XXX who clears it? */ ctx&#45;&#62;current_HLL = 0;</p>
+
+<pre lang='und' xml:lang='und'>    if (old) {
+        /* some items should better be COW copied */
+        ctx&#45;&#62;constants = old&#45;&#62;constants;
+        ctx&#45;&#62;reg_stack = old&#45;&#62;reg_stack;     /* XXX move into interpreter? */
+        ctx&#45;&#62;user_stack = old&#45;&#62;user_stack;   /* XXX move into interpreter? */
+        ctx&#45;&#62;warns = old&#45;&#62;warns;
+        ctx&#45;&#62;errors = old&#45;&#62;errors;
+        ctx&#45;&#62;trace_flags = old&#45;&#62;trace_flags;
+        ctx&#45;&#62;pred_offset = old&#45;&#62;pred_offset;
+        ctx&#45;&#62;current_HLL = old&#45;&#62;current_HLL;
+        ctx&#45;&#62;current_namespace = old&#45;&#62;current_namespace;
+        /* end COW */
+        ctx&#45;&#62;recursion_depth = old&#45;&#62;recursion_depth;
+    }
+    /* other stuff is set inside Sub.invoke */
+    clear_regs(interp, ctx);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_dup_context</p>
+
+<p>Duplicate the passed context</p>
+
+<p>*/</p>
+
+<p>struct Parrot_Context * Parrot_dup_context(Interp *interp /*NN*/, const struct Parrot_Context *old /*NN*/) { size_t diff; Parrot_Context *ctx; DECL_CONST_CAST;</p>
+
+<pre lang='und' xml:lang='und'>    const size_t reg_alloc = old&#45;&#62;regs_mem_size;
+    const int slot = CALCULATE_SLOT_NUM(reg_alloc);
+    void * ptr = interp&#45;&#62;ctx_mem.free_list[slot];
+
+    if (ptr) {
+        interp&#45;&#62;ctx_mem.free_list[slot] = *(void **) ptr;
+    }
+    else {
+        ptr = (void *)mem_sys_allocate(reg_alloc + ALIGNED_CTX_SIZE);
+    }
+    CONTEXT(interp&#45;&#62;ctx) = ctx = (Parrot_Context *)ptr;
+
+    ctx&#45;&#62;regs_mem_size   = reg_alloc;
+    ctx&#45;&#62;n_regs_used     = old&#45;&#62;n_regs_used;
+    diff                 = (long *)ctx &#45; (long *)const_cast(old);
+
+    interp&#45;&#62;ctx.bp.regs_i    += diff;
+    interp&#45;&#62;ctx.bp_ps.regs_s += diff;
+    init_context(interp, ctx, old);
+    return ctx;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_push_context</p>
+
+<p>Remember old context in <code lang='und' xml:lang='und'>caller_ctx</code>, suitable to use with <code lang='und' xml:lang='und'>Parrot_pop_context</code>.</p>
+
+<p>*/</p>
+
+<p>PARROT_API struct Parrot_Context * Parrot_push_context(Interp *interp /*NN*/, INTVAL *n_regs_used /*NN*/) { Parrot_Context * const old = CONTEXT(interp&#45;&#62;ctx); Parrot_Context * const ctx = Parrot_alloc_context(interp, n_regs_used);</p>
+
+<pre lang='und' xml:lang='und'>    ctx&#45;&#62;caller_ctx  = old;
+
+    /* doesn&#39;t change */
+    ctx&#45;&#62;current_sub = old&#45;&#62;current_sub;
+
+    /* copy more ? */
+    return ctx;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_pop_context</p>
+
+<p>Free the context created with <code lang='und' xml:lang='und'>Parrot_push_context</code> and restore the previous context.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void Parrot_pop_context(Interp *interp /*NN*/) { Parrot_Context * const ctx = CONTEXT(interp&#45;&#62;ctx); Parrot_Context * const old = ctx&#45;&#62;caller_ctx;</p>
+
+<pre lang='und' xml:lang='und'>    Parrot_free_context(interp, ctx, 1);
+
+    /* restore old, set cached interpreter base pointers */
+    CONTEXT(interp&#45;&#62;ctx) = old;
+    interp&#45;&#62;ctx.bp       = old&#45;&#62;bp;
+    interp&#45;&#62;ctx.bp_ps    = old&#45;&#62;bp_ps;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_alloc_context</p>
+
+<p>Allocate a new context and set the context pointer. Please note that the register usage <code lang='und' xml:lang='und'>n_regs_used</code> is not copied; just the pointer is stored. The function returns the new context.</p>
+
+<p>*/</p>
+
+<p>struct Parrot_Context * Parrot_alloc_context(Interp *interp /*NN*/, INTVAL *n_regs_used /*NN*/) { Parrot_Context *old, *ctx; void *ptr, *p;</p>
+
+<pre lang='und' xml:lang='und'>    /*
+     * TODO (OPT) if we allocate a new context due to a self&#45;recursive call
+     *      create a specialized version that just uses caller&#39;s size
+     */
+    const size_t size_i = sizeof (INTVAL)   * n_regs_used[REGNO_INT];
+    const size_t size_n = sizeof (FLOATVAL) * n_regs_used[REGNO_NUM];
+    const size_t size_s = sizeof (STRING*)  * n_regs_used[REGNO_STR];
+    const size_t size_p = sizeof (PMC*)     * n_regs_used[REGNO_PMC];
+
+    const size_t size_nip      = size_n + size_i + size_p;
+    const size_t all_regs_size = size_n + size_i + size_p + size_s;
+    const size_t reg_alloc     = ROUND_ALLOC_SIZE(all_regs_size);
+    const int    slot          = CALCULATE_SLOT_NUM(reg_alloc);
+
+    /*
+     * If slot is beyond the end of the allocated list, extend the list to
+     * allocate more slots.
+     */
+    if (slot &#62;= interp&#45;&#62;ctx_mem.n_free_slots) {
+        const int extend_size = slot + 1;
+        int i;
+
+        interp&#45;&#62;ctx_mem.free_list = (void **)mem_sys_realloc(
+                interp&#45;&#62;ctx_mem.free_list, extend_size * sizeof (void*));
+
+        for (i = interp&#45;&#62;ctx_mem.n_free_slots; i &#60; extend_size; ++i)
+            interp&#45;&#62;ctx_mem.free_list[i] = NULL;
+        interp&#45;&#62;ctx_mem.n_free_slots = extend_size;
+    }
+
+    /*
+     * The free_list contains a linked list of pointers for each size (slot
+     * index). Pop off an available context of the desired size from free_list.
+     * If no contexts of the desired size are available, allocate a new one.
+     */
+    ptr = interp&#45;&#62;ctx_mem.free_list[slot];
+    old = CONTEXT(interp&#45;&#62;ctx);
+
+    if (ptr) {
+        /*
+         * Store the next pointer from the linked list for this size (slot
+         * index) in free_list. On &#34;*(void **) ptr&#34;, C won&#39;t dereference a void
+         * * pointer (untyped), so type cast ptr to void** (a dereference&#45;able
+         * type) then dereference it to get a void*. Store the dereferenced
+         * value (the next pointer in the linked list) in free_list.
+         */
+        interp&#45;&#62;ctx_mem.free_list[slot] = *(void **) ptr;
+    }
+    else {
+        const size_t to_alloc = reg_alloc + ALIGNED_CTX_SIZE;
+        if (old)
+            ptr = mem_sys_allocate(to_alloc);
+        else
+            ptr = mem_sys_allocate_zeroed(to_alloc);
+    }</pre>
+
+<p>#if CTX_LEAK_DEBUG if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) { fprintf(stderr, &#34;[alloc ctx %p]\n&#34;, ptr); } #endif</p>
+
+<pre lang='und' xml:lang='und'>    CONTEXT(interp&#45;&#62;ctx) = ctx = (Parrot_Context *)ptr;
+
+    ctx&#45;&#62;regs_mem_size   = reg_alloc;
+    ctx&#45;&#62;n_regs_used     = n_regs_used;
+
+    /* regs start past the context */
+    p = (void *) ((char *)ptr + ALIGNED_CTX_SIZE);
+    /* ctx.bp points to I0, which has Nx on the left */
+    interp&#45;&#62;ctx.bp.regs_i = (INTVAL*)((char*)p + size_n);
+    /* ctx.bp_ps points to S0, which has Px on the left */
+    interp&#45;&#62;ctx.bp_ps.regs_s = (STRING**)((char*)p + size_nip);
+    init_context(interp, ctx, old);
+    return ctx;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_free_context</p>
+
+<p>Free the context. If <code lang='und' xml:lang='und'>re_use</code> is true, this function is called by a return continuation invoke, else from the destructor of a continuation.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void Parrot_free_context(Interp *interp /*NN*/, struct Parrot_Context *ctxp /*NN*/, int re_use) { /* * The context structure has a reference count, initially 0. This field is * incrementented when a continuation that points to it is created &#45;&#45; either * directly, or when a continuation is cloned, or when a retcontinuation is * converted to a full continuation in invalidate_retc. To check for leaks, * (a) disable NDEBUG, (b) enable CTX_LEAK_DEBUG in interpreter.h, and (c) * excecute &#34;debug 0x80&#34; in a (preferably small) test case. * */ if (re_use || &#45;&#45;ctxp&#45;&#62;ref_count &#60;= 0) { void *ptr; int slot;</p>
+
+<p>#ifndef NDEBUG if ( Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG) &#38;&#38; ctxp&#45;&#62;current_sub) { /* can&#39;t probably PIO_eprintf here */ const Parrot_sub * const doomed = PMC_sub(ctxp&#45;&#62;current_sub);</p>
+
+<pre lang='und' xml:lang='und'>            fprintf(stderr, &#34;[free  ctx %p of sub &#39;%s&#39;]\n&#34;,
+                    (void *)ctxp,
+                    (doomed&#45;&#62;name == (void*)0xdeadbeef
+                     ? &#34;???&#34;
+                     : (char*)doomed&#45;&#62;name&#45;&#62;strstart));
+        }
+#endif
+        ptr  = ctxp;
+        slot = CALCULATE_SLOT_NUM(ctxp&#45;&#62;regs_mem_size);
+
+        assert(slot &#60; interp&#45;&#62;ctx_mem.n_free_slots);
+        *(void **)ptr = interp&#45;&#62;ctx_mem.free_list[slot];
+        interp&#45;&#62;ctx_mem.free_list[slot] = ptr;
+    }
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_set_context_threshold</p>
+
+<p>Mark the context as possible threshold.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void Parrot_set_context_threshold(Interp *interp, struct Parrot_Context *ctxp) { /* nothing to do */ }</p>
+
+<p>/*</p>
+
+<h2><a name="Register_Stack_Functions"
+>Register Stack Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>*/</p>
+
+<p>typedef struct save_regs_t { Regs_ni old_bp_ni; /* restoreall just resets ptrs */ Regs_ps old_bp_ps; Regs_ps bp_ps; /* pushed regs need DOD marking */ INTVAL n_regs_pmc; INTVAL n_regs_str; } save_regs_t;</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: setup_register_stacks</p>
+
+<p>Set up the register stacks.</p>
+
+<p>*/</p>
+
+<p>void setup_register_stacks(Interp *interp /*NN*/) { CONTEXT(interp&#45;&#62;ctx)&#45;&#62;reg_stack = register_new_stack(interp, &#34;Regs_&#34;, sizeof (save_regs_t));</p>
+
+<p>}</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_push_regs</p>
+
+<p>Save all registers onto the register stack.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void Parrot_push_regs(Interp *interp /*NN*/) { Stack_Chunk_t *chunk; size_t size_nip, size_nips; void *ptr;</p>
+
+<pre lang='und' xml:lang='und'>    parrot_context_t * const ctx     = CONTEXT(interp&#45;&#62;ctx);
+    Stack_Chunk_t **   const chunk_p = &#38;ctx&#45;&#62;reg_stack;
+    save_regs_t *      const save_r  =
+        (save_regs_t *)stack_prepare_push(interp, chunk_p);
+
+    save_r&#45;&#62;old_bp_ni.regs_i = ctx&#45;&#62;bp.regs_i;
+    save_r&#45;&#62;old_bp_ps.regs_s = ctx&#45;&#62;bp_ps.regs_s;
+    save_r&#45;&#62;n_regs_str       = ctx&#45;&#62;n_regs_used[REGNO_STR];
+    save_r&#45;&#62;n_regs_pmc       = ctx&#45;&#62;n_regs_used[REGNO_PMC];
+
+    size_nip  = _SIZEOF_NUMS + _SIZEOF_INTS + _SIZEOF_PMCS;
+    size_nips = size_nip + _SIZEOF_STRS;
+    ptr       = mem_sys_allocate(size_nips);
+    memcpy(ptr, (char*)ctx&#45;&#62;bp.regs_i &#45; _SIZEOF_NUMS, size_nips);
+    interp&#45;&#62;ctx.bp_ps.regs_s = ctx&#45;&#62;bp_ps.regs_s =
+        save_r&#45;&#62;bp_ps.regs_s = (STRING **) ((char*) ptr + size_nip);
+    interp&#45;&#62;ctx.bp.regs_i = ctx&#45;&#62;bp.regs_i =
+        (INTVAL *) ((char*) ptr + _SIZEOF_NUMS);
+    chunk = *chunk_p;
+    PObj_bufstart(chunk) = ptr;
+    PObj_buflen  (chunk) = size_nips;
+    PObj_sysmem_SET(chunk);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_pop_regs</p>
+
+<p>Restore all registers from register stack.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void Parrot_pop_regs(Interp *interp /*NN*/) { parrot_context_t * const ctx = CONTEXT(interp&#45;&#62;ctx); Stack_Chunk_t ** const chunk_p = &#38;ctx&#45;&#62;reg_stack; Stack_Chunk_t * const chunk = *chunk_p; save_regs_t * const save_r = (save_regs_t *)stack_prepare_pop(interp, chunk_p);</p>
+
+<pre lang='und' xml:lang='und'>    /* restore register base pointers */
+    interp&#45;&#62;ctx.bp.regs_i    = ctx&#45;&#62;bp.regs_i    =
+        save_r&#45;&#62;old_bp_ni.regs_i;
+    interp&#45;&#62;ctx.bp_ps.regs_s = ctx&#45;&#62;bp_ps.regs_s =
+        save_r&#45;&#62;old_bp_ps.regs_s;
+    /* deal with allocated memory, GC handles the chunk itself */
+    mem_sys_free(PObj_bufstart(chunk));
+    PObj_bufstart(chunk) = NULL;
+    PObj_buflen(chunk) = 0;
+    PObj_sysmem_CLEAR(chunk);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: mark_register_stack</p>
+
+<p>Marks the register stack and its registers as live.</p>
+
+<p>*/</p>
+
+<p>void mark_register_stack(Parrot_Interp interp, Stack_Chunk_t* chunk /*NN*/) { for (; ; chunk = chunk&#45;&#62;prev) { int i; save_regs_t *save_r; struct Interp_Context ctx;</p>
+
+<pre lang='und' xml:lang='und'>        pobject_lives(interp, (PObj*)chunk);
+        if (chunk == chunk&#45;&#62;prev)
+            break;
+        save_r = (save_regs_t *)STACK_DATAP(chunk);
+        ctx.bp.regs_i    = NULL;
+        ctx.bp_ps.regs_p = save_r&#45;&#62;old_bp_ps.regs_p;
+        for (i = 0; i &#60; save_r&#45;&#62;n_regs_pmc; ++i) {
+            PObj * const obj = (PObj *)CTX_REG_PMC(&#38;ctx, i);
+            if (obj)
+                pobject_lives(interp, obj);
+        }
+        for (i = 0; i &#60; save_r&#45;&#62;n_regs_str; ++i) {
+            PObj * const obj = (PObj *)CTX_REG_STR(&#38;ctx, i);
+            if (obj)
+                pobject_lives(interp, obj);
+        }
+    }
+}</pre>
+
+<p>PARROT_API void Parrot_clear_i(Interp *interp /*NN*/) { int i; for (i = 0; i &#60; CONTEXT(interp&#45;&#62;ctx)&#45;&#62;n_regs_used[REGNO_INT]; ++i) REG_INT(i) = 0; }</p>
+
+<p>PARROT_API void Parrot_clear_s(Interp *interp /*NN*/) { int i; for (i = 0; i &#60; CONTEXT(interp&#45;&#62;ctx)&#45;&#62;n_regs_used[REGNO_STR]; ++i) REG_STR(i) = NULL; }</p>
+
+<p>PARROT_API void Parrot_clear_p(Interp *interp /*NN*/) { int i; for (i = 0; i &#60; CONTEXT(interp&#45;&#62;ctx)&#45;&#62;n_regs_used[REGNO_PMC]; ++i) REG_PMC(i) = PMCNULL; }</p>
+
+<p>PARROT_API void Parrot_clear_n(Interp *interp /*NN*/) { int i; for (i = 0; i &#60; CONTEXT(interp&#45;&#62;ctx)&#45;&#62;n_regs_used[REGNO_NUM]; ++i) REG_NUM(i) = 0.0; }</p>
+
+<p>/*</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/register.h</em> and <em lang='und' xml:lang='und'><a href="../stack_common.c.html">src/stack_common.c</a></em></p>
+
+<p>*/</p>
+
+<p>/* * Local variables: * c&#45;file&#45;style: &#34;parrot&#34; * End: * vim: expandtab shiftwidth=4: */</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

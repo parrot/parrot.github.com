@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/perl6.html">Perl6</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="P6C::Parser"
+><b>P6C::Parser</b> <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>The parser.
+It provides the following methods:</p>
+
+<dl>
+<dt><a name="new"
+><b>new</b></a></dt><p class="pad"></p>
+
+<dd>Create a new parser object from scratch.
+This is slow.</dd><p class="pad"></p>
+
+<dt><a name="Precompile($name)"
+><b>Precompile($name)</b></a></dt><p class="pad"></p>
+
+<dd>Call <b>Parse::RecDescent</b>&#39;s <b>Precompile</b> method to compile the grammar to the file $name.pm.
+The resulting parser can then be loaded as a module,
+and instantiated with its <b>new</b> method.
+This is much faster than re&#45;building the grammar.</dd><p class="pad"></p>
+
+<dt><a name="Debug($on)"
+><b>Debug($on)</b></a></dt><p class="pad"></p>
+
+<dd>If <code lang='und' xml:lang='und'>$on</code> is true,
+generate line&#45;number information.
+This actually has a surprisingly small impact on performance.
+If <code lang='und' xml:lang='und'>$on</code> is false,
+turn line&#45;number generation off.</dd><p class="pad"></p>
+
+<dt><a name="Reset()"
+><b>Reset()</b></a></dt><p class="pad"></p>
+
+<dd>Reset global parser state.</dd><p class="pad"></p>
+</dl>
+
+<p>It&#39;s been tweaked for speed in a number of ways.
+First,
+the infix operators have been turned into regexes.
+Second,
+<b>%item</b> is not used,
+and the grammar can be built without <b>%item</b> support for more speed.
+Third,
+a number of logically distinct rules have been inlined,
+making the job of postprocessing the parse tree somewhat more involved.</p>
+
+<h2><a name="Internals"
+>Internals <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="%WANT"
+><b>%WANT</b></a></dt><p class="pad"></p>
+
+<dd>Maps function (prefix operator) names to their corresponding argument context rules.
+The entries serve the dual purpose of recognizing a prefix operator,
+and of telling the parser what to parse next.</dd><p class="pad"></p>
+
+<dt><a name="$FUNCTION_ARGS"
+><b>$FUNCTION_ARGS</b></a></dt><p class="pad"></p>
+
+<dd>The default argument context rule; a comma&#45;separated list of values.</dd><p class="pad"></p>
+
+<dt><a name="%CLASSES"
+><b>%CLASSES</b></a></dt><p class="pad"></p>
+
+<dd>Has an entry for each class.
+This allows bare class&#45;names to be recognized.
+The hash values are currently unimportant.</dd><p class="pad"></p>
+
+<dt><a name="add_function($function,_$params,_$parser)"
+><b>add_function($function,
+$params,
+$parser)</b></a></dt><p class="pad"></p>
+
+<dd>Called in function declarations and definitions to add a function to the parser.</dd><p class="pad"></p>
+
+<dt><a name="add_class($class)"
+><b>add_class($class)</b></a></dt><p class="pad"></p>
+
+<dd>Add a class.</dd><p class="pad"></p>
+
+<dt><a name="set_error_handler($err_handler)"
+><b>set_error_handler($err_handler)</b></a></dt><p class="pad"></p>
+
+<dd>Sets the error handler for the parser.
+When an error is detected during the parse,
+$err_handler is called with these parameters: &#38;$err_handler($msg,
+$linenum)</dd><p class="pad"></p>
+
+<dd>If no error handler if set then a message is printed on STDERR.</dd><p class="pad"></p>
+
+<dd>This function returns the previous error handler.</dd><p class="pad"></p>
+
+<dt><a name="parse_sig"
+><b>parse_sig</b></a></dt><p class="pad"></p>
+
+<dd>Parses a signature and returns (signature,
+context).</dd><p class="pad"></p>
+
+<dt><a name="argument_context($name,_$params,_$parser)"
+><b>argument_context($name,
+$params,
+$parser)</b></a></dt><p class="pad"></p>
+
+<dd>Abandon hope,
+all ye who enter here.
+Given the first part of a sub definition,
+this code adds a rule to the parser to handle its argument context,
+then creates and eval&#39;s a function to handle objects of the resulting type.
+Yes,
+it&#39;s ugly.
+No,
+I don&#39;t see a less ugly way to do it.</dd><p class="pad"></p>
+
+<dt><a name="argtype($thing)"
+><b>argtype($thing)</b></a></dt><p class="pad"></p>
+
+<dd>Given a <b>P6C::variable</b>,
+return the appropriate syntax rule to recognize an argument of that time.
+Currently always returns &#34;scalar_expr&#34;.</dd><p class="pad"></p>
+
+<dt><a name="optional_last($n)"
+><b>optional_last($n)</b></a></dt><p class="pad"></p>
+
+<dd>Create code to extract arguments from a (&#39;,&#39; thing)(s?) element at position $n and flatten it.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

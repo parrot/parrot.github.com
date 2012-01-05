@@ -1,0 +1,170 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Header management functions</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Contents</a> &raquo; <a href="../../../html/c.html">C</a> &raquo; Header management functions
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/gc/pools.c &#45; Header management functions</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Handles pool creation for PMC headers.</p>
+
+<h2><a name="Buffer_Header_Functions_for_small&#45;object_lookup_table"
+>Buffer Header Functions for small&#45;object lookup table</a></h2>
+
+<dl>
+<dt><a name="void_*_get_free_buffer"
+><b><code>void *get_free_buffer</b></code></a></dt>
+Gets a free object or buffer from the given <code>pool</code> and returns it.
+If the object is larger then a standard <code>PObj</code> structure,
+all additional memory is cleared.</dl>
+
+<h2><a name="Header_Pool_Creation_Functions"
+>Header Pool Creation Functions</a></h2>
+
+<dl>
+<dt><a name="Small_Object_Pool_*_new_pmc_pool"
+><b><code>Small_Object_Pool *new_pmc_pool</b></code></a></dt>
+Creates and initializes a new pool for PMCs and returns it.
+<dt><a name="Small_Object_Pool_*_new_bufferlike_pool"
+><b><code>Small_Object_Pool *new_bufferlike_pool</b></code></a></dt>
+Creates a new pool for buffer&#45;like structures.
+This is called from <code>get_bufferlike_pool()</code>,
+and should probably not be called directly.
+<dt><a name="Small_Object_Pool_*_new_buffer_pool"
+><b><code>Small_Object_Pool *new_buffer_pool</b></code></a></dt>
+Creates a new <code>Small_Object_Pool</code> structure for managing buffer objects.Non&#45;constant strings and plain Buffers are stored in the sized header pools.
+<dt><a name="Small_Object_Pool_*_new_string_pool"
+><b><code>Small_Object_Pool *new_string_pool</b></code></a></dt>
+Creates a new pool for <code>STRING</code>s and returns it.
+This calls <code>get_bufferlike_pool</code> internally,
+which in turn calls <code>new_bufferlike_pool</code>.
+<dt><a name="Small_Object_Pool_*_get_bufferlike_pool"
+><b><code>Small_Object_Pool *get_bufferlike_pool</b></code></a></dt>
+Makes and return a bufferlike header pool for objects of a given size.
+If a pool for objects of that size already exists,
+no new pool will be created and the pointer to the existing pool is returned.
+<dt><a name="size_t_get_max_buffer_address"
+><b><code>size_t get_max_buffer_address</b></code></a></dt>
+Calculates the maximum buffer address and returns it.
+This is done by looping through all the sized pools,
+and finding the pool whose <code>end_arena_memory</code> field is the highest.
+Notice that arenas in each pool are not necessarily located directly next to each other in memory,
+and the last arena in the pool&#39;s list may not be located at the highest memory address.
+<dt><a name="size_t_get_min_buffer_address"
+><b><code>size_t get_min_buffer_address</b></code></a></dt>
+Calculates the minimum buffer address and returns it.
+Loops through all sized pools,
+and finds the one with the smallest <code>start_arena_memory</code> field.
+Notice that the memory region between <code>get_min_buffer_address</code> and <code>get_max_buffer_address</code> may be fragmented,
+and parts of it may not be available for Parrot to use directly (such as bookkeeping data for the OS memory manager).
+<dt><a name="size_t_get_max_pmc_address"
+><b><code>size_t get_max_pmc_address</b></code></a></dt>
+Returns the maximum memory address used by the <code>pmc_pool</code>.
+<dt><a name="size_t_get_min_pmc_address"
+><b><code>size_t get_min_pmc_address</b></code></a></dt>
+Returns the minimum memory address used by the <code>pmc_pool</code>.
+Notice that the memory region between <code>get_min_pmc_address</code> and <code>get_max_pmc_address</code> may be fragmented,
+and not all of it may be used directly by Parrot for storing PMCs.
+<dt><a name="int_is_buffer_ptr"
+><b><code>int is_buffer_ptr</b></code></a></dt>
+Checks whether the given <code>ptr</code> is located within one of the sized header pools.
+Returns <code>1</code> if it is,
+and <code>0</code> if not.
+<dt><a name="int_is_pmc_ptr"
+><b><code>int is_pmc_ptr</b></code></a></dt>
+Checks that <code>ptr</code> is actually a PMC pointer.
+Returns <code>1</code> if it is,
+<code>0</code> otherwise.
+<dt><a name="void_Parrot_initialize_header_pools"
+><b><code>void Parrot_initialize_header_pools</b></code></a></dt>
+The initialization routine for the interpreter&#39;s header pools.
+Initializes pools for string headers,
+constant string headers,
+buffers,
+PMCs,
+PMC_EXTs,
+and constant PMCs.The <code>string_header_pool</code> and <code>buffer_header_pool</code> are actually both in the sized pools,
+although no other sized pools are created here.
+<dt><a name="int_Parrot_forall_header_pools"
+><b><code>int Parrot_forall_header_pools</b></code></a></dt>
+Iterates through header pools,
+invoking the given callback function on each pool in the list matching the given criteria.
+Determines which pools to iterate over depending on flags passed to the function.
+Returns the callback&#39;s return value,
+if non&#45;zero.
+A non&#45;zero return value from the callback function will terminate the iteration prematurely.
+<dl>
+<dt><a name="flag_is_one_of"
+>flag is one of</a></dt>
+
+<pre>  POOL_PMC
+  POOL_BUFFER
+  POOL_CONST
+  POOL_ALL</pre>
+Only matching pools will be used. Notice that it is not possible to iterate over certain sets of pools using the provided flags in the single pass. For instance, both the PMC pool and the constant PMC pool cannot be iterated over in a single pass.
+<dt><a name="arg"
+>arg</a></dt>
+This argument is passed on to the iteration function.
+<dt><a name="pool_iter_fn"
+>pool_iter_fn</a></dt>
+Called with <code>(Parrot_Interp, Small_Object_Pool *, int flag, void *arg)</code>. If the function returns a non&#45;zero value, iteration will stop.</dl>
+
+<dt><a name="static_void_free_pool"
+><b><code>static void free_pool</b></code></a></dt>
+Frees a pool and all of its arenas. Loops through the list of arenas backwards and returns each to the memory manager. Then, frees the pool structure itself.
+<dt><a name="static_int_sweep_cb_buf"
+><b><code>static int sweep_cb_buf</b></code></a></dt>
+Performs a final garbage collection sweep, then frees the pool. Calls <code>Parrot_gc_sweep</code> to perform the sweep, and <code>free_pool</code> to free the pool and all its arenas.
+<dt><a name="static_int_sweep_cb_pmc"
+><b><code>static int sweep_cb_pmc</b></code></a></dt>
+Performs a garbage collection sweep of the given pmc pool, then frees it. Calls <code>Parrot_gc_sweep</code> to perform the sweep, and <code>free_pool</code> to free the pool and all its arenas. Always returns <code>0</code>.
+<dt><a name="void_Parrot_destroy_header_pools"
+><b><code>void Parrot_destroy_header_pools</b></code></a></dt>
+Performs a garbage collection sweep on all pools, then frees them. Calls <code>Parrot_forall_header_pools</code> to loop over all the pools, passing <code>sweep_cb_pmc</code> and <code>sweep_cb_buf</code> callback routines. Frees the array of sized header pointers in the <code>Arenas</code> structure too.
+<dt><a name="static_void_fix_pmc_syncs"
+><b><code>static void fix_pmc_syncs</b></code></a></dt>
+Walks through the given arena, looking for all live and shared PMCs, transferring their sync values to the destination interpreter.
+<dt><a name="void_Parrot_merge_header_pools"
+><b><code>void Parrot_merge_header_pools</b></code></a></dt>
+Merges the header pools of <code>source_interp</code> into those of <code>dest_interp</code>. (Used to deal with shared objects left after interpreter destruction.)</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em>include/parrot/gc_pools.h</em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY</a></h1>
+
+<p>Initial version by Mike Lambert on 2002.05.27.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

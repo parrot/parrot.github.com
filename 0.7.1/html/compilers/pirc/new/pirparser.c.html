@@ -1,0 +1,184 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Bison specification for the PIR assembly language parser.</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Bison specification for the PIR assembly language parser.</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>pir.y &#45; Bison specification for the PIR assembly language parser.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This file implements the parser for the PIR assembly language.
+During the parsing phase,
+data structures are created that represent the input.
+These data structures are defined in <code lang='und' xml:lang='und'>pircompunit.h</code>.</p>
+
+<p>The parser implements strength reduction and constant folding.
+Strength reduction refers to the selection of instructions that have the same effect as the instruction written by the PIR programmer,
+but are more efficient.
+For instance:</p>
+
+<pre lang='und' xml:lang='und'> add $P0, $P0, $P1</pre>
+
+<p>can be reduced to:</p>
+
+<pre lang='und' xml:lang='und'> add $P0, $P1</pre>
+
+<p>as <code lang='und' xml:lang='und'>$P0</code> was an IN/OUT operand.</p>
+
+<p>Constant folding refers to the compile&#45;time evaluation of expressions, if possible. For instance:</p>
+
+<pre lang='und' xml:lang='und'> add $I0, 10, 20</pre>
+
+<p>can be written as:</p>
+
+<pre lang='und' xml:lang='und'> set $I0, 30</pre>
+
+<p>as we can evaluate this result during compile time. Likewise, conditional branch instructions may become unconditional branch instructions (if the condition evaluates to <i>true</i> during compile time) or it may become a <code lang='und' xml:lang='und'>noop</code> (no op) instruction (if the condition evaluates to <i>false</i> during compile time).</p>
+
+<h1><a name="FUNCTIONS"
+>FUNCTIONS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="static_constant_*_fold_i_i(yyscan_t_yyscanner,_int_a,_pir_math_operator_op,_int_b)"
+><b><code lang='und' xml:lang='und'>static constant *fold_i_i(yyscan_t yyscanner, int a, pir_math_operator op, int b)</b></code></a></dt><p class="pad"></p>
+
+<dd>Evaluates the expression <code lang='und' xml:lang='und'>a op b</code> and returns a constant node containing the result value. Both <code lang='und' xml:lang='und'>a</code> and <code lang='und' xml:lang='und'>b</code> are integer values.</dd><p class="pad"></p>
+
+<dt><a name="static_constant_*_fold_n_i(yyscan_t_yyscanner,_double_a,_pir_math_operator_op,_int_b)"
+><b><code lang='und' xml:lang='und'>static constant *fold_n_i(yyscan_t yyscanner, double a, pir_math_operator op, int b)</b></code></a></dt><p class="pad"></p>
+
+<dd>Same as <code lang='und' xml:lang='und'>fold_i_i</code>, except <code lang='und' xml:lang='und'>a</code> is of type double.</dd><p class="pad"></p>
+
+<dt><a name="static_constant_*_fold_i_n(yyscan_t_yyscanner,_int_a,_pir_math_operator_op,_double_b)"
+><b><code lang='und' xml:lang='und'>static constant *fold_i_n(yyscan_t yyscanner, int a, pir_math_operator op, double b)</b></code></a></dt><p class="pad"></p>
+
+<dd>Same as <code lang='und' xml:lang='und'>fold_i_i</code>, except <code lang='und' xml:lang='und'>b</code> is of type double.</dd><p class="pad"></p>
+
+<dt><a name="static_constant_*_fold_n_n(yyscan_t_yyscanner,_double_a,_pir_math_operator_op,_double_b)"
+><b><code lang='und' xml:lang='und'>static constant *fold_n_n(yyscan_t yyscanner, double a, pir_math_operator op, double b)</b></code></a></dt><p class="pad"></p>
+
+<dd>Same as <code lang='und' xml:lang='und'>fold_i_i</code>, except that both <code lang='und' xml:lang='und'>a</code> and <code lang='und' xml:lang='und'>b</code> are of type double.</dd><p class="pad"></p>
+
+<dt><a name="static_constant_*_fold_s_s(yyscan_t_yyscanner,_char_*a,_pir_math_operator_op,_char_*b)"
+><b><code lang='und' xml:lang='und'>static constant *fold_s_s(yyscan_t yyscanner, char *a, pir_math_operator op, char *b)</b></code></a></dt><p class="pad"></p>
+
+<dd>Evaluate the expression <code lang='und' xml:lang='und'>a op b</code>, where both <code lang='und' xml:lang='und'>a</code> and <code lang='und' xml:lang='und'>b</code> are strings. Only the concatenation and comparison operators are implemented; other operators will result in an error.</dd><p class="pad"></p>
+
+<dt><a name="static_int_evaluate_i_i(int_a,_pir_rel_operator_op,_double_b)"
+><b><code lang='und' xml:lang='und'>static int evaluate_i_i(int a, pir_rel_operator op, double b)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compare <code lang='und' xml:lang='und'>a</code> with <code lang='und' xml:lang='und'>b</code> according to the relational operator <code lang='und' xml:lang='und'>op</code>. Wrapper for <code lang='und' xml:lang='und'>evaluate_n_n</code>, which takes arguments of type double.</dd><p class="pad"></p>
+
+<dt><a name="static_int_evaluate_n_i(int_a,_pir_rel_operator_op,_double_b)"
+><b><code lang='und' xml:lang='und'>static int evaluate_n_i(int a, pir_rel_operator op, double b)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compare <code lang='und' xml:lang='und'>a</code> with <code lang='und' xml:lang='und'>b</code> according to the relational operator <code lang='und' xml:lang='und'>op</code>. Wrapper for <code lang='und' xml:lang='und'>evaluate_n_n</code>, which takes arguments of type double.</dd><p class="pad"></p>
+
+<dt><a name="static_int_evaluate_i_n(int_a,_pir_rel_operator_op,_double_b)"
+><b><code lang='und' xml:lang='und'>static int evaluate_i_n(int a, pir_rel_operator op, double b)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compare <code lang='und' xml:lang='und'>a</code> with <code lang='und' xml:lang='und'>b</code> according to the relational operator <code lang='und' xml:lang='und'>op</code>. Wrapper for <code lang='und' xml:lang='und'>evaluate_n_n</code>, which takes arguments of type double.</dd><p class="pad"></p>
+
+<dt><a name="static_int_evaluate_n_n(double_a,_pir_rel_operator_op,_double_b)"
+><b><code lang='und' xml:lang='und'>static int evaluate_n_n(double a, pir_rel_operator op, double b)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compare <code lang='und' xml:lang='und'>a</code> with <code lang='und' xml:lang='und'>b</code> according to the relational operator <code lang='und' xml:lang='und'>op</code>. <code lang='und' xml:lang='und'>op</code> can be <code lang='und' xml:lang='und'>&#60;!=</code>&#62;, <code lang='und' xml:lang='und'>&#60;==</code>&#62;, <code lang='und' xml:lang='und'>&#60;</code>, <code lang='und' xml:lang='und'>&#60;=</code>, <code lang='und' xml:lang='und'>&#62;</code> or <code lang='und' xml:lang='und'>&#62;=</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_int_evaluate_s_s(char_*a,_pir_rel_operator_op,_char_*b)"
+><b><code lang='und' xml:lang='und'>static int evaluate_s_s(char *a, pir_rel_operator op, char *b)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compare string <code lang='und' xml:lang='und'>a</code> with string <code lang='und' xml:lang='und'>b</code> using the operator <code lang='und' xml:lang='und'>op</code>. The function uses C&#39;s <code lang='und' xml:lang='und'>strcmp</code> function. Based on that result, which can be &#45;1 (smaller), 0 (equal) or 1 (larger), a boolean result is returned.</dd><p class="pad"></p>
+
+<dt><a name="static_int_evaluate_s(char_*_const_s)"
+><b><code lang='und' xml:lang='und'>static int evaluate_s(char *const s)</b></code></a></dt><p class="pad"></p>
+
+<dd>Evaluate a string in boolean context; if the string&#39;s length is 0, it&#39;s false. If the string equals &#34;0&#34;, &#34;.0&#34;, &#34;0.&#34; or &#34;0.0&#34;, it&#39;s false. Otherwise, it&#39;s true.</dd><p class="pad"></p>
+
+<dt><a name="static_int_evaluate_c(constant_*_const_c)"
+><b><code lang='und' xml:lang='und'>static int evaluate_c(constant *const c)</b></code></a></dt><p class="pad"></p>
+
+<dd>Evaluate a constant node in boolean context; if the constant is numeric, it must be non&#45;zero to be true; if it&#39;s a string, <code lang='und' xml:lang='und'>evaluate_s</code> is invoked to evaluate the string.</dd><p class="pad"></p>
+
+<dt><a name="static_char_*_concat_strings(char_*a,_char_*b)"
+><b><code lang='und' xml:lang='und'>static char *concat_strings(char *a, char *b)</b></code></a></dt><p class="pad"></p>
+
+<dd>Concatenates two strings into a new buffer; frees all memory of the old strings. The new string is returned.</dd><p class="pad"></p>
+
+<dt><a name="static_int_is_parrot_op(lexer_state_*_const_lexer,_char_const_*_const_spelling)"
+><b><code lang='und' xml:lang='und'>static int is_parrot_op(lexer_state *const lexer, char const *const spelling)</b></code></a></dt><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void create_if_instr(yyscan_t yyscanner, lexer_state *lexer, int invert, int hasnull, char *const name, char *const label)</b></code></a></dt><p class="pad"></p>
+
+<dd>Create an <code lang='und' xml:lang='und'>if</code> or <code lang='und' xml:lang='und'>unless</code> instruction; if <code lang='und' xml:lang='und'>invert</code> is non&#45;zero (true), the <code lang='und' xml:lang='und'>if</code> instruction is inverted, effectively becoming <code lang='und' xml:lang='und'>unless</code>.</dd><p class="pad"></p>
+
+<dd>If <code lang='und' xml:lang='und'>hasnull</code> is non&#45;zero (true), the <code lang='und' xml:lang='und'>if</code> instruction becomes <code lang='und' xml:lang='und'>if_null</code>; again, if <code lang='und' xml:lang='und'>invert</code> is non&#45;zero, the instruction becomes <code lang='und' xml:lang='und'>unless_null</code>.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>name</code> is the name of the variable that is checked during this instruction</dd><p class="pad"></p>
+
+<dt><a name="static_int_check_value(constant_*_const_c,_int_val)"
+><b><code lang='und' xml:lang='und'>static int check_value(constant *const c, int val)</b></code></a></dt><p class="pad"></p>
+
+<dd>Check whether the current value of the constant <code lang='und' xml:lang='und'>c</code> equals <code lang='und' xml:lang='und'>val</code>. For our purposes, it is sufficient to check for integer values (including a check against 1.0 or 0.0). If the values are indeed equal, true is returned, false otherwise. If the constant is not numeric, it returns always false.</dd><p class="pad"></p>
+
+<dt><a name="static_void_do_strength_reduction(lexer_state_*_const_lexer)"
+><b><code lang='und' xml:lang='und'>static void do_strength_reduction(lexer_state *const lexer)</b></code></a></dt><p class="pad"></p>
+
+<dd>Implement strength reduction for the math operators <code lang='und' xml:lang='und'>add</code>, <code lang='und' xml:lang='und'>sub</code>, <code lang='und' xml:lang='und'>mul</code>, <code lang='und' xml:lang='und'>div</code> and <code lang='und' xml:lang='und'>fdiv</code>. If the current instruction is any of these, then the first two operands are checked; if both are targets and are equal, the second operand is removed; this means that the first operand will be an IN/OUT operand. For instance:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> add $I0, $I0, $I1</pre>
+
+<dd>becomes:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> add $I0, $I1</pre>
+
+<dd>and</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> add $I0, 1</pre>
+
+<dd>becomes:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> inc $I0</pre>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

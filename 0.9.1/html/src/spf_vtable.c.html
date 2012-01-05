@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot sprintf</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Contents</a> &raquo; <a href="../../html/c.html">C</a> &raquo; Parrot sprintf
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/spf_vtable.c &#45; Parrot sprintf</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Implements the two families of functions <code>Parrot_sprintf</code> may use to retrieve arguments.</p>
+
+<h2><a name="Var_args_Functions"
+>Var args Functions</a></h2>
+
+<dl>
+<dt><a name="static_STRING_*_getchr_va"
+><b><code>static STRING *getchr_va</b></code></a></dt>
+Gets a <code>char</code> out of the <code>va_list</code> in <code>obj</code> and returns it as a Parrot <code>STRING</code>.<code>size</code> is unused.
+<dt><a name="static_HUGEINTVAL_getint_va"
+><b><code>static HUGEINTVAL getint_va</b></code></a></dt>
+Gets an integer out of the <code>va_list</code> in <code>obj</code> and returns it as a Parrot <code>STRING</code>.<code>size</code> is an <code>enum spf_type_t</code> value which indicates the storage type of the integer.
+<dt><a name="static_UHUGEINTVAL_getuint_va"
+><b><code>static UHUGEINTVAL getuint_va</b></code></a></dt>
+Gets an unsigned integer out of the <code>va_list</code> in <code>obj</code> and returns it as a Parrot <code>STRING</code>.<code>size</code> is an <code>enum spf_type_t</code> value which indicates the storage type of the integer.
+<dt><a name="static_HUGEFLOATVAL_getfloat_va"
+><b><code>static HUGEFLOATVAL getfloat_va</b></code></a></dt>
+Gets an floating&#45;point number out of the <code>va_list</code> in <code>obj</code> and returns it as a Parrot <code>STRING</code>.<code>size</code> is an <code>enum spf_type_t</code> value which indicates the storage type of the number.
+<dt><a name="static_STRING_*_getstring_va"
+><b><code>static STRING *getstring_va</b></code></a></dt>
+Gets an string out of the <code>va_list</code> in <code>obj</code> and returns it as a Parrot <code>STRING</code>.<code>size</code> is an <code>enum spf_type_t</code> value which indicates the storage type of the string.
+<dt><a name="static_void_*_getptr_va"
+><b><code>static void *getptr_va</b></code></a></dt>
+Gets a <code>void *</code> out of the <code>va_list</code> in <code>obj</code> and returns it.<code>size</code> is unused.</dl>
+
+<h2><a name="PMC_Functions"
+>PMC Functions</a></h2>
+
+<dl>
+<dt><a name="static_STRING_*_getchr_pmc"
+><b><code>static STRING *getchr_pmc</b></code></a></dt>
+Same as <code>getchr_va()</code> except that a vtable is used to get the value from <code>obj</code>.
+<dt><a name="static_HUGEINTVAL_getint_pmc"
+><b><code>static HUGEINTVAL getint_pmc</b></code></a></dt>
+Same as <code>getint_va()</code> except that a vtable is used to get the value from <code>obj</code>.
+<dt><a name="static_UHUGEINTVAL_getuint_pmc"
+><b><code>static UHUGEINTVAL getuint_pmc</b></code></a></dt>
+Same as <code>getuint_va()</code> except that a vtable is used to get the value from <code>obj</code>.
+<dt><a name="static_HUGEFLOATVAL_getfloat_pmc"
+><b><code>static HUGEFLOATVAL getfloat_pmc</b></code></a></dt>
+Same as <code>getfloat_va()</code> except that a vtable is used to get the value from <code>obj</code>.
+<dt><a name="static_STRING_*_getstring_pmc"
+><b><code>static STRING *getstring_pmc</b></code></a></dt>
+Same as <code>getstring_va()</code> except that a vtable is used to get the value from <code>obj</code>.
+<dt><a name="static_void_*_getptr_pmc"
+><b><code>static void *getptr_pmc</b></code></a></dt>
+Same as <code>getptr_va()</code> except that a vtable is used to get the value from <code>obj</code>.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em>src/misc.h</em>,
+<em><a href="misc.c.html">src/misc.c</a></em>,
+<em><a href="spf_render.c.html">src/spf_render.c</a></em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY</a></h1>
+
+<p>When I was first working on this implementation of sprintf,
+I ran into a problem.
+I wanted to re&#45;use the implementation for a Parrot bytecode&#45;level sprintf,
+but that couldn&#39;t be done,
+since it used <code>va_*</code> directly.
+For a while I thought about generating two versions of the source with a Perl script,
+but that seemed like overkill.
+Eventually I came across this idea &#45;&#45; pass in a specialized vtable with methods for extracting things from the arglist,
+whatever it happened to be.
+This is the result.</p>
+
+<h1><a name="TODO"
+>TODO</a></h1>
+
+<p>In the future,
+it may be deemed desirable to similarly vtable&#45;ize appending things to the string,
+allowing for faster <code>Parrot_io_printf()</code> &#38;c,
+as well as a version that writes directly to a C string.
+However,
+at this point neither of those is needed.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

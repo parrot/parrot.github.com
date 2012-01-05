@@ -1,0 +1,306 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Control Structures</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; Control Structures
+                </div>
+
+<h1><a name="Control_Structures"
+>Control Structures</a></h1>
+
+<p>The semantics of control structures in high&#45;level languages vary broadly.
+Rather than dictating one particular set of semantics for control structures,
+or attempting to provide multiple implementations of common control structures to fit the semantics of all major target languages,
+PIR provides a simple set of conditional and unconditional branch instructions.In fact,
+all control structures in all languages ultimately compile down to conditional and unconditional branches,
+so you&#39;re just getting a peek into the inner workings of your software.</p>
+
+<h2><a name="Conditionals_and_Unconditionals"
+>Conditionals and Unconditionals</a></h2>
+
+<p><!--
+	INDEX: goto instruction
+--> <!--
+	INDEX: unconditional branch
+--> An unconditional branch always jumps to a specified label.
+PIR has only one unconditional branch instruction,
+<code>goto</code>.
+In this example,
+the first <code>say</code> statement never runs because the <code>goto</code> always skips over it to the label <code>skip_all_that</code>:</p>
+<pre>      goto skip_all_that
+      say "never printed"
+
+  skip_all_that:
+      say "after branch"
+</pre>
+<p><!--
+	INDEX: conditional branch
+--> A conditional branch jumps to a specified label only when a particular condition is true.
+The condition may be as simple as checking the truth of a particular variable or as complex as a comparison operation.</p>
+
+<p>In this example,
+the <code>if/goto</code><!--
+	INDEX: if instruction
+--> skips to the label <code>maybe_skip</code> only if the value stored in <code>$I0</code> is true.
+If <code>$I0</code> is false,
+it will print &#34;might be printed&#34; and then print &#34;after branch&#34;:</p>
+<pre>      if $I0 goto maybe_skip
+      say "might be printed"
+  maybe_skip:
+      say "after branch"
+</pre>
+<h3><a name="Boolean_Truth"
+>Boolean Truth</a></h3>
+
+<p><!--
+	INDEX: boolean truth
+--> Parrot&#39;s <code>if</code> and <code>unless</code> instructions evaluate a variable as a boolean to decide whether to jump.
+In PIR,
+an integer is false if it&#39;s 0 and true if it&#39;s any non&#45;zero value.
+A number is false if it&#39;s 0.0 and true otherwise.
+A string is false if it&#39;s the empty string (<code>&#34;&#34;</code>) or a string containing only a zero (<code>&#34;0&#34;</code>),
+and true otherwise.
+Evaluating a PMC as a boolean calls the vtable function <code>get_bool</code><!--
+	INDEX: get_bool vtable function
+--> to check if it&#39;s true or false,
+so each PMC is free to determine what its boolean value should be.</p>
+
+<h3><a name="Comparisons"
+>Comparisons</a></h3>
+
+<p><!--
+	INDEX: comparison operators
+--> In addition to a simple check for the truth of a variable,
+PIR provides a collection of comparison operations for conditional branches.
+These jump when the comparison is true.</p>
+
+<p>This example compares <code>$I0</code> to <code>$I1</code> and jumps to the label <code>success</code> if <code>$I0</code> is less than <code>$I1</code>:</p>
+<pre>      if $I0 < $I1 goto success
+      say "comparison false"
+  success:
+      say "comparison true"
+</pre>
+<p>The full set of comparison operators in PIR are <code>==</code> (equal),
+<code>!=</code> (not equal),
+<code>&#60;</code> (less than),
+<code>&#60;=</code> (less than or equal),
+<code>&#62;</code> (greater than),
+and <code>&#62;=</code> (greater than or equal).</p>
+
+<h3><a name="Complex_Conditions"
+>Complex Conditions</a></h3>
+
+<p>PIR disallows nested expressions.
+You cannot embed a statement within another statement.
+If you have a more complex condition than a simple truth test or comparison,
+you must build up your condition with a series of instructions that produce a final,
+single truth value.</p>
+
+<p>This example performs two operations,
+addition and multiplication,
+then uses <code>and</code><!--
+	INDEX: and opcode
+--> to check if the results of both operations were true.
+The <code>and</code> opcode stores a boolean value (0 or 1) in the integer variable <code>$I2</code>; the code uses this value in an ordinary truth test:</p>
+<pre>    $I0 = 4 + 5
+    $I1 = 63 * 0
+    $I2 = and $I0, $I1
+
+    if $I2 goto true
+    say "maybe printed"
+  true:
+</pre>
+<h2><a name="If/Else_Construct"
+>If/Else Construct</a></h2>
+
+<p><code>if control structure</code> High&#45;level languages often use the keywords <i>if</i> and <i>else</i> for simple conditional control structures.
+These control structures perform an action when a condition is true and skip the action when the condition is false.
+PIR&#39;s <code>if</code> instruction can build up simple conditionals.</p>
+
+<p>This example checks the truth of the condition <code>$I0</code>.
+If <code>$I0</code> is true,
+it jumps to the <code>do_it</code> label,
+and runs the body of the conditional construct.
+If <code>$I0</code> is false,
+it continues on to the next statement,
+a <code>goto</code> instruction that skips over the body of the conditional to the label <code>dont_do_it</code>:</p>
+<pre>    if $I0 goto do_it
+    goto dont_do_it
+  do_it:
+    say "in the body of the if"
+  dont_do_it:
+</pre>
+<p>The control flow of this example may seem backwards.
+In a high&#45;level language,
+<i>if</i> often means <i>&#34;if the condition is true,
+run the next few lines of code&#34;</i>.
+In an assembly language,
+it&#39;s often more straightforward to write <i>&#34;if the condition is true,
+<b>skip</b> the next few lines of code&#34;</i>.
+Because of the reversed logic,
+you may find it easier to build a simple conditional construct using the <code>unless</code><!--
+	INDEX: unless instruction
+--> instruction instead of <code>if</code>.</p>
+<pre>    unless $I0 goto dont_do_it
+    say "in the body of the if"
+  dont_do_it:
+</pre>
+<p>This example produces the same output as the previous example,
+but the logic is simpler.
+When <code>$I0</code> is true,
+<code>unless</code> does nothing and the body of the conditional runs.
+When <code>$I0</code> is false,
+<code>unless</code> skips over the body of the conditional by jumping to <code>dont_do_it</code>.</p>
+
+<p><code>else control structure</code> An <i>if/else</i> control structure is easier to build using the <code>if</code> instruction than <code>unless</code>.
+To build an <i>if/else</i>,
+insert the body of the else right after the first <code>if</code> instruction.</p>
+
+<p>This example checks if <code>$I0</code> is true.
+If so,
+it jumps to the label <code>true</code> and runs the body of the <i>if</i> construct.
+If <code>$I0</code> is false,
+the <code>if</code> instruction does nothing,
+and the code continues to the body of the <i>else</i> construct.
+When the body of the else has finished,
+the <code>goto</code> jumps to the end of the <i>if/else</i> control structure by skipping over the body of the <i>if</i> construct:</p>
+
+<pre>    if $I0 goto true
+    say &#34;in the body of the else&#34;
+    goto done
+  true:
+    say &#34;in the body of the if&#34;
+  done:</pre>
+
+<h2><a name="Switch_Construct"
+>Switch Construct</a></h2>
+
+<p><!--
+	INDEX: switch control structure
+--> A <i>switch</i> control structure selects one action from a list of possible actions by comparing a single variable to a series of values until it finds one that matches. The simplest way to achieve this in PIR is with a series of <code>unless</code> instructions:</p>
+<pre>    $S0 = 'a'
+
+  option1:
+    unless $S0 == 'a' goto option2
+    say "matched: a"
+    goto end_of_switch
+
+  option2:
+    unless $S0 == 'b' goto default
+    say "matched: b"
+    goto end_of_switch
+
+  default:
+    say "I don't understand"
+
+  end_of_switch:
+</pre>
+<p>This example uses <code>$S0</code> as the <i>case</i> of the switch construct. It compares that case against the first value <code>a</code>. If they match, it prints the string &#34;matched: a&#34;, then jumps to the end of the switch at the label <code>end_of_switch</code>. If the first case doesn&#39;t match <code>a</code>, the <code>goto</code> jumps to the label <code>option2</code> to check the second option. The second option compares the case against the value <code>b</code>. If they match, it prints the string &#34;matched: b&#34;, then jumps to the end of the switch. If the case doesn&#39;t match the second option, the <code>goto</code> goes on to the default case, prints &#34;I don&#39;t understand&#34;, and continues to the end of the switch.</p>
+
+<h2><a name="Do&#45;While_Loop"
+>Do&#45;While Loop</a></h2>
+
+<p>A <i>do&#45;while</i><!--
+	INDEX: do&#45;while loop
+--> loop runs the body of the loop once, then checks a condition at the end to decide whether to repeat it. A single conditional branch can build this style of loop:</p>
+<pre>    $I0 = 0                 # counter
+
+  redo:                     # start of loop
+    inc $I0
+    say $I0
+    if $I0 < 10 goto redo   # end of loop
+</pre>
+<p>This example prints the numbers 1 to 10. The first time through, it executes all statements up to the <code>if</code> instruction. If the condition evaluates as true (<code>$I0</code> is less than 10), it jumps to the <code>redo</code> label and runs the loop body again. The loop ends when the condition evaluates as false.</p>
+
+<p>Here&#39;s a slightly more complex example that calculates the factorial <code>5!</code>:</p>
+<pre>      .local int product, counter
+
+      product = 1
+      counter = 5
+
+  redo:                         # start of loop
+      product *= counter
+      dec counter
+      if counter > 0 goto redo  # end of loop
+
+      say product
+</pre>
+<p>Each time through the loop it multiplies <code>product</code> by the current value of the <code>counter</code>, decrements the counter, and jumps to the start of the loop. The loop ends when <code>counter</code> has counted down to 0.</p>
+
+<h2><a name="While_Loop"
+>While Loop</a></h2>
+
+<p><!--
+	INDEX: while loop
+--> A <i>while</i> loop tests the condition at the start of the loop instead of at the end. This style of loop needs a conditional branch combined with an unconditional branch. This example also calculates a factorial, but with a <i>while</i> loop:</p>
+<pre>      .local int product, counter
+      product = 1
+      counter = 5
+
+  redo:                         # start of loop
+      if counter <= 0 goto end_loop
+      product *= counter
+      dec counter
+      goto redo
+  end_loop:                     # end of loop
+
+      say product
+</pre>
+<p>This code tests the counter <code>counter</code> at the start of the loop to see if it&#39;s less than or equal to 0, then multiplies the current product by the counter and decrements the counter. At the end of the loop, it unconditionally jumps back to the start of the loop and tests the condition again. The loop ends when the counter <code>counter</code> reaches 0 and the <code>if</code> jumps to the <code>end_loop</code> label. If the counter is a negative number or zero before the loop starts the first time, the body of the loop will never execute.</p>
+
+<h2><a name="For_Loop"
+>For Loop</a></h2>
+
+<p><!--
+	INDEX: for loop
+--> A <i>for</i> loop is a counter&#45;controlled loop with three declared components: a starting value, a condition to determine when to stop, and an operation to step the counter to the next iteration. A <i>for</i> loop in C looks something like:</p>
+
+<pre>  for (i = 1; i &#60;= 10; i++) {
+    ...
+  }</pre>
+
+<p>where <code>i</code> is the counter, <code>i = 1</code> sets the start value, <code>i &#60;= 10</code> checks the stop condition, and <code>i++</code> steps to the next iteration. A <i>for</i> loop in PIR requires one conditional branch and two unconditional branches.</p>
+<pre>  loop_init:
+    .local int counter
+    counter = 1
+
+  loop_test:
+    if counter <= 10 goto loop_body
+    goto loop_end
+
+  loop_body:
+    say counter
+
+  loop_continue:
+    inc counter
+    goto loop_test
+
+  loop_end:
+</pre>
+<p>The first time through the loop, this example sets the initial value of the counter in <code>loop_init</code>. It then goes on to test that the loop condition is met in <code>loop_test</code>. If the condition is true (<code>counter</code> is less than or equal to 10) it jumps to <code>loop_body</code> and executes the body of the loop. If the the condition is false, it will jump straight to <code>loop_end</code> and the loop will end. The body of the loop prints the current counter then goes on to <code>loop_continue</code>, which increments the counter and jumps back up to <code>loop_test</code> to continue on to the next iteration. Each iteration through the loop tests the condition and increments the counter, ending the loop when the condition is false. If the condition is false on the very first iteration, the body of the loop will never run.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

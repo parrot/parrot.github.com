@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>utility PGE subroutines</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">utility PGE subroutines</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/libs.html">Libraries</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="TITLE"
+>TITLE <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>PGE::Util &#45; utility PGE subroutines</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>The subroutines and items in this module are provided to make working with PGE a little easier.</p>
+
+<p>This module defines the &#34;PGE::P6Grammar&#34; compiler,
+which can be used to compile complete sets of rules (grammars).
+Input to the grammar compiler is a string containing statements of the form</p>
+
+<pre lang='und' xml:lang='und'>    grammar &#60;name&#62; ;
+    rule &#60;ident&#62; { &#60;p6rule&#62; } ;
+    # comment</pre>
+
+<p>A <code lang='und' xml:lang='und'>grammar</code> statement indicates where to load any subsequent rules. Unlike Perl 6, there can be multiple <code lang='und' xml:lang='und'>grammar</code> statements in the string.</p>
+
+<p>Here&#39;s a code snippet to load a set of rules using the grammar compiler:</p>
+
+<pre lang='und' xml:lang='und'>    load_bytecode &#34;PGE.pbc&#34;
+    load_bytecode &#34;PGE/Util.pir&#34;
+
+    $S0 = &#60;&#60;&#39;END&#39;
+        grammar PGE::Rule;
+        rule ident { [ _ | &#60;?alpha&#62; ] \w* }
+        rule name { &#60;ident&#62; [ \:\: &#60;ident&#62; ]* }
+    END
+    $P0 = compreg &#34;PGE::P6Grammar&#34;
+    $P1 = $P0($S0)
+    # rules &#60;PGE::Rule::ident&#62; and &#60;PGE::Rule::name&#62; have now been loaded</pre>
+
+<p>The return value from the compiler is a string containing the PIR generated from the rules in the grammar, which can be saved and used to generate precompiled .pbc files for other packages.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="__onload()"
+><b><code lang='und' xml:lang='und'>__onload()</b></code></a></dt><p class="pad"></p>
+
+<dd>Generates the grammar parse rule needed to parse grammar strings.</dd><p class="pad"></p>
+
+<dt><a name="compile_rules(STR_src)"
+><b><code lang='und' xml:lang='und'>compile_rules(STR src)</b></code></a></dt><p class="pad"></p>
+
+<dd>Compiles and loads a sequence of rule statements from the string given by <code lang='und' xml:lang='und'>src</code>.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="POD_ERRORS"
+>POD ERRORS <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Hey! <b>The above document had some coding errors, which are explained below:</b></p>
+
+<dl>
+<dt><a name="Around_line_43:"
+>Around line 43:</a></dt><p class="pad"></p>
+
+<dd>&#39;=item&#39; outside of any &#39;=over&#39;</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

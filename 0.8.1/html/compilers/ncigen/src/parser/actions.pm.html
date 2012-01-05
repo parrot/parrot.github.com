@@ -1,0 +1,179 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<p>class C99::Grammar::Actions;</p>
+
+<p>our $decls := c99AST::Decls.new(); our $C99DEBUG :=0;</p>
+
+<p>method TOP($/) { if $C99DEBUG { _dumper($decls); } make $decls; }</p>
+
+<p>sub parse_decl_specs($/,
+$ast) { if $/ { for $/ { $ast.attr( strip_spaces(~$_),
+1,
+1); } } }</p>
+
+<p>sub typedef($/) { if $/ { for $/ { if (&#39;typedef&#39; eq strip_spaces(~$_) ) { return 1; } } } return 0; }</p>
+
+<p>method declaration($/) { my $ast := c99AST::VarDecl.new( :node($/) ); my $type := &#34;&#34;;</p>
+
+<pre lang='und' xml:lang='und'>    #say(&#34;=================================================================================================&#34;);
+    #_dumper($/);
+#    make $decls;
+#    return 1;
+    my $decl_specs := $&#60;declaration_specifiers&#62;&#60;repeatable_declaration_specifiers&#62;;
+    if typedef($decl_specs) {
+        $ast := c99AST::TypeDef.new( :node($/) );
+        $type := &#34;TypeDef&#34;;
+    }
+    elsif $/&#60;init_declarator&#62;&#60;init_declarator&#62;&#60;declarator&#62;&#60;direct_declarator&#62;&#60;declarator_suffix&#62;&#60;declarator_suffix&#62;&#60;parameter_type_list&#62; {
+        $ast := c99AST::FuncDecl.new( :node($/) );
+        $type := &#34;FuncDecl&#34;;
+    }
+#    elsif $&#60;declaration_specifiers&#62;&#60;type_specifier&#62;&#60;type&#62; {
+#        $ast := c99AST::Struct.new( :node($/) );
+#        $type := &#34;Struct&#34;;
+#    }
+    else {
+        $ast := c99AST::VarDecl.new( :node($/) );
+        $type := &#34;VarDecl&#34;;
+    }
+    parse_decl_specs( $&#60;declaration_specifiers&#62;&#60;repeatable_declaration_specifiers&#62;, $ast );
+
+    #  TYPE
+    settype($&#60;declaration_specifiers&#62;&#60;type_specifier&#62;, $ast);
+
+    if ($type eq &#34;FuncDecl&#34;) {
+        if (+$&#60;init_declarator&#62; != 1) {
+            say(&#34;ERROR FuncDecl has more than one &#60;init_declarator&#62;&#34;);
+        }
+
+        #assert(+$&#60;init_declarator&#62;&#60;declarator&#62;&#60;direct_declarator&#62;&#60;declarator_suffix&#62;  == 1);
+        my $params := $&#60;init_declarator&#62;&#60;declarator&#62;&#60;declarator&#62;&#60;direct_declarator&#62;&#60;declarator_suffix&#62;&#60;parameter_type_list&#62;&#60;parameter_type_list&#62;&#60;parameter_list&#62;&#60;parameter_declaration&#62;;
+        for $params {
+            my $param := c99AST::Param.new( :node( $_ ) );
+
+            settype($_&#60;declaration_specifiers&#62;&#60;type_specifier&#62;, $param);
+            my $param_ident := $_&#60;declarator&#62;;
+            if $param_ident { setname( $_, $param ); }
+            ispointer($_, $param);
+            $ast.push( $param );
+        }
+        my $declarator := $&#60;init_declarator&#62;&#60;declarator&#62;;
+        my $name := setname($declarator, $ast);
+        $decls{ $name } := $ast;
+        ispointer($declarator, $ast);
+        #if $C99DEBUG { _dumper($ast); }
+        #say($name);
+    }
+    #elsif ($type eq &#34;VarDecl&#34;) {
+    #elsif $&#60;init_declarator&#62; {
+    else {
+        for $&#60;init_declarator&#62; {
+            my $l_ast := $ast.clone();
+
+            my $name := setname($_, $l_ast);
+            $decls{ $name } := $l_ast;
+            ispointer($_, $l_ast);
+            #if $C99DEBUG { _dumper($l_ast); }
+            #say($name);
+        }
+    }
+    #else {
+    #    say(&#34;OPAQUE STRUCT OR UNTION&#34;);
+    #    _dumper($/);
+    #}
+
+    make $decls;
+}</pre>
+
+<p>sub countpointer($/) { if $&#60;pointer&#62; { return countpointer($&#60;pointer&#62;) + 1; } else { return 0; } }</p>
+
+<p>sub ispointer($/, $ast) { if $/ { if $&#60;declarator&#62;&#60;pointer&#62; { $ast.pointer(1); $ast.pointer_cnt(countpointer($&#60;declarator&#62;&#60;pointer&#62;)); } }</p>
+
+<pre lang='und' xml:lang='und'>    my $lookup_ast := $ast;
+    repeat {
+=begin comment
+        if $lookup_ast.pointer() {
+            $ast.pointer(1);
+            my $pc := +$ast.pointer_cnt();
+            $pc++;
+            $ast.pointer_cnt($pc);
+        }
+=end comment
+
+        if $lookup_ast.builtin_type() {
+            $ast.primitive_type(~($lookup_ast.type()));
+            return 1;
+        }
+        my $type_name := $lookup_ast.type();
+        my $lookup_ast_name := $lookup_ast.name();
+
+        #FIXME struct or union typedef
+        if ($lookup_ast.name() eq $type_name) {
+            return 1;
+        }
+
+        $lookup_ast := $decls{$type_name};
+        unless $lookup_ast {
+            #say(&#34;Parent &#34; ~~ $lookup_ast_name ~~ &#34; &#34; ~~ $type_name ~~ &#34; not defined&#34;);
+            return 1;
+        }
+        if $lookup_ast.pointer() {
+            $ast.pointer(1);
+            my $pc := +$ast.pointer_cnt();
+            $pc := $pc + $lookup_ast.pointer_cnt();
+            $ast.pointer_cnt($pc);
+        }
+    } while (1);
+    #_dumper($ast);
+}</pre>
+
+<p>sub settype($/, $ast) { if $/ { #is it a struct or union my $struct_or_union := strip_spaces(~$&#60;type&#62;); if $struct_or_union { my $ident := $&#60;struct_or_union_specifier&#62;&#60;identifier&#62;&#60;identifier&#62;; if $ident { $ident := strip_spaces($ident.text()); } else { $ident := $&#60;struct_or_union_specifier&#62;&#60;identifier&#62;; if $ident { $ident := strip_spaces($ident.text()); } else { $ident := &#34;anonymous_&#34; ~~ $struct_or_union~~ &#34;1&#34;; } } $ast.type($ident); my $s_or_u := $&#60;struct_or_union_specifier&#62;&#60;struct_declaration&#62;; if $s_or_u { my $su; if ($struct_or_union eq &#34;struct&#34; ) { $su := c99AST::Struct.new( :node($/) ); } else { $su := c99AST::Union.new( :node($/) ); } $su.name($ident); build_struct_or_union($s_or_u, $su); $ast.complex($su); } } else { $ast.type(strip_spaces(~$/)); # BUILTIN_TYPE if $&#60;builtin_type&#62; { $ast.builtin_type(1); } } } else { say(&#34;ERROR no type specifier&#34;); } }</p>
+
+<p>sub strip_spaces($_) { $_.replace(&#39; &#39;, &#39;&#39;); return $_; }</p>
+
+<p>sub build_struct_or_union($/, $ast) { for $/ { my $smt := c99AST::VarDecl.new( :node($_) ); settype( $_&#60;specifier_qualifier_list&#62;&#60;type_specifier&#62;, $smt ); for $_&#60;struct_declarator_list&#62; { my $sm := $smt.clone(); my $declarator := $_&#60;struct_declarator&#62;&#60;declarator&#62;; $sm.name(strip_spaces($declarator.text())); ispointer($declarator, $sm); $ast.push($sm); } } }</p>
+
+<p>sub setname($/, $ast) { my $name_node := $&#60;declarator&#62;&#60;direct_declarator&#62;&#60;declarator_prefix&#62;; if $name_node { $ast.name( ~$name_node ); return ~$name_node; } else { say(&#34;ERROR node doesn&#39;t have &#60;direct_declarator&#62;&#60;declarator_prefix&#62;&#34;); _dumper($/); } }</p>
+
+<p># Local Variables: # mode: cperl # cperl&#45;indent&#45;level: 4 # fill&#45;column: 100 # End: # vim: expandtab shiftwidth=4 syntax=perl6:</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

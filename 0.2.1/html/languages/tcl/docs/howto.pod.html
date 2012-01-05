@@ -1,0 +1,142 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/tcl.html">TCL</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="contributing_to_tcl/parrot"
+>contributing to tcl/parrot <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>a brief overview on how to help out,
+if you&#39;re interested.
+In general,
+it&#39;s ok to send patches for tcl to the RT system for anything that isn&#39;t &#34;BIG STUFF&#34; &#45; those,
+please bounce off me first.
+I&#39;d prefer <code lang='und' xml:lang='und'>diff &#45;u</code> patches,
+but am happy to take complete files as well.</p>
+
+<p>Most of this is mentioned in the TODO &#45; in fact,
+this document probably should merge with the TODO to avoid redundancy.</p>
+
+<h1><a name="BIG_STUFF"
+>BIG STUFF <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="speed"
+>speed</a></dt><p class="pad"></p>
+
+<dd>We&#39;re currently a bit slow,
+compared to tclsh.
+Switching over to a compiler instead of an interpreter might help here,
+though I&#39;m having a hard time envisioning a compiler that doesn&#39;t have to do all the things we already do as an interpreter.</dd><p class="pad"></p>
+
+<dd>We could rewrite parse/interpret/compile in C,
+either as an NCI or behind a PMC object &#45; this would <i>possibly</i> give us an improvement in speed also.</dd><p class="pad"></p>
+
+<dt><a name="features"
+>features</a></dt><p class="pad"></p>
+
+<dd>We&#39;re currently missing a lot of stuff that requires support from parrot before we can continue,
+like Unicode for the <code lang='und' xml:lang='und'>\u</code> escapes.
+I&#39;ve tried to start documenting these in the TODO with sections like <code lang='und' xml:lang='und'>given Unicode</code>,
+then listing the things that we can do once we have that.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="DOCUMENTATION"
+>DOCUMENTATION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="pod"
+>pod</a></dt><p class="pad"></p>
+
+<dd>Every PIR .sub that&#39;s defined should probably have some POD to go along with it to document the arguments and return values.</dd><p class="pad"></p>
+
+<dt><a name="big_picture_docs."
+>big picture docs.</a></dt><p class="pad"></p>
+
+<dd>Are the docs in <code lang='und' xml:lang='und'>docs/</code> useful?
+Could use someone to proof them,
+and verify that there are no missing chunks (if missing,
+write them,
+or get them added to the <code lang='und' xml:lang='und'>TODO</code>),
+and that they are coherent.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="PIR"
+>PIR <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Missing_Commands"
+>Missing Commands</a></dt><p class="pad"></p>
+
+<dd>Every builtin command corresponds to a file with an appropriately named sub in <code lang='und' xml:lang='und'>lib/commands</code> &#45; Each of these subs takes some number of PMCs as arguments.
+For those commands that take a fixed number of parameters,
+we declare them with <code lang='und' xml:lang='und'>.param</code>.
+For those that take a variable number,
+we use the <code lang='und' xml:lang='und'>foldup</code> opcode.</dd><p class="pad"></p>
+
+<dd>Note that there are two return values for each command,
+an int and a PMC.
+The integer contains the Tcl return value for that command (OK,
+BREAK,
+RETRUN,
+etc.).
+The PMC is usually a string at this point,
+but could be any valid PMC.
+Note &#45; right now,
+if there&#39;s an error condition,
+create a new string&#45;like PMC and put the error condition in it.
+Eventually this will be some kind of structure.</dd><p class="pad"></p>
+
+<dd>Once you write a command (or add a subcommand),
+you need to add a test file ( or a test in an existing) file in <code lang='und' xml:lang='und'>t/</code> &#45; tests for <code lang='und' xml:lang='und'>puts</code>,
+for example,
+go in <code lang='und' xml:lang='und'>t/cmd_puts.t</code> &#45; we use the <code lang='und' xml:lang='und'>Test::Harness</code> framework,
+via <code lang='und' xml:lang='und'><a href='../../../lib/Parrot/Test.pm.html'>Parrot::Test</a></code>.
+To run your test,
+just say <code lang='und' xml:lang='und'>make test</code> in the top level tcl directory.
+Be sure to test each of the subcommands.
+While our eventual goal is to pass the tcl test suite,
+we really need to maintain a good one on our own in the meantime.</dd><p class="pad"></p>
+
+<dd>To find a command to work on,
+just check out the TODO &#45; several commands are currently not implemented,
+and others are missing various subcommands.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

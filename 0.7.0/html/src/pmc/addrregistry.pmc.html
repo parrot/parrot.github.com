@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>A DOD Registry PMC</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">A DOD Registry PMC</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/pmc.html">PMCs</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/pmc/addrregistry.pmc &#45; A DOD Registry PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The AddrRegistry class provides the equivalence of reference counts mainly for extenders and embedders of Parrot.
+The hash keys are the addresses of the key PMC,
+values are reference counts,
+i.e.
+the difference of (set_pmc_keyed &#45; delete_pmc_keyed).
+If the reference goes to zero,
+the entry is deleted physically.</p>
+
+<p>Please note that you have to anchor an instance of AddrRegistry yourself with <code lang='und' xml:lang='und'>Parrot_register_pmc</code> if it isn&#39;t visible to Parrot.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code lang='und' xml:lang='und'>void init()</b></code></a></dt><p class="pad"></p>
+
+<dd>Initializes the instance.</dd><p class="pad"></p>
+
+<dt><a name="void_destroy()"
+><b><code lang='und' xml:lang='und'>void destroy()</b></code></a></dt><p class="pad"></p>
+
+<dd>Free hash structure.</dd><p class="pad"></p>
+
+<dt><a name="void_mark()"
+><b><code lang='und' xml:lang='und'>void mark()</b></code></a></dt><p class="pad"></p>
+
+<dd>Marks the hash as live.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_integer_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>INTVAL get_integer_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the reference count for <code lang='und' xml:lang='und'>key</code> or 0 if the key doesn&#39;t exist.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_elements()"
+><b><code lang='und' xml:lang='und'>INTVAL elements()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the number of elements in the hash.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_get_bool()"
+><b><code lang='und' xml:lang='und'>INTVAL get_bool()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns true if the hash size is not zero.</dd><p class="pad"></p>
+
+<dt><a name="void_set_pmc_keyed(PMC_*key,_PMC_*value)"
+><b><code lang='und' xml:lang='und'>void set_pmc_keyed(PMC *key, PMC *value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Increment the reference count of <code lang='und' xml:lang='und'>key</code>.
+If the entry doesn&#39;t exist create it.
+The <code lang='und' xml:lang='und'>value</code> is always ignored.</dd><p class="pad"></p>
+
+<dt><a name="void_set_integer_keyed(PMC_*key,_INTVAL_value)"
+><b><code lang='und' xml:lang='und'>void set_integer_keyed(PMC *key, INTVAL value)</b></code></a></dt><p class="pad"></p>
+
+<dd>Set the given value.</dd><p class="pad"></p>
+
+<dt><a name="void_delete_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>void delete_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>Decrement the reference count of <code lang='und' xml:lang='und'>key</code>.
+If the reference count reaches 0,
+delete the entry.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_iter_()"
+><b><code lang='und' xml:lang='und'>PMC *get_iter ()</b></code></a></dt><p class="pad"></p>
+
+<dd>Return a new iterator for the PMC.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*get_pmc_keyed(PMC_*key)"
+><b><code lang='und' xml:lang='und'>PMC *get_pmc_keyed(PMC *key)</b></code></a></dt><p class="pad"></p>
+
+<dd>If called from iteration,
+return the key PMC,
+else PMCNULL is returned.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>src/pmc.c:dod_register_pmc()</em></p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

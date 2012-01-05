@@ -1,0 +1,219 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>JIT</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">JIT</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/jit.c &#45; JIT</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>JIT (Just In Time) compilation converts bytecode to native machine code instructions and executes the generated instruction sequence directly.</p>
+
+<p>Actually it&#39;s not really just in time,
+it&#39;s just before this piece of code is used and not per subroutine or even opcode,
+it works per bytecode segment.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_void_insert_fixup_targets(PARROT_INTERP,_char_*branch,_size_t_limit)"
+><b><code lang='und' xml:lang='und'>static void insert_fixup_targets(PARROT_INTERP, char *branch, size_t limit)</b></code></a></dt><p class="pad"></p>
+
+<dd>Look at fixups,
+mark all fixup entries as branch target.</dd><p class="pad"></p>
+
+<dd>TODO: actually this is wrong: fixups belong only to one code segment.
+The code below doesn&#39;t check,
+for which segments the fixups are inserted.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void make_branch_list(PARROT_INTERP, Parrot_jit_optimizer_t *optimizer, opcode_t *code_start, opcode_t *code_end)</b></code></a></dt><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>optimizer&#45;&#62;map_branch</code> parallels the opcodes with a list of branch information and register mapping information</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="branch_instructions_have_JIT_BRANCH_SOURCE"
+>branch instructions have <b><code lang='und' xml:lang='und'>JIT_BRANCH_SOURCE</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="opcodes_jumped_to_have_JIT_BRANCH_TARGET"
+>opcodes jumped to have <b><code lang='und' xml:lang='und'>JIT_BRANCH_TARGET</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="mapped_arguments_have_register_type_+_1_and_finally"
+>mapped arguments have register type + 1 and finally</a></dt><p class="pad"></p>
+
+<dt><a name="after_register_allocation_these_have_the_processor_register_that_got_mapped"
+>after register allocation these have the processor register that got mapped</a></dt><p class="pad"></p>
+</dl>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void set_register_usage(PARROT_INTERP, Parrot_jit_info_t *jit_info, Parrot_jit_optimizer_section_ptr cur_section, op_info_t *op_info, opcode_t *cur_op, opcode_t *code_start)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the register usage counts.</dd><p class="pad"></p>
+
+<dt><a name="static_void_init_regusage(PARROT_INTERP,_Parrot_jit_optimizer_section_ptr_cur_section)"
+><b><code lang='und' xml:lang='und'>static void init_regusage(PARROT_INTERP, Parrot_jit_optimizer_section_ptr cur_section)</b></code></a></dt><p class="pad"></p>
+
+<dd>Init all register usage to Parrot register usage.
+Used when JITting subroutines to registers only</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void make_sections(PARROT_INTERP, Parrot_jit_info_t *jit_info, opcode_t *code_start, opcode_t *code_end)</b></code></a></dt><p class="pad"></p>
+
+<dd>I386 has JITed vtables,
+which have the vtable# in extcall.</dd><p class="pad"></p>
+
+<dd>This <code lang='und' xml:lang='und'>Parrot_jit_vtable_n_op()</code> does use register mappings.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void make_branch_targets(PARROT_INTERP, Parrot_jit_optimizer_t *optimizer, opcode_t *code_start)</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes the branch targets.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void sort_registers(PARROT_INTERP, Parrot_jit_info_t *jit_info, opcode_t *code_start)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sorts the Parrot registers prior to mapping them to actual hardware registers.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void assign_registers(PARROT_INTERP, Parrot_jit_info_t *jit_info, Parrot_jit_optimizer_section_ptr cur_section, opcode_t *code_start, int from_imcc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Called by <code lang='und' xml:lang='und'>map_registers()</code> to actually assign the Parrot registers to hardware registers.</dd><p class="pad"></p>
+
+<dd>TODO</dd><p class="pad"></p>
+
+<dd>Before actually assigning registers,
+we should optimize a bit:</dd><p class="pad"></p>
+
+<dd>1) calculate max use count of register types for all sections</dd><p class="pad"></p>
+
+<dd>2) calculate costs for register preserving and restoring for two different allocation strategies:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>   a) allocate non&#45;volatiles first
+      overhead for jit_begin, jit_end:
+      &#45; 2 * max_used_non_volatile registers
+      overhead for register preserving around non&#45;jitted sections:
+      &#45; only used IN arguments are saved
+      &#45; only OUT non&#45;volatile arguments are restored
+   b) allocate volatiles first
+      no overhead for jit_begin, jit_end
+      overhead per JITed op that calls a C function:
+      &#45; 2 * n_used_volatiles_to_preserve for each call
+      overhead for register preserving around non&#45;jitted sections:
+      &#45; all volatiles are saved and restored around non&#45;jitted sections</pre>
+
+<dd>NB for all cost estimations size does matter: a 64bit double counts as two 32bit ints. Opcode count is assumed to be just one.</dd><p class="pad"></p>
+
+<dd>3) depending on costs from 2) use one of the strategies That does still not account for any usage patterns. Imcc has loop nesting depth, but that&#39;s not available here. OTOH smaller code tends to perform better because of better cache usage.</dd><p class="pad"></p>
+
+<dd>Usage analysis could show that a mixture of both strategies is best, e.g: allocate 2&#45;4 non&#45;volatiles and the rest from volatiles. But that would complicate the allocation code a bit.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void map_registers(PARROT_INTERP, Parrot_jit_info_t *jit_info, opcode_t *code_start)</b></code></a></dt><p class="pad"></p>
+
+<dd>Maps the most used Parrot registers to hardware registers.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void debug_sections(PARROT_INTERP, Parrot_jit_optimizer_t *optimizer, opcode_t *code_start)</b></code></a></dt><p class="pad"></p>
+
+<dd>Prints out debugging info.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static Parrot_jit_optimizer_t *optimize_jit(PARROT_INTERP, Parrot_jit_info_t *jit_info, opcode_t *code_start, opcode_t *code_end)</b></code></a></dt><p class="pad"></p>
+
+<dd>Called by <code lang='und' xml:lang='und'>parrot_build_asm()</code> to run the optimizer.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static Parrot_jit_optimizer_t *optimize_imcc_jit(PARROT_INTERP, Parrot_jit_info_t *jit_info, opcode_t *code_start, opcode_t *code_end, PackFile_Segment *jit_seg)</b></code></a></dt><p class="pad"></p>
+
+<dd>Generate optimizer stuff from the <code lang='und' xml:lang='und'>_JIT</code> section in the packfile.</dd><p class="pad"></p>
+
+<dt><a name="size_t_reg_offs(PARROT_INTERP,_int_typ,_int_i)"
+><b><code lang='und' xml:lang='und'>size_t reg_offs(PARROT_INTERP, int typ, int i)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the offset of register <code lang='und' xml:lang='und'>typ[i]</code>.</dd><p class="pad"></p>
+
+<dd><em lang='und' xml:lang='und'>src/jit/arch/jit_emit.h</em> has to define <code lang='und' xml:lang='und'>Parrot_jit_emit_get_base_reg_no(pc)</code></dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void Parrot_jit_load_registers(Parrot_jit_info_t *jit_info, PARROT_INTERP, int volatiles)</b></code></a></dt><p class="pad"></p>
+
+<dd>Load registers for the current section from parrot to processor registers. If <code lang='und' xml:lang='und'>volatiles</code> is true, this code is used to restore these registers in JITted code that calls out to Parrot.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void Parrot_jit_save_registers(Parrot_jit_info_t *jit_info, PARROT_INTERP, int volatiles)</b></code></a></dt><p class="pad"></p>
+
+<dd>Save registers for the current section. If <code lang='und' xml:lang='und'>volatiles</code> is true, this code is used to preserve these registers in JITted code that calls out to Parrot.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_destroy_jit(void_*ptr)"
+><b><code lang='und' xml:lang='und'>void Parrot_destroy_jit(void *ptr)</b></code></a></dt><p class="pad"></p>
+
+<dd>Frees the memory used by the JIT subsystem.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>Parrot_jit_info_t *parrot_build_asm(PARROT_INTERP, opcode_t *code_start, opcode_t *code_end, void *objfile, enum_jit_code_type)</b></code></a></dt><p class="pad"></p>
+
+<dd>This is the main function of the JIT code generator.</dd><p class="pad"></p>
+
+<dd>It loops over the bytecode, calling the code generating routines for each opcode.</dd><p class="pad"></p>
+
+<dd>The information obtained is used to perform certain types of fixups on native code, as well as by the native code itself to convert bytecode program counters values to hardware program counter values.</dd><p class="pad"></p>
+
+<dd>Finally this code here is used to generate native executables (or better object files that are linked to executables), if EXEC_CAPABLE is defined. This functionality is triggered by</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  parrot &#45;o foo.o foo.pir</pre>
+
+<dd>which uses the JIT engine to translate to native code inside the object file.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_jit_newfixup(Parrot_jit_info_t_*jit_info)"
+><b><code lang='und' xml:lang='und'>void Parrot_jit_newfixup(Parrot_jit_info_t *jit_info)</b></code></a></dt><p class="pad"></p>
+
+<dd>Remember the current position in the native code for later update.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>src/jit.h</em>, <em lang='und' xml:lang='und'><a href="../docs/jit.pod.html">docs/jit.pod</a></em>, <em lang='und' xml:lang='und'><a href="jit_debug.c.html">src/jit_debug.c</a></em>, <em lang='und' xml:lang='und'>src/jit/$jitcpuarch/jit_emit.h</em>, <em lang='und' xml:lang='und'>jit/$jitcpuarch/core.jit</em>.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

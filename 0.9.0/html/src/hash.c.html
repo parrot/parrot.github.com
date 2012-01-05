@@ -1,0 +1,203 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Hash table</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Hash table</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/hash.c &#45; Hash table</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>A hashtable contains an array of bucket indexes.
+Buckets are nodes in a linked list,
+each containing a <code>void *</code> key and value.
+During hash creation,
+the types of key and value as well as appropriate compare and hashing functions can be set.</p>
+
+<p>This hash implementation uses just one piece of malloced memory.
+The <code>hash&#45;&#62;bs</code> bucket store points to this region.</p>
+
+<p>This hash doesn&#39;t move during GC,
+therefore a lot of the old caveats don&#39;t apply.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_size_t_key_hash_STRING"
+><b><code>static size_t key_hash_STRING</b></code></a></dt>
+Return the hashed value of the key <code>value</code>.
+See also string.c.
+<dt><a name="static_int_STRING_compare"
+><b><code>static int STRING_compare</b></code></a></dt>
+Compares the two strings,
+returning 0 if they are identical.
+<dt><a name="static_int_pointer_compare"
+><b><code>static int pointer_compare</b></code></a></dt>
+Compares the two pointers,
+returning 0 if they are identical
+<dt><a name="static_size_t_key_hash_pointer"
+><b><code>static size_t key_hash_pointer</b></code></a></dt>
+Returns a hashvalue for a pointer.
+<dt><a name="static_size_t_key_hash_cstring"
+><b><code>static size_t key_hash_cstring</b></code></a></dt>
+Create a hash value from a string.Takes an interpreter,
+a pointer to a string,
+and a seed value.
+Returns the hash value.Used by Parrot_new_cstring_hash.
+<dt><a name="static_int_cstring_compare"
+><b><code>static int cstring_compare</b></code></a></dt>
+C string versions of the <code>key_hash</code> and <code>compare</code> functions.
+<dt><a name="size_t_key_hash_int"
+><b><code>size_t key_hash_int</b></code></a></dt>
+Custom <code>key_hash</code> function.
+<dt><a name="int_int_compare"
+><b><code>int int_compare</b></code></a></dt>
+Custom <code>compare</code> function.
+<dt><a name="void_parrot_dump_hash"
+><b><code>void parrot_dump_hash</b></code></a></dt>
+Print out the hash in human&#45;readable form.
+Except it&#39;s empty.
+<dt><a name="void_parrot_mark_hash"
+><b><code>void parrot_mark_hash</b></code></a></dt>
+Marks the hash and its contents as live.
+Assumes that key and value are non null in all buckets.
+<dt><a name="static_void_hash_thaw"
+><b><code>static void hash_thaw</b></code></a></dt>
+This is used by freeze/thaw to visit the contents of the hash.<code>pinfo</code> is the visit info,
+(see include/parrot/pmc_freeze.h&#62;).
+<dt><a name="static_void_hash_freeze"
+><b><code>static void hash_freeze</b></code></a></dt>
+Freeze hash into a string.Takes an interpreter,
+a pointer to the hash,
+and a pointer to the structure containing the string start location.Use by parrot_hash_visit.
+<dt><a name="void_parrot_hash_visit"
+><b><code>void parrot_hash_visit</b></code></a></dt>
+Freeze or thaw hash as specified.
+Takes an interpreter,
+a pointer to the hash,
+and a pointer to the structure identifying what to do and the location of the string.
+<dt><a name="static_void_expand_hash"
+><b><code>static void expand_hash</b></code></a></dt>
+For a hashtable of size N,
+we use <code>MAXFULL_PERCENT</code> % of N as the number of buckets.
+This way,
+as soon as we run out of buckets on the free list,
+we know that it&#39;s time to resize the hashtable.Algorithm for expansion: We exactly double the size of the hashtable.
+Keys are assigned to buckets with the formula
+<pre>        bucket_index = hash(key) % parrot_hash_size</pre>
+so when doubling the size of the hashtable, we know that every key is either already in the correct bucket, or belongs in the current bucket plus <code>parrot_hash_size</code> (the old <code>parrot_hash_size</code>). In fact, because the hashtable is always a power of two in size, it depends only on the next bit in the hash value, after the ones previously used.So we scan through all the buckets in order, moving the buckets that need to be moved. No bucket will be scanned twice, and the cache should be reasonably happy because the hashtable accesses will be two parallel sequential scans. (Of course, this also mucks with the <code>&#45;&#62;next</code> pointers, and they&#39;ll be all over memory.)
+<dt><a name="void_parrot_new_hash"
+><b><code>void parrot_new_hash</b></code></a></dt>
+Returns a new Parrot STRING hash in <code>hptr</code>.
+<dt><a name="void_parrot_new_pmc_hash"
+><b><code>void parrot_new_pmc_hash</b></code></a></dt>
+Create a new Parrot STRING hash in PMC_struct_val(container)
+<dt><a name="void_parrot_new_cstring_hash"
+><b><code>void parrot_new_cstring_hash</b></code></a></dt>
+Returns a new C string hash in <code>hptr</code>.
+<dt><a name="static_Hash_*_create_hash"
+><b><code>static Hash *create_hash</b></code></a></dt>
+Creates and initializes a hash. Function pointers determine its behaviors. The container passed in is the address of the hash PMC that is using it. The hash and the PMC point to each other.Memory from this function must be freed.
+<dt><a name="void_parrot_hash_destroy"
+><b><code>void parrot_hash_destroy</b></code></a></dt>
+Free the memory allocated to the specified hash and its bucket store. Used by Parrot_chash_destroy.
+<dt><a name="void_parrot_chash_destroy"
+><b><code>void parrot_chash_destroy</b></code></a></dt>
+Delete the specified hash by freeing the memory allocated to all the key&#45;value pairs, and finally the hash itself.
+<dt><a name="void_parrot_chash_destroy_values"
+><b><code>void parrot_chash_destroy_values</b></code></a></dt>
+Delete the specified hash by freeing the memory allocated to all the key&#45;value pairs, calling the provided callback to free the values, and finally the hash itself.The callback returns <code>void</code> and takes a <code>void *</code>.
+<dt><a name="void_parrot_new_hash_x"
+><b><code>void parrot_new_hash_x</b></code></a></dt>
+Returns a new hash in <code>hptr</code>.FIXME: This function can go back to just returning the hash struct pointer once Buffers can define their own custom mark routines.The problem is: During DODs stack walking the item on the stack must be a PMC. When an auto <code>Hash*</code> is seen, it doesn&#39;t get properly marked (only the <code>Hash*</code> buffer is marked, not its contents). By passing the <code>**hptr</code> up to the Hash&#39;s init function, the newly constructed PMC is on the stack <i>including</i> this newly constructed Hash, so that it gets marked properly.
+<dt><a name="void_parrot_new_pmc_hash_x"
+><b><code>void parrot_new_pmc_hash_x</b></code></a></dt>
+Like parrot_new_hash_x but w/o the described problems. The passed in <code>container</code> PMC gets stored in the Hash end the newly created Hash is in PMC_struct_val(container).
+<dt><a name="void_parrot_new_pointer_hash"
+><b><code>void parrot_new_pointer_hash</b></code></a></dt>
+Create a new HASH with void * keys and values.
+<dt><a name="PMC*_Parrot_new_INTVAL_hash"
+><b><code>PMC *Parrot_new_INTVAL_hash</b></code></a></dt>
+Create a new Hash PMC with INTVAL keys and values. <code>flags</code> can be <code>PObj_constant_FLAG</code> or 0.
+<dt><a name="INTVAL_parrot_hash_size"
+><b><code>INTVAL parrot_hash_size</b></code></a></dt>
+Return the number of used entries in the hash.
+<dt><a name="void_*_parrot_hash_get_idx"
+><b><code>void *parrot_hash_get_idx</b></code></a></dt>
+Called by iterator.
+<dt><a name="HashBucket_*_parrot_hash_get_bucket"
+><b><code>HashBucket *parrot_hash_get_bucket</b></code></a></dt>
+Returns the bucket for <code>key</code>.
+<dt><a name="void_*_parrot_hash_get"
+><b><code>void *parrot_hash_get</b></code></a></dt>
+Returns the value keyed by <code>key</code> or <code>NULL</code> if no bucket is found.
+<dt><a name="INTVAL_parrot_hash_exists"
+><b><code>INTVAL parrot_hash_exists</b></code></a></dt>
+Returns whether the key exists in the hash.
+<dt><a name="HashBucket*_parrot_hash_put"
+><b><code>HashBucket *parrot_hash_put</b></code></a></dt>
+Puts the key and value into the hash. Note that <code>key</code> is <b>not</b> copied.
+<dt><a name="void_parrot_hash_delete"
+><b><code>void parrot_hash_delete</b></code></a></dt>
+Deletes the key from the hash.
+<dt><a name="void_parrot_hash_clone"
+><b><code>void parrot_hash_clone</b></code></a></dt>
+Clones <code>hash</code> to <code>dest</code>.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em>docs/pdds/pdd08_keys.pod</em>.</p>
+
+<h1><a name="TODO"
+>TODO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Future optimizations:</p>
+
+<ul>
+<li>Stop reallocating the bucket pool, and instead add chunks on. (Saves pointer fixups and copying during <code>realloc</code>.)</li>
+
+<li>Hash contraction (don&#39;t if it&#39;s worth it)</li>
+</ul>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

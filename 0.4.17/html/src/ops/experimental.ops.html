@@ -1,0 +1,267 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Experimental Operations</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Experimental Operations</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/ops.html">Ops</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>experimental.ops &#45; Experimental Operations</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This file contains operations that are in an experimental state.
+Do not rely upon the existence of the ops in this file when writing production code.
+No decision has yet been made as to whether they are accepted as regular Parrot ops or not.
+They are included here for testing purposes only!</p>
+
+<h2><a name="IO_operations"
+>IO operations <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="print_newline()"
+><b>print_newline</b>()</a></dt><p class="pad"></p>
+
+<dd>Print a newline char to standard output.</dd><p class="pad"></p>
+
+<dt><a name="print_newline(invar_PMC)"
+><b>print_newline</b>(invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Print a newline char to IO stream object $1.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Mathematical_operations"
+>Mathematical operations <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Implementations of various mathematical operations</p>
+
+<dl>
+<dt><a name="gcd(out_INT,_in_NUM,_in_NUM)"
+><b>gcd</b>(out INT,
+in NUM,
+in NUM)</a></dt><p class="pad"></p>
+
+<dd>Greatest Common divisor of $2 and $3.</dd><p class="pad"></p>
+
+<dt><a name="gcd(out_INT,_out_INT,_out_INT,_in_INT,_in_INT)"
+><b>gcd</b>(out INT,
+out INT,
+out INT,
+in INT,
+in INT)</a></dt><p class="pad"></p>
+
+<dd>Given $4 and $5,
+it calculates $1,
+$2 and $3 so that</dd><p class="pad"></p>
+
+<dd>$1 = gcd($4,
+$5) = $2 * $4 + $3 * $5 (d = gcd(a,b) = x*a + y*b)</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Misc_other_ops"
+>Misc other ops <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="splice(invar_PMC,_invar_PMC,_in_INT,_in_INT)"
+><b>splice</b>(invar PMC,
+invar PMC,
+in INT,
+in INT)</a></dt><p class="pad"></p>
+
+<dd>Replace $4 values at offset $3 in aggregate $1 with the PMCs in aggregate $2.
+The values are put into the aggregate by a shallow copy.
+If the values would be reused,
+they have to be <b>clone</b>d.</dd><p class="pad"></p>
+
+<dt><a name="slice(out_PMC,_invar_PMC,_in_KEY)"
+><b>slice</b>(out PMC,
+invar PMC,
+in KEY)</a></dt><p class="pad"></p>
+
+<dd>Return a new Iterator PMC $1 for aggregate $2 and Slice PMC $3.</dd><p class="pad"></p>
+
+<dt><a name="slice(out_PMC,_invar_PMC,_in_KEY,_inconst_INT)"
+><b>slice</b>(out PMC,
+invar PMC,
+in KEY,
+inconst INT)</a></dt><p class="pad"></p>
+
+<dd>Return a new list PMC $1 for aggregate $2 and Slice PMC $3.</dd><p class="pad"></p>
+
+<dd>This is a Python opcode.
+Range is i &#60;= k &#60; j.
+$4 must be 1.
+May change and move to python.ops.</dd><p class="pad"></p>
+
+<dt><a name="iter(out_PMC,_invar_PMC)"
+><b>iter</b>(out PMC,
+invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Return a new Iterator PMC $1 for aggregate $2.</dd><p class="pad"></p>
+
+<dt><a name="morph(invar_PMC,_in_INT)"
+><b>morph</b>(invar PMC,
+in INT)</a></dt><p class="pad"></p>
+
+<dt><a name="morph(invar_PMC,_in_STR)"
+><b>morph</b>(invar PMC,
+in STR)</a></dt><p class="pad"></p>
+
+<dd>Have $1 turn itself into a PMC of type $2.</dd><p class="pad"></p>
+
+<dt><a name="exec(in_STR)"
+><b>exec</b>(in STR)</a></dt><p class="pad"></p>
+
+<dd>Execute the passed&#45;in command.
+Completely tosses the current process image and replaces it with the command.
+Doesn&#39;t exit (the program ends,
+after all),
+though it does throw an exception if something goes wrong.</dd><p class="pad"></p>
+
+<dt><a name="classname(out_PMC,_invar_PMC)"
+><b>classname</b>(out PMC,
+invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Get the class name for the class in $2 and put it in $1.
+Note that $1 will be a Key PMC that you can use with &#34;new&#34;,
+for example.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="More_Experimental_Ops"
+>More Experimental Ops <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="trap"
+><b><code lang='und' xml:lang='und'>trap</b></code></a></dt><p class="pad"></p>
+
+<dd>Break into debugger.
+Implementation notes:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> &#45; x86/gcc ... works with gdb
+ &#45; ppc/gcc ... works with gdb, to proceed: gdb&#62; p $pc = $pc + 4
+ &#45; TODO</pre>
+
+<dd>For other architectures, this is a <code lang='und' xml:lang='und'>noop</code>.</dd><p class="pad"></p>
+
+<dt><a name="pow(out_NUM,_in_NUM,_in_INT)"
+><b>pow</b>(out NUM, in NUM, in INT)</a></dt><p class="pad"></p>
+
+<dd>Set $1 to $2 raised to the power $3.</dd><p class="pad"></p>
+
+<dt><a name="op_getclass(out_PMC,_in_INT)"
+>op <b>getclass</b>(out PMC, in INT)</a></dt><p class="pad"></p>
+
+<dd>Return the class PMC of the type $2.</dd><p class="pad"></p>
+
+<dt><a name="new(out_PMC,_in_INT,_in_STR)"
+><b>new</b>(out PMC, in INT, in STR)</a></dt><p class="pad"></p>
+
+<dd>Create a new PMC of the type $2 according to the PMCs string representation in $3. See also <b>instantiate</b> for a more general form.</dd><p class="pad"></p>
+
+<dd>BUT SINCE INSTANTIATE WILL PROBABLY DIE, DON&#39;T USE THIS; OR IF YOU NEED THIS (OR INSTANTIATE), TELL CHIP</dd><p class="pad"></p>
+
+<dt><a name="instantiate(out_PMC)"
+><b>instantiate</b>(out PMC)</a></dt><p class="pad"></p>
+
+<dd>Create a new PMC of the type of class ARGS[0]. This is a classmethod. Arguments are passed according to the calling conventions in <em lang='und' xml:lang='und'><a href="../../docs/pdds/pdd03_calling_conventions.pod.html">docs/pdds/pdd03_calling_conventions.pod</a></em> with the <code lang='und' xml:lang='und'>set_args</code> opcode. See also the <i>getclass</i> opcode to get a class PMC. BUT SINCE INSTANTIATE WILL PROBABLY DIE, DON&#39;T USE IT; OR IF YOU NEED IT, TELL CHIP</dd><p class="pad"></p>
+
+<dt><a name="pmcinfo(out_INT,_invar_PMC,_inconst_INT)"
+><b>pmcinfo</b>(out INT, invar PMC, inconst INT)</a></dt><p class="pad"></p>
+
+<dd>Extract some information about PMC $2 and store it in $1. Possible values for $3 are:</dd><p class="pad"></p>
+
+<dl>
+<dt><a name=".PMCINFO_FLAGS_Get_the_PMC&#39;s_flags."
+>.PMCINFO_FLAGS Get the PMC&#39;s flags.</a></dt><p class="pad"></p>
+</dl>
+
+<dd>RT#42375 move/officalize this opcode at next op cleanup.</dd><p class="pad"></p>
+
+<dt><a name="new(out_PMC,_invar_PMC)"
+><b>new</b>(out PMC, invar PMC)</a></dt><p class="pad"></p>
+
+<dd>Instantiate a new object from a string PMC or key name, or from a class object. For strings and keys, first check the namespace for a class object, then fall back to the type ID if no class object is stored in the namespace.</dd><p class="pad"></p>
+
+<dt><a name="add_io_event(invar_PMC,_invar_PMC,_invar_PMC,_inconst_INT)"
+><b>add_io_event</b>(invar PMC, invar PMC, invar PMC, inconst INT)</a></dt><p class="pad"></p>
+
+<dd>Call the sub $2 for PIO $1 with user data $3 on ready state of $4. RT#42376 The only handled $4 = IO_THR_MSG_ADD_SELECT_RD aka 2 for now.</dd><p class="pad"></p>
+
+<dt><a name="need_finalize(invar_PMC)"
+><b>need_finalize</b>(invar PMC)</a></dt><p class="pad"></p>
+
+<dd>The ParrotObject $1 needs the __finalize method during GC.</dd><p class="pad"></p>
+
+<dt><a name="runinterp(invar_PMC,_in_PMC)"
+><b>runinterp</b>(invar PMC, in PMC)</a></dt><p class="pad"></p>
+
+<dd>Invokes the PMC $2 using interp $1.</dd><p class="pad"></p>
+
+<dt><a name="newpdd15class(out_PMC,_in_STR)"
+><b>newpdd15class</b>(out PMC, in STR)</a></dt><p class="pad"></p>
+
+<dd>Creates a new Parrot&#45;style class, named $2, and puts the new PMC for it into $1.</dd><p class="pad"></p>
+
+<dt><a name="newpdd15class(out_PMC,_in_PMC)"
+><b>newpdd15class</b>(out PMC, in PMC)</a></dt><p class="pad"></p>
+
+<dd>Create a new Parrot&#45;style class, with the hierarchical name given in $2.</dd><p class="pad"></p>
+
+<dt><a name="substr_r(out_STR,_in_STR,_in_INT,_in_INT)"
+><b>substr_r</b>(out STR, in STR, in INT, in INT)</a></dt><p class="pad"></p>
+
+<dd>Make $1 refer to the given part of $2, basically like above, but it is reusing the given destination string and doesn&#39;t care if the source string is changed later. This <i>is changed</i> includes also GC runs, which will move the referenced string. This also means that $1 has to be reset before any GC may happen.</dd><p class="pad"></p>
+
+<dd>This opcode should really be just used to quickly refer to a substring of another part, e.g. for printing and is a temporary hack.</dd><p class="pad"></p>
+
+<dd><b>Handle with care</b></dd><p class="pad"></p>
+</dl>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Copyright (C) 2001&#45;2007, The Perl Foundation.</p>
+
+<h1><a name="LICENSE"
+>LICENSE <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This program is free software. It is subject to the same license as the Parrot interp itself.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

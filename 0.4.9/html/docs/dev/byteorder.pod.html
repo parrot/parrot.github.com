@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Byteorder Conversion Functions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Byteorder Conversion Functions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>docs/dev/byteorder.pod &#45; Byteorder Conversion Functions</p>
+
+<h1><a name="Overview"
+>Overview <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The byteorder code will check the endianness of an <code lang='und' xml:lang='und'>INTVAL</code> or an <code lang='und' xml:lang='und'>opcode_t</code> value and swap from little to big,
+or big to little when appropriate.
+Functions also exist to convert a 4,
+8,
+12,
+or 16 byte character buffer to big or little endian.
+The functions will be placed in the PackFile vtable and will be called when necessary.
+The Parrot interpreter should be smart enough to avoid calling these functions when converting from and to the same byteorder.</p>
+
+<h1><a name="Data_Structures_and_Algorithms"
+>Data Structures and Algorithms <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The algorithm to change from one endianness to another is identical and simple to understand.
+Basically,
+the size of an <code lang='und' xml:lang='und'>INTVAL</code> or <code lang='und' xml:lang='und'>opcode_t</code> is used to determine at compile time how many bits should be shifted around.
+Then the correct bits are shifted by the correct amounts (please look at source code for exact amounts).
+The buffer change functions are implemented by a straight forward algorithm that assigns swaps all of the bytes.</p>
+
+<h1><a name="Important_Functions"
+>Important Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="fetch_iv_le"
+><b><code lang='und' xml:lang='und'>fetch_iv_le</b></code></a></dt><p class="pad"></p>
+
+<dd>This function will convert an <code lang='und' xml:lang='und'>INTVAL</code> into little endian format.
+It is a no&#45;op if the native format is already little endian.</dd><p class="pad"></p>
+
+<dt><a name="fetch_iv_be"
+><b><code lang='und' xml:lang='und'>fetch_iv_be</b></code></a></dt><p class="pad"></p>
+
+<dd>This function will convert an <code lang='und' xml:lang='und'>INTVAL</code> into big endian format.
+It is a no&#45;op if the native format is already big endian.</dd><p class="pad"></p>
+
+<dt><a name="fetch_op_le"
+><b><code lang='und' xml:lang='und'>fetch_op_le</b></code></a></dt><p class="pad"></p>
+
+<dd>This function will convert an <code lang='und' xml:lang='und'>opcode_t</code> into little endian format.
+It is a no&#45;op if the native format is already little endian.</dd><p class="pad"></p>
+
+<dt><a name="fetch_op_be"
+><b><code lang='und' xml:lang='und'>fetch_op_be</b></code></a></dt><p class="pad"></p>
+
+<dd>This function will convert an <code lang='und' xml:lang='und'>opcode_t</code> into big endian format.
+It is a no&#45;op if the native format is already big endian.</dd><p class="pad"></p>
+
+<dt><a name="fetch_buf_le_(4,8,12,16)"
+><b><code lang='und' xml:lang='und'>fetch_buf_le_</b></code>(4,8,12,16)</a></dt><p class="pad"></p>
+
+<dd>This set of functions will convert an unsigned character buffer into little endian format.
+Only a <code lang='und' xml:lang='und'>memcpy</code> is performed if the native format is already little endian.</dd><p class="pad"></p>
+
+<dt><a name="fetch_buf_be_(4,8,12,16)"
+><b><code lang='und' xml:lang='und'>fetch_buf_be_</b></code>(4,8,12,16)</a></dt><p class="pad"></p>
+
+<dd>This set of functions will convert an unsigned character buffer into big endian format.
+Only a <code lang='und' xml:lang='und'>memcpy</code> is performed if the native format is already big endian.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="Unimplemented_Functions"
+>Unimplemented Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="endianize_fetch_int"
+><b><code lang='und' xml:lang='und'>endianize_fetch_int</b></code></a></dt><p class="pad"></p>
+
+<dd>Fetch an <code lang='und' xml:lang='und'>INTVAL</code> directly from a bytestream</dd><p class="pad"></p>
+
+<dt><a name="endianize_put_int"
+><b><code lang='und' xml:lang='und'>endianize_put_int</b></code></a></dt><p class="pad"></p>
+
+<dd>Put an <code lang='und' xml:lang='und'>INTVAL</code> directly on a bytestream</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="History"
+>History <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Initial version by Melvin on 2002/05/01</p>
+
+<h1><a name="Notes"
+>Notes <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This assumes big or little endianness...other,
+more esoteric forms (such as middle endian) are not supported.
+Also,
+an assumption of 4 or 8 byte <code lang='und' xml:lang='und'>INTVAL</code>&#39;s and <code lang='und' xml:lang='und'>opcode_t</code>&#39;s is made.</p>
+
+<h1><a name="References"
+>References <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

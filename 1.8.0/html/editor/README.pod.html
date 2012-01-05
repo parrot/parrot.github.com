@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Productivity Comes in Pretty Colors</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Home</a> &raquo; Productivity Comes in Pretty Colors
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>editor/README.pod &#45; Productivity Comes in Pretty Colors</p>
+
+<h1><a name="Syntax_Highlighting_and_Other_Editor_Assistance"
+>Syntax Highlighting and Other Editor Assistance</a></h1>
+
+<p>Included in this directory are some add&#45;ins for making working on parrot (or in parrot) easier,
+for various popular editors.
+Mostly that means syntax&#45;highlighting and automatic indenting.
+Read on to see what&#39;s available for your favorite editor.
+For a summary on what is available do cd editor &#38;&#38; make help</p>
+
+<h2><a name="Vim"
+>Vim</a></h2>
+
+<p>Calling <code>make vim&#45;install</code> in the <em>editor/</em> directory will install several files in <em>~/.vim</em>.
+All these files have the <em>.vim</em> extension.
+<em>pir.vim</em> (generated from <em>pir_vim.in</em>),
+<em>pasm.vim</em>,
+and <em>pmc.vim</em> are syntax files; <em>indent_pir.vim</em> is an indent plugin; and <em>filetype_parrot.vim</em> is a filetype script that tells vim to associate the extensions .pir,
+.pasm,
+and .pmc with the right syntax.
+The syntax files are installed to <em>~/.vim/syntax/</em>; <em>filetype_parrot.vim</em> is installed to <em>~/.vim/ftdetect</em>; <em>indent_pir.vim</em> is copied to <em>~/.vim/indent/pir.vim</em>.
+If you want indenting,
+you should also place <code>filetype indent on</code> somewhere in your <em>~/.vimrc</em>.</p>
+
+<h2><a name="Kate"
+>Kate</a></h2>
+
+<p>There is a syntax file for the KDE editor Kate,
+but it is not built by default.
+Run:</p>
+
+<pre>   make imc.kate</pre>
+
+<p>in <em>editor/</em> to build it.</p>
+
+<p>TODO: How do we install Kate syntax files?</p>
+
+<h2><a name="Emacs"
+>Emacs</a></h2>
+
+<ul>
+<li>Editing the Parrot VM source</li>
+
+<p>In this directory is a <em>parrot.el</em> describing the c&#45;mode and cperl&#45;mode changes modifications required to edit the Parrot source code. To install the Parrot mode support copy <em>parrot.el</em> to a directory where Emacs looks for external packages and add the following to your <em>~/.emacs</em> file:</p>
+
+<pre>    (load &#34;parrot&#34;)</pre>
+
+<p>Alternatively, if you&#39;re an active Parrot developer, you may wish to add this to your .emacs instead, to automatically track future changes:</p>
+
+<pre>    (load&#45;file &#34;/&#60;path&#45;to&#45;parrot&#62;/editor/parrot.el&#34;)</pre>
+
+<li>Editing PASM source files</li>
+
+<p>Included here is an Emacs mode for editing pasm files, in <em>pasm.el</em>.</p>
+
+<p>To install the pasm major mode copy <em>pasm.el</em> to a directory where Emacs looks for external packages and add the following to your <em>~/.emacs</em> file:</p>
+
+<pre>    (load &#34;pasm&#34;)</pre>
+
+<p>To automatically associate .pasm files with this major mode add:</p>
+
+<pre>    (add&#45;to&#45;list &#39;auto&#45;mode&#45;alist (cons &#34;\\.pasm\\&#39;&#34; &#39;pasm&#45;mode))</pre>
+
+<p>to your <em>~/.emacs</em> or you can alternatively type <code>M&#45;x pasm&#45;mode</code> for every file that you want to use the major mode in.</p>
+
+<p>Additionally, you might want to add:</p>
+
+<pre>    (add&#45;hook &#39;pasm&#45;mode&#45;hook
+              (function (lambda ()
+                          (setq indent&#45;tabs&#45;mode nil))))</pre>
+
+<p>to <em>~/.emacs</em> as this seems to prevent the odd behavior that is noted when using tabs in the pasm mode.</p>
+</ul>
+
+<h2><a name="TAGS_file"
+>TAGS file</a></h2>
+
+<p>There is a script here to automatically generate a TAGS file, which works with Vim and other editors that recognize ctags&#45;format files. Run</p>
+
+<pre>  make tags&#45;vi</pre>
+
+<p>for Vim&#45;compatible tags or</p>
+
+<pre>  make tags&#45;emacs</pre>
+
+<p>for Emacs&#45;style tags. The tool &#34;exuberant ctags&#34; is required for both. There is also the</p>
+
+<pre>  make tags&#45;xemacs</pre>
+
+<p>target which will work with older XEmacs etags (21.5*).</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

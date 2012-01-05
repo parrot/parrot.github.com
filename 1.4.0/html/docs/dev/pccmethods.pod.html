@@ -1,0 +1,145 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot Calling Conventions in C</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Parrot Calling Conventions in C
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/dev/pccmethods.pod &#45; Parrot Calling Conventions in C</p>
+
+<h1><a name="OVERVIEW"
+>OVERVIEW</a></h1>
+
+<p>A <code>PCCMETHOD</code> is a PMC method that follows Parrot Calling Conventions (a.k.a.
+PCC).
+This allows PIR code to call PMC methods using slurpy,
+named,
+and other types of arguments as specified in <em>PDD03</em>.
+This offers flexibility not found in a PMC <code>METHOD</code> or a vtable method using C calling conventions.</p>
+
+<p><code>PCCINVOKE</code> is used to call a method using the Parrot Calling Conventions.
+It uses the standard find_method/invoke approach that the callmethodcc opcode would.
+You can use <code>PCCINVOKE</code> in any PMC method (including v&#45;table methods),
+even if they are not <code>PCCMETHOD</code>s.
+You can call methods that are not implemented with <code>PCCMETHOD</code>,
+too.</p>
+
+<h1><a name="SYNTAX"
+>SYNTAX</a></h1>
+
+<h2><a name="PCCMETHOD"
+>PCCMETHOD</a></h2>
+
+<p>To declare that a method in a PMC should take arguments using the Parrot Calling Conventions,
+prefix its name with the keyword <code>PCCMETHOD</code>.
+Where you would put the C parameter list,
+put a PCC parameter list.
+Do not specify a return type for <code>PCCMETHOD</code>s &#45;&#45; the true signature of the return is specified inside the method using <code>RETURN</code>,
+described below.</p>
+
+<pre>  PCCMETHOD PlayRandomSong() {
+      ...
+  }
+
+  PCCMETHOD PlaySong(STRING *artist, STRING *title) {
+      ...
+  }</pre>
+
+<p>For full details of the parameter list syntax, see <a href='#Parameter_List_Syntax'>&#34;Parameter List Syntax&#34;</a>.</p>
+
+<h2><a name="RETURN"
+>RETURN</a></h2>
+
+<p>To return arguments using the Parrot Calling Conventions, which you should do if you have implemented a <code>PCCMETHOD</code> (unless it returns no arguments, of course), use the <code>RETURN</code> keyword. This takes a signature as specified in the <a href='#Parameter_List_Syntax'>&#34;Parameter List Syntax&#34;</a> section.</p>
+
+<pre>  RETURN(PMC *status, INTVAL count);</pre>
+
+<h2><a name="PCCINVOKE"
+>PCCINVOKE</a></h2>
+
+<p>To call a method on an object using the Parrot Calling Conventions, use <code>PCCINVOKE</code>. This takes 3 arguments, followed by the signature of the call and the arguments as specified in the <a href='#Parameter_List_Syntax'>&#34;Parameter List Syntax&#34;</a> section.</p>
+
+<p>The first three arguments, in order, are:</p>
+
+<dl>
+<dt><a name="The_current_interpreter;_use_interp_in_a_PMC."
+>The current interpreter; use <b><code>interp</b></code> in a PMC.</a></dt>
+
+<dt><a name="The_object_to_call_the_method_on._Use_the_SELF_macro_for_the_current_PMC."
+>The object to call the method on. Use the <b><code>SELF</b></code> macro for the current PMC.</a></dt>
+
+<dt><a name="The_double&#45;quoted_name_of_the_method_to_call."
+>The double&#45;quoted name of the method to call.</a></dt>
+</dl>
+
+<p>Any return arguments appear, with the return signature, to the left of the call and in parentheses.</p>
+
+<p>For example:</p>
+
+<pre>  PCCINVOKE(interp, monkey, &#34;eat&#34;, PMC* banana);
+
+  (PMC *pooh) = PCCINVOKE(interp, monkey, &#34;excrete&#34;);
+
+  (PMC *status, INTVAL count) = PCCINVOKE(interp, player, &#34;PlaySong&#34;, artist, title);
+
+  PCCINVOKE(interp, SELF, value :named(&#34;key&#34;) :optional)</pre>
+
+<h2><a name="Parameter_List_Syntax"
+>Parameter List Syntax</a></h2>
+
+<p>The syntax for a PCC parameter list is a comma separated list of zero or more parameters. Each parameter takes the form:</p>
+
+<pre>  { INTVAL | NUMVAL | STRING* | PMC* } NAME [ ADVERBS ]</pre>
+
+<p>That is, a register type, followed by a name, optionally followed by one or more flags specified as adverbs. The list of supported adverbs is listed in <em><a href="../pdds/pdd03_calling_conventions.pod.html">docs/pdds/pdd03_calling_conventions.pod</a></em>, the calling conventions design document.</p>
+
+<p>Note that unlike PIR, single quotes <b>cannot</b> be used to quote values in C&#45;based PCC calls.</p>
+
+<p>Also note that in line with the Parrot code standards, you should put the pointer symbol next to the variable,</p>
+
+<pre>  PMC *param :optional</pre>
+
+<p>not next to the type.</p>
+
+<pre>  PMC* param :optional</pre>
+
+<h1><a name="OTHER_CONSIDERATIONS"
+>OTHER CONSIDERATIONS</a></h1>
+
+<h2><a name="Performance"
+>Performance</a></h2>
+
+<p>When a <code>METHOD</code> or vtable method is called, <code>NCI</code> is used to map the arguments held in the current Parrot_Context onto the C calling conventions. That is, you still end up involving the Parrot Calling Conventions anyway, so there is no reason to expect a <code>PCCMETHOD</code> to be any slower. It may well be faster. It&#39;s probably best to just not care. :&#45;)</p>
+
+<p>It is clearly true that <code>PCCINVOKE</code> is going to be more costly than an invocation of a C method from another C method, if you do the call directly at the C level. However, if you do that you are ignoring any method overrides if you have been subclassed, and you wouldn&#39;t want to do that now, would you?</p>
+
+<p># vim: expandtab shiftwidth=2 tw=70:</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

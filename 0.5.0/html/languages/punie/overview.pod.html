@@ -1,0 +1,174 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/languages.html">Language Implementations</a> | <a href="../../../html/punie.html">Punie</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="Overview_of_the_Punie_Compiler"
+>Overview of the Punie Compiler <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The heart of the Punie compiler is <em lang='und' xml:lang='und'>punie.pir</em> in <em lang='und' xml:lang='und'>languages/punie</em>.
+It does all the work of slurping up the source file,
+parsing it,
+running the resulting parse tree through 3 transformations,
+compiling the resulting source code,
+and executing it.
+One useful tool for development here is turning on and off the tree dumps from each stage in the tree transformations.
+Sometimes it&#39;s very helpful to see,
+for example,
+that the transformation from parse tree to abstract syntax tree has gone as you expected,
+but the transformation to opcode syntax tree produced the wrong structure.</p>
+
+<h2><a name="Stage_1,_Parsing:"
+>Stage 1,
+Parsing: <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Parsing is handled by the Parrot Grammar Engine PGE.
+The core grammar is in <em lang='und' xml:lang='und'>lib/punie.pg</em>.
+During the build process this grammar is compiled down to the PIR file <em lang='und' xml:lang='und'>lib/punie_grammar_gen.pir</em>.
+This PIR file is then included in <em lang='und' xml:lang='und'>lib/PunieGrammar.pir</em>,
+the main class of the Punie parser (i.e.
+the generated PIR is basically a role that adds some methods to the grammar class).
+<em lang='und' xml:lang='und'>PunieGrammar.pir</em> also contains the rules defined for the operator precedence parser.
+The &#60;oexpr&#62; rule allows the recursive descent parser to call into the operator precedence parser.
+The OPP rule &#34;term:&#34;,
+allows the operator precedence parser to call back into the recursive descent parser.
+The effect is a smooth integration of two very different styles of parsing.</p>
+
+<p>The result of the parsing phase is a tree of PGE::Match objects,
+each representing the result of one rule,
+subrule,
+or capture.
+[Need to talk a bit more about the results,
+when they come back as an array and when they come back as a hash.]</p>
+
+<h2><a name="Stage_2,_Abstract_Syntax_Tree:"
+>Stage 2,
+Abstract Syntax Tree: <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The first transformation is from the parse tree to an abstract syntax tree.
+This is handled by the TGE grammar <em lang='und' xml:lang='und'>lib/ASTGrammar.tg</em>.
+Unfortunately,
+at the moment,
+the internal core of all the tree grammar rules is written in PIR.
+It&#39;s ugly (the lack of control structures and easy access to data structures is particularly annoying),
+and will eventually change,
+but for now it gives us flexibility to explore what we want a tree&#45;grammar language to be able to do.
+The tree grammar rules give you two parameters to work with in the body of each rule: &#39;tree&#39; is the top level node for the entire tree and all operations are called on it because it has the total context information,
+&#39;node&#39; is the specific node that this rule was called to operate on.
+Each rule defines an &#34;attribute&#34; of a particular node type.
+Because this is a tree transformation,
+the most common attribute defined is &#34;result&#34;,
+which returns the transformed structure for the node it was called on.</p>
+
+<p>The transformation from the parse tree is slightly more complex than the others,
+because the nodes produced by PGE don&#39;t know their own name.
+That is,
+the result PGE::Match object doesn&#39;t know that it&#39;s a PunieGrammar::lineseq match.
+Instead,
+the match object is stored as a value for a key of &#34;PunieGrammar::lineseq&#34;.
+So,
+you&#39;ll see a number of places throughout the code where it checks for a particular key in the current node and then dispatches the value of that key,
+specifying the name of the node in the call (PunieGrammar::block is an example of this kind of rule).
+Other places iterate through the hash keys and dispatch each key/value pair as a node to transform and the node name (PunieGrammar::line is an example of this kind of rule).</p>
+
+<p>A third kind of rule in <em lang='und' xml:lang='und'>ASTGrammar.tg</em> is the set of rules defined for the results of the operator precedence parser.
+These do know their own name,
+but it&#39;s stored in a &#34;type&#34; hash key inside the node.
+So,
+the &#34;result&#34; rule for an &#34;expr&#34; match (&#34;expr: result&#34;) just checks the type of the match object,
+and then dispatches to either the &#34;op&#34; rule or the &#34;term&#34; rule,
+depending on whether the match was an operator or a term.
+(This is a little hackish,
+and I suspect there&#39;s a better way to do it if we tweak the way PGE produces results.
+We&#39;ll re&#45;examine it later.)</p>
+
+<p>It&#39;s helpful when reading or writing these rules to do a text dump of a parse tree,
+because you can immediately see which nodes are the children of other nodes.</p>
+
+<h2><a name="Stage_3,_Opcode_Syntax_Tree:"
+>Stage 3,
+Opcode Syntax Tree: <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The second transformation turns the abstract syntax tree into a lower&#45;level opcode syntax tree.
+This is done by the TGE grammar <em lang='und' xml:lang='und'>lib/OSTGrammar.tg</em>.
+For the most part,
+these rules are simpler than the first set,
+because all they have to do is iterate through the children of a node and call for the results of its children.
+The rule doesn&#39;t have to figure out what the children are called,
+because each child knows its own type,
+and the dispatch is done by the type of the node.
+At this stage,
+the trickiness comes in with collapsing and expanding nodes.
+Some nodes you&#39;ll see don&#39;t actually create a node to return,
+they just return the result of their child (PAST::Stmt is an example of this kind of rule).
+These are being collapsed.
+(In particular with &#34;PAST::Stmt&#34; and &#34;PAST::Expr&#34;,
+statements and expressions are semantically significant on the level of an abstract syntax tree,
+but on the level of the opcode syntax tree all that matters are sequences of opcodes.) Other nodes you&#39;ll see return a &#34;POST::Ops&#34; type (&#34;PAST::Op: print_op&#34; is an example of this kind of rule).
+These are nodes that expand into multiple nodes,
+where a single HLL construct corresponds to a series of assembly&#45;level operations.
+The POST::Ops nodes have an optional attribute &#34;tmpvar&#34;,
+that says where to find the calculated value of the series of opcodes (very common when you have something like a complex conditional expression in the HLL,
+that translates to a series of opcodes resulting in a single binary value used in the conditional opcode).</p>
+
+<p>One significant addition to this stage is a lookup table for transforming the HLL operator names to their low&#45;level Parrot equivalents,
+in <em lang='und' xml:lang='und'>lib/PunieOpLookup.pir</em>.
+The basic idea is to keep all of these changes in one place so it&#39;s more maintainable,
+and to keep them all in one transformation stage so the AST closely corresponds to the HLL,
+while the OST closely corresponds to the assembly language.</p>
+
+<h2><a name="Stage_4,_PIR_Output:"
+>Stage 4,
+PIR Output: <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The final transformation turns the opcode syntax tree into PIR code.
+This is handled by the TGE grammar <em lang='und' xml:lang='und'>lib/PIRGrammar.tg</em>.
+It traverses the syntax tree much like stage 3 does,
+but each rule returns a string of PIR source code instead of returning a transformed tree node.
+(Ultimately this won&#39;t be done with a tree grammar,
+but it works for now.) Ideally,
+there isn&#39;t much in the way of node manipulation going on in this stage.
+At the moment,
+I&#39;ve got a bit of hackishness leftover in the translation of conditionals,
+but I&#39;ll be moving that up into the PAST&#45;&#62;POST transformation.</p>
+
+<p>Note that POST::Ops nodes are flattened out into a simple sequence of statements (they&#39;re a convenient semantic abstraction in the opcode tree,
+but not syntactically relevant in the PIR output).</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

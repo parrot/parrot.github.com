@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Calling Conventions in C</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Calling Conventions in C</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>docs/dev/pccmethods.pod &#45; Parrot Calling Conventions in C</p>
+
+<h1><a name="OVERVIEW"
+>OVERVIEW <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>A <code lang='und' xml:lang='und'>PCCMETHOD</code> is a PMC method that follows Parrot Calling Conventions (a.k.a.
+PCC).
+This allows PIR code to call PMC methods using slurpy,
+named,
+and other types of arguments as specified in <em lang='und' xml:lang='und'>PDD03</em>.
+This offers flexibility not found in a PMC <code lang='und' xml:lang='und'>METHOD</code> or a vtable method using C calling conventions.</p>
+
+<p><code lang='und' xml:lang='und'>PCCINVOKE</code> is used to call a method using the Parrot Calling Conventions.
+It uses the standard find_method/invoke approach that the callmethodcc opcode would.
+You can use <code lang='und' xml:lang='und'>PCCINVOKE</code> in any PMC method (including v&#45;table methods),
+even if they are not <code lang='und' xml:lang='und'>PCCMETHOD</code>s.
+You can call methods that are not implemented with <code lang='und' xml:lang='und'>PCCMETHOD</code>,
+too.</p>
+
+<h1><a name="SYNTAX"
+>SYNTAX <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="PCCMETHOD"
+>PCCMETHOD <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>To declare that a method in a PMC should take arguments using the Parrot Calling Conventions,
+prefix its name with the keyword <code lang='und' xml:lang='und'>PCCMETHOD</code>.
+Where you would put the C parameter list,
+put a PCC parameter list.
+Do not specify a return type for <code lang='und' xml:lang='und'>PCCMETHOD</code>s &#45;&#45; the true signature of the return is specified inside the method using <code lang='und' xml:lang='und'>PCCRETURN</code>,
+described below.</p>
+
+<pre lang='und' xml:lang='und'>  PCCMETHOD PlayRandomSong() {
+      ...
+  }
+
+  PCCMETHOD PlaySong(STRING *artist, STRING *title) {
+      ...
+  }</pre>
+
+<p>For full details of the parameter list syntax, see <a href='#Parameter_List_Syntax'>&#34;Parameter List Syntax&#34;</a>.</p>
+
+<h2><a name="PCCRETURN"
+>PCCRETURN <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>To return arguments using the Parrot Calling Conventions, which you should do if you have implemented a <code lang='und' xml:lang='und'>PCCMETHOD</code> (unless it returns no arguments, of course), use the <code lang='und' xml:lang='und'>PCCRETURN</code> keyword. This takes a signature as specified in the <a href='#Parameter_List_Syntax'>&#34;Parameter List Syntax&#34;</a> section.</p>
+
+<pre lang='und' xml:lang='und'>  PCCRETURN(PMC *status, INTVAL count);</pre>
+
+<h2><a name="PCCINVOKE"
+>PCCINVOKE <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>To call a method on an object using the Parrot Calling Conventions, use <code lang='und' xml:lang='und'>PCCINVOKE</code>. This takes 3 arguments, followed by the signature of the call and the arguments as specified in the <a href='#Parameter_List_Syntax'>&#34;Parameter List Syntax&#34;</a> section.</p>
+
+<p>The first three arguments, in order, are:</p>
+
+<dl>
+<dt><a name="The_current_interpreter;_use_interp_in_a_PMC."
+>The current interpreter; use <b><code lang='und' xml:lang='und'>interp</b></code> in a PMC.</a></dt><p class="pad"></p>
+
+<dt><a name="The_object_to_call_the_method_on._Use_the_SELF_macro_for_the_current_PMC."
+>The object to call the method on. Use the <b><code lang='und' xml:lang='und'>SELF</b></code> macro for the current PMC.</a></dt><p class="pad"></p>
+
+<dt><a name="The_double&#45;quoted_name_of_the_method_to_call."
+>The double&#45;quoted name of the method to call.</a></dt><p class="pad"></p>
+</dl>
+
+<p>Any return arguments appear, with the return signature, to the left of the call and in parentheses.</p>
+
+<p>For example:</p>
+
+<pre lang='und' xml:lang='und'>  PCCINVOKE(interp, monkey, &#34;eat&#34;, PMC* banana);
+
+  (PMC *pooh) = PCCINVOKE(interp, monkey, &#34;excrete&#34;);
+
+  (PMC *status, INTVAL count) = PCCINVOKE(interp, player, &#34;PlaySong&#34;, artist, title);
+
+  PCCINVOKE(interp, SELF, value :named(&#34;key&#34;) :optional)</pre>
+
+<h2><a name="Parameter_List_Syntax"
+>Parameter List Syntax <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The syntax for a PCC parameter list is a comma separated list of zero or more parameters. Each parameter takes the form:</p>
+
+<pre lang='und' xml:lang='und'>  { INTVAL | NUMVAL | STRING* | PMC* } NAME [ ADVERBS ]</pre>
+
+<p>That is, a register type, followed by a name, optionally followed by one or more flags specified as adverbs. The list of supported adverbs is listed in <em lang='und' xml:lang='und'><a href="../pdds/pdd03_calling_conventions.pod.html">docs/pdds/pdd03_calling_conventions.pod</a></em>, the calling conventions design document.</p>
+
+<p>Note that unlike PIR, single quotes <b>cannot</b> be used to quote values in C&#45;based PCC calls.</p>
+
+<p>Also note that in line with the Parrot code standards, you should put the pointer symbol next to the variable,</p>
+
+<pre lang='und' xml:lang='und'>  PMC *param :optional</pre>
+
+<p>not next to the type.</p>
+
+<pre lang='und' xml:lang='und'>  PMC* param :optional</pre>
+
+<h1><a name="OTHER_CONSIDERATIONS"
+>OTHER CONSIDERATIONS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Performance"
+>Performance <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>When a <code lang='und' xml:lang='und'>METHOD</code> or vtable method is called, <code lang='und' xml:lang='und'>NCI</code> is used to map the arguments held in the current Parrot_Context onto the C calling conventions. That is, you still end up involving the Parrot Calling Conventions anyway, so there is no reason to expect a <code lang='und' xml:lang='und'>PCCMETHOD</code> to be any slower. It may well be faster. It&#39;s probably best to just not care. :&#45;)</p>
+
+<p>It is clearly true that <code lang='und' xml:lang='und'>PCCINVOKE</code> is going to be more costly than an invocation of a C method from another C method, if you do the call directly at the C level. However, if you do that you are ignoring any method overrides if you have been subclassed, and you wouldn&#39;t want to do that now, would you?</p>
+
+<p># vim: expandtab shiftwidth=2 tw=70:</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

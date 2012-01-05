@@ -1,0 +1,93 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot extension for objecty testing of modules</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Contents</a> &raquo; <a href="../../../../../html/libs.html">Libraries</a> &raquo; Parrot extension for objecty testing of modules
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>Test::Class &#45; Parrot extension for objecty testing of modules</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    .sub &#39;main&#39;
+        # load this library
+        load_bytecode &#39;Test/Class.pbc&#39;
+
+        # load other testing libraries
+        .include &#39;include/test_more.pir&#39;
+
+        .local pmc class
+        class = subclass [ &#39;Test&#39;; &#39;Class&#39; ], &#39;MyClass&#39;
+
+        .local pmc obj
+        obj = class.&#39;new&#39;()
+        obj.&#39;runtests&#39;()
+    .end
+
+    .namespace [ &#39;MyClass&#39; ]
+
+    .sub &#39;init&#39; :vtable :method
+        self.&#39;add_startup&#39;(  &#39;startup&#39;,  &#39;tests&#39; =&#62; 1 )
+        self.&#39;add_shutdown&#39;( &#39;shutdown&#39;, &#39;tests&#39; =&#62; 1 )
+        self.&#39;add_setup&#39;(    &#39;setup&#39;,    &#39;tests&#39; =&#62; 2 )
+        self.&#39;add_teardown&#39;( &#39;teardown&#39;, &#39;tests&#39; =&#62; 1 )
+        self.&#39;add_test&#39;(     &#39;test_foo&#39;, &#39;tests&#39; =&#62; 3 )
+        self.&#39;add_test&#39;(     &#39;test_bar&#39;, &#39;tests&#39; =&#62; 2 )
+    .end</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p><code>Test::Class</code> is a pure&#45;Parrot library for testing code in a class&#45;y fashion. It allows you to group test code in methods and use other object oriented programming principles to organize and reuse code.</p>
+
+<p>Most of your tests will occur within test methods; <code>Test::Class</code> runs these automatically for you.</p>
+
+<p>THIS INTERFACE MAY CHANGE IN THE NEAR FUTURE.</p>
+
+<p>For each test method, you must call <code>add_test()</code>, passing the name of the test method. You may optionally pass the named parameter <code>tests</code> with the number of test assertions in the method. You may have as many test methods as you like.</p>
+
+<p><code>Test::Class</code> can also run methods at the start of the testing process and after all tests have ended. These are startup and shutdown tests, respectively. Call <code>add_startup()</code> and <code>add_shutdown()</code> tests to add each type of test. Again, you may have as many of these methods as you like.</p>
+
+<p>Finally, <code>Test::Class</code> can run setup and teardown methods before and after <i>each</i> individual test method. Call <code>add_setup()</code> and <code>add_teardown()</code> respectively.</p>
+
+<p>When you have finished adding tests, call the <code>runtests()</code> method to run everything.</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Written and maintained by chromatic, <code>chromatic at wgz dot org</code>, based on Test::Class in Perl 5, <a href='http://search.cpan.org/perldoc?Test::Class'><a href="http://search.cpan.org/perldoc?Test::Class">http://search.cpan.org/perldoc?Test::Class</a></a>, written by Adrian Howard. Please send patches, feedback, and suggestions to the Perl 6 internals mailing list.</p>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT</a></h1>
+
+<p>Copyright (C) 2008, Parrot Foundation.</p>
+
+<p># $Id$</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Methods for selected configuration steps</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Methods for selected configuration steps</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/perl.html">Perl Modules</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Parrot::Configure::Step::Methods &#45; Methods for selected configuration steps</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>The Parrot::Configure::Step::Methods module provides methods inherited by Parrot::Configure::Step which are used internally by the <code lang='und' xml:lang='und'>runstep()</code> method of more than one configuration step class but which are not intended for general use in all configuration step classes.</p>
+
+<p>The methods in this module should not be considered part of the public interface of Parrot::Configure::Step.
+They merely refactor code which at one point was repeated in multiple configuration step classes and which need access to the data in the Parrot::Configure::Step object.</p>
+
+<p>Since the methods are not part of the public interface,
+their names should begin with an underscore &#39;<code lang='und' xml:lang='und'>_</code>&#39;.</p>
+
+<h1><a name="METHODS"
+>METHODS <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="_recheck_settings()"
+><code lang='und' xml:lang='und'>_recheck_settings()</code> <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>    $self&#45;&#62;_recheck_settings($conf, $libs, $ccflags, $linkflags, $verbose);</pre>
+
+<p>Currently used in configuration step classes auto::gmp, auto::readline, auto::gdbm, and auto::opengl.</p>
+
+<h2><a name="_handle_darwin_for_fink()"
+><code lang='und' xml:lang='und'>_handle_darwin_for_fink()</code> <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>    $self&#45;&#62;_handle_darwin_for_fink($conf, $libs, $osname, $file);</pre>
+
+<p>Currently used in configuration step classes auto::gmp, auto::readline and auto::gdbm.</p>
+
+<p>Modifies settings for <code lang='und' xml:lang='und'>linkflags</code>, <code lang='und' xml:lang='und'>ldflags</code> and <code lang='und' xml:lang='und'>ccflags</code> in the Parrot::Configure object&#39;s data structure.</p>
+
+<h2><a name="_handle_darwin_for_macports()"
+><code lang='und' xml:lang='und'>_handle_darwin_for_macports()</code> <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>    $self&#45;&#62;_handle_darwin_for_macports($conf, $libs, $osname, $file);</pre>
+
+<p>Currently used in configuration step classes auto::gmp, auto::readline and auto::opengl.</p>
+
+<p>Modifies settings for <code lang='und' xml:lang='und'>linkflags</code>, <code lang='und' xml:lang='und'>ldflags</code> and <code lang='und' xml:lang='und'>ccflags</code> in the Parrot::Configure object&#39;s data structure.</p>
+
+<p>Potentially expandable to cover all BSD&#45;ports systems &#45;&#45; but as yet there has been no demand.</p>
+
+<h2><a name="_add_to_libs()"
+><code lang='und' xml:lang='und'>_add_to_libs()</code> <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>    $self&#45;&#62;_add_to_libs( {
+        conf            =&#62; $conf,
+        osname          =&#62; $osname,
+        cc              =&#62; $cc,
+        win32_gcc       =&#62; &#39;&#45;lalpha32 &#45;lalpha32 &#45;lopenalpha32&#39;,
+        win32_nongcc    =&#62; &#39;alpha.lib&#39;,
+        darwin          =&#62; &#39;alphadarwin.lib&#39;,
+        default         =&#62; &#39;&#45;lalpha&#39;,
+    } );</pre>
+
+<p><b>Purpose</b>: In a number of configuration step classes, the class&#39;s <code lang='und' xml:lang='und'>runstep()</code> method adds libraries to the single whitespace&#45;delimited string found in the Parrot::Configure object&#39;s <code lang='und' xml:lang='und'>libs</code> attribute. The libraries to be added are either OS&#45;specific or OS/C&#45;compiler&#45;specific. This method enables the developer of a configuration step class to define a default value for such a flag &#45;&#45; usually the value that is appropriate to Unix&#45;like systems &#45;&#45; and, optionally, to define non&#45;default values for certain OSes or OS/C&#45;compiler combinations. We currently support settings for:</p>
+
+<ul>
+<li>MSWin32 with <em lang='und' xml:lang='und'>gcc</em> as the C&#45;compiler.</li><p class="pad"></p>
+
+<li>MSWin32 with any C&#45;compiler other than <em lang='und' xml:lang='und'>gcc</em>.</li><p class="pad"></p>
+
+<li>Darwin.</li><p class="pad"></p>
+</ul>
+
+<p><b>Arguments</b>: Reference to a hash. Four of the hash&#39;s key&#45;value pairs are required:</p>
+
+<ul>
+<li><code lang='und' xml:lang='und'>conf</code></li><p class="pad"></p>
+
+<p>The Parrot::Configure object. Supplied within <code lang='und' xml:lang='und'>runstep()</code>.</p>
+
+<li><code lang='und' xml:lang='und'>osname</code></li><p class="pad"></p>
+
+<p>The name of the operating system. Supplied within <code lang='und' xml:lang='und'>runstep()</code>.</p>
+
+<li><code lang='und' xml:lang='und'>cc</code></li><p class="pad"></p>
+
+<p>The name of the C&#45;compiler. Supplied within <code lang='und' xml:lang='und'>runstep()</code>.</p>
+
+<li><code lang='und' xml:lang='und'>default</code></li><p class="pad"></p>
+
+<p>Libraries to be added where no OS&#45;specific or OS/C&#45;compiler&#45;specific libraries are to be added. Single whitespace&#45;delimited string.</p>
+</ul>
+
+<p>These optional settings are currently supported and, if provided, will supersede the value in <code lang='und' xml:lang='und'>default</code>.</p>
+
+<ul>
+<li><code lang='und' xml:lang='und'>win32_gcc</code></li><p class="pad"></p>
+
+<p>Libraries to be added where OS is mswin32 and C&#45;compiler is <em lang='und' xml:lang='und'>gcc</em>. Single whitespace&#45;delimited string.</p>
+
+<li><code lang='und' xml:lang='und'>win32_nongcc</code></li><p class="pad"></p>
+
+<p>Libraries to be added where OS is mswin32 and C&#45;compiler is not <em lang='und' xml:lang='und'>gcc</em>. Single whitespace&#45;delimited string.</p>
+
+<li><code lang='und' xml:lang='und'>darwin</code></li><p class="pad"></p>
+
+<p>Libraries to be added where OS is Darwin. Do not supply a value if the value you need is the same as <code lang='und' xml:lang='und'>default</code>. Single whitespace&#45;delimited string.</p>
+</ul>
+
+<p><b>Return Value</b>: Returns true value upon success.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Parrot::Configure::Step.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

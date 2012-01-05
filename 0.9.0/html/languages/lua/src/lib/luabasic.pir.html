@@ -1,0 +1,219 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Lua Basic Library</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Lua Basic Library</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/lua.html">Lua</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>lib/luabasic.pir &#45; Lua Basic Library</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>The basic library provides some core functions to Lua.</p>
+
+<p>See &#34;Lua 5.1 Reference Manual&#34;,
+section 5.1 &#34;Basic Functions&#34;,
+<a href='http://www.lua.org/manual/5.1/manual.html#5.1'><a href="http://www.lua.org/manual/5.1/manual.html#5.1">http://www.lua.org/manual/5.1/manual.html#5.1</a></a>.</p>
+
+<h2><a name="Variables"
+>Variables <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="_G"
+><b><code>_G</b></code></a></dt>
+A global variable (not a function) that holds the global environment (that is,
+<code>_G._G = _G</code>).
+Lua itself does not use this variable; changing its value does not affect any environment,
+nor vice&#45;versa.
+(Use <code>setfenv</code> to change environments.)
+<dt><a name="_VERSION"
+><b><code>_VERSION</b></code></a></dt>
+A global variable (not a function) that holds a string containing the current interpreter version.
+The current contents of this variable is <code>&#34;Lua 5.1&#34;</code>.</dl>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="assert_(v_[,_message])"
+><b><code>assert (v [, message])</b></code></a></dt>
+Issues an error when the value of its argument <code>v</code> is false (i.e.,
+<b>nil</b> or <b>false</b>); otherwise,
+returns all its arguments.
+<code>message</code> is an error message; when absent,
+it defaults to &#34;assertion failed!&#34;
+<dt><a name="collectgarbage_(opt_[,_arg])"
+><b><code>collectgarbage (opt [, arg])</b></code></a></dt>
+This function is a generic interface to the garbage collector.
+It performs different functions according to its first argument,
+<code>opt</code>:
+<dl>
+<dt><a name="&#34;stop&#34;"
+><b>&#34;stop&#34;</b></a></dt>
+stops the garbage collector.
+<dt><a name="&#34;restart&#34;"
+><b>&#34;restart&#34;</b></a></dt>
+restarts the garbage collector.
+<dt><a name="&#34;collect&#34;"
+><b>&#34;collect&#34;</b></a></dt>
+performs a full garbage&#45;collection cycle.
+<dt><a name="&#34;count&#34;"
+><b>&#34;count&#34;</b></a></dt>
+returns the total memory in use by Lua (in Kbytes).
+<dt><a name="&#34;step&#34;"
+><b>&#34;step&#34;</b></a></dt>
+performs a garbage&#45;collection step.
+The step <code>&#34;size&#34;</code> is controlled by <code>arg</code> (larger values mean more steps) in a non&#45;specified way.
+If you want to control the step size you must tune experimentally the value of <code>arg</code>.
+Returns <b>true</b> if the step finished a collection cycle.
+<dt><a name="&#34;steppause&#34;"
+><b>&#34;steppause&#34;</b></a></dt>
+sets <code>arg</code>/100 as the new value for the <i>pause</i> of the collector.
+<dt><a name="&#34;setstepmul&#34;"
+><b>&#34;setstepmul&#34;</b></a></dt>
+sets <code>arg</code>/100 as the new value for the <i>step multiplier</i> of the collector.</dl>
+STILL INCOMPLETE (see lua_gc).
+<dt><a name="dofile_(filename)"
+><b><code>dofile (filename)</b></code></a></dt>
+Opens the named file and executes its contents as a Lua chunk.
+When called without arguments,
+<code>dofile</code> executes the contents of the standard input (<code>stdin</code>).
+Returns all values returned by the chunk.
+In case of errors,
+<code>dofile</code> propagates the error to its caller (that is,
+dofile does not run in protected mode).
+<dt><a name="error_(message_[,_level])"
+><b><code>error (message [, level])</b></code></a></dt>
+Terminates the last protected function called and returns <code>message</code> as the error message.
+Function <code>error</code> never returns.Usually,
+<code>error</code> adds some information about the error position at the beginning of the message.
+The <code>level</code> argument specifies how to get the error position.
+With level 1 (the default),
+the error position is where the <code>error</code> function was called.
+Level 2 points the error to where the function that called <code>error</code> was called; and so on.
+Passing a level 0 avoids the addition of error position information to the message.STILL INCOMPLETE.
+<dt><a name="getfenv_(f)"
+><b><code>getfenv (f)</b></code></a></dt>
+Returns the current environment in use by the function.
+<code>f</code> can be a Lua function or a number that specifies the function at that stack level: Level 1 is the function calling <code>getfenv</code>.
+If the given function is not a Lua function,
+or if <code>f</code> is 0,
+<code>getfenv</code> returns the global environment.
+The default for <code>f</code> is 1.
+<dt><a name="getmetatable_(object)"
+><b><code>getmetatable (object)</b></code></a></dt>
+If <code>object</code> does not have a metatable,
+returns <b>nil</b>.
+Otherwise,
+if the object&#39;s metatable has a <code>&#34;__metatable&#34;</code> field,
+returns the associated value.
+Otherwise,
+returns the metatable of the given object.
+<dt><a name="ipairs_(t)"
+><b><code>ipairs (t)</b></code></a></dt>
+Returns three values: an iterator function,
+the table <code>t</code>,
+and 0,
+so that the construction
+<pre>    for i,v in ipairs(t) do ... end</pre>
+will iterate over the pairs (<code>1,t[1]</code>), (<code>2,t[2]</code>), ..., up to the first integer key with a nil value in the table.See <code>next</code> for the caveats of modifying the table during its traversal.
+<dt><a name="load_(func_[,_chunkname])"
+><b><code>load (func [, chunkname])</b></code></a></dt>
+Loads a chunk using function <code>func</code> to get its pieces. Each call to <code>func</code> must return a string that concatenates with previous results. A return of <b>nil</b> (or no value) signals the end of the chunk.If there are no errors, returns the compiled chunk as a function; otherwise, returns <b>nil</b> plus the error message. The environment of the returned function is the global environment.<code>chunkname</code> is used as the chunk name for error messages and debug information.NOT YET IMPLEMENTED.
+<dt><a name="loadfile_([filename])"
+><b><code>loadfile ([filename])</b></code></a></dt>
+Similar to <code>load</code>, but gets the chunk from file <code>filename</code> or from the standard input, if no file name is given.
+<dt><a name="loadstring_(string_[,_chunkname])"
+><b><code>loadstring (string [, chunkname])</b></code></a></dt>
+Similar to <code>load</code>, but gets the chunk from the given string.To load and run a given string, use the idiom
+<pre>    assert(loadstring(s))()</pre>
+
+<dt><a name="next_(table_[,_index])"
+><b><code>next (table [, index])</b></code></a></dt>
+Allows a program to traverse all fields of a table. Its first argument is a table and its second argument is an index in this table. <code>next</code> returns the next index of the table and its associated value. When called with <b>nil</b> as its second argument, <code>next</code> returns an initial index and its associated value. When called with the last index, or with <b>nil</b> in an empty table, <code>next</code> returns <b>nil</b>. If the second argument is absent, then it is interpreted as <b>nil</b>. In particular, you can use <code>next(t)</code> to check whether a table is empty.Lua has no declaration of fields. There is no difference between a field not present in a table or a field with value <b>nil</b>. Therefore, <code>next</code> only considers fields with non&#45;<b>nil</b> values. The order in which the indices are enumerated is not specified, <i>even for numeric indices</i>. (To traverse a table in numeric order, use a numerical for or the <code>ipairs</code> function.)The behavior of <code>next</code> is <i>undefined</i> if, during the traversal, you assign any value to a non&#45;existent field in the table. You may however modify existing fields. In particular, you may clear existing fields.
+<dt><a name="pairs_(t)"
+><b><code>pairs (t)</b></code></a></dt>
+Returns three values: the <code>next</code> function, the table <code>t</code>, and <b>nil</b>, so that the construction
+<pre>    for k,v in pairs(t) do ... end</pre>
+will iterate over all key&#45;&#45;value pairs of table <code>t</code>.See <code>next</code> for the caveats of modifying the table during its traversal.
+<dt><a name="pcall_(f,_arg1,_arg2,_...)"
+><b><code>pcall (f, arg1, arg2, ...)</b></code></a></dt>
+Calls function <code>f</code> with the given arguments in protected mode. This means that any error inside <code>f</code> is not propagated; instead, <code>pcall</code> catches the error and returns a status code. Its first result is the status code (a boolean), which is <b>true</b> if the call succeeds without errors. In such case, <code>pcall</code> also returns all results from the call, after this first result. In case of any error, <code>pcall</code> returns <b>false</b> plus the error message.
+<dt><a name="print_(e1,_e2,_...)"
+><b><code>print (e1, e2, ...)</b></code></a></dt>
+Receives any number of arguments, and prints their values to <code>stdout</code>, using the <code>tostring</code> function to convert them to strings. <code>print</code> is not intended for formatted output, but only as a quick way to show a value, typically for debugging. For formatted output, use <code>string.format</code>.
+<dt><a name="rawequal_(v1,_v2)"
+><b><code>rawequal (v1, v2)</b></code></a></dt>
+Checks whether <code>v1</code> is equal to <code>v2</code>, without invoking any metamethod. Returns a boolean.
+<dt><a name="rawget_(table,_index)"
+><b><code>rawget (table, index)</b></code></a></dt>
+Gets the real value of <code>table[index]</code>, without invoking any metamethod. <code>table</code> must be a table; <code>index</code> is any value different from <b>nil</b>.
+<dt><a name="rawset_(table,_index,_value)"
+><b><code>rawset (table, index, value)</b></code></a></dt>
+Sets the real value of <code>table[index]</code> to value, without invoking any metamethod. <code>table</code> must be a table, <code>index</code> is any value different from <b>nil</b>, and <code>value</code> is any Lua value.This function returns <code>table</code>.
+<dt><a name="select_(index,_...)"
+><b><code>select (index, ...)</b></code></a></dt>
+If <code>index</code> is a number, returns all arguments after argument number <code>index</code>. Otherwise, <code>index</code> must be the string <code>&#34;#&#34;</code>, and <code>select</code> returns the total number of extra arguments it received.
+<dt><a name="setfenv_(f,_table)"
+><b><code>setfenv (f, table)</b></code></a></dt>
+Sets the environment to be used by the given function. <code>f</code> can be a Lua function or a number that specifies the function at that stack level: Level 1 is the function calling <code>setfenv</code>. <code>setfenv</code> returns the given function.As a special case, when <code>f</code> is 0 <code>setfenv</code> changes the environment of the running thread. In this case, <code>setfenv</code> returns no values.STILL INCOMPLETE.
+<dt><a name="setmetatable_(table,_metatable)"
+><b><code>setmetatable (table, metatable)</b></code></a></dt>
+Sets the metatable for the given table. (You cannot change the metatable of other types from Lua.) If metatable is <b>nil</b>, removes the metatable of the given table. If the original metatable has a <code>&#34;__metatable&#34;</code> field, raises an error.This function returns <code>table</code>.
+<dt><a name="tonumber_(e_[,_base])"
+><b><code>tonumber (e [, base])</b></code></a></dt>
+Tries to convert its argument to a number. If the argument is already a number or a string convertible to a number, then <code>tonumber</code> returns that number; otherwise, it returns <b>nil</b>.An optional argument specifies the base to interpret the numeral. The base may be any integer between 2 and 36, inclusive. In bases above 10, the letter &#145;A&#146; (in either upper or lower case) represents 10, &#145;B&#146; represents 11, and so forth, with &#145;Z&#146; representing 35. In base 10 (the default), the number may have a decimal part, as well as an optional exponent part. In other bases, only unsigned integers are accepted.
+<dt><a name="tostring_(e)"
+><b><code>tostring (e)</b></code></a></dt>
+Receives an argument of any type and converts it to a string in a reasonable format. For complete control of how numbers are converted, use <code>format</code>.If the metatable of e has a <code>&#34;__tostring&#34;</code> field, <code>tostring</code> calls the corresponding value with <code>e</code> as argument, and uses the result of the call as its result.
+<dt><a name="type_(v)"
+><b><code>type (v)</b></code></a></dt>
+Returns the type of its only argument, coded as a string. The possible results of this function are <code>&#34;nil&#34;</code> (a string, not the value <b>nil</b>), <code>&#34;number&#34;</code>, <code>&#34;string&#34;</code>, <code>&#34;boolean&#34;</code>, <code>&#34;table&#34;</code>, <code>&#34;function&#34;</code>, <code>&#34;thread&#34;</code>, and <code>&#34;userdata&#34;</code>.
+<dt><a name="unpack_(list_[,_i_[,_j]])"
+><b><code>unpack (list [, i [, j]])</b></code></a></dt>
+Returns the elements from the given table. This function is equivalent to
+<pre>    return list[i], list[i+1], ..., list[j]</pre>
+except that the above code can be written only for a fixed number of elements. By default, <code>i</code> is 1 and <code>j</code> is the length of the list, as defined by the length operator.
+<dt><a name="xpcall_(f,_err)"
+><b><code>xpcall (f, err)</b></code></a></dt>
+This function is similar to <code>pcall</code>, except that you can set a new error handler.<code>xpcall</code> calls function <code>f</code> in protected mode, using <code>err</code> as the error handler. Any error inside <code>f</code> is not propagated; instead, <code>xpcall</code> catches the error, calls the <code>err</code> function with the original error object, and returns a status code. Its first result is the status code (a boolean), which is true if the call succeeds without errors. In this case, <code>xpcall</code> also returns all results from the call, after this first result. In case of any error, <code>xpcall</code> returns false plus the result from <code>err</code>.</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

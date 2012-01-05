@@ -1,0 +1,311 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - The Parrot Debugger</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Home</a> &raquo; <a href="../../html/tools.html">Tools</a> &raquo; The Parrot Debugger
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/debugger.pod &#45; The Parrot Debugger</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT</a></h1>
+
+<p>This document describes <em>parrot_debugger</em>,
+the Parrot Debugger.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Starting from version 0.0.6 Parrot has its own debugger,
+which is modeled after Perl&#39;s one.
+Its name is <em>parrot_debugger</em>,
+and is an interactive environment that let you step through bytecode,
+set breakpoints,
+evaluate assembly instructions and peek at the interpreter status.</p>
+
+<p>A good (well,
+at least some) knowledge of the Parrot internals is obviously required to read this document.
+Some familiarity with debugging principles is also mandatory beyond this point.</p>
+
+<h1><a name="BUILDING_parrot_debugger"
+>BUILDING parrot_debugger</a></h1>
+
+<p>The debugger is built along with Parrot when you run &#39;make&#39;,
+but if you want to build *only* the debugger,
+then you can run:</p>
+
+<pre>  make parrot_debugger</pre>
+
+<p>Which will create a new parrot_debugger executable in the same directory as the parrot executable.</p>
+
+<h1><a name="THE_DEBUGGER_SHELL"
+>THE DEBUGGER SHELL</a></h1>
+
+<p>To start the debugger type:</p>
+
+<pre>  parrot_debugger file.pbc</pre>
+
+<p>That is, <em>parrot_debugger</em> takes exactly one argument, which is the Parrot file that you&#39;re going to debug. This file may be Parrot bytecode (*.pbc), PASM source code (*.pasm) or PIR (*.pir). <em>parrot_debugger</em> will automatically load and disassemble the bytecode file for you.</p>
+
+<p>Note that you can&#39;t pass command line arguments to your program when you invoke the debugger. See the <code>run (r)</code> command below for this.</p>
+
+<p>After the version banner, you&#39;ll see the friendly debugger prompt:</p>
+
+<pre>  (pdb)</pre>
+
+<p><em>parrot_debugger</em> is ready to receive commands and give output. To list the available commands type &#39;h&#39;. To quit the debugger type &#39;q&#39;.</p>
+
+<p>As with the Perl debugger, whenever it halts and shows you a line of code, it is always the line it&#39;s <i>about</i> to execute, not the one that it has just executed.</p>
+
+<h1><a name="DEBUGGER_COMMANDS"
+>DEBUGGER COMMANDS</a></h1>
+
+<p>Always remember that you can enter &#39;h&#39; to get a list of commands (this document may be outdated in respect to the actual debugger, so let it speak for itself).</p>
+
+<p>Most commands can be shortened to their first letter. When available, this is signaled by the letter in parentheses after the command name Thus, <code>help (h)</code> means that the command can be given as &#39;help&#39; or just &#39;h&#39;. On the other hand, <code>load</code> can only be given as &#39;load&#39;, verbatim. Debugger commands are case sensitive (LOAD is not a valid command) but Parrot register names are not.</p>
+
+<p>A blank line always repeats the last command entered.</p>
+
+<p>Also note that at this point in its development, <em>parrot_debugger</em> has very poor error checking on commands and their arguments, so type carefully or something bad will happen. Feel free to report bugs, or better yet patch the source code (see <a href='#FILES'>&#34;FILES&#34;</a> below).</p>
+
+<dl>
+<dt><a name="assign"
+>assign</a></dt>
+Assign to a Parrot register. For example:
+<pre>    (pdb)    a I0 42
+
+        I0 = 42
+
+    (pdb)    a N1 3.14
+
+        N1 = 3.14</pre>
+The first command sets I0 to 42 and the second sets N1 to 3.14. Register names are not case sensitive, so you can use either i0 or I0 .
+<dt><a name="disassemble"
+>disassemble</a></dt>
+Disassemble a loaded bytecode file. This will turn a file loaded with <code>load</code> into proper Parrot assembler.
+<dt><a name="load"
+>load</a></dt>
+Load a source code (assembler) file. The syntax is:
+<pre>  load FILE</pre>
+
+<dt><a name="list_(l)"
+>list (l)</a></dt>
+List the source code. The syntax is:
+<pre>  list [FROM] [NUM]</pre>
+Both arguments are optional. By default <code>FROM</code> is from where the last list command ended (or the first line if this is the first invocation) and <code>NUM</code> is 10. That is, it lists the source code ten lines at a time.Note that the disassembled source code is not the same as the original source code: labels take the names <code>L1 .. Ln</code> and opcodes are fully qualified (eg. <code>set_i_ic</code> instead of just <code>set</code>). See also <code>eval (e)</code>.Example:
+<pre>  # lists the first three source code lines
+  (pdb) l 1 3
+  1  set_i_ic I1,0
+  2  L3:  print_sc &#34;fact of &#34;
+  3  print_i I1</pre>
+
+<dt><a name="run_(r)"
+>run (r)</a></dt>
+Run (or restart) the program. The syntax is:
+<pre>  run [ARGUMENTS]</pre>
+Any arguments you give are passed as command line arguments to the program (ie. they populate P0).After the program has ended, you can run it again with this command. See also the <code>continue (c)</code> command.Example:
+<pre>  (pdb) r
+  Restarting
+  fact of 0 is: 1
+  fact of 1 is: 1
+  fact of 2 is: 2
+  fact of 3 is: 6
+  fact of 4 is: 24
+  fact of 5 is: 120
+  fact of 6 is: 720
+  Program exited.</pre>
+
+<dt><a name="break_(b)"
+>break (b)</a></dt>
+Add a breakpoint. The syntax is:
+<pre>  b LINE [if CONDITION]</pre>
+If you want a conditional breakpoint you should first specify the register that is involved in the condition (at least one must be), the comparison and then the third argument can be either another register or a constant, which must be of the same type as the first register specified.The command returns a number which is the breakpoint identifier. You should note this number for the <code>delete (d)</code> command (see below).Example:
+<pre>  # sets a breakpoint on line 10 (will be breakpoint 0)
+  (pdb) b 10
+  Breakpoint 0 at line 10
+
+  # another breakpoint on line 11 (will be breakpoint 1)
+  (pdb) b 11
+  Breakpoint 1 at line 11
+
+  # break at line 4 if I16 is less than or equal to 123456
+  (pdb) b 4 if I16 &#60;= 123456
+  Breakpoint 2 at line 4
+
+  # break at line 4 if N27 is greater than 5.23
+  (pdb) b 5 if N27 &#62; 5.23
+  Breakpoint 3 at line 5
+
+  # break at line 4 if S2 is equal to S13
+  (pdb) b 6 if S2 == S13
+  Breakpoint 4 at line 6
+
+  # break at line 4 if S5 is equal to &#34;stop&#34;
+  (pdb) b 7 if S2 == &#34;stop&#34;
+  Breakpoint 5 at line 7</pre>
+
+<dt><a name="watch_(w)"
+>watch (w)</a></dt>
+Add a watchpoint. The syntax is:
+<pre>  w CONDITION</pre>
+The condition has the same format as in <code>break</code>
+<dt><a name="delete_(d)"
+>delete (d)</a></dt>
+Delete a breakpoint. The syntax is:
+<pre>  d NUM</pre>
+The <code>NUM</code> argument is the breakpoint number (from 0 to N) as emitted by the <code>break (b)</code> command. It is NOT the line that has the breakpoint.Example:
+<pre>  # delete the first breakpoint (was on line 10, see example above)
+  (pdb) d 0</pre>
+
+<dt><a name="disable"
+>disable</a></dt>
+Disable a breakpoint. The syntax is the same as for the <code>delete</code> command. Disabled breakpoints can be re&#45;enabled with <code>enable</code>.
+<dt><a name="enable"
+>enable</a></dt>
+Re&#45;enable a disabled breakpoint. The syntax is:
+<pre>  enable [NUM]</pre>
+where <code>NUM</code> is the number of the breakpoint.
+<dt><a name="continue_(c)"
+>continue (c)</a></dt>
+Continue the program execution. The syntax of this command is:
+<pre>  continue [NUM]</pre>
+Without arguments, the command just runs the source code until a breakpoint is found (or until the end of the program).If you specify a number, it will skip the next <code>NUM</code> breakpoints it encounters.When the program has ended, continue will do nothing. Use <code>run (r)</code> to execute it again.
+<dt><a name="next_(n)"
+>next (n)</a></dt>
+Run the next instruction. The syntax is:
+<pre>  next [NUM]</pre>
+<code>NUM</code> defaults to 1, but you can give a number of instructions to execute before stopping again.
+<dt><a name="eval_(e)"
+>eval (e)</a></dt>
+The eval command is currently unimplemeneted.Run an instruction. The syntax is:
+<pre>  eval INSTRUCTION</pre>
+Example:
+<pre>  (pdb) e set I0, 42
+
+  (pdb) e print I0
+  42
+
+  (pdb) p i
+  I0 =           42
+  I1 =            0
+  ...</pre>
+
+<dt><a name="trace_(t)"
+>trace (t)</a></dt>
+Trace the next instruction. The syntax is:
+<pre>  trace [NUM]</pre>
+It executes the next <code>NUM</code> instructions (default is 1) just as <code>next (n)</code> does, but printing additional trace information. This is the same as the information you get when running Parrot with the <code>&#45;t</code> option.Example:
+<pre>  # executes 2 instructions and trace them
+  (pdb) t 2
+  PC=0; OP=67 (set_i_ic); ARGS=(I1=0, 0)
+  PC=3; OP=24 (print_sc); ARGS=(&#34;fact of &#34;)
+  fact of
+  3  print_i I1</pre>
+
+<dt><a name="print_(p)"
+>print (p)</a></dt>
+Print the interpreter registers. Register names are not case sensitive. The syntax is:
+<pre>  print VALUE</pre>
+<code>VALUE</code> may be:
+<dl>
+<dt><a name="A_register_name:_I3"
+>A register name: <b><code>I3</b></code></a></dt>
+Prints out the single register specified.
+<dt><a name="A_register_type:_i,_n,_s,_or_p"
+>A register type: <b><code>i</b></code>, <b><code>n</b></code>, <b><code>s</b></code>, or <b><code>p</b></code></a></dt>
+Prints out all registers of the given type
+<dt><a name="An_aggregate_key:_P0[1]"
+>An aggregate key: <b><code>P0[1]</b></code></a></dt>
+Looks up the given (integer&#45; or string&#45;valued) key in a PMC register.</dl>
+For PMC registers, the command will print the number, the class of the PMC (in square brackets) and its string representation (when available). It prints &#60;PMCNULL&#62; for uninitialized PMC registers.Examples:
+<pre>  # prints the content of I2
+  (pdb) p i2
+  I2 =              0
+
+  # prints the content of P0
+  (pdb) p P0
+  P0 = [ResizablePMCArray]
+
+  # prints the content of all string registers
+  (pdb) p s
+   S0 = Just
+   S1 = Another
+   S2 = Parrot
+   S3 = Hacker</pre>
+
+<dt><a name="info"
+>info</a></dt>
+Print interpreter information.Example:
+<pre>  (pdb) info
+  Total memory allocated = 81936
+  GC mark runs = 6
+  GC collect runs = 0
+  Active PMCs = 8197
+  Active buffers = 7
+  Total PMCs = 21840
+  Total buffers = 48
+  Header allocations since last collect = 0
+  Memory allocations since last collect = 2</pre>
+
+<dt><a name="quit_(q)"
+>quit (q)</a></dt>
+Exit the debugger.
+<dt><a name="help_(h)"
+>help (h)</a></dt>
+Prints information about debugger commands. The syntax is:
+<pre>  help [COMMAND]</pre>
+If <code>COMMAND</code> is omitted, prints a list of the available commands.</dl>
+
+<h1><a name="FILES"
+>FILES</a></h1>
+
+<dl>
+<dt><a name="src/parrot_debugger.c"
+>src/parrot_debugger.c</a></dt>
+This is the file that will produce the executable. Nothing fancy here, it mostly consists of the <code>main</code> function.
+<dt><a name="src/debug.c"
+>src/debug.c</a></dt>
+Most of the debugger is implemented here. You may want to start from the <code>PDB_run_command</code> function and go down from there for the real meat.
+<dt><a name="src/embed.c"
+>src/embed.c</a></dt>
+<code>Parrot_debug</code>, the function which launches the debugger, is implemented here.
+<dt><a name="include/parrot/debugger.h"
+>include/parrot/debugger.h</a></dt>
+This defines all the PDB structures, which hold data used by the debugger.</dl>
+
+<h1><a name="HISTORY"
+>HISTORY</a></h1>
+
+<dl>
+<dt><a name="Version_1.0"
+>Version 1.0</a></dt>
+First version (SVN debug.c revision 1.24), authored by Aldo Calpini</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

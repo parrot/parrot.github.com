@@ -1,0 +1,131 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - GDBM PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; GDBM PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/dynpmc/gdbmhash.pmc &#45; GDBM PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This is an interface to the GNU dbm library.</p>
+
+<h1><a name="keys"
+>keys</a></h1>
+
+<p>On inserted and fetch,
+keys are converted to STRINGs.</p>
+
+<h2><a name="store"
+>store</a></h2>
+
+<p>PMC insert values are converted to STRINGs.</p>
+
+<h2><a name="fetch"
+>fetch</a></h2>
+
+<p>get_integer_keyed() and get_number_keyed() probably don&#39;t make any sense,
+as integers usually can&#39;t be converted.</p>
+
+<p>When a PMC is requested,
+a String PMC is returned.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="static_STRING*_make_hash_key(PARROT_INTERP,_PMC_*key)"
+><b><code>static STRING* make_hash_key(PARROT_INTERP, PMC *key)</b></code></a></dt>
+Returns a Parrot string for <code>*key</code>.
+<dt><a name="void_class_init()"
+><b><code>void class_init()</b></code></a></dt>
+Class initialization.
+GDBMHash is a dynamic PMC,
+meaning that a dynamically loadable module is created.
+On Unix&#45;like systems this is a shared library.
+When it is available,
+the shared library has linked in the library &#39;gdbm&#39;.On WIN32 the relevant library seems to be called &#39;gdbm3&#39;.
+So we do a bit of cheating here,
+and load it during class initialization.
+<dt><a name="VOID_set_string_native(STRING*_value)"
+><b><code>VOID set_string_native(STRING* value)</b></code></a></dt>
+Open a or create a new dbm file.
+<dt><a name="INTVAL_get_integer()"
+><b><code>INTVAL get_integer()</b></code></a></dt>
+Returns the number of pairs in the hash.
+A uninitialized GDBMHash returns 0.
+<dt><a name="INTVAL_get_bool()"
+><b><code>INTVAL get_bool()</b></code></a></dt>
+Returns true if the hash size is not zero.
+<dt><a name="void_set_string_keyed(PMC_*key,_STRING_*value)"
+><b><code>void set_string_keyed(PMC *key, STRING *value)</b></code></a></dt>
+
+<dt><a name="STRING_*get_string_keyed(PMC_*key)"
+><b><code>STRING *get_string_keyed(PMC *key)</b></code></a></dt>
+Returns the string value for the element at <code>*key</code>.
+<dt><a name="void_set_pmc_keyed(PMC*_key,_PMC_*value)"
+><b><code>void set_pmc_keyed(PMC* key, PMC *value)</b></code></a></dt>
+Convert <code>value</code> to a string and set the string for the <code>key</code>.
+<dt><a name="PMC_*get_pmc_keyed(PMC_*key)"
+><b><code>PMC *get_pmc_keyed(PMC *key)</b></code></a></dt>
+Returns the PMC value for the element at <code>*key</code>.
+<dt><a name="void_set_integer_keyed(PMC*_key,_INTVAL_value)"
+><b><code>void set_integer_keyed(PMC* key, INTVAL value)</b></code></a></dt>
+Convert <code>value</code> to a string and set the string for the <code>key</code>.
+<dt><a name="void_set_number_keyed(PMC*_key,_FLOATVAL_value)"
+><b><code>void set_number_keyed(PMC* key, FLOATVAL value)</b></code></a></dt>
+Convert <code>value</code> to a string and set the string for the <code>key</code>.
+<dt><a name="INTVAL_exists_keyed(PMC_*key)"
+><b><code>INTVAL exists_keyed(PMC *key)</b></code></a></dt>
+Returns whether a key <code>*key</code> exists in the hash.
+<dt><a name="void_delete_keyed(PMC_*key)"
+><b><code>void delete_keyed(PMC *key)</b></code></a></dt>
+Deletes the element associated with <code>*key</code>.</dl>
+
+<h2><a name="Specific_Methods"
+>Specific Methods</a></h2>
+
+<dl>
+<dt><a name="void_open(STRING*_value)"
+><b><code>void open(STRING* value)</b></code></a></dt>
+Open a or create a new dbm file.
+<dt><a name="void_close()"
+><b><code>void close()</b></code></a></dt>
+Close current dbm file.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em>docs/pdds/pdd08_keys.pod</em>,
+<a href='http://gdbm.gnu.org'><a href="http://gdbm.gnu.org">http://gdbm.gnu.org</a></a></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

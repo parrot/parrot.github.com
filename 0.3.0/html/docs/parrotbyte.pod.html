@@ -1,0 +1,336 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>The Parrot Bytecode (PBC) Format</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">The Parrot Bytecode (PBC) Format</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>docs/parrotbyte.pod &#45; The Parrot Bytecode (PBC) Format</p>
+
+<h1><a name="Format_of_the_Parrot_bytecode"
+>Format of the Parrot bytecode <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>  0          1          2          3
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | Wordsize | Byteorder|  Major   |  Minor   |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>The wordsize (or <code lang='und' xml:lang='und'>opcode_t</code> size) must be 4 (32&#45;bit) or 8 (64 bit). The bytecode loader is responsible for transforming the file into the VM native wordsize on the fly. For performance, a utility <em lang='und' xml:lang='und'>pdump</em> is provided to convert PBCs on disk if they cannot be recompiled. See <em lang='und' xml:lang='und'><a href="../src/pdump.c.html">src/pdump.c</a></em> for more information.</p>
+
+<p>Byteorder currently supports two values: (0&#45;Little Endian, 1&#45;Big Endian)</p>
+
+<pre lang='und' xml:lang='und'>  4          5
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | INT size | FloatType|  10 Byte  ...       |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |           fingerprint for ...             |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |           core.ops is here                |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>INT size (sizeof(INTVAL)) must be 4 or 8. FloatType 0 is IEEE 754 8 byte double, FloatType 1 is i386 little endian 12 byte long double.</p>
+
+<pre lang='und' xml:lang='und'>  16
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |         Parrot Magic = 0x 13155a1         |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>Magic is stored in native byteorder. The loader uses the byteorder header to convert the Magic to verify. More specifically, ALL words (non&#45;bytes) in the bytecode file are stored in native order, unless otherwise specified.</p>
+
+<pre lang='und' xml:lang='und'>  20*
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |         Opcode Type (Perl = 0x5045524c)   |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>The asterisk for the offset states, from here we have opcodes. The given offsets are for 32 bit opcode types only.</p>
+
+<h1><a name="PBC_FORMAT_1"
+>PBC FORMAT 1 <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>All segments are aligned at a 16 byte boundary. All segments share a common header and are kept in directories, which itself is a PBC segment. All offsets and sizes are in native opcodes of the machine that produced the PBC.</p>
+
+<h2><a name="Format_1_Header"
+>Format 1 Header <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  24*
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |         dir_format      (1)               |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |         padding         (0)               |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>After this header, the first PBC directory follows at offset 32* starting with a:</p>
+
+<h2><a name="Format_1_Segment_Header"
+>Format 1 Segment Header <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | total size in opcodes including this size |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |         internal type (itype)             |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |         internal id   (id)                |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |         size of opcodes following         |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>The <b>size</b> entry may be followed by a stream of <b>size</b> opcodes (starting 16 byte aligned), which may of course be no opcode stream at all for size zero.</p>
+
+<p>After this common segment header there can be segment specific data determined by the segment type. A segment without additional data, like the bytecode segment, is a <b>default</b> segment. No additional routines are required to unpack such a segment.</p>
+
+<h2><a name="Directory_Segment"
+>Directory Segment <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | number of directory entries               |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | segment type                              |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | segment name ...                          |
+  | ...        0x00       padding             |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | segment offset                            |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | segment op_count                          |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>The <b>op_count</b> at <b>offset</b> must match the segments <b>op_count</b> and is used to verify the PBCs integrity.</p>
+
+<p>Currently these segment types are defined:</p>
+
+<dl>
+<dt><a name="0"
+>0</a></dt><p class="pad"></p>
+
+<dd>Directory segment</dd><p class="pad"></p>
+
+<dt><a name="1"
+>1</a></dt><p class="pad"></p>
+
+<dd>Unknown segment (conforms to a default segment)</dd><p class="pad"></p>
+
+<dt><a name="2"
+>2</a></dt><p class="pad"></p>
+
+<dd>Fixup segment</dd><p class="pad"></p>
+
+<dt><a name="3"
+>3</a></dt><p class="pad"></p>
+
+<dd>Constant table segment</dd><p class="pad"></p>
+
+<dt><a name="4"
+>4</a></dt><p class="pad"></p>
+
+<dd>Bytecode segment</dd><p class="pad"></p>
+
+<dt><a name="5"
+>5</a></dt><p class="pad"></p>
+
+<dd>Debug segment</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Segment_Names"
+>Segment Names <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>This is not determined yet.</p>
+
+<h2><a name="Unknown_(default)_and_byte_code_segments"
+>Unknown (default) and byte code segments <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>These have only the common segment header and the opcode stream appended. The opcode stream is an <em lang='und' xml:lang='und'>mmap()</em>ed memory region, if your operating system supports this (and if the PBC was read from a disk file). You have therefore to consider these data as readonly.</p>
+
+<h2><a name="Fixup_segment"
+>Fixup segment <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | number of fixup entries                   |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | fixup type   (0)                          |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | label   name ...                          |
+  | ...        0x00       padding             |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | label offset                              |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>Fixup type <b>0</b>, known as enum_fixup_label, has a label symbol and an offset into the bytecode.</p>
+
+<p>Fixup type <b>1</b>, known as enum_fixup_sub, has a label symbol that is the name of the &#34;sub&#34; and an offset into the constant table, referencing a Sub, Closure or Coroutine PMC.</p>
+
+<h2><a name="Debug_Segment"
+>Debug Segment <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  | filename ...                              |
+  | ...        0x00       padding             |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>The debug segment has one additional field with the source file name. The opcode stream holds one line number per bytecode instruction.</p>
+
+<h2><a name="CONSTANT_TABLE_SEGMENT"
+>CONSTANT TABLE SEGMENT <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  0 (relative)
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |            Constant Count (N)             |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>For each constant:</p>
+
+<pre lang='und' xml:lang='und'>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |             Constant Type (T)             |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |                                           |
+  |        S bytes of constant content        |
+  :       appropriate for representing        :
+  |              a value of type T            |
+  |                                           |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<h2><a name="CONSTANTS"
+>CONSTANTS <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>For integer constants:</p>
+
+<pre lang='und' xml:lang='und'>  &#60;&#60; integer constants are represented as manifest constants in
+     the byte code stream currently, limiting them to 32 bit values. &#62;&#62;</pre>
+
+<p>For number constants (S is constant, and is equal to <code lang='und' xml:lang='und'>sizeof(FLOATVAL)</code>):</p>
+
+<pre lang='und' xml:lang='und'>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |                                           |
+  |             S&#39; bytes of Data              |
+  |                                           |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>where</p>
+
+<pre lang='und' xml:lang='und'>  S&#39; = S + (S % 4) ? (4 &#45; (S % 4)) : 0</pre>
+
+<p>If S&#39; &#62; S, then the extra bytes are filled with zeros.</p>
+
+<p>For string constants (S varies, and is the size of the particular string):</p>
+
+<pre lang='und' xml:lang='und'>  4, 4 + (16 + S&#39;0), 4 + (16 + S&#39;0) + (16 + S&#39;1)
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |                   Flags                   |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |                  Encoding                 |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |                   Type                    |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |                  Size (S)                 |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |                                           |
+  :             S&#39; bytes of Data              :
+  |                                           |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>where</p>
+
+<pre lang='und' xml:lang='und'>  S&#39; = S + (S % 4) ? (4 &#45; (S % 4)) : 0</pre>
+
+<p>If S&#39; &#62; S, then the extra bytes are filled with zeros.</p>
+
+<h2><a name="BYTE_CODE_SEGMENT"
+>BYTE CODE SEGMENT <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>The pieces that can be found in the byte code segment are as follows:</p>
+
+<pre lang='und' xml:lang='und'>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |              Operation Code               |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |             Register Argument             |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |    Integer Argument (Manifest Constant)   |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |   String Argument (Constant Table Index)  |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |   Number Argument (Constant Table Index)  |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |    PMC Argument (Constant Table Index)    |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>The number of arguments and the type of each argument can usually be determined by consulting Parrot::Opcode, or programatically by obtaining the op_info_t structure for the opcode in question.</p>
+
+<p>There are currently 4 opcodes that can take a variable number of arguments: set_args, get_params, set_returns and get_results. These ops always have one required argument, which is a PMC constant. Calling the elements VTABLE function on this PMC will give the number of extra variable arguments that follow.</p>
+
+<h2><a name="SOURCE_CODE_SEGMENT"
+>SOURCE CODE SEGMENT <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Currently there are no utilities that use this segment, even though it is mentioned in some of the early Parrot documents.</p>
+
+<p>Eventually there will be a more complete and useful PackFile specification, but this simple format works well enough for now (c. Parrot 0.0.5).</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>packfile.c</em>, <em lang='und' xml:lang='und'>packfile.h</em>, <em lang='und' xml:lang='und'>packout.c</em>, <em lang='und' xml:lang='und'>packdump.c</em>, <em lang='und' xml:lang='und'>pf/*.c</em>, and the <b>pdump</b> utility <em lang='und' xml:lang='und'>pdump.c</em>.</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Gregor N. Purdy <code lang='und' xml:lang='und'>gregor@focusresearch.com</code></p>
+
+<p>Format 1 description by Leopold Toetsch <code lang='und' xml:lang='und'>lt@toetsch.at</code></p>
+
+<p>Variable argument opcodes update by Jonathan Worthington <code lang='und' xml:lang='und'>jonathan@jwcs.net</code></p>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>2005.09.19</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

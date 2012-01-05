@@ -1,0 +1,108 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Lexical Ops</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Contents</a> &raquo; <a href="../../../html/tests.html">Tests</a> &raquo; Lexical Ops
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>t/op/lexicals.t &#45; Lexical Ops</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    % prove t/op/lexicals.t</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Tests various lexical scratchpad operations, as described in PDD20.</p>
+
+<pre>  ;;; Indicate that the computation has failed, and that the program
+  ;;; should try another path.  We rebind this variable as needed.
+  (define fail
+    (lambda () (error &#34;Program failed&#34;)))
+
+  ;;; Choose an arbitrary value and return it, with backtracking.
+  ;;; You are not expected to understand this.
+  (define (choose . all&#45;choices)
+    (let ((old&#45;fail fail))
+      (call&#45;with&#45;current&#45;continuation
+       (lambda (continuation)
+         (define (try choices)
+           (if (null? choices)
+               (begin
+                 (set! fail old&#45;fail)
+                 (fail))
+               (begin
+                 (set! fail
+                      (lambda () (continuation (try (cdr choices)))))
+                 (car choices))))
+         (try all&#45;choices)))))
+
+  ;;; Find two numbers with a product of 15.
+  (let ((x (choose 1 3 5))
+        (y (choose 1 5 9)))
+    (for&#45;each display `(&#34;Trying &#34; ,x &#34; and &#34; ,y #\newline))
+    (unless (= (* x y) 15)
+      (fail))
+    (for&#45;each display `(&#34;Found &#34; ,x &#34; * &#34; ,y &#34; = 15&#34; #\newline)))</pre>
+
+<p># The following PIR should be like:</p>
+
+<p>use strict;</p>
+
+<p>test_closures();</p>
+
+<p>sub test_closures { my @closures;</p>
+
+<pre>    # create some closures, outer scope
+    {
+         my $shared = 1;
+
+         # inner scope
+         for (1..3) {
+            my $not_shared = 1;
+            my $sub_num    = $_;
+            push @closures,
+                 sub {
+                     print &#34;Sub $sub_num was called $not_shared times. Any sub was called $shared times.\n&#34;;
+                     $shared++;
+                     $not_shared++;
+                 };
+         }
+    }
+
+    for ( 1 .. 4 ) {
+         foreach ( @closures ) {
+             $_&#45;&#62;();
+         }
+    }</pre>
+
+<p>}</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

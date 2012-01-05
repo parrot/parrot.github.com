@@ -1,0 +1,197 @@
+=head1 NAME
+
+Subs - Parrot Subroutines
+
+=head1 DESCRIPTION
+
+Parrot comes with different subroutine and alike classes which implement
+CPS (Continuation Passing Style) and PCC (Parrot Calling Conventions)
+F<docs/pdds/pdd03_calling_conventions.pod>.
+
+Please note, that this document refers to PASM assembler only. The PIR
+assembler has a more HLL-like syntax for Parrot Calling Conventions.
+S. F<imcc/docs/calling_conventions.pod>
+
+=head2 Class Tree
+
+  Sub
+    Closure
+      Continuation
+	Coroutine
+      Eval
+      RetContinuation
+
+=head2 Items in the Subs Context
+
+  Subtype	Controlstack  PadStack UserStack RegStacks Warnings
+  ------------------------------------------------------------------
+  Sub                -           -         -         -        C
+  Closure            -           C         -         -        C
+  Continuation       C           C         C         C        C
+  Coroutine          C           C         C         C        C
+  RetContinuation    X           X         X         X        X
+
+  "C" ... COWed copy is in context
+  "X" ... is in context
+  "-" ... isn't.
+
+=head1 SYNOPSIS
+
+=head2 Creation
+
+Create a subroutine of class C<Sub> and assign the subroutine address to it:
+
+  new P0, .Sub
+  set_addr P0, _sub_label
+
+This can be done with one opcode:
+
+  newsub P0, .Sub, _sub_label
+
+Create a subroutine (in P0) and a return continuation (in P1):
+
+  newsub .Sub, .RetContinuation, _sub_label, ret_label
+
+=head2 Refering to existing Subs
+
+Subroutines denoted with B<.pcc_sub> (and all PIR B<.sub> subroutines that use
+Parrot Calling Conventions) are stored in the constant table
+and can be fetched with the B<find_global> opcode.
+
+E.g. get a reference to a (possibly) external subroutine:
+
+  find_global P0, "_the_sub"
+  ...
+  .pcc_sub _the_sub:
+
+=head2 Program entry point
+
+Exactly one subroutine in the first executed source or byte code file
+may be flagged as the "main" subroutine, where executions starts.
+
+  .pcc_sub @MAIN _main:
+
+In the absence of a B<@MAIN> entry Parrot starts execution at the first
+statement.
+
+=head2 Automatically loaded initializer code
+
+If a subroutine is marked as B<@LOAD> this subroutine is run, before the
+B<load_bytecode> opcode returns.
+
+e.g.
+
+  .pcc_sub @MAIN _main:
+     print "in main\n"
+     load_bytecode "library_code.pasm"
+     ...
+
+# library_code.pasm
+
+     ...
+  .pcc_sub @LOAD _my_lib_init:
+     ...
+     invoke P1
+
+B<@LOAD> is ignored, if another subroutine in that file is marked with
+B<@MAIN>.
+
+=head2 Invocation i.e. calling the sub
+
+  invoke	# call the subroutine in P0 (P1 was created earlier)
+
+  invokecc	# call sub in P0 and create return continuation in P1
+
+=head2 Returning from a sub
+
+  invoke P1	# call return continuation in P1
+
+=head2 All together now
+
+The following scheme can be used if a subroutine is called once or
+if performance doesn't matter:
+
+    newsub P0, .Sub, _sub_label	# create subroutine
+    set I5, 42			# pass an argument
+    invokecc			# create ret continuation and call sub
+    end				# fin.
+  _sub_label:
+    print I5			# do something with parameters
+    invoke P1			# return
+
+If a subroutine is called several times, for instance inside a loop,
+the creation of the return continuation can be done outside the loop if
+performance is an issue:
+
+    newsub .Sub, .RetContinuation, _sub_label, ret_label
+    set I16, 1000000
+    set I17, 0
+  lp:
+    pushtopi		# preserve counter vars
+    invoke
+  ret_label:
+    poptopi
+    inc I17
+    lt I17, I16, lp
+    end
+  _sub_label:
+    # do_something
+    invoke P1
+
+If items in the interpreter context are changed between creation of
+the subroutine/return continuation and its invocation, the C<updatecc>
+opcode should be used, so that the state of the return continuation
+matches that of the interpreter:
+
+    newsub .Sub, .RetContinuation, _sub_label, ret_label
+    ...
+    warningson 1
+    ...
+    updatecc
+    invoke
+    ...
+
+=head2 Generating a Subroutine Symbol Table Entry
+
+When a subroutine label is prefixed by B<.pcc_sub>, the name of the
+subroutine (i.e. the label) gets stored in the global stash.
+
+    find_global P0, "_the_sub"
+    invokecc
+    print "back\n"
+    end
+
+  .pcc_sub _the_sub:
+    print "in sub\n"
+    invoke P1
+
+=head2 Optimized Tail Calls
+
+    find_global P0, "_the::sub"
+    invokecc
+    print "back\n"
+    end
+
+  .pcc_sub _the::sub:
+    print "in sub\n"			# must preserve P1
+    find_global P0, "_next::sub"
+    get_addr I0, P0			# get the absolute address
+    jump I0				# jump to absolute address
+
+  .pcc_sub _next::sub: 			# must preserve P1
+    print "in next sub\n"
+    invoke P1				# return to main
+
+=head1 FILES
+
+F<classes/sub.pmc>, F<classes/closure.pmc>, F<classes/continuation.pmc>,
+F<classes/coroutine.pmc>, F<sub.c>, F<t/pmc/sub.t>
+
+=head1 SEE ALSO
+
+F<docs/pdds/pdd03_calling_conventions.pod>
+F<imcc/docs/calling_conventions.pod>
+
+=head1 AUTHOR
+
+Leopold Toetsch <lt@toetsch.at>

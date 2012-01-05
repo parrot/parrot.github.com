@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Parrot Developer FAQ</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Developer FAQ</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>docs/gettingstarted.pod &#45; Parrot Developer FAQ</p>
+
+<h1><a name="DEVELOPER_FAQ"
+>DEVELOPER FAQ <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<h2><a name="I&#39;m_interested_in_helping_out._What_should_I_do?"
+>I&#39;m interested in helping out.
+What should I do? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>You&#39;re already on the right track.
+This FAQ should help you find everything you need to become an active member of the Parrot community.
+Just look through the questions below and read the ones that apply to you.</p>
+
+<h2><a name="Where_can_I_get_Parrot?"
+>Where can I get Parrot? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<ul>
+<li>There is a web interface to the subversion repository,
+in case you just want to browse the source.</li><p class="pad"></p>
+
+<p><a href='http://svn.perl.org/viewcvs/parrot/'><a href="http://svn.perl.org/viewcvs/parrot/">http://svn.perl.org/viewcvs/parrot/</a></a></p>
+
+<li>The easiest solution is to grab the most recent snapshot of the Parrot SVN repository.
+It&#39;s a tar&#45;gzipped download of a recent checkout of Parrot,
+updated every six hours.
+You can find it here:</li><p class="pad"></p>
+
+<p><a href='http://svn.perl.org/snapshots/parrot/parrot&#45;latest.tar.gz'><a href="http://svn.perl.org/snapshots/parrot/parrot&#45;latest.tar.gz">http://svn.perl.org/snapshots/parrot/parrot&#45;latest.tar.gz</a></a></p>
+
+<li>Even better is the option to use SVN,
+which gets you the very latest copy of the Parrot distribution.
+The procedure for this is:</li><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    svn checkout https://svn.perl.org/parrot/trunk parrot</pre>
+
+<li>Or, if you&#39;re one of those rsync folks, you can access the repository with:</li><p class="pad"></p>
+
+<p><code lang='und' xml:lang='und'>rsync &#45;av &#45;&#45;delete svn.perl.org::parrot&#45;HEAD parrot</code></p>
+</ul>
+
+<p>The above instructions are also on the Parrot website:</p>
+
+<p><a href='http://www.parrotcode.org/source.html'><a href="http://www.parrotcode.org/source.html">http://www.parrotcode.org/source.html</a></a></p>
+
+<h2><a name="Now_that_I&#39;ve_got_Parrot,_what_do_I_do?"
+>Now that I&#39;ve got Parrot, what do I do? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Now that you&#39;ve downloaded Parrot, you probably want to try it out. All you need is Perl 5.8.0 or later, a C compiler (any ANSI C compliant compiler should do &#45; if you find one that doesn&#39;t work, please report it to us), and some reasonable form of <code lang='und' xml:lang='und'>make</code>. To do this, follow these three easy steps.</p>
+
+<ol>
+<li><code lang='und' xml:lang='und'>cd</code> to your parrot directory and run <code lang='und' xml:lang='und'>Configure.pl</code> to create the makefile for your platform.</li><p class="pad"></p>
+
+<li>Run <code lang='und' xml:lang='und'>make</code> to compile everything and build parrot.</li><p class="pad"></p>
+
+<li>Run <code lang='und' xml:lang='und'>make test</code> to run the test suite and verify that everything works on your system.</li><p class="pad"></p>
+</ol>
+
+<h2><a name="Where&#39;s_the_Parrot_documentation?"
+>Where&#39;s the Parrot documentation? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Well, Parrot documentation is a great place to contribute, should you be looking for something to do. Figure out which parts were confusing, and either help us fix them, or let us know where we should fix them. Luckily, all of the current Parrot documentation is included along with the Parrot distribution, in the /docs/ directory.</p>
+
+<p>There is also some experimental auto&#45;generated HTML documentation available by running the following command in the Parrot distribution&#39;s root directory:</p>
+
+<pre lang='und' xml:lang='und'>    % make html</pre>
+
+<p>To view the HTML documentation start with the page <em lang='und' xml:lang='und'>docs/html/index.html</em>.</p>
+
+<p>There are a few categories of documentation, each with different intents. It&#39;ll probably help to be aware of them before you go digging in. I highly suggest you check out <em lang='und' xml:lang='und'><a href="pdds/pdd07_codingstd.pod.html">/docs/pdds/pdd07_codingstd.pod</a></em> for guidelines on how documentation is supposed to be laid out. For now, here&#39;s the executive summary:</p>
+
+<ul>
+<li>PDDs</li><p class="pad"></p>
+
+<p>Parrot Design Documents (PDDs) document the basic design of the Parrot interpreter, with each PDD focusing on a particular topic, such as the design of the garbage collector (PDD 09) or the object system (PDD 15). They can be found in the <em lang='und' xml:lang='und'>/docs/pdds</em> directory.</p>
+
+<p>NB: Some important areas are still missing PDDs; we&#39;re working to rectify that.</p>
+
+<li>Developer files</li><p class="pad"></p>
+
+<p>These are files which correspond to a specific source file, and can be found in <em lang='und' xml:lang='und'>/docs/dev/</em>. A developer file contains documentation on all the implementation decisions associated with the source file. (Note that this is in contrast to PDDs, which describe design decisions). This is the place for mini&#45;essays on how to avoid overflows in unsigned arithmetic, or on the pros and cons of differing hash algorithms, and why the current one was chosen, and how it works.</p>
+
+<p>If you are coming to a particular source file for the first time, you should be able to read the developer file and gain an immediate overview of what the source file is for, the algorithms it implements, etc.</p>
+
+<p>NB: We need more developer files too. Patches welcome!</p>
+
+<li>Source file documentation</li><p class="pad"></p>
+
+<p>Each source file includes comments embedded in the document. Usually this means function&#45;level documentation that describes the purpose and intent of a function, along with any other important information. For larger functions, it will include additional documentation that explains the meaning of code, as opposed to a verbatim translation of code.</p>
+</ul>
+
+<h2><a name="Where_can_I_find_the_main_developer_mailing_list?"
+>Where can I find the main developer mailing list? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Most of the Parrot&#45;related development discussion occurs on the parrot&#45;porters (aka perl6&#45;internals) mailing list. There are a variety of interfaces to the list:</p>
+
+<ul>
+<li>Developer Mailing List Interface (subscribing, unsubscribing, etc)</li><p class="pad"></p>
+
+<p><a href='http://lists.perl.org/showlist.cgi?name=perl6&#45;internals'><a href="http://lists.perl.org/showlist.cgi?name=perl6&#45;internals">http://lists.perl.org/showlist.cgi?name=perl6&#45;internals</a></a></p>
+
+<li>Parrot NNTP Interface</li><p class="pad"></p>
+
+<p><a href='news://nntp.perl.org/perl.perl6.internals'>news://nntp.perl.org/perl.perl6.internals</a></p>
+
+<p><a href='http://nntp.x.perl.org/group/perl.perl6.internals'><a href="http://nntp.x.perl.org/group/perl.perl6.internals">http://nntp.x.perl.org/group/perl.perl6.internals</a></a></p>
+
+<li>Parrot Archives, RSS</li><p class="pad"></p>
+
+<p><a href='http://groups.google.com/group/perl.perl6.internals/about'><a href="http://groups.google.com/group/perl.perl6.internals/about">http://groups.google.com/group/perl.perl6.internals/about</a></a> provides archives, search, and RSS feeds.</p>
+
+<p><a href='http://www.nntp.perl.org/group/perl.perl6.internals'><a href="http://www.nntp.perl.org/group/perl.perl6.internals">http://www.nntp.perl.org/group/perl.perl6.internals</a></a></p>
+</ul>
+
+<p>In addition, there is a mailing list which logs all commits to the Parrot SVN repository. If you&#39;re interested in Parrot development, you might find it very helpful to subscribe and keep up on changes that people are making.</p>
+
+<ul>
+<li>Mailing List Interface (subscribing, unsubscribing, etc)</li><p class="pad"></p>
+
+<p><a href='http://lists.perl.org/showlist.cgi?name=cvs&#45;parrot'><a href="http://lists.perl.org/showlist.cgi?name=cvs&#45;parrot">http://lists.perl.org/showlist.cgi?name=cvs&#45;parrot</a></a></p>
+
+<li>Parrot Commits NNTP Interface</li><p class="pad"></p>
+
+<p><a href='news://nntp.perl.org/perl.cvs.parrot'>news://nntp.perl.org/perl.cvs.parrot</a></p>
+
+<p><a href='http://nntp.x.perl.org/group/perl.cvs.parrot'><a href="http://nntp.x.perl.org/group/perl.cvs.parrot">http://nntp.x.perl.org/group/perl.cvs.parrot</a></a></p>
+
+<li>Commit List Archives, RSS</li><p class="pad"></p>
+
+<p><a href='http://groups.google.com/group/perl.cvs.parrot/about'><a href="http://groups.google.com/group/perl.cvs.parrot/about">http://groups.google.com/group/perl.cvs.parrot/about</a></a></p>
+
+<p><a href='http://www.nntp.perl.org/group/perl.cvs.parrot'><a href="http://www.nntp.perl.org/group/perl.cvs.parrot">http://www.nntp.perl.org/group/perl.cvs.parrot</a></a></p>
+</ul>
+
+<h2><a name="What_other_ways_can_I_get_in_contact_with_the_Parrot_developers?"
+>What other ways can I get in contact with the Parrot developers? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>The mailing list is the main resource for Parrot development. However, there is an IRC channel which you may find useful if your problem is better solved with real&#45;time discussion. Visit the channel #parrot on the IRC server <a href='TODO'>irc.perl.org</a>. Alternative IRC servers are <a href='TODO'>irc.rhizomatic.net</a> and <a href='TODO'>irc.pobox.com</a>.</p>
+
+<h2><a name="I&#39;ve_developed_a_patch._What_should_I_do_with_it?"
+>I&#39;ve developed a patch. What should I do with it? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>There&#39;s a lot of traffic that goes through the mailing list, and it&#39;s quite possible that if you send patches directly to the mailing list, they will get lost in the mailboxes of those with commit access.</p>
+
+<p>As such, a better solution would be to submit your patch to RT, the request tracker system that maintains bugs and patches for the Parrot project. To visit RT, go here:</p>
+
+<p><a href='https://rt.perl.org/rt3/'>https://rt.perl.org/rt3/</a></p>
+
+<p>Or if you want to submit a patch, send an email to <code lang='und' xml:lang='und'>parrotbug@parrotcode.org</code> with the moniker [PATCH] (including the brackets) at the start of the subject so that it can be appropriately tagged in the RT system. Please note that you do <b>not</b> have to CC <code lang='und' xml:lang='und'>parrot&#45;porters@perl.org</code> when reporting a bug. The RT system will correctly handle that on its own.</p>
+
+<p>A listing of the pending patches can be found here:</p>
+
+<p><a href='http://www.parrotcode.org/openpatches'><a href="http://www.parrotcode.org/openpatches">http://www.parrotcode.org/openpatches</a></a></p>
+
+<h2><a name="I&#39;ve_found_a_bug,_what_now?"
+>I&#39;ve found a bug, what now? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>Well, if you know enough about the bug that you can fix the problem, please do so. Then you can create a patch and submit it to the list, with a better chance of your bug getting attention. If you&#39;re not able to solve it on your own, we&#39;re still interested in seeing what the problem is, and hopefully helping to resolve it. To report a bug, email <code lang='und' xml:lang='und'>parrotbug@parrotcode.org</code> with a brief description of your bug in the subject. For more information about the bug management system, see the previous question.</p>
+
+<h2><a name="What_other_useful_resources_are_there_for_developers?"
+>What other useful resources are there for developers? <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>There are several other useful resources that can be found via:</p>
+
+<p><a href='http://www.parrotcode.org/resources'><a href="http://www.parrotcode.org/resources">http://www.parrotcode.org/resources</a></a></p>
+
+<ul>
+<li>Parrot Wiki</li><p class="pad"></p>
+
+<p>Located at:</p>
+
+<p><a href='http://www.parrotcode.org/wiki'><a href="http://www.parrotcode.org/wiki">http://www.parrotcode.org/wiki</a></a></p>
+</ul>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

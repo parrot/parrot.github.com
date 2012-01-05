@@ -1,0 +1,138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - StringHandle PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; StringHandle PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/stringhandle.pmc &#45; StringHandle PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>The StringHandle PMC performs I/O operations,
+but on an internal string rather than an external file.
+Commonly used as a mock FileHandle for testing.</p>
+
+<h2><a name="Internal_Functions"
+>Internal Functions</a></h2>
+
+<dl>
+<dt><a name="static_int_encoding_is_utf8(PARROT_INTERP,_const_STRING_*s)"
+><b><code>static int encoding_is_utf8(PARROT_INTERP, const STRING *s)</b></code></a></dt>
+Helper function for internal usage.
+Return 1 if the string argument is not null and has utf8 encoding,
+0 otherwise.</dl>
+
+<h2><a name="Vtable_Functions"
+>Vtable Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes a newly created StringHandle object.
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+Create a copy of the stringhandle.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Mark active stringhandle data as live.
+<dt><a name="INTVAL_get_bool()"
+><b><code>INTVAL get_bool()</b></code></a></dt>
+Returns whether the StringHandle has reached the end of the file.</dl>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="METHOD_open(STRING_*filename_:optional,_STRING_*mode_:optional)"
+><b><code>METHOD open(STRING *filename :optional, STRING *mode :optional)</b></code></a></dt>
+Opens a string handle with the given mode.
+The filename is not used,
+but is stored for mocking.
+<dt><a name="METHOD_close()"
+><b><code>METHOD close()</b></code></a></dt>
+Reset some core data for the StringHandle,
+but don&#39;t delete the string data,
+as it may be wanted later (for capturing the results).
+<dt><a name="METHOD_is_closed()"
+><b><code>METHOD is_closed()</b></code></a></dt>
+Check if the StringHandle is open.
+<dt><a name="METHOD_read(INTVAL_bytes)"
+><b><code>METHOD read(INTVAL bytes)</b></code></a></dt>
+Read the entire contents of the stringhandle and return it in a string.
+The <code>bytes</code> argument is currently ignored.
+<dt><a name="METHOD_readline()"
+><b><code>METHOD readline()</b></code></a></dt>
+Read a line from the stringhandle and return it in a string.
+(Currently only responds to &#34;\n&#34; newlines.)
+<dt><a name="METHOD_readall(STRING_*name);"
+>METHOD readall(STRING *name);</a></dt>
+Read the entire contents of the StringHandle into a Parrot string.
+On a StringHandle object that isn&#39;t opened yet,
+returns an empty string.
+<dt><a name="METHOD_flush()"
+><b><code>METHOD flush()</b></code></a></dt>
+Clear the StringHandle by resetting it to a null value.
+<dt><a name="METHOD_print([INTVAL|FLOATVAL|STRING_*|PMC*]_value)"
+><b><code>METHOD print([INTVAL|FLOATVAL|STRING *|PMC*] value)</b></code></a></dt>
+Print the passed in integer,
+number,
+string,
+or PMC to the stringhandle.
+(Integers,
+numbers,
+and strings are auto&#45;boxed as PMCs.)
+<dt><a name="METHOD_puts(STRING_*value)"
+><b><code>METHOD puts(STRING *value)</b></code></a></dt>
+Print the string to the stringhandle.
+<dt><a name="METHOD_buffer_type(STRING_*new_type_:optional)"
+><b><code>METHOD buffer_type(STRING *new_type :optional)</b></code></a></dt>
+Set or retrieve the buffering attribute for the stringhandle.
+This attribute is ignored,
+but stored for mocking.
+<dt><a name="METHOD_buffer_size(INTVAL_new_size_:optional)"
+><b><code>METHOD buffer_size(INTVAL new_size :optional)</b></code></a></dt>
+Returns the current size of the stringhandle.
+<dt><a name="METHOD_mode()"
+><b><code>METHOD mode()</b></code></a></dt>
+Retrieve the read mode string for the stringhandle.
+<dt><a name="METHOD_encoding(STRING_*new_encoding)"
+><b><code>METHOD encoding(STRING *new_encoding)</b></code></a></dt>
+Set or retrieve the encoding attribute (a string name of the selected encoding scheme) for the stringhandle.
+<dt><a name="METHOD_eof()"
+><b><code>METHOD eof()</b></code></a></dt>
+Check if the StringHandle is at end&#45;of&#45;file (if it has read to the end of the string data).
+<dt><a name="METHOD_get_fd()"
+><b><code>METHOD get_fd()</b></code></a></dt>
+StringHandles do not use integer file descriptors,
+so always returns an error value.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

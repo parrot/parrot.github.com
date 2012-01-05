@@ -1,0 +1,362 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Interpreter &#45; Callback Function Handling</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Interpreter &#45; Callback Function Handling</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/inter_cb.c &#45; Parrot Interpreter &#45; Callback Function Handling</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>NCI callback functions may run whenever the C code executes the callback.
+To be prepared for asynchronous callbacks these are converted to callback events.</p>
+
+<p>Often callbacks should run synchronously.
+This can only happen when the C&#45;library calls the callback,
+because Parrot called a function in the C&#45;library.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>*/</p>
+
+<p>#include &#34;parrot/parrot.h&#34; #include &#34;inter_cb.str&#34;</p>
+
+<p>/* HEADERIZER HFILE: include/parrot/interpreter.h */</p>
+
+<p>/* HEADERIZER BEGIN: static */</p>
+
+<p>static void callback_CD( PARROT_INTERP,
+NOTNULL(char *external_data),
+NOTNULL(PMC *user_data) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static void verify_CD( NOTNULL(char *external_data),
+NOTNULL(PMC *user_data) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>/* HEADERIZER END: static */</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_make_cb</p>
+
+<p>Create a callback function according to pdd16.</p>
+
+<p>*/</p>
+
+<p>PARROT_API PARROT_CANNOT_RETURN_NULL PARROT_WARN_UNUSED_RESULT PMC* Parrot_make_cb(PARROT_INTERP,
+PMC* sub,
+PMC* user_data,
+STRING *cb_signature) { PMC *cb,
+*cb_sig; int type = &#39;?&#39;; /* avoid &#45;Ox warning */ char * sig_str; STRING *sc; /* * we stuff all the information into the user_data PMC and pass that * on to the external sub */ PMC * const interp_pmc = VTABLE_get_pmc_keyed_int(interp,
+interp&#45;&#62;iglobals,
+(INTVAL) IGLOBALS_INTERPRETER);</p>
+
+<pre lang='und' xml:lang='und'>    /* be sure __LINE__ is consistent */
+    sc = CONST_STRING(interp, &#34;_interpreter&#34;);
+    VTABLE_setprop(interp, user_data, sc, interp_pmc);
+    sc = CONST_STRING(interp, &#34;_sub&#34;);
+    VTABLE_setprop(interp, user_data, sc, sub);
+    /* only ASCII signatures are supported */
+    sig_str = cb_signature&#45;&#62;strstart;
+
+    if (strlen(sig_str) != 3) {
+        real_exception(interp, NULL, 1, &#34;unhandled signature &#39;%s&#39; in make_cb&#34;,
+              cb_signature&#45;&#62;strstart);
+    }
+
+    ++sig_str;     /* Skip callback return type */
+
+    if (*sig_str == &#39;U&#39;) {
+        type = &#39;D&#39;;
+    }
+    else {
+        ++sig_str;
+        if (*sig_str == &#39;U&#39;) {
+            type = &#39;C&#39;;
+        }
+        else {
+            real_exception(interp, NULL, 1, &#34;unhandled signature &#39;%s&#39; in make_cb&#34;,
+                    cb_signature&#45;&#62;strstart);
+        }
+    }
+
+    cb_sig = pmc_new(interp, enum_class_String);
+    VTABLE_set_string_native(interp, cb_sig, cb_signature);
+    sc = CONST_STRING(interp, &#34;_signature&#34;);
+    VTABLE_setprop(interp, user_data, sc, cb_sig);
+    /*
+     * We are going to be passing the user_data PMC to external code, but
+     * it may go out of scope until the callback is called &#45;&#45; we don&#39;t know
+     * for certain as we don&#39;t know when the callback will be called.
+     * Therefore, to prevent the PMC from being destroyed by a DOD sweep,
+     * we need to anchor it.
+     *
+     */
+    dod_register_pmc(interp, user_data);
+
+    /*
+     * Finally, the external lib awaits a function pointer.
+     * Create a PMC that points to Parrot_callback_C (or _D);
+     * it can be passed on with signature &#39;p&#39;.
+     */
+    cb = pmc_new(interp, enum_class_UnManagedStruct);
+    /*
+     * Currently, we handle only 2 types:
+     * _C ... user_data is 2nd parameter
+     * _D ... user_data is 1st parameter
+     */
+    if (type == &#39;C&#39;)
+        PMC_data(cb) = F2DPTR(Parrot_callback_C);
+    else
+        PMC_data(cb) = F2DPTR(Parrot_callback_D);
+    dod_register_pmc(interp, cb);
+
+    return cb;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: verify_CD</p>
+
+<p>Verify user_data PMC then continue with callback_CD</p>
+
+<p>*/</p>
+
+<p>static void verify_CD(NOTNULL(char *external_data), NOTNULL(PMC *user_data)) { PARROT_INTERP = NULL; size_t i;</p>
+
+<pre lang='und' xml:lang='und'>    /*
+     * 1.) user_data is from external code so:
+     *     verify that we get a PMC that is one that we have passed in
+     *     as user data, when we prepared the callback
+     */
+
+    /* a NULL pointer or a pointer not aligned is very likely wrong */
+    if (!user_data || ((UINTVAL)user_data &#38; 3))
+        PANIC(interp, &#34;user_data doesn&#39;t look like a pointer&#34;);
+
+    /*
+     * We don&#39;t yet know which interpreter this PMC is from, so run
+     * through all of the existing interpreters and check their PMC
+     * pools
+     */
+    LOCK(interpreter_array_mutex);
+    for (i = 0; i &#60; n_interpreters; ++i) {
+        if (interpreter_array[i] == NULL)
+            continue;
+        interp = interpreter_array[i];
+        if (interp)
+            if (contained_in_pool(interp&#45;&#62;arena_base&#45;&#62;pmc_pool, user_data))
+                break;
+    }
+    UNLOCK(interpreter_array_mutex);
+    if (!interp)
+        PANIC(interp, &#34;interpreter not found for callback&#34;);
+
+    /*
+     * 2) some more checks
+     * now we should have the interpreter where that callback
+     * did originate &#45; do some further checks on the PMC
+     */
+
+    /* if that doesn&#39;t look like a PMC we are still lost */
+    if (!PObj_is_PMC_TEST(user_data))
+        PANIC(interp, &#34;user_data isn&#39;t a PMC&#34;);
+
+    if (!user_data&#45;&#62;vtable)
+        PANIC(interp, &#34;user_data hasn&#39;t a vtable&#34;);
+    /*
+     * ok fine till here
+     */
+    callback_CD(interp, external_data, user_data);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: callback_CD</p>
+
+<p>Common callback function handler. See pdd16.</p>
+
+<p>*/</p>
+
+<p>static void callback_CD(PARROT_INTERP, NOTNULL(char *external_data), NOTNULL(PMC *user_data)) {</p>
+
+<pre lang='und' xml:lang='und'>    PMC *passed_interp;       /* the interp that originated the CB */
+    PMC *passed_synchronous;  /* flagging synchronous execution */
+    int synchronous = 0;      /* cb is hitting this sub somewhen
+                               * inmidst, or not */
+    STRING *sc;
+    /*
+     * 3) check interpreter ...
+     */
+    sc = CONST_STRING(interp, &#34;_interpreter&#34;);
+    passed_interp = VTABLE_getprop(interp, user_data, sc);
+    if (PMC_data(passed_interp) != interp)
+        PANIC(interp, &#34;callback gone to wrong interpreter&#34;);
+
+    sc = CONST_STRING(interp, &#34;_synchronous&#34;);
+    passed_synchronous = VTABLE_getprop(interp, user_data, sc);
+    if (!PMC_IS_NULL(passed_synchronous) &#38;&#38;
+            VTABLE_get_bool(interp, passed_synchronous))
+        synchronous = 1;
+
+    /*
+     * 4) check if the call_back is synchronous:
+     *    &#45; if yes we are inside the NCI call
+     *      we could run the Sub immediately now (I think)
+     *    &#45; if no, and that&#39;s always safe, post a CALLBACK_EVENT
+     */
+
+    if (synchronous) {
+        /*
+         * just call the sub
+         */
+        Parrot_run_callback(interp, user_data, external_data);
+    }
+    else {
+        /*
+         * create a CB_EVENT, put user_data and data inside and finito
+         *
+         * *if* this function is finally no void, i.e. the calling
+         * C program awaits a return result from the callback,
+         * then wait for the CB_EVENT_xx to finish and return the
+         * result
+         */
+        Parrot_new_cb_event(interp, user_data, external_data);
+    }
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_run_callback</p>
+
+<p>Run a callback function. The PMC* user_data holds all necessary items in its properties.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void Parrot_run_callback(PARROT_INTERP, PMC* user_data, char* external_data) { PMC * signature; PMC * sub; STRING * sig_str; char * p; char pasm_sig[4]; INTVAL i_param; PMC * p_param; void* param = NULL; /* avoid &#45;Ox warning */ STRING * sc;</p>
+
+<pre lang='und' xml:lang='und'>    sc = CONST_STRING(interp, &#34;_sub&#34;);
+    sub = VTABLE_getprop(interp, user_data, sc);
+    sc = CONST_STRING(interp, &#34;_signature&#34;);
+    signature = VTABLE_getprop(interp, user_data, sc);
+
+    sig_str = VTABLE_get_string(interp, signature);
+    p = sig_str&#45;&#62;strstart;
+    ++p;     /* Skip return type */
+
+    pasm_sig[0] = &#39;v&#39;;  /* no return value supported yet */
+    pasm_sig[1] = &#39;P&#39;;
+    if (*p == &#39;U&#39;) /* user_data Z in pdd16 */
+        ++p;       /* p is now type of external data */
+    switch (*p) {
+        case &#39;v&#39;:
+            pasm_sig[2] = &#39;v&#39;;
+            break;
+#if 0
+        case &#39;2&#39;:
+        case &#39;3&#39;:
+        case &#39;4&#39;:
+#endif
+        case &#39;l&#39;:
+            i_param = (INTVAL)(long) external_data;
+            goto case_I;
+        case &#39;i&#39;:
+            i_param = (INTVAL)(int)(long) external_data;
+            goto case_I;
+        case &#39;s&#39;:
+            i_param = (INTVAL)(short)(long) external_data;
+            goto case_I;
+        case &#39;c&#39;:
+            i_param = (INTVAL)(char)(long)external_data;
+case_I:
+            pasm_sig[2] = &#39;I&#39;;
+            param = (void*) i_param;
+            break;
+#if 0
+        case &#39;f&#39;:
+        case &#39;d&#39;:
+            /* these types don&#39;t fit into a pointer, they will not
+             * work
+             */
+            break;
+#endif
+        case &#39;p&#39;:
+            /* created a UnManagedStruct */
+            p_param = pmc_new(interp, enum_class_UnManagedStruct);
+            PMC_data(p_param) = external_data;
+            pasm_sig[2] = &#39;P&#39;;
+            param = (void*) p_param;
+            break;
+#if 0
+        case &#39;P&#39;:
+            pasm_sig[2] = &#39;P&#39;;
+            break;
+#endif
+        case &#39;t&#39;:
+            pasm_sig[2] = &#39;S&#39;;
+            param = string_from_cstring(interp, external_data, 0);
+            break;
+        default:
+            real_exception(interp, NULL, 1, &#34;unhandled signature char &#39;%c&#39; in run_cb&#34;,
+                               *p);
+    }
+    pasm_sig[3] = &#39;\0&#39;;
+    Parrot_runops_fromc_args_event(interp, sub, pasm_sig,
+            user_data, param);
+}
+/*</pre>
+
+<p>FUNCDOC: Parrot_callback_C</p>
+
+<p>FUNCDOC: Parrot_callback_D</p>
+
+<p>NCI callback functions. See pdd16.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void Parrot_callback_C(NOTNULL(char *external_data), NOTNULL(PMC *user_data)) { verify_CD(external_data, user_data); }</p>
+
+<p>PARROT_API void Parrot_callback_D(NOTNULL(PMC *user_data), NOTNULL(char *external_data)) { verify_CD(external_data, user_data); }</p>
+
+<p>/* * Local variables: * c&#45;file&#45;style: &#34;parrot&#34; * End: * vim: expandtab shiftwidth=4: */</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

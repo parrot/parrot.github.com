@@ -1,0 +1,116 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Copy files to their correct locations</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/tools.html">Tools</a> &raquo; Copy files to their correct locations
+                </div>
+
+<h1><a name="TITLE"
+>TITLE</a></h1>
+
+<p>tools/dev/install_files.pl &#45; Copy files to their correct locations</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    % perl tools/dev/install_files.pl [options]</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Use a detailed MANIFEST to install a set of files.</p>
+
+<h2><a name="Options"
+>Options</a></h2>
+
+<dl>
+<dt><a name="buildprefix"
+><b><code>buildprefix</b></code></a></dt>
+The build prefix. Defaults to &#39;&#39;.
+<dt><a name="prefix"
+><b><code>prefix</b></code></a></dt>
+The install prefix. Defaults to &#39;/usr&#39;.
+<dt><a name="exec_prefix"
+><b><code>exec_prefix</b></code></a></dt>
+The exec prefix. Defaults to &#39;/usr&#39;.
+<dt><a name="bindir"
+><b><code>bindir</b></code></a></dt>
+The executables directory. Defaults to &#39;/usr/bin&#39;.
+<dt><a name="libdir"
+><b><code>libdir</b></code></a></dt>
+The library directory. Defaults to &#39;/usr/lib&#39;.
+<dt><a name="includedir"
+><b><code>includedir</b></code></a></dt>
+The header directory. Defaults to &#39;/usr/include&#39;.</dl>
+
+<h2><a name="MANIFEST_Format"
+>MANIFEST Format</a></h2>
+
+<p>The format of the MANIFEST (currently MANIFEST and MANIFEST.generated are used) is:</p>
+
+<pre>    source_path &#60;whitespace&#62; [package]meta1,meta2,...</pre>
+
+<p>or you may optionally specify a different destination path:</p>
+
+<pre>    source_path &#60;whitespace&#62; [package]meta1,meta2,... &#60;whitespace&#62; destination</pre>
+
+<p>Additionally, there may be a * in front of the whole line to designate a generated file:</p>
+
+<pre>    source_path &#60;whitespace&#62; *[package]meta1,meta2,... &#60;whitespace&#62; destination</pre>
+
+<p>The square brackets around <code>package</code> are literal. <code>package</code> gives the name of the RPM that the given file will be installed for, and is only used by this script to skip files that are not members of any package.</p>
+
+<p>The various meta flags recognized are:</p>
+
+<dl>
+<dt><a name="doc"
+><b><code>doc</b></code></a></dt>
+Tag this file with %doc in the RPM, and omit the leading path (because rpm will put it into a directory of its choosing)
+<dt><a name="include"
+><b><code>include</b></code></a></dt>
+Write this file to the location given by the <code>&#45;&#45;includedir</code> option
+<dt><a name="lib"
+><b><code>lib</b></code></a></dt>
+Write this file to the location given by the <code>&#45;&#45;libdir</code> option
+<dt><a name="bin"
+><b><code>bin</b></code></a></dt>
+Write this file to the location given by the <code>&#45;&#45;bindir</code> option</dl>
+
+<p>The optional <code>destination</code> field provides a general way to change where a file will be written to. It will be applied before any metadata tags.</p>
+
+<p>Example: if this line is in the MANIFEST.generated file</p>
+
+<pre>  languages/snorkfest/snork&#45;compile        [main]bin</pre>
+
+<p>and the &#45;&#45;bindir=/usr/parroty/bin, then the generated parrot&#45;&#60;VERSION&#62;&#45;1.&#60;arch&#62;.rpm file will contain the file /usr/parroty/bin/snork&#45;compile.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em>tools/dev/mk_manifests.pl</em></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

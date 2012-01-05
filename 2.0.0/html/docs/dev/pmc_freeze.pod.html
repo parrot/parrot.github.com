@@ -1,0 +1,228 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Freeze/Thaw Design Notes</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Freeze/Thaw Design Notes
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/dev/pmc_freeze.pod &#45; Freeze/Thaw Design Notes</p>
+
+<h1><a name="VERSION"
+>VERSION</a></h1>
+
+<p>This document describes freeze/thaw internals version 0.1.
+This is not the final implementation.</p>
+
+<h1><a name="Overview"
+>Overview</a></h1>
+
+<p>Freezing or serializing arbitrary PMCs is an interesting problem.
+Aggregates can hold other aggregates and can be deeply nested,
+so so a recursive approach could easily blow the stack,
+especially on embedded systems.
+Also,
+aggregates can be self&#45;referential &#45;&#45; they can hold pointers to themselves &#45;&#45; so that working on such structures could create infinite loops.</p>
+
+<h1><a name="Coverage"
+>Coverage</a></h1>
+
+<p>Although the file is named <em>pmc_freeze.c</em> it ultimately will deal with every kind of operation that deeply traverses an arbitrary data structures.
+For example:</p>
+
+<dl>
+<dt><a name="freeze"
+>freeze</a></dt>
+Called from user code to serialize the state of a PMC into some (possibly binary) representation held in a STRING.
+<dt><a name="freeze_at_destruct"
+>freeze_at_destruct</a></dt>
+A variant of <code>freeze</code>,
+possibly called from an exception handler or on resource shortage before interpreter shutdown,
+to save some data before dying.
+It must not consume any additional resources.
+<dt><a name="thaw"
+>thaw</a></dt>
+The opposite of <code>freeze</code>: reconstruct all PMCs to generate an identical copy of the original frozen PMC.
+As with <code>freeze</code>,
+can be called from user code.
+<dt><a name="dclone"
+>dclone</a></dt>
+Deeply clone an aggregate.
+<code>dclone(p)</code> is basically the same as <code>thaw(freeze(p))</code>.
+<dt><a name="dump,_pretty_print"
+>dump,
+pretty_print</a></dt>
+Create a visual representation of an aggregate.
+<dt><a name="destruction_ordering"
+>destruction ordering</a></dt>
+Find the logical dependencies of a collection of PMCs,
+so that they can be destroyed in an appropriate order.
+This is also called on interpreter shutdown.
+<dt><a name="mark"
+>mark</a></dt>
+Mark all objects as being live by calling <b>Parrot_gc_mark_PObj_alive</b> called from GC.
+While the functionality is the same,
+it will not be implemented on top of this general scheme for performance reasons.
+This leads to some code duplication,
+but GC is run permanently and deserves all the speed it can get.</dl>
+
+<h1><a name="Description"
+>Description</a></h1>
+
+<p>The basic scheme of operation looks like this:</p>
+
+<pre>  info = init()
+  push todo_list, pmc
+  while (todo_list)
+      current = shift todo_list
+      current&#45;&#62;visit(info)
+  done.</pre>
+
+<h2><a name="The_visit_info_structure"
+>The visit_info structure</a></h2>
+
+<p>This structure holds all necessary information and function pointers specific to the desired functionality. It gets passed on to all vtable methods and callback functions.</p>
+
+<h2><a name="Working_loop"
+>Working loop</a></h2>
+
+<dl>
+<dt><a name="todo_list"
+>todo list</a></dt>
+A <b>List</b> called <b>todo</b> holds items still to be worked on. This method is slower and consumes more resources, but doesn&#39;t interfere with GC runs and is thread&#45;safe.</dl>
+
+<h2><a name="Putting_items_on_the_todo_list"
+>Putting items on the todo list</a></h2>
+
+<p>This is done by a callback function inside the <b>visit_info</b> structure called <b>visit_pmc_now</b>. It gets called initially to put the first item on the list and is called thereafter from all PMCs for contained PMCs inside the <b>visit</b> vtable method.</p>
+
+<h2><a name="The_visit()_vtable"
+>The visit() vtable</a></h2>
+
+<p>The general scheme above shows that this method is called for all items on the <b>todo_list</b>. <b>visit</b> has to call <b>visit_pmc_now</b> for all contained PMCs, which then get visited until all is done.</p>
+
+<h2><a name="The_visit_pmc_now()_callback"
+>The visit_pmc_now() callback</a></h2>
+
+<p>The basic operation is:</p>
+
+<pre>  (seen, id) = was_already_seen(pmc)
+  do_specific_action(pmc, seen, id)
+  if (!seen)
+     pmc&#45;&#62;visit_action()</pre>
+
+<h2><a name="Avoiding_duplicates"
+>Avoiding duplicates</a></h2>
+
+<p>As stated in the introduction structures can be self&#45;referential, they can contain (at an arbitrary depth) PMCs, that were already processed. Just following these PMCs would lead to endless loops. So already <b>seen</b> PMCs have to be remembered.</p>
+
+<dl>
+<dt><a name="The_seen_hash"
+>The <b>seen</b> hash</a></dt>
+Using a <b>Hash</b> is one method to avoid duplicates. The <b>seen</b> hash holds keys being the address of the PMC and values being a PMC <b>id</b>, which is unique for this PMC. While this is straight forward, it consumes 16 bytes per PMC (plus overhead, 32&#45;bit system assumed). Hash lookups also take a considerable amount of time.</dl>
+
+<h2><a name="The_actual_action"
+>The actual action</a></h2>
+
+<p>So after all we finally arrived at the point to actually perform the desired functionality. First the PMC&#45;specific part is done inside <em>pmc_freeze.c</em> then the specific vtable method <b>freeze</b>, <b>thaw</b>, whatever, is called, again via a function pointer called <b>visit_action</b>.</p>
+
+<h1><a name="Freeze_and_thaw"
+>Freeze and thaw</a></h1>
+
+<p>As stated PMCs are currently processed inside the core, PMC&#45;specific parts are done by calling the PMCs vtable method. This parts could of course be moved to <em>default.pmc</em> too, so that it&#39;s simpler to override the functionality.</p>
+
+<h2><a name="Serializer_interface"
+>Serializer interface</a></h2>
+
+<p>During initialization the <b>visit_info</b>s <b>image_io</b> data pointer is filled with an object having <b>vtable</b> methods that remarkably look like a PMCs vtable. So <b>io&#45;&#62;vtable&#45;&#62;push_integer</b> spits out an INTVAL to the frozen <b>image</b>, while <b>shift_integer</b> gets an INTVAL from the frozen stream.</p>
+
+<p>This simplifies final changes when <b>image_io</b> becomes just a PMC of some serializer class. There are currently two serializers:</p>
+
+<dl>
+<dt><a name="Plain_text"
+>Plain text</a></dt>
+This serializer is mainly intended for testing. Having a readable representation of the image simplifies debugging a lot.
+<dt><a name="Parrot_Byte_Code"
+>Parrot Byte Code</a></dt>
+We already have a platform&#45;independent way of reading and writing opcodes, string, and number&#45;constants. So this serializer uses functionality of the pack&#45;file routines. The produced image isn&#39;t as dense as it could be though, because all data are aligned at <b>opcode_t</b> boundaries.</dl>
+
+<h2><a name="Image_data_format"
+>Image data format</a></h2>
+
+<p>PMC <b>id</b>s ranging from 1 to N&#45;PMCs are shifted left by two, so that the 2 lo bits can serve as flags:</p>
+
+<pre>  id + 0x1   ... PMC was seen
+  id + 0x2   ... PMC has same type as previous PMC
+  id + 0x3   ... escape flag</pre>
+
+<p>A PMCs image generally looks like:</p>
+
+<pre>  &#60;id&#62;&#60;type&#62;&#60;pmc&#45;specific&#45;data&#62;</pre>
+
+<p>The text representation of the array</p>
+
+<pre>  P0 = [P1=666, P2=777, P0]</pre>
+
+<p>may look like:</p>
+
+<pre>  0xdf4 30 3 0xdf8 33 666 0xdf2 777 0xdf5
+
+  0xdf4 ... PMC id (with &#34;0x&#34; in front for clarity)
+  30    ... enum_class_ResizablePMCArray
+  3     ... elements count
+  0xdf8 ... id of first element
+  33    ... enum_class_Integer
+  666   ... value
+  0xdf2 ... id of second element, same type as prev element
+  777   ... value
+  0xdf5 ... id of array itself with lo bit set</pre>
+
+<p>The escape flag marks places in the image, where additional data will follow. After the escape flag is an int defining the kind of the following data, passed on in <b>extra_flags</b>. During <b>thaw</b> the PMCs vtable is called again, to restore these data. So a PMCs <b>thaw</b> vtable has to check <b>extra_flags</b> if normal or extra data have to be shifted from the image.</p>
+
+<p>This is e.g. needed for PMC properties or arrays containing sparse holes, to set the array index of the following data.</p>
+
+<p>A Integer(666) with a property hash (&#34;answer&#34;=&#62;42) thus looks like:</p>
+
+<pre>  0xdfc 33 666 0xdff 2 0xdf4 32 1 answer 0xdf8 33 42</pre>
+
+<p><b>0xdff</b> is the escape mark for the PMC <b>0xdfc</b> followed by the constant <b>EXTRA_IS_PROP_HASH</b>.</p>
+
+<p>[ To be continued ]</p>
+
+<h1><a name="FILES"
+>FILES</a></h1>
+
+<p><em><a href="../../src/pmc_freeze.c.html">src/pmc_freeze.c</a></em>, <em>pf/pf_items.c</em></p>
+
+<h1><a name="Author"
+>Author</a></h1>
+
+<p>Leopold Toetsch <code>lt@toetsch.at</code></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

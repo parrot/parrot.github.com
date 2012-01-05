@@ -1,0 +1,572 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Frequently Asked Questions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Frequently Asked Questions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/imcc.html">IMCC</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="TITLE"
+>TITLE <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>IMCC and Parrot Programming for Compiler Developers &#45; Frequently Asked Questions</p>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Revision_0.1_&#45;_03_December_2001"
+>Revision 0.1 &#45; 03 December 2001</a></dt><p class="pad"></p>
+
+<dd>Initial creation as of Parrot version 0.0.13 by Melvin Smith</dd><p class="pad"></p>
+
+<dt><a name="Revision_0.2_&#45;_10_May_2005"
+>Revision 0.2 &#45; 10 May 2005</a></dt><p class="pad"></p>
+
+<dd>Edited to specify the .pir extension rather than .imc</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="GENERAL_QUESTIONS"
+>GENERAL QUESTIONS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="What_is_Parrot?"
+>What is Parrot? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Wrong FAQ,
+start with the Parrot FAQ first.
+Then come back here because this is where the fun is.</p>
+
+<p>The Parrot FAQ : <a href="http://www.parrotcode.org/faq/">http://www.parrotcode.org/faq/</a></p>
+
+<h2><a name="What_is_IMC,_PIR_and_IMCC?"
+>What is IMC,
+PIR and IMCC? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>IMC stands for Intermediate Code; IMCC stands for Intermediate Code Compiler.
+You will also see the term PIR which is for Parrot Intermediate Representation and means the same thing as IMC.</p>
+
+<p>It is an intermediate language that compiles either directly to Parrot Byte code,
+or translates to Parrot Assembly language.
+It is the preferred target language for compilers for the Parrot Virtual Machine.
+PIR is halfway between a High Level Language (HLL) and Parrot Assembly (PASM).</p>
+
+<h2><a name="What_is_the_history_of_IMCC?"
+>What is the history of IMCC? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>IMCC was a toy compiler written by Melvin Smith as a little 2&#45;week experiment for another toy language,
+Cola.
+It was not originally a part of Parrot,
+and understandably wasn&#39;t designed for public consumption.
+Parrot&#39;s early alpha versions (0.0.6 and earlier) included only the raw Parrot assembler that compiled Parrot Assembly language.
+This was considered the reference assembler.
+The Cola compiler,
+on the other hand,
+targeted its own little back end compiler that included a register allocator,
+basic block tracking and medium level expression parsing.
+The backend compiler was eventually named IMCC and benefited from contributions from Angel Faus,
+Leo Toetsch,
+Steve Fink and Sean O&#39;Rourke.
+The first version of Perl6 written by Sean used IMCC as its backend and that&#39;s how it currently exists.</p>
+
+<p>Leopold Toetsch added,
+among many other things,
+the ability for IMCC to compile PASM by proxying any instructions that were not valid IMCC through to be assembled as PASM.
+This was a great improvement.
+As Parrot&#39;s calling convention changed to a continuation style (PCC),
+and generally became more complex,
+the PASM instructions required to call or declare subroutines became just as complex.
+IMCC abstracted some of the convention and eventually the core team stopped using the old reference assembler altogether.
+Leo integrated IMCC into Parrot and now IMCC is _the_ front&#45;end for the Parrot VM.</p>
+
+<h2><a name="Parrot_is_a_VM,_why_does_it_need_IMCC_builtin?"
+>Parrot is a VM,
+why does it need IMCC builtin? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Static languages,
+such as Java,
+can run on VMs that are dedicated to execution of pre&#45;compiled byte code with no problems.
+Languages such as Perl,
+Ruby and Python are not so static.
+They have support for runtime evaluation and compilation and their parsers are always available.
+These languages run on their own &#34;dynamic&#34; interpreters.</p>
+
+<p>Since Parrot is specialized to be a dynamic VM,
+it must be able to compile code on the fly.
+For this reason,
+IMCC is written in C and integrated into the VM.
+IMCC is fast since it does very little type checking,
+and since most of Parrot&#39;s ops are polymorphic,
+IMCC punts most of the type checking and method dispatch to runtime.
+This allows extremely fast compile times,
+which is what scripters need.</p>
+
+<h2><a name="How_Is_IMCC_different_than_Parrot_Assembly_language?"
+>How Is IMCC different than Parrot Assembly language? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>PASM is an assembly language,
+raw and low&#45;level.
+PASM does exactly what you say,
+and each PASM instruction represents a single VM opcode.
+Assembly language can be tough to debug,
+simply due to the amount of instructions that a high&#45;level compiler generates for a given construct.
+Assembly language typically has no concept of basic blocks,
+namespaces,
+variable tracking,
+etc.
+You must track your register usage and take care of saving/restoring values in cases where you run out of registers.
+This is called spilling.</p>
+
+<p>IMC is medium level and a bit more friendly to write or debug.
+IMCC also has a builtin register allocator and spiller.
+IMC has the concept of a &#34;subroutine&#34; unit,
+complete with local variables and high&#45;level sub call syntax.
+IMCC also allows unlimited symbolic registers.
+It will take care of assigning the appropriate register to your variables and will usually find the most efficient mapping so as to use as few registers as possible for a given piece of code.
+If you use more registers than are currently available,
+IMCC will generate instructions to save/restore (spill) the registers for you.
+This is a significant piece of every compiler.</p>
+
+<p>While it is possible to write more efficient code by hand directly in PASM,
+it is rare.
+IMC is still very close to PASM as far as granularity.
+It is also common for IMCC to generate instructions that use less registers than handwritten PASM.
+This is good for cache performance.</p>
+
+<h2><a name="Why_should_I_target_IMC_instead_of_PASM?"
+>Why should I target IMC instead of PASM? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Several reasons.
+IMC is so much easier to read,
+understand and debug.
+When passing snippets back and forth on the Parrot internals list,
+IMC is preferred since the code is much shorter than the equivalent PASM.
+In some cases it is necessary to debug the PASM code as bugs in IMCC are found.</p>
+
+<p>Hand writing and debugging of code aside,
+most IMC code will be mostly compiler generated.
+In this respect,
+the most important technical reason to use IMC is the amount of abstraction it provides.
+IMC now completely hides the Parrot calling conventions and allows different call conventions to be selected via .pragma without changes to the high&#45;level code emitter.
+This allows Parrot to change somewhat without impacting existing compilers.
+The workload is balanced between the IMCC team and the compiler authors.
+The term &#34;modular&#34; springs to mind.</p>
+
+<p>Since development on the old assembler has stopped,
+IMCC will be the best way to compile bytecode classes complete with metadata and externally linkable symbols.
+It will still be possible to construct classes on the fly with PASM,
+but IMC&#39;s higher level directives allow it to do compile time construction of certain things and pack them into the bytecode in a way that does not have an equivalent set of Parrot instructions.
+The PASM assembler may or may not ever catch up with these features.</p>
+
+<h2><a name="Can_I_use_IMCC_without_Parrot?"
+>Can I use IMCC without Parrot? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Not yet.
+IMCC is currently tightly integrated to the Parrot bytecode format.
+One goal is to rework IMCC&#39;s modularity to make it easy to run separately,
+but this is not a top priority since IMCC currently only targets Parrot.
+Eventually IMCC will contain a config option to build without linking the Parrot VM,
+but IMCC must be able to do lookups of opcodes so it will require some sort of static opcode metadata.</p>
+
+<h1><a name="IMCC_PROGRAMMING_101"
+>IMCC PROGRAMMING 101 <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Hello_world?"
+>Hello world? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The basic block of execution of an IMC program is the subroutine.
+Subs can be simple,
+with no arguments or returns.
+Line comments are allowed in IMC using #.</p>
+
+<pre lang='und' xml:lang='und'>        # Hello world
+        .sub _main
+           print &#34;Hello world.\n&#34;
+           end
+        .end</pre>
+
+<h2><a name="How_do_I_compile_and_run_an_IMC_module?"
+>How do I compile and run an IMC module? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Parrot uses the filename extension to detect whether the file is an IMC file (.pir or the outdated .imc), a Parrot Assembly file (.pasm) or a pre&#45;compiled bytecode file (.pbc).</p>
+
+<pre lang='und' xml:lang='und'>        parrot hello.pir</pre>
+
+<h2><a name="How_do_I_see_the_assembly_code_that_IMC_generates?"
+>How do I see the assembly code that IMC generates? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Use the &#45;o option for Parrot. You can provide an output filename, or the &#45; character which indicates standard output. If the filename has a .pbc extension, IMCC will compile the module and assemble it to bytecode.</p>
+
+<p>Examples:</p>
+
+<dl>
+<dt><a name="Create_the_PASM_source_from_IMC."
+>Create the PASM source from IMC.</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>        parrot &#45;o hello.pasm hello.pir</pre>
+
+<dt><a name="Compile_to_bytecode_from_IMC."
+>Compile to bytecode from IMC.</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>        parrot &#45;o hello.pbc hello.pir</pre>
+
+<dt><a name="Dump_PASM_to_screen_(my_favorite_shortcut)."
+>Dump PASM to screen (my favorite shortcut).</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>        parrot &#45;o &#45; hello.pir</pre>
+</dl>
+
+<h2><a name="Does_IMCC_do_variable_interpolation_in_strings?"
+>Does IMCC do variable interpolation in strings? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>No, and it shouldn&#39;t. IMC is an intermediate language for compiling high level languages. Interpolation (print &#34;$count items&#34;) is a high level concept and the specifics are unique to each language. Perl6 already does interpolation without special support from IMCC.</p>
+
+<h2><a name="What_are_IMC_variables?"
+>What are IMC variables? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>IMC has 2 classes of variables, symbolic registers and named variables. Both are mapped to real registers, but there are a few minor differences. Named variables must be declared. They may be global or local, and may be qualified by a namespace. Symbolic registers, on the other hand, do not need declaration, but their scope never extends outside of a subroutine unit. Symbolic registers basically give compiler front ends an easy way to generate code from their parse trees or abstract syntax tree (AST). To generate expressions compilers have to create temporaries.</p>
+
+<h2><a name="Symbolic_Registers_(or_Temporaries)"
+>Symbolic Registers (or Temporaries) <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Symbolic registers have a $ sign for the first character, have a single letter representing the register type [S(tring), N(umber), I(nteger) or P(MC)] for the second character, and one or more digits for the rest. Although Parrot has only 32 real registers of each type, IMCC can handle an arbitrarily large number of symbolic registers of a given type.</p>
+
+<p>Example:</p>
+
+<pre lang='und' xml:lang='und'>        $S1 = &#34;hiya&#34;
+        $S2 = $S1 . &#34;mel&#34;
+        $I1 = 1 + 2
+        $I2 = $I1 * 3</pre>
+
+<p>This example uses symbolic STRING and INTVAL registers as temporaries. This is the typical sort of code that compilers generate from the syntax tree.</p>
+
+<h2><a name="Named_Variables"
+>Named Variables <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Named variables are either local, global or namespace qualified. Currently IMCC only supports locals transparently. However, globals are supported with explicit syntax. The way to declare locals in a subroutine is with the <b>.local</b> directive. The <b>.local</b> directive also requires a type (<b>int</b>, <b>num</b>, <b>string</b> or a classname such as <b>PerlArray</b>).</p>
+
+<p>Example:</p>
+
+<pre lang='und' xml:lang='und'>        .sub _main
+           .local int i
+           .local num n
+           i = 7
+           n = 5.003
+           end
+        .end</pre>
+
+<h2><a name="How_do_I_declare_global_or_package_variables_in_IMC?"
+>How do I declare global or package variables in IMC? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>You can&#39;t yet. IMCC still lacks a few features and this is one of those features. You can explicitly create global variables at runtime, however, but currently it only works for PMC types, like so:</p>
+
+<pre lang='und' xml:lang='und'>        .sub _main
+           .local Integer i
+           .local Integer j
+           i = new Integer
+           j = new Integer
+           i = 123
+           # Create the global
+           global &#34;i&#34; = i
+
+           # Retrieve the global
+           j = global &#34;i&#34;
+           end
+        .end</pre>
+
+<p>Two new directives are planned for IMC.</p>
+
+<ul>
+<li><code lang='und' xml:lang='und'>.global</code></li><p class="pad"></p>
+
+<li><code lang='und' xml:lang='und'>.extern</code></li><p class="pad"></p>
+</ul>
+
+<p>The <code lang='und' xml:lang='und'>.global</code> directive will be orthogonal to <code lang='und' xml:lang='und'>.local</code>. IMCC will track globals and take care of spilling just like local variables.</p>
+
+<p>Theoretically, when .global is added, the above code segment will look like:</p>
+
+<pre lang='und' xml:lang='und'>        .global Integer i = 123
+
+        .sub _main
+           .local Integer j
+           j = i
+           end
+        .end</pre>
+
+<p>The global <code lang='und' xml:lang='und'>i</code> will created and initialized during the bytecode load and other modules will be able to refer to <code lang='und' xml:lang='und'>i</code> if they include the <b>.extern</b> directive like so:</p>
+
+<pre lang='und' xml:lang='und'>        .extern Integer i
+        ...</pre>
+
+<p>Parrot will fixup the symbol references at runtime.</p>
+
+<h1><a name="IMCC_ADVANCED_TOPICS"
+>IMCC ADVANCED TOPICS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="How_can_I_make_a_library_of_IMC_routines_and_include_it_in_other_Parrot/IMC_programs?"
+>How can I make a library of IMC routines and include it in other Parrot/IMC programs? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>This one is very simple. Use the <b>.include</b> directive to include other .pir source files. Do keep in mind that currently Parrot starts execution with the first sub it sees in the bytecode; so if your main includes external .pir files you need to include them after your &#34;main&#34; start sub. If you .include them first (in typical C or Perl style), Parrot will execute the first sub in the first included source file. This is because <b>.include</b> is a preprocessed directive and simply creates one huge .pir source module.</p>
+
+<pre lang='und' xml:lang='und'>        #############################
+        # dynamic.pir
+        #
+        .sub _dynamic
+           print &#34;_dynamic include and compilation\n&#34;
+           .pcc_begin_return
+           .pcc_end_return
+           end
+        .end
+
+
+
+        #############################
+        # main.pir
+        #
+        # dynamic compilation with .include
+        #
+        .sub _main
+           print &#34;_main\n&#34;
+           _dynamic()
+           end
+        .end
+
+        .include &#34;dynamic.pir&#34;</pre>
+
+<p>The <code lang='und' xml:lang='und'>.include</code> directive is not the long&#45;term solution for working with modular bytecode, but Parrot still lacks some infrastructure for linking and running precompiled bytecodes transparently or via an import, so <code lang='und' xml:lang='und'>.include</code> is the simplest method. The downside is that all code is compiled on the fly.</p>
+
+<h2><a name="How_do_I_precompile_a_bytecode_library_and_use_it_in_another_module?"
+>How do I precompile a bytecode library and use it in another module? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>If <code lang='und' xml:lang='und'>.include</code> just isn&#39;t good enough for you, and you want to go ahead and use precompiled bytecodes, you can, with some restrictions. You have to explicitly link the symbols at runtime. This isn&#39;t too tough: just look up the symbol name and use the PMC you get in return. Subroutine PMCs are globals and are autoloaded by the &#34;load_bytecode&#34; PASM instruction.</p>
+
+<p>The main restriction with current Parrot/IMCC is that you can&#39;t use the high level shortcut for calling subs, ie. _bar(a,b). Instead you have to setup the arguments and the return continuation yourself and call <code lang='und' xml:lang='und'>invoke</code> on the Sub PMC. Soon, IMCC and Parrot will support a cleaner way of doing this. For details of the Parrot calling conventions, see <em lang='und' xml:lang='und'><a href="../../docs/pdds/pdd03_calling_conventions.pod.html">docs/pdds/pdd03_calling_conventions.pod</a></em>.</p>
+
+<pre lang='und' xml:lang='und'>        #######################################################
+        # main.pir
+        #
+        # External subs example
+        #
+        # This way is the only way that currently works to call
+        # an externally defined sub. Eventually we will support
+        # &#34;extern&#34; symbol linkage in the bytecode loader but for
+        # now you have to do it like so...
+        #
+        .sub _main
+           .local ParrotSub fun
+
+           # load the external bytecode lib
+           load_bytecode &#34;subs.pbc&#34;
+
+           # _baz()      &#60;&#45;&#45; this style doesn&#39;t work yet, but it will soon
+
+           # Instead, retrieve the global sub that was defined in subs.pir by name
+           fun = global &#34;_baz&#34;
+
+           # invokecc sets up the return continuation in P1 for the caller
+           invokecc fun
+           # Done!
+
+           # Calling a forward declared sub in same module.
+           # IMCC resolves _localsub at compile time so we can use the shortcut
+           _localsub()
+           end
+        .end
+
+        .sub _localsub
+           print &#34;this is localsub\n&#34;
+           end
+        .end
+
+
+        ##################################
+        # subs.pir
+        #
+        # Sample extern sub library
+        #
+        # Compile this separately to subs.pbc
+        #
+        .sub _foo
+           print &#34;_foo is local to _baz\n&#34;
+           .pcc_begin_return
+           .pcc_end_return
+        .end
+
+        .sub _baz
+           print &#34;this is external sub _baz\n&#34;
+           _foo()
+           .pcc_begin_return
+           .pcc_end_return
+        .end</pre>
+
+<h2><a name="How_can_I_compile_classes_and_objects?"
+>How can I compile classes and objects? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Parrot and IMCC do not YET support pre&#45;compiled classes and objects. Until the support is added, you can easily achieve it, you just need to do it all dynamically.</p>
+
+<p>Write support routines for new and construct and generate your constructors as simple subroutines. I suggest some sort of simple name mangling (C++/Java) when naming the subs (_TestClass__print_i). Your compiler will need to track field (or member) offsets in the array. Alternatively, if you want to be even lazier and give up a tiny amount of speed, you can use a hash.</p>
+
+<h2><a name="That_sounds_easy,_but_how_would_it_look?"
+>That sounds easy, but how would it look? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>I&#39;d be surprised if you are writing a compiler and can&#39;t figure this one out by yourself, but I&#39;ll be nice since this IS supposed to be documentation. It does help to actually see how IMCC does it.</p>
+
+<p>Remember, you only have to use Parrot&#39;s builtin mechanisms if your language wishes to interact with other languages, otherwise you can implement high level constructs any way you wish. You&#39;ll have to for a while longer, anyway.</p>
+
+<p>The exercise for a destructor is left up to you. You&#39;ll quickly notice that supporting destruction with Parrot&#39;s garbage collection requires a bit of support from the internals that currently just isn&#39;t there. But we plan to get there soon. By the time we DO get there, you won&#39;t need the syntax below.</p>
+
+<h2><a name="An_OOP_Example"
+>An OOP Example <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Hypothetical language Mython (apologies to Python, but it sure is nice and brief):</p>
+
+<pre lang='und' xml:lang='und'>        class TestClass:
+           int i
+           method init:
+                i = 0
+           method print_self:
+                printf &#34;%d\n&#34;, i
+
+        sub main:
+           TestClass obj1, obj2
+           obj1 = new TestClass
+           obj2 = new TestClass
+           obj1.i = 1
+           obj2.i = 2
+           obj1.print_self()
+           obj2.print_self()</pre>
+
+<p>Here is the IMCC workaround until we have explicit .class syntax and bytecode freeze/thaw.</p>
+
+<pre lang='und' xml:lang='und'>        .sub _main
+           .local pmc obj1
+           .local pmc obj2
+           .local pmc meth
+           _init_world()                 # _init() sets up all classes and globals
+           obj1 = __new(&#34;TestClass&#34;)     # obj1 = new TestClass;
+           __ctor(obj1)
+           obj2 = __new(&#34;TestClass&#34;)     # obj2 = new TestClass;
+           __ctor(obj2)
+           obj1[4] = 1                   # obj1.i = 1;
+           obj2[4] = 2                   # obj1.i = 2;
+           P2 = obj1                     # obj1.print_self()
+           meth = obj1[3]
+           invokecc meth
+           P2 = obj2                     # obj2.print_self()
+           meth = obj2[3]
+           invokecc meth
+           end
+        .end
+
+        # Called only once upon program start
+        .sub _init_world
+           .local SArray c
+           .local Sub meth
+           .local String classname
+           classname = new String                   # class TestClass:
+           c = new SArray
+           c = 10    # Array size 10
+           global &#34;classes::TestClass&#34; = c
+           classname = &#34;TestClass&#34;
+           c[0] = classname
+           meth = global &#34;_TestClass_ctor&#34;          # method init:
+           c[2] = meth
+           meth = global &#34;_TestClass_print_self&#34;    # method print_self:
+           c[3] = meth
+           $P100 = new Integer                      # int i
+           c[4] = $P100
+           # TestClass is now defined, instantiate away
+           # Setup any other globals for program
+           .pcc_begin_return
+           .pcc_end_return
+        .end
+
+        # This is generic infrastructure code
+        .sub __new
+           .param string classname
+           $S1 = &#34;classes::&#34; . classname
+           # Instantiate a TestClass
+           $P11 = global $S1
+           P2 = clone $P11                          # Clone does a copy, including members
+           .pcc_begin_return                        # Return the new &#34;object&#34;
+           .return P2
+           .pcc_end_return
+        .end
+
+        # This is generic infrastructure code
+        .sub __ctor
+           .param pmc self
+           # Call TestClass constructor
+           $P100 = self[2]
+           P2 = self       # For method calling convention, P2 is the object
+           invoke $P100    # Leave P1 with return continuation (tail chain)
+           .pcc_begin_return
+           .pcc_end_return
+        .end
+
+        .sub _TestClass_init            # method TestClass.init
+           .local pmc self
+           .local pmc classname
+           .local Integer i
+           self = P2
+           classname = self[0]
+           print classname
+           print &#34;::constructor\n&#34;
+           self[4] = 0                  # self.i = 0;
+           .pcc_begin_return
+           .pcc_end_return
+        .end
+
+        .sub _TestClass_print_self      # method TestClass.print_self
+           .local pmc self
+           .local pmc i
+           self = P2
+           i = self[4]                  # printf (&#34;self.i = %d\n&#34;, i)
+           print &#34;self.i = &#34;
+           print i
+           print &#34;\n&#34;
+           .pcc_begin_return
+           .pcc_end_return
+        .end</pre>
+
+<h1><a name="Thats_not_all."
+>Thats not all. <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>I have lots more to come. If you have suggestions for the FAQ or have an idea for a new feature for IMCC, please email me at <b>melvin.smith@mindspring.com</b> and/or hop on #parrot IRC (see the Parrot FAQ for IRC directions). I&#39;m also on AOL Instant Messenger, handle: <b>MrJoltCola</b></p>
+
+<p>Happy Hacking.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

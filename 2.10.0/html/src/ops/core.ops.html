@@ -1,0 +1,577 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Core Opcodes</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/ops.html">Opcodes</a> &raquo; Core Opcodes
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>core.ops &#45; Core Opcodes</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Parrot&#39;s core library of ops.</p>
+
+<p>Core operations are primarily flow control and interpreter introspection.</p>
+
+<p>When making changes to any ops file,
+run <code>make bootstrap&#45;ops</code> to regenerate all generated ops files.</p>
+
+<h2><a name="Basic_ops"
+>Basic ops</a></h2>
+
+<p>These are the fundamental operations.
+Please note: These opcodes must not be moved; they must have exactly these opcode numbers.
+Opcodes ending with underscores are for internal use only; don&#39;t emit these opcodes.</p>
+
+<dl>
+<dt><a name="end()"
+><b>end</b>()</a></dt>
+Halts the interpreter.
+(Must be op #0,
+CORE_OPS_end).
+See also <b>exit</b>.
+<dt><a name="noop()"
+><b>noop</b>()</a></dt>
+Does nothing other than waste an iota of time and 32 bits of bytecode space.
+(Must be op #1,
+CORE_OPS_noop)
+<dt><a name="check_events()"
+><b>check_events</b>()</a></dt>
+Check the event queue and run event handlers if there are unhandled events.
+Note: This opcode is mainly for testing.
+It should not be necessary to ever use it explicitly.
+(Must be op #3,
+CORE_OPS_check_events).
+<dt><a name="check_events__()"
+><b>check_events__</b>()</a></dt>
+Check the event queue and run event handlers if there are unhandled events.
+Note: Do <b>not</b> use this opcode.
+It is for internal use only.
+(Must be op #4,
+CORE_OPS_check_events__).
+<dt><a name="wrapper__()"
+><b>wrapper__</b>()</a></dt>
+Internal opcode to wrap unknown ops from loaded opcode libs.
+Don&#39;t use.
+(Must be op #5,
+CORE_OPS_wrapper__).
+<dt><a name="load_bytecode(in_STR)"
+><b>load_bytecode</b>(in STR)</a></dt>
+Load Parrot bytecode from file $1,
+and search the library path to locate the file.
+<dt><a name="load_language(in_STR)"
+><b>load_language</b>(in STR)</a></dt>
+Load the compiler libraries for a language $1.
+Search the library path to locate the main compiler file in the standard locations.</dl>
+
+<h2><a name="Control_flow"
+>Control flow</a></h2>
+
+<p>The control flow opcodes check conditions and manage program flow.</p>
+
+<dl>
+<dt><a name="branch(in_LABEL)"
+><b>branch</b>(in LABEL)</a></dt>
+Branch forward or backward by the amount in $1.
+<dt><a name="local_branch(invar_PMC,_in_LABEL)"
+><b>local_branch</b>(invar PMC,
+in LABEL)</a></dt>
+Go to the location specified by the label in $2.
+Push the current location onto the stack passed in $1 for later returning.
+<dt><a name="local_return(invar_PMC)"
+><b>local_return</b>(invar PMC)</a></dt>
+Pop the location off the top of the call stack and go there.
+<dt><a name="jump(in_LABEL)"
+><b>jump</b>(in LABEL)</a></dt>
+Jump to the address held in register $1.
+<dt><a name="enternative()"
+><b>enternative</b>()</a></dt>
+Internal opcode used to jump from normal bytecode into a JITted version.</dl>
+
+<h2><a name="Conditional_branch_operations"
+>Conditional branch operations</a></h2>
+
+<p>These operations perform a conditional relative branch.
+If the condition is met,
+the branch happens.
+Otherwise control falls to the next operation.</p>
+
+<dl>
+<dt><a name="if(invar_INT,_inconst_LABEL)"
+><b>if</b>(invar INT,
+inconst LABEL)</a></dt>
+
+<dt><a name="if(invar_NUM,_inconst_LABEL)"
+><b>if</b>(invar NUM,
+inconst LABEL)</a></dt>
+
+<dt><a name="if(invar_PMC,_inconst_LABEL)"
+><b>if</b>(invar PMC,
+inconst LABEL)</a></dt>
+
+<dt><a name="if(invar_STR,_inconst_LABEL)"
+><b>if</b>(invar STR,
+inconst LABEL)</a></dt>
+Check register $1.
+If true,
+branch by $2.
+<dt><a name="unless(invar_INT,_inconst_LABEL)"
+><b>unless</b>(invar INT,
+inconst LABEL)</a></dt>
+
+<dt><a name="unless(invar_NUM,_inconst_LABEL)"
+><b>unless</b>(invar NUM,
+inconst LABEL)</a></dt>
+
+<dt><a name="unless(invar_PMC,_inconst_LABEL)"
+><b>unless</b>(invar PMC,
+inconst LABEL)</a></dt>
+
+<dt><a name="unless(invar_STR,_inconst_LABEL)"
+><b>unless</b>(invar STR,
+inconst LABEL)</a></dt>
+Check register $1.
+If false,
+branch by $2.</dl>
+
+<h2><a name="Subroutine_operations"
+>Subroutine operations</a></h2>
+
+<p>These operations are used to generate and call subroutines and continuations.</p>
+
+<dl>
+<dt><a name="invokecc(invar_PMC)"
+><b>invokecc</b>(invar PMC)</a></dt>
+Call the subroutine in $1 and generate a new return continuation,
+if needed.
+For example,
+a NCI subroutine which executes code in some C library will not create a continuation,
+nor will anything but the first call to a coroutine.
+<dt><a name="invoke(invar_PMC,_invar_PMC)"
+><b>invoke</b>(invar PMC,
+invar PMC)</a></dt>
+Call the subroutine in $1 and use continuation $2.
+<dt><a name="yield()"
+><b>yield</b>()</a></dt>
+Yield results from a coroutine.
+<dt><a name="tailcall(invar_PMC)"
+><b>tailcall</b>(invar PMC)</a></dt>
+Call the subroutine in $1 and use the current continuation as the subs continuation.
+<dt><a name="returncc()"
+><b>returncc</b>()</a></dt>
+Return from the sub or method via the current continuation.
+<dt><a name="capture_lex(invar_PMC)"
+><b>capture_lex</b>(invar PMC)</a></dt>
+Capture the current lexical state of the inner subroutine PMC.
+<dt><a name="newclosure(out_PMC,_invar_PMC)"
+><b>newclosure</b>(out PMC,
+invar PMC)</a></dt>
+Create a closure of the given subroutine PMC by cloning the sub&#39;s state.</dl>
+
+<h2><a name="Function_argument_opcode"
+>Function argument opcode</a></h2>
+
+<p>Implementations of function argument and params handling</p>
+
+<dl>
+<dt><a name="set_args(inconst_PMC_/*_,_..._*/)"
+><b>set_args</b>(inconst PMC /* ,
+...
+*/)</a></dt>
+Define arguments for the next function call.
+<dt><a name="get_results(inconst_PMC_/*_,_..._*/)"
+><b>get_results</b>(inconst PMC /* ,
+...
+*/)</a></dt>
+Define return values for the next function call.
+<dt><a name="get_params(inconst_PMC_/*_,_..._*/)"
+><b>get_params</b>(inconst PMC /* ,
+...
+*/)</a></dt>
+Define function parameters for this subroutine.
+<dt><a name="set_returns(inconst_PMC_/*_,_..._*/)"
+><b>set_returns</b>(inconst PMC /* ,
+...
+*/)</a></dt>
+Define return results for the subroutine return statement.For all of these opcodes the passed invar PMC constant is the string representation of a FixedIntegerArray with one flag word per argument.
+The flags are documented currently in <em>include/parrot/enums.h</em> only.After this argument a variable amount of arguments must follow according to the elements of the signature array.
+<dt><a name="set_result_info(in_PMC)"
+><b>set_result_info</b>(in PMC)</a></dt>
+Set result_info.
+See also <code>result_info</code>.
+<dt><a name="result_info(out_PMC)"
+><b>result_info</b>(out PMC)</a></dt>
+Returns the get_results signature PMC of the caller.
+This PMC is a FixedIntegerPMCArray.
+The number of elements of this PMC is equal to the number of return values that are expected.
+The individual bits per entry are specified in <em><a href="../../docs/pdds/pdd03_calling_conventions.pod.html">docs/pdds/pdd03_calling_conventions.pod</a></em>.</dl>
+
+<h2><a name="Address_manipulation"
+>Address manipulation</a></h2>
+
+<dl>
+<dt><a name="set_addr(out_INT,_inconst_LABEL)"
+><b>set_addr</b>(out INT,
+inconst LABEL)</a></dt>
+Sets register $1 to the current address plus the offset $2.
+<dt><a name="set_addr(invar_PMC,_inconst_LABEL)"
+><b>set_addr</b>(invar PMC,
+inconst LABEL)</a></dt>
+Sets PMC in register $1 to the current address plus the offset $2.
+<dt><a name="set_addr(invar_PMC,_invar_LABEL)"
+><b>set_addr</b>(invar PMC,
+invar LABEL)</a></dt>
+Sets PMC in register $1 to the absolute address $2 obtained from <b>get_addr</b>.
+<dt><a name="get_addr(out_INT,_invar_PMC)"
+><b>get_addr</b>(out INT,
+invar PMC)</a></dt>
+Sets $1 to the absolute address of the Sub PMC $2.</dl>
+
+<h2><a name="Concurrency_operations"
+>Concurrency operations</a></h2>
+
+<dl>
+<dt><a name="schedule(invar_PMC)"
+><b>schedule</b>(invar PMC)</a></dt>
+Register a task with the concurrency scheduler.
+Details about the task are stored within the task PMC.
+<dt><a name="addhandler(invar_PMC)"
+><b>addhandler</b>(invar PMC)</a></dt>
+Add an event or exception handler to the concurrency scheduler.
+Details about the handler are stored within the handler PMC.</dl>
+
+<h2><a name="Exception_handling"
+>Exception handling</a></h2>
+
+<dl>
+<dt><a name="push_eh(inconst_LABEL)"
+><b>push_eh</b>(inconst LABEL)</a></dt>
+Create an exception handler for the given catch label and push it onto the exception handler stack.
+<dt><a name="push_eh(invar_PMC)"
+><b>push_eh</b>(invar PMC)</a></dt>
+Push an invokable PMC onto the exception handler stack.
+<dt><a name="pop_eh()"
+><b>pop_eh</b>()</a></dt>
+Pop the most recently placed exception off the handler stack.
+<dt><a name="throw(invar_PMC)"
+><b>throw</b>(invar PMC)</a></dt>
+Throw the exception in $1 with current continuation.
+<dt><a name="throw(invar_PMC,_invar_PMC)"
+><b>throw</b>(invar PMC,
+invar PMC)</a></dt>
+Throw the exception in $1 with continuation from $2.
+<dt><a name="rethrow(invar_PMC)"
+><b>rethrow</b>(invar PMC)</a></dt>
+Only valid inside an exception handler.
+Rethrow the exception $1.
+<dt><a name="count_eh(out_INT)"
+><b>count_eh</b>(out INT)</a></dt>
+Get a count of currently active exception handlers on the stack.
+<dt><a name="die(in_STR)"
+><b>die</b>(in STR)</a></dt>
+
+<dt><a name="die(in_PMC)"
+><b>die</b>(in PMC)</a></dt>
+Die with message $1
+<dt><a name="die(in_INT,_in_INT)"
+><b>die</b>(in INT,
+in INT)</a></dt>
+Die with severity $1 and error $2.
+If severity is .EXCEPT_DOOMED,
+call _exit($2).
+The latter isn&#39;t catchable.
+<dt><a name="exit(in_INT)"
+><b>exit</b>(in INT)</a></dt>
+Exit the interpreter with exit_status $1.
+If you want to communicate an extended exit status,
+create an exception with severity <b>EXCEPT_exit</b> and throw it.</dl>
+
+<h2><a name="Interpreter_operations"
+>Interpreter operations</a></h2>
+
+<p>These operations inspect or modify the interpreter itself,
+possibly affecting its subsequent operation.</p>
+
+<dl>
+<dt><a name="debug(in_INT)"
+><b>debug</b>(in INT)</a></dt>
+If $1 is zero,
+turn off debugging.
+Otherwise turn debug flag $1 on.
+<dt><a name="bounds(in_INT)"
+><b>bounds</b>(in INT)</a></dt>
+If $1 is zero,
+turn off byte code bounds checking.
+Otherwise turn it on.
+<dt><a name="profile(in_INT)"
+><b>profile</b>(in INT)</a></dt>
+If $1 is zero,
+turn off profiling.
+Otherwise turn it on.
+<dt><a name="trace(in_INT)"
+><b>trace</b>(in INT)</a></dt>
+If $1 is zero,
+turn off tracing.
+Otherwise turn trace flag $1 on.
+<dt><a name="gc_debug(in_INT)"
+><b>gc_debug</b>(in INT)</a></dt>
+If $1 is zero,
+turn off GC_DEBUG.
+Otherwise turn it on.
+<dt><a name="interpinfo"
+><b>interpinfo</b></a></dt>
+Fetch some piece of information about the interpreter and put it in $1.
+Possible values for $2 are defined in <em>runtime/parrot/include/interpinfo.pasm</em>.
+The valid constants for each return value are:
+<dl>
+<dt><a name="interpinfo(out_INT,_in_INT)"
+><b>interpinfo</b>(out INT,
+in INT)</a></dt>
+.TOTAL_MEM_ALLOC,
+.GC_MARK_RUNS,
+.GC_COLLECT_RUNS,
+.ACTIVE_PMCS,
+.ACTIVE_BUFFERS,
+.TOTAL_PMCS,
+.TOTAL_BUFFERS,
+.HEADER_ALLOCS_SINCE_COLLECT,
+.MEM_ALLOCS_SINCE_COLLECT,
+.TOTAL_COPIED,
+.IMPATIENT_PMCS,
+.GC_LAZY_MARK_RUNS,
+.EXTENDED_PMCS,
+.CURRENT_RUNCORE
+<dt><a name="interpinfo(out_PMC,_in_INT)"
+><b>interpinfo</b>(out PMC,
+in INT)</a></dt>
+.CURRENT_SUB,
+.CURRENT_CONT,
+.CURRENT_OBJECT,
+.CURRENT_LEXPAD
+<dt><a name="interpinfo(out_STR,_in_INT)"
+><b>interpinfo</b>(out STR,
+in INT)</a></dt>
+.EXECUTABLE_FULLNAME,
+.EXECUTABLE_BASENAME,
+.RUNTIME_PREFIX</dl>
+
+<dt><a name="warningson(in_INT)"
+><b>warningson</b>(in INT)</a></dt>
+Turns on warnings categories.
+Categories already turned on will stay on.
+Initial setting is currently all warnings off.
+Include <em>warnings.pasm</em> to access the categories.
+Refer to that file for the current list of warnings available.To turn on multiple categories,
+OR the category numbers together.
+<dt><a name="warningsoff(in_INT)"
+><b>warningsoff</b>(in INT)</a></dt>
+Turns off warnings categories.
+Categories already turned off will stay off.
+See the documentation for <b>warningson</b> for category numbers.
+<dt><a name="errorson(in_INT)"
+><b>errorson</b>(in INT)</a></dt>
+Turns on error categories.
+Categories already turned on will stay on.
+To access these from PASM,
+include <em>errors.pasm</em>.
+The current categories are:
+<dl>
+<dt><a name=".PARROT_ERRORS_GLOBALS_FLAG"
+>.PARROT_ERRORS_GLOBALS_FLAG</a></dt>
+Throw an exception if a global doesn&#39;t exist.
+This flag is not used by Parrot and is deprecated.
+<dt><a name=".PARROT_ERRORS_OVERFLOW_FLAG"
+>.PARROT_ERRORS_OVERFLOW_FLAG</a></dt>
+When performing arithmetic on Integer PMCs,
+throw a math overflow exception instead of promoting to BigInt.
+This flag does not pertain to native integers,
+which are never promoted.
+Default: off.
+<dt><a name=".PARROT_ERRORS_PARAM_COUNT_FLAG"
+>.PARROT_ERRORS_PARAM_COUNT_FLAG</a></dt>
+Throw an exception on an argument versus parameter count mismatch.
+Default: on.
+<dt><a name=".PARROT_ERRORS_RESULT_COUNT_FLAG"
+>.PARROT_ERRORS_RESULT_COUNT_FLAG</a></dt>
+Throw an exception on a return versus result count mismatch.
+Default: off.
+<dt><a name=".PARROT_ERRORS_ALL_FLAG"
+>.PARROT_ERRORS_ALL_FLAG</a></dt>
+</dl>
+To turn on multiple categories,
+OR the category numbers together.
+<dt><a name="errorsoff(in_INT)"
+><b>errorsoff</b>(in INT)</a></dt>
+Turns off errors categories.
+Categories already turned off will stay off.
+See the documentation for <b>errorson</b> for category numbers.
+<dt><a name="runinterp(invar_PMC,_in_LABEL)"
+><b>runinterp</b>(invar PMC,
+in LABEL)</a></dt>
+Run the code starting at offset $2 within interpreter $1.
+<dt><a name="getinterp(out_PMC)"
+><b>getinterp</b>(out PMC)</a></dt>
+Get the current ParrotInterpreter.</dl>
+
+<h2><a name="Garbage_Collection"
+>Garbage Collection</a></h2>
+
+<p>Opcodes that interact with the GC subsystem.</p>
+
+<dl>
+<dt><a name="sweep(inconst_INT)"
+><b>sweep</b>(inconst INT)</a></dt>
+Triggers a GC run,
+based on the value of $1,
+where:
+<ul>
+<li>Trigger a GC run only if there are things that have flagged themselves as really needing to be collected.</li>
+
+<li>1</li>
+
+<p>Trigger a GC run unconditionally.</p>
+</ul>
+
+<dt><a name="collect()"
+><b>collect</b>()</a></dt>
+Trigger a garbage collection.
+<dt><a name="sweepoff()"
+><b>sweepoff</b>()</a></dt>
+Disable GC runs.
+(Nestable)
+<dt><a name="sweepon()"
+><b>sweepon</b>()</a></dt>
+Re&#45;enable GC runs.
+<dt><a name="collectoff()"
+><b>collectoff</b>()</a></dt>
+Disable GC runs (nestable).
+<dt><a name="collecton()"
+><b>collecton</b>()</a></dt>
+Re&#45;enable GC.
+<dt><a name="needs_destroy(invar_PMC)"
+><b>needs_destroy</b>(invar PMC)</a></dt>
+Mark the PMC wanting destruction as soon as possible,
+for example when unused during the lazy sweep,
+triggered by <code>sweep 0</code>.</dl>
+
+<h2><a name="Native_Call_Interface"
+>Native Call Interface</a></h2>
+
+<p>Opcodes for interfacing with C functions in shared libraries.</p>
+
+<dl>
+<dt><a name="loadlib(out_PMC,_in_STR)"
+><b>loadlib</b>(out PMC,
+in STR)</a></dt>
+
+<dt><a name="loadlib(out_PMC,_in_STR,_in_PMC)"
+><b>loadlib</b>(out PMC,
+in STR,
+in PMC)</a></dt>
+Load a dynamic link library named $2 and store it in $1.
+$3,
+if provided,
+controls library loading and initialization; currently,
+we expect a bitmask accessible as an integer.
+Bit definitions are accessible from PASM if <em>dlopenflags.pasm</em> is included.
+The current bits are:
+<dl>
+<dt><a name="PARROT_DLOPEN_GLOBAL"
+>PARROT_DLOPEN_GLOBAL</a></dt>
+Make any symbols in the library accessible to other libraries loaded.</dl>
+
+<dt><a name="dlfunc(out_PMC,_invar_PMC,_in_STR,_in_STR)"
+><b>dlfunc</b>(out PMC,
+invar PMC,
+in STR,
+in STR)</a></dt>
+Look up symbol $3 in library $2 with signature $4,
+and put the corresponding sub object in $1.
+Note that you need the signature so we can build or find an appropriate thunking function.
+<dt><a name="dlvar(out_PMC,_invar_PMC,_in_STR)"
+><b>dlvar</b>(out PMC,
+invar PMC,
+in STR)</a></dt>
+Look up symbol $3 in library $2.
+We assume that this is actually a variable address rather than a function address,
+and build an UnManagedStruct PMC and stick the address into its data pointer.
+<dt><a name="compreg(out_PMC,_in_STR)"
+><b>compreg</b>(out PMC,
+in STR)</a></dt>
+Get the compiler object for source type $2.
+The returned compiler object should provide a <code>compile</code> method for translating code in the source type.
+However,
+some Parrot compilers such as <code>PIR</code> and <code>PASM</code> currently return a sub that is to be invoked directly on the source.
+<dt><a name="compreg(in_STR,_invar_PMC)"
+><b>compreg</b>(in STR,
+invar PMC)</a></dt>
+Register $2 as the compiler object for source type $1.
+<dt><a name="new_callback(out_PMC,_invar_PMC,_invar_PMC,_in_STR)"
+><b>new_callback</b>(out PMC,
+invar PMC,
+invar PMC,
+in STR)</a></dt>
+Create a callback stub $1 for PASM subroutine $2 with userdata $3 and callback function signature $4.
+Only 2 argument signatures with signature chars <i>U[1iscpt]</i> or <i>[1iscpt]U</i> are handled currently.
+But these cover a lot of callback signatures.
+Please note that the userdata PMC <i>U</i> has to be handled transparently by the caller of the callback function.</dl>
+
+<h2><a name="Annotations_operations"
+>Annotations operations</a></h2>
+
+<p>These operations relate to bytecode annotations.</p>
+
+<dl>
+<dt><a name="annotations(out_PMC)"
+><b>annotations</b>(out PMC)</a></dt>
+Gets all bytecode annotations in effect at the current point,
+in a Hash.
+If there are none,
+returns an empty Hash.
+<dt><a name="annotations(out_PMC,_in_STR)"
+><b>annotations</b>(out PMC,
+in STR)</a></dt>
+Gets the bytecode annotation with the given name that is in effect at the current point.
+Returns PMCNULL if there is none.</dl>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT</a></h1>
+
+<p>Copyright (C) 2001&#45;2010,
+Parrot Foundation.</p>
+
+<h1><a name="LICENSE"
+>LICENSE</a></h1>
+
+<p>This program is free software.
+It is subject to the same license as the Parrot interpreter itself.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

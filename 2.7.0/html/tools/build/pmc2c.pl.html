@@ -1,0 +1,87 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PMC definition to C compiler</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/tools.html">Tools</a> &raquo; PMC definition to C compiler
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>tools/build/pmc2c.pl &#45; PMC definition to C compiler</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<h2><a name="Options_used_in_Parrot_Makefile"
+>Options used in Parrot <em>Makefile</em></a></h2>
+
+<p>Create <em>src/pmc/foo.dump</em>:</p>
+
+<pre>    % perl tools/build/pmc2c.pl &#45;&#45;dump src/pmc/foo.pmc ...</pre>
+
+<p>Create <em>vtable.dump</em>:</p>
+
+<pre>    % perl tools/build/pmc2c.pl &#45;&#45;vtable</pre>
+
+<p>Create <em>src/pmc/foo.c</em> and <code>pmc_foo.h</code> from <em>src/pmc/foo.dump</em>:</p>
+
+<pre>    % perl tools/build/pmc2c.pl &#45;c src/pmc/foo.pmc ...</pre>
+
+<h2><a name="Other_Options"
+>Other Options</a></h2>
+
+<p>Create foo.c and pmc_foo.h from foo.dump files, also create libfoo.c containing the initialization function for all foo PMCs.</p>
+
+<pre>    % perl tools/build/pmc2c.pl &#45;&#45;library libfoo &#45;c \
+           src/pmc/foo1.pmc src/pmc/foo2.pmc ...</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>The job of the PMC compiler is to take .pmc files and create C files that can be compiled for use with the Parrot interpreter.</p>
+
+<h1><a name="COMMAND&#45;LINE_OPTIONS"
+>COMMAND&#45;LINE OPTIONS</a></h1>
+
+<dl>
+<dt><a name="&#45;&#45;no&#45;lines"
+><b><code>&#45;&#45;no&#45;lines</b></code></a></dt>
+Omit source line info
+<dt><a name="&#45;&#45;include=/path/to/pmc"
+><b><code>&#45;&#45;include=/path/to/pmc</b></code></a></dt>
+Specify include path where to find PMCs.
+<dt><a name="&#45;&#45;library=libname"
+><b><code>&#45;&#45;library=libname</b></code></a></dt>
+Specify the library name. This will create <em>&#60;libname&#62;.c</em> and <em>pmc_&#60;libname&#62;.h</em>. The initialization function will be named after libname and will initialize all PMCs in the library.</dl>
+
+<h1><a name="NOTES"
+>NOTES</a></h1>
+
+<p>You must use lowercase filenames for <code>.pmc</code> files, and lowercase group names in the PMC specification in those files.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,345 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Episode 7: Operators and Precedence</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Home</a> &raquo; <a href="../../../../../html/PCT_Tutorial.html">PCT Tutorial</a> &raquo; Episode 7: Operators and Precedence
+                </div>
+
+<h1><a name="Episode_7:_Operators_and_Precedence"
+>Episode 7: Operators and Precedence</a></h1>
+
+<p>Up till now,
+we&#39;ve implemented a great deal of the Squaak language.
+We&#39;ve seen assignments,
+control&#45;flow statements,
+variable declarations and scope,
+subroutines and invocation.
+Our expressions have been limited so far to singular values,
+such as string literals and integer constants.
+In this episode,
+we&#39;ll enhance Squaak so it can handle operators,
+so you can construct more complex expressions.</p>
+
+<h2><a name="Operators,_precedence_and_parse_trees"
+>Operators,
+precedence and parse trees</a></h2>
+
+<p>We will first briefly introduce the problem with recursive&#45;descent parsers (which parsers generated with the PCT are) when parsing expressions.
+Consider the following mini&#45;grammar,
+which is a very basic calculator.</p>
+
+<pre> rule TOP {
+     &#60;expression&#62;*
+ }
+
+ rule expression {
+     &#60;term&#62;
+ }
+
+ rule term {
+     &#60;factor&#62; [ &#60;addop&#62; &#60;factor&#62; ]*
+ }
+
+ token addop { &#39;+&#39; | &#39;&#45;&#39; }
+
+ rule factor {
+     &#60;value&#62; [ &#60;mulop&#62; &#60;value&#62; ]*
+ }
+
+ token mulop { &#39;*&#39; | &#39;/&#39; | &#39;%&#39; }
+
+ rule value{
+     | &#60;number&#62;
+     | &#39;(&#39; &#60;expression&#62; &#39;)&#39;
+ }</pre>
+
+<p>This basic expression grammar implements operator precedence by taking advantage of the nature of a recursive&#45;descent parser (if you haven&#39;t seen the word, google it). However, the big disadvantage of parsing expressions this way, is that the parse trees can become quite large. Perhaps more importantly, the parsing process is not very efficient. Let&#39;s take a look at some sample input. We won&#39;t show the parse trees as shown in Episode 2, but we&#39;ll just show an outline.</p>
+
+<pre> input: 42 results in this parse tree:
+
+ TOP
+   expression
+     term
+       factor
+         value
+           number
+             42</pre>
+
+<p>As you can see, the input of this single number will invoke 6 grammar rules</p>
+
+<p>before parsing the actual digits. Not that bad, you might think.</p>
+
+<pre> input: &#34;1 + 2&#34; results in this parse tree (we ignore the operator for now):
+
+ TOP
+   expression
+     term
+       factor
+       | value
+       |   number
+       |     1
+       factor
+         value
+           number
+             2</pre>
+
+<p>Only a few more grammar rules are invoked, not really a problem either.</p>
+
+<pre> input: &#34;(1 + 2) * 3&#34; results in this parse tree:
+
+ TOP
+   expression
+     term
+       factor
+         value
+         | expression
+         |   term
+         |   | factor
+         |   |   value
+         |   |     number
+         |   |       1
+         |   term
+         |     factor
+         |       value
+         |         number
+         |           2
+         value
+           number
+             3</pre>
+
+<p>Right; 16 grammar rules just to parse this simple input. I&#39;d call this slightly inefficient. The point is, implementing operator precedence using a recursive&#45;descent parser is somewhat problematic, and given the fact there are better methods to parse expressions like these, not the way to go. Check out this nice explanation or google it.</p>
+
+<h2><a name="Bottom&#45;up_parsing_and_stacks:_operator_tables"
+>Bottom&#45;up parsing and stacks: operator tables</a></h2>
+
+<p>I would like to explain to you how bottom&#45;up parsing works for expressions (or bottom&#45;up parsers in general; Yacc/Bison are parser generators that generate bottom&#45;up parsers for your grammar specification), taking operator precedence into account. However, it&#39;s been about 6 years that I did this in a CS class, and I don&#39;t remember the particular details. If you really want to know, check out the links at the end of the previous section. It&#39;s actually worth checking out. For now, I&#39;ll just assume you know what the problem is, so that I&#39;ll introduce the solution for PCT&#45;based compilers immediately. At some point when parsing your input, you might encounter an expression. At this point, we&#39;d like the parser to switch from top&#45;down to bottom&#45;up parsing. The Parrot Grammar Engine supports this, and is used as follows:</p>
+
+<pre> rule expression is optable { ... }</pre>
+
+<p>Note that we used the word <code>expression</code> here, but you can name it anything. This declares that, whenever you need an expression, the bottom&#45;up parser is activated. Of course, this &#34;optable&#34; must be populated with some operators that we need to be able to parse. This can be done by declaring operators as follows:</p>
+
+<pre> proto &#39;infix:*&#39; is tighter(&#39;infix:+&#39;) { ... }</pre>
+
+<p>This defines the operator <code>*</code> (the <code>infix:</code> is a prefix that tells the operator parser that this operator is an infix operator; there are other types, such as prefix, postfix and others). The <code>is tighter</code> clause tells that the <code>*</code> operator has a higher precedence than the <code>+</code> operator. As you could have guessed, there are other clauses to declare equivalent precedence (<code>is equiv</code>) and lower precedence (<code>is looser</code>).It is very important to spell all clauses, such as <code>is equiv</code> correctly (for instance, not <code>is equil</code>), otherwise you might get some cryptic error message when trying to run your compiler. See the references section for the optable guide, that has more details on this.</p>
+
+<p>Of course, the expression parser does not just parse operators, it must also parse the operands. So, how do we declare the most basic entity that represents an operand? It can be anything, from a basic integer&#45;constant, a function call, or even a function definition (but adding two function definition doesn&#39;t really make sense, does it?). The operands are parsed in a recursive&#45;descent fashion, so somewhere the parser must switch back from bottom&#45;up (expression parsing) to top&#45;down. To declare this &#34;switch&#45;back&#34; point, write:</p>
+
+<pre> proto &#39;term:&#39; is tighter(&#39;prefix:&#45;&#39;) is parsed(&#38;term) { ... }</pre>
+
+<p>The name <code>term:</code> is a built&#45;in name of the operator bottom&#45;up parser; it is invoked every time a new operand is needed. The <code>is parsed</code> clause tells the parser that <code>term</code> (which accidentally looks like <code>term:</code>, but you could also have named it anything else) parses the operands.</p>
+
+<p>Note: it is very important to add a <code>is tighter</code> clause to the declaration of the <code>term:</code> rule. Otherwise your expression parser will not work! My knowledge here is a bit limited, but I usually define it as <code>is tighter</code> relative to the tightest operator defined.</p>
+
+<h2><a name="Squaak_Operators"
+>Squaak Operators</a></h2>
+
+<p>We have defined the entry and exit point of the expression (bottom&#45;up) parser, now it&#39;s time to add the operators. Let&#39;s have a look at Squaak&#39;s operators and their precedence. The operators are listed with decreasing precedence (so that high&#45;precedence operators are listed at the top). (I&#39;m not sure if this precedence table is common compared to other languages; some operators may have a different precedence w.r.t. other operators than you&#39;re used to. At least the mathematical operators are organized according to standard math rules).</p>
+
+<pre> unary &#34;&#45;&#34;
+ unary &#34;not&#34;
+ * / %
+ + &#45; ..
+ &#60; &#60;= &#62;= &#62; != ==
+ and
+ or</pre>
+
+<p>(&#34;..&#34; is the string concatenation operator). Besides defining an entry and exit point for the expression parser, you need to define some operator as a reference point, so that other operators&#39; precedence can be defined relative to that reference point. My personal preference is to declare the operator with the lowest precedence as the reference point. This can be done like this:</p>
+
+<pre> proto &#39;infix:or&#39; is precedence(&#39;1&#39;) { ... }</pre>
+
+<p>Now, other operators can be defined:</p>
+
+<pre> proto &#39;infix:and&#39;  is tighter(&#39;infix:or&#39;)   { ... }
+ proto &#39;infix:&#60;&#39;    is tighter(&#39;infix:and&#39;)  { ... }
+ proto &#39;infix:+&#39;    is tighter(&#39;infix:&#60;&#39;)    { ... }
+ proto &#39;infix:*&#39;    is tighter(&#39;infix:+&#39;)    { ... }
+ proto &#39;prefix:not&#39; is tighter(&#39;infix:*&#39;)    { ... }
+ proto &#39;prefix:&#45;&#39;   is tighter(&#39;prefix:not&#39;) { ... }</pre>
+
+<p>Note that some operators are missing. See the exercises section for this. For more details on the use of the optable, check out <em><a href="../../../../docs/pct/pct_optable_guide.pod.html">docs/pct/pct_optable_guide.pod</a></em> in the Parrot repository.</p>
+
+<h2><a name="Short&#45;circuiting_logical_operators"
+>Short&#45;circuiting logical operators</a></h2>
+
+<p>Squaak has two logical operators: <code>and</code> and <code>or</code>; and results true if and only if both operands evaluate to true, while or results true if at least one of its operands evaluates to true. Both operands are short&#45;circuited, which means that they don&#39;t evaluate both operands if that&#39;s unnecessary. For instance, if the first operand of the and operator evaluates to false, then there&#39;s no need to evaluate the second operand, as the final result of the and&#45;expression cannot become true anymore (remember: both operands must evaluate to true).Let&#39;s think about how to implement this. When evaluating an and&#45;expression, we first evaluate the first operand, and if it&#39;s true, only then does it make sense to evaluate the second operand. This behavior looks very much the same as an if&#45;statement, doesn&#39;t it? In an if&#45;statement, the first child is always evaluated, and if true, the second child (the <code>then</code> block) is evaluated (remember, the third child &#45;&#45; the <code>else</code> clause &#45;&#45; is optional). It would be great to be able to implement the and operator using a <code>PAST::Op( :pasttype(&#39;if&#39;) )</code> node. Well, you can, using the <code>is pasttype</code> clause! Here&#39;s how:</p>
+
+<pre> proto &#39;infix:and&#39; is tighter(&#39;infix:or&#39;) is pasttype(&#39;if&#39;) { ... }</pre>
+
+<p>So what about the or operator? When evaluating an or&#45;expression, the first operand is evaluated. If it evaluates to true, then there&#39;s no need to evaluate the second operand, as the result of the or&#45;expression is already true! Only if the first operand evaluates to false, is it necessary to evaluate the second child. Mmmmm.... what we&#39;re saying here is, unless the first operand evaluates to true, evaluate the second child. Guess what pasttype you&#39;d need for that!</p>
+
+<h2><a name="Operators_PAST_types_and_PIR_instructions"
+>Operators PAST types and PIR instructions</a></h2>
+
+<p>In the previous section, we introduced the <code>pasttype</code> clause that you can specify. This means that for that operator (for instance, the <code>and</code> operator we discussed), a <code>PAST::Op( :pasttype(&#39;if&#39;) )</code> node is created. What happens if you don&#39;t specify a pasttype? In that case a default <code>PAST::Op</code> node is created, and the default pasttype is <code>call</code>. In other words, a <code>PAST::Op</code> node is created that calls the declared operator. For instance, the <code>infix:+</code> operator results in a call to the subroutine &#34;infix:+&#34;. This means you&#39;ll need to implement subroutines for each operator. Now, that&#39;s a bit of a shame. Obviously, some languages have very exotic semantics for the <code>+</code> operator, but many languages just want to use Parrot&#39;s built&#45;in <code>add</code> instruction. How do we achieve that?</p>
+
+<p>Instead of adding a <code>pasttype</code> clause, specify a <code>pirop</code> clause. The <code>pirop</code>, or <i>PIR operator</i>, clause tells the code generator what operator should be generated. Instead of generating a subroutine invocation with the operands as arguments, it will generate the specified instruction with the operator&#39;s operands as arguments. Neat huh? Let&#39;s look at an example:</p>
+
+<pre> proto &#39;infix:+&#39; is tighter(&#39;infix:&#60;&#39;) is pirop(&#39;n_add&#39;) { ... }</pre>
+
+<p>This specifies to use the <code>n_add</code> instruction, which tells Parrot to create a new result object instead of changing one of the operands. Why not just the <code>add</code> instruction (which takes two operands, updating the first), you might think. Well, if you leave out this <code>is pirop</code> stuff, this will be generated:</p>
+
+<pre> $P12 = &#34;infix:+&#34;($P10, $P11)</pre>
+
+<p>You see, three registers are involved. As we mentioned before, PCT does not do any optimizations. Therefore, instead of the generated instruction above, it just emit the following:</p>
+
+<pre> n_add $P12, $P10, $P11</pre>
+
+<p>which means that the PMCs in registers <code>$P10</code> and <code>$P11</code> are added, and assigned to a newly created PMC which is stored in register <code>$P12</code>.</p>
+
+<h2><a name="To_circumfix_or_not_to_circumfix"
+>To circumfix or not to circumfix</a></h2>
+
+<p>Squaak supports parenthesized expressions. Parentheses can be used to change the order of evaluation in an expression, just as you&#39;re probably have seen this in other languages. Besides infix, prefix and postfix operators, you can define circumfix operators, which is specified with the left and right delimiter. This is an ideal way to implement parenthesized expressions:</p>
+
+<pre> proto &#39;circumfix:( )&#39; is looser(&#39;infix:+&#39;) is pirop(&#39;set&#39;) { ... }</pre>
+
+<p>By default, a subroutine invocation will be generated for each operator, in this case a call to <code>circumfix:( )</code>. However, we are merely interested in the expression that has been parenthesized. The subroutine would merely return the expression. Instead, we can use the pirop attribute to specify what PIR operation should be generated; in this case that is the <code>set</code> operation, which sets one register to the contents of another. This solution works fine, except that <code>set</code> instructions are a bit of a waste. What happens is, the contents of some register is just copied to another register, which is then used in further code generation. This <code>set</code> instruction might as well be optimized away. Currently, there are no optimizations implemented in the PCT.</p>
+
+<p>There is an alternative solution for adding grammar rules for the parenthesized expressions, by adding it as an alternative of term. The grammar rule term then ends up as:</p>
+
+<pre> rule term {
+     | &#60;float_constant&#62; {*}     #= float_constant
+     | &#60;integer_constant&#62; {*}   #= integer_constant
+     | &#60;string_constant&#38;gt {*}  #= string_constant
+     | &#60;primary&#62; {*}            #= primary
+     | &#39;(&#39; &#60;expression&#62; &#39;)&#39; {*} #= expression
+ }</pre>
+
+<p>Of course, although we save one generated instruction, the parser will be slightly more inefficient, for reasons that we discussed at the beginning of this episode. Of course, you are free to decide for yourself how to implement this; this section just explains both methods. At some point, optimizations will be implemented in the PCT. I suspect &#34;useless&#34; instructions (such as the <code>set</code> instruction we just saw) will then be removed.</p>
+
+<h2><a name="Expression_parser&#39;s_action_method"
+>Expression parser&#39;s action method</a></h2>
+
+<p>For all grammar rules we introduced, we also introduced an action method that is invoked after the grammar rule was done matching. What about the action method for the optable? Naturally, there must be some actions to be executed. Well, there is, but to be frank, I cannot explain it to you. Every time I needed the action method for an optable, I just copied it from an existing actions file. Of course, the action method&#39;s name should match the name of the optable (the rule that has the &#34;is optable&#34; clause). So, here goes:</p>
+
+<pre> method expression($/, $key) {
+     if ($key eq &#39;end&#39;) {
+         make $($&#60;expr&#62;);
+     }
+     else {
+         my $past := PAST::Op.new( :name($&#60;type&#62;),
+                                   :pasttype($&#60;top&#62;&#60;pasttype&#62;),
+                                   :pirop($&#60;top&#62;&#60;pirop&#62;),
+                                   :lvalue($&#60;top&#62;&#60;lvalue&#62;),
+                                   :node($/) );
+
+         for @($/) {
+             $past.push( $($_) );
+         }
+
+         make $past;
+     }
+ }</pre>
+
+<h2><a name="What&#39;s_Next?"
+>What&#39;s Next?</a></h2>
+
+<p>This episode covered the implementation of operators, which allows us to write complex expressions. By now, most of our language is implemented, except for one thing: aggregate data structures. This will be the topic of Episode 8. We will introduce the two aggregate data types: array and hashtables, and see how we can implement these. We&#39;ll also discuss what happens when we pass such aggregates as subroutine arguments, and the difference with the basic data types.</p>
+
+<h2><a name="Exercises"
+>Exercises</a></h2>
+
+<ul>
+<li>Currently, Squaak only has grammar rules for integer and string constants, not floating point constants. Implement this grammar rule. A floating&#45;point number consists of zero or more digits, followed by a dot and at least one digit, or, at least one digit followed by a dot and any number of digits. Examples are:</li>
+
+<pre> 42.0, 1., .0001.</pre>
+
+<p>There may be no whitespace between the individual digits and the dot. Make sure you understand the difference between a &#34;rule&#34; and a &#34;token&#34;.</p>
+
+<p>Hint: currently, the Parrot Grammar Engine (PGE), the component that &#34;executes&#34; the regular expressions (your grammar rules), matches alternative subrules in order. This means that this won&#39;t work:</p>
+
+<pre> rule term {
+     | &#60;integer_constant&#62;
+     | &#60;float_constant&#62;
+     ...
+ }</pre>
+
+<p>because when giving the input <code>42.0</code>, <code>42</code> will be matched by &#60;integer_constant&#62;, and the dot and &#34;0&#34; will remain. Therefore, put the &#60;float_constant&#62; alternative in rule term before &#60;integer_constant&#62;. At some point, PGE will support <i>longest&#45;token matching</i>, so that this issue will disappear.</p>
+
+<li>Implement the missing operators: (binary) &#34;&#45;&#34;, &#34;&#60;=&#34;, &#34;&#62;=&#34;, &#34;==&#34;, &#34;!=&#34;, &#34;/&#34;, &#34;%&#34;, &#34;or&#34;</li>
+</ul>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p>docs/pct/pct_optable_guide.pod</p>
+
+<h2><a name="Solution_to_the_exercises"
+>Solution to the exercises</a></h2>
+
+<ol>
+<li>A floating&#45;point number consists of zero or more digits, followed by a dot and at least one digit, or, at least one digit followed by a dot and any number of digits. Examples are: 42.0, 1., .0001. There may be no whitespace between the individual digits and the dot. Make sure you understand the difference between a <code>rule</code> and a <code>token</code>.</li>
+
+<pre>    token float_constant {
+        [
+        | \d+ &#39;.&#39; \d*
+        | \d* &#39;.&#39; \d+
+        ]
+        {*}
+    }</pre>
+
+<li>For sake of completeness (and easy copy&#45;paste for you), here&#39;s the list of operator declarations as I wrote them for Squaak:</li>
+
+<pre>    rule expression    is optable              { ... }
+
+    proto &#39;infix:or&#39;   is precedence(&#39;1&#39;)
+                       is pasttype(&#39;unless&#39;)   { ... }
+    proto &#39;infix:and&#39;  is tighter(&#39;infix:or&#39;)
+                       is pasttype(&#39;if&#39;)       { ... }
+
+    proto &#39;infix:&#60;&#39;    is tighter(&#39;infix:and&#39;) { ... }
+    proto &#39;infix:&#60;=&#39;   is equiv(&#39;infix:&#60;&#39;)     { ... }
+    proto &#39;infix:&#62;&#39;    is equiv(&#39;infix:&#60;&#39;)     { ... }
+    proto &#39;infix:&#62;=&#39;   is equiv(&#39;infix:&#60;&#39;)     { ... }
+    proto &#39;infix:==&#39;   is equiv(&#39;infix:&#60;&#39;)     { ... }
+    proto &#39;infix:!=&#39;   is equiv(&#39;infix:&#60;&#39;)     { ... }
+
+    proto &#39;infix:+&#39;    is tighter(&#39;infix:&#60;&#39;)
+                       is pirop(&#39;n_add&#39;)       { ... }
+    proto &#39;infix:&#45;&#39;    is equiv(&#39;infix:+&#39;)
+                       is pirop(&#39;n_sub&#39;)       { ... }
+
+    proto &#39;infix:..&#39;   is equiv(&#39;infix:+&#39;)
+                       is pirop(&#39;n_concat&#39;)    { ... }
+
+    proto &#39;infix:*&#39;    is tighter(&#39;infix:+&#39;)
+                       is pirop(&#39;n_mul&#39;)       { ... }
+    proto &#39;infix:%&#39;    is equiv(&#39;infix:*&#39;)
+                       is pirop(&#39;n_mod&#39;)       { ... }
+    proto &#39;infix:/&#39;    is equiv(&#39;infix:*&#39;)
+                       is pirop(&#39;n_div&#39;)       { ... }
+
+    proto &#39;prefix:not&#39; is tighter(&#39;infix:*&#39;)
+                       is pirop(&#39;not&#39;)       { ... }
+    proto &#39;prefix:&#45;&#39;   is tighter(&#39;prefix:not&#39;)
+                       is pirop(&#39;neg&#39;)       { ... }
+
+    proto &#39;term:&#39;      is tighter(&#39;prefix:&#45;&#39;)
+                       is parsed(&#38;term)        { ... }</pre>
+</ol>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

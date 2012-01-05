@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/lolcode.html">lolcode</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<p>grammar lolcode::Grammar is PCT::Grammar;</p>
+
+<p>rule TOP { [&#39;HAI&#39; &#60;version&#62; &#60;.statement_terminator&#62;]?
+&#60;block&#62; [&#39;KTHXBYE&#39; &#60;.statement_terminator&#62;]?
+[ $ || &#60;panic: &#39;Syntax error&#39;&#62; ] {*} }</p>
+
+<p>token version { \d+ [ &#39;.&#39; \d+ ]?
+}</p>
+
+<p>rule statement { | &#60;declare&#62; {*} #= declare | &#60;assign&#62; {*} #= assign | &#60;function&#62; {*} #= function | &#60;ifthen&#62; {*} #= ifthen | &#60;switch&#62; {*} #= switch | &#60;expression&#62; {*} #= expression }</p>
+
+<p>token statement_terminator { [ &#39;,&#39; | \n+ | $ ] }</p>
+
+<p>rule declare { &#39;I&#39; &#39;HAS&#39; &#39;A&#39; &#60;scope&#62;?
+&#60;variable&#62; [ &#39;ITZ&#39; &#60;expression&#62; ]?
+{*} }</p>
+
+<p>token scope { | &#39;FARAWAY&#39; | &#39;NEARBY&#39; }</p>
+
+<p>rule assign { &#60;variable&#62; &#39;R&#39; &#60;expression&#62; {*} }</p>
+
+<p>rule function { # $&#60;parameters&#62; is only getting the first parameter,
+not all of them # like I&#39;d expect...
+&#39;HOW&#39; &#39;DUZ&#39; &#39;I&#39; &#60;variable&#62; [&#39;YR&#39; $&#60;parameters&#62;=&#60;variable&#62; [ &#39;AN&#39; &#39;YR&#39; $&#60;parameters&#62;=&#60;variable&#62;]* ]?&#60;.statement_terminator&#62; {*} #= params &#60;block&#62; &#39;IF&#39; &#39;U&#39; &#39;SAY&#39; &#39;SO&#39; {*} #= block }</p>
+
+<p>rule ifthen { &#60;expression&#62; &#60;.statement_terminator&#62; &#39;O&#39; &#39;RLY?&#39; &#60;.statement_terminator&#62; &#39;YA&#39; &#39;RLY&#39; &#60;.statement_terminator&#62; &#60;block&#62; [ &#39;MEBBE&#39; &#60;expression&#62; &#60;.statement_terminator&#62; &#60;block&#62; ]* [ &#39;NO&#39; &#39;WAI&#39; &#60;.statement_terminator&#62; $&#60;else&#62;=&#60;block&#62; ]?
+&#39;OIC&#39; {*} }</p>
+
+<p>rule switch { &#39;WTF?&#39; &#60;.statement_terminator&#62; [ &#39;OMG&#39; &#60;value&#62; &#60;.statement_terminator&#62; &#60;block&#62; ]+ [ &#39;OMGWTF&#39; &#60;.statement_terminator&#62; &#60;else=block&#62; ]?
+&#39;OIC&#39; {*} }</p>
+
+<p>rule block { {*} #= open [&#60;statement&#62; &#60;.statement_terminator&#62;]* {*} #= close }</p>
+
+<p>rule parameters { &#39;YR&#39; &#60;identifier&#62; [ &#39;AN&#39; &#39;YR&#39; &#60;identifier&#62; ]* }</p>
+
+<p>rule expression { [ | $&#60;tokens&#62;=&#60;operator&#62; | $&#60;tokens&#62;=&#60;variable&#62; | $&#60;tokens&#62;=&#60;value&#62; | &#39;AN&#39; | $&#60;tokens&#62;=&#39;MKAY&#39; ]+ {*} }</p>
+
+<p>token value { | &#60;float&#62; {*} #= float | &#60;integer&#62; {*} #= integer | &#60;boolean&#62; {*} #= boolean | &#60;quote&#62; {*} #= quote | &#60;bang&#62; {*} #= bang }</p>
+
+<p>token bang { &#39;!&#39; {*} }</p>
+
+<p>token operator { $&#60;identifier&#62;=(&#60;.identifier&#62; &#60;.ws&#62; &#39;OF&#39;|&#39;BOTH SAEM&#39;) {*} } token variable { &#60;identifier&#62; {*} }</p>
+
+<p>token identifier { &#60;!keyword&#62; &#60;[a..zA..Z]&#62; \w* }</p>
+
+<p># RT #46213 : Because PGE doesn&#39;t yet know how to do longest token matching,
+# order all tokens in reverse alpha order to avoid a parsing bug.
+token keyword { [ &#39;YR&#39; | &#39;YA&#39; | &#39;WTF?&#39; | &#39;WIN&#39; | &#39;WAI&#39; | &#39;U&#39; | &#39;SO&#39; | &#39;SAY&#39; | &#39;RLY?&#39; | &#39;RLY&#39; | &#39;R&#39; | &#39;OMGWTF&#39; | &#39;OMG&#39; | &#39;OIC&#39; | &#39;OF&#39; | &#39;O&#39; | &#39;NO&#39; | &#39;MKAY&#39; | &#39;MEBBE&#39; | &#39;KTHXBYE&#39; | &#39;ITZ&#39; | &#39;IF&#39; | &#39;I&#39; | &#39;HOW&#39; | &#39;HAS&#39; | &#39;GTFO&#39; | &#39;FOUND&#39; | &#39;FARAWAY&#39; | &#39;FAIL&#39; | &#39;AN&#39; | &#39;A&#39; ] &#62;&#62; }</p>
+
+<p>token integer { &#39;&#45;&#39;?
+\d+ {*} }</p>
+
+<p>token float { &#39;&#45;&#39;?
+\d+ &#39;.&#39; \d+ {*} }</p>
+
+<p>rule boolean { [ &#39;WIN&#39; | &#39;FAIL&#39; ] {*} }</p>
+
+<p>rule quote { [ &#60;.before &#39;&#34;&#39;&#62; &#60;yarn_literal&#62; ] {*} }</p>
+
+<p>token ws { &#60;!ww&#62; [ | ^^ \h* BTW \h \N* \n+ | ^^ \h* OBTW .*?
+^^ \h* TLDR \n+ | \h+ ]* }</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

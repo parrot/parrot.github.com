@@ -1,0 +1,436 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PDD 23: Exceptions</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; PDD 23: Exceptions
+                </div>
+
+<h1><a name="PDD_23:_Exceptions"
+>PDD 23: Exceptions</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>This document defines the requirements and implementation strategy for Parrot&#39;s exception system.</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<p><i>Exceptions</i> are indications by running code that something unusual &#45;&#45; an &#34;exception&#34; to the normal processing &#45;&#45; has occurred.
+When code detects an exceptional condition,
+it <i>throws</i> an exception object.
+Before this occurs,
+code can register exception <i>handlers</i>,
+which are functions (or closures) which may (but are not obligated to) <i>handle</i> the exception.
+Some exceptions permit continued execution immediately after the <i>throw</i>; some don&#39;t.</p>
+
+<p>Exceptions transfer control to a piece of code outside the normal flow of control.
+They are mainly used for error reporting or cleanup tasks.</p>
+
+<p>(A digression on terminology: In a system analysis sense,
+the word &#34;exception&#34; usually refers to the exceptional event that requires out&#45;of&#45;band handling.
+However,
+in Parrot,
+&#34;exception&#34; also refers to the object that holds all the information describing the exceptional condition: the nature of the exception,
+the error message describing it,
+and other ancillary information.
+The specific type (class) of an exception object indicates its category.)</p>
+
+<h3><a name="Exception_Opcodes"
+>Exception Opcodes</a></h3>
+
+<p>These are the opcodes relevant to exceptions and exception handlers:</p>
+
+<dl>
+<dt><a name="push_eh_LABEL"
+><b>push_eh <i>LABEL</i></b></a></dt>
+
+<dt><a name="push_eh_EXCEPTIONHANDLER_PMC"
+><b>push_eh <i>EXCEPTIONHANDLER_PMC</i></b></a></dt>
+Push an exception handler pmc onto the exception handler stack.When an exception is thrown,
+Parrot walks up the stack of active exception handlers,
+invoking each one in turn,
+but still in the dynamic context of the exception (i.e.
+the call stack is <i>not</i> unwound first).
+See below for more detail.If a <i>LABEL</i> is provided,
+Parrot creates and pushes an exception handler that resumes execution at <i>LABEL</i> if invoked,
+which has the effect of unconditionally handling all errors,
+and unwinding the stack to that label.If an <i>EXCEPTIONHANDLER_PMC</i> is provided,
+Parrot pushes that pmc itself onto the exception handler stack.
+<dt><a name="pop_eh"
+><b>pop_eh</b></a></dt>
+Pop the most recently pushed exception handler off the exception handler stack.
+<dt><a name="throw_EXCEPTION_[_,_CONTINUATION_]"
+><b>throw <i>EXCEPTION</i> [ ,
+<i>CONTINUATION</i> ]</b></a></dt>
+Throw an exception consisting of the given <i>EXCEPTION</i> PMC,
+after taking a continuation at the next opcode.
+When a <i>CONTINUATION</i> is passed in,
+it will use that instead of generating a new continuation.
+Active exception handlers (if any) will be invoked with <i>EXCEPTION</i> as the only parameter.
+The <i>CONTINUATION</i> is stored in the &#39;resume&#39; slot of the <i>EXCEPTION</i>.PMCs other than Parrot&#39;s Exception PMC may also be thrown,
+but they must support the interface of an Exception PMC.
+An HLL may implement throwing any arbitrary type of PMC,
+by storing that PMC in the &#39;payload&#39; slot of the Exception PMC.Exception handlers can resume execution after handling the exception by invoking the continuation stored in the &#39;resume&#39; slot of the exception object.
+That continuation must be invoked with no parameters; in other words,
+<code>throw</code> never returns a value.
+<dt><a name="rethrow_EXCEPTION"
+><b>rethrow <i>EXCEPTION</i></b></a></dt>
+While handling an exception,
+rethrow the exception to the next handler.
+Aside from selecting a different handler,
+the behaviour of <code>rethrow</code> is the same as <code>throw</code>.
+Each successive call to <code>rethrow</code> will select a different handler,
+until it exhausts the list of possible handlers.
+A rethrown exception that is not handled behaves the same as an unhandled <code>throw</code>n exception.
+<dt><a name="die_[_MESSAGE_]"
+><b>die [ <i>MESSAGE</i> ]</b></a></dt>
+The <code>die</code> opcode throws an exception of type <code>exception;death</code> and severity <code>EXCEPT_error</code> with a payload of <i>MESSAGE</i>.
+The exception payload is a <code>String</code> PMC containing <i>MESSAGE</i>.{{NOTE: Exception classes NYI.
+Currently throws CONTROL_ERROR}}The default when no <i>MESSAGE</i> is given is &#34;Fatal exception at LINE in FILE.&#34; followed by a backtrace.{{NOTE: Not yet implemented.}}If this exception is not handled,
+it results in Parrot returning an error indication and the stringification of <i>MESSAGE</i> to its embedding environment.
+When running standalone,
+this means writing the stringification of <i>MESSAGE</i> to standard error and executing the standard Parrot function <code>Parrot_exit</code>,
+to shut down the interpreter cleanly.
+<dt><a name="exit_[_EXITCODE_]"
+><b>exit [ <i>EXITCODE</i> ]</b></a></dt>
+Throw an exception of type <code>exception;exit</code> with a payload of <i>EXITCODE</i>,
+which defaults to zero,
+as an Integer PMC.{{NOTE: Exception classes NYI.
+Currently throws a type based on the EXITCODE.}}If not handled,
+this exception results in Parrot returning <i>EXITCODE</i> as a status to its embedded environment,
+or when running standalone,
+to execute the C function <code>exit(<i>EXITCODE</i>)</code>.{{NOTE: This is not currently the case.
+Parrot now stores the EXITCODE argument in the type,
+not the payload}}</dl>
+
+<h3><a name="Exception_Introspection_Opcodes"
+>Exception Introspection Opcodes</a></h3>
+
+<p>These are the opcodes relevant to introspection of the exception handler stack:</p>
+
+<dl>
+<dt><a name="count_eh"
+><b>count_eh</b></a></dt>
+Return the quantity of currently active exception handlers.</dl>
+
+<h3><a name="Order_of_Operations_in_Exception_Handling"
+>Order of Operations in Exception Handling</a></h3>
+
+<p>When <b>throw</b> is called,
+for all active exception handlers,
+in LIFO order:</p>
+
+<dl>
+<dt><a name="1_Find_the_topmost_exception_handler."
+>1 Find the topmost exception handler.</a></dt>
+
+<dt><a
+>2 Push an exception record somewhere,
+presumably on the exception handler stack.
+The exception record contains a pointer to an exception handler block,
+an exception PMC,
+and (optionally) a continuation.</a></dt>
+
+<dt><a name="3_Invoke_the_handler_(note:_this_is_still_in_the_thrower&#39;s_dynamic_context)."
+>3 Invoke the handler (note: this is still in the thrower&#39;s dynamic context).</a></dt>
+
+<dt><a name="4_If_the_exception_is_rethrown,_repeat_steps_1&#45;3_above,_finding_the_next_exception_handler."
+>4 If the exception is <b><code>rethrow</b></code>n,
+repeat steps 1&#45;3 above,
+finding the next exception handler.</a></dt>
+
+<dt><a
+>5 If no handler is found,
+and the exception is non&#45;fatal (such as a warning),
+and there is a continuation in the exception record (because the throwing opcode was <b><code>throw</b></code>),
+invoke the continuation (resume execution).
+Whether to resume or die when an exception isn&#39;t handled is determined by the severity of the exception.</a></dt>
+
+<dt><a name="6_Otherwise_terminate_the_program_like_die."
+>6 Otherwise terminate the program like <b><code>die</b></code>.</a></dt>
+</dl>
+
+<p>When running an embedded Parrot interpreter,
+the interpreter does not immediately terminate on an unhandled exception,
+it merely returns control to the embedding program and stores the unhandled exception so that it may be queried by the embedding program.
+The embedding program may choose to handle the exception and continue execution by invoking the exception&#39;s continuation.</p>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<h3><a name="Exception_Object_Interface"
+>Exception Object Interface</a></h3>
+
+<p>All of Parrot&#39;s standard exceptions provide at least the following interface.
+It is recommended that all classes intended for throwing also provide at least this interface as well.</p>
+
+<dl>
+<dt><a name="PMC_*get_attr_str(STRING_*name)"
+><b>PMC *get_attr_str(STRING *name)</b></a></dt>
+Retrieve an attribute from the Exception.
+All exceptions will have at least <code>message</code>,
+<code>severity</code>,
+<code>resume</code>,
+and <code>payload</code> attributes.The <code>message</code> is an exception&#39;s human&#45;readable self&#45;description.
+Note that the type of the returned PMC isn&#39;t required to be <code>String</code>,
+but you should still be able to stringify and print it.The <code>severity</code> is an integer from an internal Parrot enum of exception severities.The <code>resume</code> is a continuation that you can invoke to resume normal execution of the program.The <code>payload</code> more specifically identifies the detailed cause/nature of the exception.
+Each exception class will have its own specific payload type(s).
+See the table of standard exception classes for examples.
+<dt><a name="PMC_*set_attr_str(STRING_*name,_PMC_*value)"
+><b>PMC *set_attr_str(STRING *name,
+PMC *value)</b></a></dt>
+Set an attribute on the Exception.
+All exceptions will have at least <code>message</code>,
+<code>severity</code>,
+<code>resume</code>,
+and <code>payload</code> attributes.
+<dt><a name="PMC_*annotations()"
+><b>PMC *annotations()</b></a></dt>
+Gets a Hash containing any bytecode annotations in effect at the point where the exception was thrown.
+If none were in effect,
+returns an empty Hash.
+See the PIR PDD for syntax for declaring and semantics of bytecode annotations.
+<dt><a name="PMC_*annotations(STRING_*name)"
+><b>PMC *annotations(STRING *name)</b></a></dt>
+Returns a PMC representing the bytecode annotation with the key specified in <code>name</code> at the point where the exception was thrown.
+If there was no such annotation in effect,
+a NULL PMC will be returned.
+<dt><a name="PMC_*backtrace()"
+><b>PMC *backtrace()</b></a></dt>
+Gets a representation of the backtrace at the point that this exception was thrown.
+Returns an array of hashes.
+Each array element represents a caller in the backtrace,
+the most recent caller first.
+The hash has two keys: <code>sub</code>,
+which holds the PMC representing the sub,
+and <code>annotations</code> which is a hash of the annotations at the point where the exception was thrown for the current sub,
+or for the point of the call a level deeper for the rest.</dl>
+
+<h3><a name="Standard_Parrot_Exceptions"
+>Standard Parrot Exceptions</a></h3>
+
+<p>Parrot comes with a small hierarchy of classes designed for use as exceptions.
+Parrot throws them when internal Parrot errors occur,
+but any user code can throw them too.</p>
+
+<p>{{NOTE: Currently NYI.
+Parrot currently uses integers to represent exception types.}}</p>
+
+<p>{{NOTE: Questions about how this interoperates with custom HLL exception classes}}</p>
+
+<dl>
+<dt><a name="exception"
+><b>exception</b></a></dt>
+Base class of all standard exceptions.
+Provides no special functionality.
+Exists for the purpose of <code>isa</code> testing.
+<dt><a name="exception;death"
+><b>exception;death</b></a></dt>
+Exception type that is thrown by the <code>die</code> opcode.
+See the description of the <code>die</code> opcode in this document.
+<dt><a name="exception;errno"
+><b>exception;errno</b></a></dt>
+A system error as reported in the C variable <code>errno</code>.
+Payload is an integer.
+Message is the return value of the standard C function <code>strerror()</code>.
+<dt><a name="exception;exit"
+><b>exception;exit</b></a></dt>
+Exception type that is thrown by the <code>exit</code> opcode.
+See the description of the <code>exit</code> opcode in this document.
+<dt><a name="exception;math"
+><b>exception;math</b></a></dt>
+Generic base class for math errors.
+<dt><a name="exception;math;division_by_zero"
+><b>exception;math;division_by_zero</b></a></dt>
+Division by zero (integer or float).
+No payload.
+<dt><a name="exception;domain"
+><b>exception;domain</b></a></dt>
+Generic base class for miscellaneous domain (input value) errors.
+Payload is an array,
+the first element of which is the operation that failed (e.g.
+the opcode name); subsequent elements depend on the value of the first element.(Note: There is not a separate exception class for every operation that might throw a domain exception.
+Class proliferation is expensive,
+both to Parrot and to the humans working with it who have to memorize a class hierarchy.
+But I understand the temptation.)
+<dt><a name="exception;lexical"
+><b>exception;lexical</b></a></dt>
+An <code>find_lex</code> or <code>store_lex</code> operation failed because a given lexical variable was not found.
+Payload is an array: [0] the name of the lexical variable that was not found,
+[1] the LexPad in which it was not found.</dl>
+
+<h3><a name="Opcodes_that_Throw_Exceptions"
+>Opcodes that Throw Exceptions</a></h3>
+
+<p>Exceptions have been incorporated into built&#45;in opcodes in a limited way.
+For the most part,
+they&#39;re used when the return value is either impractical to check (perhaps because we don&#39;t want to add that many error checks in line),
+or where the output type is unable to represent an error state (e.g.
+the output I register of the <code>ord</code> opcode).</p>
+
+<p>The <code>div</code>,
+<code>fdiv</code>,
+and <code>cmod</code> opcodes throw <code>exception;math;division_by_zero</code>.</p>
+
+<p>The <code>ord</code> opcode throws <code>exception;domain</code> when it&#39;s passed an empty argument or a string index that&#39;s outside the length of the string.
+Payload is an array,
+first element being the string &#39;ord&#39;.</p>
+
+<p>The <code>find_charset</code> opcode throws <code>exception;domain</code> if the charset name it&#39;s looking up doesn&#39;t exist.
+Payload is an array: [0] string &#39;find_charset&#39;,
+[1] charset name that was not found.</p>
+
+<p>The <code>trans_charset</code> opcode throws <code>exception;domain</code> on &#34;information loss&#34; (presumably,
+this means when one charset doesn&#39;t have a one&#45;to&#45;one correspondence in the other charset).
+Payload is an array: [0] string &#39;trans_charset&#39;,
+[1] source charset name,
+[2] destination charset name,
+[3] untranslatable code point.</p>
+
+<p>The <code>find_encoding</code> opcode throws <code>exception;domain</code> if the encoding name it&#39;s looking up doesn&#39;t exist.
+Payload is an array: [0] string &#39;find_encoding&#39;,
+[1] encoding name that was not found.</p>
+
+<p>The <code>trans_encoding</code> opcode throws <code>exception;domain</code> on &#34;information loss&#34; (presumably,
+this means when one encoding doesn&#39;t have a one&#45;to&#45;one correspondence in the other encoding).
+Payload is an array: [0] string &#39;trans_encoding&#39;,
+[1] source encoding name,
+[2] destination encoding name,
+[3] untranslatable code point.</p>
+
+<p>Parrot&#39;s default version of the <code>LexPad</code> PMC throws <code>exception;lexical</code> for some error conditions,
+though other implementations can choose to return error values instead.</p>
+
+<p>By default,
+the <code>find_lex</code> and <code>store_lex</code> opcodes throw an exception (<code>exception;lexical</code>) when the given name can&#39;t be found in any visible lexical pads.
+However,
+this behavior is only a default,
+as provided by the default Parrot lexical pad PMC <code>LexPad</code>.
+If a given HLL has its own lexical pad PMC,
+its behavior may be very different.
+(For example,
+in Tcl,
+<code>store_lex</code> is likely to succeed every time,
+as creating new lexicals at runtime is OK in Tcl.)</p>
+
+<p>{{ TODO: List any other opcodes that currently throw exceptions and general categories of opcodes that should throw exceptions.
+}}</p>
+
+<p>Other opcodes respond to an <code>errorson</code> setting to decide whether to throw an exception or return an error value.
+<code>get_hll_global</code> and <code>get_root_global</code> throw an exception (or returns a Null PMC) if the global name requested doesn&#39;t exist.
+<code>find_name</code> throws an exception (or returns a Null PMC) if the name requested doesn&#39;t exist in a lexical,
+current,
+global,
+or built&#45;in namespace.</p>
+
+<p>{{ TODO: &#34;errorson&#34; as specified is dynamically rather than lexically scoped; is this good?
+Probably not good.
+Let&#39;s revisit it when we get the basic exceptions functionality implemented.
+}}</p>
+
+<p>It&#39;s a little odd that so few opcodes throw exceptions (these are the ones that are documented,
+but a few others throw exceptions internally even though they aren&#39;t documented as doing so).
+It&#39;s worth considering either expanding the use of exceptions consistently throughout the opcode set,
+or eliminating exceptions from the opcode set entirely.
+The strategy for error handling should be consistent,
+whatever it is.
+[I like the way <code>LexPad</code>s and the <code>errorson</code> settings provide the option for exception&#45;based or non&#45;exception&#45;based implementations,
+rather than forcing one or the other.]</p>
+
+<p>{{ NOTE: There are a couple of different factors here.
+One is the ability to globally define the severity of certain exceptions or categories of exceptions without needing to define a handler for each one.
+(e.g.
+Perl 6 may have pragmas to set how severe type&#45;checking errors are.
+A simple &#34;incompatible type&#34; error may be fatal under one pragma,
+a resumable warning under another pragma,
+and completely silent under a third pragma.) Another is the ability to &#34;defang&#34; opcodes so they return error codes instead of throwing exceptions.
+We might provide a very simple interface to catch an exception and capture its payload without the full complexity of manually defining exception handlers (though it would still be implemented as an exception handler internally).
+Something like:</p>
+
+<p>This could eliminate the need for &#34;defanging&#34; because it would be almost as easy to use as error codes.
+It could be implemented once for all exceptional opcodes,
+instead of needing to be defined for each one.
+And,
+it still keeps the error information out&#45;of&#45;band,
+instead of mixing the error in with normal return values.
+}}</p>
+
+<h3><a name="Exception_Object_Interface"
+>Exception Object Interface</a></h3>
+
+<h4><a name="Retrieving_the_Exception_Message"
+>Retrieving the Exception Message</a></h4>
+
+<p>The exception message is stored in the &#39;message&#39; attribute:</p>
+<pre>  # ...
+ handler:
+  .local pmc exception
+  .local string message
+  .get_results (exception)
+  message = exception['message']
+  say message
+</pre>
+<h4><a name="Resuming_after_Exceptions"
+>Resuming after Exceptions</a></h4>
+
+<p>Exceptions thrown by standard Parrot opcodes (like the one thrown by <code>get_hll_global</code> above or by the <code>throw</code> opcode) are always resumable,
+so when the exception handler function returns normally it continues execution at the opcode immediately after the one that threw the exception.
+Other exceptions at the run&#45;loop level are also generally resumable.</p>
+
+<p>{{NOTE: Currently only implemented for the actual throwing opcodes,
+throw,
+die,
+exit.}}</p>
+
+<p>You resume from an exception by invoking the return continuation stored in the &#39;resume&#39; attribute of the exception.</p>
+<pre>  push_eh handler
+  $P0 = new 'Exception'          # create new exception object
+  throw $P0                      # throw it
+  pop_eh
+  say "Everything is just fine."
+  .return()
+ handler:
+  .local pmc exception, continuation
+  .get_results (exception)
+  continuation = exception['resume']
+  continuation()
+</pre>
+<h2><a name="References"
+>References</a></h2>
+
+<p><em><a href="../../src/ops/core.ops.html">src/ops/core.ops</a></em>,
+<em><a href="../../src/exceptions.c.html">src/exceptions.c</a></em>,
+<em><a href="../../src/pmc/exception.pmc.html">src/pmc/exception.pmc</a></em>,
+<em><a href="../../src/pmc/exceptionhandler.pmc.html">src/pmc/exceptionhandler.pmc</a></em></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

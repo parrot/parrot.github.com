@@ -1,0 +1,140 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PDD 30: Installation</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; PDD 30: Installation
+                </div>
+
+<h1><a name="PDD_30:_Installation"
+>PDD 30: Installation</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>This PDD outlines Parrot&#39;s installation system and support.
+Parrot&#39;s core installation system will provide support for binary packages,
+a working <code>make install</code> target,
+compiled installables,
+and Filesystem Hierarchy Standard (FHS) compliant search paths for the installables.</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Synopsis"
+>Synopsis</a></h2>
+
+<p>Parrot installation process (from the parrot source directory):</p>
+
+<pre>  perl Configure.pl &#45;&#45;prefix=/usr
+  make
+  make test
+  make install</pre>
+
+<p>Language installation process (from the language source directory):</p>
+
+<pre>  perl Configure.pl &#45;&#45;parrot&#45;config=/path/to/parrot_config
+  make
+  make test
+  make install</pre>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<p>Parrot uses FHS compliant install directories by default. Each install location is configurable with options passed to the configure script.</p>
+
+<dl>
+<dt><a name="/usr/bin/parrot"
+><em>/usr/bin/parrot</em></a></dt>
+The main Parrot executable.
+<dt><a name="/usr/lib/parrot/&#60;version&#62;/library/"
+><em>/usr/lib/parrot/&#60;version&#62;/library/</em></a></dt>
+Parrot runtime libraries, corresponds to <em>runtime/parrot/library/</em> in the repository.
+<dt><a name="/usr/lib/parrot/&#60;version&#62;/include/"
+><em>/usr/lib/parrot/&#60;version&#62;/include/</em></a></dt>
+Parrot runtime include files (not C include files), corresponds to <em>runtime/parrot/include/</em> in the repository.
+<dt><a name="/usr/lib/parrot/&#60;version&#62;/dynext/"
+><em>/usr/lib/parrot/&#60;version&#62;/dynext/</em></a></dt>
+Parrot dynamic extension files (for <code>loadlib</code>), corresponds to <em>runtime/parrot/dynext/</em> in the repository.
+<dt><a name="/usr/lib/parrot/&#60;version&#62;/languages/"
+><em>/usr/lib/parrot/&#60;version&#62;/languages/</em></a></dt>
+Parrot language modules. Languages are loaded with <code>load_language &#39;abc&#39;</code>, which loads <em>/usr/lib/parrot/languages/abc/abc.pbc</em> in an installed Parrot.On the commandline, a language is executed as:
+<pre>  $ abc hello.bc</pre>
+Where <em>abc</em> is a symlink to the <em>parrot</em> executable. On platforms that don&#39;t have symlinks, <em>abc</em> may be a copy of the <em>parrot</em> executable. On general principles, languages should not install themselves with the same name as their &#34;real&#34; counterpart, but should provide a build option to do so (so, the default installed executable for Python on Parrot should be <em>pynie</em> or <em>parrot&#45;python</em> but not <em>python</em>).
+<dt><a name="/usr/lib/parrot/&#60;version&#62;/languages/*"
+><em>/usr/lib/parrot/&#60;version&#62;/languages/*</em></a></dt>
+The languages directories may have subdirectories, including <em>library</em> for their own set of libraries, and <em>dynext</em> for dynamic pmcs and ops, and <em>include</em> for PIR or PASM includes.It is recommended that languages follow a standard pattern in installing their libraries so a bytecode compiled version of a module in the <code>mylang</code> HLL named <code>[&#39;Foo&#39;;&#39;Bar&#39;]</code> is stored in <em>/usr/lib/parrot/&#60;version&#62;/languages/&#60;mylang&#62;/library/Foo/Bar.pbc</em>
+<dt><a name="/usr/lib/parrot/&#60;version&#62;/tools/"
+><em>/usr/lib/parrot/&#60;version&#62;/tools/</em></a></dt>
+Parrot tools that don&#39;t belong in the bin/ directory and don&#39;t belong in the runtime, corresponds to <em>tools/dev/</em> and/or <em>tools/build</em> in the repository. Perl modules used by the tools are installed in <em>/usr/lib/parrot/&#60;version&#62;/tools/lib/</em>.
+<dt><a name="/usr/share/doc/parrot/&#60;version&#62;/"
+><em>/usr/share/doc/parrot/&#60;version&#62;/</em></a></dt>
+Parrot documentation files, generally raw Pod, but possibly also formatted HTML. Has subdirectories for each format of documentation: <em>pod/</em>, <em>html/</em>, etc.
+<dt><a name="/usr/include/parrot/&#60;version&#62;/"
+><em>/usr/include/parrot/&#60;version&#62;/</em></a></dt>
+C header files for Parrot.
+<dt><a name="/usr/src/parrot/&#60;version&#62;/"
+><em>/usr/src/parrot/&#60;version&#62;/</em></a></dt>
+PMC source files needed for building dynamic PMCs.</dl>
+
+<h2><a name="Dependencies"
+>Dependencies</a></h2>
+
+<p>Building core Parrot depends on Perl (including <em>perldoc</em>, which may be a separate package), <em>libgdm</em> and <em>libreadline</em>.</p>
+
+<p>Building a language depends on a series of Parrot build tools, installed in <em>/usr/lib/parrot/&#60;version&#62;/tools</em>. These tools will generally not be included in the default <code>parrot</code> package on most systems, languages will require a <code>parrot&#45;dev</code> package to be installed before they can be built.</p>
+
+<h2><a name="Definitions"
+>Definitions</a></h2>
+
+<p>The <b>build_dir</b> is the full path where Parrot was built. It is defined in the configuration hash. When building from source the <code>build_dir</code> is also the <code>PARROT_RUNTIME</code> prefix.</p>
+
+<p>An <b>installable</b> is a bytecode or executable file which must not access the build_dir paths. The build_dir path is not available in a binary package. This is solved by generating and linking a special <em>install_config.fpmc</em>.</p>
+
+<p>The <b>destination directory</b> is the path of the installed Parrot tree after the prefix (<em>/usr</em>, <em>/usr/local</em>, or some other platform&#45;specific or custom location). Creating a virtual installation path like this simplifies packaging by installing into a separate install tree and creating a tarball from that tree.</p>
+
+<p>The <b>configuration hash</b> is the return value of the global function <code>_config()</code>, generated in <em>config_lib.pasm</em>, and either defined in <em>library/config.pir</em>, or as frozen PMC embedded in the test executable (<em>config.fpmc</em>), the installable executable (<em>install_config.fpmc</em>) or empty for miniparrot (<em>null_config.fpmc</em>).</p>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<p>A new language is generated by <em><a href="../../tools/dev/mk_language_shell.pl.html">tools/dev/mk_language_shell.pl</a></em></p>
+
+<p>The makefiles are generated from a makefile template, which can use conditional platform and config logic. The forward slashes are automatically converted to backslashes for MSWin32 and <code>\n</code> is converted to <code>\r\n</code> for MSWin32 nmake. See <a href='..%2F..%2Flib%2FParrot%2FConfigure%2FCompiler.pm.html'>Parrot::Configure::Compiler</a>.</p>
+
+<h3><a name="Packaging_and_Distribution"
+>Packaging and Distribution</a></h3>
+
+<p>Each language, operating system, or distribution is free to package modules in their own way, using their own usual build and install tools. The default distribution format is a tarball containing the source files and a cross&#45;platform build infrastructure (the &#39;make&#39; variants are a good choice, and can be combined with Autoconf, CMake, Perl, Python, etc. for more complex conditional builds).</p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p>None.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

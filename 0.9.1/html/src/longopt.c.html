@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Command&#45;line option parsing</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Contents</a> &raquo; <a href="../../html/c.html">C</a> &raquo; Command&#45;line option parsing
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>longopt.c &#45; Command&#45;line option parsing</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This is used by <code>parrot</code>.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="int_longopt_get"
+><b><code>int longopt_get</b></code></a></dt>
+Gets long or short options,
+specified in <code>options[]</code> (see <em>docs/dev/longopt.dev</em>).Call it iteratively with the same <code>info_buf</code> until it returns 0 or &#45;1.0 means you have reached the end of options.&#45;1 means a parse error,
+with error put in <code>info_buf&#45;&#62;opt_error</code>.Any other value is a valid option identifier.
+<dt><a name="static_int_longopt_get_longopt"
+><b><code>static int longopt_get_longopt</b></code></a></dt>
+Find the option identifier of a long option.Fill <code>info_buf</code> appropriately,
+and return the option identifier.<code>argv[info_buf&#45;</code>opt_index]&#62; is guaranteed to have at least three characters and start with <code>&#45;&#45;</code>.
+<dt><a name="static_int_longopt_get_shortopt"
+><b><code>static int longopt_get_shortopt</b></code></a></dt>
+Find the option identifier of the next short option.This next short option may be in the middle of a bundle (<code>&#45;abcd</code>),
+and <code>info_buf&#45;&#62;_shortopt_pos</code> maintains a pointer into that bundle.<code>argv[info_buf&#45;&#62;opt_index]</code> is guaranteed to be at least two characters long and start with a dash.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em>include/parrot/longopt.h</em> and <em>docs/dev/longopt.dev</em>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

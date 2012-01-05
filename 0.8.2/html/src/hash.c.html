@@ -1,0 +1,293 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Hash table</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Hash table</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/hash.c &#45; Hash table</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>A hashtable contains an array of bucket indexes.
+Buckets are nodes in a linked list,
+each containing a <code lang='und' xml:lang='und'>void *</code> key and value.
+During hash creation,
+the types of key and value as well as appropriate compare and hashing functions can be set.</p>
+
+<p>This hash implementation uses just one piece of malloced memory.
+The <code lang='und' xml:lang='und'>hash&#45;&#62;bs</code> bucket store points to this region.</p>
+
+<p>This hash doesn&#39;t move during GC,
+therefore a lot of the old caveats don&#39;t apply.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_size_t_key_hash_STRING"
+><b><code lang='und' xml:lang='und'>static size_t key_hash_STRING</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the hashed value of the key <code lang='und' xml:lang='und'>value</code>.
+See also string.c.</dd><p class="pad"></p>
+
+<dt><a name="static_int_STRING_compare"
+><b><code lang='und' xml:lang='und'>static int STRING_compare</b></code></a></dt><p class="pad"></p>
+
+<dd>Compares the two strings,
+returning 0 if they are identical.</dd><p class="pad"></p>
+
+<dt><a name="static_int_pointer_compare"
+><b><code lang='und' xml:lang='und'>static int pointer_compare</b></code></a></dt><p class="pad"></p>
+
+<dd>Compares the two pointers,
+returning 0 if they are identical</dd><p class="pad"></p>
+
+<dt><a name="static_size_t_key_hash_pointer"
+><b><code lang='und' xml:lang='und'>static size_t key_hash_pointer</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a hashvalue for a pointer.</dd><p class="pad"></p>
+
+<dt><a name="static_size_t_key_hash_cstring"
+><b><code lang='und' xml:lang='und'>static size_t key_hash_cstring</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a hash value from a string.</dd><p class="pad"></p>
+
+<dd>Takes an interpreter,
+a pointer to a string,
+and a seed value.
+Returns the hash value.</dd><p class="pad"></p>
+
+<dd>Used by Parrot_new_cstring_hash.</dd><p class="pad"></p>
+
+<dt><a name="static_int_cstring_compare"
+><b><code lang='und' xml:lang='und'>static int cstring_compare</b></code></a></dt><p class="pad"></p>
+
+<dd>C string versions of the <code lang='und' xml:lang='und'>key_hash</code> and <code lang='und' xml:lang='und'>compare</code> functions.</dd><p class="pad"></p>
+
+<dt><a name="size_t_key_hash_int"
+><b><code lang='und' xml:lang='und'>size_t key_hash_int</b></code></a></dt><p class="pad"></p>
+
+<dd>Custom <code lang='und' xml:lang='und'>key_hash</code> function.</dd><p class="pad"></p>
+
+<dt><a name="int_int_compare"
+><b><code lang='und' xml:lang='und'>int int_compare</b></code></a></dt><p class="pad"></p>
+
+<dd>Custom <code lang='und' xml:lang='und'>compare</code> function.</dd><p class="pad"></p>
+
+<dt><a name="void_parrot_dump_hash"
+><b><code lang='und' xml:lang='und'>void parrot_dump_hash</b></code></a></dt><p class="pad"></p>
+
+<dd>Print out the hash in human&#45;readable form.
+Except it&#39;s empty.</dd><p class="pad"></p>
+
+<dt><a name="void_parrot_mark_hash"
+><b><code lang='und' xml:lang='und'>void parrot_mark_hash</b></code></a></dt><p class="pad"></p>
+
+<dd>Marks the hash and its contents as live.
+Assumes that key and value are non null in all buckets.</dd><p class="pad"></p>
+
+<dt><a name="static_void_hash_thaw"
+><b><code lang='und' xml:lang='und'>static void hash_thaw</b></code></a></dt><p class="pad"></p>
+
+<dd>This is used by freeze/thaw to visit the contents of the hash.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>pinfo</code> is the visit info,
+(see include/parrot/pmc_freeze.h&#62;).</dd><p class="pad"></p>
+
+<dt><a name="static_void_hash_freeze"
+><b><code lang='und' xml:lang='und'>static void hash_freeze</b></code></a></dt><p class="pad"></p>
+
+<dd>Freeze hash into a string.</dd><p class="pad"></p>
+
+<dd>Takes an interpreter,
+a pointer to the hash,
+and a pointer to the structure containing the string start location.</dd><p class="pad"></p>
+
+<dd>Use by parrot_hash_visit.</dd><p class="pad"></p>
+
+<dt><a name="void_parrot_hash_visit"
+><b><code lang='und' xml:lang='und'>void parrot_hash_visit</b></code></a></dt><p class="pad"></p>
+
+<dd>Freeze or thaw hash as specified.
+Takes an interpreter,
+a pointer to the hash,
+and a pointer to the structure identifying what to do and the location of the string.</dd><p class="pad"></p>
+
+<dt><a name="static_void_expand_hash"
+><b><code lang='und' xml:lang='und'>static void expand_hash</b></code></a></dt><p class="pad"></p>
+
+<dd>For a hashtable of size N,
+we use <code lang='und' xml:lang='und'>MAXFULL_PERCENT</code> % of N as the number of buckets.
+This way,
+as soon as we run out of buckets on the free list,
+we know that it&#39;s time to resize the hashtable.</dd><p class="pad"></p>
+
+<dd>Algorithm for expansion: We exactly double the size of the hashtable.
+Keys are assigned to buckets with the formula</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>        bucket_index = hash(key) % parrot_hash_size</pre>
+
+<dd>so when doubling the size of the hashtable, we know that every key is either already in the correct bucket, or belongs in the current bucket plus <code lang='und' xml:lang='und'>parrot_hash_size</code> (the old <code lang='und' xml:lang='und'>parrot_hash_size</code>). In fact, because the hashtable is always a power of two in size, it depends only on the next bit in the hash value, after the ones previously used.</dd><p class="pad"></p>
+
+<dd>So we scan through all the buckets in order, moving the buckets that need to be moved. No bucket will be scanned twice, and the cache should be reasonably happy because the hashtable accesses will be two parallel sequential scans. (Of course, this also mucks with the <code lang='und' xml:lang='und'>&#45;&#62;next</code> pointers, and they&#39;ll be all over memory.)</dd><p class="pad"></p>
+
+<dt><a name="void_parrot_new_hash"
+><b><code lang='und' xml:lang='und'>void parrot_new_hash</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new Parrot STRING hash in <code lang='und' xml:lang='und'>hptr</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_parrot_new_pmc_hash"
+><b><code lang='und' xml:lang='und'>void parrot_new_pmc_hash</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a new Parrot STRING hash in PMC_struct_val(container)</dd><p class="pad"></p>
+
+<dt><a name="void_parrot_new_cstring_hash"
+><b><code lang='und' xml:lang='und'>void parrot_new_cstring_hash</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new C string hash in <code lang='und' xml:lang='und'>hptr</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_Hash_*_create_hash"
+><b><code lang='und' xml:lang='und'>static Hash *create_hash</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates and initializes a hash. Function pointers determine its behaviors. The container passed in is the address of the hash PMC that is using it. The hash and the PMC point to each other.</dd><p class="pad"></p>
+
+<dd>Memory from this function must be freed.</dd><p class="pad"></p>
+
+<dt><a name="void_parrot_hash_destroy"
+><b><code lang='und' xml:lang='und'>void parrot_hash_destroy</b></code></a></dt><p class="pad"></p>
+
+<dd>Free the memory allocated to the specified hash and its bucket store. Used by Parrot_chash_destroy.</dd><p class="pad"></p>
+
+<dt><a name="void_parrot_chash_destroy"
+><b><code lang='und' xml:lang='und'>void parrot_chash_destroy</b></code></a></dt><p class="pad"></p>
+
+<dd>Delete the specified hash by freeing the memory allocated to all the key&#45;value pairs, and finally the hash itself.</dd><p class="pad"></p>
+
+<dt><a name="void_parrot_chash_destroy_values"
+><b><code lang='und' xml:lang='und'>void parrot_chash_destroy_values</b></code></a></dt><p class="pad"></p>
+
+<dd>Delete the specified hash by freeing the memory allocated to all the key&#45;value pairs, calling the provided callback to free the values, and finally the hash itself.</dd><p class="pad"></p>
+
+<dd>The callback returns <code lang='und' xml:lang='und'>void</code> and takes a <code lang='und' xml:lang='und'>void *</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_parrot_new_hash_x"
+><b><code lang='und' xml:lang='und'>void parrot_new_hash_x</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new hash in <code lang='und' xml:lang='und'>hptr</code>.</dd><p class="pad"></p>
+
+<dd>FIXME: This function can go back to just returning the hash struct pointer once Buffers can define their own custom mark routines.</dd><p class="pad"></p>
+
+<dd>The problem is: During DODs stack walking the item on the stack must be a PMC. When an auto <code lang='und' xml:lang='und'>Hash*</code> is seen, it doesn&#39;t get properly marked (only the <code lang='und' xml:lang='und'>Hash*</code> buffer is marked, not its contents). By passing the <code lang='und' xml:lang='und'>**hptr</code> up to the Hash&#39;s init function, the newly constructed PMC is on the stack <i>including</i> this newly constructed Hash, so that it gets marked properly.</dd><p class="pad"></p>
+
+<dt><a name="void_parrot_new_pmc_hash_x"
+><b><code lang='und' xml:lang='und'>void parrot_new_pmc_hash_x</b></code></a></dt><p class="pad"></p>
+
+<dd>Like parrot_new_hash_x but w/o the described problems. The passed in <code lang='und' xml:lang='und'>container</code> PMC gets stored in the Hash end the newly created Hash is in PMC_struct_val(container).</dd><p class="pad"></p>
+
+<dt><a name="void_parrot_new_pointer_hash"
+><b><code lang='und' xml:lang='und'>void parrot_new_pointer_hash</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a new HASH with void * keys and values.</dd><p class="pad"></p>
+
+<dt><a name="PMC*_Parrot_new_INTVAL_hash"
+><b><code lang='und' xml:lang='und'>PMC *Parrot_new_INTVAL_hash</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a new Hash PMC with INTVAL keys and values. <code lang='und' xml:lang='und'>flags</code> can be <code lang='und' xml:lang='und'>PObj_constant_FLAG</code> or 0.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_parrot_hash_size"
+><b><code lang='und' xml:lang='und'>INTVAL parrot_hash_size</b></code></a></dt><p class="pad"></p>
+
+<dd>Return the number of used entries in the hash.</dd><p class="pad"></p>
+
+<dt><a name="void_*_parrot_hash_get_idx"
+><b><code lang='und' xml:lang='und'>void *parrot_hash_get_idx</b></code></a></dt><p class="pad"></p>
+
+<dd>Called by iterator.</dd><p class="pad"></p>
+
+<dt><a name="HashBucket_*_parrot_hash_get_bucket"
+><b><code lang='und' xml:lang='und'>HashBucket *parrot_hash_get_bucket</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the bucket for <code lang='und' xml:lang='und'>key</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_*_parrot_hash_get"
+><b><code lang='und' xml:lang='und'>void *parrot_hash_get</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the value keyed by <code lang='und' xml:lang='und'>key</code> or <code lang='und' xml:lang='und'>NULL</code> if no bucket is found.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_parrot_hash_exists"
+><b><code lang='und' xml:lang='und'>INTVAL parrot_hash_exists</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns whether the key exists in the hash.</dd><p class="pad"></p>
+
+<dt><a name="HashBucket*_parrot_hash_put"
+><b><code lang='und' xml:lang='und'>HashBucket *parrot_hash_put</b></code></a></dt><p class="pad"></p>
+
+<dd>Puts the key and value into the hash. Note that <code lang='und' xml:lang='und'>key</code> is <b>not</b> copied.</dd><p class="pad"></p>
+
+<dt><a name="void_parrot_hash_delete"
+><b><code lang='und' xml:lang='und'>void parrot_hash_delete</b></code></a></dt><p class="pad"></p>
+
+<dd>Deletes the key from the hash.</dd><p class="pad"></p>
+
+<dt><a name="void_parrot_hash_clone"
+><b><code lang='und' xml:lang='und'>void parrot_hash_clone</b></code></a></dt><p class="pad"></p>
+
+<dd>Clones <code lang='und' xml:lang='und'>hash</code> to <code lang='und' xml:lang='und'>dest</code>.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>docs/pdds/pdd08_keys.pod</em>.</p>
+
+<h1><a name="TODO"
+>TODO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Future optimizations:</p>
+
+<ul>
+<li>Stop reallocating the bucket pool, and instead add chunks on. (Saves pointer fixups and copying during <code lang='und' xml:lang='und'>realloc</code>.)</li><p class="pad"></p>
+
+<li>Hash contraction (don&#39;t if it&#39;s worth it)</li><p class="pad"></p>
+</ul>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

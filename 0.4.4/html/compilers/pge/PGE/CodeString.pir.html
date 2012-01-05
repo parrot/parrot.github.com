@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>object to build (PIR) code segments</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">object to build (PIR) code segments</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>CodeString &#45; object to build (PIR) code segments</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>    .local pmc code
+    code = new &#39;CodeString&#39;
+
+    code.emit(&#34;   $P0 = %0 * %1&#34;, &#39;$P21&#39;, &#39;3&#39;)
+    code.emit(&#34;  %l:&#34;, &#39;l&#39; =&#62; &#39;label&#39;)
+
+    print code</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p><code lang='und' xml:lang='und'>CodeString</code> is a class intended to simplify the process of emitting code strings. Ideally this will eventually become a form of &#34;CodeBuffer&#34; that is more efficient than string concatenation, but for now it works well enough for me.</p>
+
+<p>The primary method for <code lang='und' xml:lang='und'>CodeString</code> objects is <code lang='und' xml:lang='und'>emit</code>, which appends a line (or lines) of code to the string according to a format parameter. The line can contain substitution markers (ala printf) that indicate where other parameters to the call should be placed.</p>
+
+<p>Note that <code lang='und' xml:lang='und'>CodeString</code> is just a subclass of Parrot&#39;s native <code lang='und' xml:lang='und'>String</code> class, so it&#39;s easy to combine CodeString objects with other strings outside of the <code lang='und' xml:lang='und'>emit</code> method.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="_onload()"
+><b><code lang='und' xml:lang='und'>_onload()</b></code></a></dt><p class="pad"></p>
+
+<dd>Initializes the <code lang='und' xml:lang='und'>CodeString</code> class.</dd><p class="pad"></p>
+
+<dt><a name="emit(string_fmt_[,_pmc_args_]_[,_pmc_hash_])"
+><b><code lang='und' xml:lang='und'>emit(string fmt [, pmc args ] [, pmc hash ])</b></code></a></dt><p class="pad"></p>
+
+<dd>Add a line to a <code lang='und' xml:lang='und'>CodeString</code> object according to <code lang='und' xml:lang='und'>fmt</code>. The <code lang='und' xml:lang='und'>fmt</code> string can contain any number of &#34;%&#45;replacements&#34; which are replaced by the corresponding values from <code lang='und' xml:lang='und'>args</code> or <code lang='und' xml:lang='und'>hash</code> prior to being appended to the string. (Here <code lang='und' xml:lang='und'>args</code> is a slurpy array, and <code lang='und' xml:lang='und'>hash</code> is a slurpy hash.)</dd><p class="pad"></p>
+
+<dd>The currently defined replacements include:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    %0 %1 ... %9     the value from the args array at index 0..9
+    %,               the values of the args array separated by commas
+    %%               a percent sign</pre>
+
+<dd>A percent&#45;sign followed by any other character that is a hash key receives the value of the hash element.</dd><p class="pad"></p>
+
+<dd>A newline is automatically added to the end of the fmt.</dd><p class="pad"></p>
+
+<dt><a name="unique([string_fmt])"
+><b><code lang='und' xml:lang='und'>unique([string fmt])</b></code></a></dt><p class="pad"></p>
+
+<dd>Each call to <code lang='und' xml:lang='und'>unique</code> returns a unique number, or if a <code lang='und' xml:lang='und'>fmt</code> parameter is given it returns a unique string beginning with <code lang='und' xml:lang='und'>fmt</code>. (This may eventually be generalized to allow uniqueness anywhere in the string.) The function starts counting at 10 (so that the values 0..9 can be considered &#34;safe&#34;).</dd><p class="pad"></p>
+
+<dt><a name="escape(string_str)"
+><b><code lang='und' xml:lang='und'>escape(string str)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns an escaped value of <code lang='und' xml:lang='und'>str</code> suitable for including in PIR. If the string contains any non&#45;ASCII characters, then it&#39;s prefixed with &#39;unicode:&#39;.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Patrick Michaud (pmichaud@pobox.com) is the author and maintainer. Patches and suggestions should be sent to the Perl 6 compiler list (perl6&#45;compiler@perl.org).</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

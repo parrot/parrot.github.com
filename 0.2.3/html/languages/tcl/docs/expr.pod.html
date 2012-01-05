@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/tcl.html">TCL</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="OVERVIEW"
+>OVERVIEW <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This documents how expressions are handled internally.</p>
+
+<h1><a name="Split_the_string_into_an_array_of_chunks"
+>Split the string into an array of chunks <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>If a ( starts the chunk,
+then get until the closing matched ) and label it as a GROUP</p>
+
+<p>if a { starts the chunk,
+then get until the closing matched } and label it as a BLOCK</p>
+
+<p>if a [ starts the chunk,
+then get until the closing ] and label it as a COMMAND</p>
+
+<p>if a &#34; starts the chunk,
+then get until the next &#34; and label it as a STRING</p>
+
+<p>if a $ starts the chunk,
+then it&#39;s a variable,
+get according to variable rules,
+get the value of said variable,
+and label it as an operand of the appropriate type.</p>
+
+<p>if it&#39;s a string that matches one of the defined functions,
+then grab it and label it as a FUNC.
+Treat the argument inside the ()&#39;s as an operand ( follow operand rules)</p>
+
+<p>if it matches one of the operators,
+get it and label it as an OP</p>
+
+<p>if looks like an integer,
+pull it off and mark it as an INT</p>
+
+<p>if looks like a float,
+pull it off and mark it as a FLOAT</p>
+
+<p>if it&#39;s whitespace,
+skip.</p>
+
+<p>otherwise,
+pull it off and mark it as a string.</p>
+
+<h1><a name="Convert_the_chunks_into_a_program_stack"
+>Convert the chunks into a program stack <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Now we have an array of chunks.
+scan the array for each level of operator precedence.
+If we find a match for an op at that level of precedence,
+pull it out and put in the right spot on the stack.
+(which,
+unless I&#39;m mistaken,
+is always the top.
+but I could be.)</p>
+
+<p>e.g.
+given 5*2+4/2,
+we get an array of chunks:</p>
+
+<pre lang='und' xml:lang='und'>        INT 5, OP *, INT 2, OP +, INT 4, OP /, INT 2</pre>
+
+<p>Going through our first level of precedence, no hits. Second, we get a hit on the * and the /. Put those on the stack.</p>
+
+<pre lang='und' xml:lang='und'>        INT 5
+        INT 2
+        OP *
+        INT 4
+        INT 2
+        OP /</pre>
+
+<p>That leaves a lone &#34;OP +&#34;, which we then append to the stack, giving a program stack of:</p>
+
+<pre lang='und' xml:lang='und'>        INT 5
+        INT 2
+        OP *
+        INT 4
+        INT 2
+        OP /
+        OP +</pre>
+
+<h1><a name="Calculate_the_result"
+>Calculate the result <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Now we add a result stack to our program stack. Move off all the values until you end up with an OP (or a FUNC) at the top of the program stack:</p>
+
+<pre lang='und' xml:lang='und'>        Program    Result
+        &#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;
+        OP *       INT 5
+        INT 4      INT 2
+        INT 2
+        OP /
+        OP +</pre>
+
+<p>Now we process the * OP. It requires two numeric values, which we have. Since they&#39;re both ints, we end up with an INT result, which we put on the result stack. We then move over the other values, until we get to the next op.</p>
+
+<pre lang='und' xml:lang='und'>        Program    Result
+        &#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;
+        OP /       INT 2
+        OP +       INT 4
+                   INT 10 </pre>
+
+<p>Again, integers yield integers. we do the math, and have no more values to copy over at the moment:</p>
+
+<pre lang='und' xml:lang='und'>        Program    Result
+        &#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;
+        OP +       INT 2
+                   INT 10</pre>
+
+<p>We do the addition...</p>
+
+<pre lang='und' xml:lang='und'>        Program    Result
+        &#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;
+        /empty/    INT 12</pre>
+
+<p>Our program stack is empty, we have a single result. At this point, we know the type, so if our interpreter was smart enough (which it&#39;s not as of this writing), we could pass around the native value rather than stringifying it first.</p>
+
+<h1><a name="TODO"
+>TODO <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Clarify when we&#39;re going to evaluate blocks, commands, strings, etc.</p>
+
+<p>Add notes covering the &#34;BLOCK&#34; concept of deferred evaluation.</p>
+
+<p>Change the example given to one a little more complex, that includes precedence (implied and implicit), deferred evaluation, short circuiting.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

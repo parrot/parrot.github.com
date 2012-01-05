@@ -1,0 +1,1196 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Parrot Intermediate Representation</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Intermediate Representation</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>docs/pdds/pdd19_pir.pod &#45; Parrot Intermediate Representation</p>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>$Revision$</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This document outlines the architecture and core syntax of Parrot Intermediate Representation (PIR).</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>PIR is a stable,
+middle&#45;level language intended both as a target for the generated output from high&#45;level language compilers,
+and for human use developing core features and extensions for Parrot.</p>
+
+<h2><a name="Basic_Syntax"
+>Basic Syntax <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>A valid PIR program consists of a sequence of statements,
+directives,
+comments and empty lines.</p>
+
+<h3><a name="Statements"
+>Statements</a></h3>
+
+<p>A statement starts with an optional label,
+contains an instruction,
+and is terminated by a newline (&#60;NL&#62;).
+Each statement must be on its own line.</p>
+
+<pre lang='und' xml:lang='und'>  [label:] [instruction] &#60;NL&#62;</pre>
+
+<p>An instruction may be either a low&#45;level opcode or a higher&#45;level PIR operation, such as a subroutine call, a method call, a directive, or PIR syntactic sugar.</p>
+
+<h3><a name="Directives"
+>Directives</a></h3>
+
+<p>A directive provides information for the PIR compiler that is outside the normal flow of executable statements. Directives are all prefixed with a &#34;.&#34;, as in <code lang='und' xml:lang='und'>.local</code> or <code lang='und' xml:lang='und'>.sub</code>.</p>
+
+<h3><a name="Comments"
+>Comments</a></h3>
+
+<p>Comments start with <code lang='und' xml:lang='und'>#</code> and last until the following newline. PIR also allows comments in Pod format. Comments, Pod content, and empty lines are ignored.</p>
+
+<h3><a name="Identifiers"
+>Identifiers</a></h3>
+
+<p>Identifiers start with a letter or underscore, then may contain additionally letters, digits, and underscores. Identifiers don&#39;t have any limit on length at the moment, but some sane&#45;but&#45;generous length limit may be imposed in the future (256 chars, 1024 chars?). The following examples are all valid identifiers.</p>
+
+<pre lang='und' xml:lang='und'>    a
+    _a
+    A42</pre>
+
+<p>Opcode names are not reserved words in PIR, and may be used as variable names. For example, you can define a local variable named <code lang='und' xml:lang='und'>print</code>. [See RT #24251] Note that by using an opcode name as a local variable name, the variable will <i>hide</i> the opcode name, effectively making the opcode unusable.</p>
+
+<p>In contrast to opcode names, PIR keywords <i>are</i> reserved, and cannot be used as identifiers. Some opcode names are, in fact, PIR keywords, which therefore cannot be used as identifiers.</p>
+
+<p>The following are PIR keywords, and cannot be used as identifiers:</p>
+
+<pre lang='und' xml:lang='und'> goto      if       int         null
+ num       pmc      string      unless</pre>
+
+<p>{{ NOTE: compilers/pirc does not have any reserved words; all keywords and ops can be used as identifiers. }}</p>
+
+<h3><a name="Labels"
+>Labels</a></h3>
+
+<p>A label declaration consists of a label name followed by a colon. A label name conforms to the standard requirements for identifiers. A label declaration may occur at the start of a statement, or stand alone on a line, but always within a subroutine.</p>
+
+<p>A reference to a label consists of only the label name, and is generally used as an argument to an instruction or directive.</p>
+
+<p>A PIR label is accessible only in the subroutine where it&#39;s defined. A label name must be unique within a subroutine, but it can be reused in other subroutines.</p>
+
+<pre lang='und' xml:lang='und'>  goto label1
+     ...
+  label1:</pre>
+
+<h3><a name="Registers_and_Variables"
+>Registers and Variables</a></h3>
+
+<p>There are two ways of referencing Parrot&#39;s registers. The first is through named local variables declared with <code lang='und' xml:lang='und'>.local</code>.</p>
+
+<pre lang='und' xml:lang='und'>  .local pmc foo</pre>
+
+<p>The type of a named variable can be <code lang='und' xml:lang='und'>int</code>, <code lang='und' xml:lang='und'>num</code>, <code lang='und' xml:lang='und'>string</code> or <code lang='und' xml:lang='und'>pmc</code>, corresponding to the types of registers. No other types are used. [See RT#42769]</p>
+
+<p>The second way of referencing a register is through a register variable <code lang='und' xml:lang='und'>$In</code>, <code lang='und' xml:lang='und'>$Sn</code>, <code lang='und' xml:lang='und'>$Nn</code>, or <code lang='und' xml:lang='und'>$Pn</code>. The capital letter indicates the type of the register (integer, string, number, or PMC). <i>n</i> consists of digit(s) only. There is no limit on the size of <i>n</i>. There is no direct correspondence between the value of <i>n</i> and the position of the register in the register set, <code lang='und' xml:lang='und'>$P42</code> may be stored in the zeroth PMC register, if it is the only register in the subroutine.</p>
+
+<p>{{DEPRECATION NOTE: PIR will no longer support the old PASM&#45;style syntax for registers without dollar signs: <code lang='und' xml:lang='und'>In</code>, <code lang='und' xml:lang='und'>Sn</code>, <code lang='und' xml:lang='und'>Nn</code>, <code lang='und' xml:lang='und'>Pn</code>. RT#57638}}</p>
+
+<h2><a name="Constants"
+>Constants <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Constants may be used in place of registers or variables. A constant is not allowed on the left side of an assignment, or in any other context where the variable would be modified.</p>
+
+<dl>
+<dt><a name="&#39;single&#45;quoted_string_constant&#39;"
+>&#39;single&#45;quoted string constant&#39;</a></dt><p class="pad"></p>
+
+<dd>Are delimited by single&#45;quotes (<code lang='und' xml:lang='und'>&#39;</code>). They are taken to be ASCII encoded. No escape sequences are processed.</dd><p class="pad"></p>
+
+<dt><a name="&#34;double&#45;quoted_string_constants&#34;"
+>&#34;double&#45;quoted string constants&#34;</a></dt><p class="pad"></p>
+
+<dd>Are delimited by double&#45;quotes (<code lang='und' xml:lang='und'>&#34;</code>). A <code lang='und' xml:lang='und'>&#34;</code> inside a string must be escaped by <code lang='und' xml:lang='und'>\</code>. The default encoding for a double&#45;quoted string constant is 7&#45;bit ASCII, other character sets and encodings must be marked explicitly using a charset or encoding flag.</dd><p class="pad"></p>
+
+<dt><a name="&#60;&#60;&#34;heredoc&#34;,_&#60;&#60;&#39;heredoc&#39;"
+>&#60;&#60;&#34;heredoc&#34;, &#60;&#60;&#39;heredoc&#39;</a></dt><p class="pad"></p>
+
+<dd>Heredocs work like single or double quoted strings. All lines up to the terminating delimiter are slurped into the string. The delimiter has to be on its own line, at the beginning of the line and with no trailing whitespace.</dd><p class="pad"></p>
+
+<dd>Assignment of a heredoc:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  $S0 = &#60;&#60;&#34;EOS&#34;
+  ...
+ EOS</pre>
+
+<dd>A heredoc as an argument:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  function(&#60;&#60;&#34;END_OF_HERE&#34;, arg)
+  ...
+ END_OF_HERE
+
+  .return(&#60;&#60;&#39;EOS&#39;)
+  ...
+ EOS
+
+  .yield(&#60;&#60;&#39;EOS&#39;)
+  ...
+ EOS</pre>
+
+<dd>You may have multiple heredocs within a single statement or directive:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>   function(&#60;&#60;&#39;INPUT&#39;, &#60;&#60;&#39;OUTPUT&#39;, &#39;some test&#39;)
+   ...
+ INPUT
+   ...
+ OUTPUT</pre>
+
+<dt><a name="charset:&#34;string_constant&#34;"
+>charset:&#34;string constant&#34;</a></dt><p class="pad"></p>
+
+<dd>Like above with a character set attached to the string. Valid character sets are currently: <code lang='und' xml:lang='und'>ascii</code> (the default), <code lang='und' xml:lang='und'>binary</code>, <code lang='und' xml:lang='und'>unicode</code> (with UTF&#45;8 as the default encoding), and <code lang='und' xml:lang='und'>iso&#45;8859&#45;1</code>.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="String_escape_sequences"
+>String escape sequences <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Inside double&#45;quoted strings the following escape sequences are processed.</p>
+
+<pre lang='und' xml:lang='und'>  \xhh        1..2 hex digits
+  \ooo        1..3 oct digits
+  \cX         control char X
+  \x{h..h}    1..8 hex digits
+  \uhhhh      4 hex digits
+  \Uhhhhhhhh  8 hex digits
+  \a, \b, \t, \n, \v, \f, \r, \e, \\, \&#34;</pre>
+
+<dl>
+<dt><a name="encoding:charset:&#34;string_constant&#34;"
+>encoding:charset:&#34;string constant&#34;</a></dt><p class="pad"></p>
+
+<dd>Like above with an extra encoding attached to the string. For example:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  set S0, utf8:unicode:&#34;&#194;&#171;&#34;</pre>
+
+<dd>The encoding and charset are attached to the string constant, and adopted by any string container the constant is assigned to.</dd><p class="pad"></p>
+
+<dd>The standard escape sequences are honored within strings with an alternate encoding, so in the example above, you can include a particular Unicode character as either a literal sequence of bytes, or as an escape sequence.</dd><p class="pad"></p>
+
+<dt><a name="numeric_constants"
+>numeric constants</a></dt><p class="pad"></p>
+
+<dd>Both integers (<code lang='und' xml:lang='und'>42</code>) and numbers (<code lang='und' xml:lang='und'>3.14159</code>) may appear as constants. <code lang='und' xml:lang='und'>0x</code> and <code lang='und' xml:lang='und'>0b</code> denote hex and binary constants respectively.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Directives"
+>Directives <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name=".local_&#60;type&#62;_&#60;identifier&#62;_[:unique_reg]"
+>.local &#60;type&#62; &#60;identifier&#62; [:unique_reg]</a></dt><p class="pad"></p>
+
+<dd>Define a local name <i>identifier</i> within a subroutine with the given <i>type</i>. You can define multiple identifiers of the same type by separating them with commas:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  .local int i, j</pre>
+
+<dd>The optional <code lang='und' xml:lang='und'>:unique_reg</code> modifier will force the register allocator to associate the identifier with a unique register for the duration of the subroutine. If the register allocator is thought of as an optimization tool for allowing fewer registers to be used in a register frame by reusing unused registers, then the <code lang='und' xml:lang='und'>:unique_reg</code> directive forces this optimization to be turned off. This can be important in a number of situations:</dd><p class="pad"></p>
+
+<ul>
+<li>When a subroutine has a small fixed number of registers</li><p class="pad"></p>
+
+<li>When a named variable or named register is used throughout the entire subroutine</li><p class="pad"></p>
+
+<li>When a reference needs to be made to a register</li><p class="pad"></p>
+</ul>
+
+<dt><a name=".lex_&#60;string_constant&#62;,_&#60;reg&#62;"
+>.lex &#60;string constant&#62;, &#60;reg&#62;</a></dt><p class="pad"></p>
+
+<dd>Declare a lexical variable that is an alias for a PMC register. For example, given this preamble:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    .lex &#39;$a&#39;, $P0
+    $P1 = new &#39;Integer&#39;
+
+    These two opcodes have an identical effect:
+
+    $P0 = $P1
+    store_lex &#39;$a&#39;, $P1
+
+    And these two opcodes also have an identical effect:
+
+    $P1 = $P0
+    $P1 = find_lex &#39;$a&#39;</pre>
+
+<dt><a name=".const_&#60;type&#62;_&#60;identifier&#62;_=_&#60;const&#62;"
+>.const &#60;type&#62; &#60;identifier&#62; = &#60;const&#62;</a></dt><p class="pad"></p>
+
+<dd>Define a constant named <i>identifier</i> of type <i>type</i> and assign value <i>const</i> to it. The <i>type</i> may be either an integer value or a string constant. The constant is stored in the constant table of the current bytecode file.</dd><p class="pad"></p>
+
+<dt><a name=".globalconst_&#60;type&#62;_&#60;identifier&#62;_=_&#60;const&#62;"
+>.globalconst &#60;type&#62; &#60;identifier&#62; = &#60;const&#62;</a></dt><p class="pad"></p>
+
+<dd>As <code lang='und' xml:lang='und'>.const</code> above, but the defined constant is globally accessible.</dd><p class="pad"></p>
+
+<dt><a name=".sub"
+>.sub</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  .sub &#60;identifier&#62; [:&#60;flag&#62; ...]
+  .sub &#60;quoted string&#62; [:&#60;flag&#62; ...]</pre>
+
+<dd>Define a subroutine. All code in a PIR source file must be defined in a subroutine. See the section <a href='#Subroutine_flags'>&#34;Subroutine flags&#34;</a> for available flags. Optional flags are a list of <i>flag</i>, separated by spaces.</dd><p class="pad"></p>
+
+<dd>The name of the sub may be either a bare identifier or a quoted string constant. Bare identifiers must be valid PIR identifiers (see <a href='TODO'>Identifiers</a> above), but string sub names can contain any characters, including characters from different character sets (see <a href='TODO'>Constants</a> above).</dd><p class="pad"></p>
+
+<dd>Always paired with <code lang='und' xml:lang='und'>.end</code>.</dd><p class="pad"></p>
+
+<dt><a name=".end"
+>.end</a></dt><p class="pad"></p>
+
+<dd>End a subroutine. Always paired with <code lang='und' xml:lang='und'>.sub</code>.</dd><p class="pad"></p>
+
+<dt><a name=".namespace_[_&#60;identifier&#62;_;_&#60;identifier&#62;_]"
+>.namespace [ &#60;identifier&#62; ; &#60;identifier&#62; ]</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>   .namespace [ &#60;key&#62;? ]
+
+   key: &#60;identifier&#62; [&#39;;&#39; &#60;identifier&#62;]*</pre>
+
+<dd>Defines the namespace from this point onwards. By default the program is not in any namespace. If you specify more than one, separated by semicolons, it creates nested namespaces, by storing the inner namespace object in the outer namespace&#39;s global pad.</dd><p class="pad"></p>
+
+<dd>You can specify the root namespace by using empty brackets, such as:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    .namespace [ ]</pre>
+
+<dd>The brackets are not optional, although the key inside them is.</dd><p class="pad"></p>
+
+<dt><a name=".loadlib_&#39;lib_name&#39;"
+>.loadlib &#39;lib_name&#39;</a></dt><p class="pad"></p>
+
+<dd>Load the given library at compile time, that is, as soon that line is parsed. See also the <code lang='und' xml:lang='und'>loadlib</code> opcode, which does the same at run time.</dd><p class="pad"></p>
+
+<dd>A library loaded this way is also available at runtime, as if it has been loaded again in <code lang='und' xml:lang='und'>:load</code>, so there is no need to call <code lang='und' xml:lang='und'>loadlib</code> at runtime.</dd><p class="pad"></p>
+
+<dt><a name=".HLL_&#60;hll_name&#62;"
+>.HLL &#60;hll_name&#62;</a></dt><p class="pad"></p>
+
+<dd>Define the HLL for the current file. Takes one string constant, the name of the HLL.</dd><p class="pad"></p>
+
+<dt><a name=".HLL_&#60;hll_name&#62;,_&#60;hll_lib&#62;_[deprecated:_RT_#57428]"
+>.HLL &#60;hll_name&#62;, &#60;hll_lib&#62; [deprecated: RT #57428]</a></dt><p class="pad"></p>
+
+<dd>An old form of the .HLL directive that also loaded a shared lib for the HLL. Use <code lang='und' xml:lang='und'>.loadlib</code> instead.</dd><p class="pad"></p>
+
+<dt><a name=".HLL_map_&#60;core_type&#62;_=_&#60;user_type&#62;_[unimplemented:_RT_#57430]"
+>.HLL_map &#60;core_type&#62; = &#60;user_type&#62; [unimplemented: RT #57430]</a></dt><p class="pad"></p>
+
+<dd>Whenever Parrot has to create PMCs inside C code on behalf of the running user program, it consults the current type mapping for the executing HLL and creates a PMC of type <i>user_type</i> instead of <i>core_type</i>, if such a mapping is defined. <i>core_type</i> and <i>user_type</i> may be any valid string constant.</dd><p class="pad"></p>
+
+<dd>For example, with this code snippet:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  .loadlib &#39;dynlexpad&#39;
+
+  .HLL &#39;Foo&#39;
+  .HLL_map &#39;LexPad&#39; = &#39;DynLexPad&#39;
+
+  .sub main :main
+    ...</pre>
+
+<dd>all subroutines for language <i>Foo</i> would use a dynamic lexpad pmc.</dd><p class="pad"></p>
+
+<dt><a name=".line_&#60;integer&#62;,_&#60;string&#62;"
+>.line &#60;integer&#62;, &#60;string&#62;</a></dt><p class="pad"></p>
+
+<dd>Set the line number and filename to the value specified. This is useful in case the PIR code is generated from some source file, and error messages should print the source file, not the line number and filename of the generated file.</dd><p class="pad"></p>
+
+<dd>{{ DEPRECATION NOTE: was <code lang='und' xml:lang='und'>&#60;#line &#60;integer</code> &#60;string&#62;&#62;&#62;. See [RT#45857], [RT#43269], and [RT#47141]. }}</dd><p class="pad"></p>
+
+<dt><a name=".namespace_&#60;identifier&#62;_[deprecated:_See_RT_#48737]"
+>.namespace &#60;identifier&#62; [deprecated: See RT #48737]</a></dt><p class="pad"></p>
+
+<dd>{{ DEPRECATION NOTE: this variation of <code lang='und' xml:lang='und'>.namespace</code> and <code lang='und' xml:lang='und'>.endnamespace</code> are deprecated. They were a hackish attempt at implementing scopes in Parrot, but didn&#39;t actually turn out to be useful.}}</dd><p class="pad"></p>
+
+<dd>Open a new scope block. This &#34;namespace&#34; is not the same as the .namespace [ &#60;identifier&#62; ] syntax, which is used for storing subroutines in a particular namespace in the global symbol table. This directive is useful in cases such as (pseudocode):</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  local x = 1;
+  print(x);       # prints 1
+  do              # open a new namespace/scope block
+    local x = 2;  # this x hides the previous x
+    print(x);     # prints 2
+  end             # close the current namespace
+  print(x);       # prints 1 again</pre>
+
+<dd>All types of common language constructs such as if, for, while, repeat and such that have nested scopes, can use this directive.</dd><p class="pad"></p>
+
+<dt><a name=".endnamespace_&#60;identifier&#62;_[deprecated:_RT_#48737]"
+>.endnamespace &#60;identifier&#62; [deprecated: RT #48737]</a></dt><p class="pad"></p>
+
+<dd>Closes the scope block that was opened with .namespace &#60;identifier&#62;.</dd><p class="pad"></p>
+</dl>
+
+<h3><a name="Subroutine_flags"
+>Subroutine flags</a></h3>
+
+<dl>
+<dt><a name=":main"
+>:main</a></dt><p class="pad"></p>
+
+<dd>Define &#34;main&#34; entry point to start execution. If multiple subroutines are marked as <b>:main</b>, the <b>last</b> marked subroutine is used. Only the first file loaded or compiled counts; subs marked as <b>:main</b> are ignored by the <b>load_bytecode</b> op.</dd><p class="pad"></p>
+
+<dt><a name=":load"
+>:load</a></dt><p class="pad"></p>
+
+<dd>Run this subroutine when loaded by the <b>load_bytecode</b> op (i.e. neither in the initial program file nor compiled from memory). This is complementary to what <b>:init</b> does (below); to get both behaviours, use <b>:init :load</b>. If multiple subs have the <b>:load</b> pragma, the subs are run in source code order.</dd><p class="pad"></p>
+
+<dt><a name=":init"
+>:init</a></dt><p class="pad"></p>
+
+<dd>Run the subroutine when the program is run directly (that is, not loaded as a module), including when it is compiled from memory. This is complementary to what <b>:load</b> does (above); to get both behaviours, use <b>:init :load</b>.</dd><p class="pad"></p>
+
+<dt><a name=":anon"
+>:anon</a></dt><p class="pad"></p>
+
+<dd>Do not install this subroutine in the namespace. Allows the subroutine name to be reused.</dd><p class="pad"></p>
+
+<dt><a name=":multi(Type1,_Type2...)"
+>:multi(Type1, Type2...)</a></dt><p class="pad"></p>
+
+<dd>Engage in multiple dispatch with the listed types. See <a href='TODO#pdds%2Fpdd27_multi_dispatch.pod'>&#34;pdds/pdd27_multi_dispatch.pod&#34; in docs</a> for more information on the multiple dispatch system.</dd><p class="pad"></p>
+
+<dt><a name=":immediate"
+>:immediate</a></dt><p class="pad"></p>
+
+<dd>Execute this subroutine immediately after being compiled, which is analogous to <code lang='und' xml:lang='und'>BEGIN</code> in Perl 5.</dd><p class="pad"></p>
+
+<dd>In addition, if the sub returns a PMC value, that value replaces the sub in the constant table of the bytecode file. This makes it possible to build constants at compile time, provided that (a) the generated constant can be computed at compile time (i.e. doesn&#39;t depend on the runtime environment), and (b) the constant value is of a PMC class that supports saving in a bytecode file [need a freeze/thaw reference].</dd><p class="pad"></p>
+
+<dd>For example, <code lang='und' xml:lang='und'>examples/shootout/revcomp.pir</code> contains the following (slightly abbreviated) definition:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    .sub tr_00_init :immediate
+    .local pmc tr_array
+    tr_array = new &#39;FixedIntegerArray&#39;
+    tr_array = 256
+    ## [code to initialize tr_array omitted.]
+    .return (tr_array)
+    .end</pre>
+
+<dd>This code is run at compile time, and the returned <code lang='und' xml:lang='und'>tr_array</code> is stored in the bytecode file in place of the sub. Other subs may then do:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    .const .Sub tr_00 = &#39;tr_00_init&#39;</pre>
+
+<dd>in order to fetch the constant.</dd><p class="pad"></p>
+
+<dt><a name=":postcomp"
+>:postcomp</a></dt><p class="pad"></p>
+
+<dd>Execute immediately after being compiled, but only if the subroutine is in the initial file (i.e. not in PIR compiled as result of a <code lang='und' xml:lang='und'>load_bytecode</code> instruction from another file).</dd><p class="pad"></p>
+
+<dd>As an example, suppose file <code lang='und' xml:lang='und'>main.pir</code> contains:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    .sub main
+        load_bytecode &#39;foo.pir&#39;
+    .end</pre>
+
+<dd>and the file <code lang='und' xml:lang='und'>foo.pir</code> contains:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    .sub foo :immediate
+        print &#39;42&#39;
+    .end
+
+    .sub bar :postcomp
+        print &#39;43&#39;
+    .end</pre>
+
+<dd>Executing <code lang='und' xml:lang='und'>foo.pir</code> will run both <code lang='und' xml:lang='und'>foo</code> and <code lang='und' xml:lang='und'>bar</code>. On the other hand, executing <code lang='und' xml:lang='und'>main.pir</code> will run only <code lang='und' xml:lang='und'>foo</code>. If <code lang='und' xml:lang='und'>foo.pir</code> is compiled to bytecode, only <code lang='und' xml:lang='und'>foo</code> will be run, and loading <code lang='und' xml:lang='und'>foo.pbc</code> will not run either <code lang='und' xml:lang='und'>foo</code> or <code lang='und' xml:lang='und'>bar</code>.</dd><p class="pad"></p>
+
+<dt><a name=":method"
+>:method</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  .sub bar :method
+  .sub bar :method(&#39;foo&#39;)</pre>
+
+<dd>The marked <code lang='und' xml:lang='und'>.sub</code> is a method, added as a method in the class that corresponds to the current namespace, and not stored in the namespace. In the method body, the object PMC can be referred to with <code lang='und' xml:lang='und'>self</code>.</dd><p class="pad"></p>
+
+<dd>If a string argument is given to <code lang='und' xml:lang='und'>:method</code> the method is stored with that name instead of the <code lang='und' xml:lang='und'>.sub</code> name.</dd><p class="pad"></p>
+
+<dt><a name=":vtable"
+>:vtable</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  .sub bar :vtable
+  .sub bar :vtable(&#39;foo&#39;)</pre>
+
+<dd>The marked <code lang='und' xml:lang='und'>.sub</code> overrides a vtable function, and is not stored in the namespace. By default, it overrides a vtable function with the same name as the <code lang='und' xml:lang='und'>.sub</code> name. To override a different vtable function, use <code lang='und' xml:lang='und'>:vtable(&#39;...&#39;)</code>. For example, to have a <code lang='und' xml:lang='und'>.sub</code> named <i>ToString</i> also be the vtable function <code lang='und' xml:lang='und'>get_string</code>), use <code lang='und' xml:lang='und'>:vtable(&#39;get_string&#39;)</code>.</dd><p class="pad"></p>
+
+<dd>When the <b>:vtable</b> flag is set, the object PMC can be referred to with <code lang='und' xml:lang='und'>self</code>, as with the <b>:method</b> flag.</dd><p class="pad"></p>
+
+<dt><a name=":outer(subname)"
+>:outer(subname)</a></dt><p class="pad"></p>
+
+<dd>The marked <code lang='und' xml:lang='und'>.sub</code> is lexically nested within the sub known by <i>subname</i>.</dd><p class="pad"></p>
+
+<dt><a name=":lexid(_&#60;string_constant&#62;_)"
+>:lexid( &#60;string_constant&#62; )</a></dt><p class="pad"></p>
+
+<dd>Deprecated; see RT#60592. <code lang='und' xml:lang='und'>:lexid</code> will be renamed to <code lang='und' xml:lang='und'>:subid</code>.</dd><p class="pad"></p>
+
+<dt><a name=":subid(_&#60;string_constant&#62;_)"
+>:subid( &#60;string_constant&#62; )</a></dt><p class="pad"></p>
+
+<dd>Specifies a unique string identifier for the subroutine. This is useful for referring to a particular subroutine with <code lang='und' xml:lang='und'>:outer</code>, even though several subroutines in the file may have the same name (because they are multi, or in different namespaces).</dd><p class="pad"></p>
+
+<dt><a name=":instanceof(_&#60;string_constant&#62;_)"
+>:instanceof( &#60;string_constant&#62; )</a></dt><p class="pad"></p>
+
+<dd>The <code lang='und' xml:lang='und'>:instanceof</code> pragma is an experimental pragma that creates a sub as a PMC type other than &#39;Sub&#39;. However, as currently implemented it doesn&#39;t work well with <code lang='und' xml:lang='und'>:outer</code> or existing PMC types such as <code lang='und' xml:lang='und'>Closure</code>, <code lang='und' xml:lang='und'>Coroutine</code>, etc.</dd><p class="pad"></p>
+
+<dt><a name=":nsentry(_&#60;string_constant&#62;_)"
+>:nsentry( &#60;string_constant&#62; )</a></dt><p class="pad"></p>
+
+<dd>Specify the name by which the subroutine is stored in the namespace. The default name by which a subroutine is stored in the namespace (if this flag is missing), is the subroutine&#39;s name as given after the <code lang='und' xml:lang='und'>.sub</code> directive. This flag allows to override this.</dd><p class="pad"></p>
+</dl>
+
+<h3><a name="Directives_used_for_Parrot_calling_conventions."
+>Directives used for Parrot calling conventions.</a></h3>
+
+<dl>
+<dt><a name=".begin_call_and_.end_call"
+>.begin_call and .end_call</a></dt><p class="pad"></p>
+
+<dd>Directives to start and end a subroutine invocation, respectively.</dd><p class="pad"></p>
+
+<dt><a name=".begin_return_and_.end_return"
+>.begin_return and .end_return</a></dt><p class="pad"></p>
+
+<dd>Directives to start and end a statement to return values.</dd><p class="pad"></p>
+
+<dt><a name=".begin_yield_and_.end_yield"
+>.begin_yield and .end_yield</a></dt><p class="pad"></p>
+
+<dd>Directives to start and end a statement to yield values.</dd><p class="pad"></p>
+
+<dt><a name=".call"
+>.call</a></dt><p class="pad"></p>
+
+<dd>Takes either 2 arguments: the sub and the return continuation, or the sub only. For the latter case an <b>invokecc</b> gets emitted. Providing an explicit return continuation is more efficient, if its created outside of a loop and the call is done inside a loop.</dd><p class="pad"></p>
+
+<dt><a name=".invocant"
+>.invocant</a></dt><p class="pad"></p>
+
+<dd>Directive to specify the object for a method call. Use it in combination with <code lang='und' xml:lang='und'>.meth_call</code>.</dd><p class="pad"></p>
+
+<dt><a name=".meth_call"
+>.meth_call</a></dt><p class="pad"></p>
+
+<dd>Directive to do a method call. It calls the specified method on the object that was specified with the <code lang='und' xml:lang='und'>.invocant</code> directive.</dd><p class="pad"></p>
+
+<dt><a name=".nci_call"
+>.nci_call</a></dt><p class="pad"></p>
+
+<dd>Directive to make a call through the Native Calling Interface (NCI). The specified subroutine must be loaded using the &#60;dlfunc&#62; op that takes the library, function name and function signature as arguments. See <a href='TODO#pdds%2Fpdd16_native_call'>&#34;pdds/pdd16_native_call&#34; in docs</a> for details.</dd><p class="pad"></p>
+
+<dt><a name=".return_&#60;var&#62;_[:&#60;flag&#62;]*"
+>.return &#60;var&#62; [:&#60;flag&#62;]*</a></dt><p class="pad"></p>
+
+<dd>{{ Deprecated; use .set_return instead. See RT#58236. }}</dd><p class="pad"></p>
+
+<dt><a name=".set_return_&#60;var&#62;_[:&#60;flag&#62;]*"
+>.set_return &#60;var&#62; [:&#60;flag&#62;]*</a></dt><p class="pad"></p>
+
+<dd>Between <code lang='und' xml:lang='und'>.begin_return</code> and <code lang='und' xml:lang='und'>.end_return</code>, specify one or more of the return value(s) of the current subroutine. Available flags: <code lang='und' xml:lang='und'>:flat</code>, <code lang='und' xml:lang='und'>:named</code>.</dd><p class="pad"></p>
+
+<dt><a name=".yield_&#60;var&#62;_[:&#60;flag&#62;]*"
+>.yield &#60;var&#62; [:&#60;flag&#62;]*</a></dt><p class="pad"></p>
+
+<dd>{{ Deprecated; use .set_yield instead. See RT#58236. }}</dd><p class="pad"></p>
+
+<dt><a name=".set_yield_&#60;var&#62;_[:&#60;flag&#62;]*"
+>.set_yield &#60;var&#62; [:&#60;flag&#62;]*</a></dt><p class="pad"></p>
+
+<dd>Between <code lang='und' xml:lang='und'>.begin_yield</code> and <code lang='und' xml:lang='und'>.end_yield</code>, specify one or more of the yield value(s) of the current subroutine. Available flags: <code lang='und' xml:lang='und'>:flat</code>, <code lang='und' xml:lang='und'>:named</code>.</dd><p class="pad"></p>
+
+<dt><a name=".arg_&#60;var&#62;_[:&#60;flag&#62;]*"
+>.arg &#60;var&#62; [:&#60;flag&#62;]*</a></dt><p class="pad"></p>
+
+<dd>{{ Deprecated. Use .set_arg instead. See RT#58236. }}</dd><p class="pad"></p>
+
+<dt><a name=".set_arg_&#60;var&#62;_[:&#60;flag&#62;]*"
+>.set_arg &#60;var&#62; [:&#60;flag&#62;]*</a></dt><p class="pad"></p>
+
+<dd>Between <code lang='und' xml:lang='und'>.begin_call</code> and <code lang='und' xml:lang='und'>.call</code>, specify an argument to be passed. Available flags: <code lang='und' xml:lang='und'>:flat</code>, <code lang='und' xml:lang='und'>:named</code>.</dd><p class="pad"></p>
+
+<dt><a name=".result_&#60;var&#62;_[:&#60;flag&#62;]*"
+>.result &#60;var&#62; [:&#60;flag&#62;]*</a></dt><p class="pad"></p>
+
+<dd>{{ Deprecated. Use .get_result instead. See RT#58236. }}</dd><p class="pad"></p>
+
+<dt><a name=".get_result_&#60;var&#62;_[:&#60;flag&#62;]*"
+>.get_result &#60;var&#62; [:&#60;flag&#62;]*</a></dt><p class="pad"></p>
+
+<dd>Between <code lang='und' xml:lang='und'>.call</code> and <code lang='und' xml:lang='und'>.end_call</code>, specify where one or more return value(s) should be stored. Available flags: <code lang='und' xml:lang='und'>:slurpy</code>, <code lang='und' xml:lang='und'>:named</code>, <code lang='und' xml:lang='und'>:optional</code>, and <code lang='und' xml:lang='und'>:opt_flag</code>.</dd><p class="pad"></p>
+</dl>
+
+<h3><a name="Directives_for_subroutine_parameters"
+>Directives for subroutine parameters</a></h3>
+
+<dl>
+<dt><a name=".param_&#60;type&#62;_&#60;identifier&#62;_[:&#60;flag&#62;]*"
+>.param &#60;type&#62; &#60;identifier&#62; [:&#60;flag&#62;]*</a></dt><p class="pad"></p>
+
+<dd>At the top of a subroutine, declare a local variable, in the manner of <code lang='und' xml:lang='und'>.local</code>, into which parameter(s) of the current subroutine should be stored. Available flags: <code lang='und' xml:lang='und'>:slurpy</code>, <code lang='und' xml:lang='und'>:named</code>, <code lang='und' xml:lang='und'>:optional</code>, <code lang='und' xml:lang='und'>:opt_flag</code> and <code lang='und' xml:lang='und'>:unique_reg</code>.</dd><p class="pad"></p>
+</dl>
+
+<h3><a name="Parameter_Passing_and_Getting_Flags"
+>Parameter Passing and Getting Flags</a></h3>
+
+<p>See <a href='TODO#pdd03_calling_conventions.pod'>PDD03</a> for a description of the meaning of the flag bits <code lang='und' xml:lang='und'>SLURPY</code>, <code lang='und' xml:lang='und'>OPTIONAL</code>, <code lang='und' xml:lang='und'>OPT_FLAG</code>, and <code lang='und' xml:lang='und'>FLAT</code>, which correspond to the calling convention flags <code lang='und' xml:lang='und'>:slurpy</code>, <code lang='und' xml:lang='und'>:optional</code>, <code lang='und' xml:lang='und'>:opt_flag</code>, and <code lang='und' xml:lang='und'>:flat</code>.</p>
+
+<h3><a name="Catching_Exceptions"
+>Catching Exceptions</a></h3>
+
+<p>Using the <code lang='und' xml:lang='und'>push_eh</code> op you can install an exception handler. If an exception is thrown, Parrot will execute the installed exception handler. In order to retrieve the thrown exception, use the <code lang='und' xml:lang='und'>.get_results</code> directive. This directive always takes one argument: an exception object.</p>
+
+<pre lang='und' xml:lang='und'>   push_eh handler
+   ...
+ handler:
+   .local pmc exception
+   .get_results (exception)
+   ...</pre>
+
+<p>This is syntactic sugar for the <code lang='und' xml:lang='und'>get_results</code> op, but any flags set on the targets will be handled automatically by the PIR compiler. The <code lang='und' xml:lang='und'>.get_results</code> directive must be the first instruction of the exception handler; only declarations (.lex, .local) may come first.</p>
+
+<p>To resume execution after handling the exception, just invoke the continuation stored in the exception.</p>
+
+<pre lang='und' xml:lang='und'>   ...
+   .get_results(exception)
+   ...
+   continuation = exception[&#39;resume&#39;]
+   continuation()
+   ...</pre>
+
+<h2><a name="Syntactic_Sugar"
+>Syntactic Sugar <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Any PASM opcode is a valid PIR instruction. In addition, PIR defines some syntactic shortcuts. These are provided for ease of use by humans producing and maintaining PIR code.</p>
+
+<dl>
+<dt><a name="goto_&#60;identifier&#62;"
+>goto &#60;identifier&#62;</a></dt><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>branch</code> to <i>identifier</i> (label or subroutine name).</dd><p class="pad"></p>
+
+<dd>Examples:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  goto END</pre>
+
+<dt><a name="if_&#60;var&#62;_goto_&#60;identifier&#62;"
+>if &#60;var&#62; goto &#60;identifier&#62;</a></dt><p class="pad"></p>
+
+<dd>If <i>var</i> evaluates as true, jump to the named <i>identifier</i>.</dd><p class="pad"></p>
+
+<dt><a name="unless_&#60;var&#62;_goto_&#60;identifier&#62;"
+>unless &#60;var&#62; goto &#60;identifier&#62;</a></dt><p class="pad"></p>
+
+<dd>Unless <i>var</i> evaluates as true, jump to the named <i>identifier</i>.</dd><p class="pad"></p>
+
+<dt><a name="if_null_&#60;var&#62;_goto_&#60;identifier&#62;"
+>if null &#60;var&#62; goto &#60;identifier&#62;</a></dt><p class="pad"></p>
+
+<dd>If <i>var</i> evaluates as null, jump to the named <i>identifier</i>.</dd><p class="pad"></p>
+
+<dt><a name="unless_null_&#60;var&#62;_goto_&#60;identifier&#62;"
+>unless null &#60;var&#62; goto &#60;identifier&#62;</a></dt><p class="pad"></p>
+
+<dd>Unless <i>var</i> evaluates as null, jump to the named <i>identifier</i>.</dd><p class="pad"></p>
+
+<dt><a name="if_&#60;var1&#62;_&#60;relop&#62;_&#60;var2&#62;_goto_&#60;identifier&#62;"
+>if &#60;var1&#62; &#60;relop&#62; &#60;var2&#62; goto &#60;identifier&#62;</a></dt><p class="pad"></p>
+
+<dd>The <i>relop</i> can be: <code lang='und' xml:lang='und'>&#60;, &#60;=, ==, != &#62;= &#62;</code>. which translate to the PASM opcodes <code lang='und' xml:lang='und'>lt</code>, <code lang='und' xml:lang='und'>le</code>, <code lang='und' xml:lang='und'>eq</code>, <code lang='und' xml:lang='und'>ne</code>, <code lang='und' xml:lang='und'>ge</code> or <code lang='und' xml:lang='und'>gt</code>. If <i>var1 relop var2</i> evaluates as true, jump to the named <i>identifier</i>.</dd><p class="pad"></p>
+
+<dt><a name="unless_&#60;var1&#62;_&#60;relop&#62;_&#60;var2&#62;_goto_&#60;identifier&#62;"
+>unless &#60;var1&#62; &#60;relop&#62; &#60;var2&#62; goto &#60;identifier&#62;</a></dt><p class="pad"></p>
+
+<dd>The <i>relop</i> can be: <code lang='und' xml:lang='und'>&#60;, &#60;=, ==, != &#62;= &#62;</code>. Unless <i>var1 relop var2</i> evaluates as true, jump to the named <i>identifier</i>.</dd><p class="pad"></p>
+
+<dt><a name="&#60;var1&#62;_=_&#60;var2&#62;"
+>&#60;var1&#62; = &#60;var2&#62;</a></dt><p class="pad"></p>
+
+<dd>Assign a value.</dd><p class="pad"></p>
+
+<dt><a name="&#60;var1&#62;_=_&#60;unary&#62;_&#60;var2&#62;"
+>&#60;var1&#62; = &#60;unary&#62; &#60;var2&#62;</a></dt><p class="pad"></p>
+
+<dd>Unary operations <code lang='und' xml:lang='und'>!</code> (NOT), <code lang='und' xml:lang='und'>&#45;</code> (negation) and <code lang='und' xml:lang='und'>~</code> (bitwise NOT).</dd><p class="pad"></p>
+
+<dt><a name="&#60;var1&#62;_=_&#60;var2&#62;_&#60;binary&#62;_&#60;var3&#62;"
+>&#60;var1&#62; = &#60;var2&#62; &#60;binary&#62; &#60;var3&#62;</a></dt><p class="pad"></p>
+
+<dd>Binary arithmetic operations <code lang='und' xml:lang='und'>+</code> (addition), <code lang='und' xml:lang='und'>&#45;</code> (subtraction), <code lang='und' xml:lang='und'>*</code> (multiplication), <code lang='und' xml:lang='und'>/</code> (division), <code lang='und' xml:lang='und'>%</code> (modulus) and <code lang='und' xml:lang='und'>**</code> (exponent). Binary <code lang='und' xml:lang='und'>.</code> is concatenation and only valid for string arguments.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>&#60;&#60;</code> and <code lang='und' xml:lang='und'>&#62;&#62;</code> are arithmetic shifts left and right. <code lang='und' xml:lang='und'>&#62;&#62;&#62;</code> is the logical shift right.</dd><p class="pad"></p>
+
+<dd>Binary logic operations <code lang='und' xml:lang='und'>&#38;&#38;</code> (AND), <code lang='und' xml:lang='und'>||</code> (OR) and <code lang='und' xml:lang='und'>~~</code> (XOR).</dd><p class="pad"></p>
+
+<dd>Binary bitwise operations <code lang='und' xml:lang='und'>&#38;</code> (bitwise AND), <code lang='und' xml:lang='und'>|</code> (bitwise OR) and <code lang='und' xml:lang='und'>~</code> (bitwise XOR).</dd><p class="pad"></p>
+
+<dd>Binary relational operations <code lang='und' xml:lang='und'>&#60;, &#60;=, ==, != &#62;= &#62;</code>.</dd><p class="pad"></p>
+
+<dt><a name="&#60;var1&#62;_&#60;op&#62;=_&#60;var2&#62;"
+>&#60;var1&#62; &#60;op&#62;= &#60;var2&#62;</a></dt><p class="pad"></p>
+
+<dd>This is equivalent to <code lang='und' xml:lang='und'>&#60;var1&#62; = &#60;var1&#62; &#60;op&#62; &#60;var2&#62;</code>. Where <i>op</i> is called an assignment operator and can be any of the following binary operators described earlier: <code lang='und' xml:lang='und'>+</code>, <code lang='und' xml:lang='und'>&#45;</code>, <code lang='und' xml:lang='und'>*</code>, <code lang='und' xml:lang='und'>/</code>, <code lang='und' xml:lang='und'>%</code>, <code lang='und' xml:lang='und'>.</code>, <code lang='und' xml:lang='und'>&#38;</code>, <code lang='und' xml:lang='und'>|</code>, <code lang='und' xml:lang='und'>~</code>, <code lang='und' xml:lang='und'>&#60;&#60;</code>, <code lang='und' xml:lang='und'>&#62;&#62;</code> or <code lang='und' xml:lang='und'>&#62;&#62;&#62;</code>.</dd><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;_=_&#60;var&#62;_[_&#60;var&#62;_]"
+>&#60;var&#62; = &#60;var&#62; [ &#60;var&#62; ]</a></dt><p class="pad"></p>
+
+<dd>A keyed <code lang='und' xml:lang='und'>set</code> operation for PMCs or a substring operation for string arguments and an integer key.</dd><p class="pad"></p>
+
+<dd>{{ DEPRECATION NOTE: Possibly deprecate the substring variant. }}</dd><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;_=_&#60;var&#62;_[_&#60;key&#62;_]"
+>&#60;var&#62; = &#60;var&#62; [ &#60;key&#62; ]</a></dt><p class="pad"></p>
+
+<dd>{{ NOTE: keyed assignment is still valid in PIR, but the <code lang='und' xml:lang='und'>..</code> notation in keys is deprecated [See RT #48561], so this syntactic sugar for slices is also deprecated. See the (currently experimental) <code lang='und' xml:lang='und'>slice</code> opcode instead. }}</dd><p class="pad"></p>
+
+<dd>where <code lang='und' xml:lang='und'>key</code> is:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> &#60;var1&#62; .. &#60;var2&#62;</pre>
+
+<dd>returns a slice defined starting at <code lang='und' xml:lang='und'>var1</code> and ending at <code lang='und' xml:lang='und'>var2</code>.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> .. &#60;var2&#62;</pre>
+
+<dd>returns a slice starting at the first element, and ending at <code lang='und' xml:lang='und'>var2</code>.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> &#60;var1&#62; ..</pre>
+
+<dd>returns a slice starting at <code lang='und' xml:lang='und'>var1</code> to the end of the array.</dd><p class="pad"></p>
+
+<dd>see src/pmc/slice.pmc and t/pmc/slice.t.</dd><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;_[_&#60;var&#62;_]_=_&#60;var&#62;"
+>&#60;var&#62; [ &#60;var&#62; ] = &#60;var&#62;</a></dt><p class="pad"></p>
+
+<dd>A keyed <code lang='und' xml:lang='und'>set</code> operation.</dd><p class="pad"></p>
+
+<dd>{{ DEPRECATION NOTE: this syntactic sugar will no longer be used for the assign <code lang='und' xml:lang='und'>substr</code> op with a length of 1. }}</dd><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;_=_&#60;opcode&#62;_&#60;arguments&#62;"
+>&#60;var&#62; = &#60;opcode&#62; &#60;arguments&#62;</a></dt><p class="pad"></p>
+
+<dd>Many opcodes can use this PIR syntactic sugar. The first argument for the opcode is placed before the <code lang='und' xml:lang='und'>=</code>, and all remaining arguments go after the opcode name. For example:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  new $P0, &#39;Type&#39;</pre>
+
+<dd>becomes:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  $P0 = new &#39;Type&#39;</pre>
+
+<dd>Note that this only works for opcodes that have have a leading <code lang='und' xml:lang='und'>OUT</code> parameter. [this restriction unimplemented: RT #36283]</dd><p class="pad"></p>
+
+<dt><a name="global_&#34;string&#34;_=_&#60;var&#62;_[deprecated:_RT_#48016]"
+>global &#34;string&#34; = &#60;var&#62; [deprecated: RT #48016]</a></dt><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;_=_global_&#34;string&#34;_[deprecated:_RT_#48018]"
+>&#60;var&#62; = global &#34;string&#34; [deprecated: RT #48018]</a></dt><p class="pad"></p>
+
+<dt><a name="([&#60;var1&#62;_[:&#60;flag1&#62;_...],_...])_=_&#60;var2&#62;([&#60;arg1&#62;_[:&#60;flag2&#62;_...],_...])"
+>([&#60;var1&#62; [:&#60;flag1&#62; ...], ...]) = &#60;var2&#62;([&#60;arg1&#62; [:&#60;flag2&#62; ...], ...])</a></dt><p class="pad"></p>
+
+<dd>This is short for:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  .begin_call
+  .set_arg &#60;arg1&#62; &#60;flag2&#62;
+  ...
+  .call &#60;var2&#62;
+  .get_result &#60;var1&#62; &#60;flag1&#62;
+  ...
+  .end_call</pre>
+
+<dt><a name="&#60;var&#62;_=_&#60;var&#62;([arg_[:&#60;flag&#62;_...],_...])"
+>&#60;var&#62; = &#60;var&#62;([arg [:&#60;flag&#62; ...], ...])</a></dt><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;([arg_[:&#60;flag&#62;_...],_...])"
+>&#60;var&#62;([arg [:&#60;flag&#62; ...], ...])</a></dt><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;.&#34;_method&#34;([arg_[:&#60;flag&#62;_...],_...])"
+>&#60;var&#62;.&#34;_method&#34;([arg [:&#60;flag&#62; ...], ...])</a></dt><p class="pad"></p>
+
+<dt><a name="&#60;var&#62;.&#60;var&#62;([arg_[:&#60;flag&#62;_...],_...])"
+>&#60;var&#62;.&#60;var&#62;([arg [:&#60;flag&#62; ...], ...])</a></dt><p class="pad"></p>
+
+<dd>Function or method call. These notations are shorthand for a longer PCC function call. <i>var</i> can denote a global subroutine, a local <i>identifier</i> or a <i>reg</i>.</dd><p class="pad"></p>
+
+<dt><a name=".return_([&#60;var&#62;_[:&#60;flag&#62;_...],_...])"
+>.return ([&#60;var&#62; [:&#60;flag&#62; ...], ...])</a></dt><p class="pad"></p>
+
+<dd>Return from the current subroutine with zero or more values.</dd><p class="pad"></p>
+
+<dd>The parentheses surrounding the arguments are mandatory. Besides making sequence break more conspicuous, this is necessary to distinguish this syntax from other uses of the <code lang='und' xml:lang='und'>.return</code> directive that will be probably deprecated.</dd><p class="pad"></p>
+
+<dd>{{ Since .return is deprecated in .begin_/end_return, do we still need and/or want the parentheses? }}</dd><p class="pad"></p>
+
+<dt><a name=".tailcall_&#60;var&#62;(args)"
+>.tailcall &#60;var&#62;(args)</a></dt><p class="pad"></p>
+
+<dt><a name=".tailcall_&#60;var&#62;.&#39;somemethod&#39;(args)"
+>.tailcall &#60;var&#62;.&#39;somemethod&#39;(args)</a></dt><p class="pad"></p>
+
+<dt><a name=".tailcall_&#60;var&#62;.&#60;var&#62;(args)"
+>.tailcall &#60;var&#62;.&#60;var&#62;(args)</a></dt><p class="pad"></p>
+
+<dd>Tail call: call a function or method and return from the sub with the function or method call return values.</dd><p class="pad"></p>
+
+<dd>Internally, the call stack doesn&#39;t increase because of a tail call, so you can write recursive functions and not have stack overflows.</dd><p class="pad"></p>
+
+<dd>Whitespace surrounding the dot (&#39;.&#39;) that separates the object from the method is not allowed.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Assignment_and_Morphing"
+>Assignment and Morphing <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The <code lang='und' xml:lang='und'>=</code> syntactic sugar in PIR, when used in the simple case of:</p>
+
+<pre lang='und' xml:lang='und'>  &#60;var1&#62; = &#60;var2&#62;</pre>
+
+<p>directly corresponds to the <code lang='und' xml:lang='und'>set</code> opcode. So, two low&#45;level arguments (int, num, or string registers, variables, or constants) are a direct C assignment, or a C&#45;level conversion (int cast, float cast, a string copy, or a call to one of the conversion functions like <code lang='und' xml:lang='und'>string_to_num</code>).</p>
+
+<p>Assigning a PMC argument to a low&#45;level argument calls the <code lang='und' xml:lang='und'>get_integer</code>, <code lang='und' xml:lang='und'>get_number</code>, or <code lang='und' xml:lang='und'>get_string</code> vtable function on the PMC. Assigning a low&#45;level argument to a PMC argument calls the <code lang='und' xml:lang='und'>set_integer_native</code>, <code lang='und' xml:lang='und'>set_number_native</code>, or <code lang='und' xml:lang='und'>set_string_native</code> vtable function on the PMC (assign to value semantics). Two PMC arguments are a direct C assignment (assign to container semantics).</p>
+
+<p>For assign to value semantics for two PMC arguments use <code lang='und' xml:lang='und'>assign</code>, which calls the <code lang='und' xml:lang='und'>assign_pmc</code> vtable function.</p>
+
+<h2><a name="Macros"
+>Macros <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>This section describes the macro layer of the PIR language. The macro layer of the PIR compiler handles the following directives:</p>
+
+<ul>
+<li><code lang='und' xml:lang='und'>.include</code> &#39;&#60;filename&#62;&#39;</li><p class="pad"></p>
+
+<p>The <code lang='und' xml:lang='und'>.include</code> directive takes a string argument that contains the name of the PIR file that is included. The contents of the included file are inserted as if they were written at the point where the <code lang='und' xml:lang='und'>.include</code> directive occurs.</p>
+
+<p>The include file is searched for in the current directory and in runtime/parrot/include, in that order. The first file of that name to be found is included.</p>
+
+<p>{{ NOTE: the <code lang='und' xml:lang='und'>.include</code> directive&#39;s search order is subject to change. }}</p>
+
+<li><code lang='und' xml:lang='und'>.macro</code> &#60;identifier&#62; [&#60;parameters&#62;]</li><p class="pad"></p>
+
+<p>The <code lang='und' xml:lang='und'>.macro</code> directive starts the a macro definition named by the specified identifier. The optional parameter list is a comma&#45;separated list of identifiers, enclosed in parentheses. See <code lang='und' xml:lang='und'>.endm</code> for ending the macro definition.</p>
+
+<li><code lang='und' xml:lang='und'>.endm</code></li><p class="pad"></p>
+
+<p>Closes a macro definition.</p>
+
+<li><code lang='und' xml:lang='und'>.macro_const</code> &#60;identifier&#62; (&#60;literal&#62;|&#60;reg&#62;)</li><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> .macro_const   PI  3.14</pre>
+
+<p>The <code lang='und' xml:lang='und'>.macro_const</code> directive is a special type of macro; it allows the user to use a symbolic name for a constant value. Like <code lang='und' xml:lang='und'>.macro</code>, the substitution occurs at compile time. It takes two arguments (not comma separated), the first is an identifier, the second a constant value or a register.</p>
+</ul>
+
+<p>The macro layer is completely implemented in the lexical analysis phase. The parser does not know anything about what happens in the lexical analysis phase.</p>
+
+<p>When the <code lang='und' xml:lang='und'>.include</code> directive is encountered, the specified file is opened and the following tokens that are requested by the parser are read from that file.</p>
+
+<p>A macro expansion is a dot&#45;prefixed identifier. For instance, if a macro was defined as shown below:</p>
+
+<pre lang='und' xml:lang='und'> .macro foo(bar)
+ ...
+ .endm</pre>
+
+<p>this macro can be expanded by writing <code lang='und' xml:lang='und'>.foo(42)</code>. The body of the macro will be inserted at the point where the macro expansion is written.</p>
+
+<p>A <code lang='und' xml:lang='und'>.macro_const</code> expansion is more or less the same as a <code lang='und' xml:lang='und'>.macro</code> expansion, except that a constant expansion cannot take any arguments, and the substitution of a <code lang='und' xml:lang='und'>.macro_const</code> contains no newlines, so it can be used within a line of code.</p>
+
+<h3><a name="Macro_parameter_list"
+>Macro parameter list</a></h3>
+
+<p>The parameter list for a macro is specified in parentheses after the name of the macro. Macro parameters are not typed.</p>
+
+<pre lang='und' xml:lang='und'> .macro foo(bar, baz, buz)
+ ...
+ .endm</pre>
+
+<p>The number of arguments in the call to a macro must match the number of parameters in the macro&#39;s parameter list. Macros do not perform multidispatch, so you can&#39;t have two macros with the same name but different parameters. Calling a macro with the wrong number of arguments gives the user an error.</p>
+
+<p>If a macro defines no parameter list, parentheses are optional on both the definition and the call. This means that a macro defined as:</p>
+
+<pre lang='und' xml:lang='und'> .macro foo
+ ...
+ .endm</pre>
+
+<p>can be expanded by writing either <code lang='und' xml:lang='und'>.foo</code> or <code lang='und' xml:lang='und'>.foo()</code>. And a macro definition written as:</p>
+
+<pre lang='und' xml:lang='und'> .macro foo()
+ ...
+ .endm</pre>
+
+<p>can also be expanded by writing either <code lang='und' xml:lang='und'>.foo</code> or <code lang='und' xml:lang='und'>.foo()</code>.</p>
+
+<p>{{ NOTE: this is a change from the current implementation, which requires the definition and call of a zero&#45;parameter macro to match in the use of parentheses. }}</p>
+
+<ul>
+<li>Heredoc arguments</li><p class="pad"></p>
+
+<p>Heredoc arguments are not allowed when expanding a macro. This means that the following is not allowed:</p>
+
+<pre lang='und' xml:lang='und'>   .macro foo(bar)
+   ...
+   .endm
+
+   .foo(&#60;&#60;&#39;EOS&#39;)
+ This is a heredoc
+    string.
+
+ EOS</pre>
+
+<p>{{ NOTE: This is likely because the parsing of heredocs happens later than the preprocessing of macros. Might be nice if we could parse heredocs at the macro level, but not a high priority. compilers/pirc/new can do this. }}</p>
+
+<p>Using braces, { }, allows you to span multiple lines for an argument. See runtime/parrot/include/hllmacros.pir for examples and possible usage. A simple example is this:</p>
+
+<pre lang='und' xml:lang='und'> .macro foo(a,b)
+   .a
+   .b
+ .endm
+
+ .sub main
+   .foo({ print &#34;1&#34;
+          print &#34;2&#34;
+        }, {
+          print &#34;3&#34;
+          print &#34;4&#34;
+        })
+ .end</pre>
+
+<p>This will expand the macro <code lang='und' xml:lang='und'>foo</code>, after which the input to the PIR parser is:</p>
+
+<pre lang='und' xml:lang='und'> .sub main
+   print &#34;1&#34;
+   print &#34;2&#34;
+   print &#34;3&#34;
+   print &#34;4&#34;
+ .end</pre>
+
+<p>which will result in the output:</p>
+
+<pre lang='und' xml:lang='und'> 1234</pre>
+</ul>
+
+<h3><a name="Unique_local_labels"
+>Unique local labels</a></h3>
+
+<p>Within the macro body, the user can declare a unique label identifier using the value of a macro parameter, like so:</p>
+
+<pre lang='und' xml:lang='und'>  .macro foo(a)
+  ...
+ .label $a:
+  ...
+  .endm</pre>
+
+<h3><a name="Unique_local_variables"
+>Unique local variables</a></h3>
+
+<p>Within the macro body, the user can declare a local variable with a unique name.</p>
+
+<pre lang='und' xml:lang='und'>  .macro foo()
+  ...
+  .macro_local int b
+  ...
+  .b = 42
+  print .b # prints the value of the unique variable (42)
+  ...
+  .endm</pre>
+
+<p>The <code lang='und' xml:lang='und'>.macro_local</code> directive declares a local variable with a unique name in the macro. When the macro <code lang='und' xml:lang='und'>.foo()</code> is called, the resulting code that is given to the parser will read as follows:</p>
+
+<pre lang='und' xml:lang='und'>  .sub main
+    .local int local__foo__b__2
+    ...
+    local__foo__b__2 = 42
+    print local__foo__b__2
+
+  .end</pre>
+
+<p>The user can also declare a local variable with a unique name set to the symbolic value of one of the macro parameters.</p>
+
+<pre lang='und' xml:lang='und'>  .macro foo(b)
+  ...
+  .macro_local int $b
+  ...
+  .$b = 42
+  print .$b # prints the value of the unique variable (42)
+  print .b  # prints the value of parameter &#34;b&#34;, which is
+            # also the name of the variable.
+  ...
+  .endm</pre>
+
+<p>So, the special <code lang='und' xml:lang='und'>$</code> character indicates whether the symbol is interpreted as just the value of the parameter, or that the variable by that name is meant. Obviously, the value of <code lang='und' xml:lang='und'>b</code> should be a string.</p>
+
+<p>The automatic name munging on <code lang='und' xml:lang='und'>.macro_local</code> variables allows for using multiple macros, like so:</p>
+
+<pre lang='und' xml:lang='und'>  .macro foo(a)
+  .macro_local int $a
+  .endm
+
+  .macro bar(b)
+  .macro_local int $b
+  .endm
+
+  .sub main
+    .foo(&#34;x&#34;)
+    .bar(&#34;x&#34;)
+  .end</pre>
+
+<p>This will result in code for the parser as follows:</p>
+
+<pre lang='und' xml:lang='und'>  .sub main
+    .local int local__foo__x__2
+    .local int local__bar__x__4
+  .end</pre>
+
+<p>Each expansion is associated with a unique number; for labels declared with <code lang='und' xml:lang='und'>.macro_label</code> and locals declared with <code lang='und' xml:lang='und'>.macro_local</code> expansions, this means that multiple expansions of a macro will not result in conflicting label or local names.</p>
+
+<h3><a name="Ordinary_local_variables"
+>Ordinary local variables</a></h3>
+
+<p>Defining a non&#45;unique variable can still be done, using the normal syntax:</p>
+
+<pre lang='und' xml:lang='und'>  .macro foo(b)
+  .local int b
+  .macro_local int $b
+  .endm</pre>
+
+<p>When invoking the macro <code lang='und' xml:lang='und'>foo</code> as follows:</p>
+
+<pre lang='und' xml:lang='und'>  .foo(&#34;x&#34;)</pre>
+
+<p>there will be two variables: <code lang='und' xml:lang='und'>b</code> and <code lang='und' xml:lang='und'>x</code>. When the macro is invoked twice:</p>
+
+<pre lang='und' xml:lang='und'>  .sub main
+    .foo(&#34;x&#34;)
+    .foo(&#34;y&#34;)
+  .end</pre>
+
+<p>the resulting code that is given to the parser will read as follows:</p>
+
+<pre lang='und' xml:lang='und'>  .sub main
+    .local int b
+    .local int local__foo__x
+    .local int b
+    .local int local__foo__y
+  .end</pre>
+
+<p>Obviously, this will result in an error, as the variable <code lang='und' xml:lang='und'>b</code> is defined twice. If you intend the macro to create unique variables names, use <code lang='und' xml:lang='und'>.macro_local</code> instead of <code lang='und' xml:lang='und'>.local</code> to take advantage of the name munging.</p>
+
+<h1><a name="EXAMPLES"
+>EXAMPLES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Subroutine_Definition"
+>Subroutine Definition <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  .sub _sub_label [&#60;subflag&#62;]*
+   .param int a
+   .param int b
+   .param int c
+  ...
+  .begin_return
+   .set_return xy
+  .end_return
+  ...
+  .end</pre>
+
+<h2><a name="Subroutine_Call"
+>Subroutine Call <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  .const .Sub $P0 = &#34;_sub_label&#34;
+  $P1 = new &#39;Continuation&#39;
+  set_addr $P1, ret_addr
+  ...
+  .local int x
+  .local num y
+  .local str z
+  .begin_call
+  .set_arg x
+  .set_arg y
+  .set_arg z
+  .call $P0, $P1    # r = _sub_label(x, y, z)
+  ret_addr:
+  .local int r  # optional &#45; new result var
+  .get_result r
+  .end_call</pre>
+
+<h2><a name="NCI_Call"
+>NCI Call <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  load_lib $P0, &#34;libname&#34;
+  dlfunc $P1, $P0, &#34;funcname&#34;, &#34;signature&#34;
+  ...
+  .begin_call
+  .set_arg x
+  .set_arg y
+  .set_arg z
+  .nci_call $P1 # r = funcname(x, y, z)
+  .local int r  # optional &#45; new result var
+  .get_result r
+  .end_call</pre>
+
+<h2><a name="Subroutine_Call_Syntactic_Sugar"
+>Subroutine Call Syntactic Sugar <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  ...  # variable decls
+  r = _sub_label(x, y, z)
+  (r1[, r2 ...]) = _sub_label(x, y, z)
+  _sub_label(x, y, z)</pre>
+
+<p>This also works for NCI calls, as the subroutine PMC will be a NCI sub, and on invocation will do the Right Thing. Instead of the label a subroutine object can be used too:</p>
+
+<pre lang='und' xml:lang='und'>   find_global $P0, &#34;_sub_label&#34;
+   $P0(args)</pre>
+
+<h2><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  .namespace [ &#34;Foo&#34; ]
+
+  .sub _sub_label :method [,Subpragma, ...]
+   .param int a
+   .param int b
+   .param int c
+   ...
+   self.&#34;_other_meth&#34;()
+  ...
+  .begin_return
+   .set_return xy
+  .end_return
+  ...
+  .end</pre>
+
+<p>The variable &#34;self&#34; automatically refers to the invocating object, if the subroutine declaration contains &#34;method&#34;.</p>
+
+<h2><a name="Calling_Methods"
+>Calling Methods <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The syntax is very similar to subroutine calls. The call is done with <code lang='und' xml:lang='und'>meth_call</code> which must immediately be preceded by the <code lang='und' xml:lang='und'>.invocant</code>:</p>
+
+<pre lang='und' xml:lang='und'>   .local pmc class
+   .local pmc obj
+   newclass class, &#34;Foo&#34;
+   new obj, class
+  .begin_call
+  .set_arg x
+  .set_arg y
+  .set_arg z
+  .invocant obj
+  .meth_call &#34;_method&#34; [, $P1 ] # r = obj.&#34;_method&#34;(x, y, z)
+  .local int r  # optional &#45; new result var
+  .get_result r
+  .end_call</pre>
+
+<p>The return continuation is optional. The method can be a string constant or a string variable.</p>
+
+<h2><a name="Returning_and_Yielding"
+>Returning and Yielding <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>  .return ( a, b )      # return the values of a and b
+
+  .return ()            # return no value
+
+  .tailcall func_call()   # tail call function
+
+  .tailcall o.&#34;meth&#34;()    # tail method call</pre>
+
+<p>Similarly, one can yield using the .yield directive</p>
+
+<pre lang='und' xml:lang='und'>  .yield ( a, b )      # yield with the values of a and b
+
+  .yield ()            # yield with no value</pre>
+
+<h2><a name="Stack_calling_conventions"
+>Stack calling conventions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Arguments are <b>save</b>d in reverse order onto the user stack:</p>
+
+<pre lang='und' xml:lang='und'>   .set_arg y   # save args in reversed order
+   .set_arg x
+   call _foo    #(r, s) = _foo(x,y)
+   .local int r
+   .local int s
+   .get_result r    # restore results in order
+   .get_result s    #</pre>
+
+<p>and return values are <b>restore</b>d in argument order from there.</p>
+
+<pre lang='und' xml:lang='und'> .sub _foo      # sub foo(int a, int b)
+   saveall
+   .param int a         # receive arguments from left to right
+   .param int b
+   ...
+
+   .return mi       # return (pl, mi), push results
+   .return pl       # in reverse order
+   restoreall
+   ret
+ .end</pre>
+
+<p>Pushing arguments in reversed order on the user stack makes the left most argument the top of stack entry. This allows for a variable number of function arguments (and return values), where the left most argument before a variable number of following arguments is the argument count.</p>
+
+<h1><a name="IMPLEMENTATION"
+>IMPLEMENTATION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>There are multiple implementations of PIR, each of which will meet this specification for the syntax.</p>
+
+<h1><a name="ATTACHMENTS"
+>ATTACHMENTS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>N/A</p>
+
+<h1><a name="FOOTNOTES"
+>FOOTNOTES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>N/A</p>
+
+<h1><a name="REFERENCES"
+>REFERENCES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>N/A</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

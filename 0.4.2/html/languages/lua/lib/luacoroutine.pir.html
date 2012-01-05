@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Lua Coroutine Library</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Lua Coroutine Library</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/lua.html">Lua</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>lib/luacoroutine.pir &#45; Lua Coroutine Library</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>The operations related to coroutines comprise a sub&#45;library of the basic library and come inside the table <code lang='und' xml:lang='und'>coroutine</code>.</p>
+
+<p>See &#34;Lua 5.0 Reference Manual&#34;,
+section 5.2 &#34;Coroutine Manipulation&#34;.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="coroutine.create_(f)"
+><b><code lang='und' xml:lang='und'>coroutine.create (f)</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates a new coroutine,
+with body <code lang='und' xml:lang='und'>f</code>.
+<code lang='und' xml:lang='und'>f</code> must be a Lua function.
+Returns this new coroutine,
+an object with type <code lang='und' xml:lang='und'>&#34;thread&#34;</code>.</dd><p class="pad"></p>
+
+<dt><a name="coroutine.resume_(co,_val1,_...)"
+><b><code lang='und' xml:lang='und'>coroutine.resume (co, val1, ...)</b></code></a></dt><p class="pad"></p>
+
+<dd>Starts or continues the execution of coroutine <code lang='und' xml:lang='und'>co</code>.
+The first time you resume a coroutine,
+it starts running its body.
+The arguments <code lang='und' xml:lang='und'>val1, ...</code> go as the arguments to the body function.
+If the coroutine has yielded,
+<code lang='und' xml:lang='und'>resume</code> restarts it; the arguments <code lang='und' xml:lang='und'>val1, ...</code> go as the results from the yield.</dd><p class="pad"></p>
+
+<dd>If the coroutine runs without any errors,
+<code lang='und' xml:lang='und'>resume</code> returns <b>true</b> plus any values passed to yield (if the coroutine yields) or any values returned by the body function (if the coroutine terminates).
+If there is any error,
+<code lang='und' xml:lang='und'>resume</code> returns <b>false</b> plus the error message.</dd><p class="pad"></p>
+
+<dt><a name="coroutine.status_(co)"
+><b><code lang='und' xml:lang='und'>coroutine.status (co)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the status of coroutine <code lang='und' xml:lang='und'>co</code>,
+as a string: <code lang='und' xml:lang='und'>&#34;running&#34;</code>,
+if the coroutine is running (that is,
+it called <code lang='und' xml:lang='und'>status</code>); <code lang='und' xml:lang='und'>&#34;suspended&#34;</code>,
+if the coroutine is suspended in a call to yield,
+or if it has not started running yet; and <code lang='und' xml:lang='und'>&#34;dead&#34;</code> if the coroutine has finished its body function,
+or if it has stopped with an error.</dd><p class="pad"></p>
+
+<dd>DUMMY IMPLEMENTATION.</dd><p class="pad"></p>
+
+<dt><a name="coroutine.wrap_(f)"
+><b><code lang='und' xml:lang='und'>coroutine.wrap (f)</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates a new coroutine,
+with body <code lang='und' xml:lang='und'>f</code>.
+<code lang='und' xml:lang='und'>f</code> must be a Lua function.
+Returns a function that resumes the coroutine each time it is called.
+Any arguments passed to the function behave as the extra arguments to <code lang='und' xml:lang='und'>resume</code>.
+Returns the same values returned by <code lang='und' xml:lang='und'>resume</code>,
+except the first boolean.
+In case of error,
+propagates the error.</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+
+<dt><a name="coroutine.yield_(val1,_...)"
+><b><code lang='und' xml:lang='und'>coroutine.yield (val1, ...)</b></code></a></dt><p class="pad"></p>
+
+<dd>Suspends the execution of the calling coroutine.
+The coroutine cannot be running neither a C function,
+nor a metamethod,
+nor an iterator.
+Any arguments to <code lang='und' xml:lang='und'>yield</code> go as extra results to <code lang='und' xml:lang='und'>resume</code>.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="AUTHORS"
+>AUTHORS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Francois Perrad.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

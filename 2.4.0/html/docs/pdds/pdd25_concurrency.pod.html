@@ -1,0 +1,441 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PDD 25: Concurrency</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; PDD 25: Concurrency
+                </div>
+
+<h1><a name="PDD_25:_Concurrency"
+>PDD 25: Concurrency</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>This document defines the requirements and implementation strategy for Parrot&#39;s concurrency models.</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<dl>
+<dt><a name="&#45;_Parrot_supports_multiple_concurrency_models,_including_POSIX_threads,_event&#45;based_programming,_and_asynchronous_I/O."
+>&#45; Parrot supports multiple concurrency models,
+including POSIX threads,
+event&#45;based programming,
+and asynchronous I/O.</a></dt>
+
+<dt><a name="&#45;_A_concurrency_scheduler_manages_all_concurrent_tasks"
+>&#45; A concurrency scheduler manages all concurrent tasks</a></dt>
+
+<dt><a name="&#45;_Each_interpreter_has_its_own_concurrency_scheduler"
+>&#45; Each interpreter has its own concurrency scheduler</a></dt>
+
+<dt><a name="&#45;_Concurrency_schedulers_for_different_interpreters_communicate_and_can_share_tasks"
+>&#45; Concurrency schedulers for different interpreters communicate and can share tasks</a></dt>
+
+<dt><a name="&#45;_A_concurrency_scheduler_may_link_to_other_schedulers_as_a_parent,_a_child,_or_an_equal"
+>&#45; A concurrency scheduler may link to other schedulers as a parent,
+a child,
+or an equal</a></dt>
+
+<dt><a name="&#45;_A_task_is_a_concurrent_unit_of_work"
+>&#45; A task is a concurrent unit of work</a></dt>
+
+<dt><a
+>&#45; All tasks support a standard interface used by the concurrency scheduler,
+but otherwise have a great deal of flexibility in their implementation</a></dt>
+
+<dt><a name="&#45;_Tasks_can_share_PMC_variables"
+>&#45; Tasks can share PMC variables</a></dt>
+</dl>
+
+<h2><a name="Definitions"
+>Definitions</a></h2>
+
+<p>Concurrency is a parallel execution of units of code (on multiprocessor machines),
+or a flexible ordering of serial units of code (on single processor machines).
+For certain problem spaces,
+concurrency offers significant speed gains by parceling out processor&#45;intensive activity or by ensuring that a wait for input or system resources doesn&#39;t hold up the entire application.</p>
+
+<p>A task is a unit of code that can be executed concurrently.</p>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<p>Rather than defining a single canonical threading model,
+Parrot defines an infrastructure that supports multiple concurrency models and provides for interaction between the various models.
+Parrot already uses multiple concurrency models for events,
+threads,
+async I/O,
+and exceptions,
+a trend that will only continue as we support multiple HLLs and external threading libraries like Intel&#39;s Threading Building Blocks.
+Designing for multiple concurrency models also gives Parrot more room to grow as future models are researched and developed.</p>
+
+<p>To avoid conflicts between concurrency models,
+Parrot provides a single central concurrency scheduler for each interpreter instance.
+Each concurrency model defines a Task PMC that supports a standard minimal interface.
+The scheduler can interact with tasks from different models without direct access to the details of each model.</p>
+
+<p>On multiprocessor systems,
+the scheduler is responsible for allocating tasks to processors,
+or for delegating that allocation to the underlying OS.</p>
+
+<p>For the most part,
+when we talk about concurrency,
+we mean concurrency across an interpreter pool.
+An interpreter pool is a set of interpreter instances that share common resources: the memory pools,
+arenas,
+and global namespace&#45;&#45;pretty much everything except what&#39;s in the interpreter structure itself.
+They&#39;re essentially threads in the OS sense.</p>
+
+<p>Another form of concurrency is between completely independent interpreter instances,
+each with their own memory pools,
+arenas,
+namespaces,
+etc.
+Independent interpreters may run as separate processes on the same machine,
+or even as separate processes on different machines (in a clustering environment,
+for example).
+The concerns of shared&#45;interpreter concurrency and independent&#45;interpreter concurrency are similar,
+and in Parrot both use the same central concurrency scheduler.
+This PDD doesn&#39;t directly address independent&#45;interpreter concurrency,
+but does include occasional notes on how it integrates with shared&#45;interpreter concurrency.</p>
+
+<h3><a name="Supported_Concurrency_Models"
+>Supported Concurrency Models</a></h3>
+
+<p>The following are a few of the concurrency models Parrot intends to support.
+The biggest differences between them are in how they handle variables shared across concurrent tasks.
+But the design is such that each of the different models can run simultaneously,
+coordinated through the central concurrency scheduler.</p>
+
+<h4><a name="Mutex/Lock_Concurrency"
+>Mutex/Lock Concurrency</a></h4>
+
+<p>In this model,
+before performing an operation on a shared variable,
+you must first acquire a lock on it.
+Once a lock is acquired,
+any other concurrent tasks that attempt to acquire a lock on that variable will block until the existing lock is released.</p>
+
+<p>A mutex is a thing that can be locked.
+They are not directly exposed to users.
+They&#39;re non&#45;recursive,
+non&#45;read/write,
+exclusive things.
+When a concurrent task gets a mutex,
+any other attempt to get that mutex will block until the owning task releases the mutex.
+Mutexes are implemented using the platform&#45;native lock construct.</p>
+
+<p>The first thing that any vtable function of a shared PMC must do is to acquire the mutex of the PMCs in its parameter list (in ascending address order).
+In this model only PMCs can be shared.</p>
+
+<h4><a name="STM_Concurrency"
+>STM Concurrency</a></h4>
+
+<p>Parrot&#39;s preferred model of concurrency is based on Software Transactional Memory.
+In this model,
+rather than locking a shared variable while performing a series of operations on it,
+the changes are bundled into a transaction that acts as an atomic unit.</p>
+
+<p>Within the transaction,
+STM creates a &#34;hypothetical&#34; copy of the variable,
+logs the changes made to that copy,
+and at the end of the transaction performs some validation steps to decide whether to save the hypothetical value back to the real variable (a commit) or discard the hypothetical value (a roll back).
+One common validation step is to check whether the value of the real variable was changed during the execution of the transaction (possibly by another concurrent task).</p>
+
+<p>STM tasks can read/write shared variables from mutex/lock tasks,
+as they appear to the mutex/lock task as a single atomic operation.
+Mutex/lock tasks can read shared variables from STM tasks,
+but they cannot write them,
+as the STM tasks will not respect the lock and may commit a new value in the middle of a complex operation that requires the lock.
+As a safety mode,
+STM tasks may be configured to fail validation on any transaction attempting to commit to a variable locked by a mutex/lock task.</p>
+
+<h4><a name="POSIX_Concurrency"
+>POSIX Concurrency</a></h4>
+
+<p>This is the POSIX &#34;share&#45;everything&#34; style of threading,
+such as is used in Perl 5&#39;s &#34;pthread&#34; model,
+as well as the thread models for Ruby and Python.
+[Recommended reading: &#34;Programming with POSIX Threads&#34; by Dave Butenhof.]</p>
+
+<h4><a name="Process&#45;type_Concurrency"
+>Process&#45;type Concurrency</a></h4>
+
+<p>This is the Perl 5 &#34;iThreads&#34; threading model.
+In this model no data is shared implicitly,
+and all sharing must be done on purpose and explicitly.
+It resembles the Unix fork&#45;process&#45;with&#45;shared&#45;memory&#45;segment model,
+not a surprise as it was originally developed with emulation of Unix&#39;s fork system in mind.</p>
+
+<h4><a name="Independent_Concurrency"
+>Independent Concurrency</a></h4>
+
+<p>Independent tasks have no contact with the internal data of any other task in the current process.
+These are implemented as STM concurrency but only use transactions for the shared interpreter globals.</p>
+
+<p>Note that independent tasks may still communicate back and forth by passing either atomic things (ints,
+floats,
+and pointers) or static buffers that can become the property of the destination thread.</p>
+
+<h4><a name="Intel_Threading_Building_Blocks"
+>Intel Threading Building Blocks</a></h4>
+
+<p>Threading Building Blocks (TBB) is a library of tools for data&#45;parallel programming,
+dividing large data sets into small pieces so that operations on those data&#45;sets can be parallelized across multiple processors.</p>
+
+<p>Parrot will provide two levels of integration with TBB: an interface for TBB&#39;s scheduling to interact with the central concurrency scheduler,
+and an interface for developers to access the TBB routines from within PIR/PASM.</p>
+
+<p>Like Parrot,
+TBB is task&#45;based.
+Since TBB performs its own scheduling,
+TBB tasks in Parrot will be given a lightweight scheduler that only has the responsibility of passing messages,
+events,
+etc,
+back and forth between the TBB task and the central scheduler.
+TBB tasks will not share variables with any other types of concurrent tasks in Parrot.</p>
+
+<p>Note that since TBB is a C++ library,
+it is only available when Parrot is compiled with a C++ compiler.</p>
+
+<h3><a name="Concurrency_Scheduler_API"
+>Concurrency Scheduler API</a></h3>
+
+<p>The concurrency scheduler has two parts,
+a Scheduler PMC,
+which has an instance stored in the interpreter struct,
+and a set of core routines in <em><a href="../../src/scheduler.c.html">src/scheduler.c</a></em>.</p>
+
+<p>An instance of the Scheduler PMC has 5 internal attributes,
+which are:</p>
+
+<ol>
+<li>An unique ID for the scheduler</li>
+
+<li>The current highest assigned task ID</li>
+
+<li>The task list</li>
+
+<li>The task priority index</li>
+
+<li>The list of handlers</li>
+</ol>
+
+<p>The unique ID of the scheduler is used by other schedulers to pass messages.
+With a small set of identifying information (including process ID,
+interpreter ID,
+scheduler ID,
+and possibly a URL/hostname) a scheduler can address other schedulers,
+both local to the current interpreter and remote.</p>
+
+<p>The task list is a simple unordered integer indexed data structure,
+currently implemented as a hash.
+Each task in the list has an integer ID assigned when it is first inserted into the list.
+A task retains the same ID throughout its lifetime,
+and the ID is not reused once a task is finalized.
+(The data structure is currently implemented as a hash so that it only takes up the memory required for currently living tasks.
+A task list for a particular program may use thousands of task IDs,
+but only need memory allocated for a handful of elements at any given moment.)</p>
+
+<p>The task rank index is calculated based on the type,
+priority rating,
+age of the tasks in the task list.
+The index is a simple array,
+and in general the top (zeroth) element in the array is the next one to receive attention.
+The index is recalculated regularly as new tasks are inserted into the task list,
+existing tasks are modified or completed,
+and as time progresses so the age of some tasks pushes them to a higher priority.
+Because of the regular recalculation,
+the rank index may cache some frequently&#45;accessed and rarely changing data from the tasks (though it is not required to do so).
+(As a later optimization,
+some data structure other than an array may be used to speed up rank recalculation.
+For example,
+with a hash of hashes of arrays keyed on task attributes,
+the process of inserting new tasks at a relative priority to other existing tasks could be performed without shifting the rank of all lower ranked tasks.)</p>
+
+<p>The list of handlers is a simple stack of handler PMCs currently waiting for an appropriate task (event,
+exception).
+See PDD 24 on Events for more details on event handlers.</p>
+
+<h4><a name="Flags"
+>Flags</a></h4>
+
+<p>PMC flags 0&#45;7 are reserved for private use by a PMC.
+The scheduler uses flag 0 to indicate whether the priority index is currently valid or needs to be recalculated before the next use.</p>
+
+<h4><a name="Vtable_Functions"
+>Vtable Functions</a></h4>
+
+<dl>
+<dt><a name="push_pmc"
+>push_pmc</a></dt>
+Add an entry to the task list.
+<dt><a name="pop_pmc"
+>pop_pmc</a></dt>
+Pull the next entry (the highest ranked entry in the task priority index) off the task list.
+If there are no tasks remaining in the task list,
+return null.</dl>
+
+<h4><a name="Methods"
+>Methods</a></h4>
+
+<dl>
+<dt><a name="add_handler"
+>add_handler</a></dt>
+<pre>    $P1.'add_handler'($P2)
+</pre>Add an event or exception handler to the scheduler&#39;s list of handlers.
+<dt><a name="find_handler"
+>find_handler</a></dt>
+<pre>    $P1 = $P2.'find_handler'($P3)
+</pre>Search for an event or exception handler $P1,
+in scheduler $P2,
+for the task $P3.
+Returns a null PMC if an appropriate handler is not found.</dl>
+
+<h3><a name="Task_PMC_API"
+>Task PMC API</a></h3>
+
+<p>The interface of the Task PMC is also the minimum required interface for all subclasses,
+extensions,
+and alternate implementations of a task.</p>
+
+<p>An instance of the Task PMC has 7 internal attributes,
+which are:</p>
+
+<ol>
+<li>The task ID</li>
+
+<li>The type of the task</li>
+
+<li>The subtype of the task</li>
+
+<li>The priority of the task</li>
+
+<li>The birthtime stamp of the task</li>
+
+<li>The status of the task</li>
+
+<li>The code block of the task (optional)</li>
+
+<li>An interpreter structure for the task (optional)</li>
+</ol>
+
+<p>Types of tasks include &#39;event&#39;,
+&#39;exception&#39;,
+&#39;io&#39;,
+and &#39;code&#39;.
+The subtype of a task is used by events and exceptions to identify appropriate handlers.
+Possible status values for tasks include &#39;created&#39;,
+&#39;invoked&#39;,
+&#39;inprocess&#39;,
+and &#39;completed&#39;.
+The final state of a task is &#39;destroyed&#39;,
+but is never marked (the task PMC is removed from the task list and at some later point destroyed by GC).
+The priority of a task is an integer value between 0 and 100,
+with 0 as the lowest priority.</p>
+
+<p>The birthtime stamp is the point at which the task was inserted into the task list,
+and is used for calculating the age of tasks.</p>
+
+<p>The code block is optional and only for tasks that are associated with a simple code block.
+The interpreter structure is also optional and only used for thread&#45;like tasks that maintain their own interpreter state.</p>
+
+<h4><a name="Vtable_Functions"
+>Vtable Functions</a></h4>
+
+<dl>
+<dt><a name="get_attr_str"
+>get_attr_str</a></dt>
+Retrieve an attribute of the task.
+<dt><a name="set_attr_str"
+>set_attr_str</a></dt>
+Set an attribute of the task.</dl>
+
+<h3><a name="Opcodes"
+>Opcodes</a></h3>
+
+<dl>
+<dt><a name="new"
+>new</a></dt>
+<pre>  $P1 = new 'Task'
+</pre>Creates a new task.
+(The Scheduler PMC is never instantiated directly,
+it is only used by Parrot internals.)
+<dt><a name="schedule"
+>schedule</a></dt>
+<pre>  $P0 = new 'Task'
+  # set attributes
+  schedule $P0
+</pre>Register a task with the concurrency scheduler.
+Details about the task are stored within the task PMC.
+<dt><a name="join"
+>join</a></dt>
+<pre>  $P0 = new 'Task'
+  # ... schedule the task, etc.
+  join $P0
+</pre>Wait for a particular task to complete.
+<dt><a name="kill"
+>kill</a></dt>
+<pre>  $P0 = new 'Task'
+  # ... schedule the task, etc.
+  kill $P0
+</pre>Kill a task without waiting for it to complete.</dl>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p>Dec 2003 &#45; (Dan ponders threads based on POSIX and Perl 5 experience) <a href='http://groups.google.com/group/perl.perl6.internals/browse_frm/thread/e64b22ab7de0a7a6/889b5d8c4cd267b7?lnk=gst&#38;q=threads&#38;rnum=3#889b5d8c4cd267b7'><a href="http://groups.google.com/group/perl.perl6.internals/browse_frm/thread/e64b22ab7de0a7a6/889b5d8c4cd267b7?lnk=gst&#38;q=threads&#38;rnum=3#889b5d8c4cd267b7">http://groups.google.com/group/perl.perl6.internals/browse_frm/thread/e64b22ab7de0a7a6/889b5d8c4cd267b7?lnk=gst&#38;q=threads&#38;rnum=3#889b5d8c4cd267b7</a></a></p>
+
+<p>Dec.
+2003 &#45; &#34;threads and shared interpreter data structures&#34; <a href='http://groups.google.com/group/perl.perl6.internals/browse_frm/thread/e64ea4ff287e04fd/b71333e282d3d187?lnk=gst&#38;q=threads&#38;rnum=9#b71333e282d3d187'><a href="http://groups.google.com/group/perl.perl6.internals/browse_frm/thread/e64ea4ff287e04fd/b71333e282d3d187?lnk=gst&#38;q=threads&#38;rnum=9#b71333e282d3d187">http://groups.google.com/group/perl.perl6.internals/browse_frm/thread/e64ea4ff287e04fd/b71333e282d3d187?lnk=gst&#38;q=threads&#38;rnum=9#b71333e282d3d187</a></a></p>
+
+<p>Jan.
+2004 &#45; &#34;Threads Design.
+A Win32 perspective.&#34; <a href='http://groups.google.com/group/perl.perl6.internals/browse_frm/thread/3209629b23306029/52ba9d37425ba015?lnk=gst&#38;q=threads&#38;rnum=8#52ba9d37425ba015'><a href="http://groups.google.com/group/perl.perl6.internals/browse_frm/thread/3209629b23306029/52ba9d37425ba015?lnk=gst&#38;q=threads&#38;rnum=8#52ba9d37425ba015">http://groups.google.com/group/perl.perl6.internals/browse_frm/thread/3209629b23306029/52ba9d37425ba015?lnk=gst&#38;q=threads&#38;rnum=8#52ba9d37425ba015</a></a></p>
+
+<p>Jan.
+2004 &#45; &#34;Start of threads proposal&#34; <a href='http://groups.google.com/group/perl.perl6.internals/browse_frm/thread/4c7de440da84d5c6/04cfb70b0d81dfba?tvc=1&#38;q=threads#04cfb70b0d81dfba'><a href="http://groups.google.com/group/perl.perl6.internals/browse_frm/thread/4c7de440da84d5c6/04cfb70b0d81dfba?tvc=1&#38;q=threads#04cfb70b0d81dfba">http://groups.google.com/group/perl.perl6.internals/browse_frm/thread/4c7de440da84d5c6/04cfb70b0d81dfba?tvc=1&#38;q=threads#04cfb70b0d81dfba</a></a></p>
+
+<p>Sept.
+2005 &#45; &#34;consider using OS threads&#34; <a href='http://groups.google.com/group/perl.perl6.internals/browse_frm/thread/40b50e3aa9255f8e/036a87b5d2b5ed2c?lnk=gst&#38;q=threads&#38;rnum=2#036a87b5d2b5ed2c'><a href="http://groups.google.com/group/perl.perl6.internals/browse_frm/thread/40b50e3aa9255f8e/036a87b5d2b5ed2c?lnk=gst&#38;q=threads&#38;rnum=2#036a87b5d2b5ed2c">http://groups.google.com/group/perl.perl6.internals/browse_frm/thread/40b50e3aa9255f8e/036a87b5d2b5ed2c?lnk=gst&#38;q=threads&#38;rnum=2#036a87b5d2b5ed2c</a></a></p>
+
+<p>Aug.
+2007 &#45; &#34;multi&#45;threading a work in progress&#34; <a href='http://perlmonks.org/?node_id=636466'><a href="http://perlmonks.org/?node_id=636466">http://perlmonks.org/?node_id=636466</a></a></p>
+
+<p>Concurrency as Futures &#45; <a href='http://www.cincomsmalltalk.com/userblogs/mls/blogView?showComments=true&#38;entry=3336838959'><a href="http://www.cincomsmalltalk.com/userblogs/mls/blogView?showComments=true&#38;entry=3336838959">http://www.cincomsmalltalk.com/userblogs/mls/blogView?showComments=true&#38;entry=3336838959</a></a></p>
+
+<p>Io language &#45; <a href='http://www.iolanguage.com/about/'><a href="http://www.iolanguage.com/about/">http://www.iolanguage.com/about/</a></a></p>
+
+<p>Java memory and concurrency &#45; <a href='http://www.cs.umd.edu/~pugh/java/memoryModel/'><a href="http://www.cs.umd.edu/~pugh/java/memoryModel/">http://www.cs.umd.edu/~pugh/java/memoryModel/</a></a></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

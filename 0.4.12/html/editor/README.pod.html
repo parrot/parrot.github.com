@@ -1,0 +1,128 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Productivity Comes in Pretty Colors</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Productivity Comes in Pretty Colors</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/editor.html">Editor Plugins</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>editor/README.pod &#45; Productivity Comes in Pretty Colors</p>
+
+<h1><a name="Syntax_Highlighting_and_Other_Editor_Assistance"
+>Syntax Highlighting and Other Editor Assistance <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Included in this directory are some add&#45;ins for making working on parrot (or in parrot) easier,
+for various popular editors.
+Mostly that means syntax&#45;highlighting and automatic indenting.
+Read on to see what&#39;s available for your favorite editor.
+For a summary on what is available do make help</p>
+
+<h2><a name="Vim"
+>Vim <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>There are several files here,
+all with the <code lang='und' xml:lang='und'>.vim</code> extension.
+<code lang='und' xml:lang='und'>pir.vim</code> (generated from <code lang='und' xml:lang='und'>pir.vim.in</code>),
+<code lang='und' xml:lang='und'>pasm.vim</code>,
+and <code lang='und' xml:lang='und'>pmc.vim</code> are syntax files; <code lang='und' xml:lang='und'>indent_pir.vim</code> is an indent plugin; and <code lang='und' xml:lang='und'>filetype_parrot.vim</code> is a filetype script that tells vim to associate the extensions .pir,
+.imc,
+.imcc,
+.pasm,
+and .pmc with the right syntax.
+The syntax files should be installed to <code lang='und' xml:lang='und'>~/.vim/syntax/</code>; <code lang='und' xml:lang='und'>filetype_parrot.vim</code> should be installed to <code lang='und' xml:lang='und'>~/.vim/ftdetect</code>; <code lang='und' xml:lang='und'>indent_pir.vim</code> should be called <code lang='und' xml:lang='und'>~/.vim/indent/pir.vim</code>.
+<code lang='und' xml:lang='und'>make vim&#45;install</code> in the <code lang='und' xml:lang='und'>editor/</code> dir will do this automatically.
+If you want indenting,
+you should also place <code lang='und' xml:lang='und'>filetype indent on</code> somewhere in your vimrc.</p>
+
+<h2><a name="Kate"
+>Kate <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>There is a syntax file for the KDE editor Kate,
+but it is not built by default.
+Run:</p>
+
+<pre lang='und' xml:lang='und'>   make imc.kate</pre>
+
+<p>in <code lang='und' xml:lang='und'>editor/</code> to build it.</p>
+
+<p>TODO: How do we install Kate syntax files?</p>
+
+<h2><a name="Emacs"
+>Emacs <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<ul>
+<li>Editing the Parrot VM source</li><p class="pad"></p>
+
+<p>In this directory is a <em lang='und' xml:lang='und'>parrot.el</em> describing the c&#45;mode and cperl&#45;mode changes modifications required to edit the Parrot source code. To install the Parrot mode support copy <code lang='und' xml:lang='und'>parrot.el</code> to a directory where Emacs looks for external packages and add the following to your <code lang='und' xml:lang='und'>~/.emacs</code> file:</p>
+
+<pre lang='und' xml:lang='und'>    (load &#34;parrot&#34;)</pre>
+
+<p>Alternatively, if you&#39;re an active Parrot developer, you may wish to add this to your .emacs instead, to automatically track future changes:</p>
+
+<pre lang='und' xml:lang='und'>    (load&#45;file &#34;/&#60;path&#45;to&#45;parrot&#62;/editor/parrot.el&#34;)</pre>
+
+<li>Editing PASM source files</li><p class="pad"></p>
+
+<p>Included here is an Emacs mode for editing pasm files, in <code lang='und' xml:lang='und'>pasm.el</code>.</p>
+
+<p>To install the pasm major mode copy <code lang='und' xml:lang='und'>pasm.el</code> to a directory where Emacs looks for external packages and add the following to your <code lang='und' xml:lang='und'>~/.emacs</code> file:</p>
+
+<pre lang='und' xml:lang='und'>    (load &#34;pasm&#34;)</pre>
+
+<p>To automatically associate .pasm files with this major mode add:</p>
+
+<pre lang='und' xml:lang='und'>    (add&#45;to&#45;list &#39;auto&#45;mode&#45;alist (cons &#34;\\.pasm\\&#39;&#34; &#39;pasm&#45;mode))</pre>
+
+<p>to your <code lang='und' xml:lang='und'>~/.emacs</code> or you can alternatively type <code lang='und' xml:lang='und'>M&#45;x pasm&#45;mode</code> for every file that you want to use the major mode in.</p>
+
+<p>Additionally, you might want to add:</p>
+
+<pre lang='und' xml:lang='und'>    (add&#45;hook &#39;pasm&#45;mode&#45;hook
+              (function (lambda ()
+                          (setq indent&#45;tabs&#45;mode nil))))</pre>
+
+<p>to <code lang='und' xml:lang='und'>~/.emacs</code> as this seems to prevent the odd behavior that is noted when using tabs in the pasm mode.</p>
+</ul>
+
+<h2><a name="TAGS_file"
+>TAGS file <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>There is a script here to automatically generate a TAGS file, which works with Vim and other editors that recognize ctags&#45;format files. The tool &#34;exuberant ctags&#34; is required. Run make tags in the parrot root directory to build the tags file.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

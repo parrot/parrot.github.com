@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parser for .ops files</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/tools.html">Tools</a> &raquo; Parser for .ops files
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>tools/build/ops2c.pl &#45; Parser for .ops files</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    % perl tools/build/ops2c.pl trans [&#45;&#45;help] [&#45;&#45;no&#45;lines] [&#45;&#45;dynamic]
+                                      [&#45;&#45;core | input.ops [input2.ops ...]]
+       trans := C | CGoto | CGP | CSwitch | CPrederef</pre>
+
+<p>For example:</p>
+
+<pre>    % perl tools/build/ops2c.pl C &#45;&#45;core
+
+    % perl tools/build/ops2c.pl C &#45;&#45;dynamic myops.ops</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This script uses a supplied transform to create a pair of C header and implementation files from the operation definitions found in one or more <em>*.ops</em> files.</p>
+
+<h2><a name="Transforms"
+>Transforms</a></h2>
+
+<p>The first command&#45;line argument is the last package name component of a subclass of <code><a href='../../lib/Parrot/OpTrans.pm.html'>Parrot::OpTrans</a></code>. These subclasses all have full names of the form <code>Parrot::OpTrans::*</code>. An instance of the class is created and later consulted for various bits of information needed to generate the C code. Each creates a different type of run loop.</p>
+
+<dl>
+<dt><a name="C"
+><b><code>C</b></code></a></dt>
+Create the function&#45;based (slow or fast core) run loop.
+<dt><a name="CGoto"
+><b><code>CGoto</b></code></a></dt>
+Create the <code>goto</code> run loop.
+<dt><a name="CGP"
+><b><code>CGP</b></code></a></dt>
+Create the <code>goto</code> and predereferenced run loop.
+<dt><a name="CSwitch"
+><b><code>CSwitch</b></code></a></dt>
+Create the <code>switch</code>ed and predereferenced run loop.
+<dt><a name="CPrederef"
+><b><code>CPrederef</b></code></a></dt>
+Create the predereferenced run loop.</dl>
+
+<h2><a name="Options"
+>Options</a></h2>
+
+<dl>
+<dt><a name="&#45;&#45;help"
+><b><code>&#45;&#45;help</b></code></a></dt>
+Print synopsis.
+<dt><a name="&#45;&#45;dynamic"
+><b><code>&#45;&#45;dynamic</b></code></a></dt>
+Indicate that the opcode library is dynamic.
+<dt><a name="&#45;&#45;core"
+><b><code>&#45;&#45;core</b></code></a></dt>
+Build the Parrot core opcode library.
+<dt><a name="&#45;&#45;no&#45;lines"
+><b><code>&#45;&#45;no&#45;lines</b></code></a></dt>
+Do not generate <code>#line</code> directives in the generated C code.</dl>
+
+<h1><a name="NOTE"
+>NOTE</a></h1>
+
+<p>Most of the functionality in <em><a href="ops2c.pl.html">tools/build/ops2c.pl</a></em> has been extracted into methods and subroutines found in Parrot::Ops2c::Utils and Parrot::Ops2c::Auxiliary. This refactoring facilitates unit testing and coverage analysis of that functionality. A test suite has been provided in <em>t/tools/ops2cutils/</em>. It is recommended that future refactoring of this functionality proceed in a test&#45;driven manner, <i>i.e.,</i> tests should be written reflecting any changes to interface or functionality; the code should be written which implements the revisions; the code should be tested; and coverage analysis should be performed with Devel::Cover to measure the extent to which the tests exercise the code.</p>
+
+<h1><a name="AUTHORS"
+>AUTHORS</a></h1>
+
+<p>Based on the commit logs, the following members of the Parrot project have contributed to this program:</p>
+
+<pre>    ambs bernhard boemmels brentdax chip
+    coke dan gregor grunblatt jgoff
+    jkeenan jonathan josh jrieks leo
+    mikescott mrjoltcola nicholas particle paultcochrane
+    petdance rgrjr robert simon</pre>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<dl>
+<dt><a name="tools/build/ops2pm.pl"
+><em><a href="ops2pm.pl.html">tools/build/ops2pm.pl</a></em></a></dt>
+
+<dt><a name="Parrot::OpsFile"
+><b><code><a href='../../lib/Parrot/OpsFile.pm.html'>Parrot::OpsFile</a></b></code></a></dt>
+
+<dt><a name="Parrot::Op"
+><b><code><a href='../../lib/Parrot/Op.pm.html'>Parrot::Op</a></b></code></a></dt>
+
+<dt><a name="Parrot::OpTrans"
+><b><code><a href='../../lib/Parrot/OpTrans.pm.html'>Parrot::OpTrans</a></b></code></a></dt>
+
+<dt><a name="Parrot::OpTrans::C"
+><b><code><a href='../../lib/Parrot/OpTrans/C.pm.html'>Parrot::OpTrans::C</a></b></code></a></dt>
+
+<dt><a name="Parrot::OpTrans::CGoto"
+><b><code><a href='../../lib/Parrot/OpTrans/CGoto.pm.html'>Parrot::OpTrans::CGoto</a></b></code></a></dt>
+
+<dt><a name="Parrot::OpTrans::CGP"
+><b><code><a href='../../lib/Parrot/OpTrans/CGP.pm.html'>Parrot::OpTrans::CGP</a></b></code></a></dt>
+
+<dt><a name="Parrot::OpTrans::CSwitch"
+><b><code><a href='../../lib/Parrot/OpTrans/CSwitch.pm.html'>Parrot::OpTrans::CSwitch</a></b></code></a></dt>
+
+<dt><a name="Parrot::OpTrans::CPrederef"
+><b><code><a href='../../lib/Parrot/OpTrans/CPrederef.pm.html'>Parrot::OpTrans::CPrederef</a></b></code></a></dt>
+
+<dt><a name="Parrot::Ops2c::Utils"
+><b><code><a href='../../lib/Parrot/Ops2c/Utils.pm.html'>Parrot::Ops2c::Utils</a></b></code></a></dt>
+
+<dt><a name="Parrot::Ops2c::Auxiliary"
+><b><code><a href='../../lib/Parrot/Ops2c/Auxiliary.pm.html'>Parrot::Ops2c::Auxiliary</a></b></code></a></dt>
+</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

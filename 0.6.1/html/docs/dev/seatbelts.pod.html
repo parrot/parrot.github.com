@@ -1,0 +1,227 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="SEATBELTS"
+>SEATBELTS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>DEFINITELY UNDER CONSTRUCTION</p>
+
+<p>I&#39;m trying to create as many seat belts and idiot lights as possible.
+Using C macros and automatic function declaration generation makes this much easier for me to do,
+and is far more maintainable.</p>
+
+<p>Headerizer creates function declarations based on function definitions.
+It scans the source files passed to it and extracts the function declarations.
+Then it puts them into the appropriate .h file or,
+in the case of static functions,
+back into the source file itself.</p>
+
+<p>The headerizer also adds function attributes as specified by the decorations on the source.</p>
+
+<p>All of these macros are GCC&#45;specific right now,
+but soon will have equivalent semantics for lint added to them.
+This will make lint a far more powerful tool.
+If/when we ever get splint going,
+too,
+we can add semantics there as well.</p>
+
+<p>Also,
+where it says &#34;compiler&#34;,
+it could also mean &#34;lint or any other static analysis tool like splint.&#34;</p>
+
+<h1><a name="What&#39;s_a_shim?"
+>What&#39;s a shim? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Think of &#34;shim&#34; as shorthand for &#34;placeholder&#34;.
+It&#39;s 64% shorter.</p>
+
+<p>GCC (and lint and splint) likes to complain (as well it should) if you pass an argument into a function and don&#39;t use it.
+If we know that we&#39;re not going to use an argument,
+we can either remove the argument from the function declaration,
+or mark it as unused.</p>
+
+<p>Throwing the argument away is not always possible.
+Usually,
+it&#39;s because the function is one that gets referred to by a function pointer,
+and all functions of this group must have the same,
+say,
+three args: Interp,
+Foo and Bar.
+Maybe a given function doesn&#39;t use Foo,
+but we still have to accept Foo.
+In this case,
+we can in the body of the func,
+<code lang='und' xml:lang='und'>UNUSED(Foo)</code>,
+if we plan to use it in the future.
+Or,
+if we never will use it,
+mark it as a <code lang='und' xml:lang='und'>SHIM(Foo)</code> in the declaration.</p>
+
+<h1><a name="Function_Decorators"
+>Function Decorators <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="PARROT_WARN_UNUSED_RESULT"
+>PARROT_WARN_UNUSED_RESULT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Tells the compiler to warn if the function is called,
+but the result is ignored.</p>
+
+<h2><a name="PARROT_IGNORABLE_RESULT"
+>PARROT_IGNORABLE_RESULT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Tells the compiler that it&#39;s OK to ignore the function&#39;s return value</p>
+
+<h2><a name="PARROT_MALLOC"
+>PARROT_MALLOC <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Functions marked with this are flagged as having received <code lang='und' xml:lang='und'>malloc</code>ed memory.
+This lets the compiler do analysis on memory leaks.</p>
+
+<h2><a name="PARROT_CONST_FUNCTION"
+>PARROT_CONST_FUNCTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The function is a deterministic one that will always return the same value if given the same arguments,
+every time.
+Examples include functions like <code lang='und' xml:lang='und'>mod</code> or <code lang='und' xml:lang='und'>max</code>.
+An anti&#45;example is <code lang='und' xml:lang='und'>rand()</code> which returns a different value every time.</p>
+
+<h2><a name="PARROT_PURE_FUNCTION"
+>PARROT_PURE_FUNCTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Less stringent than PARROT_CONST_FUNCTION,
+these functions only operate on their arguments and the data they point to.
+Examples include <code lang='und' xml:lang='und'>strlen()</code> or <code lang='und' xml:lang='und'>strchr()</code>.</p>
+
+<h2><a name="PARROT_DOES_NOT_RETURN"
+>PARROT_DOES_NOT_RETURN <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>For functions that can&#39;t return,
+like <code lang='und' xml:lang='und'>Parrot_exit()</code>.
+This helps the compiler&#39;s flow analysis.</p>
+
+<h2><a name="PARROT_CANNOT_RETURN_NULL"
+>PARROT_CANNOT_RETURN_NULL <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>For functions that return a pointer,
+but the pointer is guaranteed to not be NULL.</p>
+
+<h2><a name="PARROT_CAN_RETURN_NULL"
+>PARROT_CAN_RETURN_NULL <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>For functions that return a pointer that could be null.</p>
+
+<h1><a name="ARGUMENT_&#38;_VARIABLE_DECORATORS"
+>ARGUMENT &#38; VARIABLE DECORATORS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="NOTNULL(x)"
+>NOTNULL(x) <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>For function arguments and variables that must never have NULL assigned to them,
+or passed into them.
+For example,
+if we were defining <code lang='und' xml:lang='und'>strlen()</code> in Parrot,
+we&#39;d do it as <code lang='und' xml:lang='und'>strlen(NOTNULL(const char *p))</code>.</p>
+
+<h2><a name="NULLOK(x)"
+>NULLOK(x) <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>For function arguments and variables where it&#39;s OK to pass in NULL.
+For example,
+if we wrote <code lang='und' xml:lang='und'>free()</code> in Parrot,
+it would be <code lang='und' xml:lang='und'>strlen(NULLOK(void *p))</code>.</p>
+
+<h2><a name="SHIM(x)"
+>SHIM(x) <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<h1><a name="PASSING_AROUND_INTERPRETERS"
+>PASSING AROUND INTERPRETERS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Most of the time,
+if you need an interpreter in your function,
+define that argument as <code lang='und' xml:lang='und'>PARROT_INTERP</code>.
+If your interpreter is a shim,
+then use <code lang='und' xml:lang='und'>SHIM_INTERP</code>,
+not <code lang='und' xml:lang='und'>SHIM(PARROT_INTERP)</code>.</p>
+
+<h1><a name="Examples"
+>Examples <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>    PARROT_API
+    PARROT_WARN_UNUSED_RESULT
+    INTVAL
+    string_str_index(PARROT_INTERP, NOTNULL(const STRING *s),
+            NOTNULL(const STRING *s2), INTVAL start)</pre>
+
+<p><code lang='und' xml:lang='und'>string_str_index</code> is part of the Parrot API, and returns an INTVAL. The interpreter is used somewhere in the function. String <code lang='und' xml:lang='und'>s</code> and <code lang='und' xml:lang='und'>s2</code> cannot be NULL. If the calling function ignores the return value, it&#39;s an error, because you&#39;d never want to call <code lang='und' xml:lang='und'>string_str_index()</code> without wanting to know its value.</p>
+
+<pre lang='und' xml:lang='und'>    PARROT_API
+    PARROT_PURE_FUNCTION
+    INTVAL
+    parrot_hash_size(SHIM_INTERP, NOTNULL(const Hash *hash))
+    {
+        return hash&#45;&#62;entries;
+    }</pre>
+
+<p>This function is a pure function because it only looks at its parameters or global memory. The interpreter doesn&#39;t get used, but needs to be passed because all PARROT_API functions have interpreters passed, so is flagged as a SHIM_INTERP.</p>
+
+<p>We could put <code lang='und' xml:lang='und'>PARROT_WARN_UNUSED_RESULT</code> on this function, but since all <code lang='und' xml:lang='und'>PARROT_PURE_FUNCTION</code>s and <code lang='und' xml:lang='und'>PARROT_CONST_FUNCTION</code>s get flagged that way anyway, there&#39;s no need.</p>
+
+<h1><a name="Splint_to&#45;do"
+>Splint to&#45;do <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Annotate functions with /*@only@*/ and /*@keep@*/</p>
+
+<p>Figure out where /*@modifies@*/ is different from /*@out@*/</p>
+
+<h1><a name="More_safety_stuff"
+>More safety stuff <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Look at snprintf instead of sprintf</p>
+
+<p>Use the return values from sprintf where we would be using strlen of the result</p>
+
+<p>Make the VTABLE_type func take a const PMC, because hey, your type should never change, right?</p>
+
+<p>Sync the specs in <em lang='und' xml:lang='und'><a href="../pdds/pdd17_pmc.pod.html">docs/pdds/pdd17_pmc.pod</a></em> with the function headers.</p>
+
+<p>Hoist the repetitive iter_init() in src/encodings</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

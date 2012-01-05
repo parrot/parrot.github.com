@@ -1,0 +1,230 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot Vtables</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Home</a> &raquo; <a href="../../html/developer.html">Developer Documentation</a> &raquo; Parrot Vtables
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/vtables.pod &#45; Parrot Vtables</p>
+
+<h1><a name="Implementing_Variable_Types_with_Vtables"
+>Implementing Variable Types with Vtables</a></h1>
+
+<p>This is a guide to creating your own PMC (Polymorphic Container) classes.
+It tells you what you need to write in order to add new variable types to Parrot.</p>
+
+<h2><a name="Overview"
+>Overview</a></h2>
+
+<p>The guts of the Parrot interpreter are by design ignorant (or,
+if you want to be less disparaging,
+agnostic) of the intricacies of variable type behavior.
+The standard example is the difference between Perl scalars and Python scalars.
+In Perl,
+if you have</p>
+
+<pre>    $a = &#34;a9&#34;;
+    $a++;</pre>
+
+<p>you end up with <code>$a</code> being <code>b0</code>. This is because of the magic of the Perl increment operator. In Python, on the other hand, you&#39;d get a runtime error.</p>
+
+<ul>
+<li>To be perfectly honest, this is a slightly flawed example, since it&#39;s unlikely that there will be a distinct &#34;Python scalar&#34; PMC class. The Python compiler could well infer variables by their type such that <code>a</code> would be a <code>PythonString</code> and <code>b</code> would be a <code>PythonNumber</code>. But the point remains &#45; incrementing a <code>PythonString</code> is very different from incrementing a <code>PerlScalar</code>.</li>
+</ul>
+
+<p>Since the behavior is a function of the &#34;type&#34; of the PMC, it&#39;s natural to consider the various different types of PMC as classes in an object&#45;oriented system. The Parrot interpreter calls methods on the individual PMC objects to manipulate them. So the example above would translate to something like:</p>
+
+<ol>
+<li>Construct a new PMC in the PerlScalar class.</li>
+
+<li>Call a method setting its string value to <code>&#34;a9&#34;</code>.</li>
+
+<li>Call a method to tell it to increment itself.</li>
+</ol>
+
+<p>And if you replace PerlScalar with PythonString, you get different behavior but to the fundamental guts of the interpreter, the instructions are the same. PMCs are an abstract virtual class; the interpreter calls a method, the PMC object does the right thing, and the interpreter shouldn&#39;t have to care particularly what that right thing happens to be.</p>
+
+<p>Hence, adding a new data type to Parrot is a question of providing methods which implement that data type&#39;s expected behavior. Let&#39;s now look at how one is supposed to do this.</p>
+
+<h2><a name="Starting_out"
+>Starting out</a></h2>
+
+<p>If you&#39;re adding data types to the core of Parrot, you should be creating a file in the <em>src/pmc/</em> subdirectory; this is where all the built&#45;in PMC classes live. (And a good source of examples to plunder even if you&#39;re not writing a core data type.)</p>
+
+<p>You should almost always start by running <em><a href="../tools/dev/gen_class.pl.html">tools/dev/gen_class.pl</a></em> to generate a skeleton for the class. Let&#39;s generate a number type for the beautifully non&#45;existent Fooby language:</p>
+
+<pre>    % perl tools/dev/gen_class.pl FoobyNumber &#62; src/pmc/foobynumber.pmc</pre>
+
+<p>This will produce a skeleton PMC file (to be preprocessed into ordinary C code by the <em><a href="../tools/build/pmc2c.pl.html">tools/build/pmc2c.pl</a></em> program) with stubs for all the methods you need to fill in. Actually, there are more stubs here then you probably <i>need</i> to fill in. Your PMC isn&#39;t going to want to support all these methods, and in many cases you may want to fall back to default behavior instead of implementing a dummy method.&#62; The function <code>init</code> allows you to set up anything you need to set up.</p>
+
+<p>Now you&#39;ll have to do something a little different depending on whether you&#39;re writing a built&#45;in class or an extension class. If you&#39;re writing a non&#45;core PMC, called a &#34;dynpmc&#34;, you need to add the argument <code>dynpmc</code> to the line that starts with <code>pmclass</code>. Here&#39;s an example:</p>
+
+<pre>        pmclass FooByNumber dynpmc {
+                ...</pre>
+
+<p>This alerts the PMC compiler that the PMC type should not be hard&#45;coded into Parrot, and that the PMC definition needs to be loaded in to Parrot dynamically when the user requires it.</p>
+
+<p>To finish up adding a built&#45;in class:</p>
+
+<ol>
+<li>Add src/pmc/YOURCLASS.pmc to the MANIFEST.</li>
+
+<li>Run <code>make realclean</code>, and then run <em><a href="../Configure.pl.html">Configure.pl</a></em> to add your new PMC to the set of built&#45;in PMCs.</li>
+</ol>
+
+<h2><a name="What_You_Can_and_Cannot_Do"
+>What You Can and Cannot Do</a></h2>
+
+<p>The usual way to continue from the <em><a href="../tools/dev/gen_class.pl.html">tools/dev/gen_class.pl</a></em>&#45;generated skeleton is to define a structure that will hook onto the <code>data</code>, if your data type needs to use that, and then also define some user&#45;defined flags.</p>
+
+<p>Flags are accessed by <code>pmc&#45;&#62;flags</code>. Most of the bits in the flag word are reserved for use by parrot itself, but a number of them have been assigned for general use by individual classes. These are referred to as <code>Pobj_private0_FLAG</code> .. <code>Pobj_private7_FLAG</code>.</p>
+
+<p>Normally, you will want to alias these generic bit names to something more meaningful within your class:</p>
+
+<pre>    enum {
+        Foobynumber_is_bignum = Pobj_private0_FLAG,
+        Foobynumber_is_bigint = Pobj_private1_FLAG,
+        ....
+    };</pre>
+
+<p>To manipulate the flags, use the macros listed in <em>pobj.h</em>.</p>
+
+<p>PMCs also have the ability to store an arbitrary number of user&#45;defined attribute values using the <code>ATTR</code> keyword.</p>
+
+<h2><a name="Multimethods"
+>Multimethods</a></h2>
+
+<p>One slightly (potentially) tricky element of implementing vtables is that several of the vtable functions have variant forms depending on the type of data that they&#39;re being called with.</p>
+
+<p>For instance, the <code>set_integer</code> method has multiple forms; the default <code>set_integer</code> means that you are being called with a PMC, and you should probably use the <code>get_integer</code> method of the PMC to find its integer value; <code>set_integer_native</code> means you&#39;re being passed an <code>INTVAL</code>. The final form is slightly special; if the interpreter calls <code>set_integer_same</code>, you know that the PMC that you are being passed is of the same type as you. Hence, you can break the class abstraction to save a couple of dereferences &#45; if you want to.</p>
+
+<p>Similar shortcuts exist for strings, (<code>native</code> and <code>same</code>) and floating point numbers.</p>
+
+<h2><a name="Implementing_VTABLE_Interfaces"
+>Implementing VTABLE Interfaces</a></h2>
+
+<p>The master list of VTABLE interfaces can be found in <em>src/vtable.tbl</em> in the root directory of the Parrot source, with documentation in <em><a href="pdds/pdd17_pmc.pod.html">docs/pdds/pdd17_pmc.pod</a></em>. A few of these are very important, for instance:</p>
+
+<dl>
+<dt><a name="type"
+><b><code>type</b></code></a></dt>
+Return the enumeration value of your class.
+<dt><a name="name"
+><b><code>name</b></code></a></dt>
+Return a string containing your class name.
+<dt><a name="init"
+><b><code>init</b></code></a></dt>
+Initialization. Parrot makes exactly one call to either <code>init</code> or <code>init_pmc</code> at PMC construction time.
+<dt><a name="init_pmc"
+><b><code>init_pmc</b></code></a></dt>
+Alternative entry point for initialization that takes a PMC argument. Parrot makes exactly one call to either <code>init</code> or <code>init_pmc</code> at PMC construction time.NOTE: It is strongly suggested that <code>init_pmc(PMCNULL)</code> be equivalent to <code>init()</code>.
+<dt><a name="is_equal"
+><b><code>is_equal</b></code></a></dt>
+True if the passed&#45;in PMC has the same <b>value</b> as you. For instance, a Perl integer and a Python integer could have the same value, but could not be the same thing as defined by <code>is_same</code>.
+<dt><a name="clone"
+><b><code>clone</b></code></a></dt>
+Copy your data and state into the passed&#45;in destination PMC.</dl>
+
+<p>Others are methods you may or may not need, depending on your type:</p>
+
+<dl>
+<dt><a name="morph"
+><b><code>morph</b></code></a></dt>
+Turn yourself into the specified type.
+<dt><a name="destroy"
+><b><code>destroy</b></code></a></dt>
+Do any data shut&#45;down and finalization you need to do. To have this method called, you must set the <code>Pobj_custom_destroy_FLAG</code>.
+<dt><a name="get_integer"
+><b><code>get_integer</b></code></a></dt>
+Return an integer representation of yourself.
+<dt><a name="get_number"
+><b><code>get_number</b></code></a></dt>
+Return a floating&#45;point representation of yourself.
+<dt><a name="get_string"
+><b><code>get_string</b></code></a></dt>
+Return a string representation of yourself (a STRING* object), this should be a <b>copy</b> of whatever string you are holding, not just a pointer to your own string so that anything that calls this method can happily modify this value without making a mess of your guts.
+<dt><a name="get_bool"
+><b><code>get_bool</b></code></a></dt>
+Return a boolean representation of yourself.
+<dt><a name="get_value"
+><b><code>get_value</b></code></a></dt>
+Return your private data as a raw pointer.
+<dt><a name="is_same"
+><b><code>is_same</b></code></a></dt>
+True if the passed&#45;in PMC refers to exactly the same <b>data</b> as you. (Contrast <code>is_equal</code>)
+<dt><a name="set_integer"
+><b><code>set_integer</b></code></a></dt>
+Set yourself to the passed&#45;in integer value. This is an integer multimethod.
+<dt><a name="set_number"
+><b><code>set_number</b></code></a></dt>
+Set yourself to the passed&#45;in float value. This is a floating&#45;point multimethod.
+<dt><a name="set_string"
+><b><code>set_string</b></code></a></dt>
+Set yourself to the passed&#45;in string. This is a string multimethod.
+<dt><a name="add"
+><b><code>add</b></code></a></dt>
+Fetch the number part of <code>value</code> and add your numeric value to it, storing the result in <code>dest</code>. (Probably by calling its <code>set_integer</code> or <code>set_number</code> method) This is a numeric multimethod.
+<dt><a name="subtract"
+><b><code>subtract</b></code></a></dt>
+Fetch the number part of <code>value</code> and subtract your numeric value from it, storing the result in <code>dest</code>. (Probably by calling its <code>set_integer</code> or <code>set_number</code> method) This is a numeric multimethod.
+<dt><a name="multiply"
+><b><code>multiply</b></code></a></dt>
+
+<dt><a name="divide"
+><b><code>divide</b></code></a></dt>
+
+<dt><a name="modulus"
+><b><code>modulus</b></code></a></dt>
+You get the picture.
+<dt><a name="concatenate"
+><b><code>concatenate</b></code></a></dt>
+Fetch the string part of <code>value</code> and concatenate it to yourself, storing the result in <code>dest</code>. (Probably by calling its <code>set_string</code> method) This is a string multimethod.
+<dt><a name="logical_or"
+><b><code>logical_or</b></code></a></dt>
+
+<dt><a name="logical_and"
+><b><code>logical_and</b></code></a></dt>
+Perform the given short&#45;circuiting logical operations between your boolean value and the value passed in, storing the result in <code>dest</code>.
+<dt><a name="logical_not"
+><b><code>logical_not</b></code></a></dt>
+Set yourself to be a logical negation of the value passed in.
+<dt><a name="repeat"
+><b><code>repeat</b></code></a></dt>
+Repeat your string representation <code>value</code> times and store the result in <code>dest</code>.</dl>
+
+<p>If any method doesn&#39;t fit into your class, just don&#39;t implement it and don&#39;t provide an empty function body. The default class, which all classes inherit from will throw an exception if the missing method ever gets called.</p>
+
+<p>If your class is a modification of an existing class, you may wish to use inheritance. At the beginning of your VTABLE specification in src/pmc/YOURCLASS.pmc, add the <code>extends SUPERCLASS</code> phrase. For example:</p>
+
+<pre>  pmclass PackedArray extends Array { ...</pre>
+
+<p>See the POD documentation in <em><a href="../tools/build/pmc2c.pl.html">tools/build/pmc2c.pl</a></em> for a list of useful keywords that you may use in the .pmc file.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

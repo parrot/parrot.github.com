@@ -1,0 +1,124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - CPointer</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; CPointer
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/cpointer.pmc &#45; CPointer</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>The CPointer PMC creates a PMC abstraction for a typed C pointer.
+It is particularly used by the <code>CallSignature</code> PMC,
+for the return values of a C&#45;level PCC invocation using a <code>CallSignature</code> to pass the arguments and fetch the results.</p>
+
+<h2><a name="Attributes"
+>Attributes</a></h2>
+
+<p>A CPointer PMC has two attributes:</p>
+
+<dl>
+<dt><a name="pointer"
+>pointer</a></dt>
+A <code>void *</code> pointer to an integer,
+number,
+string,
+or PMC.
+<dt><a name="sig"
+>sig</a></dt>
+A string signature for the pointer.
+The possible signature values follow the standard defined for PCC.
+<pre>  I   a Parrot integer (INTVAL)
+  N   a Parrot number  (FLOATVAL)
+  S   a Parrot string  (STRING *)
+  P   a Parrot object  (PMC *)</pre>
+</dl>
+
+<h2><a name="Vtable_Functions"
+>Vtable Functions</a></h2>
+
+<p>These are the vtable functions for the CPointer class.</p>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes the pointer object.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Marks the signature as live. Also marks a STRING or PMC pointed to by the pointer.
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+Creates and returns a clone of the pointer.
+<dt><a name="void_*get_pointer()"
+><b><code>void *get_pointer()</b></code></a></dt>
+Returns the pointer.
+<dt><a name="void_set_pointer(void_*)"
+><b><code>void set_pointer(void *)</b></code></a></dt>
+Sets the pointer.
+<dt><a name="STRING_*get_string_keyed_str(STRING_*key)"
+><b><code>STRING *get_string_keyed_str(STRING *key)</b></code></a></dt>
+Returns the string signature.
+<dt><a name="void_set_string_keyed_str(STRING_*key,_STRING_*value)"
+><b><code>void set_string_keyed_str(STRING *key, STRING *value)</b></code></a></dt>
+Sets the string signature.
+<dt><a name="INTVAL_get_integer()"
+><b><code>INTVAL get_integer()</b></code></a></dt>
+Returns the integer value that the pointer points to (if the pointer is to an integer or PMC).
+<dt><a name="void_set_integer_native(INTVAL_value)"
+><b><code>void set_integer_native(INTVAL value)</b></code></a></dt>
+Sets the integer value that the pointer points to (if the pointer is to an integer or PMC).
+<dt><a name="FLOATVAL_get_number()"
+><b><code>FLOATVAL get_number()</b></code></a></dt>
+Returns the floating point value that the pointer points to (if the pointer is to a number or PMC).
+<dt><a name="void_set_number_native(FLOATVAL_value)"
+><b><code>void set_number_native(FLOATVAL value)</b></code></a></dt>
+Sets the floating point value that the pointer points to (if the pointer is to a number or PMC).
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+Returns the Parrot string value that the pointer points to (if the pointer is to a string or PMC).
+<dt><a name="void_set_string_native(STRING_*value)"
+><b><code>void set_string_native(STRING *value)</b></code></a></dt>
+Sets the Parrot string value that the pointer points to (if the pointer is to a string or PMC).
+<dt><a name="PMC_*get_pmc()"
+><b><code>PMC *get_pmc()</b></code></a></dt>
+Returns the PMC value that the pointer points to (if the pointer is to a PMC).
+<dt><a name="void_set_pmc(PMC_*value)"
+><b><code>void set_pmc(PMC *value)</b></code></a></dt>
+Sets the PMC value that the pointer points to (if the pointer is to a PMC).
+<dt><a name="INTVAL_get_bool()"
+><b><code>INTVAL get_bool()</b></code></a></dt>
+Returns whether the pointer is not <code>NULL</code>.
+<dt><a name="INTVAL_is_same(PMC_*pmc2)"
+><b><code>INTVAL is_same(PMC *pmc2)</b></code></a></dt>
+Returns whether the pointer has the same value as <code>*pmc2</code>.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Exceptions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Exceptions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/exceptions.c &#45; Exceptions</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Define the the core subsystem for exceptions.</p>
+
+<h2><a name="Exception_Functions"
+>Exception Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="PMC_*_Parrot_ex_build_exception"
+><b><code lang='und' xml:lang='und'>PMC *Parrot_ex_build_exception</b></code></a></dt><p class="pad"></p>
+
+<dd>Constructs a new exception object from the passed in arguments.</dd><p class="pad"></p>
+
+<dt><a name="static_PMC_*_die_from_exception"
+><b><code lang='und' xml:lang='und'>static PMC *die_from_exception</b></code></a></dt><p class="pad"></p>
+
+<dd>Print a stack trace for <code lang='und' xml:lang='und'>exception</code>,
+a message if there is one,
+and then exit.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_ex_add_c_handler"
+><b><code lang='und' xml:lang='und'>void Parrot_ex_add_c_handler</b></code></a></dt><p class="pad"></p>
+
+<dd>Adds a new exception handler (defined in C) to the concurrency scheduler.
+Since the exception handler is C code,
+it stores a runloop jump point to the start of the handler code.</dd><p class="pad"></p>
+
+<dt><a name="opcode_t_*_Parrot_ex_throw_from_op"
+><b><code lang='und' xml:lang='und'>opcode_t *Parrot_ex_throw_from_op</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the exception handler.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_ex_throw_from_c"
+><b><code lang='und' xml:lang='und'>void Parrot_ex_throw_from_c</b></code></a></dt><p class="pad"></p>
+
+<dd>Throws an exception object.</dd><p class="pad"></p>
+
+<dd>See also <code lang='und' xml:lang='und'>exit_fatal()</code>,
+which signals fatal errors,
+and <code lang='und' xml:lang='und'>Parrot_ex_throw_from_op</code>.</dd><p class="pad"></p>
+
+<dd>The &#39;invoke&#39; vtable function doesn&#39;t actually execute a sub/continuation/handler,
+it only sets up the environment for invocation and returns the address of the start of the sub&#39;s code.
+That address then becomes the next op in the runloop.</dd><p class="pad"></p>
+
+<dd>Exceptions thrown from C and caught by a continuation&#45;based handler are resumable at the level of a C instruction.
+When handled,
+they return the exception object.
+Any values returned from the handler to the C code that threw the exception can be stored in the exception&#39;s payload.</dd><p class="pad"></p>
+
+<dt><a name="opcode_t_*_Parrot_ex_throw_from_op_args"
+><b><code lang='und' xml:lang='und'>opcode_t *Parrot_ex_throw_from_op_args</b></code></a></dt><p class="pad"></p>
+
+<dd>Throws an exception from an opcode,
+with an error message constructed from a format string and arguments.</dd><p class="pad"></p>
+
+<dd>See also <code lang='und' xml:lang='und'>Parrot_ex_throw_from_c</code>,
+<code lang='und' xml:lang='und'>Parrot_ex_throw_from_op</code>,
+and <code lang='und' xml:lang='und'>exit_fatal()</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_ex_throw_from_c_args"
+><b><code lang='und' xml:lang='und'>void Parrot_ex_throw_from_c_args</b></code></a></dt><p class="pad"></p>
+
+<dd>Throws an exception,
+with an error message constructed from a format string and arguments.
+<code lang='und' xml:lang='und'>ret_addr</code> is the address from which to resume,
+if some handler decides that is appropriate,
+or zero to make the error non&#45;resumable.
+<code lang='und' xml:lang='und'>exitcode</code> is a <code lang='und' xml:lang='und'>exception_type_enum</code> value.</dd><p class="pad"></p>
+
+<dd>See also <code lang='und' xml:lang='und'>Parrot_ex_throw_from_c</code>,
+<code lang='und' xml:lang='und'>Parrot_ex_throw_from_op</code>,
+and <code lang='und' xml:lang='und'>exit_fatal()</code>.</dd><p class="pad"></p>
+
+<dt><a name="opcode_t_*_Parrot_ex_rethrow_from_op"
+><b><code lang='und' xml:lang='und'>opcode_t *Parrot_ex_rethrow_from_op</b></code></a></dt><p class="pad"></p>
+
+<dd>Rethrow the exception.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_ex_rethrow_from_c"
+><b><code lang='und' xml:lang='und'>void Parrot_ex_rethrow_from_c</b></code></a></dt><p class="pad"></p>
+
+<dd>Return back to runloop,
+assumes exception is still in todo (see RT #45915) and that this is called from within a handler setup with <code lang='und' xml:lang='und'>new_c_exception</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_ex_mark_unhandled"
+><b><code lang='und' xml:lang='und'>void Parrot_ex_mark_unhandled</b></code></a></dt><p class="pad"></p>
+
+<dd>Mark an exception as unhandled,
+as part of rethrowing it.</dd><p class="pad"></p>
+
+<dt><a name="size_t_Parrot_ex_calc_handler_offset"
+><b><code lang='und' xml:lang='und'>size_t Parrot_ex_calc_handler_offset</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieve an exception from the concurrency scheduler,
+prepare a call to the handler,
+and return the offset to the handler so it can become the next op in the runloop.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Error_Functions"
+>Error Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_Parrot_assert"
+><b><code lang='und' xml:lang='und'>void Parrot_assert</b></code></a></dt><p class="pad"></p>
+
+<dd>A better version of assert() that gives a backtrace.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_confess"
+><b><code lang='und' xml:lang='und'>void Parrot_confess</b></code></a></dt><p class="pad"></p>
+
+<dd>Prints a backtrace and message for a failed assertion.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_print_backtrace"
+><b><code lang='und' xml:lang='und'>void Parrot_print_backtrace</b></code></a></dt><p class="pad"></p>
+
+<dd>Displays the primrose path to disaster,
+(the stack frames leading up to the abort).
+Used by <code lang='und' xml:lang='und'>Parrot_confess</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_exit_fatal"
+><b><code lang='und' xml:lang='und'>void exit_fatal</b></code></a></dt><p class="pad"></p>
+
+<dd>Signal a fatal error condition.
+This should only be used with dire errors that cannot throw an exception (because no interpreter is available,
+or the nature of the error would interfere with the exception system).</dd><p class="pad"></p>
+
+<dd>This involves printing an error message to stderr,
+and calling <code lang='und' xml:lang='und'>exit</code> to exit the process with the given exitcode.
+It is not possible for Parrot bytecode to intercept a fatal error (for that,
+use <code lang='und' xml:lang='und'>Parrot_ex_throw_from_c_args</code>).
+<code lang='und' xml:lang='und'>exit_fatal</code> does not call <code lang='und' xml:lang='und'>Parrot_exit</code> to invoke exit handlers (that would require an interpreter).</dd><p class="pad"></p>
+
+<dt><a name="void_do_panic"
+><b><code lang='und' xml:lang='und'>void do_panic</b></code></a></dt><p class="pad"></p>
+
+<dd>Panic handler.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/exceptions.h</em>.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

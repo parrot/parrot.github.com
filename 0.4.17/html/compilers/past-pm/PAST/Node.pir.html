@@ -1,0 +1,363 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot abstract syntax tree</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot abstract syntax tree</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>PAST &#45; Parrot abstract syntax tree</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This file implements the various abstract syntax tree nodes for compiling programs in Parrot.</p>
+
+<h1><a name="PAST_Node_types"
+>PAST Node types <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="PAST::Node"
+>PAST::Node <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p><code lang='und' xml:lang='und'>PAST::Node</code> is the base class for all PAST (and POST) nodes.
+It&#39;s derived from class <code lang='und' xml:lang='und'>Capture</code>,
+so that it has both array and hash components.
+The array component is used to maintain a node&#39;s children,
+while the hash component contains the attributes of the node.
+In general we provide and use accessor methods for a node&#39;s attributes,
+instead of accessing the hash component directly.</p>
+
+<p>Every PAST node predefines <code lang='und' xml:lang='und'>name</code>,
+<code lang='und' xml:lang='und'>source</code>,
+and <code lang='und' xml:lang='und'>pos</code> attributes.
+The <code lang='und' xml:lang='und'>name</code> attribute is the node&#39;s name,
+if any,
+while <code lang='und' xml:lang='und'>source</code> and <code lang='und' xml:lang='und'>pos</code> are used to identify the location in the original source code for the node.
+The <code lang='und' xml:lang='und'>source</code> and <code lang='und' xml:lang='und'>pos</code> values are generally set by the <code lang='und' xml:lang='und'>node</code> method below.</p>
+
+<p>Other node attributes are generally defined by subclasses of <code lang='und' xml:lang='und'>PAST::Node</code>.</p>
+
+<dl>
+<dt><a name="init([child1,_child2,_...,_]_[attr1=&#62;val1,_attr2=&#62;val2,_..._])"
+>init([child1,
+child2,
+...,
+] [attr1=&#62;val1,
+attr2=&#62;val2,
+...
+])</a></dt><p class="pad"></p>
+
+<dd>Initialize a PAST node with the given children and attributes.
+Adds each child to the node (using the <code lang='und' xml:lang='und'>push</code> method,
+below) and calls the appropriate accessor method for each attribute.
+And returns the node.</dd><p class="pad"></p>
+
+<dt><a name="new(class,_[child1,_child2,_...,_]_[attr1=&#62;val1,_attr2=&#62;val2,_...])"
+>new(class,
+[child1,
+child2,
+...,
+] [attr1=&#62;val1,
+attr2=&#62;val2,
+...])</a></dt><p class="pad"></p>
+
+<dd>Create a new PAST node of type <code lang='und' xml:lang='und'>class</code> initialized with the given children and attributes.
+Returns the newly created node.</dd><p class="pad"></p>
+
+<dt><a name="clone"
+>clone</a></dt><p class="pad"></p>
+
+<dd>Create and returns a clone of a PAST node.</dd><p class="pad"></p>
+
+<dt><a name="push(child)"
+>push(child)</a></dt><p class="pad"></p>
+
+<dd>Add <code lang='und' xml:lang='und'>child</code> to the end of the invocant&#39;s list of children.</dd><p class="pad"></p>
+
+<dt><a name="push_new(class,_[child1,_child2,_...,_]_[attr1=&#62;val1,_attr2=&#62;val2,_...])"
+>push_new(class,
+[child1,
+child2,
+...,
+] [attr1=&#62;val1,
+attr2=&#62;val2,
+...])</a></dt><p class="pad"></p>
+
+<dd>Creates a new PAST node of type <code lang='und' xml:lang='und'>class</code>,
+initializes it with the given children and attributes,
+and adds it to the end of the invocant&#39;s array of children.
+Returns the newly created PAST node.</dd><p class="pad"></p>
+
+<dt><a name="iterator(_)"
+>iterator( )</a></dt><p class="pad"></p>
+
+<dd>Returns a newly initialized iterator for the invocant&#39;s list of children.</dd><p class="pad"></p>
+
+<dt><a name="node([val])"
+>node([val])</a></dt><p class="pad"></p>
+
+<dd>Sets the invocant&#39;s <code lang='und' xml:lang='und'>source</code> and <code lang='und' xml:lang='und'>pos</code> attributes to those of <code lang='und' xml:lang='und'>val</code>.
+If <code lang='und' xml:lang='und'>val</code> is another PAST node,
+then <code lang='und' xml:lang='und'>source</code> and <code lang='und' xml:lang='und'>pos</code> are simply copied from that node,
+otherwise <code lang='und' xml:lang='und'>val</code> is assumed to be a <code lang='und' xml:lang='und'>Match</code> object and obtains source/position information from that.</dd><p class="pad"></p>
+
+<dt><a name="attr(STR_attrname,_PMC_value,_INT_has_value)"
+>attr(STR attrname,
+PMC value,
+INT has_value)</a></dt><p class="pad"></p>
+
+<dd>Helper method for accessors.
+If <code lang='und' xml:lang='und'>has_value</code> is true then set the invocant&#39;s value of <code lang='und' xml:lang='und'>attrname</code> to <code lang='und' xml:lang='und'>value</code>.
+Returns the (resulting) value of <code lang='und' xml:lang='und'>attrname</code> in the invocant.</dd><p class="pad"></p>
+
+<dt><a name="unique([STR_fmt])"
+>unique([STR fmt])</a></dt><p class="pad"></p>
+
+<dd>Generate a unique number that can be used as an identifier.
+If <code lang='und' xml:lang='und'>fmt</code> is provided,
+then it will be used as a prefix to the unique number.</dd><p class="pad"></p>
+
+<dt><a name="escape(STR_name)"
+>escape(STR name)</a></dt><p class="pad"></p>
+
+<dd>Returns <code lang='und' xml:lang='und'>name</code> in a format that can be compiled by PIR.</dd><p class="pad"></p>
+
+<dt><a name="name([value])"
+>name([value])</a></dt><p class="pad"></p>
+
+<dd>Accessor method &#45;&#45; sets/returns the <code lang='und' xml:lang='und'>name</code> attribute of the invocant.</dd><p class="pad"></p>
+
+<dt><a name="compile(code_[,_adverbs_:slurpy_:named])"
+>compile(code [,
+adverbs :slurpy :named])</a></dt><p class="pad"></p>
+
+<dd>(Deprecated.) Compile the given PAST tree according to <code lang='und' xml:lang='und'>adverbs</code>.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="PAST::Val"
+>PAST::Val <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p><code lang='und' xml:lang='und'>PAST::Val</code> nodes represent constant values in the abstract syntax tree.
+The <code lang='und' xml:lang='und'>name</code> attribute represents the value of the node.</p>
+
+<dl>
+<dt><a name="vtype([value])"
+>vtype([value])</a></dt><p class="pad"></p>
+
+<dd>Get/set the type of the value (as a Parrot class identifier).
+For example,
+a string value might use <code lang='und' xml:lang='und'>&#39;String&#39;</code>,
+or an integer might use a language&#45;specific <code lang='und' xml:lang='und'>[&#39;MyInt&#39;]</code> class.</dd><p class="pad"></p>
+
+<dt><a name="ctype([value])"
+>ctype([value])</a></dt><p class="pad"></p>
+
+<dd>Get/set the argument types for which this <code lang='und' xml:lang='und'>PAST::Val</code> node may be rendered directly into PIR code as a Parrot constant instead of first generating a PMC.
+<code lang='und' xml:lang='und'>value</code> is a sequence of character representing the various argument types for which the node&#39;s name is a usable constant:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    i    I registers or int
+    n    N register or num
+    +    Any numeric argument (int/num)
+    s    S register or string
+    ~    Any string argument</pre>
+
+<dd>If <code lang='und' xml:lang='und'>ctype</code> isn&#39;t set, then the PAST::Val node always results in a newly generated PMC initialized with the node&#39;s name.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="PAST::Var"
+>PAST::Var <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p><code lang='und' xml:lang='und'>PAST::Var</code> nodes represent variables within the abstract syntax tree. The variable name (if any) is given as the node&#39;s <code lang='und' xml:lang='und'>name</code> attribute.</p>
+
+<dl>
+<dt><a name="scope([value])"
+>scope([value])</a></dt><p class="pad"></p>
+
+<dd>Get/set the PAST::Var node&#39;s &#34;scope&#34; (i.e., how the variable is accessed or set). Allowable values include &#34;package&#34;, &#34;lexical&#34;, &#34;parameter&#34;, and &#34;keyed&#34;, representing HLL global, lexical, block parameter, and array/hash variables respectively.</dd><p class="pad"></p>
+
+<dt><a name="ismy([flag])"
+>ismy([flag])</a></dt><p class="pad"></p>
+
+<dd>Get/set the node&#39;s <code lang='und' xml:lang='und'>ismy</code> attribute (for lexical variables) to <code lang='und' xml:lang='und'>flag</code>. A true value of <code lang='und' xml:lang='und'>ismy</code> indicates that the variable given by this node is to be created within the current lexical scope. Otherwise, the node refers to a lexical variable from an outer scope.</dd><p class="pad"></p>
+
+<dt><a name="isslurpy([flag])"
+>isslurpy([flag])</a></dt><p class="pad"></p>
+
+<dd>Get/set the node&#39;s <code lang='und' xml:lang='und'>isslurpy</code> attribute (for parameter variables) to <code lang='und' xml:lang='und'>flag</code>. A true value of <code lang='und' xml:lang='und'>isslurpy</code> indicates that the parameter variable given by this node is to be created as a slurpy parameter (consuming all remaining arguments passed in).</dd><p class="pad"></p>
+
+<dt><a name="viviself([type])"
+>viviself([type])</a></dt><p class="pad"></p>
+
+<dd>If the variable needs to be instantiated, then <code lang='und' xml:lang='und'>type</code> indicates either the type of the value to create for the node or (future implementation) a PAST tree to create the value.</dd><p class="pad"></p>
+
+<dt><a name="islvalue([flag])"
+>islvalue([flag])</a></dt><p class="pad"></p>
+
+<dd>Get/set the <code lang='und' xml:lang='und'>islvalue</code> attribute, which indicates whether this variable is being used in an lvalue context.</dd><p class="pad"></p>
+
+<dt><a name="bindvalue([value])"
+>bindvalue([value])</a></dt><p class="pad"></p>
+
+<dd>Private PAST attribute that indicates the value to be bound to this variable at runtime (e.g., for binding or assignment).</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="PAST::Op"
+>PAST::Op <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p><code lang='und' xml:lang='und'>PAST::Op</code> nodes represent the operations in an abstract syntax tree. The primary function of the node is given by its <code lang='und' xml:lang='und'>pasttype</code>, secondary functions may be given by the node&#39;s <code lang='und' xml:lang='und'>name</code>, <code lang='und' xml:lang='und'>pirop</code>, or other attributes.</p>
+
+<dl>
+<dt><a name="pasttype([type])"
+>pasttype([type])</a></dt><p class="pad"></p>
+
+<dd>A <code lang='und' xml:lang='und'>PAST::Op</code> node&#39;s <code lang='und' xml:lang='und'>pasttype</code> determines the type of operation to be performed. Predefined values of <code lang='und' xml:lang='und'>pasttype</code> are:</dd><p class="pad"></p>
+
+<dd>assign &#45; Copy the value of the node&#39;s second child into the variable expression given by its first child.</dd><p class="pad"></p>
+
+<dd>bind &#45; Bind the variable given by the node&#39;s first child to the value given by its second child.</dd><p class="pad"></p>
+
+<dd>if &#45; Evaluate the first child; if the first child is true then evaluate the second child (if any) otherwise evaluate the third child (if any). If either the second or third child are missing, then they evaluate as the result of the first child.</dd><p class="pad"></p>
+
+<dd>unless &#45; Same as &#39;if&#39; above, but reverse the evaluation of the second and third children nodes.</dd><p class="pad"></p>
+
+<dd>while &#45; Evaluate the first child, if the result is true then evaluate the second child and repeat.</dd><p class="pad"></p>
+
+<dd>until &#45; Evaluate the first child, if the result is false then evaluate the second child and repeat.</dd><p class="pad"></p>
+
+<dd>for &#45; Iterate over the first child. For each element, invoke the sub in the second child, passing the element as the only parameter.</dd><p class="pad"></p>
+
+<dd>call &#45; Call a subroutine, passing the results of any child nodes as arguments. The subroutine to be called is given by the node&#39;s <code lang='und' xml:lang='und'>name</code> attribute, if the node has no <code lang='und' xml:lang='und'>name</code> attribute then the first child is assumed to evaluate to a callable sub.</dd><p class="pad"></p>
+
+<dd>pirop &#45; Execute the named PIR opcode, passing the results of any children nodes as arguments.</dd><p class="pad"></p>
+
+<dd>inline &#45; Execute the sequence of PIR statements given by the node&#39;s <code lang='und' xml:lang='und'>inline</code> attribute (a string). See the <code lang='und' xml:lang='und'>inline</code> method below for details.</dd><p class="pad"></p>
+
+<dd>callmethod &#45; Invokes a method on an object, using children nodes as arguments. If the node has a <code lang='und' xml:lang='und'>name</code> attribute, then the first child is the invocant and any remaining children are arguments. If the node doesn&#39;t have a <code lang='und' xml:lang='und'>name</code> attribute, then the first child evaluates to the method to be called, the second child is the invocant, and the remaining children are arguments to the method call.</dd><p class="pad"></p>
+
+<dd>try &#45; (preliminary) Execute the code given by the first child, and if any exceptions occur then handle them using the code given by the second child.</dd><p class="pad"></p>
+
+<dd>If a node doesn&#39;t have a value set for <code lang='und' xml:lang='und'>pasttype</code>, then it assumes &#34;pirop&#34; if its <code lang='und' xml:lang='und'>pirop</code> attribute is set, otherwise it assumes &#34;call&#34;.</dd><p class="pad"></p>
+
+<dt><a name="pirop([opcode])"
+>pirop([opcode])</a></dt><p class="pad"></p>
+
+<dd>Get/set the PIR opcode to be executed for this node. The PAST implementation knows about the argument types for many of the PIR opcodes, and will try to automatically convert the results of any children nodes into the correct types if needed. (In general, the implementation tries to convert things to PMCs whenever it isn&#39;t certain what else to do.) The table of PIR opcodes that PAST &#34;knows&#34; about is in <em lang='und' xml:lang='und'>POST.pir</em>.</dd><p class="pad"></p>
+
+<dt><a name="returns([type])"
+>returns([type])</a></dt><p class="pad"></p>
+
+<dd>Get/set the return type for this operation. Some operations require creation of a temporary value to receive the result value, the <code lang='und' xml:lang='und'>returns</code> attribute identifies the type of the result (default is <code lang='und' xml:lang='und'>.Undef</code> if not set).</dd><p class="pad"></p>
+
+<dt><a name="islvalue([flag])"
+>islvalue([flag])</a></dt><p class="pad"></p>
+
+<dd>Get/set whether this node is an lvalue, or treats its first child as an lvalue (e.g., for assignment).</dd><p class="pad"></p>
+
+<dt><a name="inline([STRING_code])"
+>inline([STRING code])</a></dt><p class="pad"></p>
+
+<dd>Get/set the code to be used for inline PIR when <code lang='und' xml:lang='und'>pasttype</code> is &#34;inline&#34;. The <code lang='und' xml:lang='und'>code</code> argument is PIR text to be inserted in the final generated code sequence. Sequences of &#34;%0&#34;, &#34;%1&#34;, &#34;%2&#34;, ... &#34;%9&#34; in <code lang='und' xml:lang='und'>code</code> are replaced with the evaluated results of the first, second, third, ..., tenth children nodes. (If you need more than ten arguments to your inline PIR, consider making it a subroutine call instead.)</dd><p class="pad"></p>
+
+<dd>The register to hold the result of the inline PIR operation is given by &#34;%r&#34;, &#34;%t&#34;, or &#34;%u&#34; in the <code lang='und' xml:lang='und'>code</code> string:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  %r   &#45; Generate a unique PMC register for the result.
+  %t   &#45; Generate a unique PMC register for the result,
+         and initialize it with an object of type C&#60;returns&#62;
+         before the execution of the inline PIR.
+  %u   &#45; Re&#45;use the first child&#39;s PMC (%0) if it&#39;s a temporary
+         result, otherwise same as %t above.
+  %v   &#45; (void) Re&#45;use the first child&#39;s PMC (%0) as the result
+         of this operation.</pre>
+</dl>
+
+<h2><a name="PAST::Stmts"
+>PAST::Stmts <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p><code lang='und' xml:lang='und'>PAST::Stmts</code> is a container of <code lang='und' xml:lang='und'>PAST::Node</code> without any specific methods.</p>
+
+<h2><a name="PAST::Block"
+>PAST::Block <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p><code lang='und' xml:lang='und'>PAST::Block</code> nodes represent lexical scopes within an abstract syntax tree, and roughly translate to individual Parrot subroutines. A <code lang='und' xml:lang='und'>PAST::Block</code> node nested within another <code lang='und' xml:lang='und'>PAST::Block</code> node acts like a nested lexical scope.</p>
+
+<p>If the block has a <code lang='und' xml:lang='und'>name</code> attribute, that becomes the name of the resulting Parrot sub, otherwise a unique name is automatically generated for the block.</p>
+
+<dl>
+<dt><a name="blocktype([STRING_type])"
+>blocktype([STRING type])</a></dt><p class="pad"></p>
+
+<dd>Get/set the type of the block. The currently understood values are &#39;declaration&#39; and &#39;immediate&#39;. &#39;Declaration&#39; indicates that a block is simply being defined at this point, while &#39;immediate&#39; indicates a block that is to be immediately executed when it is evaluated in the AST (e.g., the immediate blocks in Perl6 <code lang='und' xml:lang='und'>if</code>, <code lang='und' xml:lang='und'>while</code>, and other similar statements).</dd><p class="pad"></p>
+
+<dt><a name="namespace([STRING_type])"
+>namespace([STRING type])</a></dt><p class="pad"></p>
+
+<dd>Set the namespace for this block. If no namespace is given, then this block will inherit the namespace of any outer block.</dd><p class="pad"></p>
+
+<dt><a name="symtable([value])"
+>symtable([value])</a></dt><p class="pad"></p>
+
+<dd>Get/set the symbol table for the block. In the current implementation, the data structure for the symbol table is left entirely up to the caller; PAST doesn&#39;t use <code lang='und' xml:lang='und'>symtable</code> for any code generation.</dd><p class="pad"></p>
+
+<dt><a name="compiler([name])"
+>compiler([name])</a></dt><p class="pad"></p>
+
+<dd>Indicate that the children nodes of this block are to be compiled using compiler <code lang='und' xml:lang='und'>name</code> instead of the standard PAST compiler.</dd><p class="pad"></p>
+
+<dt><a name="pragma([pragma])"
+>pragma([pragma])</a></dt><p class="pad"></p>
+
+<dd>Get/set any pragmas (PIR) for this block.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Patrick Michaud &#60;pmichaud@pobox.com&#62; is the author and maintainer. Please send patches and suggestions to the Parrot porters or Perl 6 compilers mailing lists.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>2006&#45;11&#45;20 Patrick Michaud added first draft of POD documentation.</p>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Copyright (C) 2006, The Perl Foundation.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

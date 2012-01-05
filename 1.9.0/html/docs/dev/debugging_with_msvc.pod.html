@@ -1,0 +1,165 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Debugging Parrot with Microsoft</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Debugging Parrot with Microsoft
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/dev/debugging_with_msvc.pod &#45; Debugging Parrot with Microsoft Visual C++</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT</a></h1>
+
+<p>This document describes how to get started with debugging on Microsoft Windows using Visual C++ 7 and later.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<h2><a name="Compiler_Options"
+>Compiler Options</a></h2>
+
+<p>Probably the easiest way to get going with debugging is to add some compiler options.
+One way to go about this is to run <code>perl Configure.pl</code>,
+look at the <code>CFLAGS</code> in <em>Makefile</em> and then run <code>perl Configure.pl &#45;&#45;ccflags=&#34;...&#34;</code> with the new flags.
+Once done,
+consider saving your Configure call in a batch file so you have it available the next time.</p>
+
+<h3><a name="/Wall"
+><code>/Wall</code></a></h3>
+
+<p>Listen to your compiler.</p>
+
+<h3><a name="/RTCcsu_&#45;_Enables_run&#45;time_error_checking"
+><code>/RTCcsu</code> &#45; Enables run&#45;time error checking</a></h3>
+
+<p>This enables three different runtime checks: Conversion to smaller type,
+stacke frame and use of uninitialized local variable.
+See <a href='http://msdn2.microsoft.com/en&#45;us/library/8wtf2dfz(VS.80).aspx'><a href="http://msdn2.microsoft.com/en&#45;us/library/8wtf2dfz(VS.80">http://msdn2.microsoft.com/en&#45;us/library/8wtf2dfz(VS.80</a>).aspx</a>.</p>
+
+<h3><a name="/GS_&#45;_Buffers_security_check"
+><code>/GS</code> &#45; Buffers security check</a></h3>
+
+<p>Detect some buffer overruns.
+See <a href='http://msdn2.microsoft.com/en&#45;us/library/8dbf701c(VS.80).aspx'><a href="http://msdn2.microsoft.com/en&#45;us/library/8dbf701c(VS.80">http://msdn2.microsoft.com/en&#45;us/library/8dbf701c(VS.80</a>).aspx</a>.</p>
+
+<h3><a name="/Wp64_&#45;_Detect_64&#45;bit_compatibility_problems"
+><code>/Wp64</code> &#45; Detect 64&#45;bit compatibility problems</a></h3>
+
+<p><i>Don&#39;t</i> use this one.
+Leave 64&#45;bit checking to the real 64&#45;bit compilers.</p>
+
+<h3><a name="/D_DEBUG_vs._/DNDEBUG"
+><code>/D_DEBUG</code> vs.
+<code>/DNDEBUG</code></a></h3>
+
+<p><code>_DEBUG</code> enables the use of the debugging versions of the runtime functions.
+<code>NDEBUG</code> disables the debug function <code>assert</code>.
+Beware that the Visual C++ specific assertion macro <code>_ASSERT</code> is only enabled if <code>_DEBUG</code> is defined!</p>
+
+<p>It&#39;s probably best to start with making sure that <code>NDEBUG</code> is not defined and enable the debugging C runtime later.</p>
+
+<h3><a name="Debugging_C_runtime"
+>Debugging C runtime</a></h3>
+
+<p>Two steps are necessary to use the debugging C runtime.
+First change the <code>&#45;MD</code> flag to <code>&#45;MDd</code>.
+This will implicitly define <code>_DEBUG</code>.
+Often this is enough,
+but Parrot lists the libraries explicitly,
+so you&#39;d need to replace <em>MSVCRT.lib</em> with <em>MSVCRTd.lib</em>.
+For this,
+run <code>perl Configure.pl</code>,
+look at <code>C_LIBS</code> in the <em>Makefile</em> and run <code>perl Configure.pl &#45;&#45;libs=&#34;...&#34;</code> with the new libs.</p>
+
+<h3><a name="/analyze"
+><code>/analyze</code></a></h3>
+
+<p>Microsoft added more static source code analysis to the their compiler,
+but this is only available with certain editions.
+If not supported you&#39;ll see the following warning.</p>
+
+<pre>  cl : Command line warning D9040 : ignoring option &#39;/analyze&#39;; Code
+  Analysis warnings are not available in this edition of the compiler </pre>
+
+<h3><a name="Examples"
+>Examples</a></h3>
+
+<p>Here&#39;s an example how the new Configure call might look like.</p>
+
+<pre>  perl Configure.pl ^
+      &#45;&#45;ccflags=&#34;&#45;nologo &#45;Wall &#45;MDd &#45;Zi &#45;Od &#45;GS &#45;RTCcsu &#45;DWIN32 &#45;D_CONSOLE&#34; ^
+      &#45;&#45;linkflags=&#34;&#45;nologo &#45;nodefaultlib &#45;machine:x86 &#45;debug &#45;incremental:no&#34; ^
+      &#45;&#45;ldflags=&#34;&#45;nologo &#45;nodefaultlib &#45;machine:x86 &#45;debug &#45;incremental:no&#34; ^
+      &#45;&#45;libs=&#34;kernel32.lib ws2_32.lib msvcrtd.lib oldnames.lib&#34; ^
+      %*</pre>
+
+<h2><a name="Debugging_Tools_for_Windows"
+>Debugging Tools for Windows</a></h2>
+
+<p>TODO</p>
+
+<p><a href='http://www.microsoft.com/whdc/devtools/debugging/default.mspx'><a href="http://www.microsoft.com/whdc/devtools/debugging/default.mspx">http://www.microsoft.com/whdc/devtools/debugging/default.mspx</a></a></p>
+
+<h3><a name="Examples"
+>Examples</a></h3>
+
+<p>TODO</p>
+
+<h2><a name="Microsoft_Application_Verifier"
+>Microsoft Application Verifier</a></h2>
+
+<p>TODO</p>
+
+<p><a href='http://www.microsoft.com/technet/prodtechnol/windows/appcompatibility/appverifier.mspx'><a href="http://www.microsoft.com/technet/prodtechnol/windows/appcompatibility/appverifier.mspx">http://www.microsoft.com/technet/prodtechnol/windows/appcompatibility/appverifier.mspx</a></a></p>
+
+<h3><a name="Examples"
+>Examples</a></h3>
+
+<p>TODO</p>
+
+<h2><a name="Frequently_Asked_Questions"
+>Frequently Asked Questions</a></h2>
+
+<p>TODO</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<dl>
+<dt><a name="Debugging_Native_Code"
+>Debugging Native Code</a></dt>
+<a href='http://msdn2.microsoft.com/en&#45;us/library/k70yt3e2(VS.80).aspx'><a href="http://msdn2.microsoft.com/en&#45;us/library/k70yt3e2(VS.80">http://msdn2.microsoft.com/en&#45;us/library/k70yt3e2(VS.80</a>).aspx</a></dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Ronald Blaschke &#60;ron@rblasch.org&#62;</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

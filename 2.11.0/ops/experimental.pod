@@ -1,0 +1,133 @@
+=head1 NAME
+
+experimental.ops - Experimental Opcodes
+
+
+=cut
+
+=head1 DESCRIPTION
+
+This file contains experimental opcodes.
+
+These opcodes should be considered implicitly deprecated - that is, they
+may be removed in any release.
+
+If you rely on any of these opcodes, please open a
+Trac ticket at L<https://trac.parrot.org/>.
+
+When making changes to any ops file, run C<make bootstrap-ops> to regenerate
+all generated ops files.
+
+
+=cut
+
+=head2 More Experimental Ops
+
+=over 4
+
+=item B<trap>()
+
+Break into debugger. Implementation notes:
+
+ - x86/gcc ... works with gdb
+ - ppc/gcc ... works with gdb, to proceed: gdb> p $pc = $pc + 4
+ - TODO
+
+For other architectures, this is a C<noop>.
+
+=back
+
+
+=cut
+
+=over 4
+
+=item B<set_label>(invar PMC, inconst LABEL)
+
+Sets the opcode_t* label value for the given PMC. This is basically only
+useful for PMCs such as Sub, Continuation, ExceptionHandler and derivatives
+
+=item B<get_label>(out INT, invar PMC)
+
+Gets the opcode_t* label value from the given PMC. This is basically only
+useful for PMCs such as Sub, Continuation, ExceptionHandler and derivatives
+
+=back
+
+
+=cut
+
+=over 4
+
+=item B<fetch>(out PMC, in PMC, in PMC, in PMC)
+
+Fetches a value from $2, keyed by $3 into $1.  If the resulting PMC is PMCNULL,
+uses the type in $4 to create and return a new PMC.
+
+=item B<fetch>(out PMC, in PMC, in INT, in PMC)
+
+=item B<fetch>(out PMC, in PMC, in STR, in PMC)
+
+=back
+
+
+=cut
+
+=over 4
+
+=item B<vivify>(out PMC, in PMC, in PMC, in PMC)
+
+Fetches a value from $2, keyed by $3 into $1.  If the resulting PMC is PMCNULL,
+uses the type in $4 to create and return a new PMC.
+
+=item B<vivify>(out PMC, in PMC, in INT, in PMC)
+
+=item B<vivify>(out PMC, in PMC, in STR, in PMC)
+
+=back
+
+
+=cut
+
+=over 4
+
+=item B<new>(out PMC, in STR, in INT)
+
+=item B<new>(out PMC, in PMC, in INT)
+
+=back
+
+
+=cut
+
+=over 4
+
+=item B<root_new>(out PMC, in PMC, in INT)
+
+
+=cut
+
+=item B<finalize>(in PMC)
+
+Finalize exception handling, freeing any information needed to resume
+the handled exception, like inner runloops.
+$1 is the Exception handled or the ExceptionHandler that is handling it.
+EXPERIMENTAL. Handle with care.
+
+
+=cut
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (C) 2001-2010, Parrot Foundation.
+
+=head1 LICENSE
+
+This program is free software. It is subject to the same license
+as the Parrot interp itself.
+
+
+=cut
+

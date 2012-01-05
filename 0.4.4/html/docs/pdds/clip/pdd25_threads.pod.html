@@ -1,0 +1,195 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Threads</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Threads</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>docs/pdds/clip/pdd25_threads.pod &#45; Parrot Threads</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This document defines the requirements and implementation strategy for Parrot&#39;s threading model.</p>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>$Revision: $</p>
+
+<h1><a name="DEFINITIONS"
+>DEFINITIONS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Concurrency</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Description of the subject.</p>
+
+<h1><a name="IMPLEMENTATION"
+>IMPLEMENTATION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>[Excerpt from Perl 6 and Parrot Essentials to seed discussion.]</p>
+
+<p>Threads are a means of splitting a process into multiple pieces that execute simultaneously.
+It&#39;s a relatively easy way to get some parallelism without too much work.
+Threads don&#39;t solve all the parallelism problems your program may have.
+Sometimes multiple processes on a single system,
+multiple processes on a cluster,
+or processes on multiple separate systems are better.
+But threads do present a good solution for many common cases.</p>
+
+<p>All the resources in a threaded process are shared between threads.
+This is simultaneously the great strength and great weakness of threads.
+Easy sharing is fast sharing,
+making it far faster to exchange data between threads or access shared global data than to share data between processes on a single system or on multiple systems.
+Easy sharing is dangerous,
+though,
+since without some sort of coordination between threads it&#39;s easy to corrupt that shared data.
+And,
+because all the threads are contained within a single process,
+if any one of them fails for some reason the entire process,
+with all its threads,
+dies.</p>
+
+<p>With a low&#45;level language such as C,
+these issues are manageable.
+The core data types,
+integers,
+floats,
+and pointers are all small enough to be handled atomically.
+Composite data can be protected with mutexes,
+special structures that a thread can get exclusive access to.
+The composite data elements that need protecting can each have a mutex associated with them,
+and when a thread needs to touch the data it just acquires the mutex first.
+By default there&#39;s very little data that must be shared between threads,
+so it&#39;s relatively easy,
+barring program errors,
+to write thread&#45;safe code if a little thought is given to the program structure.</p>
+
+<p>Things aren&#39;t this easy for Parrot,
+unfortunately.
+A PMC,
+Parrot&#39;s native data type,
+is a complex structure,
+so we can&#39;t count on the hardware to provide us atomic access.
+That means Parrot has to provide atomicity itself,
+which is expensive.
+Getting and releasing a mutex isn&#39;t really that expensive in itself.
+It has been heavily optimized by platform vendors because they want threaded code to run quickly.
+It&#39;s not free,
+though,
+and when you consider that running flat&#45;out Parrot does one PMC operation per 100 CPU cycles,
+even adding an additional 10 cycles per operation can slow Parrot down by 10%.</p>
+
+<p>For any threading scheme,
+it&#39;s important that your program isn&#39;t hindered by the platform and libraries it uses.
+This is a common problem with writing threaded code in C,
+for example.
+Many libraries you might use aren&#39;t thread&#45;safe,
+and if you aren&#39;t careful with them your program will crash.
+While we can&#39;t make low&#45;level libraries any safer,
+we can make sure that Parrot itself won&#39;t be a danger.
+There is very little data shared between Parrot interpreters and threads,
+and access to all the shared data is done with coordinating mutexes.
+This is invisible to your program,
+and just makes sure that Parrot itself is thread&#45;safe.</p>
+
+<p>When you think about it,
+there are really three different threading models.
+In the first one,
+multiple threads have no interaction among themselves.
+This essentially does with threads the same thing that&#39;s done with processes.
+This works very well in Parrot,
+with the isolation between interpreters helping to reduce the overhead of this scheme.
+There&#39;s no possibility of data sharing at the user level,
+so there&#39;s no need to lock anything.</p>
+
+<p>In the second threading model,
+multiple threads run and pass messages back and forth between each other.
+Parrot supports this as well,
+via the event mechanism.
+The event queues are thread&#45;safe,
+so one thread can safely inject an event into another thread&#39;s event queue.
+This is similar to a multiple&#45;process model of programming,
+except that communication between threads is much faster,
+and it&#39;s easier to pass around structured data.</p>
+
+<p>In the third threading model,
+multiple threads run and share data between themselves.
+While Parrot can&#39;t guarantee that data at the user level remains consistent,
+it can make sure that access to shared data is at least safe.
+We do this with two mechanisms.</p>
+
+<p>First,
+Parrot presents an advisory lock system to user code.
+Any piece of user code running in a thread can lock a variable.
+Any attempt to lock a variable that another thread has locked will block until the lock is released.
+Locking a variable only blocks other lock attempts.
+It does <i>not</i> block plain access.
+This may seem odd,
+but it&#39;s the same scheme used by threading systems that obey the POSIX thread standard,
+and has been well tested in practice.</p>
+
+<p>Secondly,
+Parrot forces all shared PMCs to be marked as such,
+and all access to shared PMCs must first acquire that PMC&#39;s private lock.
+This is done by installing an alternate vtable for shared PMCs,
+one that acquires locks on all its parameters.
+These locks are held only for the duration of the vtable function,
+but ensure that the PMCs affected by the operation aren&#39;t altered by another thread while the vtable function is in progress.</p>
+
+<h1><a name="ATTACHMENTS"
+>ATTACHMENTS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>None.</p>
+
+<h1><a name="FOOTNOTES"
+>FOOTNOTES <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>None.</p>
+
+<h1><a name="REFERENCES"
+>REFERENCES <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>None.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

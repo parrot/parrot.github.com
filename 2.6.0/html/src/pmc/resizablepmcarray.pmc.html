@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - resizable array for PMCs only</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; resizable array for PMCs only
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/resizablepmcarray.pmc &#45; resizable array for PMCs only</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This class,
+ResizablePMCArray,
+implements an resizable array which stores PMCs.
+It puts things into Integer,
+Float,
+or String PMCs as appropriate.</p>
+
+<h2><a name="Vtable_Functions"
+>Vtable Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes the array.
+<dt><a name="void_set_integer_native(INTVAL_size)"
+><b><code>void set_integer_native(INTVAL size)</b></code></a></dt>
+Resizes the array to <code>size</code> elements.
+<dt><a name="FLOATVAL_shift_float()"
+><b><code>FLOATVAL shift_float()</b></code></a></dt>
+
+<dt><a name="INTVAL_shift_integer()"
+><b><code>INTVAL shift_integer()</b></code></a></dt>
+
+<dt><a name="PMC_*shift_pmc()"
+><b><code>PMC *shift_pmc()</b></code></a></dt>
+
+<dt><a name="STRING_*shift_string()"
+><b><code>STRING *shift_string()</b></code></a></dt>
+Removes and returns an item from the start of the array.
+<dt><a name="PMC_*get_pmc_keyed_int(INTVAL_key)"
+><b><code>PMC *get_pmc_keyed_int(INTVAL key)</b></code></a></dt>
+Returns the PMC value of the element at index <code>key</code>.
+<dt><a name="void_set_pmc_keyed_int(INTVAL_key,_PMC_*src)"
+><b><code>void set_pmc_keyed_int(INTVAL key, PMC *src)</b></code></a></dt>
+Sets the PMC value of the element at index <code>key</code> to <code>*src</code>.
+<dt><a name="void_set_pmc_keyed(PMC_*key,_PMC_*src)"
+><b><code>void set_pmc_keyed(PMC *key, PMC *src)</b></code></a></dt>
+Sets the PMC value of the element keyed by <code>key</code> to <code>*src</code>.
+<dt><a name="INTVAL_exists_keyed_int(INTVAL_key)"
+><b><code>INTVAL exists_keyed_int(INTVAL key)</b></code></a></dt>
+
+<dt><a name="INTVAL_exists_keyed_int(PMC_*key)"
+><b><code>INTVAL exists_keyed_int(PMC *key)</b></code></a></dt>
+Returns TRUE is the element at <code>key</code> exists; otherwise returns false.
+<dt><a name="INTVAL_defined_keyed_int(INTVAL_key)"
+><b><code>INTVAL defined_keyed_int(INTVAL key)</b></code></a></dt>
+Returns TRUE is the element at <code>key</code> is defined; otherwise returns false.
+<dt><a name="void_push_float(FLOATVAL_value)"
+><b><code>void push_float(FLOATVAL value)</b></code></a></dt>
+
+<dt><a name="void_push_integer(INTVAL_value)"
+><b><code>void push_integer(INTVAL value)</b></code></a></dt>
+
+<dt><a name="void_push_pmc(PMC_*value)"
+><b><code>void push_pmc(PMC *value)</b></code></a></dt>
+
+<dt><a name="void_push_string(STRING_*value)"
+><b><code>void push_string(STRING *value)</b></code></a></dt>
+Extends the array by adding an element of value <code>*value</code> to the end of the array.
+<dt><a name="INTVAL_pop_float()"
+><b><code>INTVAL pop_float()</b></code></a></dt>
+
+<dt><a name="INTVAL_pop_integer()"
+><b><code>INTVAL pop_integer()</b></code></a></dt>
+
+<dt><a name="PMC_*pop_pmc()"
+><b><code>PMC *pop_pmc()</b></code></a></dt>
+
+<dt><a name="STRING_*pop_string()"
+><b><code>STRING *pop_string()</b></code></a></dt>
+
+<dt><a name="void_unshift_float(FLOATVAL_value)"
+><b><code>void unshift_float(FLOATVAL value)</b></code></a></dt>
+
+<dt><a name="void_unshift_integer(INTVAL_value)"
+><b><code>void unshift_integer(INTVAL value)</b></code></a></dt>
+
+<dt><a name="void_unshift_pmc(PMC_*value)"
+><b><code>void unshift_pmc(PMC *value)</b></code></a></dt>
+
+<dt><a name="void_unshift_string(STRING_*value)"
+><b><code>void unshift_string(STRING *value)</b></code></a></dt>
+Extends the array by adding an element of value <code>*value</code> to the begin of the array.
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+Creates and returns a copy of the array.
+<dt><a name="STRING_*get_repr()"
+><b><code>STRING *get_repr()</b></code></a></dt>
+Returns the Parrot string representation <code>ResizablePMCArray</code>.
+<dt><a name="void_splice(PMC_*value,_INTVAL_offset,_INTVAL_count)"
+><b><code>void splice(PMC *value, INTVAL offset, INTVAL count)</b></code></a></dt>
+Replaces <code>count</code> elements starting at <code>offset</code> with the elements in <code>value</code>.Note that the <code>value</code> PMC can be of any of the various array types.Note that this implementation can be *VERY *inefficient as it manipulates everything via the VTABLE api.</dl>
+
+<h2><a name="Methdos"
+>Methdos</a></h2>
+
+<dl>
+<dt><a name="METHOD_append(PMC_*other)"
+>METHOD append(PMC *other)</a></dt>
+Append the other array to this array.
+<dt><a name="METHOD_PMC*_shift()"
+>METHOD PMC* shift()</a></dt>
+
+<dt><a name="METHOD_PMC*_pop()"
+>METHOD PMC* pop()</a></dt>
+Method forms to remove and return a PMC from the beginning or end of the array.
+<dt><a name="METHOD_unshift(PMC*_value)"
+>METHOD unshift(PMC* value)</a></dt>
+
+<dt><a name="METHOD_push(PMC*_value)"
+>METHOD push(PMC* value)</a></dt>
+Method forms to add a PMC to the beginning or end of the array.</dl>
+
+<h2><a name="Auxiliar_functions"
+>Auxiliar functions</a></h2>
+
+<dl>
+<dt><a name="static_void_do_shift(PMC_*arr)"
+><b><code>static void do_shift(PMC *arr)</b></code></a></dt>
+Common part for shift operations.
+<dt><a name="static_void_do_unshift(PARROT_INTERP,_PMC_*arr,_PMC_*val)"
+><b><code>static void do_unshift(PARROT_INTERP, PMC *arr, PMC *val)</b></code></a></dt>
+Common part for unshift operations.
+<dt><a name="static_void_throw_shift_empty(PARROT_INTERP)"
+><b><code>static void throw_shift_empty(PARROT_INTERP)</b></code></a></dt>
+
+<dt><a name="static_void_throw_pop_empty(PARROT_INTERP)"
+><b><code>static void throw_pop_empty(PARROT_INTERP)</b></code></a></dt>
+Throws with the appropiate message.</dl>
+
+<h1><a name="See_also"
+>See also</a></h1>
+
+<p><em>docs/pdds/pdd17_basic_types.pod</em>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/dotnet.html">.Net</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="Translating_Arrays"
+>Translating Arrays <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>This document discusses .NET arrays and how they can be supported in Parrot.</p>
+
+<h2><a name="The_.NET_Model"
+>The .NET Model <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p>At the runtime level only one&#45;dimensional arrays of fixed size,
+a single type and with first element at index zero are supported.
+Anything beyond this is supported through the System.Array class.</p>
+
+<h2><a name="The_Parrot_Model"
+>The Parrot Model <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p>Arrays are implemented using PMCs.
+PMCs have keyed v&#45;table operations (that is,
+v&#45;table functions that as one of their parameters take a key).
+For arrays the key is the array index and is expected to be an integer.
+A number of PMCs exist ready to use in the Parrot source tree,
+however languages are free to provide their own.
+The v&#45;table mechanism to access elements means that the interface to the array is always the same,
+so translated .NET code will be able to handle being passed a Perl array even though their behaviours are very different (Perl arrays are resizable,
+for example,
+where as .NET arrays are of fixed length).</p>
+
+<h2><a name="Translating_Array_Instructions"
+>Translating Array Instructions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p>Arrays are created using a &#34;newarr&#34; instruction which takes the type that the array will contain.
+As the notion of .NET value types isn&#39;t really handled so gracefully in the translation,
+there is a need to special&#45;case them,
+mapping any type of array that stores integers to be a FixedIntegerArray and any array that stores floating point numbers to be a FixedFloatArray.
+All other types get stored in a FixedPMCArray.</p>
+
+<p>Array loads and stores can be translated trivially to the PIR keyed syntax.</p>
+
+<pre lang='und' xml:lang='und'>  $I1 = $P1[$I0] # load
+  $P1[$I0] = $I1 # store</pre>
+
+<p>There $P1 is the array PMC, $I0 is the array index and $I1 is the register the value is loaded in to or the value to be stored.</p>
+
+<p>The only remaining array instruction is ldlen, which loads the element count of the array onto the stack. This maps to the elements v&#45;table call in Parrot.</p>
+
+<pre lang='und' xml:lang='und'>  $I0 = elements $P0</pre>
+
+<p>Where $P0 is the array PMC and $I0 will hold the number of elements.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

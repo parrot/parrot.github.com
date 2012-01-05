@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Utilities for string processing</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Utilities for string processing</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/libs.html">Libraries</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>String;Utils &#45; Utilities for string processing</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>    load_bytecode &#39;String/Utils.pbc&#39;
+
+    .local pmc chomp
+               chomp = get_global [&#39;String&#39;;&#39;Utils&#39;], &#39;chomp&#39;
+
+    $S0 = chomp($S0)      # use default record separator (&#34;\n&#34;)
+    $S0 = chomp($S0, $S1) # use custom record separator</pre>
+
+<h1><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="chomp"
+>chomp</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    $S0 = chomp( $S1 )
+    $S0 = chomp( $S1, $S2 )</pre>
+
+<dd>Remove all trailing record separator <code lang='und' xml:lang='und'>$S2</code> from tail of input string <code lang='und' xml:lang='und'>$S1</code> and return in <code lang='und' xml:lang='und'>$S0</code>. If <code lang='und' xml:lang='und'>$S2</code> is not specified, the default <code lang='und' xml:lang='und'>\n</code> is used.</dd><p class="pad"></p>
+
+<dt><a name="convert_string_to_int(source_[,_radix_[,_pos]])"
+>convert_string_to_int(source [, radix [, pos]])</a></dt><p class="pad"></p>
+
+<dd>Convert characters from <code lang='und' xml:lang='und'>source</code> starting at <code lang='und' xml:lang='und'>pos</code> to an integer according to <code lang='und' xml:lang='und'>radix</code>. If <code lang='und' xml:lang='und'>pos</code> is specified, start converting at <code lang='und' xml:lang='und'>pos</code>, otherwise start from the beginning of the string. <code lang='und' xml:lang='und'>radix</code> may be either an integer radix (up to 36) or one of &#39;x&#39;, &#39;d&#39;, &#39;o&#39;, or &#39;b&#39; to indicate a radix of 16, 10, 8, or 2.</dd><p class="pad"></p>
+
+<dd>Returns the integer value of the converted string, and the number of characters used in the conversion. Conversion stops at the first character that isn&#39;t in the valid range according to <code lang='und' xml:lang='und'>radix</code>.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    (result, len) = convert_string_to_int(&#39;101&#39;)           # (101, 3)
+    (result, len) = convert_string_to_int(&#39;101&#39;, 2)        # (5, 3)
+    (result, len) = convert_string_to_int(&#39;101&#39;, 8)        # (65, 3)
+    (result, len) = convert_string_to_int(&#39;ff&#39;, &#39;x&#39;)       # (255, 2)</pre>
+
+<dt><a name="convert_digits_to_string(source_[,_radix_[,_pos])"
+><b><code lang='und' xml:lang='und'>convert_digits_to_string(source [, radix [, pos])</b></code></a></dt><p class="pad"></p>
+
+<dd>Converts a decimal, hexadecimal, octal, or binary digit sequence given in <code lang='und' xml:lang='und'>source</code> (offset by <code lang='und' xml:lang='und'>pos</code>) and according to <code lang='und' xml:lang='und'>radix</code> into its corresponding codepoint(s). Returns the converted codepoints and the number of source characters used in the conversion.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="AUTHORS"
+>AUTHORS <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'> Jerry Gay a.k.a. particle
+ Patrick Michaud &#60;pmichaud@pobox.com&#62;</pre>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

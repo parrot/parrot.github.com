@@ -1,0 +1,391 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Big Numbers</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Big Numbers</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>docs/pdds/pdd14_bignum.pod &#45; Big Numbers</p>
+
+<h1><a name="ABSTRACT"
+>ABSTRACT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This document describes the big number library,
+the functionality it provides and some internal details of interest to people making use of the library.
+Some of the areas in which the big number library meet with the rest of Parrot are also discussed.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The big number library provides Parrot with both a collection of (nearly) infinite precision numeric types and an implementation of an extended decimal arithmetic (EDA).</p>
+
+<h2><a name="Why_decimal_arithmetic?"
+>Why decimal arithmetic? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>There are benefits in using the big number library to provide both values of effectively unlimited precision and a defined arithmetic,
+complete with rounding and exceptional conditions,
+for values which are otherwise easily represented using standard low&#45;level types.
+Both require the same range of operations but differ in the environment under which those operations occur.
+The effort required to produce a library which implements a decimal arithmetic is not much greater than that needed to provide a base&#45;2 big number library.
+It is true that some trade&#45;off in both space and speed is made but given the nature of dynamic languages,
+this should not present too great a burden.</p>
+
+<h2><a name="Numeric_types_provided"
+>Numeric types provided <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The bignumber library provides the following data types to Parrot:</p>
+
+<dl>
+<dt><a name="Big_integers_(BigInt)"
+>Big integers (BigInt)</a></dt><p class="pad"></p>
+
+<dd>Whole numbers with no limits on their size.</dd><p class="pad"></p>
+
+<dt><a name="Big_floats_(BigNum)"
+>Big floats (BigNum)</a></dt><p class="pad"></p>
+
+<dd>Numbers with decimal fractional parts,
+again with no limit on size.</dd><p class="pad"></p>
+
+<dt><a name="Big_floats_with_fixed_fractional_parts"
+>Big floats with fixed fractional parts</a></dt><p class="pad"></p>
+
+<dd>Numbers with a fixed maximum number of digits in their fractional part,
+again with no limit on size.</dd><p class="pad"></p>
+</dl>
+
+<p>The library implements these different forms of number using the same internal representation,
+and differentiates between them only when performing rounding operations.
+A number has the following abstract form:</p>
+
+<pre lang='und' xml:lang='und'> [ sign, string of digits, exponent ]</pre>
+
+<p>If sign is zero, the number is positive, if equal to one, the number is negative. The number has the value</p>
+
+<pre lang='und' xml:lang='und'> sign, string of digits * 10 ** exponent</pre>
+
+<p>A big integer must always have a non&#45;negative exponent, a big float may have any exponent and a float with a fixed fractional part will have an exponent greater than a given (negative) number. These limits are not attached to a numeric value, but instead are enforced by giving any operation involving the numbers a <i>context</i>.</p>
+
+<p>In general, Parrot functions will not need to care about what the bignum objects are or do, they should merely be used as arguments to big number functions, the objects will be managed by Parrot&#39;s garbage collection in a similar manner to strings.</p>
+
+<h2><a name="Special_Values"
+>Special Values <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Additionally the library provides special values, which represent the result of otherwise undefined operations (division by zero, for instance). +Infinity, &#45;Infinity and both quiet and signalling Not a Number (NaN) are available. In general, the result of an operation with at least one argument which is NaN will be NaN, if the argument is a signalling NaN, an exception will also be raised. See the EDA for full details.</p>
+
+<h2><a name="Context"
+>Context <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>All operations occur within a defined context. This tells the operations how they should be treating their arguments, what sort of rounding to perform and what to do if information is lost through rounding.</p>
+
+<p>The context provides the environment in which an operation occurs, in particular the following options are available:</p>
+
+<dl>
+<dt><a name="precision"
+>precision</a></dt><p class="pad"></p>
+
+<dd>A positive <i>precision</i> indicates that big floats are to be used, these cannot have more than <i>precision</i> digits in their coefficient before or after any operation. Arguments to operations with more than <i>precision</i> digits will be truncated and rounded appropriately and results of operations will not have more than <i>precision</i> digits in their coefficients, with any extra digits accumulated during the calculation of the operation being truncated and rounded as required.</dd><p class="pad"></p>
+
+<dd>A <i>precision</i> of zero indicates that integer operations are to be performed. Arguments to operations are rounded so that they have no fractional part, and the result of all operations will be rounded to be integers.</dd><p class="pad"></p>
+
+<dd>A negative value of <i>precision</i> indicates that a fixed number of fractional digits are to be provided, with arguments and results being truncated after those digits.</dd><p class="pad"></p>
+
+<dd>With non&#45;positive values of <i>precision</i> the total number of digits in the coefficient is limited only by available memory.</dd><p class="pad"></p>
+
+<dt><a name="rounding"
+>rounding</a></dt><p class="pad"></p>
+
+<dd>The rounding part of the context defines the rounding algorithm which is to be applied when truncating digits from a number&#39;s coefficient. The available rounding forms are outlined below.</dd><p class="pad"></p>
+
+<dt><a name="traps_and_flags"
+>traps and flags</a></dt><p class="pad"></p>
+
+<dd>The <i>traps</i> part of the context defines how exceptions are raised by the library. Seven distinct classes of error can occur, if the corresponding trap is set (enabled) then an exception is raised by the library (and dispatched to Parrot) otherwise execution continues with the exception class being recorded in flags. For more details see the extended decimal arithmetic standard.</dd><p class="pad"></p>
+</dl>
+
+<p>It is therefore the current <i>context</i> which determines which numeric type is being considered during a particular operation, this makes it easy to upgrade from one numeric form to another, and also allows for considerable code&#45;reuse within the library.</p>
+
+<h2><a name="Exception_Classes"
+>Exception Classes <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The following exception classes are defined:</p>
+
+<dl>
+<dt><a name="Lost_Digits"
+>Lost Digits</a></dt><p class="pad"></p>
+
+<dd>Non&#45;zero digits have been removed from an argument to a function during rounding before the operation.</dd><p class="pad"></p>
+
+<dt><a name="Division_By_Zero"
+>Division By Zero</a></dt><p class="pad"></p>
+
+<dd>Division by zero was attempted.</dd><p class="pad"></p>
+
+<dt><a name="Inexact"
+>Inexact</a></dt><p class="pad"></p>
+
+<dd>Because arguments were rounded, or because the result of an operation has lost significant digits, the result is inexact.</dd><p class="pad"></p>
+
+<dt><a name="Invalid_Operation"
+>Invalid Operation</a></dt><p class="pad"></p>
+
+<dd>An invalid operation was attempted, for instance a sNaN was provided as an argument to a function. This also covers recoverable errors like 0/0, which signals Invalid Operation and can return NaN.</dd><p class="pad"></p>
+
+<dt><a name="Overflow"
+>Overflow</a></dt><p class="pad"></p>
+
+<dd>The exponent of a number has overflowed.</dd><p class="pad"></p>
+
+<dt><a name="Rounded"
+>Rounded</a></dt><p class="pad"></p>
+
+<dd>An argument has been rounded.</dd><p class="pad"></p>
+
+<dt><a name="Underflow"
+>Underflow</a></dt><p class="pad"></p>
+
+<dd>The exponent of a number has underflowed.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Rounding"
+>Rounding <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The rounding part of the context defines the rounding algorithm to be used, the following are provided (examples assume a precision of 5):</p>
+
+<dl>
+<dt><a name="Round_down"
+>Round down</a></dt><p class="pad"></p>
+
+<dd>Any unwanted digits are simply truncated from the coefficient. This rounds towards zero.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> [0, 1234567, 10] =&#62; [0, 12345, 12]</pre>
+
+<dt><a name="Round_half_up"
+>Round half up</a></dt><p class="pad"></p>
+
+<dd>The first lost digit is examined, if this is in the range 0&#45;4, the coefficient is truncated directly, if in the range 5&#45;9, one is added to the final digit of the coefficient. If this leads to a coefficient with more than <i>precision</i> digits, the number is rounded again, removing the trailing zero. This is essentially rounding to nearest.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> [0, 1234567, 10] =&#62; [0, 12346, 12]
+ [0, 1234549, 10] =&#62; [0, 12345, 12]
+ [0, 9999950, 10] =&#62; [0, 10000, 13]</pre>
+
+<dt><a name="Round_half_even"
+>Round half even</a></dt><p class="pad"></p>
+
+<dd>The first lost digit is examined, if it lies in the range 0&#45;4, the coefficient is truncated directly, if in the range 6&#45;9, the coefficient is rounded up. If the first lost digit is equal to 5, and the remaining lost digits in the coefficient are non&#45;zero, the number is also rounded up. If the lost digits are equal to exactly half, the number is rounded up if the least significant retained digit is odd, and rounded down if it is even.</dd><p class="pad"></p>
+
+<dt><a name="Round_Floor"
+>Round Floor</a></dt><p class="pad"></p>
+
+<dd>If the digits to be discarded are non zero, and the number is negative, the coefficient is rounded up, otherwise it remains the same.</dd><p class="pad"></p>
+
+<dd>This is rounding towards &#45;Infinity.</dd><p class="pad"></p>
+
+<dt><a name="Round_Ceiling"
+>Round Ceiling</a></dt><p class="pad"></p>
+
+<dd>If the digits to be discarded are non zero, and the number is positive, the coefficient is rounded up, otherwise it remains the same.</dd><p class="pad"></p>
+
+<dd>This is rounding towards +Infinity.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Operations"
+>Operations <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The following operations are provided by the library, they function exactly as those described in the Standard Decimal Arithmetic (SDA) (see references below) with some extension to cope with integer and fixed fractional part numbers. Only the deviations are outlined here.</p>
+
+<p>In all cases, the sequence of rounding and promotion to zero outlined by the SDA are followed, even where the context implies integer operations.</p>
+
+<dl>
+<dt><a name="Addition,_Subtraction"
+>Addition, Subtraction</a></dt><p class="pad"></p>
+
+<dt><a name="Multiplication"
+>Multiplication</a></dt><p class="pad"></p>
+
+<dt><a name="Division"
+>Division</a></dt><p class="pad"></p>
+
+<dd>Under integer conditions, division is halted once the first fractional digit is calculated, with the result then being rounded to an integer and returned. Under fixed&#45;fraction conditions, one more digit than needed is calculated, with the coefficient then being rounded and returned.</dd><p class="pad"></p>
+
+<dd>If a floating point value is required, or if inexact division by a very small number is attempted, it may be wise to follow big float arithmetic to limit the number of digits returned. It is safe to chose a precision at least as big the largest number of digits of either argument to the division function.</dd><p class="pad"></p>
+
+<dt><a name="Integer_division,_Remainder"
+>Integer division, Remainder</a></dt><p class="pad"></p>
+
+<dd>For both integer and fixed&#45;fraction numbers, the result returned by the remainder function will be an integer or fixed&#45;fraction number. The result of integer division will be an integer.</dd><p class="pad"></p>
+
+<dt><a name="Rounding"
+>Rounding</a></dt><p class="pad"></p>
+
+<dt><a name="Plus_/_Minus"
+>Plus / Minus</a></dt><p class="pad"></p>
+
+<dt><a name="Comparison"
+>Comparison</a></dt><p class="pad"></p>
+
+<dd>Comparison returns a big number which is equal to 1, 0 or &#45;1 if the first argument is larger, equal to or smaller than the second. An alternative form which returns an INTVAL is also provided.</dd><p class="pad"></p>
+
+<dt><a name="Rescale"
+>Rescale</a></dt><p class="pad"></p>
+
+<dt><a name="Power"
+>Power</a></dt><p class="pad"></p>
+
+<dt><a name="Square_Root"
+>Square Root</a></dt><p class="pad"></p>
+</dl>
+
+<h2><a name="Conversion_to_and_from_strings"
+>Conversion to and from strings <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>A one to one conversion between the abstract representation above and a string is provided by the library, and acts as defined by the standard decimal arithmetic. Other conversation operations may also be implemented, and these may not provide one to one mapping.</p>
+
+<p>A pedantic error checking conversion is available within the library, but only works with native strings. Versions which work with Parrot strings will also be provided, although in a separate file to the rest of the library (they will share a common private header file).</p>
+
+<h1><a name="IMPLEMENTATION"
+>IMPLEMENTATION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Functions are provided which implement the arithmetic, conversion, creation and destruction of big numbers by dealing with otherwise opaque big number objects.</p>
+
+<h2><a name="Big_number_representation"
+>Big number representation <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>A big number is represented by the following structure, this is capable of being allocated, tracked and destroyed by the Parrot garbage collection system.</p>
+
+<pre lang='und' xml:lang='und'> typedef struct {
+    BN_NIB* buffer; /* string of nibbles */
+    UINTVAL nibs;   /* nibs allocated, in sizeof(BN_NIB) */
+    UINTVAL flags;  /* private flags store: 001 Inf,  010 qNAN, 110 sNAN */
+    INTVAL digits;  /* digits used */
+    int sign;       /* sign of number, 0=&#62; positive or zero, 1 =&#62; negative */
+    INTVAL expn;    /* exponent of number */
+ } parrot_bignum_t;</pre>
+
+<p>Within the library, individual decimal digits can be accessed using macros, outside the library, access must be made via exported functions. BN_NIB is likely to be a UINTVAL, but this is not essential.</p>
+
+<p>Special values are represented by setting <i>digits</i> to zero and setting appropriate private <i>flags</i>, using internal macros. Infinity has one flag field, NaN another flag field and sNaN a third. In general the flags should not be examined directly, even within the module.</p>
+
+<h2><a name="Context"
+>Context <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'> typedef struct {
+    INTVAL precision;     /* number of digs to retain */
+    BN_ROUNDING rounding; /* rounding type to perform */
+    BOOLVAL extended;     /* do we use extended or base semantics? */
+    unsigned char flags;       /* records possible errors */
+    unsigned char traps;       /* throw errors or not? */
+ } parrot_bignum_context;</pre>
+
+<p><i>BN_ROUNDING</i> is an enumeration of the possible rounding types as described above. <i>traps</i> is a bitmask of exception traps, 0 implies that a trap is disabled and 1 implies it is enabled. <i>flags</i> is a bitmask which records exceptional conditions and has the same fields at <i>flags</i>.</p>
+
+<p>It is expected that language level types implement big floats using a global floating point context which is tagged onto an interpreter structure (and can thus be modified by called the right opcodes). That big integers and fixed&#45;fraction number are provided by creating a context with an appropriate precision whenever a call into the library is made.</p>
+
+<h2><a name="Exceptional_Conditions"
+>Exceptional Conditions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>When an exceptional condition is raised by the module, control is passed to <code lang='und' xml:lang='und'>BN_nonfatal()</code>, this examines the error which has occurred and the current context to determine which class of error has occurred. If the corresponding trap handler is not enabled, the context&#39;s flags are updated and control is returned to the bignumber library, otherwise the exception becomes fatal. How this mechanism interacts with Parrot&#39;s own is yet to be decided.</p>
+
+<p>The possible exceptions are detailed in the extended decimal arithmetic.</p>
+
+<h1><a name="Tests"
+>Tests <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The Standard Decimal Arithmetic provides a collection of tests for both its base and extended behaviour. Initially it is hoped that this library can pass all base tests, with extended tests to be included at a later date as it is extended to cope with values such as +Inf.</p>
+
+<h1><a name="TODO"
+>TODO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Fill in the remaining functions from the EDA, verify that the test suite still passes, integrate the library into the rest of Parrot, provide PMC types and suitable opcodes. Conversion to and from Parrot strings, conversion to and from floating point types, sprintf output of bignumbers.</p>
+
+<h1><a name="ATTACHMENTS"
+>ATTACHMENTS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h1><a name="FOOTNOTES"
+>FOOTNOTES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h1><a name="REFERENCES"
+>REFERENCES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>IBM&#39;s Standard Decimal Arithmetic, with tests <a href='http://www2.hursley.ibm.com/decimal/'><a href="http://www2.hursley.ibm.com/decimal/">http://www2.hursley.ibm.com/decimal/</a></a></p>
+
+<p>Perl&#39;s Math::Big* modules.</p>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="CURRENT"
+>CURRENT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<pre lang='und' xml:lang='und'>    Maintainer: Alex Gough (alex@earth.li)
+    Class: Internals
+    PDD Number: 14
+    Version: $Id$
+    Status: Informational
+    Last Modified: $Id$
+    PDD Format: 1
+    Language: English</pre>
+
+<h2><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="version_1.1"
+>version 1.1</a></dt><p class="pad"></p>
+
+<dd>The first version is more a description of the state of the art than a plan for the future. The author believes this is akin to learning how to crawl before trying to run. Leaving the ground is considered Right Out with attempts being left as an exercise for the interested reader.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="CHANGES"
+>CHANGES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Version_1.0"
+>Version 1.0</a></dt><p class="pad"></p>
+
+<dd>None. First version</dd><p class="pad"></p>
+
+<dt><a name="Version_1.1"
+>Version 1.1</a></dt><p class="pad"></p>
+
+<dd>Special values added, exception handling updated to suit EDA, more rounding types added, TODO added. PDD number bagged.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

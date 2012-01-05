@@ -1,0 +1,157 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Title</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Title
+                </div>
+
+<h1><a name="Title"
+>Title</a></h1>
+
+<p>FHS &#45; Filesystem Hierarchy Standard and Parrot</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Florian Ragwitz &#60;rafl@debian.org&#62;</p>
+
+<h1><a name="VERSION"
+>VERSION</a></h1>
+
+<pre>  Maintainer: Florian Ragwitz
+  Date: 5 Dez 2005
+  Last Modified: 5 Dez 2005
+  Number: 0
+  Version: 1</pre>
+
+<p>This document introduces to the FHS, the Filesystem Hierarchy Standard, and how those concern Parrot.</p>
+
+<h1><a name="INTRODUCTION"
+>INTRODUCTION</a></h1>
+
+<p>The FHS defines some rules for file and directory placement under UNIX&#45;like operating systems. This supports interoperability of applications, system administration tools, development tools, and scripts as well as greater uniformity of documentation for these systems.</p>
+
+<h1><a name="DIRECTORIES"
+>DIRECTORIES</a></h1>
+
+<p>There&#39;s a large amount of directories explained in the FHS that are not explained here. The reason for this is that not all of them are concerning Parrot.</p>
+
+<h2><a name="/etc"
+>/etc</a></h2>
+
+<p>Does parrot have things where it makes sense to configure them using a config file? I don&#39;t think so.</p>
+
+<h2><a name="/tmp"
+>/tmp</a></h2>
+
+<p>All temporary files should be placed here. Parrot could use this directory for files that are generated during the compile of parrot code to native executables.</p>
+
+<h2><a name="/usr"
+>/usr</a></h2>
+
+<p><i>/usr</i> contains is shareable, read&#45;only data. Any information that is host&#45;specific or varies with time is stored elsewhere.</p>
+
+<h3><a name="/usr/bin"
+>/usr/bin</a></h3>
+
+<p>This is the primary directory of executable commands on the system. All executables that are intended to be called directly by the user (i.e. parrot, parrot_debugger, pbc_disassemble, pbc_dump, pbc_info, pbg_merge, ...) should go here. The current version number should be appended to the binaries itself and a symlink needs to be created that points from the binary with version number to the normal name of the file without a version. That makes installing more than one version possible.</p>
+
+<p>Executables that are for internal use only are stored elsewhere.</p>
+
+<h3><a name="/usr/include"
+>/usr/include</a></h3>
+
+<p>This is where all of the system&#39;s general&#45;use include files for the C programming language should be placed.</p>
+
+<p>For parrot this is the content of <i>include/parrot</i>. It should be placed in <i>/usr/include/parrot/$(VERSION</i> (i.e. <i>/usr/include/parrot/0.4.0</i>), including those files in <i>include/parrot</i> that are generated during build time.</p>
+
+<h3><a name="/usr/lib"
+>/usr/lib</a></h3>
+
+<p><i>/usr/lib</i> includes object files, libraries, and internal binaries that are not intended to be executed directly by users or scripts.</p>
+
+<p>This is libparrot$(SOEXT).$(SOVERSION) if the parrot binary was linked dynamically. Otherwise nothing.</p>
+
+<p>Also Parrot uses a single subdirectory called <i>/usr/lib/parrot</i> to store all architecture&#45;dependent data exclusively used by parrot. These files are grouped by the parrot version they belong to. So we&#39;ll have <i>/usr/lib/parrot/0.4.0</i>, <i>/usr/lib/parrot/0.4.1</i>, etc.</p>
+
+<p>All .pbc and .fpmc files should go there.</p>
+
+<p>.pbc files are kind of architecture independent, because parrot can run PBCs created on any architecture on any architecture, but because .pbc files created on 32 bit platforms differ from those created on 64 bit platforms and the performance of executing bytecode created on an architecture with another address width is much slower we consider parrot bytecode to be architecture dependent.</p>
+
+<h3><a name="/usr/share"
+>/usr/share</a></h3>
+
+<p>The <i>/usr/share</i> hierarchy is for all read&#45;only architecture independent data files. Parrot stores those files in <i>/usr/share/parrot/$(VERSION)</i>. For example all .pasm and .pir files should go there as well as data files for libraries like images and such.</p>
+
+<h4><a name="/usr/share/man"
+>/usr/share/man</a></h4>
+
+<p>Manpages are read&#45;only architecture independent data files as well, but they belong into <i>/usr/share/man</i> instead of <i>/usr/share/parrot/</i> so they are in $MANPATH and can be viewed using the <i>man</i> command.</p>
+
+<h4><a name="/usr/share/doc"
+>/usr/share/doc</a></h4>
+
+<p>All documentation as well as examples should go into a subdirectory of <i>/usr/share/doc</i>.</p>
+
+<h1><a name="VIOLATIONS"
+>VIOLATIONS</a></h1>
+
+<dl>
+<dt><a name="/usr/examples"
+>/usr/examples</a></dt>
+Examples should go into <i>/usr/share/doc/examples</i>.
+<dt><a name="/usr/docs"
+>/usr/docs</a></dt>
+This belongs into <i>/usr/share/doc/docs</i> or something similar.
+<dt><a name="/usr/runtime"
+>/usr/runtime</a></dt>
+This needs to be split up into <i>/usr/lib</i> and <i>/usr/share</i> according to the rules that are given in the <b>DIRECTORIES</b> section.
+<dt><a name="/usr/include/parrot"
+>/usr/include/parrot</a></dt>
+This directory conforms to the FHS, but makes it impossible to have more than one version of parrot installed at once. It should be <i>/usr/include/parrot/$(VERSION)</i>.
+<dt><a name="/usr/bin"
+>/usr/bin</a></dt>
+The files in <i>/usr/bin</i> also lack support for multiple installed parrot versions. Also if we build a shared parrot and shared parrot utils the executables in this directory have a &#39;_shared&#39; suffix which is bad.
+<dt><a name="/usr/imcc"
+>/usr/imcc</a></dt>
+This directory should be removed. It only contains documentation and examples which belong somewhere else.
+<dt><a name="/usr/LICENSES"
+>/usr/LICENSES</a></dt>
+Move this to <i>/usr/share/doc/</i> or just remove it if it&#39;s legal.
+<dt><a name="/usr/NEWS,_/usr/PBC_COMPAT,_..."
+>/usr/NEWS, /usr/PBC_COMPAT, ...</a></dt>
+This is also documentation for <i>/usr/share/doc</i>.
+<dt><a name="/usr/parrot&#45;config.pir"
+>/usr/parrot&#45;config.pir</a></dt>
+This is a command which can be called from the user. It should be in <i>/usr/bin</i>, maybe without the .pir suffix.</dl>
+
+<h1><a name="SOURCES"
+>SOURCES</a></h1>
+
+<p>FHS 2.3 &#45; <a href='http://www.pathname.com/fhs/'><a href="http://www.pathname.com/fhs/">http://www.pathname.com/fhs/</a></a></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

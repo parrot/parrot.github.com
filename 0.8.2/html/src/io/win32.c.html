@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Win32 I/O utility functions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Win32 I/O utility functions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/io/win32.c &#45; Win32 I/O utility functions</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This file implements OS&#45;specific I/O functions for Win32 platforms.</p>
+
+<h2><a name="References"
+>References <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Win32 System Programming,
+2nd Edition.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_INTVAL_convert_flags_to_win32"
+><b><code lang='und' xml:lang='und'>static INTVAL convert_flags_to_win32</b></code></a></dt><p class="pad"></p>
+
+<dd>Convert to platform&#45;specific bit open flags.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_Parrot_io_init_win32"
+><b><code lang='und' xml:lang='und'>INTVAL Parrot_io_init_win32</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets up the standard <code lang='und' xml:lang='und'>std*</code> IO handles.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_Parrot_io_getblksize_win32"
+><b><code lang='und' xml:lang='und'>INTVAL Parrot_io_getblksize_win32</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns <code lang='und' xml:lang='und'>PIO_BLKSIZE</code>.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*_Parrot_io_open_win32"
+><b><code lang='und' xml:lang='und'>PMC *Parrot_io_open_win32</b></code></a></dt><p class="pad"></p>
+
+<dd>Calls <code lang='und' xml:lang='und'>CreateFile()</code> to open <code lang='und' xml:lang='und'>*spath</code> with the Win32 translation of <code lang='und' xml:lang='und'>flags</code>.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*_Parrot_io_fdopen_win32"
+><b><code lang='und' xml:lang='und'>PMC *Parrot_io_fdopen_win32</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new <code lang='und' xml:lang='und'>PMC</code> with <code lang='und' xml:lang='und'>fd</code> as its file descriptor.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_Parrot_io_close_win32"
+><b><code lang='und' xml:lang='und'>INTVAL Parrot_io_close_win32</b></code></a></dt><p class="pad"></p>
+
+<dd>Calls <code lang='und' xml:lang='und'>CloseHandle()</code> to close <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_Parrot_io_is_closed_win32"
+><b><code lang='und' xml:lang='und'>INTVAL Parrot_io_is_closed_win32</b></code></a></dt><p class="pad"></p>
+
+<dd>Test whether the filehandle has been closed.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_io_is_tty_win32"
+><b><code lang='und' xml:lang='und'>static INTVAL io_is_tty_win32</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns whether <code lang='und' xml:lang='und'>fd</code> is a console/tty.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_Parrot_io_flush_win32"
+><b><code lang='und' xml:lang='und'>INTVAL Parrot_io_flush_win32</b></code></a></dt><p class="pad"></p>
+
+<dd>Calls <code lang='und' xml:lang='und'>FlushFileBuffers()</code> to flush <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor.</dd><p class="pad"></p>
+
+<dt><a name="size_t_Parrot_io_read_win32"
+><b><code lang='und' xml:lang='und'>size_t Parrot_io_read_win32</b></code></a></dt><p class="pad"></p>
+
+<dd>Calls <code lang='und' xml:lang='und'>ReadFile()</code> to read up to <code lang='und' xml:lang='und'>len</code> bytes from <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor to the memory starting at <code lang='und' xml:lang='und'>buffer</code>.</dd><p class="pad"></p>
+
+<dt><a name="size_t_Parrot_io_write_win32"
+><b><code lang='und' xml:lang='und'>size_t Parrot_io_write_win32</b></code></a></dt><p class="pad"></p>
+
+<dd>Calls <code lang='und' xml:lang='und'>WriteFile()</code> to write <code lang='und' xml:lang='und'>len</code> bytes from the memory starting at <code lang='und' xml:lang='und'>buffer</code> to <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor.
+Returns <code lang='und' xml:lang='und'>(size_t)&#45;1</code> on failure.</dd><p class="pad"></p>
+
+<dt><a name="PIOOFF_T_Parrot_io_seek_win32"
+><b><code lang='und' xml:lang='und'>PIOOFF_T Parrot_io_seek_win32</b></code></a></dt><p class="pad"></p>
+
+<dd>Hard seek.</dd><p class="pad"></p>
+
+<dd>Calls <code lang='und' xml:lang='und'>SetFilePointer()</code> to move the read/write position of <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor to <code lang='und' xml:lang='und'>off</code> bytes relative to the location specified by <code lang='und' xml:lang='und'>whence</code>.</dd><p class="pad"></p>
+
+<dt><a name="PIOOFF_T_Parrot_io_tell_win32"
+><b><code lang='und' xml:lang='und'>PIOOFF_T Parrot_io_tell_win32</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the current read/write position of <code lang='und' xml:lang='und'>*io</code>&#39;s file descriptor.</dd><p class="pad"></p>
+
+<dt><a name="size_t_Parrot_io_peek_win32"
+><b><code lang='und' xml:lang='und'>size_t Parrot_io_peek_win32</b></code></a></dt><p class="pad"></p>
+
+<dd>Retrieve the next character in the stream without modifying the stream.
+Not implemented for this platform.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*_Parrot_io_open_pipe_win32"
+><b><code lang='und' xml:lang='und'>PMC *Parrot_io_open_pipe_win32</b></code></a></dt><p class="pad"></p>
+
+<dd>Open a pipe.
+Not implemented for this platform.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'><a href="unix.c.html">src/io/unix.c</a></em>,
+<em lang='und' xml:lang='und'>src/io/stdio.c</em>,
+<em lang='und' xml:lang='und'>src/io/io.c</em>,
+<em lang='und' xml:lang='und'><a href="io_private.h.html">src/io/io_private.h</a></em>.
+<em lang='und' xml:lang='und'>include/parrot/io_win32.h</em>.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

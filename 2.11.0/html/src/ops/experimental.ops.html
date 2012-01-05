@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Experimental Opcodes</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/ops.html">Opcodes</a> &raquo; Experimental Opcodes
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>experimental.ops &#45; Experimental Opcodes</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This file contains experimental opcodes.</p>
+
+<p>These opcodes should be considered implicitly deprecated &#45; that is,
+they may be removed in any release.</p>
+
+<p>If you rely on any of these opcodes,
+please open a Trac ticket at <a href='https://trac.parrot.org/'>https://trac.parrot.org/</a>.</p>
+
+<p>When making changes to any ops file,
+run <code>make bootstrap&#45;ops</code> to regenerate all generated ops files.</p>
+
+<h2><a name="More_Experimental_Ops"
+>More Experimental Ops</a></h2>
+
+<dl>
+<dt><a name="trap()"
+><b>trap</b>()</a></dt>
+Break into debugger.
+Implementation notes:
+<pre> &#45; x86/gcc ... works with gdb
+ &#45; ppc/gcc ... works with gdb, to proceed: gdb&#62; p $pc = $pc + 4
+ &#45; TODO</pre>
+For other architectures, this is a <code>noop</code>.</dl>
+
+<dl>
+<dt><a name="set_label(invar_PMC,_inconst_LABEL)"
+><b>set_label</b>(invar PMC, inconst LABEL)</a></dt>
+Sets the opcode_t* label value for the given PMC. This is basically only useful for PMCs such as Sub, Continuation, ExceptionHandler and derivatives
+<dt><a name="get_label(out_INT,_invar_PMC)"
+><b>get_label</b>(out INT, invar PMC)</a></dt>
+Gets the opcode_t* label value from the given PMC. This is basically only useful for PMCs such as Sub, Continuation, ExceptionHandler and derivatives</dl>
+
+<dl>
+<dt><a name="fetch(out_PMC,_in_PMC,_in_PMC,_in_PMC)"
+><b>fetch</b>(out PMC, in PMC, in PMC, in PMC)</a></dt>
+Fetches a value from $2, keyed by $3 into $1. If the resulting PMC is PMCNULL, uses the type in $4 to create and return a new PMC.
+<dt><a name="fetch(out_PMC,_in_PMC,_in_INT,_in_PMC)"
+><b>fetch</b>(out PMC, in PMC, in INT, in PMC)</a></dt>
+
+<dt><a name="fetch(out_PMC,_in_PMC,_in_STR,_in_PMC)"
+><b>fetch</b>(out PMC, in PMC, in STR, in PMC)</a></dt>
+</dl>
+
+<dl>
+<dt><a name="vivify(out_PMC,_in_PMC,_in_PMC,_in_PMC)"
+><b>vivify</b>(out PMC, in PMC, in PMC, in PMC)</a></dt>
+Fetches a value from $2, keyed by $3 into $1. If the resulting PMC is PMCNULL, uses the type in $4 to create and return a new PMC.
+<dt><a name="vivify(out_PMC,_in_PMC,_in_INT,_in_PMC)"
+><b>vivify</b>(out PMC, in PMC, in INT, in PMC)</a></dt>
+
+<dt><a name="vivify(out_PMC,_in_PMC,_in_STR,_in_PMC)"
+><b>vivify</b>(out PMC, in PMC, in STR, in PMC)</a></dt>
+</dl>
+
+<dl>
+<dt><a name="new(out_PMC,_in_STR,_in_INT)"
+><b>new</b>(out PMC, in STR, in INT)</a></dt>
+
+<dt><a name="new(out_PMC,_in_PMC,_in_INT)"
+><b>new</b>(out PMC, in PMC, in INT)</a></dt>
+</dl>
+
+<dl>
+<dt><a name="root_new(out_PMC,_in_PMC,_in_INT)"
+><b>root_new</b>(out PMC, in PMC, in INT)</a></dt>
+
+<dt><a name="finalize(in_PMC)"
+><b>finalize</b>(in PMC)</a></dt>
+Finalize exception handling, freeing any information needed to resume the handled exception, like inner runloops. $1 is the Exception handled or the ExceptionHandler that is handling it. EXPERIMENTAL. Handle with care.</dl>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT</a></h1>
+
+<p>Copyright (C) 2001&#45;2010, Parrot Foundation.</p>
+
+<h1><a name="LICENSE"
+>LICENSE</a></h1>
+
+<p>This program is free software. It is subject to the same license as the Parrot interp itself.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

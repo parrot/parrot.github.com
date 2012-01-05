@@ -1,0 +1,404 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Handling Small Object Pools</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Handling Small Object Pools</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/resources.c &#45; Handling Small Object Pools</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Handles the accessing of small object pools (header pools).</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>*/</p>
+
+<p>#include &#34;parrot/parrot.h&#34; #include &#34;parrot/smallobject.h&#34; #include &#60;assert.h&#62;</p>
+
+<p>/* HEADERIZER HFILE: include/parrot/smallobject.h */</p>
+
+<p>/* HEADERIZER BEGIN: static */</p>
+
+<p>static void gc_ms_add_free_object( SHIM_INTERP,
+NOTNULL(Small_Object_Pool *pool),
+NOTNULL(void *to_add) ) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static void gc_ms_alloc_objects( PARROT_INTERP,
+NOTNULL(Small_Object_Pool *pool) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void * gc_ms_get_free_object( PARROT_INTERP,
+NOTNULL(Small_Object_Pool *pool) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void gc_ms_pool_init( SHIM_INTERP,
+NOTNULL(Small_Object_Pool *pool) ) __attribute__nonnull__(2);</p>
+
+<p>static void more_traceable_objects( PARROT_INTERP,
+NOTNULL(Small_Object_Pool *pool) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>/* HEADERIZER END: static */</p>
+
+<p>#define GC_DEBUG_REPLENISH_LEVEL_FACTOR 0.0 #define GC_DEBUG_UNITS_PER_ALLOC_GROWTH_FACTOR 1 #define REPLENISH_LEVEL_FACTOR 0.3</p>
+
+<p>/* this factor is totally arbitrary,
+but gives good timings for stress.pasm */ #define UNITS_PER_ALLOC_GROWTH_FACTOR 1.75</p>
+
+<p>#define POOL_MAX_BYTES 65536 * 128</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: contained_in_pool</p>
+
+<p>Returns whether <code lang='und' xml:lang='und'>pool</code> contains <code lang='und' xml:lang='und'>*ptr</code>.</p>
+
+<p>XXX If ever there is a function that ought to be consted,
+this is it.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT INTVAL contained_in_pool(NOTNULL(const Small_Object_Pool *pool),
+NOTNULL(const void *ptr)) { const Small_Object_Arena *arena;</p>
+
+<pre lang='und' xml:lang='und'>    ptr = PObj_to_ARENA(ptr);
+
+    for (arena = pool&#45;&#62;last_Arena; arena; arena = arena&#45;&#62;prev) {
+        const ptrdiff_t ptr_diff =
+            (ptrdiff_t)ptr &#45; (ptrdiff_t)arena&#45;&#62;start_objects;
+
+        if (0 &#60;= ptr_diff
+                &#38;&#38; ptr_diff &#60; (ptrdiff_t)(arena&#45;&#62;used * pool&#45;&#62;object_size)
+                &#38;&#38; ptr_diff % pool&#45;&#62;object_size == 0)
+            return 1;
+    }
+
+    return 0;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_is_const_pmc</p>
+
+<p>Returns whether <code lang='und' xml:lang='und'>*pmc</code> is a constant PMC.</p>
+
+<p>*/</p>
+
+<p>int Parrot_is_const_pmc(PARROT_INTERP, NOTNULL(PMC *pmc)) { Small_Object_Pool * const pool = interp&#45;&#62;arena_base&#45;&#62;constant_pmc_pool; const int c = contained_in_pool(pool, pmc);</p>
+
+<pre lang='und' xml:lang='und'>    /* some paranoia first */
+    assert(!!PObj_constant_TEST(pmc) == !!c);
+
+    return c;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: more_traceable_objects</p>
+
+<p>We&#39;re out of traceable objects. Try a DOD, then get some more if needed.</p>
+
+<p>*/</p>
+
+<p>static void more_traceable_objects(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool)) { if (pool&#45;&#62;skip) pool&#45;&#62;skip = 0; else { Small_Object_Arena * const arena = pool&#45;&#62;last_Arena; if (arena) { if (arena&#45;&#62;used == arena&#45;&#62;total_objects) Parrot_do_dod_run(interp, DOD_trace_stack_FLAG);</p>
+
+<pre lang='und' xml:lang='und'>            if (pool&#45;&#62;num_free_objects &#60;= pool&#45;&#62;replenish_level)
+                pool&#45;&#62;skip = 1;
+        }
+    }
+
+    /* requires that num_free_objects be updated in Parrot_do_dod_run. If dod
+     * is disabled, then we must check the free list directly. */
+    if (!pool&#45;&#62;free_list)
+        (*pool&#45;&#62;alloc_objects) (interp, pool);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: gc_ms_add_free_object</p>
+
+<p>Add an unused object back to the free pool for later reuse.</p>
+
+<p>*/</p>
+
+<p>static void gc_ms_add_free_object(SHIM_INTERP, NOTNULL(Small_Object_Pool *pool), NOTNULL(void *to_add)) { *(void **)to_add = pool&#45;&#62;free_list; pool&#45;&#62;free_list = to_add; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: gc_ms_get_free_object</p>
+
+<p>Get a new object from the free pool and return it.</p>
+
+<p>*/</p>
+
+<p>static void * gc_ms_get_free_object(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool)) { void *ptr;</p>
+
+<pre lang='und' xml:lang='und'>    /* if we don&#39;t have any objects */
+    if (!pool&#45;&#62;free_list)
+        (*pool&#45;&#62;more_objects)(interp, pool);
+
+    ptr             = pool&#45;&#62;free_list;
+    pool&#45;&#62;free_list = *(void **)ptr;
+
+    PObj_flags_SETTO((PObj*) ptr, 0);
+
+    &#45;&#45;pool&#45;&#62;num_free_objects;
+
+    return ptr;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_add_to_free_list</p>
+
+<p>Adds the memory between <code lang='und' xml:lang='und'>start</code> and <code lang='und' xml:lang='und'>end</code> to the free list.</p>
+
+<p>*/</p>
+
+<p>void Parrot_add_to_free_list(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), NOTNULL(Small_Object_Arena *arena), UINTVAL start, UINTVAL end) { UINTVAL i; void *object;</p>
+
+<pre lang='und' xml:lang='und'>    pool&#45;&#62;total_objects += end &#45; start;
+    arena&#45;&#62;used          = end;
+
+    /* Move all the new objects into the free list */
+    object = (void *)((char *)arena&#45;&#62;start_objects + start * pool&#45;&#62;object_size);
+
+    for (i = start; i &#60; end; i++) {
+        PObj_flags_SETTO((PObj *)object, PObj_on_free_list_FLAG);
+        /*
+         * during GC buflen is used to check for objects on the
+         * free_list
+         */
+        PObj_buflen((PObj*)object) = 0;
+        pool&#45;&#62;add_free_object(interp, pool, object);
+        object = (void *)((char *)object + pool&#45;&#62;object_size);
+    }
+
+    pool&#45;&#62;num_free_objects += end &#45; start;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_append_arrena_in_pool</p>
+
+<p>insert the new arena into the pool&#39;s structure, update stats</p>
+
+<p>*/ void Parrot_append_arena_in_pool(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool), NOTNULL(Small_Object_Arena *new_arena), size_t size) {</p>
+
+<pre lang='und' xml:lang='und'>    /* Maintain the *_arena_memory invariant for stack walking code. Set it
+     * regardless if we&#39;re the first pool to be added. */
+    if (!pool&#45;&#62;last_Arena
+            || (pool&#45;&#62;start_arena_memory &#62; (size_t)new_arena&#45;&#62;start_objects))
+        pool&#45;&#62;start_arena_memory = (size_t)new_arena&#45;&#62;start_objects;
+
+    if (!pool&#45;&#62;last_Arena || (pool&#45;&#62;end_arena_memory &#60;
+                (size_t)new_arena&#45;&#62;start_objects + size))
+        pool&#45;&#62;end_arena_memory = (size_t)new_arena&#45;&#62;start_objects + size;
+
+    new_arena&#45;&#62;total_objects = pool&#45;&#62;objects_per_alloc;
+    new_arena&#45;&#62;next          = NULL;
+    new_arena&#45;&#62;prev          = pool&#45;&#62;last_Arena;
+
+    if (new_arena&#45;&#62;prev)
+        new_arena&#45;&#62;prev&#45;&#62;next = new_arena;
+
+    pool&#45;&#62;last_Arena = new_arena;
+    interp&#45;&#62;arena_base&#45;&#62;header_allocs_since_last_collect++;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: gc_ms_alloc_objects</p>
+
+<p>We have no more headers on the free header pool. Go allocate more and put them on.</p>
+
+<p>*/</p>
+
+<p>static void gc_ms_alloc_objects(PARROT_INTERP, NOTNULL(Small_Object_Pool *pool)) { size_t size; UINTVAL start, end;</p>
+
+<pre lang='und' xml:lang='und'>    /* Setup memory for the new objects */
+    Small_Object_Arena * const new_arena =
+        mem_internal_allocate_typed(Small_Object_Arena);
+
+    if (!new_arena)
+        PANIC(interp, &#34;Out of arena memory&#34;);
+
+    size = pool&#45;&#62;object_size * pool&#45;&#62;objects_per_alloc;
+
+    /* could be mem_internal_allocate too, but calloc is fast */
+    new_arena&#45;&#62;start_objects = mem_internal_allocate_zeroed(size);
+
+    Parrot_append_arena_in_pool(interp, pool, new_arena, size);
+
+    start = 0;
+    end   = pool&#45;&#62;objects_per_alloc;
+    Parrot_add_to_free_list(interp, pool, new_arena, start, end);
+
+    /* Allocate more next time */
+    if (GC_DEBUG(interp)) {
+        pool&#45;&#62;objects_per_alloc *= GC_DEBUG_UNITS_PER_ALLOC_GROWTH_FACTOR;
+        pool&#45;&#62;replenish_level =
+                (size_t)(pool&#45;&#62;total_objects *
+                GC_DEBUG_REPLENISH_LEVEL_FACTOR);
+    }
+    else {
+        pool&#45;&#62;objects_per_alloc = (size_t)(pool&#45;&#62;objects_per_alloc *
+            UNITS_PER_ALLOC_GROWTH_FACTOR);
+        pool&#45;&#62;replenish_level   =
+                (size_t)(pool&#45;&#62;total_objects * REPLENISH_LEVEL_FACTOR);
+    }
+
+    /* check alloc size against maximum */
+    size = pool&#45;&#62;object_size * pool&#45;&#62;objects_per_alloc;
+
+    if (size &#62; POOL_MAX_BYTES)
+        pool&#45;&#62;objects_per_alloc = POOL_MAX_BYTES / pool&#45;&#62;object_size;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: new_small_object_pool</p>
+
+<p>Creates a new <code lang='und' xml:lang='und'>Small_Object_Pool</code> and returns a pointer to it.</p>
+
+<p>*/</p>
+
+<p>PARROT_MALLOC Small_Object_Pool * new_small_object_pool(size_t object_size, size_t objects_per_alloc) { Small_Object_Pool * const pool = mem_internal_allocate_zeroed_typed(Small_Object_Pool);</p>
+
+<pre lang='und' xml:lang='und'>    pool&#45;&#62;last_Arena        = NULL;
+    pool&#45;&#62;free_list         = NULL;
+    pool&#45;&#62;mem_pool          = NULL;
+    pool&#45;&#62;object_size       = object_size;
+    pool&#45;&#62;objects_per_alloc = objects_per_alloc;
+
+    return pool;
+}</pre>
+
+<p>void gc_pmc_ext_pool_init(NOTNULL(Small_Object_Pool *pool)) { pool&#45;&#62;add_free_object = gc_ms_add_free_object; pool&#45;&#62;get_free_object = gc_ms_get_free_object; pool&#45;&#62;alloc_objects = gc_ms_alloc_objects; pool&#45;&#62;more_objects = gc_ms_alloc_objects; }</p>
+
+<p>static void gc_ms_pool_init(SHIM_INTERP, NOTNULL(Small_Object_Pool *pool)) { pool&#45;&#62;add_free_object = gc_ms_add_free_object; pool&#45;&#62;get_free_object = gc_ms_get_free_object; pool&#45;&#62;alloc_objects = gc_ms_alloc_objects; pool&#45;&#62;more_objects = more_traceable_objects; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_gc_ms_init</p>
+
+<p>Initialize the state structures of the gc system. Called immediately before creation of memory pools. This function must set the function pointers for <code lang='und' xml:lang='und'>add_free_object_fn</code>, <code lang='und' xml:lang='und'>get_free_object_fn</code>, <code lang='und' xml:lang='und'>alloc_object_fn</code>, and <code lang='und' xml:lang='und'>more_object_fn</code>.</p>
+
+<p>*/</p>
+
+<p>void Parrot_gc_ms_init(PARROT_INTERP) { Arenas * const arena_base = interp&#45;&#62;arena_base;</p>
+
+<pre lang='und' xml:lang='und'>    arena_base&#45;&#62;do_dod_run        = Parrot_dod_ms_run;
+    arena_base&#45;&#62;de_init_gc_system = NULL;
+    arena_base&#45;&#62;init_pool         = gc_ms_pool_init;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: Parrot_small_object_pool_merge</p>
+
+<p>Merge <code lang='und' xml:lang='und'>source</code> into <code lang='und' xml:lang='und'>dest</code>.</p>
+
+<p>*/</p>
+
+<p>void Parrot_small_object_pool_merge(PARROT_INTERP, NOTNULL(Small_Object_Pool *dest), NOTNULL(Small_Object_Pool *source)) { Small_Object_Arena *cur_arena; void **free_list_end;</p>
+
+<pre lang='und' xml:lang='und'>    /* XXX num_free_objects doesn&#39;t seem to be accounted correctly in, e.g.,
+     * the PMC_EXT pool.
+     */
+#if 0
+    if (source&#45;&#62;num_free_objects == source&#45;&#62;total_objects) {
+        return;
+    }
+#endif
+
+    /* assert(source&#45;&#62;total_objects); */
+    assert(dest&#45;&#62;object_size == source&#45;&#62;object_size);
+    assert((dest&#45;&#62;name == NULL &#38;&#38; source&#45;&#62;name == NULL) ||
+        0 == strcmp(dest&#45;&#62;name, source&#45;&#62;name));
+
+    dest&#45;&#62;total_objects += source&#45;&#62;total_objects;
+
+    /* append new free_list to old */
+    /* XXX this won&#39;t work with, e.g., gc_gms */
+    free_list_end  = &#38;dest&#45;&#62;free_list;
+
+    while (*free_list_end)
+        free_list_end = (void **)*free_list_end;
+
+    *free_list_end = source&#45;&#62;free_list;
+
+    /* now append source arenas */
+    cur_arena = source&#45;&#62;last_Arena;
+
+    while (cur_arena) {
+        size_t                     total_objects;
+        Small_Object_Arena * const next_arena = cur_arena&#45;&#62;prev;
+
+        cur_arena&#45;&#62;next = cur_arena&#45;&#62;prev = NULL;
+
+        total_objects   = cur_arena&#45;&#62;total_objects;
+
+        Parrot_append_arena_in_pool(interp, dest, cur_arena,
+            cur_arena&#45;&#62;total_objects);
+
+        /* XXX needed? */
+        cur_arena&#45;&#62;total_objects = total_objects;
+
+        cur_arena = next_arena;
+    }
+
+    /* remove things from source */
+    /* XXX is this enough? */
+    source&#45;&#62;last_Arena       = NULL;
+    source&#45;&#62;free_list        = NULL;
+    source&#45;&#62;total_objects    = 0;
+    source&#45;&#62;num_free_objects = 0;
+}</pre>
+
+<p>/*</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/smallobject.h</em>, <em lang='und' xml:lang='und'><a href="../../docs/memory_internals.pod.html">docs/memory_internals.pod</a></em>.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

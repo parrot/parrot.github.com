@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>This is the readme file for PIRC, a PIR Compiler written in C.</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">This is the readme file for PIRC, a PIR Compiler written in C.</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>README.pod &#45; This is the readme file for PIRC,
+a PIR Compiler written in C.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This is the readme file for PIRC,
+a PIR Compiler written in C.</p>
+
+<h1><a name="INTRODUCTION"
+>INTRODUCTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This is an attempt to implement Parrot Intermediate Representation (PIR) using a top&#45;down approach.
+This is still in its early phases,
+and only the parser is being worked on.</p>
+
+<p>As the current implementation of PIR (IMCC) is a bit messy,
+this is an attempt to write a clean implementation to see what constructs should be allowed,
+and which should be forbidden.
+It&#39;s also a nice experiment to see whether a top&#45;down parser has any advantages over a YACC implementation.
+(For instance,
+it&#39;s much smaller).</p>
+
+<p>This implementation is as complete as I can currently oversee.
+Of course,
+things will be fixed as I encounter them.</p>
+
+<p>More importantly,
+ops cannot be parsed yet,
+because the distinction between an op and a plain identifiers can only be decided during runtime.
+This is because Parrot allows for runtime loading of op&#45;libraries.
+Currently,
+I hardcoded the &#34;print&#34; op,
+so you can compile:</p>
+
+<pre lang='und' xml:lang='und'> .sub main :main
+   print &#34;Hello World&#34;
+ .end</pre>
+
+<p>On the other hand, most of the &#34;sugar&#34; that PIR adds to Parrot assembly syntax has been implemented, and can be parsed successfully.</p>
+
+<p>For more documentation, please run:</p>
+
+<pre lang='und' xml:lang='und'> make docs</pre>
+
+<p>This will generate the documentation in HTML format. The documentation of pirparser.c contains the grammar that is accepted by PIRC. The documentation of pirlexer.c contains the lexical specifiction as accepted by PIRC. See the <code lang='und' xml:lang='und'>doc</code> directory for documentation, or run <code lang='und' xml:lang='und'>perldoc</code> on the source files.</p>
+
+<h1><a name="FEATURES"
+>FEATURES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Some highlights of PIRC:</p>
+
+<ul>
+<li>PIRC allows for multiple heredoc arguments:</li><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> .sub main
+   foo(&#60;&#60;&#39;A, &#60;&#60;&#39;B&#39;, &#60;&#60;&#39;C&#39;, 10, &#34;hello&#34;, &#60;&#60;&#39;D&#39;)
+ This is arugment A
+ A
+ This is argument B
+ B
+ This is argument C
+ C
+ This is argument D
+ D
+
+ .end</pre>
+
+<p>Unlike IMCC, this is accepted by PIRC.</p>
+
+<li>A clean interface to the compiler back&#45;end. The interface to the back&#45;end of PIRC is clean, and separates the parser completely from the back&#45;end. The back&#45;end does not get to see details of the parser, unless these details are passed as parameters. See the file <code lang='und' xml:lang='und'>doc/design.pod</code> for details.</li><p class="pad"></p>
+
+<li>PIRC is a top&#45;down recursive descent parser. Although it is handwritten, the source code is quite readable and simple, allowing for easy adjustments. While changing IMCC&#39;s yacc input file may result in shift/reduce conflicts easily, changing and adding syntax to PIRC is better isolated to a single point in the parser.</li><p class="pad"></p>
+
+<li>It correctly handles <code lang='und' xml:lang='und'>.include</code> directives.</li><p class="pad"></p>
+
+<li>Macro definitions are really parsed, not merely slurped. This means that errors in the macro definition are found immediately, and not only when expanding a macro definition.</li><p class="pad"></p>
+
+<li>PIRC shows input context when reporting an error. This means that the last <i>N</i> characters are printed to the screen (where <i>N</i> is #define&#39;d in the source, currently set to 30).</li><p class="pad"></p>
+</ul>
+
+<h1><a name="ISSUES"
+>ISSUES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<ul>
+<li>Macros are not expanded at this point, but can be parsed.</li><p class="pad"></p>
+
+<li>Parrot ops cannot be parsed, except for <code lang='und' xml:lang='und'>print</code> and <code lang='und' xml:lang='und'>null</code>, as <code lang='und' xml:lang='und'>null</code> is a PIR keyword (used in the <code lang='und' xml:lang='und'>if</code> and <code lang='und' xml:lang='und'>unless</code> statements).</li><p class="pad"></p>
+</ul>
+
+<p>Comments, improvements etc. are most welcome and may be sent to the author.</p>
+
+<h1><a name="REFERENCES"
+>REFERENCES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Run <code lang='und' xml:lang='und'>make docs</code> and see the generated files in the <code lang='und' xml:lang='und'>doc</code> directory.</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>klaas&#45;Jan stol &#60;parrotcode at gmail dot com&#62;</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

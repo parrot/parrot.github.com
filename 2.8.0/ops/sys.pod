@@ -1,0 +1,93 @@
+=head1 NAME
+
+sys.ops - System Interaction Opcodes
+
+=head1 DESCRIPTION
+
+Operations that allow the user to interact with the system.
+
+When making changes to any ops file, run C<make bootstrap-ops> to regenerate
+all generated ops files.
+
+=over 4
+
+
+=cut
+
+=item B<spawnw>(out INT, in STR)
+
+Spawn a subprocess whose program name and arguments are contained in the string
+$2 and wait for it to finish. The return status, which is very
+system-dependent, goes in $1.
+
+=item B<spawnw>(out INT, invar PMC)
+
+Spawn a subprocess whose program name and arguments are contained in the array
+$2 and wait for it to finish. The return status, which is very
+system-dependent, goes in $1.
+
+TT #847: C<spawnw()> should itself handle splitting up command-line arguments,
+rather than depending on the shell to do so in potentially unsafe manner.
+See https://trac.parrot.org/parrot/ticket/847.
+
+TT #848: C<spawnw()> should return something less system-dependent, and more
+object-like. See https://trac.parrot.org/parrot/ticket/848.
+
+
+=cut
+
+=item B<err>(out INT)
+
+Store the system error code in $1.
+
+=item B<err>(out STR)
+
+Store the system error message in $1.
+
+=item B<err>(out STR, in INT)
+
+Get the system error message for the system error code $2
+and store it in $1.
+
+
+=cut
+
+=item B<time>(out INT)
+
+Puts the current system time (represented as a whole number of seconds)
+in $1.
+
+
+=cut
+
+=item B<time>(out NUM)
+
+Puts the current system time (represented as a number of seconds, with
+microseconds) in $1.
+
+
+=cut
+
+=item B<sleep>(in INT)
+
+=item B<sleep>(in NUM)
+
+Sleep for $1 seconds.
+
+
+=cut
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (C) 2001-2009, Parrot Foundation.
+
+=head1 LICENSE
+
+This program is free software. It is subject to the same license
+as the Parrot interp itself.
+
+
+=cut
+

@@ -1,0 +1,570 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Grammar Engine</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; Grammar Engine
+                </div>
+
+<h1><a name="Grammar_Engine"
+>Grammar Engine</a></h1>
+
+<p><!--
+	INDEX: Parrot Grammar Engine
+--> <!--
+	INDEX: PGE (Parrot Grammar Engine)
+--> The Parrot Grammar Engine (PGE) is a parser generator,
+one of the key components of the Parrot Compiler Toolkit.
+It reads grammar files written in the PGE rules format,
+and generates parser modules for the syntax specified by those rules.
+PGE rules provide the full power of recursive descent parsing and operator precedence parsing,
+but are comfortably useful even if you don&#39;t know anything about parsing theory.
+In the usual case,
+all you&#39;ll ever need to know is that rules are patterns for matching text.</p>
+
+<h2><a name="Grammars"
+>Grammars</a></h2>
+
+<p>A grammar is a collection of rules,
+in much the same way that a class is a collection of methods.In fact,
+a grammar is just a special kind of class and a rule is just a special kind of method. Each rule defines a pattern for matching one piece of text.
+The basic matching syntax for rules is likely to be somewhat familiar to anyone who has worked with regular expressions.</p>
+
+<pre>  rule id { \d+ }</pre>
+
+<p>Larger rules are composed from smaller rules:</p>
+
+<pre>  rule record { &#60;id&#62; &#60;name&#62; &#60;phone&#62; }</pre>
+
+<p>And a grammar holds a group of rules that work together:</p>
+
+<pre>  grammar Contacts;
+
+  rule name { &#39;John&#39; | &#39;Bob &#39; | &#39;Fred&#39; }
+
+  rule id   { \d+ }
+
+  rule record { &#60;id&#62; &#60;name&#62; }
+
+  ...</pre>
+
+<h3><a name="Rules_and_Tokens"
+>Rules and Tokens</a></h3>
+
+<p>There are two different kinds of rules, each declared with a different keyword: <code>rule</code> or <code>token</code>. A <code>rule</code> does smart whitespace matching between the various pieces of the pattern. So, the <code>record</code> rule above would match &#34;6355 John&#34; or &#34;6355 John&#34; but not &#34;6355John&#34;.</p>
+
+<p>A <code>token</code> only matches whitespace if you specifically request it. To get the same effect with a token, you&#39;d have to add a <code>\s</code> pattern to the rule:</p>
+
+<pre>  token record { &#60;id&#62; \s+ &#60;name&#62; }</pre>
+
+<h3><a name="The_Start_Rule"
+>The Start Rule</a></h3>
+
+<p>A recursive descent parser is a top&#45;down parser. This means it starts at the highest&#45;level rule and works its way down through individual rules to match an entire string or file. In PGE, this top&#45;level rule is called <code>TOP</code> by convention.In &#34;real&#34; Perl 6, the top&#45;level rule can be called anything. However, some of the PCT compiler tools expect it to be called <code>TOP</code>. Compilers written with PCT should just use the name <code>TOP</code> for all top&#45;level tokens.</p>
+
+<pre>  rule TOP { &#60;record&#62; }</pre>
+
+<p>This rule matches a single record in a string or file. Once the parser has matched the entire string or file passed to the start rule, the parse is considered successful and a raw parse tree is returned.</p>
+
+<h3><a name="Testing_a_Grammar"
+>Testing a Grammar</a></h3>
+
+<p>You might want to try out the examples in this chapter as you read along. To compile the following simple example, save it to a file called <em>Contacts.pg</em>:</p>
+
+<pre>  grammar Contacts is PGE::Grammar;
+  rule  TOP    { &#60;record&#62; }
+  rule  record { &#60;id&#62; &#60;name&#62; }
+  token name   { &#39;John&#39; | &#39;Bob &#39; | &#39;Fred&#39; }
+  token id     { \d+ }</pre>
+
+<p>Then compile the grammar with the following command:</p>
+
+<pre>  $ parrot Perl6Grammar.pbc &#45;&#45;output=Contacts.pir Contacts.pg</pre>
+
+<p>The path to <em>parrot</em> and to the <em>Perl6Grammar.pbc</em> file will vary on different systems. If you compiled Parrot from source, it will be:</p>
+
+<pre>  $ ./parrot runtime/parrot/library/PGE/Perl6Grammar.pbc \
+        &#45;&#45;output=Contacts.pir Contacts.pg</pre>
+
+<p>Next, create a small PIR script to run your grammar. You can save it as <em>grammar_test.pir</em>.</p>
+
+<pre>  .sub main :main
+      load_bytecode &#39;PGE.pbc&#39;        # load some required modules
+      load_bytecode &#39;dumper.pbc&#39;
+      load_bytecode &#39;PGE/Dumper.pbc&#39;
+
+      load_bytecode &#39;Contacts.pir&#39;   # load your grammar
+
+      .local string source
+      .local pmc top, grammar, match
+
+      source = &#34;3 John&#34;
+      top = get_hll_global [&#39;Contacts&#39;], &#39;TOP&#39;
+      grammar = get_class &#39;Contacts&#39;
+      match = top(source, &#39;grammar&#39; =&#62; grammar)
+      _dumper(match, &#34;match&#34;)
+  .end</pre>
+
+<p>Now, you can run the test script with this command:</p>
+
+<pre>  $ parrot grammar_test.pir</pre>
+
+<p>It will print out a text representation of the raw parse tree stored in the <code>match</code> variable:</p>
+
+<pre>  &#34;match&#34; =&#62; PMC &#39;Contacts&#39; =&#62; &#34;3 John&#34; @ 0 {
+      &#60;record&#62; =&#62; PMC &#39;Contacts&#39; =&#62; &#34;3 John&#34; @ 0 {
+          &#60;id&#62; =&#62; PMC &#39;Contacts&#39; =&#62; &#34;3&#34; @ 0
+          &#60;name&#62; =&#62; PMC &#39;Contacts&#39; =&#62; &#34;John&#34; @ 2
+      }
+  }</pre>
+
+<p>Each rule in the grammar corresponds to a node in the tree. This output shows that the top&#45;level match variable contains one child named &#34;record&#34;, that &#34;record&#34; contains two children named &#34;id&#34; and &#34;name&#34;, and that &#34;id&#34; contains the number 3, and &#34;name&#34; contains the string &#34;John&#34;. Exactly what we would expect from our simple grammar.</p>
+
+<h2><a name="Rule_Syntax"
+>Rule Syntax</a></h2>
+
+<p>Every language has a set of basic components (words or parts of words) and syntax conventions for combining them. The &#34;words&#34; in rules are literal characters or symbols, some <!--
+	INDEX: metacharacters
+--> metacharacters (or metasymbols), and <!--
+	INDEX: rules;escape sequences
+--><!--
+	INDEX: escape sequences, rules
+--> escape sequences, while the combining syntax includes other metacharacters, <!--
+	INDEX: quantifiers, rules
+--> <!--
+	INDEX: rules;quantifiers
+--> quantifiers, bracketing characters, and assertions.</p>
+
+<h3><a name="Metacharacters"
+>Metacharacters</a></h3>
+
+<p>The <code>.</code> matches any single character, even a newline character. The <code>^</code> and <code>$</code> metacharacters are zero&#45;width matches on the beginning and end of a string. They each have doubled alternates <code>^^</code> and <code>$$</code> that match at the beginning and end of every line within a string.</p>
+
+<p>The <code>|</code>, <code>&#38;</code>, <code>\</code>, <code>#</code>, and <code>:=</code> metacharacters are all syntax structure elements. The <code>|</code> is an alternation between two options. The <code>&#38;</code> matches two patterns simultaneously (the patterns must be the same length). The <code>\</code> turns literal characters into metacharacters (the escape sequences). The <code>#</code> marks a comment to the end of the line. You can start a comment at any point on any line in a rule. The <code>:=</code> binds a hypothetical variable to the result of a subrule or grouped pattern. Hypotheticals are covered in <a href='#Hypothetical_Variables'>&#34;Hypothetical Variables&#34;</a> later in this chapter.</p>
+
+<p>The metacharacters <code>()</code>, <code>[]</code>, <code>{}</code> and <code>&#60;&#62;</code> are bracketing pairs. The pairs always have to be balanced within the rule, unless they are literal characters (escaped with a <code>\</code>). The <code>()</code> and <code>[]</code> pairs group patterns to match as a single atom. They&#39;re often used to capture a result, mark the boundaries of an alternation, or mark a group of patterns with a quantifier. Parentheses <code>()</code> are capturing and square brackets <code>[]</code> are non&#45;capturing. The <code>{}</code> brackets define a section of code (a closure) within a rule. These closures are always a successful zero&#45;width match. The <code>&#60;...&#62;</code> brackets mark assertions, which handle a variety of constructs including character classes and user&#45;defined quantifiers. Assertions are covered in <a href='TODO'>Assertions</a> later in this chapter.</p>
+
+<p>Table 7&#45;2 summarizes the basic set of metacharacters.</p>
+
+<h3><a name="Escape_Sequences"
+>Escape Sequences</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: escape sequences, rules
+--> <!--
+	INDEX: rules;escape sequences
+--> <!--
+	INDEX: \ (backslash);\ escape sequences (rules)
+--> The escape sequences are literal characters acting as metacharacters, marked with the <code>\</code> escape. Some escape sequences represent single characters that are difficult to represent literally, like <code>\t</code> for tab, or <code>\x[...]</code> for a character specified by a hexadecimal number. Some represent limited character classes, like <code>\d</code> for digits or <code>\w</code> for word characters. Some represent zero&#45;width positions in a match, like <code>\b</code> for a word boundary. With all the escape sequences that use brackets, <code>()</code>, <code>{}</code>, and <code>&#60;&#62;</code> work in place of <code>[]</code>.</p>
+
+<p><!--
+	INDEX: variable interpolation in rules
+--> <!--
+	INDEX: rules;variable interpolation
+--> Note that since an ordinary variable now interpolates as a literal string by default, the <code>\Q</code> escape sequence is rarely needed.</p>
+
+<p>CHP&#45;7&#45;TABLE&#45;3Table 7&#45;3 shows the escape sequences for rules.</p>
+
+<h3><a name="Quantifiers"
+>Quantifiers</a></h3>
+
+<p></p>
+
+<p>Quantifiers specify the number of times an atom (a single character, metacharacter, escape sequence, grouped pattern, assertion, etc) will match.</p>
+
+<p><!--
+	INDEX: . (dot);.. (range);quantifier (rules)
+--> <!--
+	INDEX: . (dot);... (infinite range);quantifier (rules)
+--> The numeric quantifiers use assertion syntax. A single number (<code>&#60;3&#62;</code>) requires exactly that many matches. A numeric range quantifier (<code>&#60;3<code>..</code>5&#62;</code>) succeeds if the number of matches is between the minimum and maximum numbers. A range with three trailing dots (<code>&#60;2...&#62;</code>) is shorthand for <code>&#60;n..Inf&#62;</code> and matches as many times as possible.</p>
+
+<p>Each quantifier has a minimal alternate form, marked with a trailing <code>?</code>, that matches the shortest possible sequence first.</p>
+
+<p>CHP&#45;7&#45;TABLE&#45;4Table 7&#45;4 shows the built&#45;in <!--
+	INDEX: quantifiers, rules
+--> <!--
+	INDEX: rules;quantifiers
+--> quantifiers.</p>
+
+<h3><a name="Assertions"
+>Assertions</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: assertions, rules
+--> <!--
+	INDEX: rules;assertions
+--> In general, an assertion simply states that some condition or state is true and the match fails when that assertion is false. Many different constructs with many different purposes use assertion syntax.</p>
+
+<p><!--
+	INDEX: variable interpolation in rules
+--> <!--
+	INDEX: rules;variable interpolation
+--> Assertions match named and anonymous rules, arrays or hashes containing anonymous rules, and subroutines or closures that return anonymous rules. You have to enclose a variable in assertion delimiters to get it to interpolate as an anonymous rule or rules. A bare scalar in a pattern interpolates as a literal string, while a scalar variable in assertion brackets interpolates as an anonymous rule. A bare array in a pattern matches as a series of alternate literal strings, while an array in assertion brackets interpolates as a series of alternate anonymous rules. In the simplest case, a bare hash in a pattern matches a word (<code>\w+</code>) and tries to find that word as one of its keys.The effect is much as if it matched the keys as a series of alternates, but you&#39;re guaranteed to match the longest possible key, instead of just the first one it hits in random order., while a hash in assertion brackets does the same, but then also matches the associated value as an anonymous rule.</p>
+
+<p><!--
+	INDEX: fail keyword
+--> A bare closure in a pattern always matches (unless it calls <code>fail</code>), but a closure in assertion brackets <code>&#60;{...}&#62;</code> must return an anonymous rule, which is immediately matched.</p>
+
+<p>An assertion with parentheses <code>&#60;(...)&#62;</code> is similar to a bare closure in a pattern in that it allows you to include straight Perl code within a rule. The difference is that <code>&#60;(...)&#62;</code> evaluates the return value of the closure in boolean context. The match succeeds if the return value is true and fails if the return value is false.</p>
+
+<p>Assertions match character classes, both named and enumerated. A named rule character class is often more accurate than an enumerated character class. For example, <code>&#60;[a&#45;zA&#45;Z]&#62;</code> is commonly used to match alphabetic characters, but generally what&#39;s really needed is the built&#45;in rule <code>&#60;alpha&#62;</code> which matches the full set of Unicode alphabetic characters.</p>
+
+<p>CHP&#45;7&#45;TABLE&#45;5Table 7&#45;5 shows the syntax for assertions.</p>
+
+<h3><a name="Modifiers"
+>Modifiers</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: modifiers
+--> <!--
+	INDEX: : (colon);: modifier delimiter in rules
+--> Modifiers alter the meaning of the pattern syntax. The standard position for modifiers is at the beginning of the rule, right after the <code>m</code>, <code>s</code>, or <code>rx</code>, or after the name in a named rule. Modifiers cannot attach to the outside of a bare <code>/.../</code>. For example:</p>
+
+<pre>  m:i/marvin/ # case insensitive
+  rule names :i { marvin | ford | arthur }</pre>
+
+<p>The single&#45;character modifiers can be grouped, but the others must be separated by a colon:</p>
+
+<pre>  m:wig/ zaphod /                        # OK
+  m:words:ignorecase:globally / zaphod / # OK
+  m:wordsignorecaseglobally / zaphod /   # Not OK</pre>
+
+<p>Most of the modifiers can also go inside the rule, attached to the rule delimiters or to grouping delimiters. Internal modifiers are lexically scoped to their enclosing delimiters, so you get a temporary alteration of the pattern:</p>
+
+<pre>  m/:w I saw [:i zaphod] / # only &#39;zaphod&#39; is case insensitive</pre>
+
+<p>The repetition modifiers (<code>:Nx</code>, <code>:Nth</code>, <code>:once</code>, <code>:globally</code>, and <code>:exhaustive</code>) and the continue modifier (<code>:cont</code>) can&#39;t be lexically scoped, because they alter the return value of the entire rule.</p>
+
+<p>The <code>:Nx</code> modifier matches the rule a counted number of times. If the modifier expects more matches than the string has, the match fails. It has an alternate form <code>:x(N)</code> that can take a variable in place of the number.</p>
+
+<p>The <code>:once</code> modifier on a rule only allows it to match once. The rule will not match again until the you call the <code>.reset</code> method on the rule object.</p>
+
+<p>The <code>:globally</code> modifier matches as many times as possible. The <code>:exhaustive</code> modifier also matches as many times as possible, but in as many different ways as possible.</p>
+
+<p>The <code>:Nth</code> modifier preserves one result from a particular counted match. If the rule matches fewer times than the modifier expects, the match fails. It has several alternate forms. One form&#45;&#45;<code>:th(N)</code>&#45;&#45;can take a variable in place of the number. The other forms&#45;&#45;<code>:Nst</code>, <code>:Nnd</code>, and <code>:Nrd</code>&#45;&#45;are for cases where it&#39;s more natural to write <code>:1st</code>, <code>:2nd</code>, <code>:3rd</code> than it is to write <code>:1th</code>, <code>:2th</code>, <code>:3th</code>. Either way is valid, so pick the one that&#39;s most comfortable for you.</p>
+
+<p>By default, rules ignore literal whitespace within the pattern. The <code>:w</code> modifier makes rules sensitive to literal whitespace, but in an intelligent way. Any cluster of literal whitespace acts like an explicit <code>\s+</code> when it separates two identifiers and <code>\s*</code> everywhere else.</p>
+
+<p>There are no modifiers to alter whether the matched string is treated as a single line or multiple lines. That&#39;s why the &#34;beginning of string&#34; and &#34;end of string&#34; metasymbols have &#34;beginning of line&#34; and &#34;end of line&#34; counterparts.</p>
+
+<p>CHP&#45;7&#45;TABLE&#45;6Table 7&#45;6 shows the current list of modifiers.</p>
+
+<h3><a name="Built&#45;in_Rules"
+>Built&#45;in Rules</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: rules;built&#45;in
+--> A number of named rules are provided by default, including a complete set of <!--
+	INDEX: POSIX&#45;style classes
+--> POSIX&#45;style classes, and <!--
+	INDEX: Unicode property classes
+--> Unicode property classes. The list isn&#39;t fully defined yet, but CHP&#45;7&#45;TABLE&#45;7Table 7&#45;7 shows a few you&#39;re likely to see.</p>
+
+<p>The <code>&#60;null&#62;</code> rule matches a zero&#45;width string (so it&#39;s always true) and <code>&#60;prior&#62;</code> matches whatever the most recent successful rule matched. These replace the two behaviors of <!--
+	INDEX: / (slash);// invalid null pattern
+--> <!--
+	INDEX: invalid null pattern //
+--> the Perl 5 null pattern <code>//</code>, which is no longer valid syntax for rules.</p>
+
+<h3><a name="Backtracking_Control"
+>Backtracking Control</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: backtracking controls
+--> <!--
+	INDEX: fail keyword
+--> Backtracking is triggered whenever part of the pattern fails to match. You can also explicitly trigger backtracking by calling the <code>fail</code> function within a closure. CHP&#45;7&#45;TABLE&#45;8Table 7&#45;8 shows some metacharacters and built&#45;in rules relevant to backtracking.</p>
+
+<h3><a name="Calling_Actions"
+>Calling Actions</a></h3>
+
+<p>Once the parser has matched the entire input a source code file, or a line of input at the terminal in interactive mode the parse is considered successful and the generated AST is delivered to the code generator for conversion into PIR.</p>
+
+<p>We haven&#39;t covered actions yet, but it&#39;s still important now to talk about how we will call them when we are ready. We call an action by inserting the <code>{*}</code> token into the rule. When the <code>{*}</code> rule is encountered, PGE calls the associated action method with the current match object as an argument. Let&#39;s take our <code>persons_name</code> rule from above, and sprinkle liberally with action calls:</p>
+
+<pre> rule persons_name {
+    {*} &#60;first_name&#62; {*} &#60;last_name&#62; {*}
+ }</pre>
+
+<p>The first call to the action method contains an empty match object because the parser hasn&#39;t had a chance to match anything yet. The second call contains only the first name of the match. The third and final call contains both the matched first and last name. Notice that if the match fails halfway through, we still call the actions where we succeeded, but do not call the actions after the failure. So, if we try to match the string &#34;Leia&#34;, the action is called before the name and after the first name. When the rule tries to match the last name, it fails because no last name is provided, and the third action method call is never made.</p>
+
+<h3><a name="Alternations_and_Keys"
+>Alternations and Keys</a></h3>
+
+<p>In addition to sub&#45;rules, groups, and quantifiers, we also are able to take alternations between options that are either&#45;or. The vertical bar token &#34;|&#34; can be used to distinguish between options where only one may match, Here&#39;s an example:</p>
+
+<pre> rule hero {
+    [&#39;Luke&#39; | &#39;Leia&#39;] &#39;Skywalker&#39;
+ }</pre>
+
+<p>This rule will match either &#34;Luke Skywalker&#34; or &#34;Leia Skywalker&#34; but won&#39;t match &#34;Luke Leia Skywalker&#34; or anything else, for that matter. With things like alternations, if we want to call an action method it&#39;s helpful to distinguish which combination we matched:</p>
+
+<pre> rule hero {
+    [
+      &#39;Luke&#39; {*}    #= Luke
+    | &#39;Leia&#39; {*}    #= Leia
+    ]
+    &#39;Skywalker&#39;
+ }</pre>
+
+<p>This is the same rule, except now it passes two arguments to its action method: the match object and the name of the person who got matched.</p>
+
+<h3><a name="Warning:_Left_Recursion"
+>Warning: Left Recursion</a></h3>
+
+<p>Getting into all the nitty&#45;gritty theory behind parsers is well beyond the scope of this book. However, there is one potential pitfall that developers should be made aware of that is not immediately obvious. Like functions in ordinary procedural or functional languages, the methods in the PGE parser grammar can call themselves recursively. Consider the following rules derived in part from the grammar for the C programming language:</p>
+
+<pre> rule if_statement {
+    &#39;if&#39; &#60;condition&#62; &#39;{&#39; &#60;statement&#62;* &#39;}&#39; &#60;else_block&#62;?
+ }
+
+ rule statement {
+    &#60;if_statement&#62; | &#60;expression&#62;
+ }
+
+ rule else_block {
+    &#39;else&#39; &#39;{&#39; &#60;statements&#62;* &#39;}&#39;
+ }</pre>
+
+<p>Notice that an <code>if_statement</code> can contain a list of <code>statement</code>s, and that each statement may itself be an <code>if_statement</code>? This is called <i>recursion</i> <!--
+	INDEX: Recursion
+-->, and is part of where the &#34;Recursive Descent&#34; algorithm gets its name from.</p>
+
+<p>Now, let&#39;s look at a more direct example of a comma&#45;separated list of integer digits to form an array. We can define this recursively as follows:</p>
+
+<pre> rule list {
+     &#60;list&#62; &#39;,&#39; &#60;digit&#62; | &#60;digit&#62;
+ }</pre>
+
+<p>The intention is that if there is only one digit, we match the second option in the alternation, and if there are more digits we can match them recursively in the first alternation. However, take a close look at the insidious result. The recursive descent parser enters the <code>list</code> rule. It&#39;s first option is to enter the list rule again, so it does. Recursive descent is a depth&#45;first algorithm, and it will continue to descent down a particular path until it finds a successful match or a match failure. In this case, it matches <code>list</code> and then it matches <code>list</code> again, then it matches <code>list</code> again, and so on and so forth. What we have created is an infinite loop pattern called <i>left recursion</i>.</p>
+
+<p>Left recursion is caused when the left&#45;most item of the left&#45;most alternation is a recursion. The rule above can be easily resolved by writing:</p>
+
+<pre> rule list {
+    &#60;digit&#62; | &#60;list&#62; &#39;,&#39; &#60;digit&#62;
+ }</pre>
+
+<p>Or even</p>
+
+<pre> rule list {
+    &#60;digit&#62; &#39;,&#39; &#60;list&#62; | &#60;digit&#62;
+ }</pre>
+
+<p>Both of these two options make sure the left&#45;most item in our rule is not a recursion, therefore preventing left recursion.</p>
+
+<p>Here is a more tricky example where the left recursion is hidden from view:</p>
+
+<pre> rule term {
+    &#60;expression&#62; &#39;*&#39; &#60;term&#62; | &#60;digit&#62;
+ }
+
+ rule expression {
+    &#60;term&#62; &#39;+&#39; &#60;expression&#62; | &#60;term&#62;
+ }</pre>
+
+<p>This is a very limited subset of mathematical equations that we might like to write, and even in this small subset we have this same problem: To match a <code>term</code>, the parser first tries to match an <code>expression</code>, which in turn matches a <code>term</code> and then an <code>expression</code> ...</p>
+
+<p>Left recursion is not the only problem you can run into with a recursive descent grammar, but it&#39;s one that&#39;s likely going to come up relatively often for new language designers, and one that is not always likely to generate useful error messages.</p>
+
+<h3><a name="Operator_Precedence_Parser"
+>Operator Precedence Parser</a></h3>
+
+<p>Places where there are lots of little tokens in a statement, and where there are lots of possible options that a top&#45;down parser will have to attempt can become relatively inefficient using PCT&#39;s recursive descent parser. Specifically, mathematical expressions are very open&#45;ended and have forms that are difficult to anticipate. Consider the expression:</p>
+
+<pre> a + b * c + d</pre>
+
+<p>The recursive descent parser is going to have to recognize through significant trial and error how this statement should be parsed. For tasks like this, recursive descent parsers are not ideal, although a type of bottom&#45;up parser called an <i>operator precedence</i> <!--
+	INDEX: Parser, Operator precedence
+--> parser is. Operator precedence parsers work similarly to more versatile bottom&#45;up parsers such as Lex or Yacc, but are optimized for use with expressions and equations. The &#34;things&#34; in an equation are split into two subtypes: <i>terms</i> and <i>operators</i>. Operators themselves are split into a number of types including prefix (<code>&#45;a</code>), postfix (<code>i++</code>), infix (<code>x + y</code>), circumfix (<code>[z]</code>), postcircumfix (<code>a[b]</code>), and list (<code>1, 2, 3</code>). Each operator gets its own precedence number that specifies how closely it binds to the terms. In the example above, the expression is parsed</p>
+
+<pre> a + (b * c) + d</pre>
+
+<p>This is because the <code>*</code> operator has a higher precedence and therefore binds more tightly then the <code>+</code> operator.</p>
+
+<p>To switch from the top&#45;down recursive descent parser to the bottom&#45;up operator precedence parser, a rule must be defined that is an <code>optable</code> <!--
+	INDEX: Parser, optable
+-->:</p>
+
+<pre> rule expression is optable { ... }</pre>
+
+<p>The <code>...</code> ellipses aren&#39;t an editorial shortcut, it&#39;s the Perl 6 operator that is used to define a function signature. The <code>...</code> indicates that this is just a signature and that the actual guts of it will be filled in somewhere else. In this case, that &#34;somewhere else&#34; is in the definition of the optable role.</p>
+
+<h3><a name="Protofunction_Definitions"
+>Protofunction Definitions</a></h3>
+
+<p>Protofunctions are used to define operators in the optable in the same way that rules and tokens are used throughout the rest of the grammar. A proto is a way of saying that the rule is overridable dynamically, and that it might be defined somewhere else. In this case, PCT takes information from the proto declaration and fills in the details for us. On another note, this also means that the HLL itself can modify its own grammar at run time, by overriding the proto definitions for its operator table. Some languages call this process &#34;operator overloading&#34;.</p>
+
+<p>A proto is defined like this, taking some of our grammar rules above:</p>
+
+<pre> &#39;proto&#39; &#60;proto_name&#62; [ &#39;is&#39; &#60;property&#62; ] &#39;{&#39; &#39;...&#39; &#39;}&#39;</pre>
+
+<p>The name of the operator, listed as <code>&#60;proto_name&#62;</code> above, contains both a location part and an identifier part. The location is one of the places where the operator can be located, such as infix, postfix, prefix, circumfix, and postcircumfix. The name of the operator is the symbol used for the operator in any of the quotes that Perl 6 understands:</p>
+
+<pre> proto infix:&#60;+&#62;                  # a + b
+ proto postfix:&#39;&#45;&#45;&#39;               # i&#45;&#45;
+ proto circumfix:&#171;&#60;&#62;&#187;             # &#60;x&#62;</pre>
+
+<p>The <code>is</code> <!--
+	INDEX: Parser, is
+--> keyword defines a property of the rule. Some examples of this are:</p>
+
+<pre> is precedence(1)     # Specifies an exact precedence
+ is equiv(&#39;+&#39;)        # Has the same precedence as the &#34;+&#34; operator
+ is assoc(&#39;right&#39;)    # Right associative. May also be &#34;left&#34; or &#34;list&#34;
+ is pirop(&#39;add&#39;)      # Operands are passed to the PIR operator &#34;and&#34;
+ is subname(&#39;mySub&#39;)  # Operands are passed to the function &#34;mySub&#34;
+ is pasttype(&#39;if&#39;)    # Operands are passed as children to an &#34;if&#34; PAST node in
+                      # the parse tree
+ is parsed(&#38;myRule)   # The token is parsed and identified using the rule
+                      # &#34;myRule&#34; from the top&#45;down parser</pre>
+
+<p>Protofunction definitions are function signatures which can be overridden via multimethod dispatch. This means functions can be written <i>with the same name</i> as the rule to implement the behavior of the operator:</p>
+
+<pre> rule infix:&#34;+&#34; { ... }</pre>
+
+<p>And in a PIR file for built&#45;in functions:</p>
+
+<pre> .sub &#39;infix:+&#39;
+    .param pmc a
+    .param pmc b
+    .local pmc c
+    c = a + b
+    .return(c)
+ .end</pre>
+
+<p>The question to ask then is &#34;Why have an <code>is subname()</code> property, if all operators can be defined as subroutines?&#34; The answer is that using the <code>is subname()</code> property allows PCT to call a subroutine of a different name then the operator. This is a good idea if there is already a built&#45;in function in the language that duplicates the functionality of the operator. There is no sense duplicating functionality, is there?</p>
+
+<p>The great thing about protos being overloadable is that you can specify different functions to call with different signatures:</p>
+
+<pre> .sub &#39;infix:+&#39; :multi(&#39;Integer&#39;, &#39;Integer&#39;)
+    ...
+ .end
+
+ .sub &#39;infix:+&#39; :multi(&#39;CLispRatio&#39;, &#39;Number&#39;)
+    ...
+ .end
+
+ .sub &#39;infix:+&#39; :multi(&#39;Perl6Double&#39;, &#39;PythonInteger&#39;)
+    ...
+ .end</pre>
+
+<p>This list can be a bit intimidating, and it&#39;s hard to imagine that it would be necessary to write up a new function to handle addition between every conceivable pair of operands. Fortunately for us all, this isn&#39;t the case because all these data types have those VTABLE interfaces that we can use. For most data types Parrot already has basic arithmetic operations built in, and it&#39;s only necessary to override for those data types with special needs. This example was only a demonstration of the flexibility of the method.</p>
+
+<h3><a name="Hypothetical_Variables"
+>Hypothetical Variables</a></h3>
+
+<p></p>
+
+<p><!--
+	INDEX: variables;hypothetical
+--> <!--
+	INDEX: hypothetical variables
+--> <!--
+	INDEX: rules;captures
+--> Hypothetical variables are a powerful way of building up data structures from within a match. Ordinary captures with <code>()</code> store the result of the captures in <code>$1</code>, <code>$2</code>, etc. The values stored in these variables will be kept if the match is successful, but thrown away if the match fails (hence the term &#34;hypothetical&#34;). The numbered capture variables are accessible outside the match, but only within the immediate surrounding lexical scope:</p>
+
+<pre>  &#34;Zaphod Beeblebrox&#34; ~~ m:w/ (\w+) (\w+) /;
+  
+  print $1; # prints Zaphod</pre>
+
+<p>You can also capture into any user&#45;defined variable with the binding operator <code>:=</code>. These variables must already be defined in the lexical scope surrounding the rule:</p>
+
+<pre>  my $person;
+  &#34;Zaphod&#39;s just this guy.&#34; ~~ / ^ $person := (\w+) /;
+  print $person; # prints Zaphod</pre>
+
+<p>Repeated matches can be captured into an array:</p>
+
+<pre>  my @words;
+  &#34;feefifofum&#34; ~~ / @words := (f&#60;&#45;[f]&#62;+)* /;
+  # @words contains (&#34;fee&#34;, &#34;fi&#34;, &#34;fo&#34;, &#34;fum&#34;)</pre>
+
+<p>Pairs of repeated matches can be captured into a hash:</p>
+
+<pre>  my %customers;
+  $records ~~ m:w/ %customers := [ E&#60;lt&#62;idE&#60;gt&#62; = E&#60;lt&#62;nameE&#60;gt&#62; \n]* /;</pre>
+
+<p>If you don&#39;t need the captured value outside the rule, use a <code>$?</code> variable instead. These are only directly accessible within the rule:</p>
+
+<pre>  &#34;Zaphod saw Zaphod&#34; ~~ m:w/ $?name := (\w+) \w+ $?name/;</pre>
+
+<p>A match of a named rule stores the result in a <code>$?</code> variable with the same name as the rule. These variables are also accessible only within the rule:</p>
+
+<pre>  &#34;Zaphod saw Zaphod&#34; ~~ m:w/ E&#60;lt&#62;nameE&#60;gt&#62; \w+ $?name /;</pre>
+
+<p>When a rule matches a sequence of input tokens, an associated method in NQP is called to convert that match into an AST node. This node is then inserted into the <i>parse tree</i>.</p>
+
+<h3><a name="Basic_Rules"
+>Basic Rules</a></h3>
+
+<p>Let&#39;s start off with a simple rule:</p>
+
+<pre> rule persons_name {
+    &#60;first_name&#62; &#60;last_name&#62;
+ }</pre>
+
+<p>We also define the two name tokens as:</p>
+
+<pre> token first_name { &#60;alpha&#62;+ }
+ token last_name { &#60;alpha&#62;+ }</pre>
+
+<p>The special token <code>&#60;alpha&#62;</code> is a built&#45;in construct that only accepts upper case and lower case letters. The &#34;+&#34; after the <code>&#60;alpha&#62;</code> tag is a short way of saying &#34;one or more&#34;. Our rule <code>persons_name</code> would match something like <code>Darth Vader</code> Actually, it matches a lot of things that aren&#39;t people&#39;s namesbut wouldn&#39;t match something like <code>C 3P0</code>. Notice that the rule above would match <code>Jar Jar Binks</code>, but not the way you would expect: It would match the first &#34;Jar&#34; as <code>&#60;first_name&#62;</code> and the second &#34;Jar&#34; as <code>&#60;last_name&#62;</code> and wouldn&#39;t match &#34;Binks&#34; at all.</p>
+
+<p>this example shows another new construct, the square brackets. Square brackets are ways to group things together. The star at the end means that we take all the things inside the brackets zero or more times. This is similar to the plus, except the plus matches one or more times. Notice, however, that the above rule always matches a comma at the end, so we would need to have something like:</p>
+
+<pre> Darth Vader, Luke Skywalker,</pre>
+
+<p>Instead of something more natural like:</p>
+
+<pre> Darth Vader, Luke Skywalker</pre>
+
+<p>We can modify the rule a little bit so that it always ends with a name instead of a comma:</p>
+
+<pre> rule TOP {
+    [ &#60;persons_name&#62; &#39;,&#39; ]* &#60;persons_name&#62;
+ }</pre>
+
+<p>Now we don&#39;t need a trailing comma, but at the same time we can&#39;t match an empty file because it always expects to have at least one name at the end. If we still want to match empty files successfully, we need to make the whole rule optional:</p>
+
+<pre> rule TOP {
+    [ [ &#60;persons_name&#62; &#39;,&#39; ]* &#60;persons_name&#62; ]?
+ }</pre>
+
+<p>We&#39;ve grouped the whole rule together in another set of brackets, and put a &#34;?&#34; question mark at the end. The question mark means zero or one of the prior item.</p>
+
+<p>The symbols &#34;*&#34; (zero or more), &#34;+&#34; (one or more) and &#34;?&#34; are called <i>quantifiers</i>, and allow an item in the rule to match a variable number of times. These aren&#39;t the only quantifiers, but they are the most common. We will talk about other quantifiers later on.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

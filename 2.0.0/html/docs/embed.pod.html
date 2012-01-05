@@ -1,0 +1,2443 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot embedding system</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Home</a> &raquo; <a href="../../html/developer.html">Developer Documentation</a> &raquo; Parrot embedding system
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>embed.pod &#45; Parrot embedding system</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    #include &#60;parrot/embed.h&#62;
+    #include &#60;parrot/extend.h&#62;
+
+    int main(int argc, char* argv[])
+    {
+        Parrot_Interp interp;
+        Parrot_PackFile pf;
+
+        interp = Parrot_new(NULL);
+        if (!interp) {
+            return 1;
+        }
+
+        pf = Parrot_pbc_read(interp, &#34;foo.pbc&#34;, 0);
+        Parrot_pbc_load(interp, pf);
+        Parrot_runcode(interp, argc, argv);
+
+        Parrot_destroy(interp);
+
+        return 0;
+    }</pre>
+
+<h1><a name="FILES"
+>FILES</a></h1>
+
+<dl>
+<dt><a name="include/parrot/embed.h"
+><em>include/parrot/embed.h</em></a></dt>
+
+<dt><a name="include/parrot/extend.h"
+><em>include/parrot/extend.h</em></a></dt>
+</dl>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This is the documentation for Parrot&#39;s embedding API.</p>
+
+<h2><a name="Data_structures"
+>Data structures</a></h2>
+
+<dl>
+<dt><a name="Parrot_Interp"
+><b><code>Parrot_Interp</b></code></a></dt>
+The topmost data structure in Parrot is <code>Parrot_Interp</code>, which represents a Parrot interpreter. It is a required argument to almost every Parrot API function. The structure is opaque in an embedded environment, so you cannot directly access any of its members.
+<dt><a name="Parrot_PackFile"
+><b><code>Parrot_PackFile</b></code></a></dt>
+A Parrot packfile, the internal structure containing Parrot bytecode.
+<dt><a name="Parrot_String"
+><b><code>Parrot_String</b></code></a></dt>
+Parrot&#39;s internal string type, which contains character encoding information.
+<dt><a name="Parrot_PMC"
+><b><code>Parrot_PMC</b></code></a></dt>
+A Polymorphic Container. This is the opaque external type for (PMC *). Note that this is a macro, so there can be only one <code>Parrot_PMC</code> declaration per line.
+<dt><a name="Parrot_Int"
+><b><code>Parrot_Int</b></code></a></dt>
+
+<dt><a name="Parrot_Float"
+><b><code>Parrot_Float</b></code></a></dt>
+
+<dt><a name="Parrot_UInt"
+><b><code>Parrot_UInt</b></code></a></dt>
+Parrot&#39;s numeric types.</dl>
+
+<h2><a name="Constants"
+>Constants</a></h2>
+
+<p>Not documented yet.</p>
+
+<h2><a name="Type_signatures"
+>Type signatures</a></h2>
+
+<p>These are used with the Parrot_call_sub family of functions.</p>
+
+<dl>
+<dt><a name="v_&#45;_void_(return_only)"
+>v &#45; void (return only)</a></dt>
+
+<dt><a name="I_&#45;_integer_(return_or_argument)"
+>I &#45; integer (return or argument)</a></dt>
+
+<dt><a name="N_&#45;_float_(return_or_argument)"
+>N &#45; float (return or argument)</a></dt>
+
+<dt><a name="S_&#45;_string_(return_or_argument)"
+>S &#45; string (return or argument)</a></dt>
+
+<dt><a name="P_&#45;_PMC_(return_or_argument)"
+>P &#45; PMC (return or argument)</a></dt>
+</dl>
+
+<h2><a name="Interpreter_initialization_and_destruction"
+>Interpreter initialization and destruction</a></h2>
+
+<dl>
+<dt><a name="Parrot_Interp_Parrot_new(Parrot_Interp_parent)"
+><b><code>Parrot_Interp Parrot_new(Parrot_Interp parent)</b></code></a></dt>
+Creates a new interpreter, inheriting some data structures from a parent interpreter, if supplied. The first interpreter in any process should be created with a NULL parent, and all subsequent interpreters in the same process should use the first interpreter as their parent. Failure to do so may result in unpredictable errors.
+<dt><a name="Parrot_set_flag(PARROT_INTERP,_Parrot_int_flags)"
+><b><code>Parrot_set_flag(PARROT_INTERP, Parrot_int flags)</b></code></a></dt>
+Sets or unsets interpreter flags. Flags should be OR&#39;d together. Valid flags include:
+<dl>
+<dt><a name="PARROT_NO_FLAGS"
+>PARROT_NO_FLAGS</a></dt>
+
+<dt><a name="PARROT_BOUNDS_FLAG"
+>PARROT_BOUNDS_FLAG</a></dt>
+
+<dt><a name="PARROT_GC_DEBUG_FLAG"
+>PARROT_GC_DEBUG_FLAG</a></dt>
+
+<dt><a name="PARROT_EXTERN_CODE_FLAG"
+>PARROT_EXTERN_CODE_FLAG</a></dt>
+
+<dt><a name="PARROT_DESTROY_FLAG"
+>PARROT_DESTROY_FLAG</a></dt>
+
+<dt><a name="PARROT_IS_THREAD"
+>PARROT_IS_THREAD</a></dt>
+
+<dt><a name="PARROT_THR_COPY_INTERP"
+>PARROT_THR_COPY_INTERP</a></dt>
+
+<dt><a name="PARROT_THR_THREAD_POOL"
+>PARROT_THR_THREAD_POOL</a></dt>
+
+<dt><a name="PARROT_THR_TYPE_1"
+>PARROT_THR_TYPE_1</a></dt>
+
+<dt><a name="PARROT_THR_TYPE_2"
+>PARROT_THR_TYPE_2</a></dt>
+
+<dt><a name="PARROT_THR_TYPE_3"
+>PARROT_THR_TYPE_3</a></dt>
+</dl>
+See <em>interpreter.h</em> for the definition of these flags (TODO: document flag definitions here).
+<dt><a name="void_Parrot_set_run_core(PARROT_INTERP,_Parrot_Run_core_t_core)"
+><b><code>void Parrot_set_run_core(PARROT_INTERP, Parrot_Run_core_t core)</b></code></a></dt>
+Sets the runcore for the interpreter. Must be called before executing any bytecode. Valid runcores include:
+<dl>
+<dt><a name="PARROT_SLOW_CORE"
+>PARROT_SLOW_CORE</a></dt>
+
+<dt><a name="PARROT_FUNCTION_CORE"
+>PARROT_FUNCTION_CORE</a></dt>
+
+<dt><a name="PARROT_FAST_CORE"
+>PARROT_FAST_CORE</a></dt>
+
+<dt><a name="PARROT_SWITCH_CORE"
+>PARROT_SWITCH_CORE</a></dt>
+
+<dt><a name="PARROT_CGP_CORE"
+>PARROT_CGP_CORE</a></dt>
+
+<dt><a name="PARROT_CGOTO_CORE"
+>PARROT_CGOTO_CORE</a></dt>
+
+<dt><a name="PARROT_EXEC_CORE"
+>PARROT_EXEC_CORE</a></dt>
+
+<dt><a name="PARROT_GC_DEBUG_CORE"
+>PARROT_GC_DEBUG_CORE</a></dt>
+</dl>
+See <em>interpreter.h</em> for the definitive list. If you&#39;re not sure which runcore to use, don&#39;t call this function. The default will be fine for most cases. (TODO: document runcores here).
+<dt><a name="Parrot_set_trace(Parrot_Interp,_Parrot_UInt_flags)"
+><b><code>Parrot_set_trace(Parrot_Interp, Parrot_UInt flags)</b></code></a></dt>
+Sets the interpreter&#39;s trace flags. Flags should be OR&#39;d together. Valid flags are:
+<dl>
+<dt><a name="PARROT_NO_TRACE"
+>PARROT_NO_TRACE</a></dt>
+
+<dt><a name="PARROT_TRACE_OPS_FLAG"
+>PARROT_TRACE_OPS_FLAG</a></dt>
+
+<dt><a name="PARROT_TRACE_FIND_METH_FLAG"
+>PARROT_TRACE_FIND_METH_FLAG</a></dt>
+
+<dt><a name="PARROT_TRACE_SUB_CALL_FLAG"
+>PARROT_TRACE_SUB_CALL_FLAG</a></dt>
+
+<dt><a name="PARROT_ALL_TRACE_FLAGS"
+>PARROT_ALL_TRACE_FLAGS</a></dt>
+</dl>
+
+<dt><a name="void_Parrot_set_executable_name(PARROT_INTERP,_Parrot_string_name)"
+><b><code>void Parrot_set_executable_name(PARROT_INTERP, Parrot_string name)</b></code></a></dt>
+Sets the executable name of the calling process. Note that the name is a Parrot string, not a C string.
+<dt><a name="void_Parrot_destroy(PARROT_INTERP)"
+><b><code>void Parrot_destroy(PARROT_INTERP)</b></code></a></dt>
+Destroys an interpreter. At the time of this writing, this is a no&#45;op. See &#60;Parrot_really_destroy()&#62;.
+<dt><a name="void_Parrot_really_destroy(PARROT_INTERP,_int_exit_code)"
+><b><code>void Parrot_really_destroy(PARROT_INTERP, int exit_code)</b></code></a></dt>
+Destroys an interpreter, regardless of the environment. The exit code is currently unused.
+<dt><a name="void_Parrot_exit(PARROT_INTERP,_int_status)"
+><b><code>void Parrot_exit(PARROT_INTERP, int status)</b></code></a></dt>
+Destroys the interpreter and exits with an exit code of <code>status</code>. Before exiting, the function calls all registered exit handlers in LIFO order. <code>Parrot_really_destroy()</code> is usually called as the last exit handler.
+<dt><a name="void_Parrot_on_exit(PARROT_INTERP,_void_(*handler)(Parrot_Interp,_int,_void_*),_void_*arg)"
+><b><code>void Parrot_on_exit(PARROT_INTERP, void (*handler)(Parrot_Interp, int, void *), void *arg)</b></code></a></dt>
+Registers an exit handler to be called from <code>Parrot_exit()</code> in LIFO order. The handler function should accept as arguments an interpreter, an integer exit code, and an argument (which can be NULL).</dl>
+
+<h2><a name="Loading_and_running_bytecode"
+>Loading and running bytecode</a></h2>
+
+<dl>
+<dt><a name="Parrot_PackFile_Parrot_pbc_read(PARROT_INTERP,_const_char_*path,_const_int_debug)"
+><b><code>Parrot_PackFile Parrot_pbc_read(PARROT_INTERP, const char *path, const int debug)</b></code></a></dt>
+Reads Parrot bytecode or PIR from the file referenced by <code>path</code>. Returns a packfile structure for use by <code>Parrot_pbc_load()</code>. <code>debug</code> should be 0.
+<dt><a name="void_Parrot_pbc_load(PARROT_INTERP,_Parrot_PackFile_pf)"
+><b><code>void Parrot_pbc_load(PARROT_INTERP, Parrot_PackFile pf)</b></code></a></dt>
+Loads a packfile into the interpreter. After this operation the interpreter is ready to run the bytecode in the packfile.
+<dt><a name="void_Parrot_runcode(PARROT_INTERP,_int_argc,_char_*argv[])"
+><b><code>void Parrot_runcode(PARROT_INTERP, int argc, char *argv[])</b></code></a></dt>
+Runs the bytecode associated with the interpreter. Use <code>argc</code> and <code>argv[]</code> to pass arguments to the bytecode.
+<dt><a name="Parrot_PackFile_PackFile_new_dummy(PARROT_INTERP,_char_*name)"
+><b><code>Parrot_PackFile PackFile_new_dummy(PARROT_INTERP, char *name)</b></code></a></dt>
+Creates a &#34;dummy&#34; packfile in lieu of actually creating one from a bytecode file on disk.
+<dt><a name="void_Parrot_load_bytecode(PARROT_INTERP,_const_char_*path)"
+><b><code>void Parrot_load_bytecode(PARROT_INTERP, const char *path)</b></code></a></dt>
+Reads and load Parrot bytecode or PIR from the file referenced by <code>path</code>. You should create a dummy packfile beforehand; see <code>PackFile_new_dummy</code> for details. Due to the void return type, the behavior of this function on error is unclear.</dl>
+
+<h2><a name="Data_manipulation"
+>Data manipulation</a></h2>
+
+<h3><a name="Native_types"
+>Native types</a></h3>
+
+<dl>
+<dt><a name="int_Parrot_PMC_typenum(PARROT_INTERP,_const_char_*type)"
+><b><code>int Parrot_PMC_typenum(PARROT_INTERP, const char *type)</b></code></a></dt>
+Returns the internal type number corresponding to <code>type</code>. Useful for instantiating various Parrot data types.
+<dt><a name="char_*Parrot_str_to_cstring(PARROT_INTERP,_const_STRING_*s)"
+><b><code>char *Parrot_str_to_cstring(PARROT_INTERP, const STRING *s)</b></code></a></dt>
+XXX needs to be a formal Parrot_* API. Returns the C string representation of a Parrot string.
+<dt><a name="STRING_*Parrot_str_new(PARROT_INTERP,_const_char_*string,_int_len)"
+><b><code>STRING *Parrot_str_new(PARROT_INTERP, const char *string, int len)</b></code></a></dt>
+XXX needs to be a formal Parrot_* API. Returns the Parrot string representation of a C string.
+<dt><a name="string_from_literal(PARROT_INTERP,_const_char_*string)"
+><b><code>string_from_literal(PARROT_INTERP, const char *string)</b></code></a></dt>
+XXX needs to be a formal Parrot_* API. A macro for simplifying calls to <code>Parrot_str_new</code>.</dl>
+
+<h3><a name="PMCs"
+>PMCs</a></h3>
+
+<dl>
+<dt><a name="Parrot_PMC_Parrot_PMC_new(PARROT_INTERP,_int_typenum)"
+><b><code>Parrot_PMC Parrot_PMC_new(PARROT_INTERP, int typenum)</b></code></a></dt>
+Creates a new PMC of the type identified by <code>typenum</code>. Use <code>Parrot_PMC_typenum</code> to obtain the correct type number.
+<dt><a name="void_Parrot_register_pmc(Parrot_PMC_pmc)"
+><b><code>void Parrot_register_pmc(Parrot_PMC pmc)</b></code></a></dt>
+Registers an externally created PMC with the garbage collector. You MUST call this for any PMCs you create outside of Parrot bytecode, otherwise your PMC may be garbage collected before you are finished using it.
+<dt><a name="void_Parrot_unregister_pmc(Parrot_PMC_pmc)"
+><b><code>void Parrot_unregister_pmc(Parrot_PMC pmc)</b></code></a></dt>
+Unregisters an externally created PMC from the garbage collector. You MUST call this after you are finished using PMCs you create outside of Parrot bytecode, or risk memory leaks.</dl>
+
+<h3><a name="Globals"
+>Globals</a></h3>
+
+<dl>
+<dt><a name="Parrot_PMC_Parrot_find_global_cur(PARROT_INTERP,_Parrot_String_name)"
+><b><code>Parrot_PMC Parrot_find_global_cur(PARROT_INTERP, Parrot_String name)</b></code></a></dt>
+Find and return a global called <code>name</code> in the current namespace. Returns <code>PMCNULL</code> if not found.
+<dt><a name="Parrot_PMC_Parrot_find_global_n(PARROT_INTERP,_PMC_namespace,_Parrot_String_name)"
+><b><code>Parrot_PMC Parrot_find_global_n(PARROT_INTERP, PMC namespace, Parrot_String name)</b></code></a></dt>
+Search the namespace PMC <code>namespace</code> for an object with name <code>globalname</code>. Return the object, or NULL if not found.
+<dt><a name="Parrot_PMC_Parrot_find_global_s(PARROT_INTERP,_Parrot_String_namespace,_Parrot_String_name)"
+><b><code>Parrot_PMC Parrot_find_global_s(PARROT_INTERP, Parrot_String namespace, Parrot_String name)</b></code></a></dt>
+Find and return a global called <code>name</code> in the namespace <code>namespace</code>. Returns <code>PMCNULL</code> if not found.
+<dt><a name="void_Parrot_store_global_n(PARROT_INTERP,_PMC_namespace,_Parrot_String_name,_Parrot_PMC_val)"
+><b><code>void Parrot_store_global_n(PARROT_INTERP, PMC namespace, Parrot_String name, Parrot_PMC val)</b></code></a></dt>
+Store the PMC <code>val</code> into the namespace PMC <code>namespace</code> with name <code>globalname</code>.
+<dt><a name="void_Parrot_store_global_s(PARROT_INTERP,_Parrot_String_namespace,_Parrot_String_name,_Parrot_PMC_val)"
+><b><code>void Parrot_store_global_s(PARROT_INTERP, Parrot_String namespace, Parrot_String name, Parrot_PMC val)</b></code></a></dt>
+Sets the value of a global called <code>name</code> in the namespace <code>namespace</code>. Does nothing if the global is not found.</dl>
+
+<h3><a name="Lexicals"
+>Lexicals</a></h3>
+
+<p>Not documented yet.</p>
+
+<h2><a name="Calling_subroutines"
+>Calling subroutines</a></h2>
+
+<dl>
+<dt><a name="void_Parrot_ext_call(PARROT_INTERP,_Parrot_PMC_sub,_const_char_*signature,_varargs_...)"
+><b><code>void Parrot_ext_call(PARROT_INTERP, Parrot_PMC sub, const_char *signature, varargs ...)</b></code></a></dt>
+Call a Parrot subroutine using the supplied signature. Variables to be filled with return values are passed as references in the varargs list, after all arguments.
+<dt><a name="[DEPRECATED]_void_*Parrot_call_sub(PARROT_INTERP,_Parrot_PMC_sub,_const_char_*signature)"
+>[DEPRECATED] <b><code>void *Parrot_call_sub(PARROT_INTERP, Parrot_PMC sub, const_char *signature)</b></code></a></dt>
+Call a Parrot subroutine that returns a pointer using the supplied signature.
+<dt><a name="[DEPRECATED]_Parrot_Int_Parrot_call_sub_ret_int(PARROT_INTERP,_Parrot_PMC_sub,_const_char_*signature)"
+>[DEPRECATED] <b><code>Parrot_Int Parrot_call_sub_ret_int(PARROT_INTERP, Parrot_PMC sub, const_char *signature)</b></code></a></dt>
+Call a Parrot subroutine that returns an integer using the supplied signature.
+<dt><a name="[DEPRECATED]_Parrot_Float_Parrot_call_sub_ret_float(PARROT_INTERP,_Parrot_PMC_sub,_const_char_*signature)"
+>[DEPRECATED] <b><code>Parrot_Float Parrot_call_sub_ret_float(PARROT_INTERP, Parrot_PMC sub, const_char *signature)</b></code></a></dt>
+Call a Parrot subroutine that returns an float using the supplied signature.</dl>
+
+<h2><a name="Objects"
+>Objects</a></h2>
+
+<h3><a name="Creating_and_destroying_objects"
+>Creating and destroying objects</a></h3>
+
+<dl>
+<dt><a name="Parrot_PMC_Parrot_oo_get_class(PARROT_INTERP,_Parrot_PMC_namespace)"
+><b><code>Parrot_PMC Parrot_oo_get_class(PARROT_INTERP, Parrot_PMC namespace)</b></code></a></dt>
+Returns the class corresponding to the supplied namespace.
+<dt><a name="Parrot_PMC_Parrot_PMC_instantiate(PARROT_INTERP,_Parrot_PMC_the_class,_Parrot_PMC_arg)"
+><b><code>Parrot_PMC Parrot_PMC_instantiate(PARROT_INTERP, Parrot_PMC the_class, Parrot_PMC arg)</b></code></a></dt>
+Instantiates a new object of class <code>the_class</code>, which can be obtained from <code>Parrot_oo_get_class()</code>. Passes an optional PMC argument <code>arg</code> to the constructor (see init versus init_pmc). Use <code>PMCNULL</code> if you are not supplying an argument.</dl>
+
+<h3><a name="Calling_methods"
+>Calling methods</a></h3>
+
+<dl>
+<dt><a name="void_Parrot_ext_call(PARROT_INTERP,_Parrot_PMC_method,_const_char_*signature,_varargs_...)"
+><b><code>void Parrot_ext_call(PARROT_INTERP, Parrot_PMC method, const_char *signature, varargs ...)</b></code></a></dt>
+Methods are called using the same API function as calling a subroutine. The first argument should be the object that the method will be invoked on, and it should have the signature &#34;Pi&#34;.</dl>
+
+<h1><a name="COMPILING"
+>COMPILING</a></h1>
+
+<p>Note: This section is aimed at you if you are writing an application external to parrot which links against an installed parrot library.</p>
+
+<h2><a name="Caveats"
+>Caveats</a></h2>
+
+<p>Several API functions are missing prototypes in Parrot&#39;s header files. This means you may receive type warnings during compilation even though the types of your arguments and return variables are correct. In this case it is safe to cast to the correct type; not doing so may cause undesired behavior.</p>
+
+<h2><a name="Compiler_and_linker_flags"
+>Compiler and linker flags</a></h2>
+
+<p>Your application will need to include the appropriate header files and link against parrot and its dependencies.</p>
+
+<p>Because the location of these files can vary from platform to platform, and build to build, a general method is provided to find out the necessary flags to use.</p>
+
+<p>pkg&#45;config is a helper tool, now common on many platforms, which many packages have adopted to provide the necessary compiler and linker flags required to build against a library. parrot will install a file called <em>parrot.pc</em> which can be queried using pkg&#45;config.</p>
+
+<p>To start with, find out what version of parrot is installed by running pkg&#45;config with the <code>&#45;&#45;modversion</code> flag. If this command fails with an error, skip to the end of this section.</p>
+
+<pre>  pkg&#45;config &#45;&#45;modversion parrot</pre>
+
+<p>To find out the necessary <code>&#45;I</code> flags, use <code>&#45;&#45;cflags</code>:</p>
+
+<pre>  pkg&#45;config &#45;&#45;cflags parrot</pre>
+
+<p>... and to find the necessary <code>&#45;L</code> and <code>&#45;l</code> flags, use <code>&#45;&#45;libs</code>:</p>
+
+<pre>  pkg&#45;config &#45;&#45;libs parrot</pre>
+
+<p>Where both compiling and linking are performed in one step, query both sets of flags with:</p>
+
+<pre>  pkg&#45;config &#45;&#45;cflags &#45;&#45;libs parrot</pre>
+
+<p>The pkg&#45;config command can be incorporated with a compile as shown here.</p>
+
+<pre>  cc src/disassemble.c `pkg&#45;config &#45;&#45;cflags &#45;&#45;libs parrot`</pre>
+
+<p>Most applications will probably choose to run pkg&#45;config as part of a configure script, so if you are using autoconf you could use a test such as this.</p>
+
+<pre>  PARROT_REQUIRED_VERSION=0.4.1
+  AC_SUBST(PARROT_REQUIRED_VERSION)
+  PKG_CHECK_MODULES(PARROT, parrot &#62;= $PARROT_REQUIRED_VERSION,
+                    [AC_DEFINE([HAVE_PARROT], 1, [define if have parrot])])
+  AC_SUBST(PARROT_LIBS)
+  AC_SUBST(PARROT_CFLAGS)</pre>
+
+<p>If parrot has been installed system&#45;wide, then any of the previous lines should have returned the relevant flags. If it is not installed in one of the standard places that pkg&#45;config looks, then you will get an error message.</p>
+
+<pre>  pkg&#45;config &#45;&#45;libs parrot
+  Package parrot was not found in the pkg&#45;config search path.
+  Perhaps you should add the directory containing `parrot.pc&#39;
+  to the PKG_CONFIG_PATH environment variable
+  No package &#39;parrot&#39; found</pre>
+
+<p>As stated in the error message, use an environment variable to make pkg&#45;config look in more locations.</p>
+
+<pre>  export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig</pre>
+
+<p>The last part of the variable will almost certainly be <em>.../lib/pkgconfig</em>. Set this variable in your login scripts if you need it to be available in future.</p>
+
+<h1><a name="EXAMPLES"
+>EXAMPLES</a></h1>
+
+<h2><a name="Load_bytecode_as_a_library_and_run_a_single_subroutine"
+>Load bytecode as a library and run a single subroutine</a></h2>
+
+<pre>    #include &#60;parrot/parrot.h&#62;
+    #include &#60;parrot/embed.h&#62;
+    #include &#60;parrot/extend.h&#62;
+
+    int main(int argc, char *argv[])
+    {
+        Parrot_Interp interp;
+        Parrot_PackFile pf;
+        Parrot_PMC sub;
+        Parrot_String pstr;
+
+        interp = Parrot_new(NULL);
+        imcc_init(interp);
+
+        /* create a new packfile &#45;&#45; any name will do */
+        pf = PackFile_new_dummy(interp, &#34;my&#45;parrot&#45;code&#34;);
+
+        pstr = string_from_literal(interp, &#34;foo.pir&#34;);
+        Parrot_load_bytecode(interp, pstr);
+
+        /* find the subroutine named &#34;foo&#34; in the global namespace */
+        pstr = string_from_literal(interp, &#34;foo&#34;);
+        sub = Parrot_find_global_cur(interp, pstr);
+
+        /* run foo(), which returns nothing */
+        Parrot_call_sub(interp, sub, &#34;v&#34;);
+
+        Parrot_destroy(interp);
+
+        return(0);
+    }</pre>
+
+<h1><a name="EXPORTED_FUNCTIONS"
+>EXPORTED FUNCTIONS</a></h1>
+
+<p>The Parrot embedding API is not finalized, and it will go through several deprecation cycles before stabilizing. Below is the comprehensive list of candidates for inclusion in the Parrot embedding API. It includes the following types of functions:</p>
+
+<ul>
+<li>The core functions documented above</li>
+
+<li>Functions required by macros</li>
+
+<li>Parrot_PMC_* VTABLE wrappers</li>
+
+<li>Miscellaneous functions whose utility outside of the core is uncertain. This includes functions used by HLLs.</li>
+
+<li>Functions that should be removed in a future deprecation cycle. A good example of this is most of the internal string_* functions, which now have formal Parrot_str_* wrappers.</li>
+</ul>
+
+<p>The list may also be augmented if additional functionality is required.</p>
+
+<dl>
+<dt><a name="disable_event_checking"
+><b><code>disable_event_checking</b></code></a></dt>
+
+<dt><a name="enable_event_checking"
+><b><code>enable_event_checking</b></code></a></dt>
+
+<dt><a name="interpinfo"
+><b><code>interpinfo</b></code></a></dt>
+
+<dt><a name="interpinfo_p"
+><b><code>interpinfo_p</b></code></a></dt>
+
+<dt><a name="interpinfo_s"
+><b><code>interpinfo_s</b></code></a></dt>
+
+<dt><a name="mem_allocate_n_typed"
+><b><code>mem_allocate_n_typed</b></code></a></dt>
+
+<dt><a name="mem_allocate_n_zeroed_typed"
+><b><code>mem_allocate_n_zeroed_typed</b></code></a></dt>
+
+<dt><a name="mem_allocate_zeroed_typed"
+><b><code>mem_allocate_zeroed_typed</b></code></a></dt>
+
+<dt><a name="mem_sys_allocate"
+><b><code>mem_sys_allocate</b></code></a></dt>
+
+<dt><a name="mem_sys_allocate_zeroed"
+><b><code>mem_sys_allocate_zeroed</b></code></a></dt>
+
+<dt><a name="mem_sys_free"
+><b><code>mem_sys_free</b></code></a></dt>
+
+<dt><a name="mem_sys_realloc"
+><b><code>mem_sys_realloc</b></code></a></dt>
+
+<dt><a name="mem_sys_realloc_zeroed"
+><b><code>mem_sys_realloc_zeroed</b></code></a></dt>
+
+<dt><a name="PackFile_Constant_pack"
+><b><code>PackFile_Constant_pack</b></code></a></dt>
+
+<dt><a name="PackFile_ConstTable_pack"
+><b><code>PackFile_ConstTable_pack</b></code></a></dt>
+
+<dt><a name="PackFile_ConstTable_pack_size"
+><b><code>PackFile_ConstTable_pack_size</b></code></a></dt>
+
+<dt><a name="PackFile_destroy"
+><b><code>PackFile_destroy</b></code></a></dt>
+
+<dt><a name="PackFile_find_in_const"
+><b><code>PackFile_find_in_const</b></code></a></dt>
+
+<dt><a name="PackFile_fixup_subs"
+><b><code>PackFile_fixup_subs</b></code></a></dt>
+
+<dt><a name="PackFile_new"
+><b><code>PackFile_new</b></code></a></dt>
+
+<dt><a name="PackFile_new_dummy"
+><b><code>PackFile_new_dummy</b></code></a></dt>
+
+<dt><a name="PackFile_pack"
+><b><code>PackFile_pack</b></code></a></dt>
+
+<dt><a name="PackFile_pack_size"
+><b><code>PackFile_pack_size</b></code></a></dt>
+
+<dt><a name="Parrot_assert"
+><b><code>Parrot_assert</b></code></a></dt>
+
+<dt><a name="Parrot_block_GC_mark"
+><b><code>Parrot_block_GC_mark</b></code></a></dt>
+
+<dt><a name="Parrot_block_GC_sweep"
+><b><code>Parrot_block_GC_sweep</b></code></a></dt>
+
+<dt><a name="Parrot_byte_index"
+><b><code>Parrot_byte_index</b></code></a></dt>
+
+<dt><a name="Parrot_byte_rindex"
+><b><code>Parrot_byte_rindex</b></code></a></dt>
+
+<dt><a name="Parrot_callback_C"
+><b><code>Parrot_callback_C</b></code></a></dt>
+
+<dt><a name="Parrot_callback_D"
+><b><code>Parrot_callback_D</b></code></a></dt>
+
+<dt><a name="Parrot_ext_call"
+><b><code>Parrot_ext_call</b></code></a></dt>
+
+<dt><a name="[DEPRECATED]_Parrot_call_method"
+>[DEPRECATED] <b><code>Parrot_call_method</b></code></a></dt>
+
+<dt><a name="[DEPRECATED]_Parrot_call_method_ret_float"
+>[DEPRECATED] <b><code>Parrot_call_method_ret_float</b></code></a></dt>
+
+<dt><a name="[DEPRECATED]_Parrot_call_method_ret_int"
+>[DEPRECATED] <b><code>Parrot_call_method_ret_int</b></code></a></dt>
+
+<dt><a name="[DEPRECATED]_Parrot_call_sub"
+>[DEPRECATED] <b><code>Parrot_call_sub</b></code></a></dt>
+
+<dt><a name="[DEPRECATED]_Parrot_call_sub_ret_float"
+>[DEPRECATED] <b><code>Parrot_call_sub_ret_float</b></code></a></dt>
+
+<dt><a name="[DEPRECATED]_Parrot_call_sub_ret_int"
+>[DEPRECATED] <b><code>Parrot_call_sub_ret_int</b></code></a></dt>
+
+<dt><a name="Parrot_char_digit_value"
+><b><code>Parrot_char_digit_value</b></code></a></dt>
+
+<dt><a name="Parrot_charset_c_name"
+><b><code>Parrot_charset_c_name</b></code></a></dt>
+
+<dt><a name="Parrot_charset_name"
+><b><code>Parrot_charset_name</b></code></a></dt>
+
+<dt><a name="Parrot_charset_number"
+><b><code>Parrot_charset_number</b></code></a></dt>
+
+<dt><a name="Parrot_charset_number_of_str"
+><b><code>Parrot_charset_number_of_str</b></code></a></dt>
+
+<dt><a name="Parrot_charsets_encodings_deinit"
+><b><code>Parrot_charsets_encodings_deinit</b></code></a></dt>
+
+<dt><a name="Parrot_charsets_encodings_init"
+><b><code>Parrot_charsets_encodings_init</b></code></a></dt>
+
+<dt><a name="Parrot_clear_debug"
+><b><code>Parrot_clear_debug</b></code></a></dt>
+
+<dt><a name="Parrot_clear_flag"
+><b><code>Parrot_clear_flag</b></code></a></dt>
+
+<dt><a name="Parrot_clear_i"
+><b><code>Parrot_clear_i</b></code></a></dt>
+
+<dt><a name="Parrot_clear_n"
+><b><code>Parrot_clear_n</b></code></a></dt>
+
+<dt><a name="Parrot_clear_p"
+><b><code>Parrot_clear_p</b></code></a></dt>
+
+<dt><a name="Parrot_clear_s"
+><b><code>Parrot_clear_s</b></code></a></dt>
+
+<dt><a name="Parrot_clear_trace"
+><b><code>Parrot_clear_trace</b></code></a></dt>
+
+<dt><a name="Parrot_clone"
+><b><code>Parrot_clone</b></code></a></dt>
+
+<dt><a name="Parrot_compile_file"
+><b><code>Parrot_compile_file</b></code></a></dt>
+
+<dt><a name="Parrot_compile_string"
+><b><code>Parrot_compile_string</b></code></a></dt>
+
+<dt><a name="Parrot_ComposeRole"
+><b><code>Parrot_ComposeRole</b></code></a></dt>
+
+<dt><a name="Parrot_compreg"
+><b><code>Parrot_compreg</b></code></a></dt>
+
+<dt><a name="Parrot_ComputeMRO_C3"
+><b><code>Parrot_ComputeMRO_C3</b></code></a></dt>
+
+<dt><a name="Parrot_confess"
+><b><code>Parrot_confess</b></code></a></dt>
+
+<dt><a name="Parrot_context_ref_trace"
+><b><code>Parrot_context_ref_trace</b></code></a></dt>
+
+<dt><a name="Parrot_cx_add_handler"
+><b><code>Parrot_cx_add_handler</b></code></a></dt>
+
+<dt><a name="Parrot_cx_add_handler_local"
+><b><code>Parrot_cx_add_handler_local</b></code></a></dt>
+
+<dt><a name="Parrot_cx_broadcast_message"
+><b><code>Parrot_cx_broadcast_message</b></code></a></dt>
+
+<dt><a name="Parrot_cx_count_handlers_local"
+><b><code>Parrot_cx_count_handlers_local</b></code></a></dt>
+
+<dt><a name="Parrot_cx_count_handlers_typed"
+><b><code>Parrot_cx_count_handlers_typed</b></code></a></dt>
+
+<dt><a name="Parrot_cx_delete_handler_local"
+><b><code>Parrot_cx_delete_handler_local</b></code></a></dt>
+
+<dt><a name="Parrot_cx_delete_handler_typed"
+><b><code>Parrot_cx_delete_handler_typed</b></code></a></dt>
+
+<dt><a name="Parrot_cx_delete_suspend_for_gc"
+><b><code>Parrot_cx_delete_suspend_for_gc</b></code></a></dt>
+
+<dt><a name="Parrot_cx_delete_task"
+><b><code>Parrot_cx_delete_task</b></code></a></dt>
+
+<dt><a name="Parrot_cx_find_handler_for_task"
+><b><code>Parrot_cx_find_handler_for_task</b></code></a></dt>
+
+<dt><a name="Parrot_cx_find_handler_local"
+><b><code>Parrot_cx_find_handler_local</b></code></a></dt>
+
+<dt><a name="Parrot_cx_handle_tasks"
+><b><code>Parrot_cx_handle_tasks</b></code></a></dt>
+
+<dt><a name="Parrot_cx_peek_task"
+><b><code>Parrot_cx_peek_task</b></code></a></dt>
+
+<dt><a name="Parrot_cx_request_suspend_for_gc"
+><b><code>Parrot_cx_request_suspend_for_gc</b></code></a></dt>
+
+<dt><a name="Parrot_cx_runloop_end"
+><b><code>Parrot_cx_runloop_end</b></code></a></dt>
+
+<dt><a name="Parrot_cx_schedule_callback"
+><b><code>Parrot_cx_schedule_callback</b></code></a></dt>
+
+<dt><a name="Parrot_cx_schedule_repeat"
+><b><code>Parrot_cx_schedule_repeat</b></code></a></dt>
+
+<dt><a name="Parrot_cx_schedule_sleep"
+><b><code>Parrot_cx_schedule_sleep</b></code></a></dt>
+
+<dt><a name="Parrot_cx_schedule_task"
+><b><code>Parrot_cx_schedule_task</b></code></a></dt>
+
+<dt><a name="Parrot_cx_schedule_timer"
+><b><code>Parrot_cx_schedule_timer</b></code></a></dt>
+
+<dt><a name="Parrot_cx_send_message"
+><b><code>Parrot_cx_send_message</b></code></a></dt>
+
+<dt><a name="Parrot_default_charset"
+><b><code>Parrot_default_charset</b></code></a></dt>
+
+<dt><a name="Parrot_default_encoding"
+><b><code>Parrot_default_encoding</b></code></a></dt>
+
+<dt><a name="Parrot_del_timer_event"
+><b><code>Parrot_del_timer_event</b></code></a></dt>
+
+<dt><a name="Parrot_destroy"
+><b><code>Parrot_destroy</b></code></a></dt>
+
+<dt><a name="Parrot_disassemble"
+><b><code>Parrot_disassemble</b></code></a></dt>
+
+<dt><a name="Parrot_do_check_events"
+><b><code>Parrot_do_check_events</b></code></a></dt>
+
+<dt><a name="Parrot_do_handle_events"
+><b><code>Parrot_do_handle_events</b></code></a></dt>
+
+<dt><a name="Parrot_dump_dynamic_environment"
+><b><code>Parrot_dump_dynamic_environment</b></code></a></dt>
+
+<dt><a name="Parrot_encoding_c_name"
+><b><code>Parrot_encoding_c_name</b></code></a></dt>
+
+<dt><a name="Parrot_encoding_name"
+><b><code>Parrot_encoding_name</b></code></a></dt>
+
+<dt><a name="Parrot_encoding_number"
+><b><code>Parrot_encoding_number</b></code></a></dt>
+
+<dt><a name="Parrot_encoding_number_of_str"
+><b><code>Parrot_encoding_number_of_str</b></code></a></dt>
+
+<dt><a name="Parrot_eprintf"
+><b><code>Parrot_eprintf</b></code></a></dt>
+
+<dt><a name="Parrot_event_add_io_event"
+><b><code>Parrot_event_add_io_event</b></code></a></dt>
+
+<dt><a name="Parrot_ex_add_c_handler"
+><b><code>Parrot_ex_add_c_handler</b></code></a></dt>
+
+<dt><a name="Parrot_ex_build_exception"
+><b><code>Parrot_ex_build_exception</b></code></a></dt>
+
+<dt><a name="Parrot_exit"
+><b><code>Parrot_exit</b></code></a></dt>
+
+<dt><a name="Parrot_ex_mark_unhandled"
+><b><code>Parrot_ex_mark_unhandled</b></code></a></dt>
+
+<dt><a name="Parrot_ex_rethrow_from_c"
+><b><code>Parrot_ex_rethrow_from_c</b></code></a></dt>
+
+<dt><a name="Parrot_ex_rethrow_from_op"
+><b><code>Parrot_ex_rethrow_from_op</b></code></a></dt>
+
+<dt><a name="Parrot_ex_throw_from_c"
+><b><code>Parrot_ex_throw_from_c</b></code></a></dt>
+
+<dt><a name="Parrot_ex_throw_from_c_args"
+><b><code>Parrot_ex_throw_from_c_args</b></code></a></dt>
+
+<dt><a name="Parrot_ex_throw_from_op"
+><b><code>Parrot_ex_throw_from_op</b></code></a></dt>
+
+<dt><a name="Parrot_ex_throw_from_op_args"
+><b><code>Parrot_ex_throw_from_op_args</b></code></a></dt>
+
+<dt><a name="Parrot_find_charset"
+><b><code>Parrot_find_charset</b></code></a></dt>
+
+<dt><a name="Parrot_find_charset_converter"
+><b><code>Parrot_find_charset_converter</b></code></a></dt>
+
+<dt><a name="Parrot_find_encoding"
+><b><code>Parrot_find_encoding</b></code></a></dt>
+
+<dt><a name="Parrot_find_encoding_converter"
+><b><code>Parrot_find_encoding_converter</b></code></a></dt>
+
+<dt><a name="Parrot_find_global_cur"
+><b><code>Parrot_find_global_cur</b></code></a></dt>
+
+<dt><a name="Parrot_find_global_k"
+><b><code>Parrot_find_global_k</b></code></a></dt>
+
+<dt><a name="Parrot_find_global_n"
+><b><code>Parrot_find_global_n</b></code></a></dt>
+
+<dt><a name="Parrot_find_global_op"
+><b><code>Parrot_find_global_op</b></code></a></dt>
+
+<dt><a name="Parrot_find_global_s"
+><b><code>Parrot_find_global_s</b></code></a></dt>
+
+<dt><a name="Parrot_find_language"
+><b><code>Parrot_find_language</b></code></a></dt>
+
+<dt><a name="Parrot_find_method_direct"
+><b><code>Parrot_find_method_direct</b></code></a></dt>
+
+<dt><a name="Parrot_find_method_with_cache"
+><b><code>Parrot_find_method_with_cache</b></code></a></dt>
+
+<dt><a name="Parrot_find_name_op"
+><b><code>Parrot_find_name_op</b></code></a></dt>
+
+<dt><a name="Parrot_float_rand"
+><b><code>Parrot_float_rand</b></code></a></dt>
+
+<dt><a name="Parrot_fprintf"
+><b><code>Parrot_fprintf</b></code></a></dt>
+
+<dt><a name="Parrot_free_context"
+><b><code>Parrot_free_context</b></code></a></dt>
+
+<dt><a name="Parrot_free_cstring"
+><b><code>Parrot_free_cstring</b></code></a></dt>
+
+<dt><a name="Parrot_freeze"
+><b><code>Parrot_freeze</b></code></a></dt>
+
+<dt><a name="Parrot_freeze_at_destruct"
+><b><code>Parrot_freeze_at_destruct</b></code></a></dt>
+
+<dt><a name="Parrot_full_sub_name"
+><b><code>Parrot_full_sub_name</b></code></a></dt>
+
+<dt><a name="parrot_gc_context"
+><b><code>parrot_gc_context</b></code></a></dt>
+
+<dt><a name="Parrot_gc_gms_init"
+><b><code>Parrot_gc_gms_init</b></code></a></dt>
+
+<dt><a name="parrot_gc_gms_Parrot_gc_mark_PObj_alive"
+><b><code>parrot_gc_gms_Parrot_gc_mark_PObj_alive</b></code></a></dt>
+
+<dt><a name="Parrot_gc_mark_PObj_alive"
+><b><code>Parrot_gc_mark_PObj_alive</b></code></a></dt>
+
+<dt><a name="Parrot_get_charset"
+><b><code>Parrot_get_charset</b></code></a></dt>
+
+<dt><a name="Parrot_get_ctx_HLL_namespace"
+><b><code>Parrot_get_ctx_HLL_namespace</b></code></a></dt>
+
+<dt><a name="Parrot_get_ctx_HLL_type"
+><b><code>Parrot_get_ctx_HLL_type</b></code></a></dt>
+
+<dt><a name="Parrot_get_datatype_enum"
+><b><code>Parrot_get_datatype_enum</b></code></a></dt>
+
+<dt><a name="Parrot_get_datatype_name"
+><b><code>Parrot_get_datatype_name</b></code></a></dt>
+
+<dt><a name="Parrot_get_encoding"
+><b><code>Parrot_get_encoding</b></code></a></dt>
+
+<dt><a name="Parrot_get_global"
+><b><code>Parrot_get_global</b></code></a></dt>
+
+<dt><a name="Parrot_get_HLL_id"
+><b><code>Parrot_get_HLL_id</b></code></a></dt>
+
+<dt><a name="Parrot_get_HLL_name"
+><b><code>Parrot_get_HLL_name</b></code></a></dt>
+
+<dt><a name="Parrot_get_HLL_namespace"
+><b><code>Parrot_get_HLL_namespace</b></code></a></dt>
+
+<dt><a name="Parrot_get_HLL_type"
+><b><code>Parrot_get_HLL_type</b></code></a></dt>
+
+<dt><a name="Parrot_get_intreg"
+><b><code>Parrot_get_intreg</b></code></a></dt>
+
+<dt><a name="Parrot_get_namespace_autobase"
+><b><code>Parrot_get_namespace_autobase</b></code></a></dt>
+
+<dt><a name="Parrot_get_namespace_keyed"
+><b><code>Parrot_get_namespace_keyed</b></code></a></dt>
+
+<dt><a name="Parrot_get_namespace_keyed_str"
+><b><code>Parrot_get_namespace_keyed_str</b></code></a></dt>
+
+<dt><a name="Parrot_get_numreg"
+><b><code>Parrot_get_numreg</b></code></a></dt>
+
+<dt><a name="Parrot_get_pmcreg"
+><b><code>Parrot_get_pmcreg</b></code></a></dt>
+
+<dt><a name="Parrot_get_root_namespace"
+><b><code>Parrot_get_root_namespace</b></code></a></dt>
+
+<dt><a name="Parrot_get_runtime_path"
+><b><code>Parrot_get_runtime_path</b></code></a></dt>
+
+<dt><a name="Parrot_get_runtime_prefix"
+><b><code>Parrot_get_runtime_prefix</b></code></a></dt>
+
+<dt><a name="Parrot_get_strreg"
+><b><code>Parrot_get_strreg</b></code></a></dt>
+
+<dt><a name="Parrot_get_vtable"
+><b><code>Parrot_get_vtable</b></code></a></dt>
+
+<dt><a name="Parrot_get_vtable_index"
+><b><code>Parrot_get_vtable_index</b></code></a></dt>
+
+<dt><a name="Parrot_get_vtable_name"
+><b><code>Parrot_get_vtable_name</b></code></a></dt>
+
+<dt><a name="Parrot_init_events"
+><b><code>Parrot_init_events</b></code></a></dt>
+
+<dt><a name="Parrot_init_signals"
+><b><code>Parrot_init_signals</b></code></a></dt>
+
+<dt><a name="Parrot_init_stacktop"
+><b><code>Parrot_init_stacktop</b></code></a></dt>
+
+<dt><a name="Parrot_int_rand"
+><b><code>Parrot_int_rand</b></code></a></dt>
+
+<dt><a name="Parrot_invalidate_method_cache"
+><b><code>Parrot_invalidate_method_cache</b></code></a></dt>
+
+<dt><a name="Parrot_io_accept"
+><b><code>Parrot_io_accept</b></code></a></dt>
+
+<dt><a name="Parrot_io_bind"
+><b><code>Parrot_io_bind</b></code></a></dt>
+
+<dt><a name="Parrot_io_close"
+><b><code>Parrot_io_close</b></code></a></dt>
+
+<dt><a name="Parrot_io_close_filehandle"
+><b><code>Parrot_io_close_filehandle</b></code></a></dt>
+
+<dt><a name="Parrot_io_close_piohandle"
+><b><code>Parrot_io_close_piohandle</b></code></a></dt>
+
+<dt><a name="Parrot_io_connect"
+><b><code>Parrot_io_connect</b></code></a></dt>
+
+<dt><a name="Parrot_IOData_mark"
+><b><code>Parrot_IOData_mark</b></code></a></dt>
+
+<dt><a name="Parrot_io_eof"
+><b><code>Parrot_io_eof</b></code></a></dt>
+
+<dt><a name="Parrot_io_eprintf"
+><b><code>Parrot_io_eprintf</b></code></a></dt>
+
+<dt><a name="Parrot_io_fdopen"
+><b><code>Parrot_io_fdopen</b></code></a></dt>
+
+<dt><a name="Parrot_io_finish"
+><b><code>Parrot_io_finish</b></code></a></dt>
+
+<dt><a name="Parrot_io_flush"
+><b><code>Parrot_io_flush</b></code></a></dt>
+
+<dt><a name="Parrot_io_flush_filehandle"
+><b><code>Parrot_io_flush_filehandle</b></code></a></dt>
+
+<dt><a name="Parrot_io_fprintf"
+><b><code>Parrot_io_fprintf</b></code></a></dt>
+
+<dt><a name="Parrot_io_get_buffer_end"
+><b><code>Parrot_io_get_buffer_end</b></code></a></dt>
+
+<dt><a name="Parrot_io_get_buffer_next"
+><b><code>Parrot_io_get_buffer_next</b></code></a></dt>
+
+<dt><a name="Parrot_io_get_buffer_start"
+><b><code>Parrot_io_get_buffer_start</b></code></a></dt>
+
+<dt><a name="Parrot_io_getfd"
+><b><code>Parrot_io_getfd</b></code></a></dt>
+
+<dt><a name="Parrot_io_get_file_position"
+><b><code>Parrot_io_get_file_position</b></code></a></dt>
+
+<dt><a name="Parrot_io_get_file_size"
+><b><code>Parrot_io_get_file_size</b></code></a></dt>
+
+<dt><a name="Parrot_io_get_flags"
+><b><code>Parrot_io_get_flags</b></code></a></dt>
+
+<dt><a name="Parrot_io_get_last_file_position"
+><b><code>Parrot_io_get_last_file_position</b></code></a></dt>
+
+<dt><a name="Parrot_io_get_os_handle"
+><b><code>Parrot_io_get_os_handle</b></code></a></dt>
+
+<dt><a name="Parrot_io_init"
+><b><code>Parrot_io_init</b></code></a></dt>
+
+<dt><a name="Parrot_io_is_closed"
+><b><code>Parrot_io_is_closed</b></code></a></dt>
+
+<dt><a name="Parrot_io_is_closed_filehandle"
+><b><code>Parrot_io_is_closed_filehandle</b></code></a></dt>
+
+<dt><a name="Parrot_io_is_encoding"
+><b><code>Parrot_io_is_encoding</b></code></a></dt>
+
+<dt><a name="Parrot_io_is_tty"
+><b><code>Parrot_io_is_tty</b></code></a></dt>
+
+<dt><a name="Parrot_io_listen"
+><b><code>Parrot_io_listen</b></code></a></dt>
+
+<dt><a name="Parrot_io_make_offset"
+><b><code>Parrot_io_make_offset</b></code></a></dt>
+
+<dt><a name="Parrot_io_new_pmc"
+><b><code>Parrot_io_new_pmc</b></code></a></dt>
+
+<dt><a name="Parrot_io_new_socket_pmc"
+><b><code>Parrot_io_new_socket_pmc</b></code></a></dt>
+
+<dt><a name="Parrot_io_open"
+><b><code>Parrot_io_open</b></code></a></dt>
+
+<dt><a name="Parrot_io_parse_open_flags"
+><b><code>Parrot_io_parse_open_flags</b></code></a></dt>
+
+<dt><a name="Parrot_io_peek"
+><b><code>Parrot_io_peek</b></code></a></dt>
+
+<dt><a name="Parrot_io_poll"
+><b><code>Parrot_io_poll</b></code></a></dt>
+
+<dt><a name="Parrot_io_printf"
+><b><code>Parrot_io_printf</b></code></a></dt>
+
+<dt><a name="Parrot_io_putps"
+><b><code>Parrot_io_putps</b></code></a></dt>
+
+<dt><a name="Parrot_io_puts"
+><b><code>Parrot_io_puts</b></code></a></dt>
+
+<dt><a name="Parrot_io_readline"
+><b><code>Parrot_io_readline</b></code></a></dt>
+
+<dt><a name="Parrot_io_reads"
+><b><code>Parrot_io_reads</b></code></a></dt>
+
+<dt><a name="Parrot_io_recv"
+><b><code>Parrot_io_recv</b></code></a></dt>
+
+<dt><a name="Parrot_io_seek"
+><b><code>Parrot_io_seek</b></code></a></dt>
+
+<dt><a name="Parrot_io_send"
+><b><code>Parrot_io_send</b></code></a></dt>
+
+<dt><a name="Parrot_io_set_file_position"
+><b><code>Parrot_io_set_file_position</b></code></a></dt>
+
+<dt><a name="Parrot_io_set_file_size"
+><b><code>Parrot_io_set_file_size</b></code></a></dt>
+
+<dt><a name="Parrot_io_set_flags"
+><b><code>Parrot_io_set_flags</b></code></a></dt>
+
+<dt><a name="Parrot_io_set_os_handle"
+><b><code>Parrot_io_set_os_handle</b></code></a></dt>
+
+<dt><a name="Parrot_io_socket"
+><b><code>Parrot_io_socket</b></code></a></dt>
+
+<dt><a name="Parrot_io_socket_is_closed"
+><b><code>Parrot_io_socket_is_closed</b></code></a></dt>
+
+<dt><a name="Parrot_io_STDERR"
+><b><code>Parrot_io_STDERR</b></code></a></dt>
+
+<dt><a name="Parrot_io_stdhandle"
+><b><code>Parrot_io_stdhandle</b></code></a></dt>
+
+<dt><a name="Parrot_io_STDIN"
+><b><code>Parrot_io_STDIN</b></code></a></dt>
+
+<dt><a name="Parrot_io_STDOUT"
+><b><code>Parrot_io_STDOUT</b></code></a></dt>
+
+<dt><a name="Parrot_io_tell"
+><b><code>Parrot_io_tell</b></code></a></dt>
+
+<dt><a name="Parrot_io_write"
+><b><code>Parrot_io_write</b></code></a></dt>
+
+<dt><a name="Parrot_is_blocked_GC_mark"
+><b><code>Parrot_is_blocked_GC_mark</b></code></a></dt>
+
+<dt><a name="Parrot_is_blocked_GC_sweep"
+><b><code>Parrot_is_blocked_GC_sweep</b></code></a></dt>
+
+<dt><a name="Parrot_kill_event_loop"
+><b><code>Parrot_kill_event_loop</b></code></a></dt>
+
+<dt><a name="Parrot_lib_add_path"
+><b><code>Parrot_lib_add_path</b></code></a></dt>
+
+<dt><a name="Parrot_lib_add_path_from_cstring"
+><b><code>Parrot_lib_add_path_from_cstring</b></code></a></dt>
+
+<dt><a name="Parrot_load_bytecode"
+><b><code>Parrot_load_bytecode</b></code></a></dt>
+
+<dt><a name="Parrot_load_charset"
+><b><code>Parrot_load_charset</b></code></a></dt>
+
+<dt><a name="Parrot_load_encoding"
+><b><code>Parrot_load_encoding</b></code></a></dt>
+
+<dt><a name="Parrot_load_language"
+><b><code>Parrot_load_language</b></code></a></dt>
+
+<dt><a name="Parrot_load_lib"
+><b><code>Parrot_load_lib</b></code></a></dt>
+
+<dt><a name="Parrot_locate_runtime_file"
+><b><code>Parrot_locate_runtime_file</b></code></a></dt>
+
+<dt><a name="Parrot_locate_runtime_file_str"
+><b><code>Parrot_locate_runtime_file_str</b></code></a></dt>
+
+<dt><a name="Parrot_make_cb"
+><b><code>Parrot_make_cb</b></code></a></dt>
+
+<dt><a name="Parrot_make_default_charset"
+><b><code>Parrot_make_default_charset</b></code></a></dt>
+
+<dt><a name="Parrot_make_default_encoding"
+><b><code>Parrot_make_default_encoding</b></code></a></dt>
+
+<dt><a name="Parrot_make_namespace_autobase"
+><b><code>Parrot_make_namespace_autobase</b></code></a></dt>
+
+<dt><a name="Parrot_make_namespace_keyed"
+><b><code>Parrot_make_namespace_keyed</b></code></a></dt>
+
+<dt><a name="Parrot_make_namespace_keyed_str"
+><b><code>Parrot_make_namespace_keyed_str</b></code></a></dt>
+
+<dt><a name="Parrot_mmd_cache_create"
+><b><code>Parrot_mmd_cache_create</b></code></a></dt>
+
+<dt><a name="Parrot_mmd_cache_destroy"
+><b><code>Parrot_mmd_cache_destroy</b></code></a></dt>
+
+<dt><a name="Parrot_mmd_cache_lookup_by_values"
+><b><code>Parrot_mmd_cache_lookup_by_values</b></code></a></dt>
+
+<dt><a name="Parrot_mmd_cache_mark"
+><b><code>Parrot_mmd_cache_mark</b></code></a></dt>
+
+<dt><a name="Parrot_mmd_cache_store_by_values"
+><b><code>Parrot_mmd_cache_store_by_values</b></code></a></dt>
+
+<dt><a name="Parrot_new"
+><b><code>Parrot_new</b></code></a></dt>
+
+<dt><a name="Parrot_new_cb_event"
+><b><code>Parrot_new_cb_event</b></code></a></dt>
+
+<dt><a name="Parrot_new_charset"
+><b><code>Parrot_new_charset</b></code></a></dt>
+
+<dt><a name="Parrot_new_encoding"
+><b><code>Parrot_new_encoding</b></code></a></dt>
+
+<dt><a name="Parrot_new_string"
+><b><code>Parrot_new_string</b></code></a></dt>
+
+<dt><a name="Parrot_new_suspend_for_gc_event"
+><b><code>Parrot_new_suspend_for_gc_event</b></code></a></dt>
+
+<dt><a name="Parrot_new_terminate_event"
+><b><code>Parrot_new_terminate_event</b></code></a></dt>
+
+<dt><a name="Parrot_new_timer_event"
+><b><code>Parrot_new_timer_event</b></code></a></dt>
+
+<dt><a name="Parrot_ns_get_name"
+><b><code>Parrot_ns_get_name</b></code></a></dt>
+
+<dt><a name="Parrot_on_exit"
+><b><code>Parrot_on_exit</b></code></a></dt>
+
+<dt><a name="Parrot_oo_get_class"
+><b><code>Parrot_oo_get_class</b></code></a></dt>
+
+<dt><a name="Parrot_oo_get_class_str"
+><b><code>Parrot_oo_get_class_str</b></code></a></dt>
+
+<dt><a name="Parrot_pbc_load"
+><b><code>Parrot_pbc_load</b></code></a></dt>
+
+<dt><a name="Parrot_pbc_read"
+><b><code>Parrot_pbc_read</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_absolute"
+><b><code>Parrot_PMC_absolute</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_add"
+><b><code>Parrot_PMC_add</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_add_attribute"
+><b><code>Parrot_PMC_add_attribute</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_add_float"
+><b><code>Parrot_PMC_add_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_add_int"
+><b><code>Parrot_PMC_add_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_add_method"
+><b><code>Parrot_PMC_add_method</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_add_parent"
+><b><code>Parrot_PMC_add_parent</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_add_role"
+><b><code>Parrot_PMC_add_role</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_add_vtable_override"
+><b><code>Parrot_PMC_add_vtable_override</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_assign_pmc"
+><b><code>Parrot_PMC_assign_pmc</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_assign_string_native"
+><b><code>Parrot_PMC_assign_string_native</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_and"
+><b><code>Parrot_PMC_bitwise_and</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_and_int"
+><b><code>Parrot_PMC_bitwise_and_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_ands"
+><b><code>Parrot_PMC_bitwise_ands</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_ands_str"
+><b><code>Parrot_PMC_bitwise_ands_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_lsr"
+><b><code>Parrot_PMC_bitwise_lsr</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_lsr_int"
+><b><code>Parrot_PMC_bitwise_lsr_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_not"
+><b><code>Parrot_PMC_bitwise_not</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_nots"
+><b><code>Parrot_PMC_bitwise_nots</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_or"
+><b><code>Parrot_PMC_bitwise_or</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_or_int"
+><b><code>Parrot_PMC_bitwise_or_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_ors"
+><b><code>Parrot_PMC_bitwise_ors</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_ors_str"
+><b><code>Parrot_PMC_bitwise_ors_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_shl"
+><b><code>Parrot_PMC_bitwise_shl</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_shl_int"
+><b><code>Parrot_PMC_bitwise_shl_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_shr"
+><b><code>Parrot_PMC_bitwise_shr</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_shr_int"
+><b><code>Parrot_PMC_bitwise_shr_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_xor"
+><b><code>Parrot_PMC_bitwise_xor</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_xor_int"
+><b><code>Parrot_PMC_bitwise_xor_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_xors"
+><b><code>Parrot_PMC_bitwise_xors</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_bitwise_xors_str"
+><b><code>Parrot_PMC_bitwise_xors_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_can"
+><b><code>Parrot_PMC_can</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_clone"
+><b><code>Parrot_PMC_clone</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_clone_pmc"
+><b><code>Parrot_PMC_clone_pmc</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_cmp"
+><b><code>Parrot_PMC_cmp</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_cmp_num"
+><b><code>Parrot_PMC_cmp_num</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_cmp_pmc"
+><b><code>Parrot_PMC_cmp_pmc</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_cmp_string"
+><b><code>Parrot_PMC_cmp_string</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_concatenate"
+><b><code>Parrot_PMC_concatenate</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_concatenate_str"
+><b><code>Parrot_PMC_concatenate_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_decrement"
+><b><code>Parrot_PMC_decrement</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_defined"
+><b><code>Parrot_PMC_defined</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_defined_keyed"
+><b><code>Parrot_PMC_defined_keyed</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_defined_keyed_int"
+><b><code>Parrot_PMC_defined_keyed_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_defined_keyed_str"
+><b><code>Parrot_PMC_defined_keyed_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_delete_keyed"
+><b><code>Parrot_PMC_delete_keyed</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_delete_keyed_int"
+><b><code>Parrot_PMC_delete_keyed_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_delete_keyed_str"
+><b><code>Parrot_PMC_delete_keyed_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_delete_pmckey"
+><b><code>Parrot_PMC_delete_pmckey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_delprop"
+><b><code>Parrot_PMC_delprop</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_destroy"
+><b><code>Parrot_PMC_destroy</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_divide"
+><b><code>Parrot_PMC_divide</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_divide_float"
+><b><code>Parrot_PMC_divide_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_divide_int"
+><b><code>Parrot_PMC_divide_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_does"
+><b><code>Parrot_PMC_does</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_does_pmc"
+><b><code>Parrot_PMC_does_pmc</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_elements"
+><b><code>Parrot_PMC_elements</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_exists_keyed"
+><b><code>Parrot_PMC_exists_keyed</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_exists_keyed_int"
+><b><code>Parrot_PMC_exists_keyed_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_exists_keyed_str"
+><b><code>Parrot_PMC_exists_keyed_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_find_method"
+><b><code>Parrot_PMC_find_method</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_floor_divide"
+><b><code>Parrot_PMC_floor_divide</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_floor_divide_float"
+><b><code>Parrot_PMC_floor_divide_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_floor_divide_int"
+><b><code>Parrot_PMC_floor_divide_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_attr_keyed"
+><b><code>Parrot_PMC_get_attr_keyed</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_attr_str"
+><b><code>Parrot_PMC_get_attr_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_bignum"
+><b><code>Parrot_PMC_get_bignum</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_bool"
+><b><code>Parrot_PMC_get_bool</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_class"
+><b><code>Parrot_PMC_get_class</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_cstring"
+><b><code>Parrot_PMC_get_cstring</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_cstring_intkey"
+><b><code>Parrot_PMC_get_cstring_intkey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_cstringn"
+><b><code>Parrot_PMC_get_cstringn</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_cstringn_intkey"
+><b><code>Parrot_PMC_get_cstringn_intkey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_integer"
+><b><code>Parrot_PMC_get_integer</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_integer_keyed"
+><b><code>Parrot_PMC_get_integer_keyed</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_integer_keyed_int"
+><b><code>Parrot_PMC_get_integer_keyed_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_integer_keyed_str"
+><b><code>Parrot_PMC_get_integer_keyed_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_intval"
+><b><code>Parrot_PMC_get_intval</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_intval_intkey"
+><b><code>Parrot_PMC_get_intval_intkey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_intval_pmckey"
+><b><code>Parrot_PMC_get_intval_pmckey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_iter"
+><b><code>Parrot_PMC_get_iter</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_namespace"
+><b><code>Parrot_PMC_get_namespace</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_number"
+><b><code>Parrot_PMC_get_number</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_number_keyed"
+><b><code>Parrot_PMC_get_number_keyed</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_number_keyed_int"
+><b><code>Parrot_PMC_get_number_keyed_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_number_keyed_str"
+><b><code>Parrot_PMC_get_number_keyed_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_numval"
+><b><code>Parrot_PMC_get_numval</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_numval_intkey"
+><b><code>Parrot_PMC_get_numval_intkey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_pmc"
+><b><code>Parrot_PMC_get_pmc</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_pmc_intkey"
+><b><code>Parrot_PMC_get_pmc_intkey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_pmc_keyed"
+><b><code>Parrot_PMC_get_pmc_keyed</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_pmc_keyed_int"
+><b><code>Parrot_PMC_get_pmc_keyed_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_pmc_keyed_str"
+><b><code>Parrot_PMC_get_pmc_keyed_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_pmc_strkey"
+><b><code>Parrot_PMC_get_pmc_strkey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_pointer"
+><b><code>Parrot_PMC_get_pointer</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_pointer_intkey"
+><b><code>Parrot_PMC_get_pointer_intkey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_pointer_keyed"
+><b><code>Parrot_PMC_get_pointer_keyed</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_pointer_keyed_int"
+><b><code>Parrot_PMC_get_pointer_keyed_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_pointer_keyed_str"
+><b><code>Parrot_PMC_get_pointer_keyed_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_getprop"
+><b><code>Parrot_PMC_getprop</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_getprops"
+><b><code>Parrot_PMC_getprops</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_repr"
+><b><code>Parrot_PMC_get_repr</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_string"
+><b><code>Parrot_PMC_get_string</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_string_intkey"
+><b><code>Parrot_PMC_get_string_intkey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_string_keyed"
+><b><code>Parrot_PMC_get_string_keyed</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_string_keyed_int"
+><b><code>Parrot_PMC_get_string_keyed_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_get_string_keyed_str"
+><b><code>Parrot_PMC_get_string_keyed_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_absolute"
+><b><code>Parrot_PMC_i_absolute</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_add"
+><b><code>Parrot_PMC_i_add</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_add_float"
+><b><code>Parrot_PMC_i_add_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_add_int"
+><b><code>Parrot_PMC_i_add_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_and"
+><b><code>Parrot_PMC_i_bitwise_and</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_and_int"
+><b><code>Parrot_PMC_i_bitwise_and_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_ands"
+><b><code>Parrot_PMC_i_bitwise_ands</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_ands_str"
+><b><code>Parrot_PMC_i_bitwise_ands_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_lsr"
+><b><code>Parrot_PMC_i_bitwise_lsr</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_lsr_int"
+><b><code>Parrot_PMC_i_bitwise_lsr_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_not"
+><b><code>Parrot_PMC_i_bitwise_not</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_nots"
+><b><code>Parrot_PMC_i_bitwise_nots</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_or"
+><b><code>Parrot_PMC_i_bitwise_or</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_or_int"
+><b><code>Parrot_PMC_i_bitwise_or_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_ors"
+><b><code>Parrot_PMC_i_bitwise_ors</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_ors_str"
+><b><code>Parrot_PMC_i_bitwise_ors_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_shl"
+><b><code>Parrot_PMC_i_bitwise_shl</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_shl_int"
+><b><code>Parrot_PMC_i_bitwise_shl_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_shr"
+><b><code>Parrot_PMC_i_bitwise_shr</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_shr_int"
+><b><code>Parrot_PMC_i_bitwise_shr_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_xor"
+><b><code>Parrot_PMC_i_bitwise_xor</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_xor_int"
+><b><code>Parrot_PMC_i_bitwise_xor_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_xors"
+><b><code>Parrot_PMC_i_bitwise_xors</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_bitwise_xors_str"
+><b><code>Parrot_PMC_i_bitwise_xors_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_concatenate"
+><b><code>Parrot_PMC_i_concatenate</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_concatenate_str"
+><b><code>Parrot_PMC_i_concatenate_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_divide"
+><b><code>Parrot_PMC_i_divide</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_divide_float"
+><b><code>Parrot_PMC_i_divide_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_divide_int"
+><b><code>Parrot_PMC_i_divide_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_floor_divide"
+><b><code>Parrot_PMC_i_floor_divide</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_floor_divide_float"
+><b><code>Parrot_PMC_i_floor_divide_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_floor_divide_int"
+><b><code>Parrot_PMC_i_floor_divide_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_logical_not"
+><b><code>Parrot_PMC_i_logical_not</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_modulus"
+><b><code>Parrot_PMC_i_modulus</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_modulus_float"
+><b><code>Parrot_PMC_i_modulus_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_modulus_int"
+><b><code>Parrot_PMC_i_modulus_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_multiply"
+><b><code>Parrot_PMC_i_multiply</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_multiply_float"
+><b><code>Parrot_PMC_i_multiply_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_multiply_int"
+><b><code>Parrot_PMC_i_multiply_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_increment"
+><b><code>Parrot_PMC_increment</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_neg"
+><b><code>Parrot_PMC_i_neg</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_init"
+><b><code>Parrot_PMC_init</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_init_pmc"
+><b><code>Parrot_PMC_init_pmc</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_inspect"
+><b><code>Parrot_PMC_inspect</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_inspect_str"
+><b><code>Parrot_PMC_inspect_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_instantiate"
+><b><code>Parrot_PMC_instantiate</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_invoke"
+><b><code>Parrot_PMC_invoke</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_pow"
+><b><code>Parrot_PMC_i_pow</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_pow_float"
+><b><code>Parrot_PMC_i_pow_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_pow_int"
+><b><code>Parrot_PMC_i_pow_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_repeat"
+><b><code>Parrot_PMC_i_repeat</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_repeat_int"
+><b><code>Parrot_PMC_i_repeat_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_isa"
+><b><code>Parrot_PMC_isa</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_isa_pmc"
+><b><code>Parrot_PMC_isa_pmc</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_is_equal"
+><b><code>Parrot_PMC_is_equal</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_is_equal_num"
+><b><code>Parrot_PMC_is_equal_num</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_is_equal_string"
+><b><code>Parrot_PMC_is_equal_string</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_is_same"
+><b><code>Parrot_PMC_is_same</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_subtract"
+><b><code>Parrot_PMC_i_subtract</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_subtract_float"
+><b><code>Parrot_PMC_i_subtract_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_i_subtract_int"
+><b><code>Parrot_PMC_i_subtract_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_logical_and"
+><b><code>Parrot_PMC_logical_and</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_logical_not"
+><b><code>Parrot_PMC_logical_not</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_logical_or"
+><b><code>Parrot_PMC_logical_or</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_logical_xor"
+><b><code>Parrot_PMC_logical_xor</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_mark"
+><b><code>Parrot_PMC_mark</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_modulus"
+><b><code>Parrot_PMC_modulus</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_modulus_float"
+><b><code>Parrot_PMC_modulus_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_modulus_int"
+><b><code>Parrot_PMC_modulus_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_morph"
+><b><code>Parrot_PMC_morph</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_multiply"
+><b><code>Parrot_PMC_multiply</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_multiply_float"
+><b><code>Parrot_PMC_multiply_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_multiply_int"
+><b><code>Parrot_PMC_multiply_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_name"
+><b><code>Parrot_PMC_name</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_neg"
+><b><code>Parrot_PMC_neg</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_new"
+><b><code>Parrot_PMC_new</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_newclass"
+><b><code>Parrot_PMC_newclass</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_null"
+><b><code>Parrot_PMC_null</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_pop_float"
+><b><code>Parrot_PMC_pop_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_pop_integer"
+><b><code>Parrot_PMC_pop_integer</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_pop_pmc"
+><b><code>Parrot_PMC_pop_pmc</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_pop_string"
+><b><code>Parrot_PMC_pop_string</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_pow"
+><b><code>Parrot_PMC_pow</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_pow_float"
+><b><code>Parrot_PMC_pow_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_pow_int"
+><b><code>Parrot_PMC_pow_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_push_float"
+><b><code>Parrot_PMC_push_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_push_integer"
+><b><code>Parrot_PMC_push_integer</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_push_intval"
+><b><code>Parrot_PMC_push_intval</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_push_numval"
+><b><code>Parrot_PMC_push_numval</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_push_pmc"
+><b><code>Parrot_PMC_push_pmc</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_push_pmcval"
+><b><code>Parrot_PMC_push_pmcval</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_push_string"
+><b><code>Parrot_PMC_push_string</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_remove_attribute"
+><b><code>Parrot_PMC_remove_attribute</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_remove_method"
+><b><code>Parrot_PMC_remove_method</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_remove_parent"
+><b><code>Parrot_PMC_remove_parent</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_remove_role"
+><b><code>Parrot_PMC_remove_role</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_remove_vtable_override"
+><b><code>Parrot_PMC_remove_vtable_override</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_repeat"
+><b><code>Parrot_PMC_repeat</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_repeat_int"
+><b><code>Parrot_PMC_repeat_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_attr_keyed"
+><b><code>Parrot_PMC_set_attr_keyed</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_attr_str"
+><b><code>Parrot_PMC_set_attr_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_bignum_int"
+><b><code>Parrot_PMC_set_bignum_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_bignum_num"
+><b><code>Parrot_PMC_set_bignum_num</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_bignum_str"
+><b><code>Parrot_PMC_set_bignum_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_bool"
+><b><code>Parrot_PMC_set_bool</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_cstring"
+><b><code>Parrot_PMC_set_cstring</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_cstring_intkey"
+><b><code>Parrot_PMC_set_cstring_intkey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_cstringn"
+><b><code>Parrot_PMC_set_cstringn</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_cstringn_intkey"
+><b><code>Parrot_PMC_set_cstringn_intkey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_integer_keyed"
+><b><code>Parrot_PMC_set_integer_keyed</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_integer_keyed_int"
+><b><code>Parrot_PMC_set_integer_keyed_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_integer_keyed_str"
+><b><code>Parrot_PMC_set_integer_keyed_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_integer_native"
+><b><code>Parrot_PMC_set_integer_native</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_integer_same"
+><b><code>Parrot_PMC_set_integer_same</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_intval"
+><b><code>Parrot_PMC_set_intval</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_intval_intkey"
+><b><code>Parrot_PMC_set_intval_intkey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_number_keyed"
+><b><code>Parrot_PMC_set_number_keyed</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_number_keyed_int"
+><b><code>Parrot_PMC_set_number_keyed_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_number_keyed_str"
+><b><code>Parrot_PMC_set_number_keyed_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_number_native"
+><b><code>Parrot_PMC_set_number_native</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_number_same"
+><b><code>Parrot_PMC_set_number_same</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_numval"
+><b><code>Parrot_PMC_set_numval</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_numval_intkey"
+><b><code>Parrot_PMC_set_numval_intkey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_pmc"
+><b><code>Parrot_PMC_set_pmc</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_pmc_intkey"
+><b><code>Parrot_PMC_set_pmc_intkey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_pmc_keyed"
+><b><code>Parrot_PMC_set_pmc_keyed</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_pmc_keyed_int"
+><b><code>Parrot_PMC_set_pmc_keyed_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_pmc_keyed_str"
+><b><code>Parrot_PMC_set_pmc_keyed_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_pmc_pmckey"
+><b><code>Parrot_PMC_set_pmc_pmckey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_pmc_strkey"
+><b><code>Parrot_PMC_set_pmc_strkey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_pointer"
+><b><code>Parrot_PMC_set_pointer</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_pointer_intkey"
+><b><code>Parrot_PMC_set_pointer_intkey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_pointer_keyed"
+><b><code>Parrot_PMC_set_pointer_keyed</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_pointer_keyed_int"
+><b><code>Parrot_PMC_set_pointer_keyed_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_pointer_keyed_str"
+><b><code>Parrot_PMC_set_pointer_keyed_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_setprop"
+><b><code>Parrot_PMC_setprop</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_string"
+><b><code>Parrot_PMC_set_string</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_string_intkey"
+><b><code>Parrot_PMC_set_string_intkey</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_string_keyed"
+><b><code>Parrot_PMC_set_string_keyed</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_string_keyed_int"
+><b><code>Parrot_PMC_set_string_keyed_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_string_keyed_str"
+><b><code>Parrot_PMC_set_string_keyed_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_string_native"
+><b><code>Parrot_PMC_set_string_native</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_string_same"
+><b><code>Parrot_PMC_set_string_same</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_set_vtable"
+><b><code>Parrot_PMC_set_vtable</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_share"
+><b><code>Parrot_PMC_share</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_share_ro"
+><b><code>Parrot_PMC_share_ro</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_shift_float"
+><b><code>Parrot_PMC_shift_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_shift_integer"
+><b><code>Parrot_PMC_shift_integer</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_shift_pmc"
+><b><code>Parrot_PMC_shift_pmc</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_shift_string"
+><b><code>Parrot_PMC_shift_string</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_splice"
+><b><code>Parrot_PMC_splice</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_substr"
+><b><code>Parrot_PMC_substr</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_substr_str"
+><b><code>Parrot_PMC_substr_str</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_subtract"
+><b><code>Parrot_PMC_subtract</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_subtract_float"
+><b><code>Parrot_PMC_subtract_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_subtract_int"
+><b><code>Parrot_PMC_subtract_int</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_typenum"
+><b><code>Parrot_PMC_typenum</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_unshift_float"
+><b><code>Parrot_PMC_unshift_float</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_unshift_integer"
+><b><code>Parrot_PMC_unshift_integer</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_unshift_pmc"
+><b><code>Parrot_PMC_unshift_pmc</b></code></a></dt>
+
+<dt><a name="Parrot_PMC_unshift_string"
+><b><code>Parrot_PMC_unshift_string</b></code></a></dt>
+
+<dt><a name="Parrot_pop_context"
+><b><code>Parrot_pop_context</b></code></a></dt>
+
+<dt><a name="Parrot_pop_mark"
+><b><code>Parrot_pop_mark</b></code></a></dt>
+
+<dt><a name="Parrot_printf"
+><b><code>Parrot_printf</b></code></a></dt>
+
+<dt><a name="Parrot_psprintf"
+><b><code>Parrot_psprintf</b></code></a></dt>
+
+<dt><a name="Parrot_push_action"
+><b><code>Parrot_push_action</b></code></a></dt>
+
+<dt><a name="Parrot_push_context"
+><b><code>Parrot_push_context</b></code></a></dt>
+
+<dt><a name="Parrot_push_mark"
+><b><code>Parrot_push_mark</b></code></a></dt>
+
+<dt><a name="Parrot_range_rand"
+><b><code>Parrot_range_rand</b></code></a></dt>
+
+<dt><a name="Parrot_regenerate_HLL_namespaces"
+><b><code>Parrot_regenerate_HLL_namespaces</b></code></a></dt>
+
+<dt><a name="Parrot_register_charset"
+><b><code>Parrot_register_charset</b></code></a></dt>
+
+<dt><a name="Parrot_register_charset_converter"
+><b><code>Parrot_register_charset_converter</b></code></a></dt>
+
+<dt><a name="Parrot_register_encoding"
+><b><code>Parrot_register_encoding</b></code></a></dt>
+
+<dt><a name="Parrot_register_HLL"
+><b><code>Parrot_register_HLL</b></code></a></dt>
+
+<dt><a name="Parrot_register_HLL_lib"
+><b><code>Parrot_register_HLL_lib</b></code></a></dt>
+
+<dt><a name="Parrot_register_HLL_type"
+><b><code>Parrot_register_HLL_type</b></code></a></dt>
+
+<dt><a name="Parrot_register_move"
+><b><code>Parrot_register_move</b></code></a></dt>
+
+<dt><a name="Parrot_register_pmc"
+><b><code>Parrot_register_pmc</b></code></a></dt>
+
+<dt><a name="Parrot_run_callback"
+><b><code>Parrot_run_callback</b></code></a></dt>
+
+<dt><a name="Parrot_runcode"
+><b><code>Parrot_runcode</b></code></a></dt>
+
+<dt><a name="Parrot_run_native"
+><b><code>Parrot_run_native</b></code></a></dt>
+
+<dt><a name="Parrot_schedule_event"
+><b><code>Parrot_schedule_event</b></code></a></dt>
+
+<dt><a name="Parrot_schedule_interp_qentry"
+><b><code>Parrot_schedule_interp_qentry</b></code></a></dt>
+
+<dt><a name="Parrot_secret_snprintf"
+><b><code>Parrot_secret_snprintf</b></code></a></dt>
+
+<dt><a name="Parrot_set_config_hash_internal"
+><b><code>Parrot_set_config_hash_internal</b></code></a></dt>
+
+<dt><a name="Parrot_set_context_threshold"
+><b><code>Parrot_set_context_threshold</b></code></a></dt>
+
+<dt><a name="Parrot_set_debug"
+><b><code>Parrot_set_debug</b></code></a></dt>
+
+<dt><a name="Parrot_set_executable_name"
+><b><code>Parrot_set_executable_name</b></code></a></dt>
+
+<dt><a name="Parrot_set_flag"
+><b><code>Parrot_set_flag</b></code></a></dt>
+
+<dt><a name="Parrot_set_global"
+><b><code>Parrot_set_global</b></code></a></dt>
+
+<dt><a name="Parrot_set_intreg"
+><b><code>Parrot_set_intreg</b></code></a></dt>
+
+<dt><a name="Parrot_set_numreg"
+><b><code>Parrot_set_numreg</b></code></a></dt>
+
+<dt><a name="Parrot_set_pmcreg"
+><b><code>Parrot_set_pmcreg</b></code></a></dt>
+
+<dt><a name="Parrot_set_run_core"
+><b><code>Parrot_set_run_core</b></code></a></dt>
+
+<dt><a name="Parrot_set_strreg"
+><b><code>Parrot_set_strreg</b></code></a></dt>
+
+<dt><a name="Parrot_set_trace"
+><b><code>Parrot_set_trace</b></code></a></dt>
+
+<dt><a name="Parrot_setwarnings"
+><b><code>Parrot_setwarnings</b></code></a></dt>
+
+<dt><a name="Parrot_shared_gc_block"
+><b><code>Parrot_shared_gc_block</b></code></a></dt>
+
+<dt><a name="Parrot_shared_gc_unblock"
+><b><code>Parrot_shared_gc_unblock</b></code></a></dt>
+
+<dt><a name="Parrot_sleep_on_event"
+><b><code>Parrot_sleep_on_event</b></code></a></dt>
+
+<dt><a name="Parrot_snprintf"
+><b><code>Parrot_snprintf</b></code></a></dt>
+
+<dt><a name="Parrot_sprintf_c"
+><b><code>Parrot_sprintf_c</b></code></a></dt>
+
+<dt><a name="Parrot_sprintf_s"
+><b><code>Parrot_sprintf_s</b></code></a></dt>
+
+<dt><a name="Parrot_srand"
+><b><code>Parrot_srand</b></code></a></dt>
+
+<dt><a name="Parrot_store_global_n"
+><b><code>Parrot_store_global_n</b></code></a></dt>
+
+<dt><a name="Parrot_store_global_s"
+><b><code>Parrot_store_global_s</b></code></a></dt>
+
+<dt><a name="Parrot_store_sub_in_namespace"
+><b><code>Parrot_store_sub_in_namespace</b></code></a></dt>
+
+<dt><a name="Parrot_str_append"
+><b><code>Parrot_str_append</b></code></a></dt>
+
+<dt><a name="Parrot_str_bitwise_and"
+><b><code>Parrot_str_bitwise_and</b></code></a></dt>
+
+<dt><a name="Parrot_str_bitwise_not"
+><b><code>Parrot_str_bitwise_not</b></code></a></dt>
+
+<dt><a name="Parrot_str_bitwise_or"
+><b><code>Parrot_str_bitwise_or</b></code></a></dt>
+
+<dt><a name="Parrot_str_bitwise_xor"
+><b><code>Parrot_str_bitwise_xor</b></code></a></dt>
+
+<dt><a name="Parrot_str_boolean"
+><b><code>Parrot_str_boolean</b></code></a></dt>
+
+<dt><a name="Parrot_str_byte_length"
+><b><code>Parrot_str_byte_length</b></code></a></dt>
+
+<dt><a name="Parrot_str_change_charset"
+><b><code>Parrot_str_change_charset</b></code></a></dt>
+
+<dt><a name="Parrot_str_change_encoding"
+><b><code>Parrot_str_change_encoding</b></code></a></dt>
+
+<dt><a name="Parrot_str_chopn"
+><b><code>Parrot_str_chopn</b></code></a></dt>
+
+<dt><a name="Parrot_str_chopn_inplace"
+><b><code>Parrot_str_chopn_inplace</b></code></a></dt>
+
+<dt><a name="Parrot_str_compare"
+><b><code>Parrot_str_compare</b></code></a></dt>
+
+<dt><a name="Parrot_str_compose"
+><b><code>Parrot_str_compose</b></code></a></dt>
+
+<dt><a name="Parrot_str_concat"
+><b><code>Parrot_str_concat</b></code></a></dt>
+
+<dt><a name="Parrot_str_copy"
+><b><code>Parrot_str_copy</b></code></a></dt>
+
+<dt><a name="Parrot_str_downcase"
+><b><code>Parrot_str_downcase</b></code></a></dt>
+
+<dt><a name="Parrot_str_downcase_inplace"
+><b><code>Parrot_str_downcase_inplace</b></code></a></dt>
+
+<dt><a name="Parrot_str_equal"
+><b><code>Parrot_str_equal</b></code></a></dt>
+
+<dt><a name="Parrot_str_escape"
+><b><code>Parrot_str_escape</b></code></a></dt>
+
+<dt><a name="Parrot_str_escape_truncate"
+><b><code>Parrot_str_escape_truncate</b></code></a></dt>
+
+<dt><a name="Parrot_str_find_cclass"
+><b><code>Parrot_str_find_cclass</b></code></a></dt>
+
+<dt><a name="Parrot_str_find_index"
+><b><code>Parrot_str_find_index</b></code></a></dt>
+
+<dt><a name="Parrot_str_find_not_cclass"
+><b><code>Parrot_str_find_not_cclass</b></code></a></dt>
+
+<dt><a name="Parrot_str_finish"
+><b><code>Parrot_str_finish</b></code></a></dt>
+
+<dt><a name="Parrot_str_format_data"
+><b><code>Parrot_str_format_data</b></code></a></dt>
+
+<dt><a name="Parrot_str_free_cstring"
+><b><code>Parrot_str_free_cstring</b></code></a></dt>
+
+<dt><a name="Parrot_str_from_int"
+><b><code>Parrot_str_from_int</b></code></a></dt>
+
+<dt><a name="Parrot_str_from_num"
+><b><code>Parrot_str_from_num</b></code></a></dt>
+
+<dt><a name="Parrot_str_indexed"
+><b><code>Parrot_str_indexed</b></code></a></dt>
+
+<dt><a name="Parrot_string_cstring"
+><b><code>Parrot_string_cstring</b></code></a></dt>
+
+<dt><a name="Parrot_str_init"
+><b><code>Parrot_str_init</b></code></a></dt>
+
+<dt><a name="Parrot_str_is_cclass"
+><b><code>Parrot_str_is_cclass</b></code></a></dt>
+
+<dt><a name="Parrot_str_join"
+><b><code>Parrot_str_join</b></code></a></dt>
+
+<dt><a name="Parrot_str_length"
+><b><code>Parrot_str_length</b></code></a></dt>
+
+<dt><a name="Parrot_str_new"
+><b><code>Parrot_str_new</b></code></a></dt>
+
+<dt><a name="Parrot_str_new_constant"
+><b><code>Parrot_str_new_constant</b></code></a></dt>
+
+<dt><a name="Parrot_str_new_COW"
+><b><code>Parrot_str_new_COW</b></code></a></dt>
+
+<dt><a name="Parrot_str_new_init"
+><b><code>Parrot_str_new_init</b></code></a></dt>
+
+<dt><a name="Parrot_str_new_noinit"
+><b><code>Parrot_str_new_noinit</b></code></a></dt>
+
+<dt><a name="Parrot_str_not_equal"
+><b><code>Parrot_str_not_equal</b></code></a></dt>
+
+<dt><a name="Parrot_str_pin"
+><b><code>Parrot_str_pin</b></code></a></dt>
+
+<dt><a name="Parrot_str_repeat"
+><b><code>Parrot_str_repeat</b></code></a></dt>
+
+<dt><a name="Parrot_str_replace"
+><b><code>Parrot_str_replace</b></code></a></dt>
+
+<dt><a name="Parrot_str_resize"
+><b><code>Parrot_str_resize</b></code></a></dt>
+
+<dt><a name="Parrot_str_reuse_COW"
+><b><code>Parrot_str_reuse_COW</b></code></a></dt>
+
+<dt><a name="Parrot_str_set"
+><b><code>Parrot_str_set</b></code></a></dt>
+
+<dt><a name="Parrot_str_split"
+><b><code>Parrot_str_split</b></code></a></dt>
+
+<dt><a name="Parrot_str_substr"
+><b><code>Parrot_str_substr</b></code></a></dt>
+
+<dt><a name="Parrot_str_titlecase"
+><b><code>Parrot_str_titlecase</b></code></a></dt>
+
+<dt><a name="Parrot_str_titlecase_inplace"
+><b><code>Parrot_str_titlecase_inplace</b></code></a></dt>
+
+<dt><a name="Parrot_str_to_cstring"
+><b><code>Parrot_str_to_cstring</b></code></a></dt>
+
+<dt><a name="Parrot_str_to_hashval"
+><b><code>Parrot_str_to_hashval</b></code></a></dt>
+
+<dt><a name="Parrot_str_to_int"
+><b><code>Parrot_str_to_int</b></code></a></dt>
+
+<dt><a name="Parrot_str_to_num"
+><b><code>Parrot_str_to_num</b></code></a></dt>
+
+<dt><a name="Parrot_str_unescape"
+><b><code>Parrot_str_unescape</b></code></a></dt>
+
+<dt><a name="Parrot_str_unpin"
+><b><code>Parrot_str_unpin</b></code></a></dt>
+
+<dt><a name="Parrot_str_upcase"
+><b><code>Parrot_str_upcase</b></code></a></dt>
+
+<dt><a name="Parrot_str_upcase_inplace"
+><b><code>Parrot_str_upcase_inplace</b></code></a></dt>
+
+<dt><a name="Parrot_str_write_COW"
+><b><code>Parrot_str_write_COW</b></code></a></dt>
+
+<dt><a name="Parrot_sub_new_from_c_func"
+><b><code>Parrot_sub_new_from_c_func</b></code></a></dt>
+
+<dt><a name="Parrot_test_debug"
+><b><code>Parrot_test_debug</b></code></a></dt>
+
+<dt><a name="Parrot_test_flag"
+><b><code>Parrot_test_flag</b></code></a></dt>
+
+<dt><a name="Parrot_test_trace"
+><b><code>Parrot_test_trace</b></code></a></dt>
+
+<dt><a name="Parrot_thaw"
+><b><code>Parrot_thaw</b></code></a></dt>
+
+<dt><a name="Parrot_thaw_constants"
+><b><code>Parrot_thaw_constants</b></code></a></dt>
+
+<dt><a name="Parrot_uint_rand"
+><b><code>Parrot_uint_rand</b></code></a></dt>
+
+<dt><a name="Parrot_unblock_GC_mark"
+><b><code>Parrot_unblock_GC_mark</b></code></a></dt>
+
+<dt><a name="Parrot_unblock_GC_sweep"
+><b><code>Parrot_unblock_GC_sweep</b></code></a></dt>
+
+<dt><a name="Parrot_unregister_pmc"
+><b><code>Parrot_unregister_pmc</b></code></a></dt>
+
+<dt><a name="Parrot_vfprintf"
+><b><code>Parrot_vfprintf</b></code></a></dt>
+
+<dt><a name="Parrot_vsnprintf"
+><b><code>Parrot_vsnprintf</b></code></a></dt>
+
+<dt><a name="Parrot_vsprintf_c"
+><b><code>Parrot_vsprintf_c</b></code></a></dt>
+
+<dt><a name="Parrot_vsprintf_s"
+><b><code>Parrot_vsprintf_s</b></code></a></dt>
+
+<dt><a name="Parrot_warn"
+><b><code>Parrot_warn</b></code></a></dt>
+
+<dt><a name="PMC_is_null"
+><b><code>PMC_is_null</b></code></a></dt>
+
+<dt><a name="pmc_new"
+><b><code>pmc_new</b></code></a></dt>
+
+<dt><a name="pmc_type"
+><b><code>pmc_type</b></code></a></dt>
+
+<dt><a name="PObj_custom_destroy_SET"
+><b><code>PObj_custom_destroy_SET</b></code></a></dt>
+
+<dt><a name="PObj_custom_mark_SET"
+><b><code>PObj_custom_mark_SET</b></code></a></dt>
+
+<dt><a name="string_capacity"
+><b><code>string_capacity</b></code></a></dt>
+
+<dt><a name="string_chr"
+><b><code>string_chr</b></code></a></dt>
+
+<dt><a name="string_make"
+><b><code>string_make</b></code></a></dt>
+
+<dt><a name="string_make_from_charset"
+><b><code>string_make_from_charset</b></code></a></dt>
+
+<dt><a name="string_max_bytes"
+><b><code>string_max_bytes</b></code></a></dt>
+
+<dt><a name="string_ord"
+><b><code>string_ord</b></code></a></dt>
+
+<dt><a name="string_primary_encoding_for_representation"
+><b><code>string_primary_encoding_for_representation</b></code></a></dt>
+
+<dt><a name="string_rep_compatible"
+><b><code>string_rep_compatible</b></code></a></dt>
+
+<dt><a name="string_to_cstring_nullable"
+><b><code>string_to_cstring_nullable</b></code></a></dt>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em><a href="../src/main.c.html">src/main.c</a></em> and <em>t/src/*.t</em> for Parrot&#39;s use of the embedding system.</p>
+
+<p><a href='http://pkgconfig.freedesktop.org/wiki/'><a href="http://pkgconfig.freedesktop.org/wiki/">http://pkgconfig.freedesktop.org/wiki/</a></a> A pkg&#45;config page</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

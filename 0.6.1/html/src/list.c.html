@@ -1,0 +1,454 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>List aka array routines</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">List aka array routines</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/list.c &#45; List aka array routines</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>List is roughly based on concepts of IntList (thanks to Steve),
+so I don&#39;t repeat them here.</p>
+
+<p>Especially the same invariants hold,
+except an empty list is really empty,
+meaning,
+push does first check for space.</p>
+
+<p>The main differences are:</p>
+
+<p>&#45; List can hold items of different size,
+it&#39;s suitable for ints and PMCs ...,
+calculations are still done in terms of items.
+The item_size is specified at list creation time with the &#34;type&#34; argument.</p>
+
+<p>If you later store different item types in the list,
+as stated initially,
+you&#39;ll get probably not what you want &#45; so don&#39;t do this.</p>
+
+<p>&#45; List does auto grow.
+The caller may implement a different behaviour if she likes.</p>
+
+<p>&#45; Error checking for out of bounds access is minimal,
+caller knows better,
+what should be done.</p>
+
+<p>&#45; List structure itself is different from List_chunk,
+implying:</p>
+
+<ul>
+<li>end of list is not <code lang='und' xml:lang='und'>list&#45;&#62;prev</code> but <code lang='und' xml:lang='und'>list&#45;&#62;end</code></li><p class="pad"></p>
+
+<li>start of list is list&#45;&#62;first</li><p class="pad"></p>
+
+<li>the list of chunks is not closed,
+detecting the end is more simple</li><p class="pad"></p>
+
+<li>no spare is keeped,
+didn&#39;t improve due to size constraints</li><p class="pad"></p>
+
+<li>the List object itself doesn&#39;t move around for shift/unshift</li><p class="pad"></p>
+</ul>
+
+<p>&#45; list chunks don&#39;t have <code lang='und' xml:lang='und'>&#45;&#62;start</code> and <code lang='und' xml:lang='und'>&#45;&#62;end</code> fields.
+Instead the list has <code lang='und' xml:lang='und'>&#45;&#62;start</code>,
+which is start of first chunk,
+and <code lang='und' xml:lang='und'>&#45;&#62;cap</code>,
+the total usable capacity in the list.</p>
+
+<p>&#45; number of items in chunks are not fixed,
+but there is a mode using same sized chunks</p>
+
+<h2><a name="Grow_policy"
+>Grow policy <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="enum_grow_fixed"
+><b><code lang='und' xml:lang='und'>enum_grow_fixed</b></code></a></dt><p class="pad"></p>
+
+<dd>All chunks are of <code lang='und' xml:lang='und'>MAX_ITEMS</code> size,
+chosen,
+when the first access to the array is indexed and beyond <code lang='und' xml:lang='und'>MIN_ITEMS</code> and below 10 * <code lang='und' xml:lang='und'>MAX_ITEMS</code></dd><p class="pad"></p>
+
+<dd>If the first access is beyond 10 * <code lang='und' xml:lang='und'>MAX_ITEMS</code> a sparse chunk will be created.</dd><p class="pad"></p>
+
+<dd>To avoid this &#45; and the performance penalty &#45; set the array size before setting elements.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    new P0, &#39;Array&#39;
+    set P0, 100000  # sets fixed sized, no sparse</pre>
+
+<dd>This is only meaningful, if a lot of the entries are used too.</dd><p class="pad"></p>
+
+<dt><a name="enum_grow_growing"
+><b><code lang='und' xml:lang='und'>enum_grow_growing</b></code></a></dt><p class="pad"></p>
+
+<dd>Chunk sizes grow from <code lang='und' xml:lang='und'>MIN_ITEMS</code> to <code lang='und' xml:lang='und'>MAX_ITEMS</code>, this will be selected for pushing data on an empty array.</dd><p class="pad"></p>
+
+<dt><a name="enum_grow_mixed"
+><b><code lang='und' xml:lang='und'>enum_grow_mixed</b></code></a></dt><p class="pad"></p>
+
+<dd>Mixture of above chunk types and when sparse chunks are present, or after insert and delete.</dd><p class="pad"></p>
+
+<dd>The chunks hold the information, how many chunks are of the same type, beginning from the current, and how many items are included in this range. See <code lang='und' xml:lang='und'>get_chunk</code> below for details.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Sparse_lists"
+>Sparse lists <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>To save memory, List can handle sparse arrays. This code snippet:</p>
+
+<p>new P0, &#39;IntList&#39; set P0[1000000], 42</p>
+
+<p>generates 3 List_chunks, one at the beginning of the array, a big sparse chunk and a chunk for the actual data.</p>
+
+<p>Setting values inside sparse chunks changes them to real chunks. For poping/shifting inside sparse chunks, s. return value below.</p>
+
+<h2><a name="Chunk_types"
+>Chunk types <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="fixed_items"
+><b><code lang='und' xml:lang='und'>fixed_items</b></code></a></dt><p class="pad"></p>
+
+<dd>Have allocated space, size is a power of 2, consecutive chunks are same sized.</dd><p class="pad"></p>
+
+<dt><a name="grow_items"
+><b><code lang='und' xml:lang='und'>grow_items</b></code></a></dt><p class="pad"></p>
+
+<dd>Same, but consecutive chunks are growing.</dd><p class="pad"></p>
+
+<dt><a name="no_power_2"
+><b><code lang='und' xml:lang='und'>no_power_2</b></code></a></dt><p class="pad"></p>
+
+<dd>Have allocated space but any size.</dd><p class="pad"></p>
+
+<dt><a name="sparse"
+><b><code lang='und' xml:lang='und'>sparse</b></code></a></dt><p class="pad"></p>
+
+<dd>Only dummy allocation, <code lang='und' xml:lang='und'>chunk&#45;&#62;items</code> holds the items of this sparse hole.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Data_types"
+>Data types <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>A List can hold various datatypes. See <em lang='und' xml:lang='und'>src/datatypes.h</em> for the enumeration of types.</p>
+
+<p>Not all are yet implemented in <code lang='und' xml:lang='und'>list_set</code>/<code lang='und' xml:lang='und'>list_item</code>, see the <code lang='und' xml:lang='und'>switch()</code>.</p>
+
+<p>Arbitrary length data:</p>
+
+<p>Construct initializer with:</p>
+
+<dl>
+<dt><a name="enum_type_sized"
+><b><code lang='und' xml:lang='und'>enum_type_sized</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="item_size_(in_bytes)"
+><b><code lang='und' xml:lang='und'>item_size</b></code> (in bytes)</a></dt><p class="pad"></p>
+
+<dt><a name="items_per_chunk_(rounded_up_to_power_of_2,_default_MAX_ITEMS)"
+><b><code lang='und' xml:lang='und'>items_per_chunk</b></code> (rounded up to power of 2, default <b><code lang='und' xml:lang='und'>MAX_ITEMS</b></code>)</a></dt><p class="pad"></p>
+</dl>
+
+<p>In <code lang='und' xml:lang='und'>list_assign</code> the values are copied into the array, <code lang='und' xml:lang='und'>list_get</code> returns a pointer as for all other data types.</p>
+
+<p>See <em lang='und' xml:lang='und'>src/list_2.t</em> and <code lang='und' xml:lang='und'>list_new_init()</code>.</p>
+
+<h2><a name="Return_value"
+>Return value <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>List get functions return a <code lang='und' xml:lang='und'>(void*)</code> pointer to the location of the stored data. The caller has to extract the value from this pointer.</p>
+
+<p>For non existent data beyond the dimensions of the array a <code lang='und' xml:lang='und'>NULL</code> pointer is returned.</p>
+
+<p>For non existing data inside sparse holes, a pointer <code lang='und' xml:lang='und'>(void*)&#45;1</code> is returned.</p>
+
+<p>The caller can decide to assume these data as undef or 0 or whatever is appropriate.</p>
+
+<h2><a name="Testing"
+>Testing <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>See <em lang='und' xml:lang='und'>t/src/{int, }list.c</em> and <em lang='und' xml:lang='und'>t/pmc/{int, }list.t</em>.</p>
+
+<p>Also all array usage depends on list.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_List_chunk_*_allocate_chunk"
+><b><code lang='und' xml:lang='und'>static List_chunk *allocate_chunk</b></code></a></dt><p class="pad"></p>
+
+<dd>Make a new chunk, size bytes big, holding items items.</dd><p class="pad"></p>
+
+<dt><a name="static_void_list_dump"
+><b><code lang='und' xml:lang='und'>static void list_dump</b></code></a></dt><p class="pad"></p>
+
+<dd>Only char and int are supported currently.</dd><p class="pad"></p>
+
+<dt><a name="static_void_rebuild_chunk_ptrs"
+><b><code lang='und' xml:lang='und'>static void rebuild_chunk_ptrs</b></code></a></dt><p class="pad"></p>
+
+<dd>Rebuild chunk_list and update/optimize chunk usage, helper functions.</dd><p class="pad"></p>
+
+<dd>Delete empty chunks, count chunks and fix prev pointers.</dd><p class="pad"></p>
+
+<dt><a name="static_void_rebuild_sparse"
+><b><code lang='und' xml:lang='und'>static void rebuild_sparse</b></code></a></dt><p class="pad"></p>
+
+<dd>Coalesce adjacent sparse chunks.</dd><p class="pad"></p>
+
+<dt><a name="static_void_rebuild_other"
+><b><code lang='und' xml:lang='und'>static void rebuild_other</b></code></a></dt><p class="pad"></p>
+
+<dd>Coalesce adjacent irregular chunks.</dd><p class="pad"></p>
+
+<dt><a name="static_void_rebuild_fix_ends"
+><b><code lang='und' xml:lang='und'>static void rebuild_fix_ends</b></code></a></dt><p class="pad"></p>
+
+<dd>Called by <code lang='und' xml:lang='und'>rebuild_chunk_list()</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_UINTVAL_rebuild_chunk_list"
+><b><code lang='und' xml:lang='und'>static UINTVAL rebuild_chunk_list</b></code></a></dt><p class="pad"></p>
+
+<dd>Called to optimise the list when modifying it in some way.</dd><p class="pad"></p>
+
+<dt><a name="static_List_chunk_*_alloc_next_size"
+><b><code lang='und' xml:lang='und'>static List_chunk *alloc_next_size</b></code></a></dt><p class="pad"></p>
+
+<dd>Calculate size and items for next chunk and allocate it.</dd><p class="pad"></p>
+
+<dt><a name="static_List_chunk_*_add_chunk"
+><b><code lang='und' xml:lang='und'>static List_chunk *add_chunk</b></code></a></dt><p class="pad"></p>
+
+<dd>Add chunk at start or end.</dd><p class="pad"></p>
+
+<dt><a name="UINTVAL_ld"
+><b><code lang='und' xml:lang='und'>UINTVAL ld</b></code></a></dt><p class="pad"></p>
+
+<dd>Calculates log2(x).</dd><p class="pad"></p>
+
+<dd>Stolen from <em lang='und' xml:lang='und'>src/malloc.c</em>.</dd><p class="pad"></p>
+
+<dt><a name="static_List_chunk_*_get_chunk"
+><b><code lang='und' xml:lang='und'>static List_chunk *get_chunk</b></code></a></dt><p class="pad"></p>
+
+<dd>Get the chunk for <code lang='und' xml:lang='und'>idx</code>, also update the <code lang='und' xml:lang='und'>idx</code> to point into the chunk.</dd><p class="pad"></p>
+
+<dd>This routine will be called for every operation on list, so its optimized to be fast and needs an up to date chunk statistic, that <code lang='und' xml:lang='und'>rebuild_chunk_list</code> does provide.</dd><p class="pad"></p>
+
+<dd>The scheme of operations is:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    if all_chunks_are_MAX_ITEMS
+         chunk = chunk_list[ idx / MAX_ITEMS ]
+         idx =   idx % MAX_ITEMS
+         done.
+
+    chunk = first
+    repeat
+         if (index &#60; chunk&#45;&#62;items)
+             done.
+
+     if (index &#62;= items_in_chunk_block)
+         index &#45;= items_in_chunk_block
+         chunk += chunks_in_chunk_block
+         continue
+
+     calc chunk and index in this block
+     done.</pre>
+
+<dd>One chunk_block consists of chunks of the same type: fixed, growing or other. So the time to look up a chunk doesn&#39;t depend on the array length, but on the complexity of the array. <code lang='und' xml:lang='und'>rebuild_chunk_list</code> tries to reduce the complexity, but may fail, if you e.g. do a prime sieve by actually <code lang='und' xml:lang='und'>list_delet</code>ing the none prime numbers.</dd><p class="pad"></p>
+
+<dd>The complexity of the array is how many different <code lang='und' xml:lang='und'>chunk_blocks</code> are there. They come from:</dd><p class="pad"></p>
+
+<dd>&#45; initially fixed: 1</dd><p class="pad"></p>
+
+<dd>&#45; initially growing: 2</dd><p class="pad"></p>
+
+<dd>&#45; first unshift: 1 except for initially fixed arrays</dd><p class="pad"></p>
+
+<dd>&#45; insert: 1 &#45; 3</dd><p class="pad"></p>
+
+<dd>&#45; delete: 1 &#45; 2</dd><p class="pad"></p>
+
+<dd>&#45; sparse hole: 3 (could be 2, code assumes access at either end now)</dd><p class="pad"></p>
+
+<dd>There could be some optimizer, that, after detecting almost only indexed access after some time, does reorganize the array to be all <code lang='und' xml:lang='und'>MAX_ITEMS</code> sized, when this would improve performance.</dd><p class="pad"></p>
+
+<dt><a name="static_void_split_chunk"
+><b><code lang='und' xml:lang='und'>static void split_chunk</b></code></a></dt><p class="pad"></p>
+
+<dd>Split a sparse chunk, so that we have</dd><p class="pad"></p>
+
+<dd>&#45; allocated space at <code lang='und' xml:lang='und'>idx</code></dd><p class="pad"></p>
+
+<dd>if sparse is big:</dd><p class="pad"></p>
+
+<dd>&#45; <code lang='und' xml:lang='und'>MAX_ITEMS</code> near <code lang='und' xml:lang='und'>idx</code> and if there is still sparse space after the real chunk, this also <code lang='und' xml:lang='und'>n*MAX_ITEMS</code> sized, so that consecutive writing would make <code lang='und' xml:lang='und'>MAX_ITEMS</code> sized real chunks.</dd><p class="pad"></p>
+
+<dt><a name="static_void_list_set"
+><b><code lang='und' xml:lang='und'>static void list_set</b></code></a></dt><p class="pad"></p>
+
+<dd>Set <code lang='und' xml:lang='und'>item</code> of type <code lang='und' xml:lang='und'>type</code> in chunk at <code lang='und' xml:lang='und'>idx</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_void_*_list_item"
+><b><code lang='und' xml:lang='und'>static void *list_item</b></code></a></dt><p class="pad"></p>
+
+<dd>Get the pointer to the item of type <code lang='und' xml:lang='und'>type</code> in the chunk at <code lang='und' xml:lang='und'>idx</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_void_list_append"
+><b><code lang='und' xml:lang='und'>static void list_append</b></code></a></dt><p class="pad"></p>
+
+<dd>Add one or more chunks to end of list.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Public_Interface_Functions"
+>Public Interface Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="List_*_list_new"
+><b><code lang='und' xml:lang='und'>List *list_new</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new list of type <code lang='und' xml:lang='und'>type</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_list_pmc_new"
+><b><code lang='und' xml:lang='und'>void list_pmc_new</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a new list containing PMC* values in PMC_data(container).</dd><p class="pad"></p>
+
+<dt><a name="List_*_list_new_init"
+><b><code lang='und' xml:lang='und'>List *list_new_init</b></code></a></dt><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>list_new_init()</code> uses these initializers:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    0 ... size (set initial size of list)
+    1 ... array dimensions (multiarray)
+    2 ... type (overriding type parameter)
+    3 ... item_size for enum_type_sized
+    4 ... items_per_chunk</pre>
+
+<dd>After getting these values out of the key/value pairs, a new array with these values is stored in user_data, where the keys are explicit.</dd><p class="pad"></p>
+
+<dt><a name="void_list_pmc_new_init"
+><b><code lang='und' xml:lang='und'>void list_pmc_new_init</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a new list containing PMC* values in PMC_data(container).</dd><p class="pad"></p>
+
+<dt><a name="List_*_list_clone"
+><b><code lang='und' xml:lang='und'>List *list_clone</b></code></a></dt><p class="pad"></p>
+
+<dd>Return a clone of the list.</dd><p class="pad"></p>
+
+<dd>TODO &#45; Barely tested. Optimize new array structure, fixed if big.</dd><p class="pad"></p>
+
+<dt><a name="void_list_mark"
+><b><code lang='und' xml:lang='und'>void list_mark</b></code></a></dt><p class="pad"></p>
+
+<dd>Mark the list and its contents as live.</dd><p class="pad"></p>
+
+<dt><a name="void_list_visit"
+><b><code lang='und' xml:lang='und'>void list_visit</b></code></a></dt><p class="pad"></p>
+
+<dd>This is used by freeze/thaw to visit the contents of the list.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>pinfo</code> is the visit info, (see include/parrot/pmc_freeze.h&#62;).</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_list_length"
+><b><code lang='und' xml:lang='und'>INTVAL list_length</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the length of the list.</dd><p class="pad"></p>
+
+<dt><a name="void_list_set_length"
+><b><code lang='und' xml:lang='und'>void list_set_length</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the length of the list to <code lang='und' xml:lang='und'>len</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_list_insert"
+><b><code lang='und' xml:lang='und'>void list_insert</b></code></a></dt><p class="pad"></p>
+
+<dd>Make room for <code lang='und' xml:lang='und'>n_items</code> at <code lang='und' xml:lang='und'>idx</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_list_delete"
+><b><code lang='und' xml:lang='und'>void list_delete</b></code></a></dt><p class="pad"></p>
+
+<dd>Delete <code lang='und' xml:lang='und'>n_items</code> at <code lang='und' xml:lang='und'>idx</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_list_push"
+><b><code lang='und' xml:lang='und'>void list_push</b></code></a></dt><p class="pad"></p>
+
+<dd>Pushes <code lang='und' xml:lang='und'>item</code> of type <code lang='und' xml:lang='und'>type</code> on to the end of the list.</dd><p class="pad"></p>
+
+<dt><a name="void_list_unshift"
+><b><code lang='und' xml:lang='und'>void list_unshift</b></code></a></dt><p class="pad"></p>
+
+<dd>Pushes <code lang='und' xml:lang='und'>item</code> of type <code lang='und' xml:lang='und'>type</code> on to the start of the list.</dd><p class="pad"></p>
+
+<dt><a name="void_*_list_pop"
+><b><code lang='und' xml:lang='und'>void *list_pop</b></code></a></dt><p class="pad"></p>
+
+<dd>Removes and returns the last item of type <code lang='und' xml:lang='und'>type</code> from the end of the list.</dd><p class="pad"></p>
+
+<dt><a name="void_*_list_shift"
+><b><code lang='und' xml:lang='und'>void *list_shift</b></code></a></dt><p class="pad"></p>
+
+<dd>Removes and returns the first item of type <code lang='und' xml:lang='und'>type</code> from the start of the list.</dd><p class="pad"></p>
+
+<dt><a name="void_list_assign"
+><b><code lang='und' xml:lang='und'>void list_assign</b></code></a></dt><p class="pad"></p>
+
+<dd>Assigns <code lang='und' xml:lang='und'>item</code> of type <code lang='und' xml:lang='und'>type</code> to index <code lang='und' xml:lang='und'>idx</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_*_list_get"
+><b><code lang='und' xml:lang='und'>void *list_get</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the item of type <code lang='und' xml:lang='und'>type</code> at index <code lang='und' xml:lang='und'>idx</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_list_splice"
+><b><code lang='und' xml:lang='und'>void list_splice</b></code></a></dt><p class="pad"></p>
+
+<dd>Replaces <code lang='und' xml:lang='und'>count</code> items starting at <code lang='und' xml:lang='und'>offset</code> with the items in <code lang='und' xml:lang='und'>value</code>.</dd><p class="pad"></p>
+
+<dd>If <code lang='und' xml:lang='und'>count</code> is 0 then the items in <code lang='und' xml:lang='und'>value</code> will be inserted after <code lang='und' xml:lang='und'>offset</code>.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

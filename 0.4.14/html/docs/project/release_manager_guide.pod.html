@@ -1,0 +1,291 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/info.html">Project Information</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="Release_Instructions"
+>Release Instructions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>To prepare a release:</p>
+
+<dl>
+<dt><a name="0."
+>0.</a></dt><p class="pad"></p>
+
+<dd>Announce to parrot&#45;porters and #parrot at least a couple days in advance,
+asking if there are any showstopping bugs.
+You might also select a name for your release (e.g.,
+perhaps select a name from <a href='http://en.wikipedia.org/wiki/List_of_parrots'><a href="http://en.wikipedia.org/wiki/List_of_parrots">http://en.wikipedia.org/wiki/List_of_parrots</a></a>).</dd><p class="pad"></p>
+
+<dt><a name="1."
+>1.</a></dt><p class="pad"></p>
+
+<dd>Make sure you&#39;re up to date:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> $ svn update</pre>
+
+<dd>You may want to ask the developer base to stop committing big changes; it will avoid complications. Or you could create a release branch before releasing, rather than after. Then you could fold the release&#45;oriented changes into the trunk once the release is done.</dd><p class="pad"></p>
+
+<dd>TODO: explain how to do this</dd><p class="pad"></p>
+
+<dt><a name="2."
+>2.</a></dt><p class="pad"></p>
+
+<dd>Update files with version&#45;specific information:</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="a"
+>a</a></dt><p class="pad"></p>
+
+<dd>Increment the version number in the following files: <em lang='und' xml:lang='und'>VERSION</em>, <em lang='und' xml:lang='und'>parrot.spec</em>, <em lang='und' xml:lang='und'>MANIFEST.generated</em>, <em lang='und' xml:lang='und'>META.yml</em>, <em lang='und' xml:lang='und'>README</em>.</dd><p class="pad"></p>
+
+<dd>Also update the version number, date, and your name in the following files: <em lang='und' xml:lang='und'>DEVELOPING</em>, <em lang='und' xml:lang='und'><a href="../parrothist.pod.html">docs/parrothist.pod</a></em>, and <em lang='und' xml:lang='und'><a href="../ROADMAP.pod.html">docs/ROADMAP.pod</a></em></dd><p class="pad"></p>
+
+<dd>Also update the URL in <em lang='und' xml:lang='und'>parrot.spec</em> for &#34;Source0&#34; to point to the current release manager&#39;s CPAN directory. [Really, we should provide a more standard location for the release tarball.]</dd><p class="pad"></p>
+
+<dt><a name="b"
+>b</a></dt><p class="pad"></p>
+
+<dd>Update <em lang='und' xml:lang='und'>ChangeLog</em>, <em lang='und' xml:lang='und'>NEWS</em> with the new version number and any other changes that have occurred since the last release: Hopefully these files are being updated as committers work.</dd><p class="pad"></p>
+
+<dt><a name="c"
+>c</a></dt><p class="pad"></p>
+
+<dd>Update release&#45;related information in <em lang='und' xml:lang='und'>tools/util/release.json</em>. This will be used later when making release announcements. There are a few interesting fields:</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="rt.tracking"
+><b><code lang='und' xml:lang='und'>rt.tracking</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a new ticket for the next release. Change the URL fragment here to use that ticket&#39;s number.</dd><p class="pad"></p>
+
+<dt><a name="rt.saved_search"
+><b><code lang='und' xml:lang='und'>rt.saved_search</b></code></a></dt><p class="pad"></p>
+
+<dd>Open the link to the previous value of this field. Copy the resulting full URL, then change the ticket number in the <code lang='und' xml:lang='und'>DependedOnBy</code> parameter to the ticket for the next release. Take the entire resulting URL to <a href='http://xrl.us/'><a href="http://xrl.us/">http://xrl.us/</a></a> and get a short URL. Add that to this field.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="d"
+>d</a></dt><p class="pad"></p>
+
+<dd>Make sure <em lang='und' xml:lang='und'>RESPONSIBLE_PARTIES</em> is still accurate.</dd><p class="pad"></p>
+
+<dt><a name="e"
+>e</a></dt><p class="pad"></p>
+
+<dd>Configure parrot and run <code lang='und' xml:lang='und'>perl t/harness t/distro/*.t</code>, and either fix what those tests complain about, or fix them so they don&#39;t complain.</dd><p class="pad"></p>
+
+<dt><a name="f"
+>f</a></dt><p class="pad"></p>
+
+<dd>Update <em lang='und' xml:lang='und'>PBC_COMPAT</em>, perhaps by collapsing intra&#45;release entries into a single entry naming the release.</dd><p class="pad"></p>
+
+<dt><a name="g"
+>g</a></dt><p class="pad"></p>
+
+<dd>Run <code lang='und' xml:lang='und'>perl tools/dev/pbc_header.pl &#45;&#45;upd t/native_pbc/*.pbc</code> to update version and fingerprint in the native tests.</dd><p class="pad"></p>
+
+<dt><a name="h"
+>h</a></dt><p class="pad"></p>
+
+<dd>Make sure everything works:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> $ make realclean
+ $ perl Configure.pl &#45;&#45;test ...
+ $ make &#45;s all world fulltest html
+ # Note that fulltest runs separate harnesses..</pre>
+</dl>
+
+<dt><a name="3."
+>3.</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> svn commit</pre>
+
+<dt><a name="4."
+>4.</a></dt><p class="pad"></p>
+
+<dd>Prepare the release tarball.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> $ make release VERSION=a.b.c</pre>
+
+<dd>where a.b.c is the version number. This will create the tarball named <em lang='und' xml:lang='und'>parrot&#45;a.b.c.tar.gz</em>. This will automatically avoid including <code lang='und' xml:lang='und'>DEVELOPING</code> in the release tarball.</dd><p class="pad"></p>
+
+<dt><a name="5."
+>5.</a></dt><p class="pad"></p>
+
+<dd>Untar <em lang='und' xml:lang='und'>parrot&#45;a.b.c.tar.gz</em> into another area.</dd><p class="pad"></p>
+
+<dt><a name="6."
+>6.</a></dt><p class="pad"></p>
+
+<dd>Make sure everything works:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> $ perl Configure.pl
+ $ make world
+ $ make fulltest
+ $ make docs
+ $ make html</pre>
+
+<dt><a name="7."
+>7.</a></dt><p class="pad"></p>
+
+<dd>Tag the release as &#34;RELEASE_a_b_c&#34;, where a.b.c is the version number. If you&#39;re working in trunk, be sure to specify the revision number generated in step 3, above.</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> $ export SVNPARROT=https://svn.perl.org/parrot
+ $ svn copy &#45;m&#34;tagged release a.b.c&#34; \
+   $SVNPARROT/trunk $SVNPARROT/tags/RELEASE_a_b_c</pre>
+
+<dd>See also <a href='#Appendix_1'>&#34;Appendix 1&#34;</a> below.</dd><p class="pad"></p>
+
+<dt><a name="8."
+>8.</a></dt><p class="pad"></p>
+
+<dd>Upload to CPAN.</dd><p class="pad"></p>
+
+<dd>NOTE: you may get a failure message from the CPAN Indexer about the content of META.yml. Don&#39;t worry, the tarball still uploaded okay. You can fix META.yml after the release. (TODO: clarify what this means)</dd><p class="pad"></p>
+
+<dt><a name="9."
+>9.</a></dt><p class="pad"></p>
+
+<dd>Compose and send out the announcements &#45;&#45; parrot&#45;porters, perl6&#45;language, perl6&#45;announce, perl5&#45;porters, use Perl, PerlMonks, etc. Don&#39;t forget to include the next scheduled release date.</dd><p class="pad"></p>
+
+<dd>Use <em lang='und' xml:lang='und'><a href="../../tools/util/crow.pir.html">tools/util/crow.pir</a></em> to make this part easier. You can specify the format of your announcments like so:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  $ parrot tools/util/crow.pir &#45;&#45;type=text
+  $ parrot tools/util/crow.pir &#45;&#45;type=html</pre>
+
+<dd>Take the screen output and paste it into the application you need. HTML works well for use Perl and PerlMonks, and text for the rest.</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="a"
+>a</a></dt><p class="pad"></p>
+
+<dd>Submit the use Perl announcement story to Slashdot, Newsforge, etc. Don&#39;t forget to set a Reply&#45;To: or Followup&#45;To: header, if your mail client lets you.</dd><p class="pad"></p>
+
+<dt><a name="b"
+>b</a></dt><p class="pad"></p>
+
+<dd>Modify the topic on #parrot, e.g.:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> /topic #parrot Parrot 0.4.8 Released | <a href="http://parrotcode.org/">http://parrotcode.org/</a></pre>
+
+<dt><a name="c"
+>c</a></dt><p class="pad"></p>
+
+<dd>Update the next planned release date on the wiki.</dd><p class="pad"></p>
+
+<dt><a name="d"
+>d</a></dt><p class="pad"></p>
+
+<dd>Update the website. The svn repository for the website is at <a href='https://svn.perl.org/perl.org/docs/live/parrotcode'>https://svn.perl.org/perl.org/docs/live/parrotcode</a>.</dd><p class="pad"></p>
+
+<dd>Add a release announcement to news/[year]/Parrot&#45;[release].html. Update <code lang='und' xml:lang='und'>/index.html</code> (The old mini&#45;announcement may be commented out). Update <code lang='und' xml:lang='und'>/source.html</code>. Make sure all urls are updated appropriately.</dd><p class="pad"></p>
+
+<dd>Test locally in combust before pushing update out.</dd><p class="pad"></p>
+</dl>
+
+<dt><a name="10."
+>10.</a></dt><p class="pad"></p>
+
+<dd>Close any release&#45;related tickets in RT. If they are not yet resolved, migrate the critical ones to the next milestone release ticket. Non&#45;critical unresolved tickets can be simply unlinked.</dd><p class="pad"></p>
+
+<dt><a name="11."
+>11.</a></dt><p class="pad"></p>
+
+<dd>You&#39;re done! Help yourself to a beer, cola or other celebratory drink.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="ABOUT_THIS_DOCUMENT"
+>ABOUT THIS DOCUMENT <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>This document was written after a couple of subtly incorrectly assembled releases&#45;&#45;usually when someone forgot to delete <em lang='und' xml:lang='und'>DEVELOPING</em> (which is now automated!), but at least once where the <em lang='und' xml:lang='und'>MANIFEST</em> check failed. The intent of this file is to document what must be done to release so that such mistakes don&#39;t happen again.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>README</em>, <em lang='und' xml:lang='und'>RESPONSIBLE_PARTIES</em>.</p>
+
+<h1><a name="Appendix_1"
+>Appendix 1 <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>parrot repository layout as of end of Apr 2005</p>
+
+<pre lang='und' xml:lang='und'> $ svn ls $SVNPARROT
+ branches/
+ tags/
+ trunk/
+
+ $ svn ls $SVNPARROT/tags
+ PRE_REL_0_0_8/
+ RELEASE_0_0_10/
+ RELEASE_0_0_11/
+ RELEASE_0_0_13/
+ RELEASE_0_0_6/
+ RELEASE_0_0_8/
+ RELEASE_0_0_9/
+ RELEASE_0_1_0/
+ RELEASE_0_1_1/
+ RELEASE_0_1_2/
+ REL_0_0_5/
+ V1/
+ file_move_031023/
+ help/
+ ponie&#45;PRE&#45;P5_592/</pre>
+
+<h1><a name="Appendix_2"
+>Appendix 2 <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Planned releases in 2007.</p>
+
+<p>To make a monthly release schedule possible, we&#39;re spreading the burden of releases across multiple release managers. Each release manager takes one release in a 6 month rotation. Releases are scheduled for the 3rd Tuesday of the month.</p>
+
+<pre lang='und' xml:lang='und'> &#45; Jan 16th (0.4.8)  Jerry Gay (particle)
+ &#45; Feb 20th (0.4.9)  Patrick Michaud (pmichaud)
+ &#45; Mar 20th (0.4.10) Will Coleda (Coke)
+ &#45; Apr 17th (0.4.11) Matt Diephouse (mdiep)
+ &#45; May 15th (0.4.12) chromatic
+ &#45; Jun 19th, Allison Randal
+ &#45; Jul 17th, Jerry Gay (particle)
+ &#45; Aug 21th, Patrick Michaud (pmichaud)
+ &#45; Sep 18th, Matt Diephouse (mdiep)
+ &#45; Oct 16th, Will Coleda (Coke)
+ &#45; Nov 20th, chromatic
+ &#45; Dec 18th, Allison Randal</pre>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

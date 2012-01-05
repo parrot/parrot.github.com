@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Design Notes for Events</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Design Notes for Events
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/dev/events.pod &#45; Design Notes for Events</p>
+
+<h1><a name="VERSION"
+>VERSION</a></h1>
+
+<p>This document describes the current state,
+which might not be the final implementation.</p>
+
+<h1><a name="Overview"
+>Overview</a></h1>
+
+<p>Parrot has to deal with asynchronous events (from timers,
+signals,
+async IO,
+notifications,
+and so on).
+This document describes the current implementation.</p>
+
+<h1><a name="Prelims"
+>Prelims</a></h1>
+
+<p>As there is currently no good test if a threading library is included at link time,
+its assumed,
+that platforms having <b>PARROT_HAS_HEADER_PTHREAD</b> link against <b>libpthread</b>.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>On construction of the first interpreter (the one with no <b>parent_interpreter</b>) two threads are started: The <b>event_thread</b>,
+which manages the static global <b>event_queue</b> and the <b>io_thread</b> which is responsible for signal and IO related events.</p>
+
+<h2><a name="Events"
+>Events</a></h2>
+
+<p>Events can be either timed (they are due after some elapsed time) or untimed.
+For the former there is one API call: <b>Parrot_new_timer_event</b></p>
+
+<h2><a name="The_event_thread"
+>The <b>event_thread</b></a></h2>
+
+<p>The <b>event_thread</b> holds the <b>event_queue</b> mutex first.
+When there is no event entry in the <b>event_queue</b>,
+the <b>event_thread</b> waits on the event condition until an event arrives.
+When there is an event with a timed entry,
+a timed wait is performed.
+(Waiting on the condition releases the mutex,
+so that other threads can insert events into the <b>event_queue</b>.)</p>
+
+<p>When an event arrives (or the timeout was reached) the <b>event_thread</b> pops off all events and places the queue entries into the interpreter&#39;s <b>task_queue</b>.
+This also enables event checking in the interpreter&#39;s run&#45;core.</p>
+
+<p>When the popped off entry is a timed event and has a repeat interval,
+the entry is duplicated and reinserted with the interval added to the current time.</p>
+
+<h2><a name="Signals"
+><b>Signals</b></a></h2>
+
+<p>All signals that should be handled inside Parrot are blocked in all threads and only enabled in the <b>io_thread</b>.
+The signal handler functions just sets an atomic flag,
+that this signal arrived and returns.
+This finally interrupts the select(2) loop in the <b>io_thread</b>.</p>
+
+<h2><a name="The_io_thread"
+>The <b>io_thread</b></a></h2>
+
+<p>The <b>io_thread</b> sleeps in a select(2) loop,
+which is interrupted when either a signal arrives or when one of the file descriptors has a ready condition.
+Additionally the file descriptor set contains the reader end of an internal pipe,
+which is used by other threads to communicate with the <b>io_thread</b>.</p>
+
+<p>Signal events like SIGINT are broadcasted to all running interpreters,
+which then throw an appropriate exception.</p>
+
+<h2><a name="The_interpreter_event_checking_code"
+>The interpreter event checking code</a></h2>
+
+<p>We cannot interrupt the interpreter at arbitrary points and run some different code (e.g.
+a PASM subroutine handling timer events).
+So when an event is put into the interpreter&#39;s <b>task_queue</b> the opcode dispatch table for the interpreter is changed.</p>
+
+<p>Plain function cores get a function table with all entries filled with the <b>check_events__</b> opcode.
+This opcode pops off and finally handles the event.
+The same scheme works for the CGOTO core,
+where the address table is replaced.
+The switched core does an explicit check if events are to be handled.</p>
+
+<p>Prederefed and especially the CGP core don&#39;t have an opcode dispatch table that is checked during running the opcodes.
+When an event is scheduled,
+the event handler replaces backward branches in the opcode image with the <b>check_events__</b> opcode.</p>
+
+<p>After all events are popped off and handled,
+the opcode dispatch table is restored to its original,
+and the <b>check_events__</b> reexecutes the same instruction again,
+which is now the real one and thus normal execution flow continues.</p>
+
+<p>This scheme has zero overhead in the absence of scheduled events for all cores except switched.</p>
+
+<h1><a name="Missing"
+>Missing</a></h1>
+
+<dl>
+<dt><a name="Synchronous_event_API"
+>Synchronous event API</a></dt>
+Sync events could be placed directly into the interpreter&#39;s task queue.
+<dt><a name="Async_IO"
+>Async IO</a></dt>
+That depends probably on the underlying OS,
+i.e.
+if it does async IO or we have to do it.
+<dt><a name="Event_priorities"
+>Event priorities</a></dt>
+
+<dt><a name="A_lot_more"
+>A lot more</a></dt>
+</dl>
+
+<h1><a name="Author"
+>Author</a></h1>
+
+<p>Leopold Toetsch <code>lt@toetsch.at</code></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

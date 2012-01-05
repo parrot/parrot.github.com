@@ -1,0 +1,296 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - String Opcodes</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/ops.html">Opcodes</a> &raquo; String Opcodes
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>string.ops &#45; String Opcodes</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Operations that work on strings,
+whether constructing,
+modifying or examining them.</p>
+
+<p>When making changes to any ops file,
+run <code>make bootstrap&#45;ops</code> to regenerate all generated ops files.</p>
+
+<dl>
+<dt><a name="ord(out_INT,_in_STR)"
+><b>ord</b>(out INT,
+in STR)</a></dt>
+The codepoint in the current character set of the first character of string $2 is returned in integer $1.
+If $2 is empty,
+an exception is thrown.
+<dt><a name="ord(out_INT,_in_STR,_in_INT)"
+><b>ord</b>(out INT,
+in STR,
+in INT)</a></dt>
+The codepoint in the current character set of the character at integer index $3 of string $2 is returned in integer $1.
+If $2 is empty,
+an exception is thrown.
+If $3 is greater than the length of $2,
+an exception is thrown.
+If $3 is less then zero but greater than the negative of the length of $2,
+counts backwards through $2,
+such that &#45;1 is the last character,
+&#45;2 is the second&#45;to&#45;last character,
+and so on.
+If $3 is less than the negative of the length of $2,
+an exception is thrown.
+<dt><a name="chr(out_STR,_in_INT)"
+><b>chr</b>(out STR,
+in INT)</a></dt>
+The character specified by codepoint integer $2 is returned in string $1.
+<dt><a name="chopn(out_STR,_in_STR,_in_INT)"
+><b>chopn</b>(out STR,
+in STR,
+in INT)</a></dt>
+Remove n characters specified by integer $3 from the tail of string $2,
+and returns the characters not chopped in string $1.
+If $3 is negative,
+cut the string after &#45;$3 characters.
+<dt><a name="concat(inout_STR,_in_STR)"
+><b>concat</b>(inout STR,
+in STR)</a></dt>
+
+<dt><a name="concat(invar_PMC,_in_STR)"
+><b>concat</b>(invar PMC,
+in STR)</a></dt>
+
+<dt><a name="concat(invar_PMC,_invar_PMC)"
+><b>concat</b>(invar PMC,
+invar PMC)</a></dt>
+Modify string $1 in place,
+appending string $2.
+<dt><a name="concat(out_STR,_in_STR,_in_STR)"
+><b>concat</b>(out STR,
+in STR,
+in STR)</a></dt>
+
+<dt><a name="concat(invar_PMC,_invar_PMC,_in_STR)"
+><b>concat</b>(invar PMC,
+invar PMC,
+in STR)</a></dt>
+
+<dt><a name="concat(invar_PMC,_invar_PMC,_invar_PMC)"
+><b>concat</b>(invar PMC,
+invar PMC,
+invar PMC)</a></dt>
+Append string $3 to string $2 and place the result into string $1.
+<dt><a name="repeat(out_STR,_in_STR,_in_INT)"
+><b>repeat</b>(out STR,
+in STR,
+in INT)</a></dt>
+
+<dt><a name="repeat(invar_PMC,_invar_PMC,_in_INT)"
+><b>repeat</b>(invar PMC,
+invar PMC,
+in INT)</a></dt>
+
+<dt><a name="repeat(invar_PMC,_invar_PMC,_invar_PMC)"
+><b>repeat</b>(invar PMC,
+invar PMC,
+invar PMC)</a></dt>
+Repeat string $2 integer $3 times and return result in string $1.
+The <code>PMC</code> versions are MMD operations.
+<dt><a name="repeat(invar_PMC,_in_INT)"
+><b>repeat</b>(invar PMC,
+in INT)</a></dt>
+
+<dt><a name="repeat(invar_PMC,_invar_PMC)"
+><b>repeat</b>(invar PMC,
+invar PMC)</a></dt>
+Repeat string $1 number $2 times and return result in string $1.
+The <code>PMC</code> versions are MMD operations.
+<dt><a name="length(out_INT,_in_STR)"
+><b>length</b>(out INT,
+in STR)</a></dt>
+Calculate the length (in characters) of string $2 and return as integer $1.
+If $2 is NULL or zero length,
+zero is returned.
+<dt><a name="bytelength(out_INT,_in_STR)"
+><b>bytelength</b>(out INT,
+in STR)</a></dt>
+Calculate the length (in bytes) of string $2 and return as integer $1.
+If $2 is NULL or zero length,
+zero is returned.
+<dt><a name="pin(inout_STR)"
+><b>pin</b>(inout STR)</a></dt>
+Make the memory in string $1 immobile.
+This memory will <i>not</i> be moved by the Garbage Collector,
+and may be safely passed to external libraries.
+(Well,
+as long as they don&#39;t free it) Pinning a string will move the contents.$1 should be unpinned if it is used after pinning is no longer necessary.
+<dt><a name="unpin(inout_STR)"
+><b>unpin</b>(inout STR)</a></dt>
+Make the memory in string $1 movable again.
+This will make the memory in $1 move.
+<dt><a name="substr(out_STR,_in_STR,_in_INT)"
+><b>substr</b>(out STR,
+in STR,
+in INT)</a></dt>
+
+<dt><a name="substr(out_STR,_in_STR,_in_INT,_in_INT)"
+><b>substr</b>(out STR,
+in STR,
+in INT,
+in INT)</a></dt>
+
+<dt><a name="substr(out_STR,_invar_PMC,_in_INT,_in_INT)"
+><b>substr</b>(out STR,
+invar PMC,
+in INT,
+in INT)</a></dt>
+Set $1 to the portion of $2 starting at (zero&#45;based) character position $3 and having length $4.
+If no length ($4) is provided,
+it is equivalent to passing in the length of $2.
+<dt><a name="replace(out_STR,_in_STR,_in_INT,_in_INT,_in_STR)"
+><b>replace</b>(out STR,
+in STR,
+in INT,
+in INT,
+in STR)</a></dt>
+Replace part of $2 starting from $3 of length $4 with $5.
+If the length of $5 is different from the length specified in $4,
+then $2 will grow or shrink accordingly.
+If $3 is one character position larger than the length of $2,
+then $5 is appended to $2 (and the empty string is returned); this is essentially the same as
+<pre>  concat $2, $5</pre>
+Finally, if $3 is negative, then it is taken to count backwards from the end of the string (ie an offset of &#45;1 corresponds to the last character).New $1 string returned.
+<dt><a name="index(out_INT,_in_STR,_in_STR)"
+><b>index</b>(out INT, in STR, in STR)</a></dt>
+
+<dt><a name="index(out_INT,_in_STR,_in_STR,_in_INT)"
+><b>index</b>(out INT, in STR, in STR, in INT)</a></dt>
+The <b>index</b> function searches for a substring within target string, but without the wildcard&#45;like behavior of a full regular&#45;expression pattern match. It returns the position of the first occurrence of substring $3 in target string $2 at or after zero&#45;based position $4. If $4 is omitted, <b>index</b> starts searching from the beginning of the string. The return value is based at &#34;0&#34;. If the string is null, or the substring is not found or is null, <b>index</b> returns &#34;&#45;1&#34;.
+<dt><a name="sprintf(out_STR,_in_STR,_invar_PMC)"
+><b>sprintf</b>(out STR, in STR, invar PMC)</a></dt>
+
+<dt><a name="sprintf(out_PMC,_invar_PMC,_invar_PMC)"
+><b>sprintf</b>(out PMC, invar PMC, invar PMC)</a></dt>
+Sets $1 to the result of calling <code>Parrot_psprintf</code> with the given format ($2) and arguments ($3, which should be an ordered aggregate PMC).The result is quite similar to using the system <code>sprintf</code>, but is protected against buffer overflows and the like. There are some differences, especially concerning sizes (which are largely ignored); see <em>misc.c</em> for details.
+<dt><a name="new(out_STR)"
+><b>new</b>(out STR)</a></dt>
+
+<dt><a name="new(out_STR,_in_INT)"
+><b>new</b>(out STR, in INT)</a></dt>
+Allocate a new empty string of length $2 (optional).
+<dt><a name="stringinfo(out_INT,_in_STR,_in_INT)"
+><b>stringinfo</b>(out INT, in STR, in INT)</a></dt>
+Extract some information about string $2 and store it in $1. If a null string is passed, $1 is always set to 0. If an invalid $3 is passed, an exception is thrown. Possible values for $3 are:
+<dl>
+<dt><a name="1_The_location_of_the_string_buffer_header."
+>1 The location of the string buffer header.</a></dt>
+
+<dt><a name="2_The_location_of_the_start_of_the_string."
+>2 The location of the start of the string.</a></dt>
+
+<dt><a name="3_The_length_of_the_string_buffer_(in_bytes)."
+>3 The length of the string buffer (in bytes).</a></dt>
+
+<dt><a name="4_The_flags_attached_to_the_string_(if_any)."
+>4 The flags attached to the string (if any).</a></dt>
+
+<dt><a name="5_The_amount_of_the_string_buffer_used_(in_bytes)."
+>5 The amount of the string buffer used (in bytes).</a></dt>
+
+<dt><a name="6_The_length_of_the_string_(in_characters)."
+>6 The length of the string (in characters).</a></dt>
+</dl>
+
+<dt><a name="upcase(out_STR,_in_STR)"
+><b>upcase</b>(out STR, in STR)</a></dt>
+Uppercase $2 and put the result in $1
+<dt><a name="downcase(out_STR,_in_STR)"
+><b>downcase</b>(out STR, in STR)</a></dt>
+Downcase $2 and put the result in $1
+<dt><a name="titlecase(out_STR,_in_STR)"
+><b>titlecase</b>(out STR, in STR)</a></dt>
+Titlecase $2 and put the result in $1
+<dt><a name="join(out_STR,_in_STR,_invar_PMC)"
+><b>join</b>(out STR, in STR, invar PMC)</a></dt>
+Create a new string $1 by joining array elements from array $3 with string $2.
+<dt><a name="split(out_PMC,_in_STR,_in_STR)"
+><b>split</b>(out PMC, in STR, in STR)</a></dt>
+Create a new Array PMC $1 by splitting the string $3 into pieces delimited by the string $2. If $2 does not appear in $3, then return $3 as the sole element of the Array PMC. Will return empty strings for delimiters at the beginning and end of $3Note: the string $2 is just a string. If you want a perl&#45;ish split on regular expression, use <code>PGE::Util</code>&#39;s split from the standard library.
+<dt><a name="charset(out_INT,_in_STR)"
+><b>charset</b>(out INT, in STR)</a></dt>
+Return the charset number $1 of string $2.
+<dt><a name="charsetname(out_STR,_in_INT)"
+><b>charsetname</b>(out STR, in INT)</a></dt>
+Return the name $1 of charset number $2. If charset number $2 is not found, name $1 is set to null.
+<dt><a name="find_charset(out_INT,_in_STR)"
+><b>find_charset</b>(out INT, in STR)</a></dt>
+Return the charset number of the charset named $2. If the charset doesn&#39;t exist, throw an exception.
+<dt><a name="trans_charset(out_STR,_in_STR,_in_INT)"
+><b>trans_charset</b>(out STR, in STR, in INT)</a></dt>
+Create a string $1 from $2 with the specified charset.Both functions may throw an exception on information loss.
+<dt><a name="encoding(out_INT,_in_STR)"
+><b>encoding</b>(out INT, in STR)</a></dt>
+Return the encoding number $1 of string $2.
+<dt><a name="encodingname(out_STR,_in_INT)"
+><b>encodingname</b>(out STR, in INT)</a></dt>
+Return the name $1 of encoding number $2. If encoding number $2 is not found, name $1 is set to null.
+<dt><a name="find_encoding(out_INT,_in_STR)"
+><b>find_encoding</b>(out INT, in STR)</a></dt>
+Return the encoding number of the encoding named $2. If the encoding doesn&#39;t exist, throw an exception.
+<dt><a name="trans_encoding(out_STR,_in_STR,_in_INT)"
+><b>trans_encoding</b>(out STR, in STR, in INT)</a></dt>
+Create a string $1 from $2 with the specified encoding.Both functions may throw an exception on information loss.
+<dt><a name="is_cclass(out_INT,_in_INT,_in_STR,_in_INT)"
+><b>is_cclass</b>(out INT, in INT, in STR, in INT)</a></dt>
+Set $1 to 1 if the codepoint of $3 at position $4 is in the character class(es) given by $2.
+<dt><a name="find_cclass(out_INT,_in_INT,_in_STR,_in_INT,_in_INT)"
+><b>find_cclass</b>(out INT, in INT, in STR, in INT, in INT)</a></dt>
+Set $1 to the offset of the first codepoint matching the character class(es) given by $2 in string $3, starting at offset $4 for up to $5 codepoints. If no matching character is found, set $1 to (offset + count).
+<dt><a name="find_not_cclass(out_INT,_in_INT,_in_STR,_in_INT,_in_INT)"
+><b>find_not_cclass</b>(out INT, in INT, in STR, in INT, in INT)</a></dt>
+Set $1 to the offset of the first codepoint not matching the character class(es) given by $2 in string $3, starting at offset $4 for up to $5 codepoints. If the substring consists entirely of matching characters, set $1 to (offset + count).
+<dt><a name="escape(out_STR,_invar_STR)"
+><b>escape</b>(out STR, invar STR)</a></dt>
+Escape all non&#45;ascii chars to backslashed escape sequences. A string with charset <i>ascii</i> is created as result.
+<dt><a name="compose(out_STR,_in_STR)"
+><b>compose</b>(out STR, in STR)</a></dt>
+Compose (normalize) a string.</dl>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT</a></h1>
+
+<p>Copyright (C) 2001&#45;2010, Parrot Foundation.</p>
+
+<h1><a name="LICENSE"
+>LICENSE</a></h1>
+
+<p>This program is free software. It is subject to the same license as the Parrot interpreter itself.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

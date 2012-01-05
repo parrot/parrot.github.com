@@ -1,0 +1,242 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Integer PMC class</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Integer PMC class
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/integer.pmc &#45; Integer PMC class</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p><code>Integer</code> provides an integer for languages that want a value&#45;restricted integer type without going to an I register.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="PMC_init_pmc(PMC_*init)"
+><b><code>PMC init_pmc(PMC *init)</b></code></a></dt>
+Create a new Integer with arguments passed according to pdd03.
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes the integer with a default value of <code>0</code>.
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+Creates an exact duplicate of this PMC.
+<dt><a name="void_set_pmc(PMC_*value)"
+><b><code>void set_pmc(PMC *value)</b></code></a></dt>
+Sets the value of the integer to the value in <code>*value</code>.
+<dt><a name="void_share()"
+><b><code>void share()</b></code></a></dt>
+Sets this PMC as shared and read&#45;only.
+<dt><a name="INTVAL_get_integer()"
+><b><code>INTVAL get_integer()</b></code></a></dt>
+Returns the integer value of the Integer.
+<dt><a name="INTVAL_get_bool()"
+><b><code>INTVAL get_bool()</b></code></a></dt>
+Returns the boolean value of the Integer.
+<dt><a name="FLOATVAL_get_number()"
+><b><code>FLOATVAL get_number()</b></code></a></dt>
+Returns the floating&#45;point value of the integer.
+<dt><a name="PMC_*get_bignum()"
+><b><code>PMC *get_bignum()</b></code></a></dt>
+Return a new BigInt PMC with the value of <code>SELF</code>.
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+
+<dt><a name="STRING_*get_repr()"
+><b><code>STRING *get_repr()</b></code></a></dt>
+Returns the string value of the integer.
+<dt><a name="void_set_integer_native(INTVAL_value)"
+><b><code>void set_integer_native(INTVAL value)</b></code></a></dt>
+Sets the value of the integer to the value of the <code>Integer</code> <code>*value</code>.
+<dt><a name="void_set_number_native(FLOATVAL_value)"
+><b><code>void set_number_native(FLOATVAL value)</b></code></a></dt>
+Morphs the integer to a <code>Float</code> and sets the value from <code>value</code>.
+<dt><a name="void_set_bool(INTVAL_value)"
+><b><code>void set_bool(INTVAL value)</b></code></a></dt>
+Morphs the integer to a <code>Boolean</code> and sets the value from <code>value</code>.
+<dt><a name="void_set_bigint_int(INTVAL_value)"
+><b><code>void set_bigint_int(INTVAL value)</b></code></a></dt>
+Morphs the integer to a <code>BigInt</code> and sets the value from <code>value</code>.
+<dt><a name="void_set_string_native(STRING_*value)"
+><b><code>void set_string_native(STRING *value)</b></code></a></dt>
+Morphs the integer to a <code>String</code> and sets the value from <code>value</code>.
+<dt><a name="PMC_*add(PMC_*value,_PMC_*dest)"
+><b><code>PMC *add(PMC *value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="PMC_*add_int(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *add_int(INTVAL value, PMC *dest)</b></code></a></dt>
+Adds <code>value</code> to the integer and returns the result in <code>*dest</code>.
+<dt><a name="void_i_add(PMC_*value)"
+><b><code>void i_add(PMC *value)</b></code></a></dt>
+
+<dt><a name="void_i_add(INTVAL_value)"
+><b><code>void i_add(INTVAL value)</b></code></a></dt>
+
+<dt><a name="void_i_add(FLOATVAL_value)"
+><b><code>void i_add(FLOATVAL value)</b></code></a></dt>
+Adds <code>value</code> to <code>SELF</code> inplace.
+<dt><a name="PMC_*subtract(PMC_*value,_PMC_*dest)"
+><b><code>PMC *subtract(PMC *value, PMC *dest)</b></code></a></dt>
+Subtracts <code>*value</code> from the integer and returns the result in <code>*dest</code>.
+If <code>dest</code> is NULL,
+a PMC of this type.Please note: as <code>SELF</code> or <code>value</code> maybe be subclassed,
+we have to call <code>get_integer</code> and <code>set_integer_native</code> always.
+<dt><a name="PMC_*subtract_int(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *subtract_int(INTVAL value, PMC *dest)</b></code></a></dt>
+Subtracts <code>value</code> from the integer and returns the result in <code>*dest</code>.
+<dt><a name="void_i_subtract(PMC_*value)"
+><b><code>void i_subtract(PMC *value)</b></code></a></dt>
+
+<dt><a name="void_i_subtract_int(INTVAL_value)"
+><b><code>void i_subtract_int(INTVAL value)</b></code></a></dt>
+
+<dt><a name="void_i_subtract_float(FLOATVAL_value)"
+><b><code>void i_subtract_float(FLOATVAL value)</b></code></a></dt>
+Subtracts <code>value</code> from <code>SELF</code> inplace.
+<dt><a name="PMC_*multiply(PMC_*value,_PMC_*dest)"
+><b><code>PMC *multiply(PMC *value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="PMC_*multiply_int(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *multiply_int(INTVAL value, PMC *dest)</b></code></a></dt>
+Multiplies the integer by <code>*value</code> and returns the result in <code>*dest</code>.
+<dt><a name="void_i_multiply(PMC_*value)"
+><b><code>void i_multiply(PMC *value)</b></code></a></dt>
+
+<dt><a name="void_i_multiply_int(INTVAL_value)"
+><b><code>void i_multiply_int(INTVAL value)</b></code></a></dt>
+
+<dt><a name="void_i_multiply_float(FLOATVAL_value)"
+><b><code>void i_multiply_float(FLOATVAL value)</b></code></a></dt>
+Multiply <code>value</code> with <code>SELF</code> inplace.
+<dt><a name="PMC_*divide(PMC_*value,_PMC_*dest)"
+><b><code>PMC *divide(PMC *value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="PMC_*divide_int(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *divide_int(INTVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="PMC_*divide_float(FLOATVAL_value,_PMC_*dest)"
+><b><code>PMC *divide_float(FLOATVAL value, PMC *dest)</b></code></a></dt>
+Divides the number by <code>value</code> and returns the result in <code>*dest</code>.
+<dt><a name="void_i_divide(PMC_*value)"
+><b><code>void i_divide(PMC *value)</b></code></a></dt>
+
+<dt><a name="void_i_divide_int(INTVAL_value)"
+><b><code>void i_divide_int(INTVAL value)</b></code></a></dt>
+
+<dt><a name="void_i_divide_float(FLOATVAL_value)"
+><b><code>void i_divide_float(FLOATVAL value)</b></code></a></dt>
+Divides <code>SELF</code> by <code>value</code> inplace.
+<dt><a name="PMC_*floor_divide(PMC_*value,_PMC_*dest)"
+><b><code>PMC *floor_divide(PMC *value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="PMC_*floor_divide_int(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *floor_divide_int(INTVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="PMC_*floor_divide_float(FLOATVAL_value,_PMC_*dest)"
+><b><code>PMC *floor_divide_float(FLOATVAL value, PMC *dest)</b></code></a></dt>
+Divides the number by <code>value</code> and returns the result in <code>*dest</code>.
+<dt><a name="void_i_floor_divide(PMC_*value)"
+><b><code>void i_floor_divide(PMC *value)</b></code></a></dt>
+
+<dt><a name="void_i_floor_divide_int(INTVAL_value)"
+><b><code>void i_floor_divide_int(INTVAL value)</b></code></a></dt>
+
+<dt><a name="void_i_floor_divide_float(FLOATVAL_value)"
+><b><code>void i_floor_divide_float(FLOATVAL value)</b></code></a></dt>
+Divides <code>SELF</code> by <code>value</code> inplace.
+<dt><a name="PMC_*modulus(PMC_*value,_PMC_*dest)"
+><b><code>PMC *modulus(PMC *value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="PMC_*modulus(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *modulus(INTVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="PMC_*modulus(FLOATVAL_value,_PMC_*dest)"
+><b><code>PMC *modulus(FLOATVAL value, PMC *dest)</b></code></a></dt>
+Calculates the value of corrected <code>mod</code> <code>value</code> and returns the result in <code>dest</code>.
+See also ops/math.ops.
+<dt><a name="void_i_modulus(PMC_*value)"
+><b><code>void i_modulus(PMC *value)</b></code></a></dt>
+
+<dt><a name="void_i_modulus(INTVAL_value)"
+><b><code>void i_modulus(INTVAL value)</b></code></a></dt>
+
+<dt><a name="void_i_modulus(FLOATVAL_value)"
+><b><code>void i_modulus(FLOATVAL value)</b></code></a></dt>
+Calculates modulus in place.
+<dt><a name="PMC_*pow(PMC_*value,_PMC_*dest)"
+><b><code>PMC *pow(PMC *value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="PMC_*pow_int(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *pow_int(INTVAL value, PMC *dest)</b></code></a></dt>
+Returns SELF to the <code>value</code>th power in <code>dest</code>.
+<dt><a name="void_i_pow(PMC_*value)"
+><b><code>void i_pow(PMC *value)</b></code></a></dt>
+
+<dt><a name="void_i_pow_int(INTVAL_value)"
+><b><code>void i_pow_int(INTVAL value)</b></code></a></dt>
+Raises SELF to the <code>value</code>th power.TODO: TT #1228: Implement Complex and BigInt RHS values for the pow() functions
+<dt><a name="INTVAL_is_equal(PMC_*value)"
+><b><code>INTVAL is_equal(PMC *value)</b></code></a></dt>
+The <code>==</code> operation.
+<dt><a name="INTVAL_cmp(PMC_*value)"
+><b><code>INTVAL cmp(PMC *value)</b></code></a></dt>
+Returns the result of comparing the integer with <code>*value</code>.
+<dt><a name="INTVAL_cmp_num(PMC_*value)"
+><b><code>INTVAL cmp_num(PMC *value)</b></code></a></dt>
+Returns the result of numerically comparing the integer with <code>*value</code>.
+<dt><a name="void_increment()"
+><b><code>void increment()</b></code></a></dt>
+Increments the integer.
+<dt><a name="void_decrement()"
+><b><code>void decrement()</b></code></a></dt>
+Decrements the integer.
+<dt><a name="PMC_*absolute(PMC_*dest)"
+><b><code>PMC *absolute(PMC *dest)</b></code></a></dt>
+
+<dt><a name="void_absolute()"
+><b><code>void absolute()</b></code></a></dt>
+Sets <code>dest</code> to the absolute value of SELF.
+<dt><a name="STRING_*get_as_base(INTVAL_base)"
+><b><code>STRING *get_as_base(INTVAL base)</b></code></a></dt>
+Converts and returns the integer in base <code>base</code>.
+<code>base</code> must be between 2 and 36,
+inclusive.
+<dt><a name="void_freeze(visit_info_*info)"
+><b><code>void freeze(visit_info *info)</b></code></a></dt>
+Used to archive the integer.
+<dt><a name="void_thaw(visit_info_*info)"
+><b><code>void thaw(visit_info *info)</b></code></a></dt>
+Used to unarchive the integer.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

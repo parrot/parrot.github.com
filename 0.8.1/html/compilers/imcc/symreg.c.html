@@ -1,0 +1,327 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>compilers/imcc/symreg.c</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">compilers/imcc/symreg.c</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>compilers/imcc/symreg.c</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>imcc symbol handling</p>
+
+<p>XXX: SymReg stuff has become overused.
+SymReg should be for symbolic registers,
+reg allocation,
+etc.
+but we are now using it for extensive symbol table management.
+Need to convert much of this over the use Symbol and SymbolTable (see symbol.h and symbol.c)</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_push_namespace"
+><b><code lang='und' xml:lang='und'>void push_namespace</b></code></a></dt><p class="pad"></p>
+
+<dd>Begins a new namespace in PASM/PIR,
+named after the given <code lang='und' xml:lang='und'>name</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_pop_namespace"
+><b><code lang='und' xml:lang='und'>void pop_namespace</b></code></a></dt><p class="pad"></p>
+
+<dd>Ends the current namespace,
+popping back to the previous.
+If the namespace stack is empty,
+throws a syntax error.</dd><p class="pad"></p>
+
+<dt><a name="static_SymReg_*__get_sym_typed"
+><b><code lang='und' xml:lang='und'>static SymReg *_get_sym_typed</b></code></a></dt><p class="pad"></p>
+
+<dd>Gets a symbol from the hash,
+with the given <code lang='und' xml:lang='und'>name</code> of the specific type <code lang='und' xml:lang='und'>t</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_SymReg_*__mk_symreg"
+><b><code lang='und' xml:lang='und'>static SymReg *_mk_symreg</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes a new SymReg in the given SymHash from a varname and type.</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*_mk_symreg"
+><b><code lang='und' xml:lang='und'>SymReg *mk_symreg</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes a new SymReg in the current unit,
+given a varname and type.</dd><p class="pad"></p>
+
+<dt><a name="char_*_symreg_to_str"
+><b><code lang='und' xml:lang='und'>char *symreg_to_str</b></code></a></dt><p class="pad"></p>
+
+<dd>Dumps a SymReg to a printable format.</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*_mk_temp_reg"
+><b><code lang='und' xml:lang='und'>SymReg *mk_temp_reg</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes a new unique and temporary SymReg of the specified type <code lang='und' xml:lang='und'>t</code>.</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*_mk_pcc_sub"
+><b><code lang='und' xml:lang='und'>SymReg *mk_pcc_sub</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes a SymReg representing a PCC sub of the given <code lang='und' xml:lang='und'>name</code> with the specified type.</dd><p class="pad"></p>
+
+<dt><a name="void_add_namespace"
+><b><code lang='und' xml:lang='und'>void add_namespace</b></code></a></dt><p class="pad"></p>
+
+<dd>Add the current namespace to a sub declaration.</dd><p class="pad"></p>
+
+<dt><a name="void_add_pcc_arg"
+><b><code lang='und' xml:lang='und'>void add_pcc_arg</b></code></a></dt><p class="pad"></p>
+
+<dd>Adds a register or constant to the function arg list.</dd><p class="pad"></p>
+
+<dt><a name="void_add_pcc_result"
+><b><code lang='und' xml:lang='und'>void add_pcc_result</b></code></a></dt><p class="pad"></p>
+
+<dd>Adds a register or constant to the function&#39;s return list.</dd><p class="pad"></p>
+
+<dt><a name="void_add_pcc_multi"
+><b><code lang='und' xml:lang='und'>void add_pcc_multi</b></code></a></dt><p class="pad"></p>
+
+<dd>Adds a :multi signature to the sub.</dd><p class="pad"></p>
+
+<dt><a name="void_add_pcc_sub"
+><b><code lang='und' xml:lang='und'>void add_pcc_sub</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the current sub in the given SymReg to the second SymReg.</dd><p class="pad"></p>
+
+<dt><a name="void_add_pcc_cc"
+><b><code lang='und' xml:lang='und'>void add_pcc_cc</b></code></a></dt><p class="pad"></p>
+
+<dd>Adds a continuation (?) to the current sub.</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*_mk_pasm_reg"
+><b><code lang='und' xml:lang='und'>SymReg *mk_pasm_reg</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes a SymReg representing a PASM register.</dd><p class="pad"></p>
+
+<dt><a name="static_char_*__mk_fullname"
+><b><code lang='und' xml:lang='und'>static char *_mk_fullname</b></code></a></dt><p class="pad"></p>
+
+<dd>Combines the namespace and name together,
+separated by a <code lang='und' xml:lang='und'>::</code>.
+If there&#39;s no namespace,
+the name is returned on its own.</dd><p class="pad"></p>
+
+<dd>The returned string must be free()d.</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*_mk_ident"
+><b><code lang='und' xml:lang='und'>SymReg *mk_ident</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes a new identifier.</dd><p class="pad"></p>
+
+<dt><a name="SymReg*_mk_ident_ur"
+><b><code lang='und' xml:lang='und'>SymReg *mk_ident_ur</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates and returns a SymReg representing a unique (non&#45;volatile) register.</dd><p class="pad"></p>
+
+<dt><a name="static_SymReg_*_mk_pmc_const_2"
+><b><code lang='und' xml:lang='und'>static SymReg *mk_pmc_const_2</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes a constant PMC and inserts instructions to access it.</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*_mk_const_ident"
+><b><code lang='und' xml:lang='und'>SymReg *mk_const_ident</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes a new identifier constant with value val.</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*__mk_const"
+><b><code lang='und' xml:lang='und'>SymReg *_mk_const</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes a new constant (internal use only).</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*_mk_const"
+><b><code lang='und' xml:lang='und'>SymReg *mk_const</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes a new constant (and populates the cache of global symbols).</dd><p class="pad"></p>
+
+<dt><a name="static_char_*_add_ns"
+><b><code lang='und' xml:lang='und'>static char *add_ns</b></code></a></dt><p class="pad"></p>
+
+<dd>Adds a namespace to the current sub.</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*__mk_address"
+><b><code lang='und' xml:lang='und'>SymReg *_mk_address</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes a new address (internal use only).</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*_mk_sub_label"
+><b><code lang='und' xml:lang='und'>SymReg *mk_sub_label</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes and stores a new address label for a sub.
+The label gets a fixup entry.</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*_mk_sub_address"
+><b><code lang='und' xml:lang='und'>SymReg *mk_sub_address</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes a symbol for a label.
+The symbol gets a fixup entry.</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*_mk_local_label"
+><b><code lang='und' xml:lang='und'>SymReg *mk_local_label</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes a local symbol,
+giving it <i>no</i> fixup entry.</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*_mk_label_address"
+><b><code lang='und' xml:lang='und'>SymReg *mk_label_address</b></code></a></dt><p class="pad"></p>
+
+<dd>Makes a new label address.</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*_dup_sym"
+><b><code lang='und' xml:lang='und'>SymReg *dup_sym</b></code></a></dt><p class="pad"></p>
+
+<dd>Links keys to a keys structure = SymReg</dd><p class="pad"></p>
+
+<dd>we might have</dd><p class="pad"></p>
+
+<dd>what op type pbc.c:build_key() &#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45; int const _kic VTCONST no int reg _ki VTREG no str const _kc VTCONST yes str reg _kc VTREG yes</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> &#34;key&#34; &#39;;&#39; &#34;key&#34; _kc           &#45;&#62; (list of above)   yes
+ &#34;key&#34; &#39;;&#39; $I0   _kc  VTREGKEY &#45;&#62; (list of above)   yes
+
+ The information about which reg should be passed to build_key() is
+ in the instruction.
+
+ A key containing a variable has a special flag VTREGKEY
+ because this key must be considered for life analysis for
+ all the chain members, that are variables.
+
+ An instruction with a keychain looks like this
+
+ e.h. set I0, P[&#34;abc&#34;;0;I1]
+
+ ins&#45;&#62;r[2]  = keychain  &#39;K&#39;
+ keychain&#45;&#62;nextkey = SymReg(VTCONST) &#34;abc&#34;
+             &#45;&#62;nextkey = SymReg(VTCONST) 0
+                &#45;&#62;nextkey = SymReg(VTREG), ...&#45;&#62;reg = VTVAR I1
+                   &#45;&#62;nextkey = 0
+
+ We can&#39;t use the consts or keys in the chain directly,
+ because a different usage would destroy the &#45;&#62;nextkey pointers
+ so these are all copies.
+ XXX and currently not freed</pre>
+
+<dt><a name="SymReg_*_link_keys"
+><b><code lang='und' xml:lang='und'>SymReg *link_keys</b></code></a></dt><p class="pad"></p>
+
+<dd>Links keys together in a keychain.</dd><p class="pad"></p>
+
+<dt><a name="void_free_sym"
+><b><code lang='und' xml:lang='und'>void free_sym</b></code></a></dt><p class="pad"></p>
+
+<dd>Frees all memory of the specified SymReg. If it has a pcc_sub_t entry, frees all memory of that structure as well.</dd><p class="pad"></p>
+
+<dt><a name="void_create_symhash"
+><b><code lang='und' xml:lang='und'>void create_symhash</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates a symbol hash table with space for 16 entries.</dd><p class="pad"></p>
+
+<dt><a name="static_void_resize_symhash"
+><b><code lang='und' xml:lang='und'>static void resize_symhash</b></code></a></dt><p class="pad"></p>
+
+<dd>Resizes a symbol hash table.</dd><p class="pad"></p>
+
+<dt><a name="void__store_symreg"
+><b><code lang='und' xml:lang='und'>void _store_symreg</b></code></a></dt><p class="pad"></p>
+
+<dd>Stores a symbol in the hash (internal use only).</dd><p class="pad"></p>
+
+<dt><a name="void_store_symreg"
+><b><code lang='und' xml:lang='und'>void store_symreg</b></code></a></dt><p class="pad"></p>
+
+<dd>Stores a symbol in the hash.</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*__get_sym"
+><b><code lang='und' xml:lang='und'>SymReg *_get_sym</b></code></a></dt><p class="pad"></p>
+
+<dd>Fetches a symbol from the hash (internal use only).</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*_get_sym"
+><b><code lang='und' xml:lang='und'>SymReg *get_sym</b></code></a></dt><p class="pad"></p>
+
+<dd>Gets a symbol from the current unit&#39;s symbol table.</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*__find_sym"
+><b><code lang='und' xml:lang='und'>SymReg *_find_sym</b></code></a></dt><p class="pad"></p>
+
+<dd>Find a symbol hash or ghash (internal use only);</dd><p class="pad"></p>
+
+<dt><a name="SymReg_*_find_sym"
+><b><code lang='und' xml:lang='und'>SymReg *find_sym</b></code></a></dt><p class="pad"></p>
+
+<dd>Finds a symbol hash or ghash in the current unit, if it exists. Otherwise returns NULL.</dd><p class="pad"></p>
+
+<dt><a name="void_clear_sym_hash"
+><b><code lang='und' xml:lang='und'>void clear_sym_hash</b></code></a></dt><p class="pad"></p>
+
+<dd>Frees all memory of the symbols in the specified hash table.</dd><p class="pad"></p>
+
+<dt><a name="void_debug_dump_sym_hash"
+><b><code lang='und' xml:lang='und'>void debug_dump_sym_hash</b></code></a></dt><p class="pad"></p>
+
+<dd>Prints all identifiers in the specified hash table to stderr.</dd><p class="pad"></p>
+
+<dt><a name="void_clear_locals"
+><b><code lang='und' xml:lang='und'>void clear_locals</b></code></a></dt><p class="pad"></p>
+
+<dd>Deletes all local symbols and clears life info from the given IMC_Unit.</dd><p class="pad"></p>
+
+<dt><a name="void_clear_globals"
+><b><code lang='und' xml:lang='und'>void clear_globals</b></code></a></dt><p class="pad"></p>
+
+<dd>Clears global symbols.</dd><p class="pad"></p>
+
+<dt><a name="unsigned_int_hash_str"
+><b><code lang='und' xml:lang='und'>unsigned int hash_str</b></code></a></dt><p class="pad"></p>
+
+<dd>Computes the hash value for the string argument.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

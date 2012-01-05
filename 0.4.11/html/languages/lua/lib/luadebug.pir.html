@@ -1,0 +1,254 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Lua Debug Library</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Lua Debug Library</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/lua.html">Lua</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>lib/luadebug.pir &#45; Lua Debug Library</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This library provides the functionality of the debug interface to Lua programs.
+You should exert care when using this library.
+The functions provided here should be used exclusively for debugging and similar tasks,
+such as profiling.
+Please resist the temptation to use them as a usual programming tool: They can be very slow.
+Moreover,
+several of its functions violate some assumptions about Lua code (e.g.,
+that variables local to a function cannot be accessed from outside or that userdata metatables cannot be changed by Lua code) and therefore can compromise otherwise secure code.</p>
+
+<p>All functions in this library are provided inside the <code lang='und' xml:lang='und'>debug</code> table.</p>
+
+<p>See &#34;Lua 5.1 Reference Manual&#34;,
+section 5.9 &#34;The Debug Library&#34;.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="debug.debug_()"
+><b><code lang='und' xml:lang='und'>debug.debug ()</b></code></a></dt><p class="pad"></p>
+
+<dd>Enters an interactive mode with the user,
+running each string that the user enters.
+Using simple commands and other debug facilities,
+the user can inspect global and local variables,
+change their values,
+evaluate expressions,
+and so on.
+A line containing only the word <code lang='und' xml:lang='und'>cont</code> finishes this function,
+so that the caller continues its execution.</dd><p class="pad"></p>
+
+<dd>Note that commands for <code lang='und' xml:lang='und'>debug.debug</code> are not lexically nested within any function,
+and so have no direct access to local variables.</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+
+<dt><a name="debug.getfenv_(o)"
+><b><code lang='und' xml:lang='und'>debug.getfenv (o)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the environment of object <code lang='und' xml:lang='und'>o</code>.</dd><p class="pad"></p>
+
+<dt><a name="debug.gethook_()"
+><b><code lang='und' xml:lang='und'>debug.gethook ()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the current hook settings,
+as three values: the current hook function,
+the current hook mask,
+and the current hook count (as set by the <code lang='und' xml:lang='und'>debug.sethook</code> function).</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+
+<dt><a name="debug.getinfo_(function_[,_what])"
+><b><code lang='und' xml:lang='und'>debug.getinfo (function [, what])</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a table with information about a function.
+You can give the function directly,
+or you can give a number as the value of <code lang='und' xml:lang='und'>function</code>,
+which means the function running at level <code lang='und' xml:lang='und'>function</code> of the call stack: Level 0 is the current function (<code lang='und' xml:lang='und'>getinfo</code> itself); level 1 is the function that called <code lang='und' xml:lang='und'>getinfo</code>; and so on.
+If <code lang='und' xml:lang='und'>function</code> is a number larger than the number of active functions,
+then <code lang='und' xml:lang='und'>getinfo</code> returns <b>nil</b>.</dd><p class="pad"></p>
+
+<dd>The returned table contains all the fields returned by <code lang='und' xml:lang='und'>lua_getinfo</code>,
+with the string <code lang='und' xml:lang='und'>what</code> describing which fields to fill in.
+The default for <code lang='und' xml:lang='und'>what</code> is to get all information available.
+If present,
+the option `<code lang='und' xml:lang='und'>f</code>&#180; adds a field named <code lang='und' xml:lang='und'>func</code> with the function itself.</dd><p class="pad"></p>
+
+<dd>For instance,
+the expression <code lang='und' xml:lang='und'>debug.getinfo(1,&#34;n&#34;).name</code> returns a name of the current function,
+if a reasonable name can be found,
+and <code lang='und' xml:lang='und'>debug.getinfo(print)</code> returns a table with all available information about the <code lang='und' xml:lang='und'>print</code> function.</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+
+<dt><a name="debug.getlocal_(level,_local)"
+><b><code lang='und' xml:lang='und'>debug.getlocal (level, local)</b></code></a></dt><p class="pad"></p>
+
+<dd>This function returns the name and the value of the local variable with index <code lang='und' xml:lang='und'>local</code> of the function at level <code lang='und' xml:lang='und'>level</code> of the stack.
+(The first parameter or local variable has index 1,
+and so on,
+until the last active local variable.) The function returns <b>nil</b> if there is no local variable with the given index,
+and raises an error when called with a <code lang='und' xml:lang='und'>level</code> out of range.
+(You can call <code lang='und' xml:lang='und'>debug.getinfo</code> to check whether the level is valid.)</dd><p class="pad"></p>
+
+<dd>Variable names starting with `<code lang='und' xml:lang='und'>(</code>&#180; (open parentheses) represent internal variables (loop control variables,
+temporaries,
+and C function locals).</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+
+<dt><a name="debug.getmetatable_(object)"
+><b><code lang='und' xml:lang='und'>debug.getmetatable (object)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the metatable of the given <code lang='und' xml:lang='und'>object</code> or <b>nil</b> if it does not have a metatable.</dd><p class="pad"></p>
+
+<dt><a name="debug.getregistry_()"
+><b><code lang='und' xml:lang='und'>debug.getregistry ()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the registry table.</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+
+<dt><a name="debug.getupvalue_(func,_up)"
+><b><code lang='und' xml:lang='und'>debug.getupvalue (func, up)</b></code></a></dt><p class="pad"></p>
+
+<dd>This function returns the name and the value of the upvalue with index <code lang='und' xml:lang='und'>up</code> of the function <code lang='und' xml:lang='und'>func</code>.
+The function returns <b>nil</b> if there is no upvalue with the given index.</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+
+<dt><a name="debug.setfenv_(object,_table)"
+><b><code lang='und' xml:lang='und'>debug.setfenv (object, table)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the environment of the given <code lang='und' xml:lang='und'>object</code> to the given <code lang='und' xml:lang='und'>table</code>.</dd><p class="pad"></p>
+
+<dt><a name="debug.sethook_(hook,_mask_[,_count])"
+><b><code lang='und' xml:lang='und'>debug.sethook (hook, mask [, count])</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the given function as a hook.
+The string <code lang='und' xml:lang='und'>mask</code> and the number <code lang='und' xml:lang='und'>count</code> describe when the hook will be called.
+The string mask may have the following characters,
+with the given meaning:</dd><p class="pad"></p>
+
+<dl>
+<dt><a name="&#34;c&#34;"
+><b><code lang='und' xml:lang='und'>&#34;c&#34;</b></code></a></dt><p class="pad"></p>
+
+<dd>The hook is called every time Lua calls a function;</dd><p class="pad"></p>
+
+<dt><a name="&#34;r&#34;"
+><b><code lang='und' xml:lang='und'>&#34;r&#34;</b></code></a></dt><p class="pad"></p>
+
+<dd>The hook is called every time Lua returns from a function;</dd><p class="pad"></p>
+
+<dt><a name="&#34;l&#34;"
+><b><code lang='und' xml:lang='und'>&#34;l&#34;</b></code></a></dt><p class="pad"></p>
+
+<dd>The hook is called every time Lua enters a new line of code.</dd><p class="pad"></p>
+</dl>
+
+<dd>With a <code lang='und' xml:lang='und'>count</code> different from zero,
+the hook is called after every <code lang='und' xml:lang='und'>count</code> instructions.</dd><p class="pad"></p>
+
+<dd>When called without arguments,
+<code lang='und' xml:lang='und'>debug.sethook</code> turns off the hook.</dd><p class="pad"></p>
+
+<dd>When the hook is called,
+its first parameter is a string describing the event that has triggered its call: <code lang='und' xml:lang='und'>&#34;call&#34;</code>,
+<code lang='und' xml:lang='und'>&#34;return&#34;</code> (or <code lang='und' xml:lang='und'>&#34;tail return&#34;</code>),
+<code lang='und' xml:lang='und'>&#34;line&#34;</code>,
+and <code lang='und' xml:lang='und'>&#34;count&#34;</code>.
+For line events,
+the hook also gets the new line number as its second parameter.
+Inside a hook,
+you can call <code lang='und' xml:lang='und'>getinfo</code> with level 2 to get more information about the running function (level 0 is the <code lang='und' xml:lang='und'>getinfo</code> function,
+and level 1 is the hook function),
+unless the event is <code lang='und' xml:lang='und'>&#34;tail return&#34;</code>.
+In this case,
+Lua is only simulating the return,
+and a call to <code lang='und' xml:lang='und'>getinfo</code> will return invalid data.</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+
+<dt><a name="debug.setlocal_(level,_local,_value)"
+><b><code lang='und' xml:lang='und'>debug.setlocal (level, local, value)</b></code></a></dt><p class="pad"></p>
+
+<dd>This function assigns the value <code lang='und' xml:lang='und'>value</code> to the local variable with index <code lang='und' xml:lang='und'>local</code> of the function at level <code lang='und' xml:lang='und'>level</code> of the stack.
+The function returns <b>nil</b> if there is no local variable with the given index,
+and raises an error when called with a <code lang='und' xml:lang='und'>level</code> out of range.
+(You can call <code lang='und' xml:lang='und'>getinfo</code> to check whether the level is valid.) Otherwise,
+it returns the name of the local variable.</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+
+<dt><a name="debug.setmetatable_(object,_table)"
+><b><code lang='und' xml:lang='und'>debug.setmetatable (object, table)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the metatable for the given <code lang='und' xml:lang='und'>object</code> to the given <code lang='und' xml:lang='und'>table</code> (which can be <b>nil</b>).</dd><p class="pad"></p>
+
+<dt><a name="debug.setupvalue_(func,_up,_value)"
+><b><code lang='und' xml:lang='und'>debug.setupvalue (func, up, value)</b></code></a></dt><p class="pad"></p>
+
+<dd>This function assigns the value <code lang='und' xml:lang='und'>value</code> to the upvalue with index <code lang='und' xml:lang='und'>up</code> of the function <code lang='und' xml:lang='und'>func</code>.
+The function returns <b>nil</b> if there is no upvalue with the given index.
+Otherwise,
+it returns the name of the upvalue.</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+
+<dt><a name="debug.traceback_([message])"
+><b><code lang='und' xml:lang='und'>debug.traceback ([message])</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a string with a traceback of the call stack.
+An optional <code lang='und' xml:lang='und'>message</code> string is appended at the beginning of the traceback.
+This function is typically used with <code lang='und' xml:lang='und'>xpcall</code> to produce better error messages.</dd><p class="pad"></p>
+
+<dd>NOT YET IMPLEMENTED.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="AUTHORS"
+>AUTHORS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Francois Perrad</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

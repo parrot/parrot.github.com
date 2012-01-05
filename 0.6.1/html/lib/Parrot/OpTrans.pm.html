@@ -1,0 +1,229 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Transform Ops to C Code</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Transform Ops to C Code</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/perl.html">Perl Modules</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Parrot::OpTrans &#45; Transform Ops to C Code</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><code lang='und' xml:lang='und'>Parrot::OpTrans</code> is the abstract superclass for the Parrot op to C transforms.
+Each transform contains various bits of information needed to generate the C code,
+and creates a different type of run loop.
+The methods defined here supply various default values and behaviour common to all transforms.</p>
+
+<p>The subclass hierarchy is as follows:</p>
+
+<pre lang='und' xml:lang='und'>    OpTrans
+       |_________________________
+       |           |             |
+       C         CGoto       Compiled
+       |           |
+    CPrederef      |
+       | |         |
+       | |_________|
+       |           |
+    CSwitch       CGP</pre>
+
+<h2><a name="Class_Methods"
+>Class Methods <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="new()"
+><b><code lang='und' xml:lang='und'>new()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new instance.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Instance_Methods"
+>Instance Methods <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="prefix()"
+><b><code lang='und' xml:lang='und'>prefix()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the default &#39;<code lang='und' xml:lang='und'>Parrot_</code>&#39; prefix.</dd><p class="pad"></p>
+
+<dd>Used by <code lang='und' xml:lang='und'><a href='Op.pm.html'>Parrot::Op</a></code>&#39;s <code lang='und' xml:lang='und'>func_name()</code> to individuate op function names.</dd><p class="pad"></p>
+
+<dt><a name="suffix()"
+><b><code lang='und' xml:lang='und'>suffix()</b></code></a></dt><p class="pad"></p>
+
+<dd>Implemented in subclasses to return a suffix with which to individuate variable names. This default implementation returns an empty string.</dd><p class="pad"></p>
+
+<dt><a name="defines()"
+><b><code lang='und' xml:lang='und'>defines()</b></code></a></dt><p class="pad"></p>
+
+<dd>Implemented in subclasses to return the C <code lang='und' xml:lang='und'>#define</code> macros required.</dd><p class="pad"></p>
+
+<dt><a name="opsarraytype()"
+><b><code lang='und' xml:lang='und'>opsarraytype()</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the type for the array of opcodes. By default here it&#39;s an array <code lang='und' xml:lang='und'>opcode_t</code>, but the prederef runops core uses an array of <code lang='und' xml:lang='und'>void*</code> to do its clever tricks.</dd><p class="pad"></p>
+
+<dt><a name="core_type()"
+><b><code lang='und' xml:lang='und'>core_type()</b></code></a></dt><p class="pad"></p>
+
+<dd>Implemented in subclasses to return the type of core created by the transform. This default implementation raises an exception indicating that the core type is missing. See the <code lang='und' xml:lang='und'>Parrot_Run_core_t</code> <code lang='und' xml:lang='und'>enum</code> in <em lang='und' xml:lang='und'>include/parrot/interpreter.h</em> for a list of the core types.</dd><p class="pad"></p>
+
+<dt><a name="core_prefix()"
+><b><code lang='und' xml:lang='und'>core_prefix()</b></code></a></dt><p class="pad"></p>
+
+<dd>Implemented in subclasses to return a short prefix indicating the core type used to individuate core function names.</dd><p class="pad"></p>
+
+<dt><a name="run_core_func_decl($base)"
+><b><code lang='und' xml:lang='und'>run_core_func_decl($base)</b></code></a></dt><p class="pad"></p>
+
+<dd>Optionally implemented in subclasses to return the C code for the run core function declaration. <code lang='und' xml:lang='und'>$base</code> is the name of the main ops file minus the .ops extension.</dd><p class="pad"></p>
+
+<dt><a name="ops_addr_decl($base_suffix)"
+><b><code lang='und' xml:lang='und'>ops_addr_decl($base_suffix)</b></code></a></dt><p class="pad"></p>
+
+<dd>Optionally implemented in subclasses to return the C code for the ops address declaration. <code lang='und' xml:lang='und'>$base_suffix</code> is the name of the main ops file minus the .ops extension with <code lang='und' xml:lang='und'>suffix()</code> and an underscore appended.</dd><p class="pad"></p>
+
+<dt><a name="run_core_func_decl($base)"
+><b><code lang='und' xml:lang='und'>run_core_func_decl($base)</b></code></a></dt><p class="pad"></p>
+
+<dd>Optionally implemented in subclasses to return the C code for the run core function declaration. <code lang='und' xml:lang='und'>$base</code> is the same as for <code lang='und' xml:lang='und'>run_core_func_decl()</code>.</dd><p class="pad"></p>
+
+<dt><a name="run_core_func_start()"
+><b><code lang='und' xml:lang='und'>run_core_func_start()</b></code></a></dt><p class="pad"></p>
+
+<dd>Implemented in subclasses, if <code lang='und' xml:lang='und'>run_core_func_decl()</code> is implemented, to return the C code prior to the run core function.</dd><p class="pad"></p>
+
+<dt><a name="run_core_after_addr_table($base_suffix)"
+><b><code lang='und' xml:lang='und'>run_core_after_addr_table($base_suffix)</b></code></a></dt><p class="pad"></p>
+
+<dd>Optionally implemented in subclasses to return the run core C code for section after the address table. <code lang='und' xml:lang='und'>$base_suffix</code> is the same as for <code lang='und' xml:lang='und'>ops_addr_decl()</code>.</dd><p class="pad"></p>
+
+<dt><a name="run_core_finish($base)"
+><b><code lang='und' xml:lang='und'>run_core_finish($base)</b></code></a></dt><p class="pad"></p>
+
+<dd>Implemented in subclasses to return the C code following the run core function. <code lang='und' xml:lang='und'>$base</code> is the same as for <code lang='und' xml:lang='und'>run_core_func_decl()</code>.</dd><p class="pad"></p>
+
+<dt><a name="init_func_init1($base)"
+><b><code lang='und' xml:lang='und'>init_func_init1($base)</b></code></a></dt><p class="pad"></p>
+
+<dd>Optionally implemented in subclasses to return the C code for the core&#39;s init function. <code lang='und' xml:lang='und'>$base</code> is the same as for <code lang='und' xml:lang='und'>run_core_func_decl()</code>.</dd><p class="pad"></p>
+
+<dt><a name="init_set_dispatch($base_suffix)"
+><b><code lang='und' xml:lang='und'>init_set_dispatch($base_suffix)</b></code></a></dt><p class="pad"></p>
+
+<dd>Optionally implemented in subclasses to return the C code for initializing the dispatch mechanism within the core&#39;s init function. <code lang='und' xml:lang='und'>$base_suffix</code> is the same as for <code lang='und' xml:lang='und'>ops_addr_decl()</code>.</dd><p class="pad"></p>
+</dl>
+
+<p><b>Macro Substitutions</b></p>
+
+<p>The following methods are called by <code lang='und' xml:lang='und'>Parrot::OpFile</code> to perform ops file macro substitutions.</p>
+
+<dl>
+<dt><a name="access_arg($type,_$value,_$op)"
+><b><code lang='und' xml:lang='und'>access_arg($type, $value, $op)</b></code></a></dt><p class="pad"></p>
+
+<dd>Implemented in subclasses to return the C code for the specified op argument type and value. <code lang='und' xml:lang='und'>$op</code> is an instance of <code lang='und' xml:lang='und'><a href='Op.pm.html'>Parrot::Op</a></code>.</dd><p class="pad"></p>
+
+<dt><a name="gen_goto($where)"
+><b><code lang='und' xml:lang='und'>gen_goto($where)</b></code></a></dt><p class="pad"></p>
+
+<dd>The various <code lang='und' xml:lang='und'>goto_<i>X</i></code> methods below call this method with the return value of an <code lang='und' xml:lang='und'>expr_<i>X</i></code> method (implemented in subclass).</dd><p class="pad"></p>
+
+<dt><a name="restart_address($address)"
+><b><code lang='und' xml:lang='und'>restart_address($address)</b></code></a></dt><p class="pad"></p>
+
+<dd>Implemented in subclasses to return the C code for <code lang='und' xml:lang='und'>restart ADDRESS($address)</code>.</dd><p class="pad"></p>
+
+<dt><a name="restart_offset($offset)"
+><b><code lang='und' xml:lang='und'>restart_offset($offset)</b></code></a></dt><p class="pad"></p>
+
+<dd>Implemented in subclasses to return the C code for <code lang='und' xml:lang='und'>restart OFFSET($offset)</code>.</dd><p class="pad"></p>
+
+<dt><a name="goto_address($address)"
+><b><code lang='und' xml:lang='und'>goto_address($address)</b></code></a></dt><p class="pad"></p>
+
+<dd>Transforms the <code lang='und' xml:lang='und'>goto ADDRESS($address)</code> macro in an ops file into the relevant C code.</dd><p class="pad"></p>
+
+<dt><a name="goto_offset($offset)"
+><b><code lang='und' xml:lang='und'>goto_offset($offset)</b></code></a></dt><p class="pad"></p>
+
+<dd>Transforms the <code lang='und' xml:lang='und'>goto OFFSET($offset)</code> macro in an ops file into the relevant C code.</dd><p class="pad"></p>
+
+<dt><a name="goto_pop()"
+><b><code lang='und' xml:lang='und'>goto_pop()</b></code></a></dt><p class="pad"></p>
+
+<dd>Transforms the <code lang='und' xml:lang='und'>goto POP($address)</code> macro in an ops file into the relevant C code.</dd><p class="pad"></p>
+
+<dt><a name="expr_offset($offset)"
+><b><code lang='und' xml:lang='und'>expr_offset($offset)</b></code></a></dt><p class="pad"></p>
+
+<dd>Implemented in subclasses to return the C code for <code lang='und' xml:lang='und'>OFFSET($offset)</code>. Called by <code lang='und' xml:lang='und'>goto_offset()</code>.</dd><p class="pad"></p>
+
+<dt><a name="expr_address($address)"
+><b><code lang='und' xml:lang='und'>expr_address($address)</b></code></a></dt><p class="pad"></p>
+
+<dd>Implemented in subclasses to return the C code for <code lang='und' xml:lang='und'>ADDRESS($address)</code>. Called by <code lang='und' xml:lang='und'>goto_address()</code>.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="Parrot::OpTrans::C"
+><b><code lang='und' xml:lang='und'><a href='OpTrans/C.pm.html'>Parrot::OpTrans::C</a></b></code></a></dt><p class="pad"></p>
+
+<dt><a name="Parrot::OpTrans::CGP"
+><b><code lang='und' xml:lang='und'><a href='OpTrans/CGP.pm.html'>Parrot::OpTrans::CGP</a></b></code></a></dt><p class="pad"></p>
+
+<dt><a name="Parrot::OpTrans::CGoto"
+><b><code lang='und' xml:lang='und'><a href='OpTrans/CGoto.pm.html'>Parrot::OpTrans::CGoto</a></b></code></a></dt><p class="pad"></p>
+
+<dt><a name="Parrot::OpTrans::CPrederef"
+><b><code lang='und' xml:lang='und'><a href='OpTrans/CPrederef.pm.html'>Parrot::OpTrans::CPrederef</a></b></code></a></dt><p class="pad"></p>
+
+<dt><a name="Parrot::OpTrans::CSwitch"
+><b><code lang='und' xml:lang='und'><a href='OpTrans/CSwitch.pm.html'>Parrot::OpTrans::CSwitch</a></b></code></a></dt><p class="pad"></p>
+
+<dt><a name="Parrot::OpTrans::Compiled"
+><b><code lang='und' xml:lang='und'><a href='OpTrans/Compiled.pm.html'>Parrot::OpTrans::Compiled</a></b></code></a></dt><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

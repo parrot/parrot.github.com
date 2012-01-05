@@ -1,0 +1,793 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Subroutines</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; Subroutines
+                </div>
+
+<h1><a name="Subroutines"
+>Subroutines</a></h1>
+
+<p><!--
+	INDEX: subroutines
+--> Subroutines in PIR are roughly equivalent to the subroutines or methods of a high&#45;level language.
+They&#39;re the most basic building block of code reuse in PIR.
+Each high&#45;level language has different syntax and semantics for defining and calling subroutines,
+so Parrot&#39;s subroutines need to be flexible enough to handle a broad array of behaviors.</p>
+
+<p>A subroutine declaration starts with the <code>.sub</code><!--
+	INDEX: .sub directive
+--> directive and ends with the <code>.end</code><!--
+	INDEX: .end directive
+--> directive.
+This example defines a subroutine named <code>hello</code> that prints a string &#34;Hello,
+Polly.&#34;:</p>
+<pre>  .sub 'hello'
+      say "Hello, Polly."
+  .end
+</pre>
+<p>The quotes around the subroutine name are optional as long as the name of the subroutine uses only plain alphanumeric ASCII characters.
+You must use quotes if the subroutine name uses Unicode characters,
+characters from some other character set or encoding,
+or is otherwise an invalid PIR identifier.</p>
+
+<p>A subroutine call consists of the name of the subroutine to call followed by a list of (zero or more) arguments in parentheses.
+You may precede the call with a list of (zero or more) return values.
+This example calls the subroutine <code>fact</code> with two arguments and assigns the result to <code>$I0</code>:</p>
+
+<pre>  $I0 = &#39;fact&#39;(count, product)</pre>
+
+<h2><a name="Modifiers"
+>Modifiers</a></h2>
+
+<p><!--
+	INDEX: modifiers
+--> <!--
+	INDEX: subroutines; modifiers
+--> A modifier is an annotation to a basic subroutine declarationor parameter declaration that selects an optional feature. Modifiers all start with a colon (<code>:</code>). A subroutine can have multiple modifiers.</p>
+
+<p>When you execute a PIR file as a program, Parrot normally runs the first subroutine it encounters, but you can mark any subroutine as the first one to run with the <code>:main</code><!--
+	INDEX: :main subroutine modifier
+--> modifier:</p>
+<pre>  .sub 'first'
+      say "Polly want a cracker?"
+  .end
+
+  .sub 'second' :main
+      say "Hello, Polly."
+  .end
+</pre>
+<p>This code prints &#34;Hello, Polly.&#34; but not &#34;Polly want a cracker?&#34;. The <code>first</code> subroutine is first in the source code, but <code>second</code> has the <code>:main</code> modifier. Parrot will never call <code>first</code> in this program. If you remove the <code>:main</code> modifier, the code will print &#34;Polly want a cracker?&#34; instead.</p>
+
+<p>The <code>:load</code><!--
+	INDEX: :load subroutine modifier
+--> modifier tells Parrot to run the subroutine when it loads the current file as a library. The <code>:init</code><!--
+	INDEX: :init subroutine modifier
+--> modifier tells Parrot to run the subroutine only when it executes the file as a program (and <i>not</i> as a library). The <code>:immediate</code><!--
+	INDEX: :immediate subroutine modifier
+--> modifier tells Parrot to run the subroutine as soon as it gets compiled. The <code>:postcomp</code><!--
+	INDEX: :postcomp subroutine modifier
+--> modifier also runs the subroutine right after compilation, but only if the subroutine was declared in the main program file (when <i>not</i> loaded as a library).</p>
+
+<p>By default, Parrot stores all subroutines in the namespace currently active at the point of their declaration. The <code>:anon</code><!--
+	INDEX: :anon subroutine modifier
+--> modifier tells Parrot not to store the subroutine in the namespace. The <code>:nsentry</code><!--
+	INDEX: :nsentry subroutine modifier
+--> modifier stores the subroutine in the currenly active namespace with a different name. For example, Parrot will store this subroutine in the current namespace as <code>bar</code>, not <code>foo</code>:</p>
+<pre>  .sub 'foo' :nsentry('bar')
+    #...
+  .end
+</pre>
+<p>Chapter 7 on <i>&#34;Classes and Objects&#34;</i> explains other subroutine modifiers.</p>
+
+<h2><a name="Parameters_and_Arguments"
+>Parameters and Arguments</a></h2>
+
+<p><!--
+	INDEX: subroutines; parameters
+--> <!--
+	INDEX: .param directive
+--> The <code>.param</code> directive defines the parameters for the subroutine and creates local named variables for them (similar to <code>.local</code>):</p>
+<pre>  .param int c
+</pre>
+<p><!--
+	INDEX: .return directive
+--> The <code>.return</code> directive returns control flow to the calling subroutine. To return results, pass them as arguments to <code>.return</code>.</p>
+<pre>  .return($P0)
+</pre>
+<p>This example implements the factorial algorithm using two subroutines, <code>main</code> and <code>fact</code>:</p>
+<pre>  # factorial.pir
+  .sub 'main' :main
+     .local int count
+     .local int product
+     count   = 5
+     product = 1
+
+     $I0 = 'fact'(count, product)
+
+     say $I0
+  .end
+
+  .sub 'fact'
+     .param int c
+     .param int p
+
+  loop:
+     if c <= 1 goto fin
+     p = c * p
+     dec c
+     branch loop
+  fin:
+     .return (p)
+  .end
+</pre>
+<p>This example defines two local named variables, <code>count</code> and <code>product</code>, and assigns them the values 1 and 5. It calls the <code>fact</code> subroutine with both variables as arguments. The <code>fact</code> subroutine uses the <code>.param</code> directive to retrieve these parameters and the <code>.return</code> directive to return the result. The final printed result is 120.</p>
+
+<h3><a name="Positional_Parameters"
+>Positional Parameters</a></h3>
+
+<p><!--
+	INDEX: positional parameters
+--> The default way of matching the arguments passed in a subroutine call to the parameters defined in the subroutine&#39;s declaration is by position. If you declare three parameters &#45;&#45; an integer, a number, and a string:</p>
+<pre>  .sub 'foo'
+    .param int a
+    .param num b
+    .param string c
+    # ...
+  .end
+</pre>
+<p>... then calls to this subroutine must also pass three arguments &#45;&#45; an integer, a number, and a string:</p>
+<pre>  'foo'(32, 5.9, "bar")
+</pre>
+<p>Parrot will assign each argument to the corresponding parameter in order from first to last. Changing the order of the arguments or leaving one out is an error.</p>
+
+<h3><a name="Named_Parameters"
+>Named Parameters</a></h3>
+
+<p><!--
+	INDEX: named parameters
+--> Named parameters are an alternative to positional parameters. Instead of passing parameters by their position in the string, Parrot assigns arguments to parameters by their name. Consequently you may pass named parameters in any order. Declare named parameters with with the <code>:named</code><!--
+	INDEX: :named parameter modifier
+--> modifier.</p>
+
+<p>This example declares two named parameters in the subroutine <code>shoutout</code> &#45;&#45; <code>name</code> and <code>years</code> &#45;&#45; each declared with the <code>:named</code> modifier and followed by the name to use when pass arguments. The string name can match the parameter name (as with the <code>name</code> parameter), but it can also be different (as with the <code>years</code> parameter):</p>
+<pre> .sub 'shoutout'
+    .param string name :named("name")
+    .param string years :named("age")
+    $S0  = "Hello " . name
+    $S1  = "You are " . years
+    $S1 .= " years old"
+    say $S0
+    say $S1
+ .end
+</pre>
+<p>Pass named arguments to a subroutine as a series of name/value pairs, with the elements of each pair separated by an arrow <code>=&#62;</code>.</p>
+<pre> .sub 'main' :main
+    'shoutout'("age" => 42, "name" => "Bob")
+ .end
+</pre>
+<p>The order of the arguments does not matter:</p>
+<pre> .sub 'main' :main
+    'shoutout'("name" => "Bob", "age" => 42)
+ .end
+</pre>
+<h3><a name="Optional_Parameters"
+>Optional Parameters</a></h3>
+
+<p><!--
+	INDEX: optional parameters
+--> Another alternative to the required positional parameters is optional parameters. Some parameters are unnecessary for certain calls. Parameters marked with the <code>:optional</code><!--
+	INDEX: :optional parameter modifier
+--> modifier do not produce errors about invalid parameter counts if they are not present. A subroutine with optional parameters should gracefully handle the missing argument, either by providing a default value or by performing an alternate action that doesn&#39;t need that value.</p>
+
+<p>Checking the value of the optional parameter isn&#39;t enough to know whether the call passed such an argument, because the user might have passed a null or false value intentionally. PIR also provides an <code>:opt_flag</code><!--
+	INDEX: :opt_flag parameter modifier
+--> modifier for a boolean check whether the caller passed an argument:</p>
+<pre>  .param string name     :optional
+  .param int    has_name :opt_flag
+</pre>
+<p>When an integer parameter with the <code>:opt_flag</code> modifier immediately follows an <code>:optional</code> parameter, it will be true if the caller passed the argument and false otherwise.</p>
+
+<p>This example demonstrates how to provide a default value for an optional parameter:</p>
+<pre>    .param string name     :optional
+    .param int    has_name :opt_flag
+
+    if has_name goto we_have_a_name
+    name = "default value"
+  we_have_a_name:
+</pre>
+<p>When the <code>has_name</code> parameter is true, the <code>if</code> control statement jumps to the <code>we_have_a_name</code> label, leaving the <code>name</code> parameter unmodified. When <code>has_name</code> is false (when the caller passed no argument for <code>name</code>) the <code>if</code> statement does nothing. The next line sets the <code>name</code> parameter to a default value.</p>
+
+<p>The <code>:opt_flag</code> parameter never takes an argument from the passed&#45;in argument list. It&#39;s purely for bookkeeping within the subroutine.</p>
+
+<p>Optional parameters can be positional or named parameters. Optional parameters must appear at the end of the list of positional parameters after all the required parameters. An optional parameter must immediately precede its <code>:opt_flag</code> parameter whether it&#39;s named or positional:</p>
+<pre>  .sub 'question'
+    .param int value     :named("answer") :optional
+    .param int has_value :opt_flag
+    #...
+  .end
+</pre>
+<p>You can call this subroutine with a named argument or with no argument:</p>
+<pre>  'question'("answer" => 42)
+  'question'()
+</pre>
+<h3><a name="Aggregating_Parameters"
+>Aggregating Parameters</a></h3>
+
+<p><!--
+	INDEX: aggregating parameters
+--> <!--
+	INDEX: :slurpy parameter modifier
+--> Another alternative to a sequence of positional parameters is an aggregating parameter which bundles a list of arguments into a single parameter. The <code>:slurpy</code> modifier creates a single array parameter containing all the provided arguments:</p>
+<pre>  .param pmc args :slurpy
+  $P0 = args[0]           # first argument
+  $P1 = args[1]           # second argument
+</pre>
+<p>As an aggregating parameter will consume all subsequent parameters, you may use an aggregating parameter with other positional parameters only after all other positional parameters:</p>
+<pre>  .param string first
+  .param int second
+  .param pmc the_rest :slurpy
+
+  $P0 = the_rest[0]           # third argument
+  $P1 = the_rest[1]           # fourth argument
+</pre>
+<p>When you combine <code>:named</code> and <code>:slurpy</code> on a parameter, the result is a single associative array containing the named arguments passed into the subroutine call:</p>
+<pre>  .param pmc all_named :slurpy :named
+
+  $P0 = all_named['name']             # 'name' => 'Bob'
+  $P1 = all_named['age']              # 'age'  => 42
+</pre>
+<h3><a name="Flattening_Arguments"
+>Flattening Arguments</a></h3>
+
+<p><!--
+	INDEX: flattening arguments
+--> <!--
+	INDEX: :flat argument modifier
+--> A flattening argument breaks up a single argument to fill multiple parameters. It&#39;s the complement of an aggregating parameter. The <code>:flat</code> modifier splits arguments (and return values) into a flattened list. Passing an array PMC to a subroutine with <code>:flat</code>:</p>
+<pre>  $P0 = new "ResizablePMCArray"
+  $P0[0] = "Bob"
+  $P0[1] = 42
+  'foo'($P0 :flat)
+</pre>
+<p>... allows the elements of that array to fill the required parameters:</p>
+<pre>  .param string name  # Bob
+  .param int age      # 42
+</pre>
+<h3><a name="Arguments_on_the_Command_Line"
+>Arguments on the Command Line</a></h3>
+
+<p><!--
+	INDEX: command&#45;line arguments
+--></p>
+
+<p>Arguments passed to a PIR program on the command line are available to the <code>:main</code> subroutine of that program as strings in a <code>ResizableStringArray</code> PMC. If you call a program <em>args.pir</em>, passing it three arguments:</p>
+
+<pre>  $ parrot args.pir foo bar baz</pre>
+
+<p>... they will be accessible at index 1, 2, and 3 of the PMC parameter.Index 0 is unused.</p>
+<pre>  .sub 'main' :main
+    .param pmc all_args
+    $S1 = all_args[1]   # foo
+    $S2 = all_args[2]   # bar
+    $S3 = all_args[3]   # baz
+    # ...
+  .end
+</pre>
+<p>Because <code>all_args</code> is a <code>ResizableStringArray</code> PMC, you can loop over the results, access them individually, or even modify them.</p>
+
+<h2><a name="Compiling_and_Loading_Libraries"
+>Compiling and Loading Libraries</a></h2>
+
+<p><!--
+	INDEX: libraries
+--> In addition to running PIR files on the command&#45;line, you can also load a library of pre&#45;compiled bytecode directly into your PIR source file. The <code>load_bytecode</code><!--
+	INDEX: load_bytecode opcode
+--> opcode takes a single argument: the name of the bytecode file to load. If you create a file named <em>foo_file.pir</em> containing a single subroutine:</p>
+<pre>  # foo_file.pir
+  .sub 'foo_sub'              # .sub stores a global sub
+     say "in foo_sub"
+  .end
+</pre>
+<p>... and compile it to bytecode using the <code>&#45;o</code> command&#45;line switch<!--
+	INDEX: &#45;o command&#45;line switch
+-->:</p>
+
+<pre>  $ parrot &#45;o foo_file.pbc foo_file.pir</pre>
+
+<p>... you can then load the compiled bytecode into <em>main.pir</em> and directly call the subroutine defined in <em>foo_file.pir</em>:</p>
+<pre>  # main.pir
+  .sub 'main' :main
+    load_bytecode "foo_file.pbc"    # compiled foo_file.pir
+    foo_sub()
+  .end
+</pre>
+<p>The <code>load_bytecode</code> opcode also works with source files, as long as Parrot has a compiler registered for that type of file:</p>
+<pre>  # main2.pir
+  .sub 'main' :main
+    load_bytecode "foo_file.pir"  # PIR source code
+    foo_sub()
+  .end
+</pre>
+<h2><a name="Sub_PMC"
+>Sub PMC</a></h2>
+
+<p><!--
+	INDEX: Sub PMC
+--> Subroutines are a PMC type in Parrot. You can store them in PMC registers and manipulate them just as you do with other PMCs. Parrot stores subroutines in namespaces; retrieve them with the <code>get_global</code><!--
+	INDEX: get_global opcode
+--> opcode:</p>
+<pre>  $P0 = get_global "my_sub"
+</pre>
+<p>To find a subroutine in a different namespace, first look up the appropriate the namespace object, then use that as the first parameter to <code>get_global</code>:</p>
+<pre>  $P0 = get_namespace ["My";"Namespace"]
+  $P1 = get_global $P0, "my_sub"
+</pre>
+<p>You can invoke a Sub object directly:</p>
+<pre>  $P0(1, 2, 3)
+</pre>
+<p>You can get or even <i>change</i> its name:</p>
+<pre>  $S0 = $P0               # Get the current name
+  $P0 = "my_new_sub"      # Set a new name
+</pre>
+<p><!--
+	INDEX: inspect opcode
+--> You can get a hash of the complete metadata for the subroutine:</p>
+<pre>  $P1 = inspect $P0
+</pre>
+<p>... which contains the fields:</p>
+
+<ul>
+<li>pos_required</li>
+
+<p>The number of required positional parameters</p>
+
+<li>pos_optional</li>
+
+<p>The number of optional positional parameters</p>
+
+<li>named_required</li>
+
+<p>The number of required named parameters</p>
+
+<li>named_optional</li>
+
+<p>The number of optional named parameters</p>
+
+<li>pos_slurpy</li>
+
+<p>True if the sub has an aggregating parameter for positional args</p>
+
+<li>named_slurpy</li>
+
+<p>True if the sub has an aggregating parameter for named args</p>
+</ul>
+
+<p>Instead of fetching the entire inspection hash, you can also request individual pieces of metadata:</p>
+<pre>  $P1 = inspect $P0, "pos_required"
+</pre>
+<p>The <code>arity</code><!--
+	INDEX: arity method
+--> method on the sub object returns the total number of defined parameters of all varieties:</p>
+<pre>  $I0 = $P0.'arity'()
+</pre>
+<p>The <code>get_namespace</code><!--
+	INDEX: get_namespace method
+--> method on the sub object fetches the namespace PMC which contains the Sub:</p>
+<pre>  $P1 = $P0.'get_namespace'()
+</pre>
+<h2><a name="Evaluating_a_Code_String"
+>Evaluating a Code String</a></h2>
+
+<p><!--
+	INDEX: code strings, evaluating
+--> One way of producing a code object during a running program is by compiling a code string. In this case, it&#39;s a <!--
+	INDEX: bytecode segment object
+--> bytecode segment object.</p>
+
+<p>The first step is to fetch a compiler object for the target language:</p>
+<pre>  $P1 = compreg "PIR"
+</pre>
+<p>Parrot registers a compiler for PIR by default, so it&#39;s always available. The following example fetches a compiler object for PIR and places it in the named variable <code>compiler</code>. It then generates a code object from a string by calling <code>compiler</code> as a subroutine and places the resulting bytecode segment object into the named variable <code>generated</code> and then invokes it as a subroutine:</p>
+<pre>  .local pmc compiler, generated
+  .local string source
+  source    = ".sub foo\n$S1 = 'in eval'\nprint $S1\n.end"
+  compiler  = compreg "PIR"                
+  generated = compiler(source)
+  generated()
+  say "back again"
+</pre>
+<p>You can register a compiler or assembler for any language inside the Parrot core and use it to compile and invoke code from that language.</p>
+
+<p>In the following example, the <code>compreg</code> opcode registers the subroutine&#45;like object <code>$P10</code> as a compiler for the language &#34;MyLanguage&#34;:</p>
+<pre>  compreg "MyLanguage", $P10
+</pre>
+<h2><a name="Lexicals"
+>Lexicals</a></h2>
+
+<p><!--
+	INDEX: lexical variables
+--> <!--
+	INDEX: scope
+--> Variables stored in a namespace are global variables. They&#39;re accessible from anywhere in the program if you specify the right namespace path. High&#45;level languages also have lexical variables which are only accessible from the local section of code (or <i>scope</i>) where they appear, or in a section of code embedded within that scope.A scope is roughly equivalent to a block in C. In PIR, the section of code between a <code>.sub</code> and a <code>.end</code> defines a scope for lexical variables.</p>
+
+<p>While Parrot stores global variables in namespaces, it stores lexical variables in lexical padsThink of a pad like a box to hold a collection of lexical variables.. Each lexical scope has its own pad. The <code>store_lex</code> opcode stores a lexical variable in the current pad. The <code>find_lex</code> opcode retrieves a variable from the current pad:</p>
+<pre>  $P0 = new "Integer"       # create a variable
+  $P0 = 10                  # assign value to it
+  store_lex "foo", $P0      # store with lexical name "foo"
+  # ...
+  $P1 = find_lex "foo"      # get the lexical "foo" into $P1
+  say $P1                   # prints 10
+</pre>
+<p>The <code>.lex</code><!--
+	INDEX: .lex directive
+--> directive defines a local variable that follows these scoping rules:</p>
+<pre>      .local pmc foo
+      .lex 'foo', foo
+</pre>
+<h3><a name="LexPad_and_LexInfo_PMCs"
+>LexPad and LexInfo PMCs</a></h3>
+
+<p><!--
+	INDEX: LexPad PMC
+--> <!--
+	INDEX: LexInfo PMC
+--> Parrot uses two different PMCs to store information about a subroutine&#39;s lexical variables: the <code>LexPad</code> PMC and the <code>LexInfo</code> PMC. Neither of these PMC types are usable directly from PIR code; Parrot uses them internally to store information about lexical variables.</p>
+
+<p><code>LexInfo</code> PMCs store information about lexical variables at compile time. Parrot generates this read&#45;only information during compilation to represent what it knows about lexical variables. Not all subroutines get a <code>LexInfo</code> PMC by default; subroutines need to indicate to Parrot that they require a <code>LexInfo</code> PMC. One way to do this is with the <code>.lex</code> directive. Of course, the <code>.lex</code> directive only works for languages that know the names of their lexical variables at compile time. Languages where this information is not available can mark the subroutine with <code>:lex</code> instead.</p>
+
+<p><code>LexPad</code> PMCs store run&#45;time information about lexical variables. This includes their current values and type information. Parrot creates a new <code>LexPad</code> PMC for subs that have a <code>LexInfo</code> PMC already. It does so for each invocation of the subroutine, which allows for recursive subroutine calls without overwriting lexical variables.</p>
+
+<p>The <code>get_lexinfo</code><!--
+	INDEX: get_lexinfo method
+--> method on a sub retrieves its associated <code>LexInfo</code> PMC:</p>
+<pre>  $P0 = get_global "MySubroutine"
+  $P1 = $P0.'get_lexinfo'()
+</pre>
+<p>The <code>LexInfo</code> PMC supports a few introspection operations. The <code>elements</code> opcode retrieves the number of elements it contains. String key access operations retrieve entries from the <code>LexInfo</code> PMC as if it were an associative array.</p>
+<pre>  $I0 = elements $P1    # number of lexical variables
+  $P0 = $P1["name"]     # lexical variable "name"
+</pre>
+<p>There is no easy way to retrieve the current <code>LexPad</code> PMC in a given subroutine, but they are of limited use in PIR.</p>
+
+<h3><a name="Nested_Scopes"
+>Nested Scopes</a></h3>
+
+<p><!--
+	INDEX: nested lexical scopes
+--> PIR has no separate syntax for blocks or lexical scopes; subroutines define lexical scopes in PIR. Because PIR disallows nested <code>.sub</code>/<code>.end</code> declarations, it needs a way to identify which lexical scopes are the parents of inner lexical scopes. The <code>:outer</code><!--
+	INDEX: :outer subroutine modifier
+--> modifier declares a subroutine as a nested inner lexical scope of another existing subroutine. The modifier takes one argument, the name of the outer subroutine:</p>
+<pre>  .sub 'foo'
+    # defines lexical variables
+  .end
+
+  .sub 'bar' :outer('foo')
+    # can access foo's lexical variables
+  .end
+</pre>
+<p>Sometimes a name alone isn&#39;t sufficient to uniquely identify the outer subroutine. The <code>:subid</code><!--
+	INDEX: :subid subroutine modifier
+--> modifier allows the outer subroutine to declare a truly unique name usable with <code>:outer</code>:</p>
+<pre>  .sub 'foo' :subid('barsouter')
+    # defines lexical variables
+  .end
+
+  .sub 'bar' :outer('barsouter')
+    # can access foo's lexical variables
+  .end
+</pre>
+<p>The <code>get_outer</code><!--
+	INDEX: get_outer method
+--> method on a <code>Sub</code> PMC retrieves its <code>:outer</code> sub.</p>
+<pre>  $P1 = $P0.'get_outer'()
+</pre>
+<p>If there is no <code>:outer</code> sub, this will return a null PMC. The <code>set_outer</code> method on a <code>Sub</code> object sets the <code>:outer</code> sub:</p>
+<pre>  $P0.'set_outer'($P1)
+</pre>
+<h3><a name="Scope_and_Visibility"
+>Scope and Visibility</a></h3>
+
+<p>High&#45;level languages such as Perl, Python, and Ruby allow nested scopes, or blocks within blocks that have their own lexical variables. This construct is common even in C:</p>
+
+<pre>  {
+      int x = 0;
+      int y = 1;
+      {
+          int z = 2;
+          /* x, y, and z are all visible here */
+      }
+
+      /* only x and y are visible here */
+  }</pre>
+
+<p>In the inner block, all three variables are visible. The variable <code>z</code> is only visible inside that block. The outer block has no knowledge of <code>z</code>. A na&#239;ve translation of this code to PIR might be:</p>
+<pre>  .param int x
+  .param int y
+  .param int z
+  x = 0
+  y = 1
+  z = 2
+  #...
+</pre>
+<p>This PIR code is similar, but the handling of the variable <code>z</code> is different: <code>z</code> is visible throughout the entire current subroutine. It was not visible throughout the entire C function. A more accurate translation of the C scopes uses <code>:outer</code> PIR subroutines instead:</p>
+<pre>  .sub 'MyOuter'
+      .local pmc x, y
+      .lex 'x', x
+      .lex 'y', y
+      x = new 'Integer'
+      x = 10
+      'MyInner'()
+      # only x and y are visible here
+      say y                             # prints 20
+  .end
+
+  .sub 'MyInner' :outer('MyOuter')
+      .local pmc x, new_y, z
+      .lex 'z', z
+      find_lex x, 'x'
+      say x                            # prints 10
+      new_y = new 'Integer'
+      new_y = 20
+      store_lex 'y', new_y
+  .end
+</pre>
+<p>The <code>find_lex</code> and <code>store_lex</code> opcodes don&#39;t just access the value of a variable directly in the scope where it&#39;s declared, they interact with the <code>LexPad</code> PMC to find lexical variables within outer lexical scopes. All lexical variables from an outer lexical scope are visible from the inner lexical scope.</p>
+
+<p>Note that you can only store PMCs &#45;&#45; not primitive types &#45;&#45; as lexicals.</p>
+
+<h2><a name="Multiple_Dispatch"
+>Multiple Dispatch</a></h2>
+
+<p><!--
+	INDEX: multiple dispatch
+--> <!--
+	INDEX: subroutines; signatures
+--> Multiple dispatch subroutines (or <i>multis</i>) have several variants with the same name but different sets of parameters. The set of parameters for a subroutine is its <i>signature</i>. When a multi is called, the dispatch operation compares the arguments passed in to the signatures of all the variants and invokes the subroutine with the best match.</p>
+
+<p>Parrot stores all multiple dispatch subs with the same name in a namespace within a single PMC called a <code>MultiSub</code><!--
+	INDEX: MultiSub PMC
+-->. The <code>MultiSub</code> is an invokable list of subroutines. When a multiple dispatch sub is called, the <code>MultiSub</code> PMC searches its list of variants for the best matching candidate.</p>
+
+<p>The <code>:multi</code><!--
+	INDEX: :multi subroutine modifier
+--> modifier on a <code>.sub</code> declares a <code>MultiSub</code>:</p>
+<pre>  .sub 'MyMulti' :multi()
+      # does whatever a MyMulti does
+  .end
+</pre>
+<p>Each variant in a <code>MultiSub</code> must have a unique type or number of parameters declared, so the dispatcher can calculate a best match. If you had two variants that both took four integer parameters, the dispatcher would never be able to decide which one to call when it received four integer arguments.</p>
+
+<p><!--
+	INDEX: multi signature
+--> The <code>:multi</code> modifier takes one or more arguments defining the <i>multi signature</i>. The multi signature tells Parrot what particular combination of input parameters the multi accepts:</p>
+<pre>  .sub 'Add' :multi(I, I)
+    .param int x
+    .param int y
+     $I0 = x + y
+    .return($I0)
+  .end
+
+  .sub 'Add' :multi(N, N)
+    .param num x
+    .param num y
+    $N0 = x + y
+    .return($N0)
+  .end
+
+  .sub 'Start' :main
+    $I0 = Add(1, 2)      # 3
+    $N0 = Add(3.14, 2.0) # 5.14
+    $S0 = Add("a", "b")  # ERROR! No (S, S) variant!
+  .end
+</pre>
+<p>Multis can take I, N, S, and P types, but they can also use <code>_</code> (underscore) to denote a wildcard, and a string which names a PMC type:</p>
+<pre>  .sub 'Add' :multi(I, I)          # two integers
+    #...
+  .end
+
+  .sub 'Add' :multi(I, 'Float')    # integer and Float PMC
+    #...
+  .end
+
+  .sub 'Add' :multi('Integer', _)  # Integer PMC and wildcard
+    #...
+  .end
+</pre>
+<p>When you call a <code>MultiSub</code>, Parrot will try to take the most specific best&#45;match variant, but will fall back to more general variants if it cannot find a perfect match. If you call <code>Add</code> with <code>(1, 2)</code>, Parrot will dispatch to the <code>(I, I)</code> variant. If you call it with <code>(1, &#34;hi&#34;)</code>, Parrot will match the <code>(I, _)</code> variant, as the string in the second argument doesn&#39;t match <code>I</code> or <code>Float</code>. Parrot can also promote one of the I, N, or S values to an Integer, Float, or String PMC.</p>
+
+<p><!--
+	INDEX: Manhattan Distance
+--> To make the decision about which multi variant to call, Parrot calculates the <i>Manhattan Distance</i> between the argument signature and the parameter signature of each variant. Every difference between each element counts as one step. A difference can be a promotion from a primitive type to a PMC, the conversion from one primitive type to another, or the matching of an argument to a <code>_</code> wildcard. After Parrot calculates the distance to each variant, it calls the one with the lowest distance. Notice that it&#39;s possible to define a variant that is impossible to call: for every potential combination of arguments there is a better match. This is uncommon, but possible in systems with many multis and a limited number of data types.</p>
+
+<h2><a name="Continuations"
+>Continuations</a></h2>
+
+<p><!--
+	INDEX: continuations
+--> <!--
+	INDEX: subroutines; continuations
+--> Continuations are subroutines that take snapshots of control flow. They are frozen images of the current execution state of the VM. Once you have a continuation, you can invoke it to return to the point where the continuation was first created. It&#39;s like a magical timewarp that allows the developer to arbitrarily move control flow back to any previous point in the program.</p>
+
+<p>Continuations are like any other PMC; create one with the <code>new</code> opcode:</p>
+<pre>  $P0 = new 'Continuation'
+</pre>
+<p>The new continuation starts in an undefined state. If you attempt to invoke a new continuation without initializing it, Parrot will throw an exception. To prepare the continuation for use, assign it a destination label with the <code>set_addr</code><!--
+	INDEX: set_addr opcode
+--> opcode:</p>
+<pre>    $P0 = new 'Continuation'
+    set_addr $P0, my_label
+
+  my_label:
+    # ...
+</pre>
+<p>To jump to the continuation&#39;s stored label and return the context to the state it was in <i>at the point of its creation</i>, invoke the continuation:</p>
+<pre>  $P0()
+</pre>
+<p>Even though you can use the subroutine call notation <code>$P0()</code> to invoke the continuation, you cannot pass arguments or obtain return values.</p>
+
+<h3><a name="Continuation_Passing_Style"
+>Continuation Passing Style</a></h3>
+
+<p><!--
+	INDEX: continuation passing style (CPS)
+--> <!--
+	INDEX: CPS (continuation passing style)
+--> Parrot uses continuations internally for control flow. When Parrot invokes a subroutine, it creates a continuation representing the current point in the program. It passes this continuation as an invisible parameter to the subroutine call. To return from that subroutine, Parrot invokes the continuation to return to the point of creation of that continuation. If you have a continuation, you can invoke it to return to its point of creation any time you want.</p>
+
+<p>This type of flow control &#45;&#45; invoking continuations instead of performing bare jumps &#45;&#45; is called Continuation Passing Style (CPS).</p>
+
+<h3><a name="Tailcalls"
+>Tailcalls</a></h3>
+
+<p>Many subroutines set up and call another subroutine and then return the result of the second call directly. This is a <!--
+	INDEX: tailcall
+--> tailcall, and is an important opportunity for optimization. Here&#39;s a contrived example in pseudocode:</p>
+
+<pre>  call add_two(5)
+
+  subroutine add_two(value)
+    value = add_one(value)
+    return add_one(value)</pre>
+
+<p>In this example, the subroutine <code>add_two</code> makes two calls to <code>add_one</code>. The second call to <code>add_one</code> is the return value. <code>add_one</code> gets called; its result gets returned to the caller of <code>add_two</code>. Nothing in <code>add_two</code> uses that return value directly.</p>
+
+<p>A simple optimization is available for this type of code. The second call to <code>add_one</code> can return to the same place that <code>add_two</code> returns; it&#39;s perfectly safe and correct to use the same return continuation that <code>add_two</code> uses. The two subroutine calls can share a return continuation.</p>
+
+<p><!--
+	INDEX: .tailcall directive
+--> PIR provides the <code>.tailcall</code> directive to identify similar situations. Use it in place of the <code>.return</code> directive. <code>.tailcall</code> performs this optimization by reusing the return continuation of the parent subroutine to make the tailcall:</p>
+<pre>  .sub 'main' :main
+      .local int value
+      value = add_two(5)
+      say value
+  .end
+
+  .sub 'add_two'
+      .param int value
+      .local int val2
+      val2 = add_one(value)
+      .tailcall add_one(val2)
+  .end
+
+  .sub 'add_one'
+      .param int a
+      .local int b
+      b = a + 1
+      .return (b)
+  .end
+</pre>
+<p>This example prints the correct value <code>7</code>.</p>
+
+<h2><a name="Coroutines"
+>Coroutines</a></h2>
+
+<p><!--
+	INDEX: coroutines
+--> <!--
+	INDEX: subroutines; coroutines
+--> Coroutines are similar to subroutines except that they have an internal notion of <i>state</i>. In addition to performing a normal <code>.return</code> to return control flow back to the caller and destroy the execution environment of the subroutine, coroutines may also perform a <code>.yield</code> operation. <code>.yield</code> returns a value to the caller like <code>.return</code> can, but it does not destroy the execution state of the coroutine. The next call to the coroutine continues execution from the point of the last <code>.yield</code>, not at the beginning of the coroutine.</p>
+
+<p>Inside a coroutine continuing from a <code>.yield</code>, the entire execution environment is the same as it was when the coroutine <code>.yield</code>ed. This means that the parameter values don&#39;t change, even if the next invocation of the coroutine had different arguments passed in.</p>
+
+<p>Coroutines look like ordinary subroutines. They do not require any special modifier or any special syntax to mark them as being a coroutine. What sets them apart is the use of the <code>.yield</code><!--
+	INDEX: .yield directive
+--> directive. <code>.yield</code> plays several roles:</p>
+
+<ul>
+<li>Identifies coroutines</li>
+
+<p>When Parrot sees a <code>.yield</code>, it knows to create a Coroutine PMC object instead of a <code>Sub</code> PMC.</p>
+
+<li>Creates a continuation</li>
+
+<p><code>.yield</code> creates a continuation in the coroutine and stores the continuation object in the coroutine object for later resuming from the point of the <code>.yield</code>.</p>
+
+<li>Returns a value</li>
+
+<p><code>.yield</code> can return a value ... or many values, or no values. to the caller. It is basically the same as a <code>.return</code> in this regard.</p>
+</ul>
+
+<p>Here is a simple coroutine example:</p>
+<pre>  .sub 'MyCoro'
+    .yield(1)
+    .yield(2)
+    .yield(3)
+    .return(4)
+  .end
+
+  .sub 'main' :main
+    $I0 = MyCoro()    # 1
+    $I0 = MyCoro()    # 2
+    $I0 = MyCoro()    # 3
+    $I0 = MyCoro()    # 4
+    $I0 = MyCoro()    # 1
+    $I0 = MyCoro()    # 2
+    $I0 = MyCoro()    # 3
+    $I0 = MyCoro()    # 4
+    $I0 = MyCoro()    # 1
+    $I0 = MyCoro()    # 2
+    $I0 = MyCoro()    # 3
+    $I0 = MyCoro()    # 4
+  .end
+</pre>
+<p>This contrived example demonstrates how the coroutine stores its state. When Parrot encounters the <code>.yield</code>, the coroutine stores its current execution environment. At the next call to the coroutine, it picks up where it left off.</p>
+
+<h2><a name="Native_Call_Interface"
+>Native Call Interface</a></h2>
+
+<p>The <!--
+	INDEX: NCI (native call interface)
+--> Native Call Interface (NCI) is a special version of the Parrot calling conventions for calling functions in shared C libraries with a known signature. This is a simplified version of the first test in <em><a href="../../../t/pmc/nci.t.html">t/pmc/nci.t</a></em>:</p>
+<pre>    .local pmc library
+    library = loadlib "libnci_test"         # library object
+    say "loaded"
+
+    .local pmc ddfunc
+    ddfunc = dlfunc library, "nci_dd", "dd" # function object
+    say "dlfunced"
+
+    .local num result
+    result = ddfunc( 4.0 )                  # call the function
+
+    ne result, 8.0, nok_1
+    say "ok 1"
+    end
+  nok_1:
+    say "not ok 1"
+
+    #...
+</pre>
+<p>This example shows two new opcodes: <code>loadlib</code> and <code>dlfunc</code>. The <code>loadlib</code><!--
+	INDEX: loadlib opcode
+--> opcode obtains a handle for a shared library. It searches for the shared library in the current directory, in <em>runtime/parrot/dynext</em>, and in a few other configured directories. It also tries to load the provided filename unaltered and with appended extensions like <em>.so</em> or <em>.dll</em>. Which extensions it tries depends on the operating system Parrot is running on.</p>
+
+<p>The <code>dlfunc</code><!--
+	INDEX: dlfunc opcode
+--> opcode gets a function object from a previously loaded library (second argument) of a specified name (third argument) with a known function signature (fourth argument). The function signature is a string where the first character is the return value and the rest of the parameters are the function parameters. Table 6&#45;1 lists the characters used in NCI function signatures.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

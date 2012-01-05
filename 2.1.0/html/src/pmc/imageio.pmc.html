@@ -1,0 +1,284 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - ImageIO PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; ImageIO PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/imageio.pmc &#45; ImageIO PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Freezes and thaws other PMCs.</p>
+
+<p>*/</p>
+
+<p>#define GROW_TO_16_BYTE_BOUNDARY(size) ((size) + ((size) % 16 ?
+16 &#45; (size) % 16 : 0))</p>
+
+<p>/* preallocate freeze image for aggregates with this estimation */ #define FREEZE_BYTES_PER_ITEM 9</p>
+
+<p>/* macros/constants to handle packing/unpacking of PMC IDs and flags * the 2 LSBs are used for flags,
+all other bits are used for PMC ID */ #define PackID_new(id,
+flags) (((UINTVAL)(id) * 4) | ((UINTVAL)(flags) &#38; 3)) #define PackID_get_PMCID(id) ((UINTVAL)(id) / 4) #define PackID_set_PMCID(lv,
+id) (lv) = PackID_new((id),
+PackID_get_FLAGS(lv)) #define PackID_get_FLAGS(id) ((UINTVAL)(id) &#38; 3) #define PackID_set_FLAGS(lv,
+flags) (lv) = PackID_new(PackID_get_PMCID(lv),
+(flags))</p>
+
+<p>enum { enum_PackID_normal = 0,
+enum_PackID_seen = 1,
+};</p>
+
+<p>PARROT_INLINE static opcode_t * GET_VISIT_CURSOR(PMC *pmc){ char *buf = (char *)Buffer_bufstart(PARROT_IMAGEIO(pmc)&#45;&#62;buffer); size_t pos = PARROT_IMAGEIO(pmc)&#45;&#62;pos; return (opcode_t *)(buf + pos); }</p>
+
+<p>PARROT_INLINE static void SET_VISIT_CURSOR(PMC *pmc,
+char *cursor) { char *bufstart = (char *)Buffer_bufstart(PARROT_IMAGEIO(pmc)&#45;&#62;buffer); PARROT_IMAGEIO(pmc)&#45;&#62;pos = (cursor &#45; bufstart); }</p>
+
+<p>PARROT_INLINE static void INC_VISIT_CURSOR(PMC *pmc,
+UINTVAL inc) { PARROT_IMAGEIO(pmc)&#45;&#62;pos += inc; }</p>
+
+<p>#define BYTECODE_SHIFT_OK(pmc) PARROT_ASSERT( \ PARROT_IMAGEIO(pmc)&#45;&#62;pos &#60;= PARROT_IMAGEIO(pmc)&#45;&#62;input_length)</p>
+
+<p>static void create_buffer(PARROT_INTERP,
+PMC *pmc,
+PMC *info) { INTVAL len;</p>
+
+<pre>    if (!PMC_IS_NULL(pmc)) {
+        STRING *array = CONST_STRING(interp, &#34;array&#34;);
+        STRING *hash  = CONST_STRING(interp, &#34;hash&#34;);
+        INTVAL  items = 1;
+
+        if (VTABLE_does(interp, pmc, array) || VTABLE_does(interp, pmc, hash)) {
+            items += VTABLE_elements(interp, pmc);
+        }
+        len = items * FREEZE_BYTES_PER_ITEM;
+    }
+    else
+        len = FREEZE_BYTES_PER_ITEM;
+
+    PARROT_IMAGEIO(info)&#45;&#62;buffer =
+        Parrot_gc_new_bufferlike_header(interp, sizeof (Buffer));
+    Parrot_gc_allocate_buffer_storage_aligned(interp,
+        PARROT_IMAGEIO(info)&#45;&#62;buffer, len);
+    SET_VISIT_CURSOR(info, (char *)Buffer_bufstart(PARROT_IMAGEIO(info)&#45;&#62;buffer));
+}</pre>
+
+<p>/* static void ensure_buffer_size(PARROT_INTERP, PMC *io, size_t len)</p>
+
+<p>Checks the size of the buffer to see if it can accommodate &#39;len&#39; more bytes. If not, expands the buffer.</p>
+
+<p>*/</p>
+
+<p>PARROT_INLINE static void ensure_buffer_size(PARROT_INTERP, ARGIN(PMC *io), size_t len) { Buffer *buf = PARROT_IMAGEIO(io)&#45;&#62;buffer; const size_t used = PARROT_IMAGEIO(io)&#45;&#62;pos; const int need_free = Buffer_buflen(buf) &#45; used &#45; len;</p>
+
+<pre>    /* grow by factor 1.5 or such */
+    if (need_free &#60;= 16) {
+        size_t new_size = (size_t) (Buffer_buflen(buf) * 1.5);
+        if (new_size &#60; Buffer_buflen(buf) &#45; need_free + 512)
+            new_size = Buffer_buflen(buf) &#45; need_free + 512;
+        Parrot_gc_reallocate_buffer_storage(interp, buf, new_size);
+        PARROT_ASSERT(Buffer_buflen(buf) &#45; used &#45; len &#62;= 15);
+    }</pre>
+
+<p>#ifndef DISABLE_GC_DEBUG Parrot_gc_compact_memory_pool(INTERP); #endif</p>
+
+<p>}</p>
+
+<p>PARROT_INLINE static INTVAL INFO_HAS_DATA(ARGIN(PMC *io)) { return PARROT_IMAGEIO(io)&#45;&#62;pos &#60; PARROT_IMAGEIO(io)&#45;&#62;input_length; }</p>
+
+<p>PARROT_INLINE static PMC* id_list_get(PARROT_INTERP, PMC *io, UINTVAL id) { return VTABLE_get_pmc_keyed_int(interp, PARROT_IMAGEIO(io)&#45;&#62;id_list, id); }</p>
+
+<p>PARROT_INLINE static void visit_todo_list_thaw(PARROT_INTERP, SHIM(PMC* pmc_not_used), ARGIN(PMC* info)) { UINTVAL n = VTABLE_shift_integer(interp, info); UINTVAL id = PackID_get_PMCID(n); int packid_flags = PackID_get_FLAGS(n); PMC *pmc = PMCNULL;</p>
+
+<pre>    PARROT_ASSERT(PARROT_IMAGEIO(info)&#45;&#62;what == VISIT_THAW_NORMAL);
+
+    switch (packid_flags) {
+      case enum_PackID_seen:
+        if (id) /* got a non&#45;NULL PMC */
+            pmc = id_list_get(interp, info, id);
+        break;
+      case enum_PackID_normal:
+        {
+            INTVAL type = VTABLE_shift_integer(interp, info);
+            if (type &#60;= 0 || type &#62; interp&#45;&#62;n_vtable_max)
+                Parrot_ex_throw_from_c_args(interp, NULL, 1, &#34;Unknown PMC type to thaw %d&#34;, type);
+
+            pmc = pmc_new_noinit(interp, type);
+            VTABLE_thaw(interp, pmc, info);
+
+            {
+                PMC * const todo    = PARROT_IMAGEIO(info)&#45;&#62;todo;
+                PMC * const id_list = PARROT_IMAGEIO(info)&#45;&#62;id_list;
+                VTABLE_set_pmc_keyed_int(interp, id_list, id, pmc);
+                /* remember nested aggregates depth first */
+                VTABLE_push_pmc(interp, todo, pmc);
+            }
+        }
+        break;
+      default:
+        Parrot_ex_throw_from_c_args(interp, NULL, 1, &#34;Unknown PMC id args thaw %d&#34;, packid_flags);
+        break;
+    }
+
+    *(PARROT_IMAGEIO(info)&#45;&#62;thaw_ptr) = pmc;
+}</pre>
+
+<p>static void visit_todo_list_freeze(PARROT_INTERP, PMC* pmc, PMC* info) { UINTVAL id; int packid_type;</p>
+
+<pre>    PARROT_ASSERT(PARROT_IMAGEIO(info)&#45;&#62;what == VISIT_FREEZE_NORMAL);
+
+    if (PMC_IS_NULL(pmc)) {
+        id   = 0;
+        packid_type = enum_PackID_seen;
+    }
+    else {
+        Hash *hash = (Hash *)VTABLE_get_pointer(interp, PARROT_IMAGEIO(info)&#45;&#62;seen);
+        HashBucket * const b = parrot_hash_get_bucket(interp, hash, pmc);
+        if (b) {
+            id = (UINTVAL) b&#45;&#62;value;
+            packid_type = enum_PackID_seen;
+        }
+        else {
+            PARROT_IMAGEIO(info)&#45;&#62;id++; /* next id to freeze */
+            id = PARROT_IMAGEIO(info)&#45;&#62;id;
+            packid_type = enum_PackID_normal;
+        }
+    }
+
+    VTABLE_push_integer(interp, info, PackID_new(id, packid_type));
+
+    if (packid_type == enum_PackID_normal) {
+        Hash *hash = (Hash *)VTABLE_get_pointer(interp, PARROT_IMAGEIO(info)&#45;&#62;seen);
+        PARROT_ASSERT(pmc);
+        VTABLE_push_integer(interp, info,
+                PObj_is_object_TEST(pmc) ? enum_class_Object : pmc&#45;&#62;vtable&#45;&#62;base_type);
+        parrot_hash_put(interp, hash, pmc, (void *)id);
+        VTABLE_push_pmc(interp, PARROT_IMAGEIO(info)&#45;&#62;todo, pmc);
+        VTABLE_freeze(interp, pmc, info);
+    }
+}</pre>
+
+<p>static void visit_loop_todo_list(PARROT_INTERP, PMC *current, PMC *info) { PMC * const todo = PARROT_IMAGEIO(info)&#45;&#62;todo; const int thawing = PARROT_IMAGEIO(info)&#45;&#62;what == VISIT_THAW_NORMAL;</p>
+
+<pre>    (PARROT_IMAGEIO(info)&#45;&#62;visit_pmc_now)(interp, current, info);
+
+    /* can&#39;t cache upper limit, visit may append items */
+    while (VTABLE_get_bool(interp, todo)) {
+        current = VTABLE_pop_pmc(interp, todo);
+        if (!current)
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                    &#34;NULL current PMC in visit_loop_todo_list&#34;);
+
+        PARROT_ASSERT(current&#45;&#62;vtable);
+
+        VTABLE_visit(interp, current, info);
+
+        VISIT_PMC(interp, info, PMC_metadata(current));
+    }
+
+    if (thawing)
+        /* we&#39;re done reading the image */
+        PARROT_ASSERT(!INFO_HAS_DATA(info));
+
+    if (thawing) {
+        /* on thawing call thawfinish for each processed PMC */
+        const INTVAL n = VTABLE_elements(interp, PARROT_IMAGEIO(info)&#45;&#62;id_list);
+        int          i;
+
+        /*
+         * Thaw in reverse order. We have to fully thaw younger PMCs
+         * before use them in older.
+         *
+         * XXX There are no younger or older pmcs in a directed graph
+         *     that allows cycles. Any code that requires a specific
+         *      order here is likely broken.
+         */
+        for (i = n&#45;1; i &#62;= 0; &#45;&#45;i) {
+            current = VTABLE_get_pmc_keyed_int(interp, PARROT_IMAGEIO(info)&#45;&#62;id_list, i);
+            if (!PMC_IS_NULL(current))
+                VTABLE_thawfinish(interp, current, info);
+        }
+    }
+}</pre>
+
+<p>pmclass ImageIO auto_attrs { ATTR visit_f visit_pmc_now; ATTR Buffer *buffer; /* buffer to store the image */ ATTR size_t pos; /* current read/write position in buffer */ ATTR size_t input_length; ATTR INTVAL what; ATTR PMC **thaw_ptr; /* where to thaw a new PMC */ ATTR PMC *seen; /* seen hash */ ATTR PMC *todo; /* todo list */ ATTR PMC *id_list; /* seen list used by thaw */ ATTR UINTVAL id; /* freze ID of PMC */ ATTR INTVAL extra_flags; /* concerning to extra */ ATTR struct PackFile *pf;</p>
+
+<p>/*</p>
+
+<h1><a name="VTABLES"
+>VTABLES</a></h1>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes the PMC.
+<dt><a name="void_destroy()"
+><b><code>void destroy()</b></code></a></dt>
+Destroys the PMC.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Marks the PMC as alive.
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+Returns the content of the image as a string.
+<dt><a name="VTABLE_void_set_pointer()"
+><b><code>VTABLE void set_pointer()</b></code></a></dt>
+Sets the location where to thaw a new PMC.
+<dt><a name="VTABLE_INTVAL_get_integer()"
+><b><code>VTABLE INTVAL get_integer()</b></code></a></dt>
+Returns the flags describing the visit action
+<dt><a name="VTABLE_void_push_integer(INTVAL_v)"
+><b><code>VTABLE void push_integer(INTVAL v)</b></code></a></dt>
+Pushes the integer <code>v</code> onto the end of the image.
+<dt><a name="VTABLE_void_push_float(FLOATVAL_v)"
+><b><code>VTABLE void push_float(FLOATVAL v)</b></code></a></dt>
+Pushes the float <code>v</code> onto the end of the image.
+<dt><a name="VTABLE_void_push_string(STRING_*v)"
+><b><code>VTABLE void push_string(STRING *v)</b></code></a></dt>
+Pushes the string <code>*v</code> onto the end of the image.
+<dt><a name="VTABLE_void_push_pmc(PMC_*v)"
+><b><code>VTABLE void push_pmc(PMC *v)</b></code></a></dt>
+Pushes a reference to pmc <code>*v</code> onto the end of the image. If <code>*v</code> hasn&#39;t been seen yet, it is also pushed onto the todo list.
+<dt><a name="VTABLE_INTVAL_shift_integer()"
+><b><code>VTABLE INTVAL shift_integer()</b></code></a></dt>
+Removes and returns an integer from the start of the image.
+<dt><a name="VTABLE_FLOATVAL_shift_float()"
+><b><code>VTABLE FLOATVAL shift_float()</b></code></a></dt>
+Removes and returns an number from the start of the image.
+<dt><a name="VTABLE_STRING*_shift_string()"
+><b><code>VTABLE STRING* shift_string()</b></code></a></dt>
+Removes and returns a string from the start of the image.
+<dt><a name="static_PMC_*shift_pmc()"
+><b><code>static PMC *shift_pmc()</b></code></a></dt>
+Removes and returns a reference to a pmc from the start of the image.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

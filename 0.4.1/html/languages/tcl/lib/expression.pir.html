@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Tcl Expressions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Tcl Expressions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/tcl.html">TCL</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Tcl Expressions</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This is the parser that deals with all [expr] related code.
+(Include those used implicitly by commands like [while].</p>
+
+<dl>
+<dt><a name="(int_register_num,_string_pir_code)_=___expression_compile(int_register_num,_string_expr)"
+><b><code lang='und' xml:lang='und'>(int register_num, string pir_code) = __expression_compile(int register_num, string expr)</b></code></a></dt><p class="pad"></p>
+
+<dd>Argument register_num is the first register number that is available for use by the generated PIR.</dd><p class="pad"></p>
+
+<dd>Return register_num is the register number that contains the result of this code.</dd><p class="pad"></p>
+
+<dt><a name="(pmc_ast)_=___expression_ast(string_expr)"
+><b><code lang='und' xml:lang='und'>(pmc ast) = __expression_ast(string expr)</b></code></a></dt><p class="pad"></p>
+
+<dd>Given a string representing a tcl [expr],
+return a PMC that represents the abstract syntax tree associated with this expression.</dd><p class="pad"></p>
+
+<dd>Convert the chunks into a stack.
+For each level of precendence,
+scan the chunk list for operators that match our level.
+As we find one,
+grab the left and right operands.
+If the operand is null,
+instead use the value from the same location in the program stack as the operand (as it is the result of a previous operator.).
+If a value is pulled from the program_stack,
+then null it there.</dd><p class="pad"></p>
+
+<dd>Now that we have an operand and two operators (unary ops are treated like operands during the parse phase.
+Ternary op is currently ignored,
+but we&#39;d special case it here.),
+create a TclBinaryOp,
+and put it in the same index in the program stack as the left op here.
+Replace all three entries in the chunk list with a single NULL entry.</dd><p class="pad"></p>
+
+<dd>When our list of chunks to process is a single NULL entry,
+we&#39;re done,
+and now have a program list containing a single element,
+which is something which supports <code lang='und' xml:lang='und'>compile</code>.
+(In most cases,
+a TclBinaryOp)</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="POD_ERRORS"
+>POD ERRORS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Hey!
+<b>The above document had some coding errors,
+which are explained below:</b></p>
+
+<dl>
+<dt><a name="Around_line_14:"
+>Around line 14:</a></dt><p class="pad"></p>
+
+<dd>Unknown directive: =head</dd><p class="pad"></p>
+
+<dt><a name="Around_line_16:"
+>Around line 16:</a></dt><p class="pad"></p>
+
+<dd>&#39;=item&#39; outside of any &#39;=over&#39;</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

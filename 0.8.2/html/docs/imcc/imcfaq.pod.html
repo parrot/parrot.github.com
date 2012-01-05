@@ -1,0 +1,317 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Frequently Asked Questions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Frequently Asked Questions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/imcc.html">IMCC</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="TITLE"
+>TITLE <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>PIR and Parrot Programming for Compiler Developers &#45; Frequently Asked Questions</p>
+
+<h1><a name="GENERAL_QUESTIONS"
+>GENERAL QUESTIONS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="What_is_Parrot?"
+>What is Parrot? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Wrong FAQ,
+start with the Parrot FAQ first.
+Then come back here because this is where the fun is.</p>
+
+<p>The Parrot FAQ : <a href="http://www.parrotcode.org/faq/">http://www.parrotcode.org/faq/</a></p>
+
+<h2><a name="What_is_IMC,_PIR_and_IMCC?"
+>What is IMC,
+PIR and IMCC? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>IMC stands for Intermediate Code.
+IMCC stands for Intermediate Code Compiler.
+Most of the time you will encounter the term PIR which is for Parrot Intermediate Representation and means the same thing as IMC.
+PIR files use the extension <code lang='und' xml:lang='und'>.pir</code>.</p>
+
+<p>PIR is an intermediate language that compiles either directly to Parrot Byte code.
+It is a possible target language for compilers targeting the Parrot Virtual Machine.
+PIR is halfway between a High Level Language (HLL) and Parrot Assembly (PASM).</p>
+
+<p>IMCC is the current implementation of the PIR language.
+A PGE&#45;based implementation can be found in languages/PIR.
+A completely handwritten,
+recursive&#45;descent parser in C can be found in compilers/pirc.
+Both the PGE&#45;based parser and pirc are a bit different,
+as it is very difficult to implement the exact language that IMCC implements.
+Note too,
+that they are merely parsers,
+and not finished compilers.</p>
+
+<h2><a name="What_is_the_history_of_IMCC?"
+>What is the history of IMCC? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>IMCC was a toy compiler written by Melvin Smith as a little 2&#45;week experiment for another toy language,
+Cola.
+It was not originally a part of Parrot,
+and understandably wasn&#39;t designed for public consumption.
+Parrot&#39;s early alpha versions (0.0.6 and earlier) included only the raw Parrot assembler that compiled Parrot Assembly language.
+This was considered the reference assembler.
+The Cola compiler,
+on the other hand,
+targeted its own little back end compiler that included a register allocator,
+basic block tracking and medium level expression parsing.
+The backend compiler was eventually named IMCC and benefited from contributions from Angel Faus,
+Leo Toetsch,
+Steve Fink and Sean O&#39;Rourke.
+The first version of Perl6 written by Sean used IMCC as its backend and that&#39;s how it currently exists.</p>
+
+<p>Leopold Toetsch added,
+among many other things,
+the ability for IMCC to compile PASM by proxying any instructions that were not valid IMCC through to be assembled as PASM.
+This was a great improvement.
+As Parrot&#39;s calling convention changed to a continuation style (PCC),
+and generally became more complex,
+the PASM instructions required to call or declare subroutines became just as complex.
+IMCC abstracted some of the convention and eventually the core team stopped using the old reference assembler altogether.
+Leo integrated IMCC into Parrot and now IMCC is <b>the</b> front&#45;end for the Parrot VM.</p>
+
+<h2><a name="Parrot_is_a_VM,_why_does_it_need_IMCC_builtin?"
+>Parrot is a VM,
+why does it need IMCC builtin? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Static languages,
+such as Java,
+can run on VMs that are dedicated to execution of pre&#45;compiled byte code with no problems.
+Languages such as Perl,
+Ruby and Python are not so static.
+They have support for runtime evaluation and compilation and their parsers are always available.
+These languages run on their own &#34;dynamic&#34; interpreters.</p>
+
+<p>Since Parrot is specialized to be a dynamic VM,
+it must be able to compile code on the fly.
+For this reason,
+IMCC is written in C and integrated into the VM.
+IMCC is fast since it does very little type checking,
+and since most of Parrot&#39;s ops are polymorphic,
+IMCC punts most of the type checking and method dispatch to runtime.
+This allows extremely fast compile times,
+which is what scripters need.</p>
+
+<h2><a name="How_Is_PIR_different_than_Parrot_Assembly_language?"
+>How Is PIR different than Parrot Assembly language? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>PASM is an assembly language,
+raw and low&#45;level.
+PASM does exactly what you say,
+and each PASM instruction represents a single VM opcode.
+Assembly language can be tough to debug,
+simply due to the amount of instructions that a high&#45;level compiler generates for a given construct.
+Assembly language typically has no concept of basic blocks,
+namespaces,
+variable tracking,
+etc.
+You must track your register usage and take care of saving/restoring values in cases where you run out of registers.
+This is called spilling.</p>
+
+<p>PIR is medium level and a bit more friendly to write or debug.
+IMCC also has a builtin register allocator and spiller.
+PIR has the concept of a &#34;subroutine&#34; unit,
+complete with local variables and high&#45;level sub call syntax.
+PIR also allows unlimited symbolic registers.
+It will take care of assigning the appropriate register to your variables and will usually find the most efficient mapping so as to use as few registers as possible for a given piece of code.
+If you use more registers than are currently available,
+IMCC will generate instructions to save/restore (spill) the registers for you.
+This is a significant piece of every compiler.</p>
+
+<p>While it is possible to write more efficient code by hand directly in PASM,
+it is rare.
+PIR is still very close to PASM as far as granularity.
+It is also common for IMCC to generate instructions that use less registers than handwritten PASM.
+This is good for cache performance.</p>
+
+<h2><a name="Why_should_I_target_PIR_instead_of_PASM?"
+>Why should I target PIR instead of PASM? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Several reasons.
+PIR is so much easier to read,
+understand and debug.
+When passing snippets back and forth on the Parrot internals list,
+IMC is preferred since the code is much shorter than the equivalent PASM.
+In some cases it is necessary to debug the PASM code as bugs in IMCC are found.</p>
+
+<p>Hand writing and debugging of code aside,
+most PIR code will be mostly compiler generated.
+In this respect,
+the most important technical reason to use PIR is the amount of abstraction it provides.
+PIR now completely hides the Parrot calling conventions.
+This allows Parrot to change somewhat without impacting existing compilers.
+The workload is balanced between the IMCC team and the compiler authors.
+The term &#34;modular&#34; springs to mind.</p>
+
+<p>Since development on the old assembler has stopped,
+IMCC will be the best way to compile bytecode classes complete with metadata and externally linkable symbols.
+It will still be possible to construct classes on the fly with PASM,
+but PIR&#39;s higher level directives allow it to do compile time construction of certain things and pack them into the bytecode in a way that does not have an equivalent set of Parrot instructions.
+The PASM assembler may or may not ever catch up with these features.</p>
+
+<h2><a name="Shouldn&#39;t_I_rather_target_PAST?"
+>Shouldn&#39;t I rather target PAST? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Yes,
+preferably using the PCT,
+the Parrot Compiler Toolkit.</p>
+
+<h2><a name="Can_I_use_IMCC_without_Parrot?"
+>Can I use IMCC without Parrot? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Not yet.
+IMCC is currently tightly integrated to the Parrot bytecode format.
+An old idea is to rework IMCC&#39;s modularity to make it easy to run separately,
+but this is not a top priority since IMCC currently only targets Parrot.
+Eventually IMCC will contain a config option to build without linking the Parrot VM,
+but IMCC must be able to do lookups of opcodes so it will require some sort of static opcode metadata.</p>
+
+<h1><a name="PIR_PROGRAMMING_101"
+>PIR PROGRAMMING 101 <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Hello_world?"
+>Hello world? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The basic block of execution of an IMC program is the subroutine.
+Subs can be simple,
+with no arguments or returns.
+Line comments are allowed in IMC using #.</p>
+
+<pre lang='und' xml:lang='und'>        # Hello world
+        .sub main :main
+          print &#34;Hello world.\n&#34;
+        .end</pre>
+
+<h2><a name="Tutorial"
+>Tutorial <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>For more examples see the PIR tutorial in <em lang='und' xml:lang='und'>examples/tutorial</em>.</p>
+
+<h2><a name="How_do_I_compile_and_run_an_PIR_module?"
+>How do I compile and run an PIR module? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Parrot uses the filename extension to detect whether the file is an PIR file (.pir), a Parrot Assembly file (.pasm) or a pre&#45;compiled bytecode file (.pbc).</p>
+
+<pre lang='und' xml:lang='und'>        parrot hello.pir</pre>
+
+<h2><a name="How_do_I_see_the_assembly_code_that_PIR_generates?"
+>How do I see the assembly code that PIR generates? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Use the &#45;o option for Parrot. You can provide an output filename, or the &#45; character which indicates standard output. If the filename has a .pbc extension, IMCC will compile the module and assemble it to bytecode.</p>
+
+<p>Beware that compiling to PASM is not well supported and might produce broken PASM.</p>
+
+<p>Examples:</p>
+
+<dl>
+<dt><a name="Create_the_PASM_source_from_PIR."
+>Create the PASM source from PIR.</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>        parrot &#45;o hello.pasm hello.pir</pre>
+
+<dt><a name="Compile_to_bytecode_from_PIR."
+>Compile to bytecode from PIR.</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>        parrot &#45;o hello.pbc hello.pir</pre>
+
+<dt><a name="Dump_PASM_to_screen"
+>Dump PASM to screen</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>        parrot &#45;o &#45; hello.pir</pre>
+</dl>
+
+<h2><a name="Does_IMCC_do_variable_interpolation_in_strings?"
+>Does IMCC do variable interpolation in strings? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>No, and it shouldn&#39;t. PIR is an intermediate language for compiling high level languages. Interpolation (print &#34;$count items&#34;) is a high level concept and the specifics are unique to each language. Perl6 already does interpolation without special support from IMCC.</p>
+
+<h2><a name="What_are_PIR_variables?"
+>What are PIR variables? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>PIR has 2 classes of variables, symbolic registers and named variables. Both are mapped to real registers, but there are a few minor differences. Named variables must be declared. They may be global or local, and may be qualified by a namespace. Symbolic registers, on the other hand, do not need declaration, but their scope never extends outside of a subroutine unit. Symbolic registers basically give compiler front ends an easy way to generate code from their parse trees or abstract syntax tree (AST). To generate expressions compilers have to create temporaries.</p>
+
+<h2><a name="Symbolic_Registers_(or_Temporaries)"
+>Symbolic Registers (or Temporaries) <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Symbolic registers have a $ sign for the first character, have a single letter representing the register type [S(tring), N(umber), I(nteger) or P(MC)] for the second character, and one or more digits for the rest.</p>
+
+<p>Example:</p>
+
+<pre lang='und' xml:lang='und'>        $S1 = &#34;hiya&#34;
+        $S2 = $S1 . &#34;mel&#34;
+        $I1 = 1 + 2
+        $I2 = $I1 * 3</pre>
+
+<p>This example uses symbolic STRING and INTVAL registers as temporaries. This is the typical sort of code that compilers generate from the syntax tree.</p>
+
+<h2><a name="Named_Variables"
+>Named Variables <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Named variables are either local or namespace qualified. Currently IMCC only supports locals transparently. However, globals are supported with explicit syntax. The way to declare locals in a subroutine is with the <b>.local</b> directive. The <b>.local</b> directive also requires a type (<b>int</b>, <b>num</b>, <b>string</b> or <b>pmc</b>).</p>
+
+<p>Example:</p>
+
+<pre lang='und' xml:lang='und'>        .sub _main :main
+           .local int i
+           .local num n
+           i = 7
+           n = 5.003
+        .end</pre>
+
+<h2><a name="How_do_I_declare_global_or_package_variables_in_PIR?"
+>How do I declare global or package variables in PIR? <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>You can&#39;t. You can explicitly create global variables at runtime, however, but it only works for PMC types, like so:</p>
+
+<pre lang='und' xml:lang='und'>        .sub _main :main
+           .local pmc i
+           .local pmc j
+           i = new &#39;Integer&#39;
+           i = 123
+           # Create the global
+           global &#34;i&#34; = i
+
+           # Refer to the global
+           j = global &#34;i&#34;
+        .end</pre>
+
+<p>Happy Hacking.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

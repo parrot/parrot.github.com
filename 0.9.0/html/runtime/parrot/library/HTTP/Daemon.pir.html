@@ -1,0 +1,267 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>A Simple HTTPD Server</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">A Simple HTTPD Server</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/libs.html">Libraries</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>HTTP;Daemon &#45; A Simple HTTPD Server</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<pre>  load_bytecode &#34;HTTP/Daemon.pir&#34;
+  opts = new &#39;Hash&#39;
+  opts[&#39;LocalPort&#39;] = 1234
+  opts[&#39;LocalAddr&#39;] = &#39;localhost&#39;
+  d = new [&#39;HTTP&#39;;&#39;Daemon&#39;], opts
+  unless d goto err
+  d.&#39;run&#39;()</pre>
+
+<h1><a name="TODO"
+>TODO <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>A lot. The code is by now just an objectified version of httpd.pir.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>RFC2616, <em><a href="../../../../examples/io/httpd2.pir.html">examples/io/httpd2.pir</a></em></p>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Leopold Toetsch &#60;lt@toetsch.at&#62; &#45; some code based on httpd.pir.</p>
+
+<h1><a name="Class_HTTP;_Daemon"
+>Class HTTP; Daemon <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>A HTTP server class.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="_onload"
+>_onload</a></dt>
+Called from <i>load_bytecode</i> to create used classes.
+<dt><a name="req_handler(pio,_conn)"
+>req_handler(pio, conn)</a></dt>
+Called from the asynchronous select code, when data are ready to read at the pio.</dl>
+
+<h2><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="__init(args)"
+>__init(args)</a></dt>
+Object initializer, takes a hash argument to initialize attributes, which are:
+<dl>
+<dt><a name="LocalPort"
+>LocalPort</a></dt>
+Port number to listen.
+<dt><a name="LocalAddr"
+>LocalAddr</a></dt>
+Address name or IP number to listen.
+<dt><a name="debug"
+>debug</a></dt>
+Turn on internal diagnostic messages, printed to stderr.
+<dt><a name="parrot&#45;docs"
+>parrot&#45;docs</a></dt>
+Redirect to and serve files from <em>docs/html</em>.</dl>
+
+<dt><a name="socket()"
+>socket()</a></dt>
+Get connected server socket.
+<dt><a name="opts()"
+>opts()</a></dt>
+Get server options.
+<dt><a name="url(?init?)"
+>url(?init?)</a></dt>
+Get or set server url, aka document root
+<dt><a name="__get_bool()"
+>__get_bool()</a></dt>
+Vtable method, called from the <code>if</code> or <code>unless</code> opcode. Returns true, if the daemon object is listening on a socket, that is if the initialization went ok.
+<dt><a name="run()"
+>run()</a></dt>
+Main server runloop.
+<dt><a name="_write_logs()"
+>_write_logs()</a></dt>
+Called from server runloop. Write log files (currently to stdout only).
+<dt><a name="debug(...)"
+>debug(...)</a></dt>
+If debugging is on, concat passed arguments and write that string to stderr.
+<dt><a name="log(...)"
+>log(...)</a></dt>
+Concat passed arguments and schedule the string for logging.
+<dt><a name="_select_active()"
+>_select_active()</a></dt>
+Create a select event for all active connections. Called from server runnloop.
+<dt><a name="_del_stale_conns()"
+>_del_stale_conns()</a></dt>
+Not yet used method to delete old connections for the active set. Called from server runnloop.
+<dt><a name="new_conn(pio)"
+>new_conn(pio)</a></dt>
+Add <code>pio</code> to the list of active connections.
+<dt><a name="accept_conn()"
+>accept_conn()</a></dt>
+Accept a new connection and call <code>new_conn</code> on the accepted socket.
+<dt><a name="del_conn(conn)"
+>del_conn(conn)</a></dt>
+Delete connection from the active list
+<dt><a name="exists_conn(conn)"
+>exists_conn(conn)</a></dt>
+Return true, if the given connection is already active.</dl>
+
+<h1><a name="Class_HTTP;_Daemon;_ClientConn"
+>Class HTTP; Daemon; ClientConn <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>A class abstracting client connections.</p>
+
+<h2><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="init_pmc(pio)"
+>init_pmc(pio)</a></dt>
+Create a new connection object with the given socket pio.
+<dt><a name="socket()"
+>socket()</a></dt>
+Get connection socket.
+<dt><a name="server(?srv?)"
+>server(?srv?)</a></dt>
+Get or set server object.
+<dt><a name="timestamp(?ticks?)"
+>timestamp(?ticks?)</a></dt>
+Get or set the timestamp of this connection.
+<dt><a name="get_request"
+>get_request</a></dt>
+Read client request, return Request obj. Currently only <code>GET</code> is supported.
+<dt><a name="_read"
+>_read</a></dt>
+Internal method to read from the client. It returns a request string.
+<dt><a name="send_respons(resp)"
+>send_respons(resp)</a></dt>
+Send the response back to the client. Argument is a response object.
+<dt><a name="send_file_respons(url)"
+>send_file_respons(url)</a></dt>
+Slurp the <code>url</code> and send the response back to the client. TODO doc CGI urls.
+<dt><a name="check_cgi(url)"
+>check_cgi(url)</a></dt>
+Check if a request url is a CGI request. If yes, return the reulst of the CGI invocation.</dl>
+
+<h2><a name="Utility_functions"
+>Utility functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="to_string"
+>to_string</a></dt>
+Doomed.
+<dt><a name="urldecode(s)"
+>urldecode(s)</a></dt>
+Return %&#45;unescaped string of url string.
+<dt><a name="hex_to_int"
+>hex_to_int</a></dt>
+Called from above to convert a hex string to integer.
+<dt><a name="make_query_hash"
+>make_query_hash</a></dt>
+Split a query string at &#39;&#38;&#39; and return a hash of foo=bar items. The hash keys and values are urldecoded already.</dl>
+
+<h1><a name="Class_HTTP;Message"
+>Class HTTP;Message <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Base class for Request and Response Messages.</p>
+
+<h2><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="__init()"
+>__init()</a></dt>
+Create a new Message object.
+<dt><a name="headers()"
+>headers()</a></dt>
+Return an OrderedHash of message headers.
+<dt><a name="content(?s?)"
+>content(?s?)</a></dt>
+Set or get the message contents.
+<dt><a name="parse(s)"
+>parse(s)</a></dt>
+Parse the given request string into <code>header</code> and <code>content</code> attributes of the Message object.</dl>
+
+<h1><a name="Class_HTTP;Request_isa_HTTP;Message"
+>Class HTTP;Request isa HTTP;Message <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Handles client requests.</p>
+
+<h2><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="method()"
+>method()</a></dt>
+Return the request method. Currently just &#39;GET&#39; or &#39;&#39; is returned.
+<dt><a name="__get_bool()"
+>__get_bool()</a></dt>
+Returns true, if the request has at least one header.
+<dt><a name="uri()"
+>uri()</a></dt>
+Return the uri of the request.</dl>
+
+<h1><a name="Class_HTTP;Response_isa_HTTP;Message"
+>Class HTTP;Response isa HTTP;Message <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="code(c)"
+>code(c)</a></dt>
+Create initial code response line. This has to be called first to create header response items.
+<dt><a name="header(h_=&#62;_v,_...)"
+>header(h =&#62; v, ...)</a></dt>
+Append the given keyed items to the response headers.XXX shall this be actually push_header?
+<dt><a name="as_string()"
+>as_string()</a></dt>
+Return stringified version of the response object, ready for returning to client.</dl>
+
+<p># Local Variables: # mode: pir # fill&#45;column: 100 # End: # vim: expandtab shiftwidth=4 ft=pir:</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

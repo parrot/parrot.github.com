@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Untitled</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Contents</a> &raquo; <a href="../../../../html/perl.html">Perl Modules</a> &raquo; Untitled
+                </div>
+
+<h3><a name="dump_pmc()"
+><code>dump_pmc()</code></a></h3>
+
+<pre>    $return_value = dump_pmc($pmc2cMain);</pre>
+
+<p><b>Purpose:</b> Creates a <em>.dump</em> file for each file listed in pmc2cMain&#39;s <code>arg</code> key (which can be found in the directories listed in pmc2cMain&#39;s <code>include</code> key).</p>
+
+<p><b>Arguments:</b></p>
+
+<p><b>Return Values:</b> Returns 1 upon success.</p>
+
+<p><b>Comments:</b> Called when <code>&#45;&#45;dump</code> is specified as the command&#45;line option to <em>pmc2c.pl</em>.</p>
+
+<h2><a name="Non&#45;Public_Methods"
+>Non&#45;Public Methods</a></h2>
+
+<p>These functions are expressed as methods called on the Parrot::Pmc2c::Pmc2cMain object, but only because they make use of data stored in that object. They are called within the publicly available methods described above and are not intended to be publicly callable.</p>
+
+<h3><a name="gen_parent_lookup_info()"
+><code>gen_parent_lookup_info()</code></a></h3>
+
+<pre>    $pmc2cMain&#45;&#62;gen_parent_lookup_info($name, \%all);</pre>
+
+<p><b>Purpose:</b> Generate an ordered list of parent classes to put in the <code>$classes&#45;</code>{name}&#45;&#62;{parents}&#62; array, using the given directories to find parents.</p>
+
+<p><b>Arguments:</b> List of two arguments:</p>
+
+<ul>
+<li>String holding class name.</li>
+
+<li>Hash reference holding data structure being built up within <code>dump_pmc()</code>.</li>
+</ul>
+
+<p><b>Return Value:</b> Returns 1 upon success.</p>
+
+<p><b>Comments:</b> Called within <code>dump_pmc()</code>.</p>
+
+<h2><a name="Subroutines"
+>Subroutines</a></h2>
+
+<h3><a name="gen_parent_reverse_lookup_info()"
+><code>gen_parent_reverse_lookup_info()</code></a></h3>
+
+<pre>    $class = gen_parent_reverse_lookup_info($name, $all, $vt);</pre>
+
+<p><b>Purpose:</b> Generate a list of inherited methods for <code>$name</code> by searching the inheritance tree. The method list is found in <code>$vt</code>.</p>
+
+<p><b>Arguments:</b> List of three elements:</p>
+
+<ul>
+<li>String holding name of class being dumped.</li>
+
+<li>Reference to the hash holding the data structure being built up within <code>dump_pmc()</code>.</li>
+
+<li>The result of a call of <code>read_dump()</code> on <em>vtable.pmc</em>.</li>
+</ul>
+
+<p><b>Return Value:</b> Returns 1 upon success.</p>
+
+<p><b>Comments:</b> Called within <code>dump_pmc()</code>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

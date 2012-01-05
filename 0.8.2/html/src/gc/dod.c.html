@@ -1,0 +1,206 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Dead object destruction of the various headers</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Dead object destruction of the various headers</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/gc/dod.c &#45; Dead object destruction of the various headers</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>This file implements <i>dead object destruction</i>.
+This is documented in PDD 9 with supplementary notes in <em lang='und' xml:lang='und'>docs/dev/dod.pod</em> and <em lang='und' xml:lang='und'><a href="../../docs/memory_internals.pod.html">docs/memory_internals.pod</a></em>.</p>
+
+<p>It&#39;s possible to turn on/off the checking of the system stack and processor registers.
+The actual checking is set up in <em lang='und' xml:lang='und'><a href="../cpu_dep.c.html">src/cpu_dep.c</a></em> and is performed in the function <code lang='und' xml:lang='und'>trace_memory_block</code> here.</p>
+
+<p>There&#39;s also a verbose mode for garbage collection.</p>
+
+<h1><a name="FUNCTIONS"
+>FUNCTIONS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="static_void_mark_special"
+><b><code lang='und' xml:lang='und'>static void mark_special</b></code></a></dt><p class="pad"></p>
+
+<dd>Marks the children of a special PMC.
+Handles the marking necessary for shared PMCs,
+and ensures timely marking of high&#45;priority PMCs.
+Ensures PMC_EXT structures are properly organized for garbage collection.</dd><p class="pad"></p>
+
+<dt><a name="void_pobject_lives"
+><b><code lang='und' xml:lang='und'>void pobject_lives</b></code></a></dt><p class="pad"></p>
+
+<dd>Marks the PObj as &#34;alive&#34; for the Garbage Collector.
+Takes a pointer to a PObj,
+and performs necessary marking to ensure the PMC and it&#39;s direct children nodes are marked alive.
+Implementation is generally dependant on the particular garbage collector in use.</dd><p class="pad"></p>
+
+<dt><a name="int_Parrot_dod_trace_root"
+><b><code lang='und' xml:lang='und'>int Parrot_dod_trace_root</b></code></a></dt><p class="pad"></p>
+
+<dd>Traces the root set.
+Returns 0 if it&#39;s a lazy DOD run and all objects that need timely destruction were found.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>trace_stack</code> can have these values:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> 0 ... trace normal roots, no system areas
+ 1 ... trace whole root set
+ 2 ... trace system areas only</pre>
+
+<dt><a name="static_int_trace_active_PMCs"
+><b><code lang='und' xml:lang='und'>static int trace_active_PMCs</b></code></a></dt><p class="pad"></p>
+
+<dd>Performs a full trace run and marks all the PMCs as active if they are. Returns whether the run completed, that is, whether it&#39;s safe to proceed with GC.</dd><p class="pad"></p>
+
+<dt><a name="int_Parrot_dod_trace_children"
+><b><code lang='und' xml:lang='und'>int Parrot_dod_trace_children</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns whether the tracing process has completed.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_trace_pmc_data"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_trace_pmc_data</b></code></a></dt><p class="pad"></p>
+
+<dd>If the PMC is an array of PMCs, trace all elements in the array as children. Touches each object in the array to mark it as being alive. To determine whether a PMC is an array to be marked in this way, it is tested for the <code lang='und' xml:lang='und'>PObj_data_is_PMC_array_FLAG</code> flag.</dd><p class="pad"></p>
+
+<dt><a name="void_clear_cow"
+><b><code lang='und' xml:lang='und'>void clear_cow</b></code></a></dt><p class="pad"></p>
+
+<dd>Clears the COW ref count.</dd><p class="pad"></p>
+
+<dt><a name="void_used_cow"
+><b><code lang='und' xml:lang='und'>void used_cow</b></code></a></dt><p class="pad"></p>
+
+<dd>Finds other users of COW&#39;s <code lang='und' xml:lang='und'>bufstart</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_sweep"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_sweep</b></code></a></dt><p class="pad"></p>
+
+<dd>Puts any buffers/PMCs that are now unused onto the pool&#39;s free list. If <code lang='und' xml:lang='und'>GC_IS_MALLOC</code>, bufstart gets freed too, if possible. Avoids buffers that are immune from collection (i.e. constant).</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_free_pmc"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_free_pmc</b></code></a></dt><p class="pad"></p>
+
+<dd>Frees a PMC that is no longer being used. Calls a custom <code lang='und' xml:lang='und'>destroy</code> VTABLE method if one is available. If the PMC uses a PMC_EXT structure, that is freed as well.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_free_pmc_ext"
+><b><code lang='und' xml:lang='und'>void Parrot_free_pmc_ext</b></code></a></dt><p class="pad"></p>
+
+<dd>Frees the <code lang='und' xml:lang='und'>PMC_EXT</code> structure attached to a PMC, if it exists.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_free_sysmem"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_free_sysmem</b></code></a></dt><p class="pad"></p>
+
+<dd>If the PMC uses memory allocated directly from the system, this function frees that memory.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_free_buffer_malloc"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_free_buffer_malloc</b></code></a></dt><p class="pad"></p>
+
+<dd>Frees the given buffer, returning the storage space to the operating system and removing it from Parrot&#39;s memory management system. If the buffer is COW, The buffer is not freed if the reference count is greater then 1.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_free_buffer"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_free_buffer</b></code></a></dt><p class="pad"></p>
+
+<dd>Frees a buffer, returning it to the memory pool for Parrot to possibly reuse later.</dd><p class="pad"></p>
+
+<dt><a name="static_size_t_find_common_mask"
+><b><code lang='und' xml:lang='und'>static size_t find_common_mask</b></code></a></dt><p class="pad"></p>
+
+<dd>Finds a mask covering the longest common bit&#45;prefix of <code lang='und' xml:lang='und'>val1</code> and <code lang='und' xml:lang='und'>val2</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_trace_mem_block"
+><b><code lang='und' xml:lang='und'>void trace_mem_block</b></code></a></dt><p class="pad"></p>
+
+<dd>Traces the memory block between <code lang='und' xml:lang='und'>lo_var_ptr</code> and <code lang='und' xml:lang='und'>hi_var_ptr</code>. Attempt to find pointers to PObjs or buffers, and mark them as &#34;alive&#34; if found. See src/cpu_dep.c for more information about tracing memory areas.</dd><p class="pad"></p>
+
+<dt><a name="static_void_clear_live_bits"
+><b><code lang='und' xml:lang='und'>static void clear_live_bits</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs through all PMC arenas and clear live bits. This is used to reset the GC system after a full system sweep.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_clear_live_bits"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_clear_live_bits</b></code></a></dt><p class="pad"></p>
+
+<dd>Resets the PMC pool, so all objects are marked as &#34;White&#34;. This is done after a GC run to reset the system and prepare for the next mark phase.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_profile_start"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_profile_start</b></code></a></dt><p class="pad"></p>
+
+<dd>Records the start time of a DOD run when profiling is enabled.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_profile_end"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_profile_end</b></code></a></dt><p class="pad"></p>
+
+<dd>Records the end time of the DOD part <code lang='und' xml:lang='und'>what</code> run when profiling is enabled. Also record start time of next part.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_ms_run_init"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_ms_run_init</b></code></a></dt><p class="pad"></p>
+
+<dd>Prepares the collector for a mark &#38; sweep DOD run. This is the initializer function for the MS garbage collector.</dd><p class="pad"></p>
+
+<dt><a name="static_int_sweep_cb"
+><b><code lang='und' xml:lang='und'>static int sweep_cb</b></code></a></dt><p class="pad"></p>
+
+<dd>Sweeps the given pool for the MS collector. This function also ends the profiling timer, if profiling is enabled. Returns the total number of objects freed.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_dod_ms_run"
+><b><code lang='und' xml:lang='und'>void Parrot_dod_ms_run</b></code></a></dt><p class="pad"></p>
+
+<dd>Runs the stop&#45;the&#45;world mark &#38; sweep (MS) collector.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_do_dod_run"
+><b><code lang='und' xml:lang='und'>void Parrot_do_dod_run</b></code></a></dt><p class="pad"></p>
+
+<dd>Calls the configured garbage collector to find and reclaim unused headers.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/dod.h</em>, <em lang='und' xml:lang='und'><a href="../cpu_dep.c.html">src/cpu_dep.c</a></em>, <em lang='und' xml:lang='und'>docs/dev/dod.dev</em> and <em lang='und' xml:lang='und'><a href="../../docs/pdds/pdd09_gc.pod.html">docs/pdds/pdd09_gc.pod</a></em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Initial version by Mike Lambert on 2002.05.27.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

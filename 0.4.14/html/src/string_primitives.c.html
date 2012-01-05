@@ -1,0 +1,214 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>String Primitives</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">String Primitives</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/string_primitives.c &#45; String Primitives</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>This file collects together all the functions that call into the ICU API.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>*/</p>
+
+<p>/* HEADERIZER HFILE: include/parrot/string_primitives.h */</p>
+
+<p>#include &#34;parrot/parrot.h&#34; #if PARROT_HAS_ICU # include &#60;unicode/ucnv.h&#62; # include &#60;unicode/utypes.h&#62; # include &#60;unicode/uchar.h&#62; # include &#60;unicode/ustring.h&#62; #else # include &#60;ctype.h&#62; #endif #include &#60;assert.h&#62;</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: string_set_data_directory</p>
+
+<p>Set the directory where ICU finds its data files (encodings,
+locales,
+etc.).</p>
+
+<p>*/</p>
+
+<p>PARROT_API void string_set_data_directory(PARROT_INTERP,
+const char *dir) { #if PARROT_HAS_ICU u_setDataDirectory(dir);</p>
+
+<pre lang='und' xml:lang='und'>    /* Since u_setDataDirectory doesn&#39;t have a result code, we&#39;ll spot
+       check that everything is okay by making sure that &#39;9&#39; had decimal
+       value 9. Using 57 rather than &#39;9&#39; so that the encoding of this
+       source code file isn&#39;t an issue.... (Don&#39;t want to get bitten by
+       EBCDIC.) */
+
+    if (!u_isdigit(57) || (u_charDigitValue(57) != 9)) {
+            real_exception(interp, NULL, ICU_ERROR,
+                &#34;string_set_data_directory: ICU data files not found&#34;
+                &#34;(apparently) for directory [%s]&#34;, dir);
+    }
+#else
+    UNUSED(dir);
+
+    real_exception(interp, NULL, ICU_ERROR,
+        &#34;string_set_data_directory: parrot compiled without ICU support&#34;);
+#endif
+}</pre>
+
+<p>/*</p>
+
+<p>Creates a Parrot string from an &#34;external&#34; buffer, converting from any supported encoding into Parrot string&#39;s internal format.</p>
+
+<p>*/</p>
+
+<p>PARROT_API void string_fill_from_buffer(PARROT_INTERP, NOTNULL(const void *buffer), UINTVAL len, const char *encoding_name, NULLOK(STRING *s)) { #if PARROT_HAS_ICU UErrorCode icuError = U_ZERO_ERROR; UConverter *conv = NULL; UChar *target = NULL; UChar *target_limit = NULL; const char *source = NULL; const char *source_limit = NULL;</p>
+
+<pre lang='und' xml:lang='und'>    assert(buffer);
+    assert(encoding_name);
+
+    if (s &#38;&#38; !len) {
+        /* XXX: I _guess_ this is always an empty string&#45;&#45;is that right? */
+        s&#45;&#62;bufused = 0;
+        s&#45;&#62;strlen = 0;
+        return;
+    }
+
+    /* big guess&#45;&#45;allocate same space for string as buffer needed.
+       may be able to make a more educated guess based on the encoding. */
+    Parrot_allocate_string(interp, s, len);
+
+    conv = ucnv_open(encoding_name, &#38;icuError);
+
+    if (!conv || icuError != U_ZERO_ERROR) {
+        /* unknown encoding??? */
+        real_exception(interp, NULL, ICU_ERROR,
+                &#34;string_fill_from_buffer: ICU error from ucnv_open()&#34;);
+
+    }
+
+    target = (UChar *)s&#45;&#62;strstart;
+    /* buflen may be larger than what we asked for,
+     * so take advantage of the space
+     */
+    target_limit = (UChar *)((char *)PObj_bufstart(s) + PObj_buflen(s) &#45; 1);
+    source = buffer;
+    source_limit = source + len;
+
+    ucnv_toUnicode(conv, &#38;target, target_limit, &#38;source,
+            source_limit, NULL, TRUE, &#38;icuError);
+
+    while (icuError == U_BUFFER_OVERFLOW_ERROR) {
+        const size_t consumed_length = (char *)target &#45; (char *)(s&#45;&#62;strstart);
+
+        /* double size, at least */
+        Parrot_reallocate_string(interp, s, 2 * PObj_buflen(s));
+
+        target = (UChar *)((char *)s&#45;&#62;strstart + consumed_length);
+        target_limit = (UChar *)((char *)PObj_bufstart(s) + PObj_buflen(s) &#45; 1);
+
+        icuError = U_ZERO_ERROR;
+        ucnv_toUnicode(conv, &#38;target, target_limit, &#38;source,
+                source_limit, NULL, TRUE, &#38;icuError);
+    }
+
+    ucnv_close(conv);
+
+    if (icuError != U_ZERO_ERROR) {
+        /* handle error */
+        real_exception(interp, NULL, ICU_ERROR,
+                &#34;string_fill_from_buffer: ICU error from ucnv_toUnicode()&#34;);
+    }
+
+    real_exception(interp, NULL, UNIMPLEMENTED, &#34;Can&#39;t do unicode yet&#34;);
+
+    /* temporary; need to promote to rep 4 if has non&#45;BMP characters*/
+    s&#45;&#62;bufused = (char *)target &#45; (char *)s&#45;&#62;strstart;
+    string_compute_strlen(interp, s);
+#else
+    UNUSED(interp);
+    UNUSED(buffer);
+    UNUSED(len);
+    UNUSED(encoding_name);
+    UNUSED(s);
+
+    real_exception(interp, NULL, ICU_ERROR,
+        &#34;string_fill_from_buffer: parrot compiled without ICU support&#34;);
+#endif
+}</pre>
+
+<p>/* Unescape a single character. We assume that we&#39;re at the start of a sequence, right after the \ */ PARROT_API Parrot_UInt4 string_unescape_one(PARROT_INTERP, NOTNULL(UINTVAL *offset), STRING *string) { UINTVAL workchar = 0; UINTVAL charcount = 0; const UINTVAL len = string_length(interp, string); /* Well, not right now */ UINTVAL codepoint = CHARSET_GET_BYTE(interp, string, *offset); ++*offset; switch (codepoint) { case &#39;x&#39;: codepoint = CHARSET_GET_BYTE(interp, string, *offset); if (codepoint &#62;= &#39;0&#39; &#38;&#38; codepoint &#60;= &#39;9&#39;) { workchar = codepoint &#45; &#39;0&#39;; } else if (codepoint &#62;= &#39;a&#39; &#38;&#38; codepoint &#60;= &#39;f&#39;) { workchar = codepoint &#45; &#39;a&#39; + 10; } else if (codepoint &#62;= &#39;A&#39; &#38;&#38; codepoint &#60;= &#39;F&#39;) { workchar = codepoint &#45; &#39;A&#39; + 10; } else if (codepoint == &#39;{&#39;) { int i; ++*offset; workchar = 0; for (i = 0; i &#60; 8 &#38;&#38; *offset &#60; len; ++i, ++*offset) { codepoint = CHARSET_GET_BYTE(interp, string, *offset); if (codepoint == &#39;}&#39;) { ++*offset; return workchar; } workchar *= 16; if (codepoint &#62;= &#39;0&#39; &#38;&#38; codepoint &#60;= &#39;9&#39;) { workchar += codepoint &#45; &#39;0&#39;; } else if (codepoint &#62;= &#39;a&#39; &#38;&#38; codepoint &#60;= &#39;f&#39;) { workchar += codepoint &#45; &#39;a&#39; + 10; } else if (codepoint &#62;= &#39;A&#39; &#38;&#38; codepoint &#60;= &#39;F&#39;) { workchar += codepoint &#45; &#39;A&#39; + 10; } else { real_exception(interp, NULL, UNIMPLEMENTED, &#34;Illegal escape sequence inside {}&#34;); } } if (*offset == len) real_exception(interp, NULL, UNIMPLEMENTED, &#34;Illegal escape sequence no &#39;}&#39;&#34;); } else { real_exception(interp, NULL, UNIMPLEMENTED, &#34;Illegal escape sequence in&#34;); } ++*offset; if (*offset &#60; len) { workchar *= 16; codepoint = CHARSET_GET_BYTE(interp, string, *offset); if (codepoint &#62;= &#39;0&#39; &#38;&#38; codepoint &#60;= &#39;9&#39;) { workchar += codepoint &#45; &#39;0&#39;; } else if (codepoint &#62;= &#39;a&#39; &#38;&#38; codepoint &#60;= &#39;f&#39;) { workchar += codepoint &#45; &#39;a&#39; + 10; } else if (codepoint &#62;= &#39;A&#39; &#38;&#38; codepoint &#60;= &#39;F&#39;) { workchar += codepoint &#45; &#39;A&#39; + 10; } else { return workchar; } } else { return workchar; } ++*offset; return workchar; case &#39;c&#39;: codepoint = CHARSET_GET_BYTE(interp, string, *offset); if (codepoint &#62;= &#39;A&#39; &#38;&#38; codepoint &#60;= &#39;Z&#39;) { workchar = codepoint &#45; &#39;A&#39; + 1; } else { real_exception(interp, NULL, UNIMPLEMENTED, &#34;Illegal escape sequence&#34;); } ++*offset; return workchar; case &#39;u&#39;: workchar = 0; for (charcount = 0; charcount &#60; 4; charcount++) { if (*offset &#60; len) { workchar *= 16; codepoint = CHARSET_GET_BYTE(interp, string, *offset); if (codepoint &#62;= &#39;0&#39; &#38;&#38; codepoint &#60;= &#39;9&#39;) { workchar += codepoint &#45; &#39;0&#39;; } else if (codepoint &#62;= &#39;a&#39; &#38;&#38; codepoint &#60;= &#39;f&#39;) { workchar += codepoint &#45; &#39;a&#39; + 10; } else if (codepoint &#62;= &#39;A&#39; &#38;&#38; codepoint &#60;= &#39;F&#39;) { workchar += codepoint &#45; &#39;A&#39; + 10; } else { real_exception(interp, NULL, UNIMPLEMENTED, &#34;Illegal escape sequence in uxxx escape&#34;); } } else { real_exception(interp, NULL, UNIMPLEMENTED, &#34;Illegal escape sequence in uxxx escape &#45; too short&#34;); } ++*offset; } return workchar; case &#39;U&#39;: workchar = 0; for (charcount = 0; charcount &#60; 8; charcount++) { if (*offset &#60; len) { workchar *= 16; codepoint = CHARSET_GET_BYTE(interp, string, *offset); if (codepoint &#62;= &#39;0&#39; &#38;&#38; codepoint &#60;= &#39;9&#39;) { workchar += codepoint &#45; &#39;0&#39;; } else if (codepoint &#62;= &#39;a&#39; &#38;&#38; codepoint &#60;= &#39;f&#39;) { workchar += codepoint &#45; &#39;a&#39; + 10; } else if (codepoint &#62;= &#39;A&#39; &#38;&#38; codepoint &#60;= &#39;F&#39;) { workchar += codepoint &#45; &#39;A&#39; + 10; } else { real_exception(interp, NULL, UNIMPLEMENTED, &#34;Illegal escape sequence in Uxxx escape&#34;); } } else { real_exception(interp, NULL, UNIMPLEMENTED, &#34;Illegal escape sequence in uxxx escape &#45; too short&#34;); } ++*offset; } return workchar; case &#39;0&#39;: case &#39;1&#39;: case &#39;2&#39;: case &#39;3&#39;: case &#39;4&#39;: case &#39;5&#39;: case &#39;6&#39;: case &#39;7&#39;: workchar = codepoint &#45; &#39;0&#39;; if (*offset &#60; len) { workchar *= 8; codepoint = CHARSET_GET_BYTE(interp, string, *offset); if (codepoint &#62;= &#39;0&#39; &#38;&#38; codepoint &#60;= &#39;7&#39;) { workchar += codepoint &#45; &#39;0&#39;; } else { return workchar; } } else { return workchar; } ++*offset; if (*offset &#60; len) { workchar *= 8; codepoint = CHARSET_GET_BYTE(interp, string, *offset); if (codepoint &#62;= &#39;0&#39; &#38;&#38; codepoint &#60;= &#39;7&#39;) { workchar += codepoint &#45; &#39;0&#39;; } else { return workchar; } } else { return workchar; } ++*offset; return workchar; case &#39;a&#39;: return 7; /* bell */ case &#39;b&#39;: return 8; /* bs */ case &#39;t&#39;: return 9; case &#39;n&#39;: return 10; case &#39;v&#39;: return 11; case &#39;f&#39;: return 12; case &#39;r&#39;: return 13; case &#39;e&#39;: return 27; case 92: /* \ */ return 92; case &#39;&#34;&#39;: return &#39;&#34;&#39;; }</p>
+
+<pre lang='und' xml:lang='und'>    return codepoint;  /* any not special return the char */
+}</pre>
+
+<p>/*</p>
+
+<h2><a name="Character_Property_Functions"
+>Character Property Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>FUNCDOC: Parrot_char_digit_value</p>
+
+<p>Returns the decimal digit value of the specified character if it is a decimal digit character. If not, then &#45;1 is returned.</p>
+
+<p>Note that as currently written, <code lang='und' xml:lang='und'>Parrot_char_digit_value()</code> can correctly return the decimal digit value of characters for which <code lang='und' xml:lang='und'>Parrot_char_is_digit()</code> returns false.</p>
+
+<p>*/</p>
+
+<p>PARROT_API UINTVAL Parrot_char_digit_value(SHIM_INTERP, UINTVAL character) { #if PARROT_HAS_ICU return u_charDigitValue(character); #else if ((character &#62;= 0x30) || (character &#60;= 0x39)) return character &#45; 0x30; return &#45;1; #endif }</p>
+
+<p>/*</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="include/parrot/string_primitives.h"
+><em lang='und' xml:lang='und'>include/parrot/string_primitives.h</em></a></dt><p class="pad"></p>
+
+<dt><a name="include/parrot/string.h"
+><em lang='und' xml:lang='und'>include/parrot/string.h</em></a></dt><p class="pad"></p>
+
+<dt><a name="src/string.c"
+><em lang='und' xml:lang='und'><a href="string.c.html">src/string.c</a></em></a></dt><p class="pad"></p>
+</dl>
+
+<p>*/</p>
+
+<p>/* * Local variables: * c&#45;file&#45;style: &#34;parrot&#34; * End: * vim: expandtab shiftwidth=4: */</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

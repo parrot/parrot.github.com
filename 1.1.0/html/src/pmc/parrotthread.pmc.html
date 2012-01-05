@@ -1,0 +1,76 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Threaded Interpreter</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Threaded Interpreter
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/parrotthread.pmc &#45; Threaded Interpreter</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>ParrotThread extends ParrotInterpreter to provide a threaded interpreter which supports:</p>
+
+<pre>    new P2, &#34;ParrotThread&#34;        # create new threaded interp
+    find_method P0, P2, &#34;thread3&#34; # thread&#45;run function
+    find_global P5, &#34;_th1&#34;        # locate thread function
+    invoke                        # run thread
+
+    set I0, P2                    # get thread id</pre>
+
+<p>and these methods:</p>
+
+<pre>    thread1
+    thread2
+    thread3                   # start thread of type 1..3
+    join
+    detach
+    yield
+    kill</pre>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="thread_id_=_thread.&#39;run&#39;(CLONE_FLAGS,_sub,_args...)"
+><b><code>thread_id = thread.&#39;run&#39;(CLONE_FLAGS, sub, args...)</b></code></a></dt>
+Run the thread. This object is morphed into an appropriate ParrotRunningThread PMC. The CLONE_FLAGS are or&#39;d together values taken from <code>cloneflags.pasm</code>.
+<dt><a name="thread_id_=_thread.&#39;run_clone&#39;(sub,_args...)"
+><b><code>thread_id = thread.&#39;run_clone&#39;(sub, args...)</b></code></a></dt>
+Equivalent to calling run with PARROT_CLONE_DEFAULT.
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes the thread.
+<dt><a name="void_init_pmc(PMC_*parent)"
+><b><code>void init_pmc(PMC *parent)</b></code></a></dt>
+Create a new thread by cloning the passed interpreter.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

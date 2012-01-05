@@ -1,0 +1,142 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Untitled</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Contents</a> &raquo; <a href="../../../../../html/languages.html">Language Implementations</a> &raquo; <a href="../../../../../html/squaak.html">Squaak</a> &raquo; Untitled
+                </div>
+
+<p>grammar Squaak::Grammar is PCT::Grammar;</p>
+
+<p>rule TOP { {*} #= open &#60;stat_or_def&#62;* [ $ || &#60;.panic: &#39;Syntax error&#39;&#62; ] {*} #= close }</p>
+
+<p>rule stat_or_def { | &#60;statement&#62; {*} #= statement | &#60;sub_definition&#62; {*} #= sub_definition }</p>
+
+<p>rule statement { | &#60;if_statement&#62; {*} #= if_statement | &#60;while_statement&#62; {*} #= while_statement | &#60;for_statement&#62; {*} #= for_statement | &#60;try_statement&#62; {*} #= try_statement | &#60;throw_statement&#62; {*} #= throw_statement | &#60;return_statement&#62; {*} #= return_statement | &#60;sub_call&#62; {*} #= sub_call | &#60;assignment&#62; {*} #= assignment | &#60;variable_declaration&#62; {*} #= variable_declaration | &#60;do_block&#62; {*} #= do_block }</p>
+
+<p>rule if_statement { &#39;if&#39; &#60;expression&#62; &#39;then&#39; &#60;block&#62; [&#39;else&#39; &#60;else=block&#62;]?
+&#39;end&#39; {*} }</p>
+
+<p>rule while_statement { &#39;while&#39; &#60;expression&#62; &#39;do&#39; &#60;block&#62; &#39;end&#39; {*} }</p>
+
+<p>rule for_statement { &#39;for&#39; &#60;for_init&#62; &#39;,&#39; &#60;expression&#62; [&#39;,&#39; &#60;step=expression&#62;]?
+&#39;do&#39; &#60;statement&#62;* &#39;end&#39; {*} }</p>
+
+<p>rule for_init { &#39;var&#39; &#60;identifier&#62; &#39;=&#39; &#60;expression&#62; {*} }</p>
+
+<p>rule try_statement { &#39;try&#39; &#60;try=block&#62; &#39;catch&#39; &#60;exception&#62; &#60;catch=block&#62; &#39;end&#39; {*} }</p>
+
+<p>rule exception { &#60;identifier&#62; {*} }</p>
+
+<p>rule throw_statement { &#39;throw&#39; &#60;expression&#62; {*} }</p>
+
+<p>rule return_statement { &#39;return&#39; &#60;expression&#62; {*} }</p>
+
+<p>rule block { {*} #= open &#60;statement&#62;* {*} #= close }</p>
+
+<p>rule do_block { &#39;do&#39; &#60;block&#62; &#39;end&#39; {*} }</p>
+
+<p>rule assignment { &#60;primary&#62; &#39;=&#39; &#60;expression&#62; {*} }</p>
+
+<p>rule sub_definition { &#39;sub&#39; &#60;identifier&#62; &#60;parameters&#62; &#60;statement&#62;* &#39;end&#39; {*} }</p>
+
+<p>rule parameters { &#39;(&#39; [ &#60;identifier&#62; [&#39;,&#39; &#60;identifier&#62;]* ]?
+&#39;)&#39; {*} }</p>
+
+<p>rule variable_declaration { &#39;var&#39; &#60;identifier&#62; [&#39;=&#39; &#60;expression&#62;]?
+{*} }</p>
+
+<p>rule sub_call { &#60;primary&#62; &#60;arguments&#62; {*} }</p>
+
+<p>rule arguments { &#39;(&#39; [ &#60;expression&#62; [&#39;,&#39; &#60;expression&#62;]* ]?
+&#39;)&#39; {*} }</p>
+
+<p>rule primary { &#60;identifier&#62; &#60;postfix_expression&#62;* {*} }</p>
+
+<p>rule postfix_expression { | &#60;key&#62; {*} #= key | &#60;member&#62; {*} #= member | &#60;index&#62; {*} #= index }</p>
+
+<p>rule key { &#39;{&#39; &#60;expression&#62; &#39;}&#39; {*} }</p>
+
+<p>rule member { &#39;.&#39; &#60;identifier&#62; {*} }</p>
+
+<p>rule index { &#39;[&#39; &#60;expression&#62; &#39;]&#39; {*} }</p>
+
+<p>rule term { | &#60;float_constant&#62; {*} #= float_constant | &#60;integer_constant&#62; {*} #= integer_constant | &#60;string_constant&#62; {*} #= string_constant | &#60;hash_constructor&#62; {*} #= hash_constructor | &#60;array_constructor&#62; {*} #= array_constructor | &#60;sub_call&#62; {*} #= sub_call | &#60;primary&#62; {*} #= primary | &#39;(&#39; &#60;expression&#62; &#39;)&#39; {*} #= expression }</p>
+
+<p>rule hash_constructor { &#39;{&#39; [ &#60;named_field&#62; [&#39;,&#39; &#60;named_field&#62;]* ]?
+&#39;}&#39; {*} }</p>
+
+<p>rule named_field { &#60;string_constant&#62; &#39;=&#62;&#39; &#60;expression&#62; {*} }</p>
+
+<p>rule array_constructor { &#39;[&#39; [ &#60;expression&#62; [&#39;,&#39; &#60;expression&#62;]* ]?
+&#39;]&#39; {*} }</p>
+
+<p>token identifier { &#60;!keyword&#62; &#60;ident&#62; {*} }</p>
+
+<p>token integer_constant { \d+ {*} }</p>
+
+<p>token float_constant { [ | \d+ &#39;.&#39; \d* | \d* &#39;.&#39; \d+ ] {*} }</p>
+
+<p>token string_constant { \&#34; &#60;string_literal: &#39;&#34;&#39;&#62; \&#34; {*} }</p>
+
+<p>token keyword { [&#39;and&#39;|&#39;catch&#39; |&#39;do&#39; |&#39;else&#39; |&#39;end&#39; |&#39;for&#39;|&#39;if&#39; |&#39;not&#39; |&#39;or&#39; |&#39;return&#39;|&#39;sub&#39;|&#39;throw&#39;|&#39;try&#39; |&#39;var&#39;|&#39;while&#39;]&#62;&#62; }</p>
+
+<p>rule expression is optable { ...
+}</p>
+
+<p>proto &#39;infix:or&#39; is precedence(&#39;1&#39;) is pasttype(&#39;unless&#39;) { ...
+} proto &#39;infix:and&#39; is tighter(&#39;infix:or&#39;) is pasttype(&#39;if&#39;) { ...
+}</p>
+
+<p>proto &#39;infix:&#60;&#39; is tighter(&#39;infix:and&#39;) { ...
+} proto &#39;infix:&#60;=&#39; is equiv(&#39;infix:&#60;&#39;) { ...
+} proto &#39;infix:&#62;&#39; is equiv(&#39;infix:&#60;&#39;) { ...
+} proto &#39;infix:&#62;=&#39; is equiv(&#39;infix:&#60;&#39;) { ...
+} proto &#39;infix:==&#39; is equiv(&#39;infix:&#60;&#39;) { ...
+} proto &#39;infix:!=&#39; is equiv(&#39;infix:&#60;&#39;) { ...
+}</p>
+
+<p>proto &#39;infix:+&#39; is tighter(&#39;infix:&#60;&#39;) is pirop(&#39;add&#39;) { ...
+} proto &#39;infix:&#45;&#39; is equiv(&#39;infix:+&#39;) is pirop(&#39;sub&#39;) { ...
+}</p>
+
+<p>proto &#39;infix:..&#39; is equiv(&#39;infix:+&#39;) is pirop(&#39;concat&#39;) { ...
+}</p>
+
+<p>proto &#39;infix:*&#39; is tighter(&#39;infix:+&#39;) is pirop(&#39;mul&#39;) { ...
+} proto &#39;infix:%&#39; is equiv(&#39;infix:*&#39;) is pirop(&#39;mod&#39;) { ...
+} proto &#39;infix:/&#39; is equiv(&#39;infix:*&#39;) is pirop(&#39;div&#39;) { ...
+}</p>
+
+<p>proto &#39;prefix:not&#39; is tighter(&#39;infix:*&#39;) is pirop(&#39;not&#39;) { ...
+} proto &#39;prefix:&#45;&#39; is tighter(&#39;prefix:not&#39;) is pirop(&#39;neg&#39;) { ...
+}</p>
+
+<p>proto &#39;term:&#39; is tighter(&#39;prefix:&#45;&#39;) is parsed(&#38;term) { ...
+}</p>
+
+<p>## this &#60;ws&#62; rule treats # as &#34;comment to eol&#34; ## you may want to replace it with something appropriate token ws { &#60;!ww&#62; [ &#39;#&#39; \N* \n?
+| \s+ ]* }</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

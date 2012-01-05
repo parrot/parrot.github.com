@@ -1,0 +1,178 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>A pure PIR implementation of coroutines</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Contents</a> &raquo; <a href="../../../../../html/libs.html">Libraries</a> &raquo; A pure PIR implementation of coroutines
+                </div>
+
+<h1><a name="TITLE"
+>TITLE</a></h1>
+
+<p>Parrot::Coroutine &#45; A pure PIR implementation of coroutines</p>
+
+<h1><a name="VERSION"
+>VERSION</a></h1>
+
+<pre> $Id$</pre>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    .sub onload :load
+        load_bytecode &#39;Parrot/Coroutine.pir&#39;
+    .end
+
+    ## Recursive coroutine to enumerate tree elements.  Each element that is
+    ## not a FixedPMCArray is yielded in turn.
+    .sub enumerate_tree
+        .param pmc coro
+        .param pmc tree_node
+        .param int depth :optional
+        .param int depth_p :opt_flag
+
+        if depth_p goto have_depth
+        depth = 0
+    have_depth:
+        inc depth
+
+        $I0 = isa tree_node, &#39;FixedPMCArray&#39;
+        if $I0 goto recur
+        print &#34;[leaf &#34;
+        print tree_node
+        print &#34;]\n&#34;
+        coro.&#39;yield&#39;(tree_node)
+        .return ()
+
+    recur:
+        ## Loop through array elements, recurring on each.
+        .local int size, i
+        i = 0
+        size = tree_node
+    again:
+        if i &#62;= size goto done
+        print &#34;[recur: depth &#34;
+        print depth
+        print &#39; elt &#39;
+        print i
+        print &#34;]\n&#34;
+        $P1 = tree_node[i]
+        enumerate_tree(coro, $P1, depth)
+        inc i
+        goto again
+    done:
+        .return ()
+    .end
+
+    .sub print_tree
+        .param pmc tree
+
+        .local int coro_class, idx
+        .local pmc coro
+        .const &#39;Sub&#39; coro_sub = &#34;enumerate_tree&#34;
+        coro = new &#39;Parrot::Coroutine&#39;, coro_sub
+        ($P0 :optional, $I0 :opt_flag) = coro.&#39;resume&#39;(coro, tree)
+        idx = 0
+
+    loop:
+        unless $I0 goto done
+        print &#39;print_tree:  &#39;
+        print idx
+        print &#39; =&#62; &#39;
+        print $P0
+        print &#34;\n&#34;
+        ($P0 :optional, $I0 :opt_flag) = coro.&#39;resume&#39;()
+        goto loop
+    done:
+    .end</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This object class provides an implementation of coroutines that is written in pure PIR using continuations.</p>
+
+<h2><a name="METHODS"
+>METHODS</a></h2>
+
+<h3><a name="init_pmc(sub)"
+><b>init_pmc(sub)</b></a></h3>
+
+<p>This method is normally called via the <code>new</code> op:</p>
+
+<pre>    .local pmc coro
+    .const &#39;Sub&#39; coro_sub = &#34;enumerate_tree&#34;
+    coro_class = get_class &#39;Parrot::Coroutine&#39;
+    coro = coro_class.&#39;new&#39;(&#39;initial_sub&#39; =&#62; coro_sub)</pre>
+
+<p>Given a sub, it initializes a new <code>Parrot::Coroutine</code> object.</p>
+
+<h3><a name="coro.resume(args...)"
+><b>coro.resume(args...)</b></a></h3>
+
+<p>Invoke the coroutine. The first time this is called on a new coroutine, the initial sub is invoked with the passed arguments. The second and subsequent times, the args are delivered as the result of the previous <code>yield</code> operation.</p>
+
+<p>If the coroutine subsequently yields, the values passed to the <code>yield</code> method are returned as the values from <code>resume</code>.</p>
+
+<p>If the coroutine returns normally (i.e. from the original sub), then those values are passed returned from the <code>resume</code> method, and the coroutine is marked as dead, in which case it is an error to attempt to resume it again.</p>
+
+<h3><a name="coro.yield(args...)"
+><b>coro.yield(args...)</b></a></h3>
+
+<p>Within the coroutine, <code>yield</code> returns arbitrary values back to the caller, making it look like the values came from the last <code>resume</code> call.</p>
+
+<p>The next time the caller decides to resume the coroutine, the arguments passed to <code>resume</code> are returned as the values from <code>yield</code>.</p>
+
+<h1><a name="BUGS"
+>BUGS</a></h1>
+
+<ol>
+<li>We should really keep more state details. The only legal state transitions should be &#39;new&#39; to &#39;resumed&#39; to &#39;yielded&#39; to &#39;resumed&#39; to &#39;yielded&#39; ..., except that one might at any time transition to &#39;dead&#39;, which is (not surprisingly) the terminal state.</li>
+</ol>
+
+<p>Please report any others you find to <code>&#60;parrot&#45;dev@lists.parrot.org&#62;</code>.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><a href='http://en.wikipedia.org/wiki/Coroutine'><a href="http://en.wikipedia.org/wiki/Coroutine">http://en.wikipedia.org/wiki/Coroutine</a></a> &#45;&#45; coroutines defined.</p>
+
+<p><code>t/library/coroutine.t</code> &#45;&#45; &#34;same fringe&#34; test case.</p>
+
+<p><code>src/pmc/coroutine.pmc</code> &#45;&#45; the <code>pmclass</code> implementation.</p>
+
+<p><a href='http://www.lua.org/manual/5.1/manual.html#2.11'><a href="http://www.lua.org/manual/5.1/manual.html#2.11">http://www.lua.org/manual/5.1/manual.html#2.11</a></a> &#45;&#45; definition of the coroutine API for the Lua programming language, upon which the <code>Parrot::Coroutine</code> API is based.</p>
+
+<p><a href='http://gd.tuwien.ac.at/languages/scheme/tutorial&#45;dsitaram/t&#45;y&#45;scheme&#45;Z&#45;H&#45;14.html'><a href="http://gd.tuwien.ac.at/languages/scheme/tutorial&#45;dsitaram/t&#45;y&#45;scheme&#45;Z&#45;H&#45;14.html">http://gd.tuwien.ac.at/languages/scheme/tutorial&#45;dsitaram/t&#45;y&#45;scheme&#45;Z&#45;H&#45;14.html</a></a> &#45;&#45; Scheme tutorial chapter that introduces call/cc and uses it to solve &#34;same fringe&#34; via coroutines.</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Bob Rogers <code>&#60;rogers&#45;perl6@rgrjr.dyndns.org&#62;</code></p>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT</a></h1>
+
+<p>Copyright (C) 2006&#45;2008, Parrot Foundation. This program is free software. It is subject to the same license as The Parrot Interpreter.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

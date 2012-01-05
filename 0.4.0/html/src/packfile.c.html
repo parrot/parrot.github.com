@@ -1,0 +1,601 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot PackFile API</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot PackFile API</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/packfile.c &#45; Parrot PackFile API</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<h2><a name="PackFile_Manipulation_Functions"
+>PackFile Manipulation Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>This file contains all the functions required for the processing of the structure of a PackFile.
+It is not intended to understand the byte code stream itself,
+but merely to dissect and reconstruct data from the various segments.
+See <em lang='und' xml:lang='und'><a href="../docs/parrotbyte.pod.html">docs/parrotbyte.pod</a></em> for information about the structure of the frozen bytecode.</p>
+
+<dl>
+<dt><a name="void_PackFile_destroy(struct_PackFile_*pf)"
+><b><code lang='und' xml:lang='und'>void PackFile_destroy(struct PackFile *pf)</b></code></a></dt><p class="pad"></p>
+
+<dd>Delete a <code lang='und' xml:lang='und'>PackFile</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_PackFile_check_segment_size(opcode_t_segment_size,_const_char_*debug)"
+><b><code lang='und' xml:lang='und'>static INTVAL PackFile_check_segment_size(opcode_t segment_size, const char *debug)</b></code></a></dt><p class="pad"></p>
+
+<dd>Internal function to check <code lang='und' xml:lang='und'>segment_size % sizeof(opcode_t)</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_void_make_code_pointers(struct_PackFile_Segment_*seg)"
+><b><code lang='und' xml:lang='und'>static void make_code_pointers(struct PackFile_Segment *seg)</b></code></a></dt><p class="pad"></p>
+
+<dd>Make compat/shorthand pointers.</dd><p class="pad"></p>
+
+<dd>The first segments read are the default segments.</dd><p class="pad"></p>
+
+<dt><a name="static_int_sub_pragma(Parrot_Interp_interpreter,_int_action,_PMC_*sub_pmc)"
+><b><code lang='und' xml:lang='und'>static int sub_pragma(Parrot_Interp interpreter, int action, PMC *sub_pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Handle :load,
+:main ...
+pragmas for <b>sub_pmc</b></dd><p class="pad"></p>
+
+<dt><a name="static_PMC*_run_sub(Parrot_Interp_interpreter,_PMC*_sub_pmc)"
+><b><code lang='und' xml:lang='und'>static PMC *run_sub(Parrot_Interp interpreter, PMC *sub_pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Run the <b>sub_pmc</b> due its <b>:load</b>,
+<b>:immediate</b>,
+...
+pragma</dd><p class="pad"></p>
+
+<dt><a name="&#60;static_PMC*_do_sub_pragmas(Parrot_Interp_interpreter,_struct_PackFile_*self,_int_action)&#62;"
+>&#60;static PMC* do_sub_pragmas(Parrot_Interp interpreter,
+struct PackFile *self,
+int action)&#62;</a></dt><p class="pad"></p>
+
+<dd>Run autoloaded bytecode,
+mark MAIN subroutine entry</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static void fixup_subs(Interp *interpreter, struct PackFile_Bytecode *self, int action, PMC *eval_pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Fixes up the constant subroutine objects.
+<b>action</b> is one of <b>PBC_PBC</b>,
+<b>PBC_LOADED</b>,
+or <b>PBC_MAIN</b>.
+Also store the <code lang='und' xml:lang='und'>eval_pmc</code> in the sub structure,
+so that the eval PMC is kept alive be living subs.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>opcode_t PackFile_unpack(Interp *interpreter, struct PackFile *self, opcode_t *packed, size_t packed_size)</b></code></a></dt><p class="pad"></p>
+
+<dd>Unpack a <code lang='und' xml:lang='und'>PackFile</code> from a block of memory.
+The format is:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  byte     wordsize
+  byte     byteorder
+  byte     major
+  byte     minor
+  byte     intvalsize
+  byte     floattype
+  byte     pad[10] = fingerprint
+
+  opcode_t magic
+  opcode_t language type
+
+  opcode_t dir_format
+  opcode_t padding
+
+  directory segment
+    * segment
+    ...</pre>
+
+<dd>All segments have this common header:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  &#45; op_count    ... total segment size incl. this count
+  &#45; itype       ... internal type of data
+  &#45; id          ... id of data e.g. byte code nr.
+  &#45; size        ... size of data oparray
+  &#45; data[size]  ... data array e.g. bytecode
+  segment specific data follows here ...</pre>
+
+<dd>Checks to see if the magic matches the Parrot magic number for Parrot <code lang='und' xml:lang='und'>PackFiles</code>.</dd><p class="pad"></p>
+
+<dd>Returns size of unpacked if everything is OK, else zero (0).</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>INTVAL PackFile_map_segments (Interp*, struct PackFile_Directory *dir, PackFile_map_segments_func_t callback, void *user_data)</b></code></a></dt><p class="pad"></p>
+
+<dd>For each segment in the directory <code lang='und' xml:lang='und'>dir</code> the callback function <code lang='und' xml:lang='und'>callback</code> is called. The pointer <code lang='und' xml:lang='und'>user_data</code> is append to each call.</dd><p class="pad"></p>
+
+<dd>If a callback returns non&#45;zero the processing of segments is stopped, and this value is returned.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PackFile_add_segment_(struct_PackFile_Directory_*dir,_struct_PackFile_Segment_*seg)"
+><b><code lang='und' xml:lang='und'>INTVAL PackFile_add_segment (struct PackFile_Directory *dir, struct PackFile_Segment *seg)</b></code></a></dt><p class="pad"></p>
+
+<dd>Adds the Segment <code lang='und' xml:lang='und'>seg</code> to the directory <code lang='und' xml:lang='und'>dir</code> The PackFile becomes the owner of the segment; that means its getting destroyed, when the packfile gets destroyed.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>struct PackFile_Segment *PackFile_find_segment (Interp *, struct PackFile_Directory *dir, const char *name, int sub_dir)</b></code></a></dt><p class="pad"></p>
+
+<dd>Finds the segment with the name <code lang='und' xml:lang='und'>name</code> in the <code lang='und' xml:lang='und'>PackFile_Directory</code> if <code lang='und' xml:lang='und'>sub_dir</code> is true, directories are searched recursively The segment is returned, but its still owned by the <code lang='und' xml:lang='und'>PackFile</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>struct PackFile_Segment *PackFile_remove_segment_by_name (Interp *, struct PackFile_Directory *dir, const char *name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Finds and removes the segment with name <code lang='und' xml:lang='und'>name</code> in the <code lang='und' xml:lang='und'>PackFile_Directory</code>. The segment is returned and must be destroyed by the user.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="PackFile_Structure_Functions"
+>PackFile Structure Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_void_PackFile_set_header(struct_PackFile_*self)"
+><b><code lang='und' xml:lang='und'>static void PackFile_set_header(struct PackFile *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Fill a <code lang='und' xml:lang='und'>PackFile</code> header with system specific data.</dd><p class="pad"></p>
+
+<dt><a name="struct_PackFile_*_PackFile_new(Interp*,_INTVAL_is_mapped)"
+><b><code lang='und' xml:lang='und'>struct PackFile *PackFile_new(Interp*, INTVAL is_mapped)</b></code></a></dt><p class="pad"></p>
+
+<dd>Allocate a new empty <code lang='und' xml:lang='und'>PackFile</code> and setup the directory.</dd><p class="pad"></p>
+
+<dd>Directory segment:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |    Segment Header                         |
+  |    ..............                         |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |    number of directory items              |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<dd>followed by a sequence of items</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |    Segment type                           |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |    &#34;name&#34;                                 |
+  |    ...     &#39;\0&#39;       padding bytes       |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |    Offset in the file                     |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+
+  |    Size of the segment                    |
+  +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<dd>&#34;name&#34; is a NUL&#45;terminated c&#45;string encoded in plain ASCII.</dd><p class="pad"></p>
+
+<dd>Segment types are defined in <em lang='und' xml:lang='und'>include/parrot/packfile.h</em>.</dd><p class="pad"></p>
+
+<dd>Offset and size are in <code lang='und' xml:lang='und'>opcode_t</code>.</dd><p class="pad"></p>
+
+<dd>A Segment Header has these entries:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> &#45; op_count     total ops of segment incl. this count
+ &#45; itype        internal type of segment
+ &#45; id           internal id e.g code seg nr
+ &#45; size         size of following op array, 0 if none
+ * data         possibly empty data, or e.g. byte code</pre>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>INTVAL PackFile_funcs_register(Interp*, struct PackFile *pf, UINTVAL type, struct PackFile_funcs funcs)</b></code></a></dt><p class="pad"></p>
+
+<dd>Register the <code lang='und' xml:lang='und'>pack</code>/<code lang='und' xml:lang='und'>unpack</code>/... functions for a packfile type.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static opcode_t *default_unpack (Interp *interpreter, struct PackFile_Segment *self, opcode_t *cursor)</b></code></a></dt><p class="pad"></p>
+
+<dd>The default unpack function.</dd><p class="pad"></p>
+
+<dt><a name="void_default_dump_header_(Parrot_Interp_interpreter,_struct_PackFile_Segment_*self)"
+><b><code lang='und' xml:lang='und'>void default_dump_header (Parrot_Interp interpreter, struct PackFile_Segment *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>The default dump header function.</dd><p class="pad"></p>
+
+<dt><a name="static_void_default_dump_(Parrot_Interp_interpreter,_struct_PackFile_Segment_*self)"
+><b><code lang='und' xml:lang='und'>static void default_dump (Parrot_Interp interpreter, struct PackFile_Segment *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>The default dump function.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_pf_register_standard_funcs(Interp*,_struct_PackFile_*pf)"
+><b><code lang='und' xml:lang='und'>static INTVAL pf_register_standard_funcs(Interp*, struct PackFile *pf)</b></code></a></dt><p class="pad"></p>
+
+<dd>Called from within <code lang='und' xml:lang='und'>PackFile_new()</code> register the standard functions.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>struct PackFile_Segment *PackFile_Segment_new_seg(Interp*, struct PackFile_Directory *dir, UINTVAL type, const char *name, int add)</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a new segment.</dd><p class="pad"></p>
+
+<dt><a name="struct_PackFile_ByteCode_*_PF_create_default_segs(Interp*,_const_char_*file_name,_int_add)"
+><b><code lang='und' xml:lang='und'>struct PackFile_ByteCode *PF_create_default_segs(Interp*, const char *file_name, int add)</b></code></a></dt><p class="pad"></p>
+
+<dd>Create bytecode, constant, and fixup segment for <code lang='und' xml:lang='und'>file_nam</code>. If <code lang='und' xml:lang='und'>add</code> is true, the current packfile becomes the owner of these segments by adding the segments to the directory.</dd><p class="pad"></p>
+
+<dt><a name="void_PackFile_Segment_destroy(Interp_*,_struct_PackFile_Segment_*_self)"
+><b><code lang='und' xml:lang='und'>void PackFile_Segment_destroy(Interp *, struct PackFile_Segment *self)</b></code></a></dt><p class="pad"></p>
+
+<dt><a name="size_t_PackFile_Segment_packed_size(Interp*,_struct_PackFile_Segment_*_self)"
+><b><code lang='und' xml:lang='und'>size_t PackFile_Segment_packed_size(Interp*, struct PackFile_Segment *self)</b></code></a></dt><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>opcode_t *PackFile_Segment_pack(Interp*, struct PackFile_Segment *self, opcode_t *cursor)</b></code></a></dt><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>opcode_t *PackFile_Segment_unpack(Interp *interpreter, struct PackFile_Segment *self, opcode_t *cursor)</b></code></a></dt><p class="pad"></p>
+
+<dd>All all these functions call the related <code lang='und' xml:lang='und'>default_*</code> function.</dd><p class="pad"></p>
+
+<dd>If a special is defined this gets called after.</dd><p class="pad"></p>
+
+<dt><a name="void_PackFile_Segment_dump(Interp_*interpreter,_struct_PackFile_Segment_*self)"
+><b><code lang='und' xml:lang='und'>void PackFile_Segment_dump(Interp *interpreter, struct PackFile_Segment *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Dumps the segment <code lang='und' xml:lang='und'>self</code>.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Standard_Directory_Functions"
+>Standard Directory Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a
+><b><code lang='und' xml:lang='und'>static struct PackFile_Segment *directory_new(Interp*, struct PackFile *pf, const char *name, int add)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new <code lang='und' xml:lang='und'>PackFile_Directory</code> cast as a <code lang='und' xml:lang='und'>PackFile_Segment</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_void_directory_dump(Interp_*interpreter,_struct_PackFile_Segment_*self)"
+><b><code lang='und' xml:lang='und'>static void directory_dump(Interp *interpreter, struct PackFile_Segment *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Dumps the directory <code lang='und' xml:lang='und'>self</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static opcode_t *directory_unpack(Interp *interpreter, struct PackFile_Segment *segp, opcode_t *cursor)</b></code></a></dt><p class="pad"></p>
+
+<dd>Unpacks the directory.</dd><p class="pad"></p>
+
+<dt><a name="static_void_directory_destroy(Interp*,_struct_PackFile_Segment_*self)"
+><b><code lang='und' xml:lang='und'>static void directory_destroy(Interp*, struct PackFile_Segment *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Destroys the directory.</dd><p class="pad"></p>
+
+<dt><a name="static_void_sort_segs(Interp*,_struct_PackFile_Directory_*dir)"
+><b><code lang='und' xml:lang='und'>static void sort_segs(Interp*, struct PackFile_Directory *dir)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sorts the segments in <code lang='und' xml:lang='und'>dir</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_size_t_directory_packed_size(Interp*,_struct_PackFile_Segment_*self)"
+><b><code lang='und' xml:lang='und'>static size_t directory_packed_size(Interp*, struct PackFile_Segment *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the size of the directory minus the value returned by <code lang='und' xml:lang='und'>default_packed_size()</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_opcode_t_*_directory_pack(Interp*,_struct_PackFile_Segment_*self,_opcode_t_*cursor)"
+><b><code lang='und' xml:lang='und'>static opcode_t *directory_pack(Interp*, struct PackFile_Segment *self, opcode_t *cursor)</b></code></a></dt><p class="pad"></p>
+
+<dd>Packs the directory <code lang='und' xml:lang='und'>self</code>.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="PackFile_Segment_Functions"
+><code lang='und' xml:lang='und'>PackFile_Segment</code> Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a
+><b><code lang='und' xml:lang='und'>static void segment_init(Interp*, struct PackFile_Segment *self, struct PackFile *pf, const char *name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Initializes the segment <code lang='und' xml:lang='und'>self</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>struct PackFile_Segment *PackFile_Segment_new(Interp*, struct PackFile *pf, const char *name, int add)</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a new default section.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Default_Function_Implementations"
+>Default Function Implementations <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>The default functions are called before the segment specific functions and can read a block of <code lang='und' xml:lang='und'>opcode_t</code> data.</p>
+
+<dl>
+<dt><a name="static_void_default_destroy(Interp*,_struct_PackFile_Segment_*self)"
+><b><code lang='und' xml:lang='und'>static void default_destroy(Interp*, struct PackFile_Segment *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>The default destroy function.</dd><p class="pad"></p>
+
+<dt><a name="static_size_t_default_packed_size(Interp*,_struct_PackFile_Segment_*self)"
+><b><code lang='und' xml:lang='und'>static size_t default_packed_size(Interp*, struct PackFile_Segment *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the default size of the segment <code lang='und' xml:lang='und'>self</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_opcode_t_*_default_pack(Interp*,_struct_PackFile_Segment_*self,_opcode_t_*dest)"
+><b><code lang='und' xml:lang='und'>static opcode_t *default_pack(Interp*, struct PackFile_Segment *self, opcode_t *dest)</b></code></a></dt><p class="pad"></p>
+
+<dd>Performs the default pack.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="ByteCode"
+>ByteCode <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_void_byte_code_destroy(Interp*,_struct_PackFile_Segment_*self)"
+><b><code lang='und' xml:lang='und'>static void byte_code_destroy(Interp*, struct PackFile_Segment *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Destroys the <code lang='und' xml:lang='und'>PackFile_ByteCode</code> segment <code lang='und' xml:lang='und'>self</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static struct PackFile_Segment *byte_code_new(Interp*, struct PackFile *pf, const char *name, int add)</b></code></a></dt><p class="pad"></p>
+
+<dd>New <code lang='und' xml:lang='und'>PackFile_ByteCode</code> segment.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>add</code> is ignored.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Debug_Info"
+>Debug Info <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_void_pf_debug_destroy_(Interp*,_struct_PackFile_Segment_*self)"
+><b><code lang='und' xml:lang='und'>static void pf_debug_destroy (Interp*, struct PackFile_Segment *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Destroys the <code lang='und' xml:lang='und'>PackFile_Debug</code> segment <code lang='und' xml:lang='und'>self</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static struct PackFile_Segment *pf_debug_new (Interp*, struct PackFile *pf, const char *name, int add)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new <code lang='und' xml:lang='und'>PackFile_Debug</code> segment.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>add</code> is ignored.</dd><p class="pad"></p>
+
+<dt><a name="static_size_t_pf_debug_packed_size_(Interp*,_struct_PackFile_Segment_*self)"
+><b><code lang='und' xml:lang='und'>static size_t pf_debug_packed_size (Interp*, struct PackFile_Segment *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the size of the <code lang='und' xml:lang='und'>PackFile_Debug</code> segment&#39;s filename in <code lang='und' xml:lang='und'>opcode_t</code> units.</dd><p class="pad"></p>
+
+<dt><a name="static_opcode_t_*_pf_debug_pack(Interp*,_struct_PackFile_Segment_*self,_opcode_t_*cursor)"
+><b><code lang='und' xml:lang='und'>static opcode_t *pf_debug_pack(Interp*, struct PackFile_Segment *self, opcode_t *cursor)</b></code></a></dt><p class="pad"></p>
+
+<dd>Pack the debug segment.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static opcode_t *pf_debug_unpack(Interp *interpreter, struct PackFile_Segment *self, opcode_t *cursor)</b></code></a></dt><p class="pad"></p>
+
+<dd>Unpack a debug segment into a PackFile_Debug structure.</dd><p class="pad"></p>
+
+<dt><a name="static_void_pf_debug_dump_(Interp_*interpreter,_struct_PackFile_Segment_*self)"
+><b><code lang='und' xml:lang='und'>static void pf_debug_dump (Interp *interpreter, struct PackFile_Segment *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Dumps a debug segment to a human readable form.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>struct PackFile_Debug *Parrot_new_debug_seg(Interp *interpreter, struct PackFile_ByteCode *cs, size_t size)</b></code></a></dt><p class="pad"></p>
+
+<dd>Create and append (or resize) a new debug seg for a code segment.</dd><p class="pad"></p>
+
+<dt><a
+>c&#60;void Parrot_debug_add_mapping(Interp *interpreter, struct PackFile_Debug *debug, opcode_t offset, int mapping_type, const char *filename, int source_seg)&#62;</a></dt><p class="pad"></p>
+
+<dd>Add a bytecode offset to filename/source segment mapping. mapping_type may be one of PF_DEBUGMAPPINGTYPE_NONE (in which case the last two parameters are ignored), PF_DEBUGMAPPINGTYPE_FILENAME (in which case filename must be given) or PF_DEBUGMAPPINGTYPE_SOURCESEG (in which case source_seg should contains the number of the source segment in question).</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>STRING *Parrot_debug_pc_to_filename(Interp *interpreter, struct PackFile_Debug *debug, opcode_t pc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Take a position in the bytecode and return the filename of the source for that position.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_switch_to_cs_by_nr(Interp_*interpreter,_opcode_t_seg)"
+><b><code lang='und' xml:lang='und'>void Parrot_switch_to_cs_by_nr(Interp *interpreter, opcode_t seg)</b></code></a></dt><p class="pad"></p>
+
+<dd>Switch to byte code segment number <code lang='und' xml:lang='und'>seg</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>struct PackFile_ByteCode *Parrot_switch_to_cs(Interp *interpreter, struct PackFile_ByteCode *new_cs, int really)</b></code></a></dt><p class="pad"></p>
+
+<dd>Switch to a byte code segment <code lang='und' xml:lang='und'>new_cs</code>, returning the old segment.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_pop_cs(Interp_*interpreter)"
+><b><code lang='und' xml:lang='und'>void Parrot_pop_cs(Interp *interpreter)</b></code></a></dt><p class="pad"></p>
+
+<dd>Remove current byte code segment from directory and switch to previous.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="PackFile_FixupTable_Structure_Functions"
+>PackFile FixupTable Structure Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_PackFile_FixupTable_clear(Interp_*,_struct_PackFile_FixupTable_*self)"
+><b><code lang='und' xml:lang='und'>void PackFile_FixupTable_clear(Interp *, struct PackFile_FixupTable *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Clear a PackFile FixupTable.</dd><p class="pad"></p>
+
+<dt><a name="static_void_fixup_destroy_(Interp*,_struct_PackFile_Segment_*self)"
+><b><code lang='und' xml:lang='und'>static void fixup_destroy (Interp*, struct PackFile_Segment *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Just calls <code lang='und' xml:lang='und'>PackFile_FixupTable_clear()</code> with <code lang='und' xml:lang='und'>self</code>.</dd><p class="pad"></p>
+
+<dt><a name="static_size_t_fixup_packed_size(Interp*,_struct_PackFile_Segment_*self)"
+><b><code lang='und' xml:lang='und'>static size_t fixup_packed_size(Interp*, struct PackFile_Segment *self)</b></code></a></dt><p class="pad"></p>
+
+<dd><i>What does this do?</i></dd><p class="pad"></p>
+
+<dt><a name="static_opcode_t_*_fixup_pack_(Interp*,_struct_PackFile_Segment_*self,_opcode_t_*cursor)"
+><b><code lang='und' xml:lang='und'>static opcode_t *fixup_pack (Interp*, struct PackFile_Segment *self, opcode_t *cursor)</b></code></a></dt><p class="pad"></p>
+
+<dd><i>What does this do?</i></dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static struct PackFile_Segment *fixup_new(Interp*, struct PackFile *pf, const char *name, int add)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new <code lang='und' xml:lang='und'>PackFile_FixupTable</code> segment.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static opcode_t *fixup_unpack(Interp *interpreter, struct PackFile_Segment *seg, opcode_t *cursor)</b></code></a></dt><p class="pad"></p>
+
+<dd>Unpack a PackFile FixupTable from a block of memory.</dd><p class="pad"></p>
+
+<dd>Returns one (1) if everything is OK, else zero (0).</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>void PackFile_FixupTable_new_entry(Interp *interpreter, char *label, enum_fixup_t type, opcode_t offs)</b></code></a></dt><p class="pad"></p>
+
+<dd><i>What does this do?</i></dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static struct PackFile_FixupEntry *find_fixup(struct PackFile_FixupTable *ft, enum_fixup_t type, const char *name)</b></code></a></dt><p class="pad"></p>
+
+<dd>Finds the fix&#45;up entry for <code lang='und' xml:lang='und'>name</code> and returns it.</dd><p class="pad"></p>
+
+<dt><a name="static_INTVAL_find_fixup_iter(Interp*,_struct_PackFile_Segment_*seg,_void_*user_data)"
+><b><code lang='und' xml:lang='und'>static INTVAL find_fixup_iter(Interp*, struct PackFile_Segment *seg, void *user_data)</b></code></a></dt><p class="pad"></p>
+
+<dd><i>What does this do?</i></dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>struct PackFile_FixupEntry *PackFile_find_fixup_entry(Interp *interpreter, enum_fixup_t type, char *name)</b></code></a></dt><p class="pad"></p>
+
+<dd><i>What does this do?</i></dd><p class="pad"></p>
+</dl>
+
+<h2><a name="PackFile_ConstTable_Structure_Functions"
+>PackFile ConstTable Structure Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_PackFile_ConstTable_clear(Interp*,_struct_PackFile_ConstTable_*self)"
+><b><code lang='und' xml:lang='und'>void PackFile_ConstTable_clear(Interp*, struct PackFile_ConstTable *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Clear the <code lang='und' xml:lang='und'>PackFile_ConstTable</code> <code lang='und' xml:lang='und'>self</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>opcode_t *PackFile_ConstTable_unpack(Interp *interpreter, struct PackFile_Segment *seg, opcode_t *cursor)</b></code></a></dt><p class="pad"></p>
+
+<dd>Unpack a PackFile ConstTable from a block of memory. The format is:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  opcode_t const_count
+  *  constants</pre>
+
+<dd>Returns cursor if everything is OK, else zero (0).</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>static struct PackFile_Segment *const_new(Interp*, struct PackFile *pf, const char *name, int add)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a new <code lang='und' xml:lang='und'>PackFile_ConstTable</code> segment.</dd><p class="pad"></p>
+
+<dt><a name="static_void_const_destroy(Interp*,_struct_PackFile_Segment_*self)"
+><b><code lang='und' xml:lang='und'>static void const_destroy(Interp*, struct PackFile_Segment *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Destroys the <code lang='und' xml:lang='und'>PackFile_ConstTable</code> <code lang='und' xml:lang='und'>self</code>.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="PackFile_Constant_Structure_Functions"
+>PackFile Constant Structure Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="struct_PackFile_Constant_*_PackFile_Constant_new(Interp*)"
+><b><code lang='und' xml:lang='und'>struct PackFile_Constant *PackFile_Constant_new(Interp*)</b></code></a></dt><p class="pad"></p>
+
+<dd>Allocate a new empty PackFile Constant.</dd><p class="pad"></p>
+
+<dd>This is only here so we can make a new one and then do an unpack.</dd><p class="pad"></p>
+
+<dt><a name="void_PackFile_Constant_destroy(Interp*,_struct_PackFile_Constant_*self)"
+><b><code lang='und' xml:lang='und'>void PackFile_Constant_destroy(Interp*, struct PackFile_Constant *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Delete the <code lang='und' xml:lang='und'>PackFile_Constant</code> <code lang='und' xml:lang='und'>self</code>.</dd><p class="pad"></p>
+
+<dd>Don&#39;t delete <code lang='und' xml:lang='und'>PMC</code>s or <code lang='und' xml:lang='und'>STRING</code>s, they are destroyed via DOD/GC.</dd><p class="pad"></p>
+
+<dt><a name="size_t_PackFile_Constant_pack_size(Interp*,_struct_PackFile_Constant_*self)"
+><b><code lang='und' xml:lang='und'>size_t PackFile_Constant_pack_size(Interp*, struct PackFile_Constant *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Determine the size of the buffer needed in order to pack the PackFile Constant into a contiguous region of memory.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>opcode_t *PackFile_Constant_unpack(Interp *interpreter, struct PackFile_ConstTable *constt, struct PackFile_Constant *self, opcode_t *cursor)</b></code></a></dt><p class="pad"></p>
+
+<dd>Unpack a PackFile Constant from a block of memory. The format is:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  opcode_t type
+  *  data</pre>
+
+<dd>Returns cursor if everything is OK, else zero (0).</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>opcode_t *PackFile_Constant_unpack_pmc(Interp *interpreter, struct PackFile_ConstTable *constt, struct PackFile_Constant *self, opcode_t *cursor)</b></code></a></dt><p class="pad"></p>
+
+<dd>Unpack a constant PMC.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>opcode_t *PackFile_Constant_unpack_key(Interp *interpreter, struct PackFile_ConstTable *constt, struct PackFile_Constant *self, opcode_t *cursor)</b></code></a></dt><p class="pad"></p>
+
+<dd>Unpack a PackFile Constant from a block of memory. The format consists of a sequence of key atoms, each with the following format:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  opcode_t type
+  opcode_t value</pre>
+
+<dd>Returns cursor if everything is OK, else zero (0).</dd><p class="pad"></p>
+
+<dt><a name="static_struct_PackFile_*_PackFile_append_pbc(Interp_*interpreter,_const_char_*filename)"
+><b><code lang='und' xml:lang='und'>static struct PackFile *PackFile_append_pbc(Interp *interpreter, const char *filename)</b></code></a></dt><p class="pad"></p>
+
+<dd>Read a PBC and append it to the current directory Fixup local label and sub addresses in newly loaded bytecode.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_load_bytecode(Interp_*interpreter,_const_char_*filename)"
+><b><code lang='und' xml:lang='und'>void Parrot_load_bytecode(Interp *interpreter, const char *filename)</b></code></a></dt><p class="pad"></p>
+
+<dd>Load and append a bytecode, IMC or PASM file into interpreter.</dd><p class="pad"></p>
+
+<dd>Load some bytecode (PASM, PIR, PBC ...) and append it to the current directory.</dd><p class="pad"></p>
+
+<dt><a name="void_PackFile_fixup_subs(Interp_*interpreter,_pbc_action_enum_t)"
+><b><code lang='und' xml:lang='und'>void PackFile_fixup_subs(Interp *interpreter, pbc_action_enum_t)</b></code></a></dt><p class="pad"></p>
+
+<dd><i>What does this do?</i></dd><p class="pad"></p>
+</dl>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Rework by Melvin; new bytecode format, make bytecode portable. (Do endian conversion and wordsize transforms on the fly.)</p>
+
+<p>leo applied and modified Juergen Boemmels packfile patch giving an extensible packfile format with directory reworked again, with common chunks (<code lang='und' xml:lang='und'>default_*</code>).</p>
+
+<p>2003.11.21 leo: moved low level item fetch routines to new <em lang='und' xml:lang='und'><a href="../pf/pf_items.c.html">pf/pf_items.c</a></em></p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

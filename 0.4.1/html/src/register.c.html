@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Register handling routines</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Register handling routines</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/register.c &#45; Register handling routines</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Parrot has 4 register sets,
+one for each of its basic types.
+The amount of registers in each set varies depending on the use counts of the respective subroutine and is determined by the PASM/PIR compiler in the register allocation pass (<em lang='und' xml:lang='und'>imcc/reg_alloc.c</em>).</p>
+
+<p>There is one register stack to support the <code lang='und' xml:lang='und'>saveall</code> and <code lang='und' xml:lang='und'>restoreall</code> opcodes.
+The former copies all registers to a newly allocated storage and points the register base pointers to this storage.
+In <code lang='und' xml:lang='und'>Parrot_pop_regs</code> the register base pointers are restored to the previous values and the allocated register memory is discarded.</p>
+
+<h2><a name="Context_and_Register_Allocation_Functions"
+>Context and Register Allocation Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="static_void_new_context_mem(Interp_*,_context_mem_*ctx_mem)"
+><b><code lang='und' xml:lang='und'>static void new_context_mem(Interp *, context_mem *ctx_mem)</b></code></a></dt><p class="pad"></p>
+
+<dd>Allocate and initialize context memory chunk.</dd><p class="pad"></p>
+
+<dt><a name="void_destroy_context(Interp_*)"
+><b><code lang='und' xml:lang='und'>void destroy_context(Interp *)</b></code></a></dt><p class="pad"></p>
+
+<dd>Free allocated context memory</dd><p class="pad"></p>
+
+<dt><a name="void_create_initial_context(Interp_*)"
+><b><code lang='und' xml:lang='und'>void create_initial_context(Interp *)</b></code></a></dt><p class="pad"></p>
+
+<dd>Create initial interpreter context.</dd><p class="pad"></p>
+
+<dt><a name="void_parrot_gc_context(Interp_*)"
+><b><code lang='und' xml:lang='und'>void parrot_gc_context(Interp *)</b></code></a></dt><p class="pad"></p>
+
+<dd>Cleanup dead context memory.
+Called by the gargabe collector.</dd><p class="pad"></p>
+
+<dt><a name="parrot_context_t*_Parrot_alloc_context(Interp_*,_INTVAL_*n_regs_used)"
+><b><code lang='und' xml:lang='und'>parrot_context_t *Parrot_alloc_context(Interp *, INTVAL *n_regs_used)</b></code></a></dt><p class="pad"></p>
+
+<dd>Allocate a new context and set the context pointer.
+Please note that the register usage <code lang='und' xml:lang='und'>n_regs_used</code> is not copied,
+just the pointer is stored.
+The function returns the new context.</dd><p class="pad"></p>
+
+<dt><a name="parrot_context_t*_Parrot_dup_context(Interp_*,_parrot_context_t*)"
+><b><code lang='und' xml:lang='und'>parrot_context_t *Parrot_dup_context(Interp *, parrot_context_t*)</b></code></a></dt><p class="pad"></p>
+
+<dd>Like above but duplicate the passed context.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_set_context_threshold(Interp_*,_parrot_context_t_*ctxp)"
+><b><code lang='und' xml:lang='und'>void Parrot_set_context_threshold(Interp *, parrot_context_t *ctxp)</b></code></a></dt><p class="pad"></p>
+
+<dd>Mark the context as possible threshold.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_free_context(Interp_*,_parrot_context_t_*ctxp,_int_re_use)"
+><b><code lang='und' xml:lang='und'>void Parrot_free_context(Interp *, parrot_context_t *ctxp, int re_use)</b></code></a></dt><p class="pad"></p>
+
+<dd>Free the context.
+If <code lang='und' xml:lang='und'>re_use</code> is true,
+this function is called by a return continuation invoke,
+else from the destructur of a continuation.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Register_Stack_Functions"
+>Register Stack Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_setup_register_stacks(Interp_*)"
+><b><code lang='und' xml:lang='und'>void setup_register_stacks(Interp *)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets up the register stacks.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_push_regs(Interp_*)"
+><b><code lang='und' xml:lang='und'>void Parrot_push_regs(Interp *)</b></code></a></dt><p class="pad"></p>
+
+<dd>Save all registers onto the register stack.</dd><p class="pad"></p>
+
+<dt><a name="void_Parrot_pop_regs(Interp_*)"
+><b><code lang='und' xml:lang='und'>void Parrot_pop_regs(Interp *)</b></code></a></dt><p class="pad"></p>
+
+<dd>Restore all registers from register stack.</dd><p class="pad"></p>
+
+<dt><a name="void_mark_register_stack(Parrot_Interp_interpreter,_Stack_Chunk_t*_stack)"
+><b><code lang='und' xml:lang='und'>void mark_register_stack(Parrot_Interp interpreter, Stack_Chunk_t *stack)</b></code></a></dt><p class="pad"></p>
+
+<dd>Marks the register stack and it&#39;s registers as live.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>include/parrot/register.h</em> and <em lang='und' xml:lang='und'><a href="stack_common.c.html">src/stack_common.c</a></em></p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

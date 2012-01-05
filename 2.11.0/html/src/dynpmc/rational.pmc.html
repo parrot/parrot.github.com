@@ -1,0 +1,230 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Rational numbers PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Rational numbers PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/dynpmc/rational.pmc &#45; Rational numbers PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Rational is currently going to get implemented.
+It uses the GNU Multiple Precision (GMP) library,
+like BigInt,
+because implementation with integers would be too unstable and inaccurate.</p>
+
+<p>&#39;LispRational&#39; will subclass this.</p>
+
+<p>You may use Rational with any of parrot&#39;s basic data types as well as with String&#45;,
+Integer&#45; and Float&#45;PMCs.</p>
+
+<h1><a name="Functions"
+>Functions</a></h1>
+
+<p>Currently <code>rational.pmc</code> only has some <code>static</code> functions for code sharing.</p>
+
+<dl>
+<dt><a name="static_STRING_*rat_get_string_to_base(PARROT_INTERP,_PMC_*self,_int_base)"
+><b><code>static STRING *rat_get_string_to_base(PARROT_INTERP, PMC *self, int base)</b></code></a></dt>
+Returns a string representation of a Rational&#45;PMC to a certain base.
+<dt><a name="static_void_rat_add_integer(PARROT_INTERP,_PMC_*self,_int_value)"
+><b><code>static void rat_add_integer(PARROT_INTERP, PMC *self, int value)</b></code></a></dt>
+Adds an integer &#34;value&#34; to a Rational&#45;PMC inplace.
+<dt><a name="static_void_rat_add_float(PARROT_INTERP,_PMC_*self,_double_value)"
+><b><code>static void rat_add_float(PARROT_INTERP, PMC *self, double value)</b></code></a></dt>
+Adds a float &#34;value&#34; to a Rational&#45;PMC in&#45;place.
+&#34;value&#34; is first converted to a rational using GMPs mpq_set_d&#45;function.
+This is meant to be exact.
+<dt><a name="static_void_rat_multiply_integer(PARROT_INTERP,_PMC_*self,_int_value)"
+><b><code>static void rat_multiply_integer(PARROT_INTERP, PMC *self, int value)</b></code></a></dt>
+Multiplies a Rational&#45;PMC with an integer &#34;value&#34; in&#45;place.
+<dt><a name="static_void_rat_multiply_float(PARROT_INTERP,_PMC_*self,_double_value)"
+><b><code>static void rat_multiply_float(PARROT_INTERP, PMC *self, double value)</b></code></a></dt>
+Multiplies a Rational&#45;PMC with a float &#34;value&#34; in&#45;place.
+<dt><a name="static_void_rat_divide_integer(PARROT_INTERP,_PMC_*self,_int_value)"
+><b><code>static void rat_divide_integer(PARROT_INTERP, PMC *self, int value)</b></code></a></dt>
+Divides a Rational&#45;PMC through an integer &#34;value&#34; in&#45;place.
+<dt><a name="static_void_rat_divide_float(PARROT_INTERP,_PMC_*self,_double_value)"
+><b><code>static void rat_divide_float(PARROT_INTERP, PMC *self, double value)</b></code></a></dt>
+Divides a Rational&#45;PMC through a float &#34;value&#34; in&#45;place.</dl>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<p>The DynPMC Rational has the following methods.
+Note,
+that all methods depend on GMP.
+If GMP is not available,
+an exception is thrown in almost all cases.
+The only exception is the version&#45;method.</p>
+
+<dl>
+<dt><a name="METHOD_version()"
+><b><code>METHOD version()</b></code></a></dt>
+Returns the version of GNU Multiple Precision library.
+Returns 0.0.0,
+if GMP is not available.
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+
+<dt><a name="void_clone()"
+><b><code>void clone()</b></code></a></dt>
+
+<dt><a name="void_destroy()"
+><b><code>void destroy()</b></code></a></dt>
+
+<dt><a name="void_set_integer_native(INTVAL)"
+><b><code>void set_integer_native(INTVAL)</b></code></a></dt>
+
+<dt><a name="void_set_number_native(FLOATVAL)"
+><b><code>void set_number_native(FLOATVAL)</b></code></a></dt>
+
+<dt><a name="void_set_string_native(STRING*)"
+><b><code>void set_string_native(STRING*)</b></code></a></dt>
+
+<dt><a name="void_set_string_keyed_int(INTVAL_base,_STRING_*value)"
+><b><code>void set_string_keyed_int(INTVAL base, STRING *value)</b></code></a></dt>
+
+<dt><a name="INTVAL_get_integer()"
+><b><code>INTVAL get_integer()</b></code></a></dt>
+
+<dt><a name="get_number()"
+><b><code>get_number()</b></code></a></dt>
+
+<dt><a name="get_bool()"
+><b><code>get_bool()</b></code></a></dt>
+
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+
+<dt><a name="STRING_*get_string_keyed_int(INTVAL_base)"
+><b><code>STRING *get_string_keyed_int(INTVAL base)</b></code></a></dt>
+
+<dt><a name="void_increment()"
+><b><code>void increment()</b></code></a></dt>
+
+<dt><a name="void_decrement()"
+><b><code>void decrement()</b></code></a></dt>
+
+<dt><a name="PMC_*add(PMC*_value,_PMC*_dest)"
+><b><code>PMC *add(PMC* value, PMC* dest)</b></code></a></dt>
+Adds Integer&#45;,
+Float&#45; or Rational&#45;PMCs to SELF and stores them in dest.
+<dt><a name="void_i_add(PMC_*value)"
+><b><code>void i_add(PMC *value)</b></code></a></dt>
+
+<dt><a name="PMC_*add_int(INTVAL_value,_PMC*_dest)"
+><b><code>PMC *add_int(INTVAL value, PMC* dest)</b></code></a></dt>
+
+<dt><a name="void_i_add_int(INTVAL_value)"
+><b><code>void i_add_int(INTVAL value)</b></code></a></dt>
+
+<dt><a name="PMC_*add_float(FLOATVAL_value,_PMC*_dest)"
+><b><code>PMC *add_float(FLOATVAL value, PMC* dest)</b></code></a></dt>
+
+<dt><a name="void_i_add_float(FLOATVAL_value)"
+><b><code>void i_add_float(FLOATVAL value)</b></code></a></dt>
+
+<dt><a name="PMC_*subtract(PMC*_value,_PMC*_dest)"
+><b><code>PMC *subtract(PMC* value, PMC* dest)</b></code></a></dt>
+
+<dt><a name="void_i_subtract(PMC_*value)"
+><b><code>void i_subtract(PMC *value)</b></code></a></dt>
+
+<dt><a name="PMC_*subtract_int(INTVAL_value,_PMC*_dest)"
+><b><code>PMC *subtract_int(INTVAL value, PMC* dest)</b></code></a></dt>
+
+<dt><a name="void_i_subtract_int(INTVAL_value)"
+><b><code>void i_subtract_int(INTVAL value)</b></code></a></dt>
+
+<dt><a name="PMC_*subtract_float(FLOATVAL_value,_PMC*_dest)"
+><b><code>PMC *subtract_float(FLOATVAL value, PMC* dest)</b></code></a></dt>
+
+<dt><a name="void_i_subtract_float(FLOATVAL_value)"
+><b><code>void i_subtract_float(FLOATVAL value)</b></code></a></dt>
+
+<dt><a name="PMC_*multiply(PMC*_value,_PMC*_dest)"
+><b><code>PMC *multiply(PMC* value, PMC* dest)</b></code></a></dt>
+
+<dt><a name="void_i_multiply(PMC_*value)"
+><b><code>void i_multiply(PMC *value)</b></code></a></dt>
+
+<dt><a name="PMC_*multiply_int(INTVAL_value,_PMC*_dest)"
+><b><code>PMC *multiply_int(INTVAL value, PMC* dest)</b></code></a></dt>
+
+<dt><a name="void_i_multiply_int(INTVAL_value)"
+><b><code>void i_multiply_int(INTVAL value)</b></code></a></dt>
+
+<dt><a name="PMC_*multiply_float(FLOATVAL_value,_PMC*_dest)"
+><b><code>PMC *multiply_float(FLOATVAL value, PMC* dest)</b></code></a></dt>
+
+<dt><a name="void_i_multiply_float(FLOATVAL_value)"
+><b><code>void i_multiply_float(FLOATVAL value)</b></code></a></dt>
+
+<dt><a name="PMC_*divide(PMC*_value,_PMC*_dest)"
+><b><code>PMC *divide(PMC* value, PMC* dest)</b></code></a></dt>
+
+<dt><a name="void_i_divide(PMC_*value)"
+><b><code>void i_divide(PMC *value)</b></code></a></dt>
+
+<dt><a name="PMC_*divide_int(INTVAL_value,_PMC*_dest)"
+><b><code>PMC *divide_int(INTVAL value, PMC* dest)</b></code></a></dt>
+
+<dt><a name="void_i_divide_int(INTVAL_value)"
+><b><code>void i_divide_int(INTVAL value)</b></code></a></dt>
+
+<dt><a name="PMC_*divide_float(FLOATVAL_value,_PMC*_dest)"
+><b><code>PMC *divide_float(FLOATVAL value, PMC* dest)</b></code></a></dt>
+
+<dt><a name="void_i_divide_float(FLOATVAL_value)"
+><b><code>void i_divide_float(FLOATVAL value)</b></code></a></dt>
+
+<dt><a name="PMC_*negate(PMC*_dest)"
+><b><code>PMC *negate(PMC* dest)</b></code></a></dt>
+
+<dt><a name="void_i_negate()"
+><b><code>void i_negate()</b></code></a></dt>
+
+<dt><a name="PMC_*absolute(PMC*_dest)"
+><b><code>PMC *absolute(PMC* dest)</b></code></a></dt>
+
+<dt><a name="void_i_absolute()"
+><b><code>void i_absolute()</b></code></a></dt>
+
+<dt><a name="INTVAL_cmp(PMC_*value)"
+><b><code>INTVAL cmp(PMC *value)</b></code></a></dt>
+
+<dt><a name="INTVAL_is_equal(PMC_*value)"
+><b><code>INTVAL is_equal(PMC *value)</b></code></a></dt>
+</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

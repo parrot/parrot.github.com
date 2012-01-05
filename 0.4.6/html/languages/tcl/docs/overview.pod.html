@@ -1,0 +1,232 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/tcl.html">TCL</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This was originally written as a perl5 script.
+Rather than doing bootstrapping,
+I foolishly decided it would be fun to write the parser IN parrot assembly,
+esp.
+as this would help implementing &#34;eval&#34; and &#34;proc&#34; (Of course,
+in retrospect,
+I really wish I had kept with the bootstrapping effort,
+as I think it would have generated usable results sooner.</p>
+
+<h1><a name="OVERVIEW"
+>OVERVIEW <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This is a from&#45;scratch implementation,
+based primarily on the tcl man page(s),
+and the cvs&#45;current test suite for tcl.</p>
+
+<p>Another interesting project would have been to modify the tcl source and have it generate parrot directly.
+Many people smarter than I am have declared this <i>hard</i>,
+so I&#39;m rather happy I&#39;m working on it this way.
+(Apparently Tcl&#39;s bytecode engine is very optimized for Tcl (big surprise).
+So,
+converting the tcl&#45;specific bytecodes there to parrot would be a big deal.)</p>
+
+<h1><a name="RUNNING_TCL"
+>RUNNING TCL <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Generated_Files"
+>Generated Files <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>When you make tcl,
+you&#39;re generating several files:</p>
+
+<dl>
+<dt><a name="runtime/tcllib.pbc"
+>runtime/tcllib.pbc</a></dt><p class="pad"></p>
+
+<dd>This file is used to load all the various commands,
+ops,
+etc.
+into the appropriate namespaces,
+as well as declare and register the TCL compiler for the <code lang='und' xml:lang='und'>compile</code> opcode.</dd><p class="pad"></p>
+
+<dd>This file is actually built in several steps.
+First,
+all the templated commands (src/builtin/*.tmt) are converted to PIR.
+Next,
+runtime/builtins.pir is generated from all the pir files in src/builtin/ and runtime/builtin.
+This file is then included by tcllib.pir and compiled to tcllib.pbc.</dd><p class="pad"></p>
+
+<dt><a name="tcl.pbc"
+>tcl.pbc</a></dt><p class="pad"></p>
+
+<dd>This is roughly equivalent to <code lang='und' xml:lang='und'>tclsh</code> &#45; It takes the command line arguments (currently,
+the name of the file you wish to parse),
+and reads in the file,
+and uses the tcl library to parse those contents as tcl.
+You can also specify command line options to be used with this bytecode file.</dd><p class="pad"></p>
+
+<dt><a name="src/grammar/expr/pge2past.pir"
+>src/grammar/expr/pge2past.pir</a></dt><p class="pad"></p>
+
+<dt><a name="src/grammar/expr/past2pir.pir"
+>src/grammar/expr/past2pir.pir</a></dt><p class="pad"></p>
+
+<dt><a name="src/grammar/expr/expression.pir"
+>src/grammar/expr/expression.pir</a></dt><p class="pad"></p>
+
+<dd>This <code lang='und' xml:lang='und'>PIR</code> files are generated from their corresponding <code lang='und' xml:lang='und'>.tg</code> and <code lang='und' xml:lang='und'>.pg</code> files.
+These grammar files allow us to use PGE&#39;s implementation of perl6 rules to more simply specify our parsing rules.
+At the moment,
+only the [expr] rules are used.
+This might eventually be extended to replace the entire parsing system used by tcl,
+which was originally hand&#45;rolled in <code lang='und' xml:lang='und'>PIR</code>.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Classes"
+>Classes <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>The classes are not user&#45;visible,
+but are internal helper classes designed to simplify the parser/interpreter.
+They are written in PIR and are in <code lang='und' xml:lang='und'>src/classes</code>.
+All the helper classes provide a <code lang='und' xml:lang='und'>compile</code> method,
+which can be invoked by the top level compiler,
+or by a container class.
+For example,
+in <code lang='und' xml:lang='und'>TclConst</code>,
+the compilation is a very straightforward register load,
+while <code lang='und' xml:lang='und'>TclCommandList</code> compiles each of the <code lang='und' xml:lang='und'>TclCommand</code>s it contains,
+which in turn compile their arguments,
+and their method name,
+and setup an invocation of the PIR subroutine that corresponds to the tcl proc or builtin.</p>
+
+<dl>
+<dt><a name="TclCommand"
+>TclCommand</a></dt><p class="pad"></p>
+
+<dd>A class representing a Tcl command made up of a name and arguments.</dd><p class="pad"></p>
+
+<dt><a name="TclCommandList"
+>TclCommandList</a></dt><p class="pad"></p>
+
+<dd>A list of TclCommands used to represent a body of code.
+This returns the value of the last command.</dd><p class="pad"></p>
+
+<dt><a name="TclConst"
+>TclConst</a></dt><p class="pad"></p>
+
+<dd>A constant Tcl value created during parsing.</dd><p class="pad"></p>
+
+<dt><a name="TclVar"
+>TclVar</a></dt><p class="pad"></p>
+
+<dd>A class representing Tcl variables.</dd><p class="pad"></p>
+
+<dt><a name="TclWord"
+>TclWord</a></dt><p class="pad"></p>
+
+<dd>A TclWord handles the concatenation of arguments.
+For instance,
+given</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  puts ab$c</pre>
+
+<dd>the parser will generate a <code lang='und' xml:lang='und'>TclWord</code> containing an <code lang='und' xml:lang='und'>TclConst</code>==<code lang='und' xml:lang='und'>ab</code> and a <code lang='und' xml:lang='und'>TclVar</code>==<code lang='und' xml:lang='und'>c</code>. When compiled, a <code lang='und' xml:lang='und'>TclWord</code> compiles each of its elements and concatenates the results.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="PMCS"
+>PMCS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>The Tcl PMCs (Parrot Magic Cookies) are the user visible data types. These live in the <code lang='und' xml:lang='und'>*.pmc</code> files in <em lang='und' xml:lang='und'>src/pmc/</em>. They are compiled into a dynamically loadable library which is loaded with the <code lang='und' xml:lang='und'>.HLL</code> directive (HLL stands for High Level Language). Most of the functionality associated with these PMCS is derived from the base parrot classes, except as noted below.</p>
+
+<dl>
+<dt><a name="TclString"
+>TclString</a></dt><p class="pad"></p>
+
+<dd>Scalar string, with an override for the boolean truth values.</dd><p class="pad"></p>
+
+<dt><a name="TclInt"
+>TclInt</a></dt><p class="pad"></p>
+
+<dd>Scalar integer, with an override for various math. (For example, parrot Integers automatically promote to float division, while Tcl does not.)</dd><p class="pad"></p>
+
+<dt><a name="TclFloat"
+>TclFloat</a></dt><p class="pad"></p>
+
+<dd>Scalar float, with an override of the stringification: Tcl floats are somewhat unusual compared to other parrot HLLs in that integer&#45;valued floats stringify with a trailing <code lang='und' xml:lang='und'>.0</code>.</dd><p class="pad"></p>
+
+<dt><a name="TclList"
+>TclList</a></dt><p class="pad"></p>
+
+<dd>Ordered container, corresponding to values generated by the <code lang='und' xml:lang='und'>[list]</code> builtin. Overrides the default stringification provided by parrot Arrays.</dd><p class="pad"></p>
+
+<dt><a name="TclArray"
+>TclArray</a></dt><p class="pad"></p>
+
+<dd>Hash like container, corresponding to values created with the <code lang='und' xml:lang='und'>[array]</code> builtin.</dd><p class="pad"></p>
+
+<dt><a name="TclObject"
+>TclObject</a></dt><p class="pad"></p>
+
+<dd>A virtual type, which is used to provide some shimmer (aka morph) methods common to all the scalar value types.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="TESTS"
+>TESTS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>To run the test suite, <code lang='und' xml:lang='und'>make test</code>. If you want to also get output from the TODO tests, <code lang='und' xml:lang='und'>make devtest</code> instead. This is NOT the tcl test suite. Occasional failures are suspected against svn&#45;head; there should be no failures in a released version, however.</p>
+
+<p>To run the tcl test suite, type <code lang='und' xml:lang='und'>make tcl&#45;test</code>. This will checkout the latest cvs copy of the tests from the tcl repository and run them. Warning:</p>
+
+<dl>
+<dt><a name="1_Slow"
+>1 Slow</a></dt><p class="pad"></p>
+
+<dd>There are a lot of tests, and we setup and breakdown an instance of parrot for *each* test we try to run.</dd><p class="pad"></p>
+
+<dt><a name="2_Incomplete"
+>2 Incomplete</a></dt><p class="pad"></p>
+
+<dd>We convert the tests to use Perl&#39;s TAP instead of running them natively. The conversion process is flawed, and we don&#39;t claim to implement 100% of Tcl yet anyway. Expect a low pass rate.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="EXAMPLES"
+>EXAMPLES <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>There are examples in the <code lang='und' xml:lang='und'>examples</code> directory that are vaguely more interesting. Change to that directory and type <code lang='und' xml:lang='und'>make</code> for directions.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

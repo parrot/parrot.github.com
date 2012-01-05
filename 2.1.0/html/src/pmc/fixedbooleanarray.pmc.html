@@ -1,0 +1,159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - fixed size array for booleans only</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; fixed size array for booleans only
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/fixedbooleanarray.pmc &#45; fixed size array for booleans only</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>The <code>FixedBooleanArray</code> PMC implements an array of fixed size,
+which stores booleans.
+It uses the <code>Boolean</code> PMC for all conversions.
+The <code>FixedBooleanArray</code> PMC is extended by the <code>ResizableBooleanArray</code> PMC.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="static_UINTVAL_get_size_in_bytes(UINTVAL_size)"
+><b><code>static UINTVAL get_size_in_bytes(UINTVAL size)</b></code></a></dt>
+Auxiliar function to avoid repeating the size evaluation.</dl>
+
+<h2><a name="Vtable_functions"
+>Vtable functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes the array.
+<dt><a name="void_destroy()"
+><b><code>void destroy()</b></code></a></dt>
+Destroys the array.
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+Creates and returns a copy of the array.
+<dt><a name="INTVAL_get_bool()"
+><b><code>INTVAL get_bool()</b></code></a></dt>
+Returns whether the array has any elements (meaning been initialized,
+for a fixed sized array).
+<dt><a name="INTVAL_elements()"
+><b><code>INTVAL elements()</b></code></a></dt>
+
+<dt><a name="INTVAL_get_integer()"
+><b><code>INTVAL get_integer()</b></code></a></dt>
+Returns the number of elements in the array.
+<dt><a name="INTVAL_get_integer_keyed_int(INTVAL_key)"
+><b><code>INTVAL get_integer_keyed_int(INTVAL key)</b></code></a></dt>
+Returns the integer value of the element at index <code>key</code>.
+<dt><a name="INTVAL_get_integer_keyed(PMC_*key)"
+><b><code>INTVAL get_integer_keyed(PMC *key)</b></code></a></dt>
+Returns the integer value of the element at index <code>*key</code>.
+<dt><a name="FLOATVAL_get_number_keyed_int(INTVAL_key)"
+><b><code>FLOATVAL get_number_keyed_int(INTVAL key)</b></code></a></dt>
+Returns the floating&#45;point value of the element at index <code>key</code>.
+<dt><a name="FLOATVAL_get_number_keyed(PMC_*key)"
+><b><code>FLOATVAL get_number_keyed(PMC *key)</b></code></a></dt>
+Returns the floating&#45;point value of the element at index <code>*key</code>.
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+Returns the Parrot string representation of the array.
+<dt><a name="STRING_*get_string_keyed_int(INTVAL_key)"
+><b><code>STRING *get_string_keyed_int(INTVAL key)</b></code></a></dt>
+Returns the Parrot string value of the element at index <code>key</code>.
+<dt><a name="STRING_*get_string_keyed(PMC_*key)"
+><b><code>STRING *get_string_keyed(PMC *key)</b></code></a></dt>
+Returns the Parrot string value of the element at index <code>*key</code>.
+<dt><a name="PMC_*get_pmc_keyed_int(INTVAL_key)"
+><b><code>PMC *get_pmc_keyed_int(INTVAL key)</b></code></a></dt>
+Returns the PMC value of the element at index <code>key</code>.
+<dt><a name="PMC_*get_pmc_keyed(PMC_*key)"
+><b><code>PMC *get_pmc_keyed(PMC *key)</b></code></a></dt>
+Returns the PMC value of the element at index <code>*key</code>.
+<dt><a name="void_set_integer_native(INTVAL_size)"
+><b><code>void set_integer_native(INTVAL size)</b></code></a></dt>
+Resizes the array to <code>size</code> elements.
+<dt><a name="void_set_integer_keyed_int(INTVAL_key,_INTVAL_value)"
+><b><code>void set_integer_keyed_int(INTVAL key, INTVAL value)</b></code></a></dt>
+Sets the integer value of the element at index <code>key</code> to <code>value</code>.
+<dt><a name="void_set_integer_keyed(PMC_*key,_INTVAL_value)"
+><b><code>void set_integer_keyed(PMC *key, INTVAL value)</b></code></a></dt>
+Sets the integer value of the element at index <code>key</code> to <code>value</code>.
+<dt><a name="void_set_number_keyed_int(INTVAL_key,_FLOATVAL_value)"
+><b><code>void set_number_keyed_int(INTVAL key, FLOATVAL value)</b></code></a></dt>
+Sets the floating&#45;point value of the element at index <code>key</code> to <code>value</code>.
+<dt><a name="void_set_number_keyed(PMC_*key,_FLOATVAL_value)"
+><b><code>void set_number_keyed(PMC *key, FLOATVAL value)</b></code></a></dt>
+Sets the floating&#45;point value of the element at index <code>key</code> to <code>value</code>.
+<dt><a name="void_set_string_keyed_int(INTVAL_key,_STRING_*value)"
+><b><code>void set_string_keyed_int(INTVAL key, STRING *value)</b></code></a></dt>
+Sets the Parrot string value of the element at index <code>key</code> to <code>value</code>.
+<dt><a name="void_set_string_keyed(PMC_*key,_STRING_*value)"
+><b><code>void set_string_keyed(PMC *key, STRING *value)</b></code></a></dt>
+Sets the string value of the element at index <code>key</code> to <code>value</code>.
+<dt><a name="void_set_pmc_keyed_int(INTVAL_key,_PMC_*src)"
+><b><code>void set_pmc_keyed_int(INTVAL key, PMC *src)</b></code></a></dt>
+Sets the PMC value of the element at index <code>key</code> to <code>*src</code>.
+<dt><a name="void_set_pmc_keyed(PMC_*key,_PMC_*value)"
+><b><code>void set_pmc_keyed(PMC *key, PMC *value)</b></code></a></dt>
+Sets the string value of the element at index <code>key</code> to <code>value</code>.
+<dt><a name="PMC_*get_iter()"
+><b><code>PMC *get_iter()</b></code></a></dt>
+Return a new iterator for SELF.</dl>
+
+<h2><a name="Freeze/thaw_Interface"
+>Freeze/thaw Interface</a></h2>
+
+<dl>
+<dt><a name="void_freeze(PMC_*info)"
+><b><code>void freeze(PMC *info)</b></code></a></dt>
+Used to archive the string.
+<dt><a name="void_thaw(PMC_*info)"
+><b><code>void thaw(PMC *info)</b></code></a></dt>
+Used to unarchive the string.</dl>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="METHOD_fill(INTVAL_fill)"
+><b><code>METHOD fill(INTVAL fill)</b></code></a></dt>
+Sets all of the entires to true if fill is a true value,
+otherwise sets them all to false.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em>docs/pdds/pdd17_basic_types.pod</em>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

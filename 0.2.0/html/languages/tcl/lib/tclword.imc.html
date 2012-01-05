@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/languages.html">Language Implementations</a> | <a href="../../../../html/tcl.html">TCL</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="TclWord"
+>TclWord <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This object holds the result of parsing a tcl command.
+Internally,
+It represents a word as discrete chunks,
+which are either finalized or require interpolation.
+Each chunk is marked as such.
+When the word is <i>used</i> (at interpretation or at execution time),
+the required interpolation occurs (either variable or command)</p>
+
+<h1><a name="Attributes"
+>Attributes <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Each TclWord has the following attributes:</p>
+
+<h2><a name="chunks"
+>chunks <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>an array of pairs of (type,
+content),
+where type/content is</p>
+
+<dl>
+<dt><a name="CONST"
+>CONST</a></dt><p class="pad"></p>
+
+<dd>a string</dd><p class="pad"></p>
+
+<dt><a name="VARIABLE"
+>VARIABLE</a></dt><p class="pad"></p>
+
+<dd>an array suitable for passing to <code lang='und' xml:lang='und'>_Tcl::_get_var</code></dd><p class="pad"></p>
+
+<dt><a name="COMMAND"
+>COMMAND</a></dt><p class="pad"></p>
+
+<dd>the result of a the parse step for a [] command,
+i.e.
+a TclList of TclWords.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="constant"
+>constant <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>An Integer PMC flag representing whether or not the value we hold is constant.
+<i>Used as a hint at compile time.</i></p>
+
+<h1><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>TclWord defines the following methods:</p>
+
+<h2><a name="__class_init"
+>__class_init <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Define the attributes required for the class.</p>
+
+<h2><a name="__init"
+>__init <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Initialize the attributes for an instance of the class</p>
+
+<h2><a name="concat_words"
+>concat_words <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Given an array of words,
+append the chunks of a given word to the existing word</p>
+
+<h2><a name="concat_char"
+>concat_char <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Add a constant character to a TclWord</p>
+
+<h2><a name="concat_const"
+>concat_const <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Add a constant string to a TclWord</p>
+
+<h2><a name="concat_variable"
+>concat_variable <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Add the name of a variable to be interpolated to a TclWord.
+Takes the name of the var,
+and an optional index for array variables.</p>
+
+<h2><a name="concat_command"
+>concat_command <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Add a command to be interpolated to a TclWord.
+Takes the text of the command,
+and stores the parsed version for later interpretation.</p>
+
+<h2><a name="__get_pmc"
+>__get_pmc <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Return a PMC that contains the value of our word.
+If we&#39;re just a command,
+evaluate the command and return the resulting PMC.
+If we&#39;re just a variable,
+return the PMC associated with that variable.
+In any other case,
+concat the results and return a Stringy PMC.</p>
+
+<h2><a name="__get_string"
+>__get_string <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Stringify &#45; In our case,
+we take the individual chunks of the words and evaluate them &#45; so if we have a TclWord that came from a string like:</p>
+
+<pre lang='und' xml:lang='und'>        &#34;$a + $b = [expr $a + $b]&#34;</pre>
+
+<p>We have split it up internally to look like:</p>
+
+<pre lang='und' xml:lang='und'>        VAR:     a
+        CONST:   &#34; + &#34;
+        VAR:     b
+        CONST:   &#34; = &#34;
+        COMMAND:
+                WORD:
+                        CONST: &#34;expr&#34;
+                WORD:
+                        VAR: a
+                WORD:
+                        CONST: &#34;+&#34;
+                WORD:
+                        VAR: b</pre>
+
+<p>And, when we ask for the string representation, the two variable interpolations are performed, and the command containing &#34;expr&#34; is also evaluated. The resulting string, (assuming values of 1 and 2 for a and b, respectively) is</p>
+
+<pre lang='und' xml:lang='und'>        &#34;1 + 2 = 3&#34;</pre>
+
+<p>NB: This isn&#39;t quite the normal <code lang='und' xml:lang='und'>__get_string</code> method, and should probably be renamed &#45; it is returning a tcl exit code in addition to the normal string result.</p>
+
+<h2><a name="__dump"
+>__dump <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Allow us to be rendered by Data::Dumper</p>
+
+<h2><a name="__get_integer"
+>__get_integer <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Return the number of chunks in this tclword.</p>
+
+<h2><a name="XXX___freeze"
+>XXX __freeze <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Not implemented yet, pending delegation of <code lang='und' xml:lang='und'>freeze</code> to objects. (Necessary anymore?)</p>
+
+<h2><a name="XXX___thaw"
+>XXX __thaw <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Not implemented yet, pending delegation of <code lang='und' xml:lang='und'>thaw</code> to objects. (Necessary anymore?)</p>
+
+<h2><a name="__is_const"
+>__is_const <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<p>Returns an integer, <code lang='und' xml:lang='und'>1</code> if this word is constant, <code lang='und' xml:lang='und'>0</code> if it requires interpolation.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

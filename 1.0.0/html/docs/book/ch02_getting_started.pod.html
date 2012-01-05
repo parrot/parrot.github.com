@@ -1,0 +1,168 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Getting Started</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; Getting Started
+                </div>
+
+<h1><a name="Getting_Started"
+>Getting Started</a></h1>
+
+<h1><a name="Building_Parrot"
+>Building Parrot</a></h1>
+
+<p></p>
+
+<p><!--
+	INDEX: Parrot;source code
+--> The first step before you start playing with Parrot is to get a copy of the source code and compile it.
+You can download the latest monthly release from <a href="http://www.parrot.org/release/current">http://www.parrot.org/release/current</a>.</p>
+
+<p>To build Parrot you&#39;ll need a C compiler and a make utility.
+Generally,
+you&#39;ll use <em>gcc</em> and <em>make</em>,
+but many different versions of these tools are supported on different operation systems.
+Perl is also needed for parts of the configuration and build process.
+The following command&#45;line instructions will build the core virtual machine and compiler toolkit,
+and run the standard test suite.</p>
+
+<pre>  $ perl Configure.pl
+  $ make
+  $ make test</pre>
+
+<p>Once you&#39;ve compiled Parrot, you can run your first small script. Create a test file in the main <em>parrot</em> directory called <em>fjord.pasm</em>. <code>.pasm</code> files are written in primative Parrot Assembly Language (PASM) which is a low&#45;level programming interface to Parrot.</p>
+
+<pre>  print &#34;He&#39;s pining for the fjords.\n&#34;
+  end</pre>
+
+<p>Now run this file with:</p>
+
+<pre>  $ ./parrot fjord.pasm</pre>
+
+<p>which will print:</p>
+
+<pre>  He&#39;s pining for the fjords.</pre>
+
+<p>Next, try out one of Parrot&#39;s high&#45;level languages. Create a test file called <em>hello.nqp</em>:</p>
+
+<pre>  say &#34;Hello, World!&#34;</pre>
+
+<p>Then run it as:</p>
+
+<pre>  $ ./nqp hello.nqp</pre>
+
+<p>This will print, of course, the phrase &#34;Hello, World&#34;. NQP stands for <i>Not Quite Perl</i>, it&#39;s a mini language that&#39;s very similar to the Perl 6 programming language. NQP is part of the Parrot Compiler Tools (PCT) and is an integral part of building compilers for Parrot. We will talk more about NQP and the rest of the PCT tools, and how to use these for building compilers for Parrot in chapter 9.</p>
+
+<p>In the next few chapters we will discuss more aspects of Parrot programming using low&#45;level PASM language, and a higher&#45;level interface language called PIR. Chapters 3 and 4 will talk about PIR, which is the primary way to program Parrot directly. Chapter 5 will talk about PASM, and the low&#45;level programming interface.</p>
+
+<h2><a name="Build_Requirements"
+>Build Requirements</a></h2>
+
+<p>There are a number of requirements for building Parrot from source, and a number of optional libraries and components that can be used to extend its capabilities. None of these requirements or optional components are necessary unless you are building Parrot from the source code.</p>
+
+<ul>
+<li>C Compiler</li>
+
+<p>Parrot can be built with a number of C compilers. Parrot is written using the C89 standard, and the Parrot project officially supports the most recent C89 compiler on major systems, including the most recent versions of Microsoft C Compiler and the GNU Compiler Collection (GCC).</p>
+
+<li>make</li>
+
+<p>Make is a program to manage and automate the build process. Unix&#45;based systems will typically have access to the <code>make</code> command as part of the normal development tools. Windows systems can get the <code>nmake</code> utility to perform the same task.</p>
+
+<li>Subversion</li>
+
+<p>Subversion is the source control system that is used by the Parrot project. You need subversion to checkout the latest version of the source code. You can get subversion at <a href='http://subversion.tigris.org'><a href="http://subversion.tigris.org">http://subversion.tigris.org</a></a>, or through one of the common packaging systems.</p>
+
+<li>bison and flex</li>
+
+<p>Bison and Flex are used to create the lexical analyzer and parser components for the PIR compilers IMCC and PIRC. These are not necessary most of the time unless you are planning to hack on IMCC and PIRC directly.</p>
+
+<li>ICU</li>
+
+<p>ICU is a library for handling and manipulating Unicode text strings. Without ICU libraries installed, you wont be able to use Unicode with your built Parrot.</p>
+
+<li>GMP</li>
+
+<p>GMP is a mathematics library for manipulating arbitrary precision and arbitrary size numbers. GMP is an optional library used by the BigInt and BigNum PMCs.</p>
+
+<li>Readline</li>
+
+<p>The readline library allows some advanced behaviors on the command line such as command history.</p>
+
+<li>PCRE</li>
+
+<p>PCRE is a library that provides access to the Perl 5 regular expression syntax. In order to use these regular expressions, you will want to install PCRE. To do that on Linux you use the command:</p>
+
+<pre>  sudo apt&#45;get install libpcre3&#45;dev</pre>
+
+<li>GDBM</li>
+
+<li>PQ</li>
+
+<li>GLUT</li>
+
+<p>GLUT is an interface to the OpenGL API. It enables programs running on Parrot to have access to 3D graphics. To get GLUT on Linux systems you can use the command:</p>
+
+<pre>  sudo apt&#45;get install libglut3&#45;dev</pre>
+</ul>
+
+<p>In addition to these build requirements listed above, there are a number of Perl libraries needed to enable all tests and testing facilities, and to generate all the necessary documentation.</p>
+
+<p>To get the Perl packages for Parrot, you can use the commands:</p>
+
+<pre>  sudo cpan Test::Base Test::Pod Test::Pod::Coverage Pod::Spell
+  sudo cpan File::HomeDir File::Which Readonly Regexp::Parser
+  sudo cpan Perl::Critic Perl::Critic::Bangs Test::Perl::Critic</pre>
+
+<h3><a name="Use_the_source"
+>Use the source</a></h3>
+
+<p><!--
+	INDEX: Parrot;source code
+--> The second step to participating in Parrot development is to get a copy of the source code. If you just want to try it out&#45;&#45;experiment with a few features and see how it feels&#45;&#45;the best option is to download the most recent point release for your system. Point releases are usually packaged up for easy download and install for various platforms, including Windows, Debian, and Redhat. Point releases are also available from CPAN. The sure way to get the most recent release is at <a href="http://search.cpan.org/dist/parrot/">http://search.cpan.org/dist/parrot/</a> (or search for &#34;parrot&#34; in &#34;Distributions&#34;). If you want something a little more cutting edge than the packaged release, a new snapshot of the subversion repository is created every eight hours. The most recent snapshot is always available at <a href="http://cvs.perl.org/snapshots/parrot/parrot&#45;latest.tar.gz">http://cvs.perl.org/snapshots/parrot/parrot&#45;latest.tar.gz</a>.</p>
+
+<p>If you plan to get involved in development, you&#39;ll want to check out the source from the subversion repository directly. Anyone can get anonymous access to read the files and download a working copy to explore and test. For commit access, volunteers need a https://trac.parrot.org username, and need to be approved by a Metacommitter. To download the most recent version from SVN, type this command into your terminal This is for Linux users, on Mac or Windows systems, follow the instructions from your SVN client:</p>
+
+<pre>  svn co https://svn.parrot.org/parrot/trunk parrot</pre>
+
+<p>There&#39;s also a web interface for viewing files in the repository at <a href="http://svn.parrot.org/parrot/">http://svn.parrot.org/parrot/</a>.</p>
+
+<p>The repository is large and complex, so it&#39;s worth taking a little bit of time to explore. The code changes constantly, but most files and functions have informative descriptions to help keep track of things.</p>
+
+<p>The most important top&#45;level directory is <em>docs/</em>. The content isn&#39;t always up to date, but it is a good place to start. <em>parrot.pod</em> provides a quick overview of what&#39;s in each documentation file. If you&#39;re a capable writer and know a thing or two about how Parrot works, the documentation is a great place to start contributing. This book that you&#39;re reading right now was created in <em>docs/book/</em> by ordinary contributors. Most other documentation files found here are parsed and converted to HTML for display at <a href="http://www.parrot.org">http://www.parrot.org</a>.</p>
+
+<p>There are a number of existing language implementations for Parrot: Perl 6, Python (&#34;Pynie&#34;), Ruby (&#34;Cardinal&#34;), PHP (&#34;Pipp&#34;), Lisp, Lua, Tcl (&#34;partcl&#34;), WMLScript, Forth, Scheme, Befunge, BASIC, and many others. These language compilers are in various stages of partial completion. The page <a href='https://trac.parrot.org/parrot/wiki/Languages'>https://trac.parrot.org/parrot/wiki/Languages</a> provides meta information on these languages and where to find them. If you have a language you&#39;re particularly interested to see implemented on Parrot, you can see how far along the effort is, or you can start the work to implement it yourself. We&#39;ll talk more about creating new compilers in Chapter 10: High&#45;Level Languages, if you&#39;re interested.</p>
+
+<p>The <em>lib/</em> directory contains Perl 5 classes currently used in developing, building, and testing Parrot. The <em>src/pmc/</em> directory contains the C source code for Parrot classes (PMCs, which you&#39;ll read more about in CHP&#45;11Chapter 11).</p>
+
+<p>Most Parrot development happens in <em>src/</em> for the C source code, and <em>include/parrot/</em> for the C development header files.</p>
+
+<p>Libraries for use by programs running on Parrot are found in <em>runtime/</em>.</p>
+
+<p>The <em>examples/</em> directory contains some example Parrot PIR and Assembly code, as well as benchmarks. More discussions about these topics will be found in CHP&#45;3 Chapter 3, CHP&#45;5 Chapter 5, and CHP&#45;7 Chapter 7 respectively.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

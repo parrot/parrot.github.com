@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>PIR implementation for creating protoobjects</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">PIR implementation for creating protoobjects</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/libs.html">Libraries</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="TITLE"
+>TITLE <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Protoobject.pir &#45; PIR implementation for creating protoobjects</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>    load_bytecode &#39;Protoobject.pbc&#39;
+    .local pmc protomaker, fooclass, fooproto
+
+    # create a protoobject for existing class Foo
+    protomaker = get_hll_global &#39;Protomaker&#39;
+    fooclass = get_class &#39;Foo&#39;
+    fooproto = protomaker.&#39;new_proto&#39;(fooclass)
+
+    # create a subclass &#39;NS::Bar&#39; from &#39;Foo&#39; with attributes
+    .local pmc bclass, bproto
+    fooclass = get_class &#39;Foo&#39;
+    (bclass, bproto) = protomaker.&#39;new_subclass&#39;(fooclass, &#39;NS::Bar&#39;, &#39;$attr&#39;)</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>Objects of class <code lang='und' xml:lang='und'>Protomaker</code> are used to construct and initialize &#34;protoobjects&#34; for Parrot classes. The concept of protoobjects comes from Perl 6; <i>protoobjects</i> are &#34;empty&#34; instances of a class &#45;&#45; i.e., they are instances that are simply more undefined than a normal instance.</p>
+
+<p>Newly created protoobjects are automatically added as symbols in a corresponding namespace &#45;&#45; for example, the protoobject for <code lang='und' xml:lang='und'>Foo::Bar::Baz</code> is automatically entered as the &#39;Baz&#39; symbol in the <code lang='und' xml:lang='und'>[&#39;Foo&#39;;&#39;Bar&#39;]</code> namespace.</p>
+
+<h2><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="new_proto(class)"
+>new_proto(class)</a></dt><p class="pad"></p>
+
+<dd>Create and initialize a new protoobject for <code lang='und' xml:lang='und'>class</code>. The newly created protoobject is placed as an entry in the appropriate namespace and returned.</dd><p class="pad"></p>
+
+<dt><a name="new_subclass(baseclass,_name_[,_attr1,_attr2,_...]_)"
+>new_subclass(baseclass, name [, attr1, attr2, ...] )</a></dt><p class="pad"></p>
+
+<dd>Helper method to create subclasses and their corresponding protoobjects as a single method call. This method creates a subclass of <code lang='und' xml:lang='und'>baseclass</code> with the given <code lang='und' xml:lang='und'>name</code>, adds attributes <code lang='und' xml:lang='und'>attr1</code>, <code lang='und' xml:lang='und'>attr2</code>, etc. to the subclass, and then creates a corresponding protoobject for the subclass.</dd><p class="pad"></p>
+
+<dd>The <code lang='und' xml:lang='und'>name</code> parameter is either an array of strings or a string with namespace identifiers separated by double colons (<code lang='und' xml:lang='und'>::</code>).</dd><p class="pad"></p>
+
+<dd>The method returns the subclass object and its corresponding protoobject.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,279 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>PAST Compiler</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">PAST Compiler</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>PAST::Compiler &#45; PAST Compiler</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>PAST::Compiler implements a basic compiler for PAST nodes.
+By default PAST::Compiler transforms a PAST tree into POST.</p>
+
+<h2><a name="Signature_Flags"
+>Signature Flags <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p>Throughout the compiler PAST uses a number of 1&#45;character &#34;flags&#34; to indicate allowable register types and conversions.
+This helps the compiler generate more efficient code and know what sorts of conversions are allowed (or desired).
+The basic flags are:</p>
+
+<pre lang='und' xml:lang='und'>    P,S,I,N   PMC, string, int, or num register
+    s         string register or constant
+    i         int register or constant
+    n         num register or constant
+    r         any register result
+    v         void (no result)
+    *         any result type except void
+    +         PMC, int register, num register, or numeric constant
+    ~         PMC, string register, or string constant
+    :         argument (same as &#39;*&#39;), possibly with :named or :flat</pre>
+
+<p>These flags are used to describe signatures and desired return types for various operations. For example, if an opcode is specified with a signature of <code lang='und' xml:lang='und'>I~P*</code>, then the opcode places its result in an int register, its first child is coerced into some sort of string value, its second child is coerced into a PMC register, and the third and subsequent children can return any value type.</p>
+
+<h2><a name="Compiler_methods"
+>Compiler methods <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="to_post(node_[,_&#39;option&#39;=&#62;option,_...])"
+>to_post(node [, &#39;option&#39;=&#62;option, ...])</a></dt><p class="pad"></p>
+
+<dd>Compile the abstract syntax tree given by <code lang='und' xml:lang='und'>past</code> into POST.</dd><p class="pad"></p>
+
+<dt><a name="escape(str)"
+>escape(str)</a></dt><p class="pad"></p>
+
+<dd>Return <code lang='und' xml:lang='und'>str</code> as a PIR constant string.</dd><p class="pad"></p>
+
+<dt><a name="unique([STR_fmt])"
+>unique([STR fmt])</a></dt><p class="pad"></p>
+
+<dd>Generate a unique number that can be used as an identifier. If <code lang='und' xml:lang='und'>fmt</code> is provided, then it will be used as a prefix to the unique number.</dd><p class="pad"></p>
+
+<dt><a name="uniquereg(rtype)"
+>uniquereg(rtype)</a></dt><p class="pad"></p>
+
+<dd>Generate a unique register based on <code lang='und' xml:lang='und'>rtype</code>, where <code lang='und' xml:lang='und'>rtype</code> is one of the signature flags described above.</dd><p class="pad"></p>
+
+<dt><a name="coerce(post,_rtype)"
+>coerce(post, rtype)</a></dt><p class="pad"></p>
+
+<dd>Return a POST tree that coerces the result of <code lang='und' xml:lang='und'>post</code> to have a return value compatible with <code lang='und' xml:lang='und'>rtype</code>. <code lang='und' xml:lang='und'>rtype</code> can also be a specific register, in which case the result of <code lang='und' xml:lang='und'>post</code> is forced into that register (with conversions as needed).</dd><p class="pad"></p>
+
+<dt><a name="post_children(node_[,_&#39;signature&#39;=&#62;signature]_)"
+>post_children(node [, &#39;signature&#39;=&#62;signature] )</a></dt><p class="pad"></p>
+
+<dd>Return the POST representation of evaluating all of <code lang='und' xml:lang='und'>node</code>&#39;s children in sequence. The <code lang='und' xml:lang='und'>signature</code> option is a string of flags as described in &#34;Signature Flags&#34; above. Since we&#39;re just evaluating children nodes, the first character of <code lang='und' xml:lang='und'>signature</code> (return value type) is ignored. Thus a <code lang='und' xml:lang='und'>signature</code> of <code lang='und' xml:lang='und'>v~P*</code> says that the first child needs to be something in string context, the second child should be a PMC, and the third and subsequent children can be any value they wish.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Methods_on_PAST::Node_arguments"
+>Methods on <code lang='und' xml:lang='und'>PAST::Node</code> arguments <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p>The methods below are used to transform PAST nodes into their POST equivalents.</p>
+
+<h3><a name="Defaults"
+>Defaults</a></h3>
+
+<dl>
+<dt><a name="as_post(node)_(General)"
+>as_post(node) (General)</a></dt><p class="pad"></p>
+
+<dd>Return a POST representation of <code lang='und' xml:lang='und'>node</code>. Note that <code lang='und' xml:lang='und'>post</code> is a multimethod based on the type of its first argument, this is the method that is called when no other methods match.</dd><p class="pad"></p>
+
+<dt><a name="as_post(Any)"
+>as_post(Any)</a></dt><p class="pad"></p>
+
+<dd>This is the &#34;fallback&#34; method for any unrecognized node types. We use this to throw a more useful exception in case any non&#45;PAST nodes make it into the tree.</dd><p class="pad"></p>
+
+<dt><a name="as_post(Undef)"
+>as_post(Undef)</a></dt><p class="pad"></p>
+
+<dd>Return an empty POST node that can be used to hold a (PMC) result.</dd><p class="pad"></p>
+
+<dt><a name="as_post(String_class)"
+>as_post(String class)</a></dt><p class="pad"></p>
+
+<dd>Generate POST to create a new object of type <code lang='und' xml:lang='und'>class</code>. This is typically invoked by the various vivification methods below (e.g., in a PAST::Var node to default a variable to a given type).</dd><p class="pad"></p>
+
+<dt><a name="as_post(PAST::Node_node)"
+>as_post(PAST::Node node)</a></dt><p class="pad"></p>
+
+<dd>Return the POST representation of executing <code lang='und' xml:lang='und'>node</code>&#39;s children in sequence. The result of the final child is used as the result of this node.</dd><p class="pad"></p>
+
+<dd>N.B.: This method is also the one that is invoked for converting nodes of type <code lang='und' xml:lang='und'>PAST::Stmts</code>.</dd><p class="pad"></p>
+</dl>
+
+<h3><a name="PAST::Block"
+><code lang='und' xml:lang='und'>PAST::Block</code></a></h3>
+
+<dl>
+<dt><a name="as_post(PAST::Block_node)"
+>as_post(PAST::Block node)</a></dt><p class="pad"></p>
+
+<dd>Return the POST representation of a <code lang='und' xml:lang='und'>PAST::Block</code>.</dd><p class="pad"></p>
+</dl>
+
+<h3><a name="PAST::Op"
+><code lang='und' xml:lang='und'>PAST::Op</code></a></h3>
+
+<dl>
+<dt><a name="as_post(PAST::Op_node)"
+>as_post(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dd>Return the POST representation of a <code lang='und' xml:lang='und'>PAST::Op</code> node. Normally this is handled by redispatching to a method corresponding to the node&#39;s &#34;pasttype&#34; attribute.</dd><p class="pad"></p>
+
+<dt><a name="pirop(PAST::Op_node)"
+>pirop(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dd>Return the POST representation of a <code lang='und' xml:lang='und'>PAST::Op</code> node with a &#39;pasttype&#39; of &#39;pirop&#39;.</dd><p class="pad"></p>
+
+<dt><a name="call(PAST::Op_node)"
+>call(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dd>Return the POST representation of a <code lang='und' xml:lang='und'>PAST::Op</code> node for calling a sub.</dd><p class="pad"></p>
+
+<dt><a name="callmethod(PAST::Op_node)"
+>callmethod(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dd>Return the POST representation of a <code lang='und' xml:lang='und'>PAST::Op</code> node to invoke a method on a PMC.</dd><p class="pad"></p>
+
+<dt><a name="if(PAST::Op_node)"
+>if(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dt><a name="unless(PAST::Op_node)"
+>unless(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dd>Return the POST representation of <code lang='und' xml:lang='und'>PAST::Op</code> nodes with a &#39;pasttype&#39; of if/unless.</dd><p class="pad"></p>
+
+<dt><a name="while(PAST::Op_node)"
+>while(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dt><a name="until(PAST::Op_node)"
+>until(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dd>Return the POST representation of a <code lang='und' xml:lang='und'>while</code> or <code lang='und' xml:lang='und'>until</code> loop.</dd><p class="pad"></p>
+
+<dt><a name="repeat_while(PAST::Op_node)"
+>repeat_while(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dt><a name="repeat_until(PAST::Op_node)"
+>repeat_until(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dd>Return the POST representation of a <code lang='und' xml:lang='und'>repeat_while</code> or <code lang='und' xml:lang='und'>repeat_until</code> loop.</dd><p class="pad"></p>
+
+<dt><a name="for(PAST::Op_node)"
+>for(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dd>Return the POST representation of the <code lang='und' xml:lang='und'>for</code> loop given by <code lang='und' xml:lang='und'>node</code>.</dd><p class="pad"></p>
+
+<dt><a name="try(PAST::Op_node)"
+>try(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dd>Return the POST representation of a <code lang='und' xml:lang='und'>PAST::Op</code> node with a &#39;pasttype&#39; of bind. The first child is the code to be surrounded by an exception handler, the second child (if any) is the code to process the handler.</dd><p class="pad"></p>
+
+<dt><a name="chain(PAST::Op_node)"
+>chain(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dd>A short&#45;circuiting chain of operations. In a sequence of nodes with pasttype &#39;chain&#39;, the right operand of a node serves as the left operand of its parent. Each node is evaluated only once, and the first false result short&#45;circuits the chain. In other words, <code lang='und' xml:lang='und'>$x &#60; $y &#60; $z</code> is true only if $x &#60; $y and $y &#60; $z, but $y only gets evaluated once.</dd><p class="pad"></p>
+
+<dt><a name="def_or(PAST::Op_node)"
+>def_or(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dd>The short&#45;circuiting default operator (e.g., Perl 6&#39;s <code lang='und' xml:lang='und'>infix:&#60;//&#62;</code>). Returns its first child if its defined, otherwise it evaluates and returns the second child. (N.B.: This particular pasttype is a candidate for being refactored out using thunks of some sort.)</dd><p class="pad"></p>
+
+<dt><a name="xor(PAST::Op_node)"
+>xor(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dd>A short&#45;circuiting exclusive&#45;or operation. Each child is evaluated, if exactly one child evaluates to true then its value is returned, otherwise return Undef. Short&#45;circuits with Undef as soon as a second child is found that evaluates as true.</dd><p class="pad"></p>
+
+<dt><a name="bind(PAST::Op_node)"
+>bind(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dd>Return the POST representation of a <code lang='und' xml:lang='und'>PAST::Op</code> node with a &#39;pasttype&#39; of bind.</dd><p class="pad"></p>
+
+<dt><a name="copy(PAST::Op_node)"
+>copy(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dd>Implement a &#39;copy&#39; assignment (at least until we get the &#39;copy&#39; opcode &#45;&#45; see RT#47828).</dd><p class="pad"></p>
+
+<dt><a name="inline(PAST::Op_node)"
+>inline(PAST::Op node)</a></dt><p class="pad"></p>
+
+<dd>Return the POST representation of a <code lang='und' xml:lang='und'>PAST::Op</code> node with a &#39;pasttype&#39; of inline.</dd><p class="pad"></p>
+</dl>
+
+<h3><a name="PAST::Var"
+><code lang='und' xml:lang='und'>PAST::Var</code></a></h3>
+
+<dl>
+<dt><a name="as_post(PAST::Block_node)"
+>as_post(PAST::Block node)</a></dt><p class="pad"></p>
+
+<dd>Return the POST representation of a <code lang='und' xml:lang='und'>PAST::Var</code>. Generally we redispatch to an appropriate handler based on the node&#39;s &#39;scope&#39; attribute.</dd><p class="pad"></p>
+</dl>
+
+<h3><a name="PAST::Val"
+><code lang='und' xml:lang='und'>PAST::Val</code></a></h3>
+
+<dl>
+<dt><a name="as_post(PAST::Val_node_[,_&#39;rtype&#39;=&#62;rtype])"
+>as_post(PAST::Val node [, &#39;rtype&#39;=&#62;rtype])</a></dt><p class="pad"></p>
+
+<dd>Return the POST representation of the constant value given by <code lang='und' xml:lang='und'>node</code>. The <code lang='und' xml:lang='und'>rtype</code> parameter advises the method whether the value may be returned directly as a PIR constant or needs to have a PMC generated containing the constant value.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Patrick Michaud &#60;pmichaud@pobox.com&#62; is the author and maintainer. Please send patches and suggestions to the Parrot porters or Perl 6 compilers mailing lists.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>2006&#45;11&#45;20 Patrick Michaud added first draft of POD documentation. 2006&#45;11&#45;27 Significant refactor into separate modules.</p>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Copyright (C) 2006&#45;2008, The Perl Foundation.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Functions for writing out packfiles</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Functions for writing out packfiles</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/packout.c &#45; Functions for writing out packfiles</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="opcode_t_PackFile_pack_size(Interp*,_struct_PackFile_*self)"
+><b><code lang='und' xml:lang='und'>opcode_t PackFile_pack_size(Interp*, struct PackFile *self)</b></code></a></dt><p class="pad"></p>
+
+<dd>Description.</dd><p class="pad"></p>
+
+<dt><a name="void_PackFile_pack(Interp*,_struct_PackFile_*self,_opcode_t_*cursor)"
+><b><code lang='und' xml:lang='und'>void PackFile_pack(Interp*, struct PackFile *self, opcode_t *cursor)</b></code></a></dt><p class="pad"></p>
+
+<dd>Pack the PackFile into a contiguous region of memory.</dd><p class="pad"></p>
+
+<dd>Note that the memory block had better have at least the amount of memory indicated by <code lang='und' xml:lang='und'>PackFile_pack_size()</code>.</dd><p class="pad"></p>
+
+<dd>This means that you MUST call <code lang='und' xml:lang='und'>PackFile_pack_size()</code> before <code lang='und' xml:lang='und'>PackFile_pack()</code></dd><p class="pad"></p>
+
+<dd>Other pack routines are in <em lang='und' xml:lang='und'><a href="packfile.c.html">src/packfile.c</a></em>.</dd><p class="pad"></p>
+
+<dt><a name="size_t_PackFile_ConstTable_pack_size(struct_PackFile_Segment_*seg)"
+><b><code lang='und' xml:lang='und'>size_t PackFile_ConstTable_pack_size(struct PackFile_Segment *seg)</b></code></a></dt><p class="pad"></p>
+
+<dd>Determine the size of the buffer needed in order to pack the PackFile constant table into a contiguous region of memory.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>opcode_t *PackFile_ConstTable_pack(Interp *, struct PackFile_Segment *seg, opcode_t *cursor)</b></code></a></dt><p class="pad"></p>
+
+<dd>Pack the PackFile ConstTable into a contiguous region of memory.</dd><p class="pad"></p>
+
+<dd>Note that the memory block had better have at least the amount of memory indicated by <code lang='und' xml:lang='und'>PackFile_pack_size()</code>.</dd><p class="pad"></p>
+
+<dd>This means that you MUST call <code lang='und' xml:lang='und'>PackFile_pack_size()</code> before <code lang='und' xml:lang='und'>PackFile_ConstTable_pack()</code></dd><p class="pad"></p>
+
+<dt><a name="static_int_find_in_const(PMC_*key,_int_type)"
+><b><code lang='und' xml:lang='und'>static int find_in_const(PMC *key, int type)</b></code></a></dt><p class="pad"></p>
+
+<dd>This is really ugly,
+we don&#39;t know where our <code lang='und' xml:lang='und'>PARROT_ARG_SC</code> key constant is in constant table,
+so we have to search for it.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>opcode_t *PackFile_Constant_pack(Interp*, struct PackFile_Constant *self, opcode_t *cursor)</b></code></a></dt><p class="pad"></p>
+
+<dd>Pack a PackFile Constant into a contiguous region of memory.</dd><p class="pad"></p>
+
+<dd>Note that the memory block had better have at least the amount of memory indicated by <code lang='und' xml:lang='und'>PackFile_pack_size()</code>.</dd><p class="pad"></p>
+
+<dd>This means that you MUST call <code lang='und' xml:lang='und'>PackFile_pack_size()</code> before <code lang='und' xml:lang='und'>PackFile_Constant_pack()</code></dd><p class="pad"></p>
+
+<dd>The data is zero&#45;padded to an opcode_t&#45;boundary,
+so pad bytes may be added.
+(Note this padding is not yet implemented for FLOATVALs.)</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Rework by Melvin; new bytecode format,
+make bytecode portable.
+(Do endian conversion and wordsize transforms on the fly.)</p>
+
+<p>leo: rewrite to use new directory&#45;based format.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

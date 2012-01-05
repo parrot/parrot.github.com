@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Interpreter miscellaneous functions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Interpreter miscellaneous functions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/inter_misc.c &#45; Parrot Interpreter miscellaneous functions</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>NCI function setup,
+compiler registration,
+<code lang='und' xml:lang='und'>interpinfo</code>,
+and <code lang='und' xml:lang='und'>sysinfo</code> opcodes.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API void register_nci_method(PARROT_INTERP, const int type, void *func, const char *name, const char *proto)</b></code></a></dt><p class="pad"></p>
+
+<dd>Create an entry in the <code lang='und' xml:lang='und'>nci_method_table</code> for the given NCI method of PMC class <code lang='und' xml:lang='und'>type</code>.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API void register_raw_nci_method_in_ns(PARROT_INTERP, const int type, void *func, const char *name)</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API void Parrot_mark_method_writes(PARROT_INTERP, int type, NOTNULL(const char *name))</b></code></a></dt><p class="pad"></p>
+
+<dd>Mark the method <code lang='und' xml:lang='und'>name</code> on PMC type <code lang='und' xml:lang='und'>type</code> as one that modifies the PMC.</dd><p class="pad"></p>
+
+<dt><a name="PARROT_API_void_Parrot_compreg(PARROT_INTERP,_STRING_*type,_Parrot_compiler_func_t_func)"
+><b><code lang='und' xml:lang='und'>PARROT_API void Parrot_compreg(PARROT_INTERP, STRING *type, Parrot_compiler_func_t func)</b></code></a></dt><p class="pad"></p>
+
+<dd>Register a parser/compiler function.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL PMC *Parrot_compile_string(PARROT_INTERP, NOTNULL(STRING *type), NOTNULL(const char *code), NOTNULL(STRING **error))</b></code></a></dt><p class="pad"></p>
+
+<dd>Compile code string.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_CANNOT_RETURN_NULL void *Parrot_compile_file(PARROT_INTERP, NOTNULL(const char *fullname), NOTNULL(STRING **error))</b></code></a></dt><p class="pad"></p>
+
+<dd>Compile code file.</dd><p class="pad"></p>
+
+<dt><a name="PARROT_API_INTVAL_interpinfo(PARROT_INTERP,_INTVAL_what)"
+><b><code lang='und' xml:lang='und'>PARROT_API INTVAL interpinfo(PARROT_INTERP, INTVAL what)</b></code></a></dt><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>what</code> specifies the type of information you want about the interpreter.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CAN_RETURN_NULL PMC *interpinfo_p(PARROT_INTERP, INTVAL what)</b></code></a></dt><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>what</code> specifies the type of information you want about the interpreter.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_API PARROT_WARN_UNUSED_RESULT PARROT_CANNOT_RETURN_NULL STRING *interpinfo_s(PARROT_INTERP, INTVAL what)</b></code></a></dt><p class="pad"></p>
+
+<dd>TODO: Not yet documented!!!</dd><p class="pad"></p>
+
+<dt><a name="PARROT_WARN_UNUSED_RESULT_INTVAL_sysinfo_i(SHIM_INTERP,_INTVAL_info_wanted)"
+><b><code lang='und' xml:lang='und'>PARROT_WARN_UNUSED_RESULT INTVAL sysinfo_i(SHIM_INTERP, INTVAL info_wanted)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the system info.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>info_wanted</code> is one of:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    PARROT_INTSIZE
+    PARROT_FLOATSIZE
+    PARROT_POINTERSIZE</pre>
+
+<dd>In unknown info is requested then &#45;1 is returned.</dd><p class="pad"></p>
+
+<dt><a
+><b><code lang='und' xml:lang='und'>PARROT_CANNOT_RETURN_NULL PARROT_WARN_UNUSED_RESULT STRING *sysinfo_s(PARROT_INTERP, INTVAL info_wanted)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the system info string.</dd><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>info_wanted</code> is one of:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    PARROT_OS
+    PARROT_OS_VERSION
+    PARROT_OS_VERSION_NUMBER
+    CPU_ARCH
+    CPU_TYPE</pre>
+
+<dd>If unknown info is requested then and empty string is returned.</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot_small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

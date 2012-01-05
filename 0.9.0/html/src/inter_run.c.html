@@ -1,0 +1,143 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Parrot Interpreter &#45; Run Ops and Methods</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Interpreter &#45; Run Ops and Methods</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/inter_run.c &#45; Parrot Interpreter &#45; Run Ops and Methods</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Various functions that call the run loop.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_runops"
+><b><code>void runops</b></code></a></dt>
+Run parrot ops.
+Set exception handler and/or resume after exception.
+<dt><a name="Parrot_Context_*_Parrot_runops_fromc"
+><b><code>Parrot_Context *Parrot_runops_fromc</b></code></a></dt>
+Runs the Parrot ops,
+called from C code.
+The function arguments are already setup according to Parrot calling conventions,
+the <code>sub</code> argument is an invocable <code>Sub</code> PMC.
+<dt><a name="static_Parrot_Context_*_runops_args"
+><b><code>static Parrot_Context *runops_args</b></code></a></dt>
+Calls the PMC subroutine <code>sub</code> with optional name <code>meth</code>.
+If PMC object <code>obj</code> is provided,
+the call is treated as a method call on that object.
+The function has a function signature <code>sig</code> and a variadic argument list <code>ap</code>.Signatures are similar to NCI:
+<pre>    v ... void return
+    I ... INTVAL (not Interpreter)
+    N ... NUMVAL
+    S ... STRING*
+    P ... PMC*</pre>
+TODO: Update this list of possible signature elements.
+<dt><a name="void_*_Parrot_run_meth_fromc"
+><b><code>void *Parrot_run_meth_fromc</b></code></a></dt>
+Run a method sub from C. The function arguments are already setup according to Parrot calling conventions, the <code>sub</code> argument is an invocable <code>Sub</code> PMC.If a PMC return value is registered it is returned.
+<dt><a name="PMC_*_Parrot_runops_fromc_args"
+><b><code>PMC *Parrot_runops_fromc_args</b></code></a></dt>
+Run parrot ops, called from C code, function arguments are passed as <code>va_args</code> according to the signature. The <code>sub</code> argument is an invocable <code>Sub</code> PMC.
+<dt><a name="void_*_Parrot_runops_fromc_args_event"
+><b><code>void *Parrot_runops_fromc_args_event</b></code></a></dt>
+Run code from within event handlers. This variant deals with some reentrency issues. It also should do sanity checks, if e.g. the handler subroutine didn&#39;t return properly.
+<dt><a name="INTVAL_Parrot_runops_fromc_args_reti"
+><b><code>INTVAL Parrot_runops_fromc_args_reti</b></code></a></dt>
+Called from C code, runs a Parrot subroutine <code>sub</code>. The subroutine has function signature <code>sig</code> and a C variadic argument list. Returns an <code>INTVAL</code>.
+<dt><a name="FLOATVAL_Parrot_runops_fromc_args_retf"
+><b><code>FLOATVAL Parrot_runops_fromc_args_retf</b></code></a></dt>
+Called from C code, runs a Parrot subroutine <code>sub</code>. The subroutine has function signature <code>sig</code> and a C variadic argument list. Returns a <code>FLOATVAL</code>.
+<dt><a name="void*_Parrot_run_meth_fromc_args"
+><b><code>void *Parrot_run_meth_fromc_args</b></code></a></dt>
+Called from C code, runs a Parrot subroutine <code>sub</code> as a method on object <code>obj</code>. The subroutine has function signature <code>sig</code> and a C variadic argument list.
+<dt><a name="INTVAL_Parrot_run_meth_fromc_args_reti"
+><b><code>INTVAL Parrot_run_meth_fromc_args_reti</b></code></a></dt>
+Called from C code, runs a Parrot subroutine <code>sub</code> as a method on object <code>obj</code>. The subroutine has function signature <code>sig</code> and a C variadic argument list. Returns an <code>INTVAL</code>.
+<dt><a name="FLOATVAL_Parrot_run_meth_fromc_args_retf"
+><b><code>FLOATVAL Parrot_run_meth_fromc_args_retf</b></code></a></dt>
+Called from C code, runs a Parrot subroutine <code>sub</code> as a method on object <code>obj</code>. The subroutine has function signature <code>sig</code> and a C variadic argument list <code>args</code>. Returns a <code>FLOATVAL</code>.
+<dt><a name="void_*_Parrot_runops_fromc_arglist"
+><b><code>void *Parrot_runops_fromc_arglist</b></code></a></dt>
+Called from C code, runs a Parrot subroutine <code>sub</code>. The subroutine has function signature <code>sig</code> and a C <code>va_list</code> argument list <code>args</code>.
+<dt><a name="INTVAL_Parrot_runops_fromc_arglist_reti"
+><b><code>INTVAL Parrot_runops_fromc_arglist_reti</b></code></a></dt>
+Called from C code, runs a Parrot subroutine <code>sub</code>. The subroutine has function signature <code>sig</code> and a C <code>va_list</code> argument list <code>args</code>. Returns an <code>INTVAL</code>.
+<dt><a name="FLOATVAL_Parrot_runops_fromc_arglist_retf"
+><b><code>FLOATVAL Parrot_runops_fromc_arglist_retf</b></code></a></dt>
+Called from C code, runs a Parrot subroutine <code>sub</code>. The subroutine has function signature <code>sig</code> and a C <code>va_list</code> argument list <code>args</code>. Returns an <code>FLOATVAL</code>.
+<dt><a name="void*_Parrot_run_meth_fromc_arglist"
+><b><code>void *Parrot_run_meth_fromc_arglist</b></code></a></dt>
+Calls the subroutine <code>sub</code> as a method on object <code>obj</code>. The method to be called is named <code>meth</code>, has the function signature <code>sig</code> and arguments <code>args</code>. <code>args</code> is a C variadic argument list created with <code>va_start</code>.
+<dt><a name="INTVAL_Parrot_run_meth_fromc_arglist_reti"
+><b><code>INTVAL Parrot_run_meth_fromc_arglist_reti</b></code></a></dt>
+Calls the subroutine <code>sub</code> as a method on object <code>obj</code>. The method to be called is named <code>meth</code>, has the function signature <code>sig</code> and arguments <code>args</code>. <code>args</code> is a C variadic argument list created with <code>va_start</code>. Returns an <code>INTVAL</code>.
+<dt><a name="FLOATVAL_Parrot_run_meth_fromc_arglist_retf"
+><b><code>FLOATVAL Parrot_run_meth_fromc_arglist_retf</b></code></a></dt>
+Calls the subroutine <code>sub</code> as a method on object <code>obj</code>. The method to be called is named <code>meth</code>, has the function signature <code>sig</code> and arguments <code>args</code>. <code>args</code> is a C variadic argument list created with <code>va_start</code>. Returns a <code>FLOATVAL</code>.</dl>
+
+<h2><a name="Helper_Functions"
+>Helper Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_new_runloop_jump_point"
+><b><code>void new_runloop_jump_point</b></code></a></dt>
+Create a new runloop jump point, either by allocating it or by getting one from the free list.
+<dt><a name="void_free_runloop_jump_point"
+><b><code>void free_runloop_jump_point</b></code></a></dt>
+Place runloop jump point back on the free list.
+<dt><a name="void_destroy_runloop_jump_points"
+><b><code>void destroy_runloop_jump_points</b></code></a></dt>
+Destroys (and frees the memory of) the runloop jump point list and the associated free list for the specified interpreter.
+<dt><a name="void_really_destroy_runloop_jump_points"
+><b><code>void really_destroy_runloop_jump_points</b></code></a></dt>
+Takes a pointer to a runloop jump point (which had better be the last one in the list). Walks back through the list, freeing the memory of each one, until it encounters NULL. Used by <code>destroy_runloop_jump_points</code>.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em>include/parrot/interpreter.h</em>, <em><a href="interpreter.c.html">src/interpreter.c</a></em>.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

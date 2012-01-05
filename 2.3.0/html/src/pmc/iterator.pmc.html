@@ -1,0 +1,119 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Iterator PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Iterator PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/iterator.pmc &#45; Iterator PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>These are the vtable functions for the Iterator base class.
+Iterators are used in combination with other classes(mainly aggregates) to visit all entries in that aggregate.</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<h2><a name="default_usage"
+>default usage</a></h2>
+
+<pre>    .local pmc iterator, array, entry
+    iterator = iter array
+  iter_loop:
+    unless iterator, iter_end  # while (more values)
+    entry = shift iterator     # get an entry
+    ...
+    goto iter_loop
+  iter_end:</pre>
+
+<h2><a name="iterate_from_the_end,_for_arrays"
+>iterate from the end, for arrays</a></h2>
+
+<pre>    .local pmc iterator, array, entry
+    iterator = iter array
+    iterator = .ITERATE_FROM_END
+  iter_loop:
+    unless iterator, iter_end  # while (more values)
+    entry = pop iterator     # get an entry
+    ...
+    goto iter_loop
+  iter_end:</pre>
+
+<h2><a name="iterate_over_a_hash"
+>iterate over a hash</a></h2>
+
+<pre>    .local pmc iterator, hash, key, entry
+    iterator = iter hash
+  iter_loop:
+    unless iterator, iter_end  # while (more values)
+    key   = shift iterator     # get the key..
+    entry = hash[key]
+    ...
+    goto iter_loop
+  iter_end:</pre>
+
+<h1><a name="Methods"
+>Methods</a></h1>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Raises an exception. Use <code>init_pmc()</code>.
+<dt><a name="void_init_pmc(PMC_*initializer)"
+><b><code>void init_pmc(PMC *initializer)</b></code></a></dt>
+Initializes the iterator with an aggregate PMC. Defaults iteration mode to iterate from start.
+<dt><a name="INTVAL_get_integer_keyed(PMC_*key)"
+><b><code>INTVAL get_integer_keyed(PMC *key)</b></code></a></dt>
+
+<dt><a name="FLOATVAL_get_number_keyed(PMC_*key)"
+><b><code>FLOATVAL get_number_keyed(PMC *key)</b></code></a></dt>
+
+<dt><a name="STRING_*get_string_keyed(PMC_*key)"
+><b><code>STRING *get_string_keyed(PMC *key)</b></code></a></dt>
+
+<dt><a name="PMC_*get_pmc_keyed(PMC_*key)"
+><b><code>PMC *get_pmc_keyed(PMC *key)</b></code></a></dt>
+Returns the element for <code>*key</code>.
+<dt><a name="INTVAL_exists_keyed(PMC_*key)"
+><b><code>INTVAL exists_keyed(PMC *key)</b></code></a></dt>
+Returns whether an element for <code>*key</code> exists in the aggregate.
+<dt><a name="INTVAL_defined()"
+><b><code>INTVAL defined()</b></code></a></dt>
+Returns whether the iterator contains an aggregate.
+<dt><a name="INTVAL_defined_keyed(PMC_*key)"
+><b><code>INTVAL defined_keyed(PMC *key)</b></code></a></dt>
+
+<dt><a name="void_set_integer_native(INTVAL_value)"
+><b><code>void set_integer_native(INTVAL value)</b></code></a></dt>
+Restart iterator</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

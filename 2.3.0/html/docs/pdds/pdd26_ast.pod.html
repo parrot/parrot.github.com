@@ -1,0 +1,457 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PDD 26: Compiler Tools &#45; Abstract Syntax Tree</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; PDD 26: Compiler Tools &#45; Abstract Syntax Tree
+                </div>
+
+<h1><a name="PDD_26:_Compiler_Tools_&#45;_Abstract_Syntax_Tree"
+>PDD 26: Compiler Tools &#45; Abstract Syntax Tree</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>This PDD describes the node types and semantics of the Parrot Abstract Syntax Tree representation.</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<p>The Parrot Abstract Syntax Tree (PAST) is a set of Parrot classes useful for generating an abstract semantic representation of a program written in a high level language such as Perl or Python.
+Once a program has been translated into its equivalent PAST representation,
+the Parrot Compiler Toolkit can be used to generate executable PIR or bytecode from the abstract syntax tree representation.</p>
+
+<p>PAST is designed to provide the common operations and semantics needed by many of the high level languages targeted by Parrot,
+while also being extensible to support the unique needs of specific languages.</p>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<h3><a name="PAST::Node"
+>PAST::Node</a></h3>
+
+<p><code>PAST::Node</code> is the base class for all nodes in an abstract syntax tree.
+Each <code>PAST::Node</code> element has an array of children nodes (which may be empty),
+as well as a number of attributes and accessor methods for the node.</p>
+
+<p>Every PAST node has <code>name</code>,
+<code>source</code>,
+and <code>pos</code> attributes.
+The <code>name</code> attribute is the node&#39;s name,
+if any,
+while <code>source</code> and <code>pos</code> are used to identify the location of the node in the original source code.</p>
+
+<dl>
+<dt><a name="init([child1,_child2,_...,_]_[attr1=&#62;val1,_attr2=&#62;val2,_...])"
+>init([child1,
+child2,
+...,
+] [attr1=&#62;val1,
+attr2=&#62;val2,
+...])</a></dt>
+Initialize a PAST node with the given children and attributes.
+Adds each child to the node (using the <code>push</code> method,
+below) and calls the appropriate accessor method for each attribute.
+<dt><a name="new([child1,_child2,_...,_]_[attr1=&#62;val1,_attr2=&#62;val2,_...])"
+>new([child1,
+child2,
+...,
+] [attr1=&#62;val1,
+attr2=&#62;val2,
+...])</a></dt>
+Create a new PAST node with the same type as the invocant and initialized with the given children and attributes.
+Returns the newly created node.
+<dt><a name="push(child)"
+>push(child)</a></dt>
+Add <code>child</code> to the end of the node&#39;s array of children.
+<dt><a name="pop()"
+>pop()</a></dt>
+Remove the last child from the node&#39;s array of children.
+Returns the child.
+<dt><a name="unshift(child)"
+>unshift(child)</a></dt>
+Add <code>child</code> to the beginning of the node&#39;s array of children.
+<dt><a name="shift()"
+>shift()</a></dt>
+Remove the first child from the node&#39;s array of children.
+Returns the child.
+<dt><a name="iterator(_)"
+>iterator( )</a></dt>
+Return a newly initialized <code>Iterator</code> for the node&#39;s list of children.
+<dt><a name="node(val)"
+>node(val)</a></dt>
+Set the invocant&#39;s <code>source</code> and <code>pos</code> attributes to be the same as <code>val</code>.
+If <code>val</code> is another PAST node,
+then <code>source</code> and <code>pos</code> are simply copied from that node.
+Otherwise,
+<code>val</code> is assumed to be a <code>Match</code> object (e.g.,
+from PGE) and the source and position information are obtained from that.
+<dt><a name="name([value])"
+>name([value])</a></dt>
+Accessor method &#45;&#45; sets/returns the <code>name</code> attribute of the node.
+<dt><a name="named([value])"
+>named([value])</a></dt>
+Accessor method &#45;&#45; for nodes that are being used as named arguments,
+sets/returns the name to be associated with the argument.
+<dt><a name="flat([value])"
+>flat([value])</a></dt>
+Accessor method &#45;&#45; sets/returns the &#34;flatten&#34; flag on nodes being used as arguments.
+<dt><a name="attr(STR_attrname,_PMC_value,_INT_has_value)"
+>attr(STR attrname,
+PMC value,
+INT has_value)</a></dt>
+Helper method for writing accessors &#45;&#45; if <code>has_value</code> is true then set the node&#39;s value of <code>attrname</code> to <code>value</code>.
+Returns the (resulting) value of <code>attrname</code> for the invocant.</dl>
+
+<h3><a name="PAST::Stmts"
+>PAST::Stmts</a></h3>
+
+<p><code>PAST::Stmts</code> is simply a <code>PAST::Node</code> used to contain a sequence of other PAST nodes to be evaluated.
+It has no specific methods or attributes.</p>
+
+<h3><a name="PAST::Val"
+>PAST::Val</a></h3>
+
+<p><code>PAST::Val</code> nodes represent constant values in the abstract syntax tree.
+The <code>value</code> attribute represents the value of the node itself.</p>
+
+<dl>
+<dt><a name="value([value])"
+>value([value])</a></dt>
+Accessor method to get/set the constant value for this node.
+<dt><a name="returns([typename])"
+>returns([typename])</a></dt>
+Get/set the type of value to be generated by this node.
+If not specified,
+the type is taken from the type of the value attribute given above.</dl>
+
+<h3><a name="PAST::Var"
+>PAST::Var</a></h3>
+
+<p><code>PAST::Var</code> nodes represent variable&#45;like items within the abstract syntax tree.
+The <code>name</code> attribute (inherited from <code>PAST::Node</code>) identifies the name of the variable as given by the high level language program.
+The other attributes for <code>PAST::Var</code> nodes provide the details of how the variable is defined and accessed.</p>
+
+<dl>
+<dt><a name="scope([value])"
+>scope([value])</a></dt>
+A variable node&#39;s &#34;scope&#34; indicates how the variable is to be defined or accessed within the program.
+The available scopes include:
+<dl>
+<dt><a name="&#34;lexical&#34;"
+>&#34;lexical&#34;</a></dt>
+Lexical variables are scoped to the <code>PAST::Block</code> in which they are declared,
+including any nested blocks.
+If the node&#39;s <code>isdecl</code> attribute is true,
+then this node defines a new lexical variable within the current block.
+Otherwise,
+the node refers to a lexical variable already declared in the current or outer block.
+<dt><a name="&#34;package&#34;"
+>&#34;package&#34;</a></dt>
+Package variables represent global or namespace&#45;managed variables in the program.
+The node&#39;s <code>namespace</code> attribute may be used to explicitly identify the namespace of the variable,
+otherwise it is assumed to be within the namespace of the <code>PAST::Block</code> containing the node.
+<dt><a name="&#34;parameter&#34;"
+>&#34;parameter&#34;</a></dt>
+Parameter variables are the formal arguments to subroutine and methods,
+typically represented as <code>PAST::Block</code> nodes.
+The parameter&#39;s lexical name is given by the node&#39;s <code>name</code> attribute.
+Positional parameters are defined by the order in which they appear in the <code>PAST::Block</code> node,
+named parameters have values for the <code>named</code> attribute.
+Optional parameters are identified via the <code>viviself</code> attribute (see below) indicating how the parameter is to be initialized if not supplied by the caller.
+Slurpy parameters are indicated via the node&#39;s <code>slurpy</code> attribute.
+<dt><a name="&#34;keyed&#34;"
+>&#34;keyed&#34;</a></dt>
+Keyed variables represent the elements of aggregates such as arrays and hashes.
+Nodes representing keyed elements have two children; the first child is the PAST representation of the aggregate,
+and the second child is the PAST representation of the key or index.
+The <code>vivibase</code> attribute below may be used to specify how to generate the aggregate if it doesn&#39;t already exist.
+<dt><a name="&#34;attribute&#34;"
+>&#34;attribute&#34;</a></dt>
+Attribute variables represent object attributes (in some languages they&#39;re called &#34;member variables&#34;).
+The attribute&#39;s name is given by the node&#39;s <code>name</code> attribute.
+Nodes representing attribute variables have an optional child,
+representing the object to which the attribute belongs.
+If this child is not present,
+the attribute is assumed to belong to the current invocant,
+indicated by the special variable <code>self</code> (which is implicitly passed to all subs that are flagged as a <code>:method</code> or <code>:vtable</code>).
+<dt><a name="&#34;register&#34;"
+>&#34;register&#34;</a></dt>
+Register variables are limited in scope to the <code>PAST::Block</code> node in which they are declared.
+This is different from the <code>lexical</code> scope,
+which <i>includes</i> any nested <code>PAST::Block</code> nodes.
+If the node&#39;s <code>isdecl</code> attribute is true,
+then this node defines a new register variable within the current block.
+Register variables are mapped to Parrot registers,
+and are useful for handling the PIR pseudo&#45;variable <code>self</code> and storing intermediate results.
+Names given to the <code>name</code> attribute must conform to rules for PIR identifiers.
+If no <code>name</code> attribute is set,
+Parrot registers are used.
+In this case,
+setting the <code>isdecl</code> does not have any effect.</dl>
+If <code>scope</code> is not explicitly provided in the node,
+then PAST will look at the local symbol tables of any outer <code>PAST::Block</code> nodes to try to determine the scope of the named variable.
+If this still does not result in a scope,
+then &#39;lexical&#39; is assumed.
+<dt><a name="viviself([value])"
+>viviself([value])</a></dt>
+Accessor method for the <code>viviself</code> attribute,
+which specifies how uninitialized variables are to be initialized when first used.
+The <code>viviself</code> attribute may be either a string or array representing a type (e.g.,
+<code>Integer</code>),
+or it may be a PAST representation for generating the variable&#39;s initial value.
+<dt><a name="vivibase([value])"
+>vivibase([value])</a></dt>
+Accessor method for the <code>vivibase</code> attribute,
+which specifies how the base portion of aggregate variables (see &#34;keyed scope&#34; above) is to be created if it doesn&#39;t already exist.
+<code>Vivibase</code> may either be a string or array representing the type of the newly created aggregate,
+or it may be a PAST representation for generating the aggregate.
+<dt><a name="isdecl([flag])"
+>isdecl([flag])</a></dt>
+Accessor method for the <code>isdecl</code> attribute.
+A true value of <code>isdecl</code> indicates that the variable given by this node is being created at this point within the current lexical scope.
+Otherwise,
+the node refers to a pre&#45;existing variable (possibly from an outer scope).
+<dt><a name="lvalue([flag])"
+>lvalue([flag])</a></dt>
+Accessor method for the <code>lvalue</code> attribute,
+which indicates whether this variable is being used in an lvalue context.
+<dt><a name="slurpy([flag])"
+>slurpy([flag])</a></dt>
+Accessor method for the <code>slurpy</code> attribute of parameter variables.
+A true value of <code>slurpy</code> indicates that the parameter variable given by this node is to be created as a slurpy parameter (consuming all remaining arguments passed in).
+Named slurpy parameters are indicated by having a non&#45;empty <code>named</code> attribute and a true value of <code>slurpy</code>.</dl>
+
+<h3><a name="PAST::Op"
+>PAST::Op</a></h3>
+
+<p><code>PAST::Op</code> nodes represent the operations in an abstract syntax tree.
+The primary function of the node is given by its <code>pasttype</code> attribute,
+secondary functions may be indicated by the node&#39;s <code>name</code>,
+<code>pirop</code>,
+or other attributes as given below.</p>
+
+<dl>
+<dt><a name="pasttype([value])"
+>pasttype([value])</a></dt>
+Accessor method for the node&#39;s <code>pasttype</code> attribute.
+The <code>pasttype</code> is the primary indicator of the type of operation to be performed,
+the operands are typically given as the children of the node.
+Defined values of <code>pasttype</code> are:
+<dl>
+<dt><a name="chain"
+>chain</a></dt>
+A short&#45;circuiting chain of operations.
+In a sequence of nodes with pasttype &#39;chain&#39;,
+the right operand of a node serves as the left operand of its parent.
+Each node is evaluated only once,
+and the first false result short&#45;circuits the chain.
+In other words,
+<code>$x &#60; $y &#60; $z</code> is true only if $x &#60; $y and $y &#60; $z,
+but $y only gets evaluated once.
+<dt><a name="copy"
+>copy</a></dt>
+Copy the value of the node&#39;s second child into the variable expression given by its first child.
+<dt><a name="bind"
+>bind</a></dt>
+Bind the variable given by the node&#39;s first child to the value given by its second child.
+<dt><a name="if"
+>if</a></dt>
+The first,
+second,
+and third children represent the &#34;condition&#34;,
+&#34;then&#34;,
+and &#34;else&#34; parts of a conditional expression.
+The first child is evaluated; if the result is true then the second child is evaluated and returned as the result of the <code>PAST::Op</code> node,
+otherwise the third child is evaluated and returned as the result.
+This implements the standard if&#45;then&#45;else logic needed by most higher level languages,
+and can also be used for implementing the ternary operator.If the node is missing its second (&#34;then&#34;) or third (&#34;else&#34;) child,
+then the result of the condition is used as the corresponding result of the operation.
+This makes it easy to implement the &#34;short&#45;circuit and&#34; operator commonly used in many high level languages.
+For example,
+the standard <code>&#38;&#38;</code> operator may be implemented using an &#34;if&#34; node,
+where the left operand is the first (condition) child,
+the right operand is the second (then) child,
+and the third child is left as null or uninitialized.It&#39;s also possible to build a &#34;short&#45;circuit or&#34; (<code>||</code>) operator using this pasttype,
+by setting the left operand to <code>||</code> as the first child and the right operand as the <i>third</i> child (leaving the second child as null).
+However,
+it&#39;s probably simpler to use the &#34;unless&#34; type as described below.
+<dt><a name="unless"
+>unless</a></dt>
+Same as <code>if</code> above,
+except that the second child is evaluated if the first child evaluates to false and the third child is evaluated if the first child evaluates to true.The <code>unless</code> type can be used to implement &#34;short&#45;circuit or&#34; semantics; simply set the first child to the left operand and the second child to the right operand,
+leaving the third child empty or uninitialized.
+If the first child evaluates to true it is returned as the result of the operation,
+otherwise the second child is evaluated and returned as the result.
+<dt><a name="while"
+>while</a></dt>
+Evaluate the first child (condition),
+if the result is true then evaluate the second child (body) and repeat.
+<dt><a name="until"
+>until</a></dt>
+Evaluate the first child (condition),
+if the result is false then evaluate the second child (body) and repeat.
+<dt><a name="repeat_while,_repeat_until"
+>repeat_while,
+repeat_until</a></dt>
+Same as <code>while</code> and <code>until</code> above,
+except the second child is evaluated before the conditional first child is evaluated for continuation of the loop.
+<dt><a name="for"
+>for</a></dt>
+Iterate over the first child in groups of elements given by <code>arity</code> (default 1).
+For each iteration,
+invoke the second child,
+passing the elements as parameters.
+<dt><a name="call"
+>call</a></dt>
+Call the subroutine given by the <code>name</code> attribute,
+passing the results of any child nodes as arguments.
+If the node has no <code>name</code> attribute,
+then the first child is assumed to evaluate to a callable subroutine,
+and any remaining children are used as arguments.
+<dt><a name="callmethod"
+>callmethod</a></dt>
+Invoke the method given by <code>name</code> on the first child,
+passing the results of any child nodes as arguments.
+If the node has no <code>name</code> attribute,
+then the first child is evaluated as a method to be called,
+the second child is the invocant,
+and any remaining children are arguments to the method call.
+<dt><a name="pirop"
+>pirop</a></dt>
+Execute the PIR opcode given by the <code>pirop</code> attribute.
+See the <code>pirop</code> method below for details.
+This is also the default behavior when a <code>pirop</code> attribute is set and <code>pasttype</code> is not.
+<dt><a name="inline"
+>inline</a></dt>
+Execute the sequence of PIR statements given by the node&#39;s <code>inline</code> attribute (a string).
+See the <code>inline</code> method below for details.
+<dt><a name="return"
+>return</a></dt>
+Generate a return exception,
+using the first child (if any) as a return value.
+<dt><a name="try"
+>try</a></dt>
+Evaluates the first child,
+if any exceptions occur then they are handled by the code given by the second child (if any).
+<dt><a name="xor"
+>xor</a></dt>
+Evaluate the child nodes looking for exactly one true result to be returned.
+If two true results are encountered,
+the operation immediately short&#45;circuits and returns false.
+Otherwise,
+after all children have been evaluated the result of any true child is used as the result of the operation,
+or the result of the last child if none of the children evaluated to true.</dl>
+
+<dt><a name="pirop([opcode])"
+>pirop([opcode])</a></dt>
+Get/set the PIR opcode to be executed for this node.
+Internally the PAST and POST (Parrot Opcode Syntax Tree) implementations understand the register types available for common PIR operations and will handle any needed register or constant conversion of operands automatically.
+Note that except for the <code>assign</code> opcode,
+any destination is typically generated automatically and should not be explicitly given as a child operand to the node.
+The table of PIR opcodes that PAST &#34;knows&#34; about is given in <em><a href="../../compilers/pct/src/PAST/Compiler.pir.html">compilers/pct/src/PAST/Compiler.pir</a></em> .
+<dt><a name="lvalue([flag])"
+>lvalue([flag])</a></dt>
+Get/set whether this node is an lvalue,
+or treats its first child as an lvalue (e.g.,
+for assignment).
+<dt><a name="inline([STRING_code])"
+>inline([STRING code])</a></dt>
+Get/set the code to be used for inline PIR when <code>pasttype</code> is set to &#34;inline&#34;.
+The <code>code</code> argument is PIR text to be inserted in the final generated code sequence.
+Sequences of &#34;%0&#34;,
+&#34;%1&#34;,
+&#34;%2&#34;,
+...
+&#34;%9&#34; in <code>code</code> are replaced with the evaluated results of the first,
+second,
+third,
+...,
+tenth children nodes.
+(If you need more than ten arguments to your inline PIR,
+consider making it a subroutine call instead.)The register to hold the result of the inline PIR operation is given by &#34;%r&#34;,
+&#34;%t&#34;,
+or &#34;%u&#34; in the <code>code</code> string:
+<pre>  %r   &#45; Generate a unique PMC register for the result.
+  %t   &#45; Generate a unique PMC register for the result,
+         and initialize it with an object of type C&#60;returns&#62;
+         {{Pm: or possibly C&#60;viviself&#62; }}
+         before the execution of the inline PIR.
+  %u   &#45; Re&#45;use the first child&#39;s PMC (%0) if it&#39;s a temporary
+         result, otherwise same as %t above.</pre>
+If none of %r, %t, or %u appear in <code>code</code>, then the first child&#39;s (%0) is used as the result of this operation.</dl>
+
+<h3><a name="PAST::Block"
+>PAST::Block</a></h3>
+
+<p><code>PAST::Block</code> nodes represent lexical scopes within an abstract syntax tree, and roughly translate to individual Parrot subroutines. A <code>PAST::Block</code> node nested within another <code>PAST::Block</code> node acts like a nested lexical scope.</p>
+
+<p>If the block has a <code>name</code> attribute, that becomes the name of the resulting Parrot sub. Otherwise, a unique name is automatically generated for the block.</p>
+
+<p>Each PAST::Block node can maintain its own local symbol table, see the <code>symbol</code> method below.</p>
+
+<dl>
+<dt><a name="blocktype([type])"
+>blocktype([type])</a></dt>
+Get/set the type of the block to <code>type</code>. The currently understood values are &#39;declaration&#39; and &#39;immediate&#39;. &#39;Declaration&#39; indicates that a block is simply being defined at this point, the result of the node is a reference to the block. A <code>blocktype</code> of &#39;immediate&#39; indicates a block that is to be immediately executed when it is evaluated in the AST, and the result of the last operation is used as the return value for the block.
+<dt><a name="namespace([value])"
+>namespace([value])</a></dt>
+Get/set the namespace for this particular block (and any nested blocks that do not explicitly provide a namespace). <code>Value</code> may either be a simple string or an array of strings representing a nested namespace.
+<dt><a name="hll([value])"
+>hll([value])</a></dt>
+Get/set the HLL namespace for this block (and any nested blocks that do not explicitly provide a <code>hll</code>).
+<dt><a name="symbol(name,_[attr1_=&#62;_val1,_attr2_=&#62;_val2,_...])"
+>symbol(name, [attr1 =&#62; val1, attr2 =&#62; val2, ...])</a></dt>
+Each PAST::Block node can use the <code>symbol</code> method to maintain its own compile&#45;time notion of a local symbol table. Each value of <code>name</code> is given its own hash to hold information about that symbol for the block (i.e., the symbol table acts like a hash of hashes indexed by symbol name). If the <code>symbol</code> method is called with named arguments, then the method sets the entries in the hash corresponding to <code>name</code> in the block&#39;s symbol table. If <code>symbol</code> is called with just a single <code>name</code> argument, then the current hash for local symbol <code>name</code> is returned.HLLs are free to place any values in the symbol hashes that may be useful. However, the <code>scope</code> entry for a symbol is typically used to provide the <code>scope</code> attribute for any nested <code>PAST::Var</code> nodes that do not provide an explicit <code>scope</code> attribute.
+<dt><a name="symbol_defaults([attr1_=&#62;_val1,_attr2_=&#62;_val2,_...])"
+>symbol_defaults([attr1 =&#62; val1, attr2 =&#62; val2, ...])</a></dt>
+Sets default attributes for symbols that aren&#39;t explicitly given by the <code>symbol</code> method above. For example, an abstract syntax tree can use this method on a top&#45;level <code>PAST::Block</code> to specify the <code>scope</code> attribute to be used for all variable nodes that don&#39;t otherwise provide one.
+<dt><a name="subid([value])"
+>subid([value])</a></dt>
+Get/set the unique subid to be used for this block. If no subid is explicitly set, a unique subid is randomly generated for the block.
+<dt><a name="pirflags([value])"
+>pirflags([value])</a></dt>
+Get/set any PIR flags to be used when generating the block.
+<dt><a name="compiler([compiler_name])"
+>compiler([compiler_name])</a></dt>
+Specify that the children nodes of this block are to be compiled using <code>compiler_name</code> instead of being treated as standard PAST nodes. This is useful when a program may contain components of code written in other HLLs. For example, the <code>perl6</code> compiler uses this feature to use PGE to compile pre&#45;parsed Perl 6 regular expressions, rather than trying to represent the semantics of those expressions in PAST itself.When code is generated from a <code>PAST::Block</code> node having a <code>compiler</code> attribute, the compiler is invoked with <code>name</code> and <code>outer</code> arguments so that any generated subs can have names and lexical scoping appropriate to the block (it&#39;s the responsibility of the external compiler to support this).</dl>
+
+<h3><a name="PAST::CompUnit"
+>PAST::CompUnit</a></h3>
+
+<p><code>PAST::CompUnit</code> nodes are used for the abstract representation of compilation units. Specific attributes and semantics are yet to be determined.</p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p>None.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

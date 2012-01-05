@@ -1,0 +1,343 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - [DRAFT] PDD 29: Compiler Tools</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; <a href="../../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; [DRAFT] PDD 29: Compiler Tools
+                </div>
+
+<h1><a name="[DRAFT]_PDD_29:_Compiler_Tools"
+>[DRAFT] PDD 29: Compiler Tools</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>This PDD specifies the Parrot Compiler Tools (PCT).</p>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Definitions"
+>Definitions</a></h2>
+
+<h3><a name="Compiler"
+>Compiler</a></h3>
+
+<p>In this document,
+when we speak of a <i>compiler</i>,
+we mean PCT&#45;based compilers.</p>
+
+<h3><a name="HLL"
+>HLL</a></h3>
+
+<p>A High&#45;Level Language.
+Examples are: Perl,
+Ruby,
+Python,
+Lua,
+Tcl,
+etc.</p>
+
+<h2><a name="Synopsis"
+>Synopsis</a></h2>
+
+<p>Creating a PCT&#45;based compiler can be done as follows:</p>
+<pre> .sub 'onload' :anon :load :init
+     load_bytecode 'PCT.pbc'
+     $P0 = get_hll_global ['PCT'], 'HLLCompiler'
+     $P1 = $P0.'new'()
+     $P1.'language'('Foo')
+     $P1.'parsegrammar'('Foo::Grammar')
+     $P1.'parseactions'('Foo::Grammar::Actions')
+ .end
+
+ .sub 'main' :main
+     .param pmc args
+     $P0 = compreg 'Foo'
+     $P1 = $P0.'command_line'(args)
+ .end
+</pre>
+<p>{{ this is the most important part; is this enough?
+}}</p>
+
+<p>The Parrot distribution contains a Perl script to generate a compiler stub,
+containing all necessary files.
+This generated compiler will compile out of the box.
+It is highly suggested to use this script to get started with the PCT.
+The script is located in <code>tools/dev/mk_language_shell.pl</code>.</p>
+
+<p>{{ Not sure whether the mk_language_shell.pl script should be mentioned long term.
+In a sense,
+this script can also be considered part of the parrot compiler &#34;tools&#34;,
+as it is used to create a compiler.
+}}</p>
+
+<h3><a name="Parser_Synopsis"
+>Parser Synopsis</a></h3>
+
+<pre> grammar Foo is PCT::Grammar;
+
+ rule TOP {
+     &#60;statement&#62;*
+     {*}
+ }
+
+ rule statement {
+     &#60;ident&#62; &#39;=&#39; &#60;expression&#62;
+     {*}
+ }
+
+ rule expression is optable { ... }
+
+ proto infix:&#60;+&#62; is precedence(&#39;1&#39;) is pirop(&#39;n_add&#39;) { ... }
+
+ rule &#39;term:&#39; is tighter(infix:&#60;+&#62;) is parsed(&#38;term) { ... }
+
+ rule term {
+     | &#60;ident&#62; {*}       #= ident
+     | &#60;number&#62; {*}      #= number
+ }</pre>
+
+<h3><a name="Actions_Synopsis"
+>Actions Synopsis</a></h3>
+
+<p>{{ Is this a good idea? }}</p>
+
+<pre> class Foo::Grammar::Actions;
+
+ method TOP($/) {
+     my $past := PAST::Block.new( :blocktype(&#39;declaration&#39;), :node($/) );
+     for $&#60;statement&#62; {
+         $past.push( $( $_ ) );
+     }
+     make $past;
+ }
+
+ method statement($/) {
+     make PAST::Op.new( $( $&#60;ident&#62; ),
+                        $( $&#60;expression&#62; ),
+                        :pasttype(&#39;bind&#39;),
+                        :node($/) );
+ }
+
+ method expression($/, $key) {
+     ...
+ }
+
+ method term($/, $key) {
+     make $( $/{$key} );
+ }</pre>
+
+<h3><a name="Running_the_compiler"
+>Running the compiler</a></h3>
+
+<p>Running the compiler is then done as follows:</p>
+
+<pre> $ parrot foo.pbc [&#45;&#45;target=[parse|past|post|pir]] &#60;file&#62;</pre>
+
+<p>{{ other options? Maybe &#45;&#45;target=pbc in the future, once PBC can be generated? }}</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<p>The Parrot Compiler Tools are specially designed to easily create a compiler targeting the Parrot Virtual Machine. The tools themselves run on Parrot, which implies that no other external programs are needed.</p>
+
+<p>The PCT is a set of libraries and programs, to:</p>
+
+<ul>
+<li>create a parser</li>
+
+<li>create an intermediate data structure (Abstract Syntax Tree)</li>
+
+<li>generate executable Parrot code</li>
+</ul>
+
+<p>{{ Maybe just say it&#39;s used to create parrot&#45;targeting compilers, not list these as =items }}</p>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<p>The PCT is made up of the following libraries and programs:</p>
+
+<ul>
+<li>Parrot Grammar Engine (PGE)</li>
+
+<li>Parrot Abstract Syntax Tree (PAST) classes</li>
+
+<li>Parrot Opcode Syntax Tree (POST) classes</li>
+
+<li>PCT::HLLCompiler class</li>
+
+<li>PCT::Grammar class</li>
+</ul>
+
+<p>Although strictly speaking it is not part of the PCT, the Not Quite Perl (6) (NQP) language is typically used in all PCT&#45;based compilers. NQP is a subset of the Perl 6 language, and is a high&#45;level language as an alternative for PIR.</p>
+
+<h3><a name="Compilation_phases"
+>Compilation phases</a></h3>
+
+<p>A PCT&#45;based compiler has by default four compilation phases, or <i>transformations</i>. Phases can be removed and added through the API of the <code>HLLCompiler</code> class. These are:</p>
+
+<ul>
+<li>source to parse tree</li>
+
+<p>The source is read, parsed and stored in a parse tree.</p>
+
+<li>parse tree to PAST</li>
+
+<p>The parse tree is converted into a Parrot Abstract Syntax Tree.</p>
+
+<li>PAST to POST</li>
+
+<p>The PAST is converted into a Parrot Opcode Syntax Tree.</p>
+
+<li>POST to PIR</li>
+
+<p>The POST is converted into executable Parrot Intermediate Representation.</p>
+</ul>
+
+<h4><a name="Source_to_Parse_Tree"
+>Source to Parse Tree</a></h4>
+
+<p>The first stage of a PCT&#45;based compiler is done by the <code>parser</code>. The parser is defined as a set of Perl 6 Rules, which is processed by the Perl 6 Rules compiler. This results in a generated PIR file that implements the parser.</p>
+
+<p>{{ Doesn&#39;t this make the Perl 6 rules compiler part of the PCT? }}</p>
+
+<p>During the first stage, the source (input string) is parsed, resulting in a <code>parse tree</code>.</p>
+
+<h4><a name="Parse_tree_to_PAST"
+>Parse tree to PAST</a></h4>
+
+<p>The second stage converts the parse tree into a Parrot Abstract Syntax Tree (PAST). PAST is a data structure consisting of PAST nodes, each of which represents a common HLL construct. While all languages differ in syntax, many constructs in different HLLs map to the same semantics. This second transformation is executed during the parse stage. The transformations of the parse tree nodes into PAST nodes is done by so&#45;called parse actions, which are methods of a class that is specified through the <code>parseactions</code> attribute of the HLLCompiler. Such classes are implemented in NQP.</p>
+
+<p>{{ How do we say that this is not obligatory; you could also use PIR, and in the future maybe other languages. }}</p>
+
+<h4><a name="PAST_to_POST"
+>PAST to POST</a></h4>
+
+<p>The third transformation converts the PAST into a Parrot Opcode Syntax Tree (POST). PAST nodes represent HLL constructs, which are transformed into a set of low&#45;level POST nodes. A POST node is a low&#45;level node, representing a single instruction, label, or a subroutine. While a PAST is very close to a HLL program, a POST is much closer to PIR code.</p>
+
+<h4><a name="POST_to_PIR"
+>POST to PIR</a></h4>
+
+<p>The last transformation generates PIR code from the POST.</p>
+
+<p>The generated PIR is then fed into the Parrot executable, and processed into Parrot Byte Code (PBC) by the PIR compiler.</p>
+
+<h3><a name="Parrot_Grammar_Engine"
+>Parrot Grammar Engine</a></h3>
+
+<p>The Parrot Grammar Engine (PGE) is a component that <i>executes</i> regular expressions. Besides <i>classic</i> regular expressions, it also understands Perl 6 Rules. Such rules are special regular expressions to define a grammar.</p>
+
+<p>The <i>start</i> symbol in a grammar is named <code>TOP</code>; this is the top&#45;level rule that is executed when the parser is invoked.</p>
+
+<h4><a name="Operator_precedence_parsing"
+>Operator precedence parsing</a></h4>
+
+<p>{{ insert stuff about using an operator prec. table here }}</p>
+
+<h3><a name="Parrot_Abstract_Syntax_Tree"
+>Parrot Abstract Syntax Tree</a></h3>
+
+<p>The PCT includes a set of PAST classes. PAST classes represent common language constructs, such as a <code>while statement</code>. These are described extensively in <a href='TODO#pdds%2Fpdd26_ast.pod'>&#34;pdds/pdd26_ast.pod&#34; in docs</a>.</p>
+
+<h3><a name="Parrot_Opcode_Syntax_Tree"
+>Parrot Opcode Syntax Tree</a></h3>
+
+<h4><a name="POST::Node"
+>POST::Node</a></h4>
+
+<p>POST::Node is the base class for all other POST classes.</p>
+
+<h4><a name="POST::Op"
+>POST::Op</a></h4>
+
+<h4><a name="POST::Ops"
+>POST::Ops</a></h4>
+
+<h4><a name="POST::Label"
+>POST::Label</a></h4>
+
+<h4><a name="POST::Sub"
+>POST::Sub</a></h4>
+
+<h3><a name="PCT::Grammar"
+>PCT::Grammar</a></h3>
+
+<p>The class <code>PCT::Grammar</code> is a built&#45;in grammar class that can be used as a parent class for a custom grammar. This class defines a number of rules and tokens that are inherited by child classes. Note that the concept of <code>class</code> and <code>grammar</code> are equivalent.</p>
+
+<p>The following rules are predefined:</p>
+
+<p>{{ is this necessary, or just a reference to the file? }}</p>
+
+<dl>
+<dt><a name="ident"
+>ident</a></dt>
+
+<dt><a name="ws"
+>ws</a></dt>
+</dl>
+
+<h3><a name="PCT::HLLCompiler"
+>PCT::HLLCompiler</a></h3>
+
+<p>All PCT&#45;based compilers use a HLLCompiler object as a compiler driver. It acts as a <i>facade</i> for the compiler. This object invokes the different compiler phases.</p>
+
+<h4><a name="HLLCompiler_API_Methods"
+>HLLCompiler API Methods</a></h4>
+
+<p>{{ TODO: complete this }}</p>
+
+<dl>
+<dt><a name="language"
+>language</a></dt>
+<pre>  $P0.'language'('Foo')
+</pre>
+<dt><a name="parsegrammar"
+>parsegrammar</a></dt>
+<pre>  $P0.'parsegrammar'('Foo::Grammar')
+</pre>
+<dt><a name="parseactions"
+>parseactions</a></dt>
+<pre>  $P0.'parseactions'('Foo::Grammar::Actions')
+</pre>
+<dt><a name="commandline_prompt"
+>commandline_prompt</a></dt>
+<pre>  $P0.'commandline_prompt'($S0)
+</pre>sets the string in <code>$S0</code> as a commandline prompt on the compiler in <code>$P0</code>. The prompt is the text that is shown on the commandline before a command is entered when the compiler is started in interactive mode.
+<dt><a name="commandline_banner"
+>commandline_banner</a></dt>
+<pre>  $P0.'commandline_banner'($S0)
+</pre>sets the string in <code>$S0</code> as a commandline banner on the compiler in <code>$P0</code>. The banner is the first text that is shown when the compiler is started in interactive mode. This can be used for a copyright notice or other information.</dl>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p><em>docs/pdd26_ast.pod</em>, <a href='http://dev.perl.org/perl6/doc/design/syn/S05.html'><a href="http://dev.perl.org/perl6/doc/design/syn/S05.html">http://dev.perl.org/perl6/doc/design/syn/S05.html</a></a></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

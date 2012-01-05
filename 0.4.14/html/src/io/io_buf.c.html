@@ -1,0 +1,712 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>IO buffer layer</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">IO buffer layer</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/io/io_buf.c &#45; IO buffer layer</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The &#34;buf&#34; layer of Parrot IO.
+Buffering and all the fun stuff.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>*/</p>
+
+<p>#include &#34;parrot/parrot.h&#34; #include &#34;io_private.h&#34; #include &#60;assert.h&#62;</p>
+
+<p>/* HEADERIZER HFILE: none */ /* HEADERIZER BEGIN: static */</p>
+
+<p>static INTVAL PIO_buf_close( PARROT_INTERP,
+NOTNULL(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static ParrotIO * PIO_buf_fdopen( PARROT_INTERP,
+NOTNULL(ParrotIOLayer *layer),
+PIOHANDLE fd,
+INTVAL flags ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static size_t PIO_buf_fill_readbuf( PARROT_INTERP,
+NOTNULL(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io),
+NOTNULL(ParrotIOBuf *b) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3) __attribute__nonnull__(4);</p>
+
+<p>static INTVAL PIO_buf_flush( PARROT_INTERP,
+NOTNULL(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static INTVAL PIO_buf_init( PARROT_INTERP,
+NOTNULL(ParrotIOLayer *layer) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>PARROT_CAN_RETURN_NULL static ParrotIO * PIO_buf_open( PARROT_INTERP,
+NOTNULL(ParrotIOLayer *layer),
+NOTNULL(const char *path),
+INTVAL flags ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static size_t PIO_buf_peek( PARROT_INTERP,
+NOTNULL(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io),
+NOTNULL(STRING **buf) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3) __attribute__nonnull__(4);</p>
+
+<p>static size_t PIO_buf_read( PARROT_INTERP,
+NOTNULL(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io),
+NOTNULL(STRING **buf) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3) __attribute__nonnull__(4);</p>
+
+<p>static size_t PIO_buf_readline( PARROT_INTERP,
+NOTNULL(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io),
+NOTNULL(STRING **buf) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3) __attribute__nonnull__(4);</p>
+
+<p>static PIOOFF_T PIO_buf_seek( PARROT_INTERP,
+NOTNULL(ParrotIOLayer *l),
+NOTNULL(ParrotIO *io),
+PIOOFF_T offset,
+INTVAL whence ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static INTVAL PIO_buf_setbuf( PARROT_INTERP,
+NOTNULL(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io),
+size_t bufsize ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static INTVAL PIO_buf_setlinebuf( PARROT_INTERP,
+NOTNULL(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static PIOOFF_T PIO_buf_tell( SHIM_INTERP,
+ParrotIOLayer *layer,
+NOTNULL(ParrotIO *io) ) __attribute__nonnull__(3);</p>
+
+<p>static size_t PIO_buf_write( PARROT_INTERP,
+NOTNULL(ParrotIOLayer *layer),
+NOTNULL(ParrotIO *io),
+NOTNULL(STRING *s) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3) __attribute__nonnull__(4);</p>
+
+<p>/* HEADERIZER END: static */</p>
+
+<p>/* Defined at bottom */ extern const ParrotIOLayerAPI pio_buf_layer_api;</p>
+
+<p>ParrotIOLayer pio_buf_layer = { NULL,
+&#34;buf&#34;,
+PIO_L_TERMINAL,
+&#38;pio_buf_layer_api,
+0,
+0 };</p>
+
+<p>/* XXX: This is not portable */ #define DEFAULT_RECSEP &#39;\n&#39; #define IS_EOL(io,c) (io&#45;&#62;recsep == (*c)) /* #define IS_EOL(io,c) ((*c) == &#39;\n&#39;) */</p>
+
+<p>/*</p>
+
+<p>FUNCODC: PIO_buf_init</p>
+
+<p>The buffer layer&#39;s <code lang='und' xml:lang='und'>Init</code> function.
+Initializes buffering.</p>
+
+<p>*/</p>
+
+<p>static INTVAL PIO_buf_init(PARROT_INTERP,
+NOTNULL(ParrotIOLayer *layer)) { if (PIO_STDOUT(interp)) PIO_buf_setlinebuf(interp,
+layer,
+PMC_data_typed(PIO_STDOUT(interp),
+ParrotIO *));</p>
+
+<pre lang='und' xml:lang='und'>    if (PIO_STDIN(interp))
+        PIO_buf_setbuf(interp, layer,
+            PMC_data_typed(PIO_STDIN(interp), ParrotIO *), PIO_UNBOUND);
+
+    return 0;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_buf_open</p>
+
+<p>The buffer layer&#39;s <code lang='und' xml:lang='und'>Open</code> function.</p>
+
+<p>*/</p>
+
+<p>PARROT_CAN_RETURN_NULL static ParrotIO * PIO_buf_open(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer), NOTNULL(const char *path), INTVAL flags) { ParrotIOLayer * const l = PIO_DOWNLAYER(layer); ParrotIO * const io = PIO_open_down(interp, l, path, flags); if (!io) { /* error creating IO stream */ return NULL; } /* * We have an IO stream. Now setup stuff * for our layer before returning it. * XXX: Make default behaviour linebuffered? */ /*PIO_buf_setlinebuf(interp, l, io);*/ PIO_buf_setbuf(interp, l, io, PIO_UNBOUND); return io; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_buf_setbuf</p>
+
+<p>The buffer layer&#39;s <code lang='und' xml:lang='und'>SetBuf</code> function.</p>
+
+<p>Don&#39;t pass <code lang='und' xml:lang='und'>SetBuf</code> calls down the stack, top layer wins. This doesn&#39;t mean other layers can&#39;t buffer, I just need to think about the mechanism for buffer control or if it even makes sense this way. Most layers will not implement <code lang='und' xml:lang='und'>SetBuf</code>.</p>
+
+<p>*/</p>
+
+<p>static INTVAL PIO_buf_setbuf(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer), NOTNULL(ParrotIO *io), size_t bufsize) { ParrotIOLayer * const l = layer ? layer : io&#45;&#62;stack; ParrotIOBuf * const b = &#38;io&#45;&#62;b;</p>
+
+<pre lang='und' xml:lang='und'>    /* If there is a buffer, make sure we flush before
+     * dinking around with the buffer.
+     */
+    if (b&#45;&#62;startb)
+        PIO_buf_flush(interp, l, io);
+
+    /* Choose an appropriate buffer size for caller */
+    switch (bufsize) {
+        case 0:
+            b&#45;&#62;size = 0;
+            break;
+        case PIO_UNBOUND:
+            b&#45;&#62;size = PIO_getblksize(io&#45;&#62;fd);
+            break;
+        default:
+            b&#45;&#62;size = (bufsize &#62;= PIO_GRAIN ? bufsize : PIO_GRAIN);
+            break;
+    }
+
+    if (b&#45;&#62;startb &#38;&#38; (b&#45;&#62;flags &#38; PIO_BF_MALLOC)) {
+        mem_sys_free(b&#45;&#62;startb);
+        b&#45;&#62;startb = b&#45;&#62;next = NULL;
+    }
+
+    if (b&#45;&#62;size &#62; 0) {
+        b&#45;&#62;startb = b&#45;&#62;next = (unsigned char *)mem_sys_allocate(b&#45;&#62;size);
+        b&#45;&#62;flags |= PIO_BF_MALLOC;
+    }
+    else
+        b&#45;&#62;flags &#38;= ~PIO_BF_MALLOC;
+
+    if (b&#45;&#62;size != 0) {
+        io&#45;&#62;flags &#38;= ~PIO_F_LINEBUF;
+        io&#45;&#62;flags |= PIO_F_BLKBUF;
+    }
+    else
+        io&#45;&#62;flags &#38;= ~(PIO_F_BLKBUF | PIO_F_LINEBUF);
+
+    return 0;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_buf_setlinebuf</p>
+
+<p>The buffer layer&#39;s <code lang='und' xml:lang='und'>SetLineBuf</code> function.</p>
+
+<p>*/</p>
+
+<p>static INTVAL PIO_buf_setlinebuf(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer), NOTNULL(ParrotIO *io)) { int err; ParrotIOLayer * const l = layer ? layer : io&#45;&#62;stack;</p>
+
+<pre lang='und' xml:lang='und'>    /* already linebuffering */
+    if (io&#45;&#62;flags &#38; PIO_F_LINEBUF)
+        return 0;
+
+    /* Reuse setbuf call */
+    if ((err = PIO_buf_setbuf(interp, l, io, PIO_LINEBUFSIZE)) &#62;= 0) {
+        /* Then switch to linebuf */
+        io&#45;&#62;flags &#38;= ~PIO_F_BLKBUF;
+        io&#45;&#62;flags |= PIO_F_LINEBUF;
+        io&#45;&#62;recsep = DEFAULT_RECSEP;
+        return 0;
+    }
+    return err;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_buf_fdopen</p>
+
+<p>The buffer layer&#39;s <code lang='und' xml:lang='und'>FDOpen</code> function.</p>
+
+<p>*/</p>
+
+<p>static ParrotIO * PIO_buf_fdopen(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer), PIOHANDLE fd, INTVAL flags) { ParrotIOLayer * const l = PIO_DOWNLAYER(layer); ParrotIO * const io = PIO_fdopen_down(interp, l, fd, flags);</p>
+
+<pre lang='und' xml:lang='und'>    if (!io) {
+        /* error creating IO stream */
+        return NULL;
+    }
+
+    if (io&#45;&#62;flags &#38; PIO_F_CONSOLE)
+        PIO_buf_setlinebuf(interp, l, io);
+    else
+        PIO_buf_setbuf(interp, l, io, PIO_UNBOUND);
+
+    return io;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_buf_close</p>
+
+<p>The buffer layer&#39;s <code lang='und' xml:lang='und'>Close</code> function.</p>
+
+<p>*/</p>
+
+<p>static INTVAL PIO_buf_close(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer), NOTNULL(ParrotIO *io)) { ParrotIOLayer * const l = PIO_DOWNLAYER(layer); PIO_buf_flush(interp, layer, io);</p>
+
+<pre lang='und' xml:lang='und'>    return PIO_close_down(interp, l, io);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_buf_flush</p>
+
+<p>The buffer layer&#39;s <code lang='und' xml:lang='und'>Flush</code> function.</p>
+
+<p>*/</p>
+
+<p>static INTVAL PIO_buf_flush(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer), NOTNULL(ParrotIO *io)) { long wrote; size_t to_write; STRING fake; /* * Either buffering is null, disabled, or empty. */ if (!io&#45;&#62;b.startb || (io&#45;&#62;flags &#38; (PIO_F_BLKBUF | PIO_F_LINEBUF)) == 0 || (io&#45;&#62;b.flags &#38; (PIO_BF_WRITEBUF | PIO_BF_READBUF)) == 0) return 0; /* * Write flush */ if (io&#45;&#62;b.flags &#38; PIO_BF_WRITEBUF) { ParrotIOLayer * const l = layer; to_write = io&#45;&#62;b.next &#45; io&#45;&#62;b.startb;</p>
+
+<pre lang='und' xml:lang='und'>        /* Flush to next layer */
+        fake.strstart = (char *)io&#45;&#62;b.startb;
+        fake.bufused = to_write;
+        wrote = PIO_write_down(interp, PIO_DOWNLAYER(l), io, &#38;fake);
+        if (wrote == (long)to_write) {
+            io&#45;&#62;b.next = io&#45;&#62;b.startb;
+            /* Release buffer */
+            io&#45;&#62;b.flags &#38;= ~PIO_BF_WRITEBUF;
+            return 0;
+        }
+        else {
+            /* FIXME: I/O Error */
+        }
+    }
+    /*
+     * Read flush
+     */
+    else if (io&#45;&#62;b.flags &#38; PIO_BF_READBUF) {
+        io&#45;&#62;b.flags &#38;= ~PIO_BF_READBUF;
+        io&#45;&#62;b.next = io&#45;&#62;b.startb;
+    }
+    return &#45;1;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_buf_fill_readbuf</p>
+
+<p>The buffer layer&#39;s <code lang='und' xml:lang='und'>Fill</code> function.</p>
+
+<p>*/</p>
+
+<p>static size_t PIO_buf_fill_readbuf(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer), NOTNULL(ParrotIO *io), NOTNULL(ParrotIOBuf *b)) { size_t got; PIOOFF_T pos = io&#45;&#62;fpos; STRING fake, *s; fake.strstart = (char *)b&#45;&#62;startb; fake.bufused = b&#45;&#62;size; s = &#38;fake;</p>
+
+<pre lang='und' xml:lang='und'>    got = PIO_read_down(interp, PIO_DOWNLAYER(layer),
+                        io, &#38;s);
+    /* buffer&#45;filling does not change fileposition */
+    io&#45;&#62;fpos = pos;
+
+    /* nothing to get */
+    if (got == 0)
+        return 0;
+
+    b&#45;&#62;endb = b&#45;&#62;startb + got;
+    b&#45;&#62;next = b&#45;&#62;startb;
+
+    b&#45;&#62;flags |= PIO_BF_READBUF;
+
+    return got;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_buf_read</p>
+
+<p>The buffer layer&#39;s <code lang='und' xml:lang='und'>Read</code> function.</p>
+
+<p>*/</p>
+
+<p>static size_t PIO_buf_read(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer), NOTNULL(ParrotIO *io), NOTNULL(STRING **buf)) { ParrotIOLayer *l = layer; ParrotIOBuf *b; unsigned char *out_buf; STRING *s; size_t len; size_t current = 0;</p>
+
+<pre lang='und' xml:lang='und'>    /* write buffer flush */
+    if (io&#45;&#62;b.flags &#38; PIO_BF_WRITEBUF) {
+        PIO_buf_flush(interp, layer, io);
+    }
+
+    b = &#38;io&#45;&#62;b;
+
+    /* line buffered read */
+    if (io&#45;&#62;flags &#38; PIO_F_LINEBUF) {
+        return PIO_buf_readline(interp, layer, io, buf);
+    }
+
+    if (*buf == NULL) {
+        *buf = new_string_header(interp, 0);
+        (*buf)&#45;&#62;bufused = len = 2048;
+    }
+    s = *buf;
+    len = s&#45;&#62;bufused;
+    if (!s&#45;&#62;strstart) {
+        Parrot_allocate_string(interp, s, len);
+    }
+    out_buf = (unsigned char *)s&#45;&#62;strstart;
+    /* read Data from buffer */
+    if (b&#45;&#62;flags &#38; PIO_BF_READBUF) {
+        const size_t avail = b&#45;&#62;endb &#45; b&#45;&#62;next;
+
+        current = avail &#60; len ? avail : len;
+        memcpy(out_buf, b&#45;&#62;next, current);
+        b&#45;&#62;next += current;
+        io&#45;&#62;fpos += current;
+
+        /* buffer completed */
+        if (current == avail) {
+            io&#45;&#62;b.flags &#38;= ~PIO_BF_READBUF;
+            /* XXX: Is the reset of next and endb really necessary ? */
+            io&#45;&#62;b.endb = NULL;
+            io&#45;&#62;b.next = io&#45;&#62;b.startb;
+        }
+
+        if (len == current) {
+            s&#45;&#62;strlen = s&#45;&#62;bufused = len;
+            return current;
+        }
+        else {
+            /* more data needed from downlayer */
+            out_buf += current;
+            len &#45;= current;
+        }
+    }
+
+    /* (re)fill the readbuffer */
+    if (!(b&#45;&#62;flags &#38; PIO_BF_READBUF)) {
+        size_t got;
+        if (len &#62;= io&#45;&#62;b.size) {
+            STRING fake;
+            STRING *sf = &#38;fake;
+
+            fake.strstart = (char *)out_buf;
+            fake.bufused  = len;
+            got = PIO_read_down(interp, PIO_DOWNLAYER(l), io, &#38;sf);
+            s&#45;&#62;strlen = s&#45;&#62;bufused = current + got;
+            io&#45;&#62;fpos += got;
+            return current + got;
+        }
+
+        got = PIO_buf_fill_readbuf(interp, l, io, b);
+
+        len = len &#60; got ? len : got;
+    }
+
+    /* read from the read_buffer */
+    memcpy(out_buf, io&#45;&#62;b.next, len);
+    s&#45;&#62;strlen = s&#45;&#62;bufused = current + len;
+    io&#45;&#62;b.next += len;
+    io&#45;&#62;fpos += len;
+
+    /* is the buffer is completely empty ? */
+    if (io&#45;&#62;b.next == io&#45;&#62;b.endb) {
+        io&#45;&#62;b.flags &#38;= ~PIO_BF_READBUF;
+        /* XXX: Is the reset of next and encb really necessary ? */
+        io&#45;&#62;b.endb = NULL;
+        io&#45;&#62;b.next = io&#45;&#62;b.startb;
+    }
+    return current + len;
+}</pre>
+
+<p>static size_t PIO_buf_peek(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer), NOTNULL(ParrotIO *io), NOTNULL(STRING **buf)) { ParrotIOLayer *l = layer; ParrotIOBuf *b; size_t len = 1; size_t avail = 0;</p>
+
+<pre lang='und' xml:lang='und'>    STRING * const s = PIO_make_io_string(interp, buf, 1);
+
+    /* write buffer flush */
+    if (io&#45;&#62;b.flags &#38; PIO_BF_WRITEBUF) {
+        PIO_buf_flush(interp, layer, io);
+    }
+
+    b = &#38;io&#45;&#62;b;
+
+    /* read Data from buffer */
+    if (b&#45;&#62;flags &#38; PIO_BF_READBUF) {
+        avail = b&#45;&#62;endb &#45; b&#45;&#62;next;
+
+        /* if we have data available, copy out the next byte */
+        if (avail) {
+ret_string:
+            memcpy(s&#45;&#62;strstart, b&#45;&#62;next, len);
+            s&#45;&#62;bufused = s&#45;&#62;strlen = len;
+            return len;
+        }
+    }
+
+    /* (re)fill the buffer */
+    if (! (b&#45;&#62;flags &#38; PIO_BF_READBUF)) {
+        size_t got;
+        /* exception if we&#39;re unbuffered */
+        if (io&#45;&#62;b.size == 0)
+            real_exception(interp, NULL, PIO_ERROR, &#34;Can&#39;t peek at unbuffered PIO&#34;);
+
+        got = PIO_buf_fill_readbuf(interp, l, io, b);
+        len = (len &#60; got) ? len : got;
+    }
+
+    /* if we got any data, then copy out the next byte */
+    goto ret_string;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_buf_readline</p>
+
+<p>This is called from <code lang='und' xml:lang='und'>PIO_buf_read()</code> to do line buffered reading if that is what is required.</p>
+
+<p>*/</p>
+
+<p>static size_t PIO_buf_readline(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer), NOTNULL(ParrotIO *io), NOTNULL(STRING **buf)) { size_t l; unsigned char *out_buf; unsigned char *buf_start; ParrotIOBuf * const b = &#38;io&#45;&#62;b; size_t len; STRING *s;</p>
+
+<pre lang='und' xml:lang='und'>    if (*buf == NULL) {
+        *buf = new_string_header(interp, 0);
+    }
+    s = *buf;
+    s&#45;&#62;strlen = 0;
+
+    /* fill empty buffer */
+    if (!(b&#45;&#62;flags &#38; PIO_BF_READBUF)) {
+        if (PIO_buf_fill_readbuf(interp, layer, io, b) == 0)
+            return 0;
+    }
+
+    buf_start = b&#45;&#62;next;
+    for (l = 0; b&#45;&#62;next &#60; b&#45;&#62;endb;) {
+        l++;
+        if (IS_EOL(io, b&#45;&#62;next++)) {
+            break;
+        }
+        /* if there is a buffer, readline is called by the read opcode
+         * &#45; return just that part
+         */
+        if (s&#45;&#62;bufused &#38;&#38; l == s&#45;&#62;bufused)
+            break;
+        /* buffer completed; copy out and refill */
+        if (b&#45;&#62;next == b&#45;&#62;endb) {
+            len = b&#45;&#62;endb &#45; buf_start;
+            if (s&#45;&#62;bufused &#60; l) {
+                if (s&#45;&#62;strstart) {
+                    Parrot_reallocate_string(interp, s, l);
+                }
+                else {
+                    Parrot_allocate_string(interp, s, l);
+                }
+            }
+            out_buf = (unsigned char*)s&#45;&#62;strstart + s&#45;&#62;strlen;
+            memcpy(out_buf, buf_start, len);
+            s&#45;&#62;strlen = s&#45;&#62;bufused = l;
+            if (PIO_buf_fill_readbuf(interp, layer, io, b) == 0)
+                return l;
+            buf_start = b&#45;&#62;startb;
+        }
+    }
+    if (s&#45;&#62;bufused &#60; l) {
+        if (s&#45;&#62;strstart) {
+            Parrot_reallocate_string(interp, s, l);
+        }
+        else {
+            Parrot_allocate_string(interp, s, l);
+        }
+    }
+    out_buf = (unsigned char*)s&#45;&#62;strstart + s&#45;&#62;strlen;
+    len = b&#45;&#62;next &#45; buf_start;
+    memcpy(out_buf, buf_start, len);
+    s&#45;&#62;strlen = s&#45;&#62;bufused = l;
+
+    /* check if buffer is finished */
+    if (b&#45;&#62;next == b&#45;&#62;endb) {
+        b&#45;&#62;next = b&#45;&#62;startb;
+        b&#45;&#62;endb = NULL;
+        b&#45;&#62;flags &#38;= ~PIO_BF_READBUF;
+    }
+
+    return l;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_buf_write</p>
+
+<p>The buffer layer&#39;s <code lang='und' xml:lang='und'>Write</code> function.</p>
+
+<p>*/</p>
+
+<p>static size_t PIO_buf_write(PARROT_INTERP, NOTNULL(ParrotIOLayer *layer), NOTNULL(ParrotIO *io), NOTNULL(STRING *s)) { size_t avail; void * const buffer = s&#45;&#62;strstart; size_t len = s&#45;&#62;bufused; int need_flush;</p>
+
+<pre lang='und' xml:lang='und'>    if (len &#60;= 0)
+        return 0;
+    if (io&#45;&#62;b.flags &#38; PIO_BF_WRITEBUF) {
+        avail = io&#45;&#62;b.size &#45; (io&#45;&#62;b.next &#45; io&#45;&#62;b.startb);
+    }
+    else if (io&#45;&#62;b.flags &#38; PIO_BF_READBUF) {
+        io&#45;&#62;b.flags &#38;= ~PIO_BF_READBUF;
+        io&#45;&#62;b.next = io&#45;&#62;b.startb;
+        avail = io&#45;&#62;b.size;
+    }
+    else {
+        avail = io&#45;&#62;b.size;
+    }
+    /* If we are line buffered, check for newlines.
+     * If any, we should flush
+     */
+    need_flush = 0;
+    if (io&#45;&#62;flags &#38; PIO_F_LINEBUF) {
+        /* scan from end, it&#39;s likely that EOL is at end of string */
+        const char *p = (char*)buffer + len &#45; 1;
+        size_t i;
+        for (i = 0; i &#60; len; ++i, &#45;&#45;p)
+            if (IS_EOL(io, p)) {
+                need_flush = 1;
+                break;
+            }
+    }
+
+    /*
+     * Large writes (multiples of blocksize) should write
+     * through generally for best performance, else you are
+     * just doing extra memcpys.
+     * FIXME: This is badly optimized, will fixup later.
+     */
+    if (need_flush || len &#62;= io&#45;&#62;b.size) {
+        long wrote;
+        /* Write through, skip buffer. */
+        PIO_buf_flush(interp, layer, io);
+        wrote = PIO_write_down(interp, PIO_DOWNLAYER(layer), io, s);
+        if (wrote == (long)len) {
+            io&#45;&#62;fpos += wrote;
+            return wrote;
+        }
+        else {
+            return (size_t)&#45;1; /* Write error */
+        }
+    }
+    else if (avail &#62; len) {
+        io&#45;&#62;b.flags |= PIO_BF_WRITEBUF;
+        memcpy(io&#45;&#62;b.next, buffer, len);
+        io&#45;&#62;b.next += len;
+        io&#45;&#62;fpos += len;
+        return len;
+    }
+    else {
+        const unsigned int diff = (int)(len &#45; avail);
+
+        io&#45;&#62;b.flags |= PIO_BF_WRITEBUF;
+        /* Fill remainder, flush, then try to buffer more */
+        memcpy(io&#45;&#62;b.next, buffer, avail);
+        io&#45;&#62;b.next += avail;
+        io&#45;&#62;fpos += avail;
+        PIO_buf_flush(interp, layer, io);
+        memcpy(io&#45;&#62;b.startb, ((const char *)buffer + avail), diff);
+        io&#45;&#62;b.next += diff;
+        io&#45;&#62;fpos += diff;
+        return len;
+    }
+    return (size_t)&#45;1;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_buf_seek</p>
+
+<p>The buffer layer&#39;s <code lang='und' xml:lang='und'>Seek</code> function.</p>
+
+<p>*/</p>
+
+<p>static PIOOFF_T PIO_buf_seek(PARROT_INTERP, NOTNULL(ParrotIOLayer *l), NOTNULL(ParrotIO *io), PIOOFF_T offset, INTVAL whence) { PIOOFF_T newpos;</p>
+
+<pre lang='und' xml:lang='und'>    switch (whence) {
+    case SEEK_SET:
+        newpos = offset;
+        break;
+    case SEEK_CUR:
+        newpos = io&#45;&#62;fpos + offset;
+        break;
+    case SEEK_END:
+        newpos = PIO_seek_down(interp, PIO_DOWNLAYER(l), io, offset,
+                               whence);
+        if (newpos == &#45;1)
+            return &#45;1;
+
+        break;
+    default:
+        /* XXX: somehow report the illegal whence value */
+        return &#45;1;
+    }
+
+    if ((newpos &#60; io&#45;&#62;fpos &#45; (io&#45;&#62;b.next &#45; io&#45;&#62;b.startb))
+        || (newpos &#62;= io&#45;&#62;fpos + (io&#45;&#62;b.endb &#45; io&#45;&#62;b.next))) {
+        PIO_buf_flush(interp, l, io);
+        PIO_seek_down(interp, PIO_DOWNLAYER(l), io, newpos, SEEK_SET);
+    }
+    else {
+        io&#45;&#62;b.next += newpos &#45; io&#45;&#62;fpos;
+    }
+
+    io&#45;&#62;lpos = io&#45;&#62;fpos;
+    io&#45;&#62;fpos = newpos;
+
+    return io&#45;&#62;fpos;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: PIO_buf_tell</p>
+
+<p>The buffer layer&#39;s <code lang='und' xml:lang='und'>Tell</code> function.</p>
+
+<p>*/</p>
+
+<p>static PIOOFF_T PIO_buf_tell(SHIM_INTERP, SHIM(ParrotIOLayer *layer), NOTNULL(ParrotIO *io)) { return io&#45;&#62;fpos; }</p>
+
+<p>const ParrotIOLayerAPI pio_buf_layer_api = { PIO_buf_init, PIO_base_new_layer, PIO_base_delete_layer, PIO_null_push_layer, PIO_null_pop_layer, PIO_buf_open, PIO_null_open2, PIO_null_open3, PIO_null_open_async, PIO_buf_fdopen, PIO_buf_close, PIO_buf_write, PIO_null_write_async, PIO_buf_read, PIO_null_read_async, PIO_buf_flush, PIO_buf_peek, PIO_buf_seek, PIO_buf_tell, PIO_buf_setbuf, PIO_buf_setlinebuf, PIO_null_getcount, PIO_null_fill, PIO_null_eof, 0, /* no poll */ 0, /* no socket */ 0, /* no connect */ 0, /* no send */ 0, /* no recv */ 0, /* no bind */ 0, /* no listen */ 0 /* no accept */ };</p>
+
+<p>/*</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'><a href="io_passdown.c.html">src/io/io_passdown.c</a></em>, <em lang='und' xml:lang='und'><a href="io_stdio.c.html">src/io/io_stdio.c</a></em>, <em lang='und' xml:lang='und'><a href="io_unix.c.html">src/io/io_unix.c</a></em>, <em lang='und' xml:lang='und'><a href="io_win32.c.html">src/io/io_win32.c</a></em>, <em lang='und' xml:lang='und'><a href="io.c.html">src/io/io.c</a></em>, <em lang='und' xml:lang='und'><a href="io_private.h.html">src/io/io_private.h</a></em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Initially written by Melvin Smith.</p>
+
+<p>Some ideas from AT&#38;T SFIO.</p>
+
+<p>*/</p>
+
+<p>/* * Local variables: * c&#45;file&#45;style: &#34;parrot&#34; * End: * vim: expandtab shiftwidth=4: */</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

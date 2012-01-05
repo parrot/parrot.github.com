@@ -1,0 +1,381 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Generic IO</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Generic IO</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>src/io/io.c &#45; Generic IO</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>The Parrot IO subsystem uses a per&#45;interpreter stack to provide a layer&#45;based approach to IO.
+Each layer implements a subset of the <code lang='und' xml:lang='und'>ParrotIOLayerAPI</code> vtable.
+To find an IO function the layer stack is searched downwards until a non&#45;<code lang='und' xml:lang='und'>NULL</code> function pointer is found for that particular slot.</p>
+
+<p>This file implements the generic functionality.
+Specific layers are in separate files: <em lang='und' xml:lang='und'><a href="io_buf.c.html">src/io/io_buf.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io_stdio.c.html">src/io/io_stdio.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io_unix.c.html">src/io/io_unix.c</a></em>,
+<em lang='und' xml:lang='und'><a href="io_win32.c.html">src/io/io_win32.c</a></em>,
+and <em lang='und' xml:lang='und'><a href="io_layers.c.html">src/io/io_layers.c</a></em>.</p>
+
+<p>The <code lang='und' xml:lang='und'>ParrotIO</code> PMC provides the class&#45;based interface that is used in Parrot ops.
+The <code lang='und' xml:lang='und'>ParrotIO struct</code> is defined in <em lang='und' xml:lang='und'><a href="io_private.h.html">src/io/io_private.h</a></em>.</p>
+
+<h2><a name="Resource_Functions"
+>Resource Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="PMC_*_new_io_pmc(theINTERP,_ParrotIO_*io)"
+><b><code lang='und' xml:lang='und'>PMC *new_io_pmc(theINTERP, ParrotIO *io)</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates and returns a new <code lang='und' xml:lang='und'>ParrotIO</code> PMC.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*PIO_make_io_string(Interp_*,_STRING_**buf,_size_t_default_len)"
+><b><code lang='und' xml:lang='und'>STRING *PIO_make_io_string(Interp *, STRING **buf, size_t default_len)</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a STRING* suitable for returning results from IO read functions.
+The passed in <code lang='und' xml:lang='und'>buf</code> parameter can be either:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  1) Point to a NULL STRING
+  2) Point to a real STRING
+  3) Point to a fake STRING with (strstart, bufused) holding the *buffer
+     information.</pre>
+
+<dd>In case 3) the buffer or STRING must be able to hold the required amount of data. For case 1) or 2) with a NULL strstart the STRING memory gets allocated.</dd><p class="pad"></p>
+
+<dt><a name="ParrotIOTable_alloc_pio_array(int_numhandles)"
+><b><code lang='und' xml:lang='und'>ParrotIOTable alloc_pio_array(int numhandles)</b></code></a></dt><p class="pad"></p>
+
+<dd>Called in <code lang='und' xml:lang='und'>PIO_init()</code> to allocate an interpreter&#39;s IO handle table with room for <code lang='und' xml:lang='und'>numhandles</code> IO handles.</dd><p class="pad"></p>
+
+<dt><a name="int_realloc_pio_array(ParrotIOTable_*table,_int_numhandles)"
+><b><code lang='und' xml:lang='und'>int realloc_pio_array(ParrotIOTable *table, int numhandles)</b></code></a></dt><p class="pad"></p>
+
+<dd>Unimplemented. Simply returns <code lang='und' xml:lang='und'>&#45;1</code>.</dd><p class="pad"></p>
+
+<dt><a name="ParrotIO_*_PIO_new(theINTERP,_INTVAL_iotype,_INTVAL_flags,_INTVAL_mode)"
+><b><code lang='und' xml:lang='und'>ParrotIO *PIO_new(theINTERP, INTVAL iotype, INTVAL flags, INTVAL mode)</b></code></a></dt><p class="pad"></p>
+
+<dd>Create a new IO stream.</dd><p class="pad"></p>
+
+<dd>The values of <code lang='und' xml:lang='und'>flags</code> and <code lang='und' xml:lang='und'>mode</code> are set in the returned <code lang='und' xml:lang='und'>ParrotIO</code>.</dd><p class="pad"></p>
+
+<dd>Currently <code lang='und' xml:lang='und'>iotype</code> is unused.</dd><p class="pad"></p>
+
+<dt><a name="void_PIO_destroy(theINTERP,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>void PIO_destroy(theINTERP, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Destroying the IO stream at the moment only frees the memory and removes the pointers from the PMC.</dd><p class="pad"></p>
+
+<dt><a name="void_PIO_init(theINTERP)"
+><b><code lang='und' xml:lang='und'>void PIO_init(theINTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>This is called when creating an interpreter to set up its layer stack and creates the <code lang='und' xml:lang='und'>STD*</code> handles.</dd><p class="pad"></p>
+
+<dt><a name="void_PIO_finish(theINTERP)"
+><b><code lang='und' xml:lang='und'>void PIO_finish(theINTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>Called when the interpreter is being destroyed to close down its IO resourses.</dd><p class="pad"></p>
+
+<dt><a name="void_PIO_internal_shutdown(theINTERP)"
+><b><code lang='und' xml:lang='und'>void PIO_internal_shutdown(theINTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>IO system destructor, called on destruction of the last interpreter.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_init_stacks(theINTERP)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_init_stacks(theINTERP)</b></code></a></dt><p class="pad"></p>
+
+<dd>Initialize the interpreter&#39;s default IO stack by pushing on the IO layers (OS&#45;specific first).</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_base_init(theINTERP,_ParrotIOLayer_*l)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_base_init(theINTERP, ParrotIOLayer *l)</b></code></a></dt><p class="pad"></p>
+
+<dd>Init routine called once for each layer at interpreter creation time. This is similar to a Perl module <code lang='und' xml:lang='und'>INIT {}</code> block.</dd><p class="pad"></p>
+
+<dd>This default implementation does nothing. Returns <code lang='und' xml:lang='und'>0</code>.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Generic_top&#45;level_ParrotIO_interface"
+>Generic top&#45;level <code lang='und' xml:lang='und'>ParrotIO</code> interface <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="INTVAL_PIO_parse_open_flags(const_char_*flagstr)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_parse_open_flags(const char *flagstr)</b></code></a></dt><p class="pad"></p>
+
+<dd>Parses <code lang='und' xml:lang='und'>*flagstr</code> for Perl&#45;style file open mode flags (<code lang='und' xml:lang='und'>&#60;</code>, <code lang='und' xml:lang='und'>&#62;</code>, <code lang='und' xml:lang='und'>&#62;&#62;</code>, <code lang='und' xml:lang='und'>+&#60;</code>, <code lang='und' xml:lang='und'>+&#62;</code>) and returns the combined generic bit flags.</dd><p class="pad"></p>
+
+<dd>The low level OS layers may then interpret the generic bits differently depending on platform.</dd><p class="pad"></p>
+
+<dd>XXX BD Should this be static?</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_peek(theINTERP,_PMC_*pmc,_void_*buffer)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_peek(theINTERP, PMC *pmc, void *buffer)</b></code></a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> Iterate down the stack to the first layer implementing &#34;Peek&#34; API</pre>
+
+<dt><a name="INTVAL_PIO_pioctl(theINTERP,_PMC_*pmc,_INTVAL_cmd,_INTVAL_arg)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_pioctl(theINTERP, PMC *pmc, INTVAL cmd, INTVAL arg)</b></code></a></dt><p class="pad"></p>
+
+<dd>General purpose interface for manipulation of IO objects and layer attributes.</dd><p class="pad"></p>
+
+<dd>Refer to the <code lang='und' xml:lang='und'>PIOCTL*</code> values in <em lang='und' xml:lang='und'>include/parrot/io.h</em>.</dd><p class="pad"></p>
+
+<dd>All &#34;set&#34; operations return <code lang='und' xml:lang='und'>0</code> on success and a negative value on error. &#34;get&#34; operations will use the return value as the value requested, but should always be <code lang='und' xml:lang='und'>&#62;= 0</code>. A negative value indicates an error. This may be too limited but we will see. &#45;&#45;Melvin</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_setbuf(theINTERP,_PMC_*pmc,_size_t_bufsize)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_setbuf(theINTERP, PMC *pmc, size_t bufsize)</b></code></a></dt><p class="pad"></p>
+
+<dd>Sets the buffer size for <code lang='und' xml:lang='und'>*pmc</code> to <code lang='und' xml:lang='und'>bufsize</code>. Returns <code lang='und' xml:lang='und'>0</code> if the buffering was enabled.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_setlinebuf(theINTERP,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_setlinebuf(theINTERP, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Enables line buffering for <code lang='und' xml:lang='und'>*pmc</code>. Returns <code lang='und' xml:lang='und'>0</code> if line buffering was successfully set, or already enabled.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*_PIO_open(theINTERP,_ParrotIOLayer_*layer,_const_char_*spath,_const_char_*sflags)"
+><b><code lang='und' xml:lang='und'>PMC *PIO_open(theINTERP, ParrotIOLayer *layer, const char *spath, const char *sflags)</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates and returns a <code lang='und' xml:lang='und'>ParrotIO</code> PMC for <code lang='und' xml:lang='und'>*spath</code>.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*_PIO_fdopen(theINTERP,_ParrotIOLayer_*layer,_PIOHANDLE_fd,_const_char_*sflags)"
+><b><code lang='und' xml:lang='und'>PMC *PIO_fdopen(theINTERP, ParrotIOLayer *layer, PIOHANDLE fd, const char *sflags)</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates and returns a <code lang='und' xml:lang='und'>ParrotIO</code> PMC for <code lang='und' xml:lang='und'>*spath</code> on an existing, open file descriptor.</dd><p class="pad"></p>
+
+<dd>This is used particularly to initialize the <code lang='und' xml:lang='und'>STD*</code> IO handles onto the OS IO handles (0,1,2).</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_close(theINTERP,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_close(theINTERP, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Flushes, closes and destroys the <code lang='und' xml:lang='und'>ParrotIO</code> PMC <code lang='und' xml:lang='und'>*pmc</code>.</dd><p class="pad"></p>
+
+<dt><a name="void_PIO_flush(theINTERP,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>void PIO_flush(theINTERP, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Flushes the <code lang='und' xml:lang='und'>ParrotIO</code> PMC <code lang='und' xml:lang='und'>*pmc</code>.</dd><p class="pad"></p>
+
+<dt><a name="STRING_*_PIO_reads(theINTERP,_PMC_*pmc,_size_t_len)"
+><b><code lang='und' xml:lang='und'>STRING *PIO_reads(theINTERP, PMC *pmc, size_t len)</b></code></a></dt><p class="pad"></p>
+
+<dd>Return a new <code lang='und' xml:lang='und'>STRING*</code> holding up to <code lang='und' xml:lang='und'>len</code> bytes.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_read(theINTERP,_PMC_*pmc,_void_*buffer,_size_t_len)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_read(theINTERP, PMC *pmc, void *buffer, size_t len)</b></code></a></dt><p class="pad"></p>
+
+<dd>Reads up to <code lang='und' xml:lang='und'>len</code> bytes from <code lang='und' xml:lang='und'>*pmc</code> and copys them into <code lang='und' xml:lang='und'>*buffer</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_write(theINTERP,_PMC_*pmc,_const_void_*buffer,_size_t_len)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_write(theINTERP, PMC *pmc, const void *buffer, size_t len)</b></code></a></dt><p class="pad"></p>
+
+<dd>Writes <code lang='und' xml:lang='und'>len</code> bytes from <code lang='und' xml:lang='und'>*buffer</code> to <code lang='und' xml:lang='und'>*pmc</code>.</dd><p class="pad"></p>
+
+<dt><a name="PIOOFF_T_PIO_seek(theINTERP,_PMC_*pmc,_PIOOFF_T_offset,_INTVAL_w)"
+><b><code lang='und' xml:lang='und'>PIOOFF_T PIO_seek(theINTERP, PMC *pmc, PIOOFF_T offset, INTVAL w)</b></code></a></dt><p class="pad"></p>
+
+<dd>Moves the read/write position of <code lang='und' xml:lang='und'>*pmc</code> to offset <code lang='und' xml:lang='und'>bytes</code> from the position indicated by <code lang='und' xml:lang='und'>w</code>. Typically <code lang='und' xml:lang='und'>w</code> will be <code lang='und' xml:lang='und'>0</code> for the start of the file, <code lang='und' xml:lang='und'>1</code> for the current position, and <code lang='und' xml:lang='und'>2</code> for the end.</dd><p class="pad"></p>
+
+<dt><a name="PIOOFF_T_PIO_tell(theINTERP,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>PIOOFF_T PIO_tell(theINTERP, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the current read/write position of <code lang='und' xml:lang='und'>*pmc</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_eof(theINTERP,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_eof(theINTERP, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a boolean value indication whether <code lang='und' xml:lang='und'>*pmc</code>&#39;s current read/write position is <code lang='und' xml:lang='und'>EOF</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_puts(theINTERP,_PMC_*pmc,_const_char_*s)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_puts(theINTERP, PMC *pmc, const char *s)</b></code></a></dt><p class="pad"></p>
+
+<dd>Writes <code lang='und' xml:lang='und'>*s</code> tp <code lang='und' xml:lang='und'>*pmc</code>. C string version.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_putps(theINTERP,_PMC_*pmc,_STRING_*s)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_putps(theINTERP, PMC *pmc, STRING *s)</b></code></a></dt><p class="pad"></p>
+
+<dd>Writes <code lang='und' xml:lang='und'>*s</code> tp <code lang='und' xml:lang='und'>*pmc</code>. Parrot string version.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_fprintf(theINTERP,_PMC_*pmc,_const_char_*s,_...)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_fprintf(theINTERP, PMC *pmc, const char *s, ...)</b></code></a></dt><p class="pad"></p>
+
+<dd>Writes a C string format with varargs to <code lang='und' xml:lang='und'>*pmc</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_printf(theINTERP,_const_char_*s,_...)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_printf(theINTERP, const char *s, ...)</b></code></a></dt><p class="pad"></p>
+
+<dd>Writes a C string format with varargs to <code lang='und' xml:lang='und'>stdout</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_eprintf(theINTERP,_const_char_*s,_...)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_eprintf(theINTERP, const char *s, ...)</b></code></a></dt><p class="pad"></p>
+
+<dd>Writes a C string format with varargs to <code lang='und' xml:lang='und'>stderr</code>.</dd><p class="pad"></p>
+
+<dt><a name="PIOHANDLE_PIO_getfd(theINTERP,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>PIOHANDLE PIO_getfd(theINTERP, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns <code lang='und' xml:lang='und'>*pmc</code>&#39;s file descriptor, or <code lang='und' xml:lang='und'>0</code> if it is not defined.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="PIO_STD*_Functions"
+><code lang='und' xml:lang='und'>PIO_STD*</code> Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The <code lang='und' xml:lang='und'>PIO_STD*</code> functions are defined using the <code lang='und' xml:lang='und'>theINTERP</code> macro. The prototype is protected with an identity macro.</p>
+
+<dl>
+<dt><a name="PMC_*_PIO_STDIN_ID((theINTERP))"
+><b><code lang='und' xml:lang='und'>PMC *PIO_STDIN ID((theINTERP))</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the <code lang='und' xml:lang='und'>ParrotIO</code> PMC for <code lang='und' xml:lang='und'>stdin</code>.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*_PIO_STDOUT_ID((theINTERP))"
+><b><code lang='und' xml:lang='und'>PMC *PIO_STDOUT ID((theINTERP))</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the <code lang='und' xml:lang='und'>ParrotIO</code> PMC for <code lang='und' xml:lang='und'>stdout</code>.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*_PIO_STDERR_ID((theINTERP))"
+><b><code lang='und' xml:lang='und'>PMC *PIO_STDERR ID((theINTERP))</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the <code lang='und' xml:lang='und'>ParrotIO</code> PMC for <code lang='und' xml:lang='und'>stderr</code>.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="DOD&#45;related_Functions"
+>DOD&#45;related Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_Parrot_IOData_mark(theINTERP,_ParrotIOData_*piodata)"
+><b><code lang='und' xml:lang='und'>void Parrot_IOData_mark(theINTERP, ParrotIOData *piodata)</b></code></a></dt><p class="pad"></p>
+
+<dd>Called from <code lang='und' xml:lang='und'>trace_active_PMCs()</code> to mark the IO data live.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Offset_Functions"
+>Offset Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>These are used to create offsets for the <code lang='und' xml:lang='und'>seek</code> op.</p>
+
+<dl>
+<dt><a name="PIOOFF_T_PIO_make_offset(INTVAL_offset)"
+><b><code lang='und' xml:lang='und'>PIOOFF_T PIO_make_offset(INTVAL offset)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns <code lang='und' xml:lang='und'>offset</code>.</dd><p class="pad"></p>
+
+<dt><a name="PIOOFF_T_PIO_make_offset32(INTVAL_hi,_INTVAL_lo)"
+><b><code lang='und' xml:lang='und'>PIOOFF_T PIO_make_offset32(INTVAL hi, INTVAL lo)</b></code></a></dt><p class="pad"></p>
+
+<dd><code lang='und' xml:lang='und'>hi</code> is shifted 32 bytes to the left and <code lang='und' xml:lang='und'>or</code>ed together with <code lang='und' xml:lang='und'>lo</code>. This allows 64&#45;bit seeks with only 32&#45;bit <code lang='und' xml:lang='und'>INTVALS</code>.</dd><p class="pad"></p>
+
+<dt><a name="PIOOFF_T_PIO_make_offset_pmc(theINTERP,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>PIOOFF_T PIO_make_offset_pmc(theINTERP, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns the return value of the <code lang='und' xml:lang='und'>get_integer</code> vtable method on <code lang='und' xml:lang='und'>*pmc</code>.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Networking_Functions"
+>Networking Functions <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="INTVAL_PIO_poll(theINTERP,_PMC_*pmc,_INTVAL_which,_INTVAL_sec,_INTVAL_usec)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_poll(theINTERP, PMC *pmc, INTVAL which, INTVAL sec, INTVAL usec)</b></code></a></dt><p class="pad"></p>
+
+<dd>Polls <code lang='und' xml:lang='und'>*pmc</code> for the events in <code lang='und' xml:lang='und'>which</code> every <code lang='und' xml:lang='und'>sec</code> seconds + <code lang='und' xml:lang='und'>usec</code> microseconds.</dd><p class="pad"></p>
+
+<dt><a name="PMC_*_PIO_socket(theINTERP,_INTVAL_fam,_INTVAL_type,_INTVAL_proto)"
+><b><code lang='und' xml:lang='und'>PMC *PIO_socket(theINTERP, INTVAL fam, INTVAL type, INTVAL proto)</b></code></a></dt><p class="pad"></p>
+
+<dd>Creates and returns a socket using the specified address family, socket type and protocol number. The returned PMC has to be checked with a boolean test to see whether the socket was successfully created.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_recv(theINTERP,_PMC_*pmc,_STRING_**buf)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_recv(theINTERP, PMC *pmc, STRING **buf)</b></code></a></dt><p class="pad"></p>
+
+<dd>Receives a message from the connected socket <code lang='und' xml:lang='und'>*pmc</code> in <code lang='und' xml:lang='und'>*buf</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_send(theINTERP,_PMC_*pmc,_STRING_*buf)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_send(theINTERP, PMC *pmc, STRING *buf)</b></code></a></dt><p class="pad"></p>
+
+<dd>Send the message <code lang='und' xml:lang='und'>*buf</code> to the connected socket <code lang='und' xml:lang='und'>*pmc</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_connect(theINTERP,_PMC_*pmc,_STRING_*address)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_connect(theINTERP, PMC *pmc, STRING *address)</b></code></a></dt><p class="pad"></p>
+
+<dd>Connect <code lang='und' xml:lang='und'>*pmc</code> to <code lang='und' xml:lang='und'>*address</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_bind(theINTERP,_PMC_*pmc,_STRING_*address)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_bind(theINTERP, PMC *pmc, STRING *address)</b></code></a></dt><p class="pad"></p>
+
+<dd>Binds <code lang='und' xml:lang='und'>*pmc</code>&#39;s socket to the local address and port specified by <code lang='und' xml:lang='und'>*address</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_listen(theINTERP,_PMC_*pmc,_INTVAL_backlog)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_listen(theINTERP, PMC *pmc, INTVAL backlog)</b></code></a></dt><p class="pad"></p>
+
+<dd>Listen for new connections on socket <code lang='und' xml:lang='und'>*pmc</code>.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_accept(theINTERP,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_accept(theINTERP, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Accept a new connection and return a newly created <code lang='und' xml:lang='und'>ParrotIO</code> socket.</dd><p class="pad"></p>
+
+<dt><a name="INTVAL_PIO_isatty(theINTERP,_PMC_*pmc)"
+><b><code lang='und' xml:lang='und'>INTVAL PIO_isatty(theINTERP, PMC *pmc)</b></code></a></dt><p class="pad"></p>
+
+<dd>Returns a boolean value indicating whether <code lang='und' xml:lang='und'>*pmc</code> is a console/tty.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>io/io_buf.c</em>, <em lang='und' xml:lang='und'>io/io_passdown.c</em>, <em lang='und' xml:lang='und'>io/io_stdio.c</em>, <em lang='und' xml:lang='und'>io/io_unix.c</em>, <em lang='und' xml:lang='und'>io/io_win32.c</em>, <em lang='und' xml:lang='und'>io/io_private.h</em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Initially written by Melvin Smith.</p>
+
+<p>Some ideas and goals from Perl5.7 and Nick Ing&#45;Simmons&#39; work.</p>
+
+<h1><a name="TODO"
+>TODO <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>In future rework to use copy&#45;on&#45;write IO stacks rather than creating a new stack for each IO stream.</p>
+
+<p>Add support for loadable layers in Parrot bytecode.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

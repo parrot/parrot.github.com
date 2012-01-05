@@ -1,0 +1,254 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Class and Object Opcodes</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/ops.html">Opcodes</a> &raquo; Class and Object Opcodes
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>object.ops &#45; Class and Object Opcodes</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Parrot&#39;s library of object ops</p>
+
+<p>When making changes to any ops file,
+run <code>make bootstrap&#45;ops</code> to regenerate all generated ops files.</p>
+
+<dl>
+<dt><a name="callmethodcc(invar_PMC,_in_STR)"
+><b>callmethodcc</b>(invar PMC,
+in STR)</a></dt>
+Call method $2 with invocant $1 and generate a new return continuation.
+The invocant ($1) is used for method lookup.
+The object is passed as the first argument in <b>set_args</b>.Throws a Method_Not_Found_Exception for a non&#45;existent method.
+<dt><a name="callmethodcc(invar_PMC,_invar_PMC)"
+><b>callmethodcc</b>(invar PMC,
+invar PMC)</a></dt>
+Like above but use the Sub object $2 as method.
+<dt><a name="callmethod(invar_PMC,_in_STR,_invar_PMC)"
+><b>callmethod</b>(invar PMC,
+in STR,
+invar PMC)</a></dt>
+
+<dt><a name="callmethod(invar_PMC,_invar_PMC,_invar_PMC)"
+><b>callmethod</b>(invar PMC,
+invar PMC,
+invar PMC)</a></dt>
+Like above,
+but use continuation $3 instead of creating a new continuation.
+<dt><a name="tailcallmethod(invar_PMC,_in_STR)"
+><b>tailcallmethod</b>(invar PMC,
+in STR)</a></dt>
+
+<dt><a name="tailcallmethod(invar_PMC,_invar_PMC)"
+><b>tailcallmethod</b>(invar PMC,
+invar PMC)</a></dt>
+Make a tailcall to method $2 with invocant $1.
+<dt><a name="addmethod(invar_PMC,_in_STR,_invar_PMC)"
+><b>addmethod</b>(invar PMC,
+in STR,
+invar PMC)</a></dt>
+Adds $3 as a method named $2 to $1.
+<dt><a name="can(out_INT,_invar_PMC,_in_STR)"
+><b>can</b>(out INT,
+invar PMC,
+in STR)</a></dt>
+Sets result $1 to the result of the &#34;can&#34; vtable function for PMC $2,
+given method $3.
+<dt><a name="does(out_INT,_invar_PMC,_in_STR)"
+><b>does</b>(out INT,
+invar PMC,
+in STR)</a></dt>
+Sets result $1 to the result of the &#34;does&#34; vtable function for PMC $2,
+given the role of name $3.
+<dt><a name="does(out_INT,_invar_PMC,_in_PMC)"
+><b>does</b>(out INT,
+invar PMC,
+in PMC)</a></dt>
+Sets result $1 to the result of the &#34;does&#34; vtable function for PMC $2,
+given the role $3.
+<dt><a name="isa(out_INT,_invar_PMC,_in_STR)"
+><b>isa</b>(out INT,
+invar PMC,
+in STR)</a></dt>
+
+<dt><a name="isa(out_INT,_invar_PMC,_in_PMC)"
+><b>isa</b>(out INT,
+invar PMC,
+in PMC)</a></dt>
+Sets result $1 to the result of the &#34;isa&#34; vtable function for PMC $2,
+given class $3.
+<dt><a name="newclass(out_PMC,_in_STR)"
+><b>newclass</b>(out PMC,
+in STR)</a></dt>
+Create a new Parrot&#45;style class,
+named $2,
+and puts the new PMC for it into $1.
+<dt><a name="newclass(out_PMC,_in_PMC)"
+><b>newclass</b>(out PMC,
+in PMC)</a></dt>
+Create a new Parrot&#45;style class,
+with the name given in $2 as a key,
+namespace,
+or string PMC.
+<dt><a name="subclass(out_PMC,_in_PMC)"
+><b>subclass</b>(out PMC,
+in PMC)</a></dt>
+
+<dt><a name="subclass(out_PMC,_in_PMC,_in_STR)"
+><b>subclass</b>(out PMC,
+in PMC,
+in STR)</a></dt>
+
+<dt><a name="subclass(out_PMC,_in_PMC,_in_PMC)"
+><b>subclass</b>(out PMC,
+in PMC,
+in PMC)</a></dt>
+Create a new class,
+put in $1,
+that is a subclass of $2.
+$3,
+if available and not null,
+is the name of the new class&#45;&#45;if not,
+the subclass is an anonymous subclass.
+<dt><a name="subclass(out_PMC,_in_STR)"
+><b>subclass</b>(out PMC,
+in STR)</a></dt>
+
+<dt><a name="subclass(out_PMC,_in_STR,_in_STR)"
+><b>subclass</b>(out PMC,
+in STR,
+in STR)</a></dt>
+
+<dt><a name="subclass(out_PMC,_in_STR,_in_PMC)"
+><b>subclass</b>(out PMC,
+in STR,
+in PMC)</a></dt>
+Create a new class,
+put in $1,
+that is a subclass of the class named $2.
+$3,
+if available and not null,
+is the name of the new class&#45;&#45;if not,
+the subclass is an anonymous subclass.
+<dt><a name="get_class(out_PMC,_in_STR)"
+><b>get_class</b>(out PMC,
+in STR)</a></dt>
+
+<dt><a name="get_class(out_PMC,_in_PMC)"
+><b>get_class</b>(out PMC,
+in PMC)</a></dt>
+Find the PMC for a class,
+by string name,
+key or namespace.
+This op does <code>not</code> find the class of an instance of an object.
+use <code>typeof</code> for that.
+<dt><a name="class(out_PMC,_invar_PMC)"
+><b>class</b>(out PMC,
+invar PMC)</a></dt>
+Get the class PMC for the object in $2 and put it in $1.
+<dt><a name="addparent(invar_PMC,_invar_PMC)"
+><b>addparent</b>(invar PMC,
+invar PMC)</a></dt>
+Add class $2 to the list of parent classes for $1.
+<dt><a name="removeparent(invar_PMC,_invar_PMC)"
+><b>removeparent</b>(invar PMC,
+invar PMC)</a></dt>
+Remove class $2 from class $1&#39;s list of parents.
+<dt><a name="addrole(invar_PMC,_invar_PMC)"
+><b>addrole</b>(invar PMC,
+invar PMC)</a></dt>
+Compose the role $2 into $1.
+<dt><a name="addattribute(invar_PMC,_in_STR)"
+><b>addattribute</b>(invar PMC,
+in STR)</a></dt>
+Add the attribute named $2 to the class $1.
+<dt><a name="removeattribute(invar_PMC,_in_STR)_(unimplemented)"
+><b>removeattribute</b>(invar PMC,
+in STR) <b>(unimplemented)</b></a></dt>
+Remove attribute $2 from class $1,
+specified by name.
+<dt><a name="getattribute(out_PMC,_invar_PMC,_in_STR)"
+><b>getattribute</b>(out PMC,
+invar PMC,
+in STR)</a></dt>
+Get the attribute $3 from object $2 and put the result in $1.
+<dt><a name="getattribute(out_PMC,_invar_PMC,_in_PMC,_in_STR)"
+><b>getattribute</b>(out PMC,
+invar PMC,
+in PMC,
+in STR)</a></dt>
+Get the attribute $4 from the parent $3 of object $2 and put the result in $1.
+(This is useful for storing data for a parent class attribute that is overridden in a child class.) The parent $3 is a class name,
+namespace,
+or key PMC.
+<dt><a name="setattribute(invar_PMC,_in_STR,_invar_PMC)"
+><b>setattribute</b>(invar PMC,
+in STR,
+invar PMC)</a></dt>
+Set attribute $2 of object $1 to $3.
+<dt><a name="setattribute(invar_PMC,_in_PMC,_in_STR,_invar_PMC)"
+><b>setattribute</b>(invar PMC,
+in PMC,
+in STR,
+invar PMC)</a></dt>
+Set attribute $3 of the parent $2 of object $1 to $4.
+(This is useful for storing data for a parent class attribute that is overridden in a child class.) The parent $2 is a class name,
+namespace,
+or key PMC.
+<dt><a name="inspect(out_PMC,_in_PMC)"
+><b>inspect</b>(out PMC,
+in PMC)</a></dt>
+Sets $1 to a PMC hash of all introspection data available for $2,
+keyed on name.
+<dt><a name="inspect(out_PMC,_in_PMC,_in_STR)"
+><b>inspect</b>(out PMC,
+in PMC,
+in STR)</a></dt>
+Sets $1 to a PMC Hash,
+Array,
+String,
+Integer,
+or Number value with introspection information corresponding to the requested string name.</dl>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT</a></h1>
+
+<p>Copyright (C) 2001&#45;2009,
+Parrot Foundation.</p>
+
+<h1><a name="LICENSE"
+>LICENSE</a></h1>
+
+<p>This program is free software.
+It is subject to the same license as the Parrot interpreter itself.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

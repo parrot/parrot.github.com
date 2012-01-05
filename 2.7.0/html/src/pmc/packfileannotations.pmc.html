@@ -1,0 +1,102 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PackfileAnnotations PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; PackfileAnnotations PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/packfileannotations.pmc &#45; PackfileAnnotations PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This class implements a PackfileAnnotations object,
+a segment of the .pbc data file used for listing annotations.
+It is a container for PackfileAnnotation objects.</p>
+
+<p>See packfile.pmc for the toplevel Packfile interface,
+see packfilesegment.pmc for the list of common methods every packfile segment pmc must implement; see PDD13 for the design spec.</p>
+
+<p>To works properly PackfileAnnotations has to be added to PackfileDirectory with PackfileConstantTable.
+Otherwise PackfileAnnotationKey can&#39;t be created.</p>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initialize PackfileAnnotations.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Marks the object as live.
+<dt><a name="INTVAL_elements()"
+><b><code>INTVAL elements()</b></code></a></dt>
+Get the number of elements in the array.
+<dt><a name="PMC_*get_pmc_keyed_int(INTVAL_index)"
+><b><code>PMC *get_pmc_keyed_int(INTVAL index)</b></code></a></dt>
+Fetch an annotation PMC from the array.
+<dt><a name="void_set_pmc_keyed_int(INTVAL_index,_PMC_*annotation)"
+><b><code>void set_pmc_keyed_int(INTVAL index, PMC *annotation)</b></code></a></dt>
+Add an annotation to the array at the given offset.
+An exception will be thrown unless all of the following criteria are met:
+<dl>
+<dt><a name="&#45;_The_type_of_the_PMC_passed_is_PackfileAnnotation"
+>&#45; The type of the PMC passed is PackfileAnnotation</a></dt>
+
+<dt><a name="&#45;_The_entry_at_the_previous_index_is_defined"
+>&#45; The entry at the previous index is defined</a></dt>
+
+<dt><a name="&#45;_The_offset_of_the_previous_entry_is_less_than_this_entry"
+>&#45; The offset of the previous entry is less than this entry</a></dt>
+
+<dt><a name="&#45;_The_offset_of_the_next_entry,_if_it_exists,_is_greater_than_this_entry"
+>&#45; The offset of the next entry,
+if it exists,
+is greater than this entry</a></dt>
+
+<dt><a name="&#45;_The_key_ID_references_a_valid_annotation_key"
+>&#45; The key ID references a valid annotation key</a></dt>
+</dl>
+
+<dt><a name="void_set_directory()"
+><b><code>void set_directory()</b></code></a></dt>
+Handle setting of ownership.Find PackfileConstantTable in PackfileDirectory and pass it to PackfileAnnotationKeys.
+<dt><a name="void_set_pointer(void_*ptr)"
+><b><code>void set_pointer(void *ptr)</b></code></a></dt>
+Initialize PackfileAnnotations from PackFile_Annotations*.
+<dt><a name="void_*get_pointer()"
+><b><code>void *get_pointer()</b></code></a></dt>
+Create PackFile_Annotations* from self.
+<dt><a name="METHOD_type()"
+><b><code>METHOD type()</b></code></a></dt>
+Get segment type.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Complex Numbers PMC Class</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Complex Numbers PMC Class
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/complex.pmc &#45; Complex Numbers PMC Class</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p><code>Complex</code> provides a representation of complex numbers.
+It handles string parsing/generating and basic mathematical operations.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="static_void_complex_parse_string(PARROT_INTERP,_FLOATVAL_*re,_FLOATVAL_*im,_STRING_*value)"
+><b><code>static void complex_parse_string(PARROT_INTERP, FLOATVAL *re, FLOATVAL *im, STRING *value)</b></code></a></dt>
+Parses the string in <code>value</code> to produce a complex number,
+represented by the real (<code>*re</code>) and imaginary (<code>*im</code>) parts.
+Raises an exception if it cannot understand the string.
+The string should be of the form <code>a+bi</code> with optional spaces around <code>+</code> and before <code>i</code>.
+You can also use <code>j</code> instead of <code>i</code>.</dl>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes the complex number with the value 0+0i.
+<dt><a name="void_init_pmc(PMC_*initializer)"
+><b><code>void init_pmc(PMC *initializer)</b></code></a></dt>
+Initializes the complex number with the specified initializer.
+The initializer can be a string PMC or a numeric array with (real,
+imag)
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+Creates an identical copy of the complex number.
+<dt><a name="void_freeze(PMC_*visit)"
+><b><code>void freeze(PMC *visit)</b></code></a></dt>
+
+<dt><a name="void_thaw(PMC_*visit)"
+><b><code>void thaw(PMC *visit)</b></code></a></dt>
+Serialize/deserialize this object for bytecode.
+<dt><a name="INTVAL_get_integer()"
+><b><code>INTVAL get_integer()</b></code></a></dt>
+Returns the modulus of the complex number as an integer.
+<dt><a name="FLOATVAL_get_number()"
+><b><code>FLOATVAL get_number()</b></code></a></dt>
+Returns the modulus of the complex number.
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+Returns the complex number as a string in the form <code>a+bi</code>.
+<dt><a name="INTVAL_get_bool()"
+><b><code>INTVAL get_bool()</b></code></a></dt>
+Returns true if the complex number is non&#45;zero.
+<dt><a name="INTVAL_get_integer_keyed(PMC_*key)"
+><b><code>INTVAL get_integer_keyed(PMC *key)</b></code></a></dt>
+
+<dt><a name="INTVAL_get_integer_keyed_str(STRING_*key)"
+><b><code>INTVAL get_integer_keyed_str(STRING *key)</b></code></a></dt>
+
+<dt><a name="FLOATVAL_get_number_keyed(PMC_*key)"
+><b><code>FLOATVAL get_number_keyed(PMC *key)</b></code></a></dt>
+
+<dt><a name="FLOATVAL_get_number_keyed_str(STRING_*key)"
+><b><code>FLOATVAL get_number_keyed_str(STRING *key)</b></code></a></dt>
+
+<dt><a name="PMC_*get_pmc_keyed(PMC_*key)"
+><b><code>PMC *get_pmc_keyed(PMC *key)</b></code></a></dt>
+
+<dt><a name="PMC_*get_pmc_keyed_str(STRING_*key)"
+><b><code>PMC *get_pmc_keyed_str(STRING *key)</b></code></a></dt>
+Returns the requested number (real part for <code>real</code> and imaginary for <code>imag</code>).
+<dt><a name="PMC_*get_pmc_keyed_int(INTVAL_key)"
+><b><code>PMC *get_pmc_keyed_int(INTVAL key)</b></code></a></dt>
+Returns the requested number (real part for <code>0</code> and imaginary for <code>1</code>).
+<dt><a name="FLOATVAL_get_number_keyed_int(INTVAL_key)"
+><b><code>FLOATVAL get_number_keyed_int(INTVAL key)</b></code></a></dt>
+Quick hack to emulate get_real() and get_imag():
+<pre>  key = 0 ... get real part
+  key = 1 ... get imag part</pre>
+
+<dt><a name="void_set_number_keyed_int(INTVAL_key,_FLOATVAL_v)"
+><b><code>void set_number_keyed_int(INTVAL key, FLOATVAL v)</b></code></a></dt>
+Set real or imag depending on key
+<dt><a name="void_set_string_native(STRING_*value)"
+><b><code>void set_string_native(STRING *value)</b></code></a></dt>
+Parses the string <code>value</code> into a complex number; raises an exception on failure.
+<dt><a name="void_set_pmc(PMC_*value)"
+><b><code>void set_pmc(PMC *value)</b></code></a></dt>
+if <code>value</code> is a Complex PMC then the complex number is set to its value; otherwise <code>value</code>&#39;s string representation is parsed with <code>set_string_native()</code>.
+<dt><a name="void_set_integer_native(INTVAL_value)"
+><b><code>void set_integer_native(INTVAL value)</b></code></a></dt>
+
+<dt><a name="void_set_number_native(FLOATVAL_value)"
+><b><code>void set_number_native(FLOATVAL value)</b></code></a></dt>
+Sets the real part of the complex number to <code>value</code> and the imaginary part to <code>0.0</code>
+<dt><a name="void_set_integer_keyed(PMC_*key,_INTVAL_value)"
+><b><code>void set_integer_keyed(PMC *key, INTVAL value)</b></code></a></dt>
+
+<dt><a name="void_set_integer_keyed_str(STRING_*key,_INTVAL_value)"
+><b><code>void set_integer_keyed_str(STRING *key, INTVAL value)</b></code></a></dt>
+
+<dt><a name="void_set_number_keyed(PMC_*key,_FLOATVAL_value)"
+><b><code>void set_number_keyed(PMC *key, FLOATVAL value)</b></code></a></dt>
+
+<dt><a name="void_set_number_keyed_str(STRING_*key,_FLOATVAL_value)"
+><b><code>void set_number_keyed_str(STRING *key, FLOATVAL value)</b></code></a></dt>
+
+<dt><a name="void_set_pmc_keyed(PMC_*key,_PMC_*value)"
+><b><code>void set_pmc_keyed(PMC *key, PMC *value)</b></code></a></dt>
+
+<dt><a name="void_set_pmc_keyed_str(STRING_*key,_PMC_*value)"
+><b><code>void set_pmc_keyed_str(STRING *key, PMC *value)</b></code></a></dt>
+Sets the requested number (real part for <code>real</code> and imaginary for <code>imag</code>) to <code>value</code>.
+<dt><a name="PMC_*add(PMC_*value,_PMC_*dest)"
+><b><code>PMC *add(PMC *value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="PMC_*add_int(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *add_int(INTVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="PMC_*add_float(FLOATVAL_value,_PMC_*dest)"
+><b><code>PMC *add_float(FLOATVAL value, PMC *dest)</b></code></a></dt>
+Adds <code>value</code> to the complex number, placing the result in <code>dest</code>.
+<dt><a name="PMC_*subtract(PMC_*value,_PMC_*dest)"
+><b><code>PMC *subtract(PMC *value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="PMC_*subtract_int(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *subtract_int(INTVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="PMC_*subtract_float(FLOATVAL_value,_PMC_*dest)"
+><b><code>PMC *subtract_float(FLOATVAL value, PMC *dest)</b></code></a></dt>
+Subtracts <code>value</code> from the complex number, placing the result in <code>dest</code>.
+<dt><a name="PMC_*multiply(PMC_*value,_PMC_*dest)"
+><b><code>PMC *multiply(PMC *value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="PMC_*multiply_int(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *multiply_int(INTVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="PMC_*multiply_float(FLOATVAL_value,_PMC_*dest)"
+><b><code>PMC *multiply_float(FLOATVAL value, PMC *dest)</b></code></a></dt>
+Multiplies the complex number with <code>value</code>, placing the result in <code>dest</code>.
+<dt><a name="void_i_multiply(PMC_*value)"
+><b><code>void i_multiply(PMC *value)</b></code></a></dt>
+
+<dt><a name="void_i_multiply_int(INTVAL_value)"
+><b><code>void i_multiply_int(INTVAL value)</b></code></a></dt>
+
+<dt><a name="void_i_multiply_float(FLOATVAL_value)"
+><b><code>void i_multiply_float(FLOATVAL value)</b></code></a></dt>
+Multiplies the complex number SELF inplace with <code>value</code>.
+<dt><a name="PMC_*divide(PMC_*value,_PMC_*dest)"
+><b><code>PMC *divide(PMC *value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="PMC_*divide_int(INTVAL_value,_PMC_*dest)"
+><b><code>PMC *divide_int(INTVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="PMC_*divide_float(FLOATVAL_value,_PMC_*dest)"
+><b><code>PMC *divide_float(FLOATVAL value, PMC *dest)</b></code></a></dt>
+Divide the complex number by <code>value</code>, placing the result in <code>dest</code>.
+<dt><a name="void_i_divide(PMC_*value,_PMC_*dest)"
+><b><code>void i_divide(PMC *value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="void_i_divide_int(INTVAL_value,_PMC_*dest)"
+><b><code>void i_divide_int(INTVAL value, PMC *dest)</b></code></a></dt>
+
+<dt><a name="void_i_divide_float(FLOATVAL_value,_PMC_*dest)"
+><b><code>void i_divide_float(FLOATVAL value, PMC *dest)</b></code></a></dt>
+Divide the complex number <code>SELF</code> by <code>value</code> inplace.Throws divide by zero exception if divisor is zero.
+<dt><a name="PMC_*neg(PMC_*dest)"
+><b><code>PMC *neg(PMC *dest)</b></code></a></dt>
+
+<dt><a name="void_neg()"
+><b><code>void neg()</b></code></a></dt>
+Set <code>dest</code> to the negated value of <code>SELF</code>.
+<dt><a name="INTVAL_is_equal(PMC_*value)"
+><b><code>INTVAL is_equal(PMC *value)</b></code></a></dt>
+Compares the complex number with <code>value</code> and returns true if they are equal.
+<dt><a name="PMC_*absolute(PMC_*dest)"
+><b><code>PMC *absolute(PMC *dest)</b></code></a></dt>
+
+<dt><a name="void_i_absolute()"
+><b><code>void i_absolute()</b></code></a></dt>
+Sets <code>dest</code> to the absolute value of SELF that is the distance from (0.0).
+<dt><a name="METHOD_ln()"
+><b><code>METHOD ln()</b></code></a></dt>
+Returns the natural logarithm of SELF as a PMC.
+<dt><a name="METHOD_exp()"
+><b><code>METHOD exp()</b></code></a></dt>
+Returns e ^ SELF as a PMC.
+<dt><a name="METHOD_PMC_*sin()"
+><b><code>METHOD PMC *sin()</b></code></a></dt>
+
+<dt><a name="METHOD_PMC_*cos()"
+><b><code>METHOD PMC *cos()</b></code></a></dt>
+
+<dt><a name="METHOD_PMC_*tan()"
+><b><code>METHOD PMC *tan()</b></code></a></dt>
+
+<dt><a name="METHOD_PMC_*csc()"
+><b><code>METHOD PMC *csc()</b></code></a></dt>
+
+<dt><a name="METHOD_PMC_*sec()"
+><b><code>METHOD PMC *sec()</b></code></a></dt>
+
+<dt><a name="METHOD_PMC_*cot()"
+><b><code>METHOD PMC *cot()</b></code></a></dt>
+Returns <code>FUNC</code>(SELF).
+<dt><a name="METHOD_PMC_*asin()"
+><b><code>METHOD PMC *asin()</b></code></a></dt>
+
+<dt><a name="METHOD_PMC_*acos()"
+><b><code>METHOD PMC *acos()</b></code></a></dt>
+
+<dt><a name="METHOD_PMC_*atan()"
+><b><code>METHOD PMC *atan()</b></code></a></dt>
+
+<dt><a name="METHOD_PMC_*acsc()"
+><b><code>METHOD PMC *acsc()</b></code></a></dt>
+
+<dt><a name="METHOD_PMC_*asec()"
+><b><code>METHOD PMC *asec()</b></code></a></dt>
+
+<dt><a name="METHOD_PMC_*acot()"
+><b><code>METHOD PMC *acot()</b></code></a></dt>
+Returns the inverse function of SELF.
+<dt><a name="METHOD_PMC_*sinh()"
+><b><code>METHOD PMC *sinh()</b></code></a></dt>
+Returns the arctangent of SELF.
+<dt><a name="METHOD_PMC_*cosh()"
+><b><code>METHOD PMC *cosh()</b></code></a></dt>
+Returns the arcsine of SELF.
+<dt><a name="METHOD_PMC_*tanh()"
+><b><code>METHOD PMC *tanh()</b></code></a></dt>
+Returns the arccosine of SELF.
+<dt><a name="METHOD_PMC_*asinh()"
+><b><code>METHOD PMC *asinh()</b></code></a></dt>
+
+<dt><a name="METHOD_PMC_*acosh()"
+><b><code>METHOD PMC *acosh()</b></code></a></dt>
+
+<dt><a name="METHOD_PMC_*atanh()"
+><b><code>METHOD PMC *atanh()</b></code></a></dt>
+
+<dt><a name="METHOD_PMC_*acsch()"
+><b><code>METHOD PMC *acsch()</b></code></a></dt>
+
+<dt><a name="METHOD_PMC_*asech()"
+><b><code>METHOD PMC *asech()</b></code></a></dt>
+
+<dt><a name="METHOD_PMC_*acoth()"
+><b><code>METHOD PMC *acoth()</b></code></a></dt>
+The inverse hyperbolic functions. Currently all broken, but for <code>func(a+bi) = c+di</code>, <code>|c|</code> and <code>|d|</code> will be correct, confusingly enough.
+<dt><a name="METHOD_PMC_*pow(PMC_*value)"
+><b><code>METHOD PMC *pow(PMC *value)</b></code></a></dt>
+Raise SELF to the power of value. Replacement for the old pow() vtable, which was deleted.TODO: Requires testing
+<dt><a name="METHOD_PMC_*sqrt()"
+><b><code>METHOD PMC *sqrt()</b></code></a></dt>
+Return the square root of SELF.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

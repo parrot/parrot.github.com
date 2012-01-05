@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - resizable array for typed pointers</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; resizable array for typed pointers
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/callsignaturereturns.pmc &#45; resizable array for typed pointers</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This class stores typed pointers used to fill results in CallSignature.</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>  # VTABLEs are too tight to implement something more beautiful
+
+  # Create signature
+  rets = new CallSignatureReturns
+  rets.set_pointer_keyed_int(0, &#38;intval);
+  rest.push_integer(PARROT_ARG_INTVAL);
+
+  rets.set_pointer_keyed_int(1, &#38;floatval);
+  rest.push_integer(PARROT_ARG_FLOATVAL);
+
+  rets.set_pointer_keyed_int(2, &#38;string);
+  rest.push_integer(PARROT_ARG_STRING);
+
+  rets.set_pointer_keyed_int(3, &#38;pmc);
+  rest.push_integer(PARROT_ARG_PMC);
+
+  # Fill
+  rets.set_integer_keyed_int(intval, 0);
+  rets.set_number_keyed_int(floatval, 1);
+  rets.set_string_keyed_int(string, 2);
+  rets.set_pmc_keyed_int(pmc, 3);</pre>
+
+<p>CallSignatureReturns will behave like CPointer with autocasting values.</p>
+
+<p>Up to 8 returns use FixedSizeAllocator. Switch to malloc/free after.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initialize the CallSignatureReturns PMC.
+<dt><a name="void_destroy()"
+><b><code>void destroy()</b></code></a></dt>
+Destroy CallSignatureReturns.
+<dt><a name="void_set_integer_native(INTVAL_size)"
+><b><code>void set_integer_native(INTVAL size)</b></code></a></dt>
+Resizes the array to <code>size</code> elements.
+<dt><a name="INTVAL_elements()"
+><b><code>INTVAL elements()</b></code></a></dt>
+Returns the number of elements in the array.
+<dt><a name="void_set_pointer_keyed_int(INTVAL_key,_void_*value)"
+><b><code>void set_pointer_keyed_int(INTVAL key, void *value)</b></code></a></dt>
+Sets the pointer at position key. The pointer should point to a storage location for a return value &#45;&#45; it must be a pointer to an INTVAL, FLOATVAL, PMC, or STRING storage location.
+<dt><a name="void_push_integer(INTVAL_value)"
+><b><code>void push_integer(INTVAL value)</b></code></a></dt>
+Set type of last pushed pointer.
+<dt><a name="void_set_integer_keyed_int(INTVAL_key,_INTVAL_value)"
+><b><code>void set_integer_keyed_int(INTVAL key, INTVAL value)</b></code></a></dt>
+
+<dt><a name="void_set_number_keyed_int(INTVAL_key,_FLOATVAL_value)"
+><b><code>void set_number_keyed_int(INTVAL key, FLOATVAL value)</b></code></a></dt>
+
+<dt><a name="void_set_string_keyed_int(INTVAL_key,_STRING_*value)"
+><b><code>void set_string_keyed_int(INTVAL key, STRING *value)</b></code></a></dt>
+
+<dt><a name="void_set_pmc_keyed_int(INTVAL_key,_PMC_*value)"
+><b><code>void set_pmc_keyed_int(INTVAL key, PMC *value)</b></code></a></dt>
+Sets the value of the element at index <code>key</code> to <code>value</code>, casting if necessary.
+<dt><a name="void_*get_string_keyed_int(INTVAL_key)"
+><b><code>void *get_string_keyed_int(INTVAL key)</b></code></a></dt>
+Gets raw pointer for result.
+<dt><a name="void_*get_pointer_keyed_int(INTVAL_key)"
+><b><code>void *get_pointer_keyed_int(INTVAL key)</b></code></a></dt>
+Gets raw pointer for result.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em><a href="../../docs/pdds/pdd03_calling_conventions.pod.html">docs/pdds/pdd03_calling_conventions.pod</a></em>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

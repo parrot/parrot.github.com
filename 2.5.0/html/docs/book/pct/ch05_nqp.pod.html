@@ -1,0 +1,230 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Grammar Actions</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; Grammar Actions
+                </div>
+
+<h1><a name="Grammar_Actions"
+>Grammar Actions</a></h1>
+
+<p>The job of the grammar is to match input patterns from the source language.
+These patterns then need to get converted to nodes in the abstract syntax tree for manipulation in other stages of the compiler.
+We&#39;ve already seen one example of a subroutine structure that takes a match and produces a tree node: Protofunctions.
+Protofunction signatures aren&#39;t the only way to apply functions to rules matched by a parser.
+They are limited and are slightly primitive,
+but effective for handling operators.
+There is an easier and more powerful way to write subroutines to convert match objects into parse tree nodes,
+using a language that&#39;s almost,
+but Not Quite Perl.</p>
+
+<p><!--
+	INDEX: NQP
+--> <!--
+	INDEX: Not Quite Perl
+--> NQP (Not Quite Perl) is a small language which offers a limited subset of Perl 6&#39;s syntax and semantics.
+Though it originated as a bootstrapping tool for the Rakudo Perl 6 compiler,
+several other Parrot&#45;based compilers use it as well.
+It has become a permanent member of PCT,
+and therefore a permanent part of the Parrot code base.</p>
+
+<p>NQP represents almost the smallest subset of the Perl 6 language necessary to implement parser transformations,
+plus a few syntactic convenience features that developers have requested.
+NQP&#39;s Perl 6 subset shows its Perl 5 roots,
+so existing Perl 5 programmers should find much of it familiar and should be able to leverage their existing skills for writing compilers.</p>
+
+<p>In PGE,
+at the time of a match the grammar we can invoke an action using the special <code>{*}</code> symbol.
+In general,
+these action methods are written in NQP,
+although it is possible for them to be written in PIR In fact,
+this is how the NQP compiler itself is written.
+We won&#39;t discuss the PIR case here because it&#39;s uncommon and needlessly difficult.
+NQP is the standard and preferred choice for this.</p>
+
+<h2><a name="NQP_Basics"
+>NQP Basics</a></h2>
+
+<p><!--
+	INDEX: sigils
+--> <!--
+	INDEX: scalar
+--> Like all flavors and versions of Perl,
+NQP uses special prefix symbols called <i>sigils</i> to distinguish variable types.
+The <code>$</code> sigil represents scalars,
+<code>@</code> arrays,
+and <code>%</code> for hashes.
+A scalar is any single value which can interchangeably contain given a string value,
+an integer value,
+or an object reference.
+Simple NQP assignments are:</p>
+
+<pre>  my $scalar;  my $x;  my $pi;
+  # assignments are:
+  $scalar := &#34;This is a string&#34;;
+  $x      := 123;
+  $pi     := 3.1415;      # rounding</pre>
+
+<p><!--
+	INDEX: bind operator
+--> <!--
+	INDEX: operators; binding
+--> <!--
+	INDEX: :=
+--> The <code>:=</code> <i>bind</i> operator performs reference assignment in NQP. Reference assignment makes one variable into an alias for another. This means that the two variables are just different names for the same storage location, and changes to one will change both. It&#39;s important to remember that a bind is not a copy!</p>
+
+<p>NQP has hashes and arrays just like other flavors of Perl and various dynamic languages. NQP does not have a notion of hash and array context, but otherwise it works the way you would expect. Arrays have the <code>@</code> sigil, and hashes have the <code>%</code> sigil. Here are some examples:</p>
+
+<pre>  @ary[0] := 1;
+  @ary[1] := &#34;foo&#34;;
+  ...
+
+  %hsh{&#39;bar&#39;} := 2;
+  %hsh{&#39;baz&#39;} := &#34;parrot&#34;;
+  ...</pre>
+
+<p>There is also a nice shorthand way to index hashes, using angle brackets:</p>
+
+<pre>  %hsh&#60;bar&#62; := &#34;parrot&#34;;</pre>
+
+<p>It&#39;s also possible to assign a list in <i>scalar context</i>:</p>
+
+<pre>  $array_but_a_scalar := (1, 2, 3, 4);</pre>
+
+<p>Or you could write a new function in PIR to create a new array from a variadic argument list:</p>
+
+<pre> @my_array := create_new_array(1, 2, 3, 4)</pre>
+
+<p>... which calls the PIR function:</p>
+<pre> .namespace []
+
+ .sub 'create_new_array'
+     .param pmc elems :slurpy
+     .return(elems)
+ .end
+</pre>
+<h3><a name="Calling_Actions_From_Rules"
+>Calling Actions From Rules</a></h3>
+
+<p>Needs a link to that section.</p>
+
+<p>As mentioned in the chapter on grammar rules, the funny little <code>{*}</code> symbol calls an action. The action in question is an NQP method with the same name as the rule that calls it. NQP rules can have two different signatures:</p>
+
+<pre> method name ($/)      { ... }
+ method name($/, $key) { ... }</pre>
+
+<p>Where does the key come from? Consider this grammar:</p>
+
+<pre> rule cavepeople {
+      &#39;Fred&#39;  {*}    #= Caveman
+    | &#39;Wilma&#39; {*}    #= Cavewoman
+    | &#39;Dino&#39;  {*}    #= Dinosaur
+ }</pre>
+
+<p>The <code>cavepeople</code> rule demonstrates the result:</p>
+
+<pre> method cavepeople($/, $key) {
+    if $key eq &#39;Caveman&#39; {
+        say &#34;We&#39;ve found a caveman!&#34;;
+    } elsif $key eq &#39;Cavewoman&#39; {
+        say &#34;We&#39;ve found a cavewoman!&#34;;
+    } elsif $key eq &#39;Dinosaur&#39; {
+        say &#34;A dinosaur isn&#39;t a caveperson at all!&#34;;
+    }
+ }</pre>
+
+<p>The key is a string that contains whatever any text following the <code>#=</code> symbol. Without a <code>#=</code> following the rule invocation, there&#39;s no <code>$key</code> to use in the method. If you attempt to use one without the other, the NQP compiler will die with error messages about mismatched argument/parameter numbers.</p>
+
+<h3><a name="The_Match_Object_$/"
+>The Match Object <code>$/</code></a></h3>
+
+<p><!--
+	INDEX: match object
+--> <!--
+	INDEX: $/
+--> The match object <code>$/</code> is a data structure that&#39;s all business: it&#39;s both a hash and an array. Because it&#39;s a special variable used pervasively in PCT, it has a special shortcut syntax:</p>
+
+<pre> $/{&#39;Match_item&#39;}   is the same as $&#60;Match_item&#62;
+ $/[0]              is the same as $[0]</pre>
+
+<p>Each key in the match object&#39;s hash is the name of a matched rule. Given a file containing &#34;<code>X + 5</code>&#34; and a rule:</p>
+
+<pre> rule introductions {
+    &#60;variable&#62; &#60;operator&#62; &#60;number&#62;
+ }</pre>
+
+<p>The resulting match object will contain the key/value pairs:</p>
+
+<pre> &#34;variable&#34; =&#62; &#34;x&#34;
+ &#34;operator&#34; =&#62; &#34;+&#34;
+ &#34;number&#34;   =&#62; &#34;5&#34;</pre>
+
+<p>When the match contains multiple values with the same name, or when rules have quantifiers such as <code>*</code> or <code>+</code>, the values in the hash may be arrays. Given the input &#34;A A A B B&#34; and the rule:</p>
+
+<pre> rule letters {
+    &#60;vowel&#62;* &#60;consonant&#62;*
+ }</pre>
+
+<p>The match object will contain the pairs:</p>
+
+<pre> &#34;vowel&#34;     =&#62; [&#34;A&#34;, &#34;A&#34;, &#34;A&#34;]
+ &#34;consonant&#34; =&#62; [&#34;B&#34;, &#34;B&#34;]</pre>
+
+<p><!--
+	INDEX: $( ) operator
+--></p>
+
+<p>Use the <code>$( )</code> operator to count the number of matches in each group (by casting it to a scalar):</p>
+
+<pre> $($&#60;vowel&#62;) == 3</pre>
+
+<h3><a name="Inline_PIR"
+>Inline PIR</a></h3>
+
+<p>Needs expansion.</p>
+
+<p><!--
+	INDEX: {{ }}
+--> <!--
+	INDEX: double curly brackets
+--> Sometimes NQP isn&#39;t quite flexible enough to handle transforms appropriately. In a PGE rule, the <code>{{ }}</code> double curly brackets demarcate inline&#45;PIR mode. PGE will execute any PIR code in those brackets. You can access <code>$/</code> directly in the grammar without having to jump into NQP.</p>
+
+<h3><a name="PAST_Nodes"
+>PAST Nodes</a></h3>
+
+<p><!--
+	INDEX: PAST
+--> <!--
+	INDEX: PAST nodes
+--> NQP&#39;s job is to make abstract syntax trees. These trees are all objects &#45;&#45; and as such, instances of PAST nodes. Each PAST class represents a unique program construct. These constructs are common and simple, but combine to represent complicated programming structures.</p>
+
+<h3><a name="Making_Trees"
+>Making Trees</a></h3>
+
+<p>Every action has the ability to create a PAST node that represents that action, as well as any children of that node. Calling <code>make</code> on that node adds it into the growing PAST tree that PCT maintains. Once the <code>TOP</code> rule matches successfully and returns, PCT optimizes and converts that tree into PIR and PBC for execution.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

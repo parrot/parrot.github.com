@@ -1,0 +1,175 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Untitled</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Untitled</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../html/index.html">Contents</a> | <a href="../../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<p>This file implements an API for generating bytecode.
+All gory details are hidden.
+In order to improve modularity,
+all bytecode generating functions take a <code>bytecode</code> struct parameter,
+which keeps track of the <i>state</i>; this includes a Parrot interpreter.</p>
+
+<p>Since this state is private,
+the bytecode struct is declared in this C file,
+not in the header file.
+It is,
+however,
+declared in the header file as a struct,
+so you can use it as a type,
+but not touch its private bits.
+Everything you need to know should be accessible through accessor functions.</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<pre>  // create a bytecode object
+  bytecode *bc = new_bytecode(interp, &#34;foo.pir&#34;, codesize, bytes);
+
+  // add a subroutine PMC
+  add_sub_pmc(bc, mysub&#45;&#62;info, sub&#45;&#62;needlex, mysub&#45;&#62;pragmas);
+
+  while ( ... ) {
+
+      // write opcodes
+      int opcode = ...
+      emit_opcode(bc, opcode);
+
+      // emit constants
+      int mystring = add_string_const(bc, &#34;hello&#34;);
+
+      // emit the constant index into bytecode stream
+      emit_int_arg(bc, mystring);
+  }
+
+  // write the pbc file
+  write_pbc_file(bc, &#34;foo.pbc&#34;);
+
+  // clean up
+  destroy_bytecode(bc);</pre>
+
+<h1><a name="FUNCTIONS"
+>FUNCTIONS <a href='#_top'><img alt='^' border=0 src='../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="static_int_new_pbc_const(bytecode_*_const_bc)"
+><b><code>static int new_pbc_const(bytecode *const bc)</b></code></a></dt>
+Add a new constant to the constant table.XXX This function needs to be cleaned up, as it&#39;s not really efficient: constant table is resized each time a constant is added.
+<dt><a name="int_add_pmc_const(bytecode_*_const_bc,_PMC_*_pmc)"
+><b><code>int add_pmc_const(bytecode *const bc, PMC *pmc)</b></code></a></dt>
+Add the PMC constant <code>pmc</code> to the constant table. This function returns the index in the constant table where <code>pmc</code> is stored.
+<dt><a name="int_add_string_const(bytecode_*_const_bc,_char_const_*_const_str,_char_const_*_charset)"
+><b><code>int add_string_const(bytecode *const bc, char const *const str, char const *charset)</b></code></a></dt>
+Add the string constant <code>str</code> to the constant table. This function returns the index in the constant table where <code>str</code> is stored. <code>str</code> is assumed to be a C&#45;string; it is converted to a Parrot STRING object, using the character set passed in <code>charset</code>.XXX what to do with &#34;encoding&#34;?
+<dt><a name="c&#60;int_add_num_const(bytecode_*_const_bc,_double_f)&#62;"
+>c&#60;int add_num_const(bytecode * const bc, double f)&#62;</a></dt>
+XXX should f be a FLOATVAL?Add a number constant to the constants list. The index in the constant table where <code>f</code> is stored is returned.
+<dt><a name="int_add_key_const(bytecode_*_const_bc,_PMC_*key)"
+><b><code>int add_key_const(bytecode *const bc, PMC *key)</b></code></a></dt>
+Add a key constant to the constants list. The index where <code>key</code> is stored in the constants table is returned.
+<dt><a name="static_void_check_requested_constant(bytecode_*_const_bc,_unsigned_index,_int_expectedtype)"
+><b><code>static void check_requested_constant(bytecode *const bc, unsigned index, int expectedtype)</b></code></a></dt>
+Perform a sanity check on a requested constant. The constant at index <code>index</code> is requested; this function checks whether the index is valid. Then, if so, the constant is checked for its type, which must be <code>expectedtype</code>. This must be one of: PFC_PMC, PFC_NUMBER, PFC_STRING.
+<dt><a name="PMC_*_get_pmc_const(bytecode_*_const_bc,_unsigned_index)"
+><b><code>PMC *get_pmc_const(bytecode *const bc, unsigned index)</b></code></a></dt>
+Get the PMC constant at index <code>index</code> in the PBC constant table.
+<dt><a name="FLOATVAL_get_num_const(bytecode_*_const_bc,_unsigned_index)"
+><b><code>FLOATVAL get_num_const(bytecode *const bc, unsigned index)</b></code></a></dt>
+Get the FLOATVAL constant at index <code>index</code> in the PBC constant table.
+<dt><a name="STRING_*_get_string_const(bytecode_*_const_bc,_unsigned_index)"
+><b><code>STRING *get_string_const(bytecode *const bc, unsigned index)</b></code></a></dt>
+Get the STRING constant at index <code>index</code> in the PBC constant table.
+<dt><a name="bytecode_*_new_bytecode(Interp_*interp,_char_const_*_const_filename)"
+><b><code>bytecode *new_bytecode(Interp *interp, char const *const filename)</b></code></a></dt>
+Create a new bytecode struct, representing the bytecode for file <code>filename</code>. The bytecode struct contains a PackFile, which is initialized and loaded into the Parrot interpreter <code>interp</code>. Default bytecode segments are created, and the interpreter&#39;s <code>iglobals</code> field is stored as a constant PMC in the bytecode&#39;s constant table.
+<dt><a name="void_create_codesegment(bytecode_*_const_bc,_int_codesize)"
+><b><code>void create_codesegment(bytecode *const bc, int codesize)</b></code></a></dt>
+Create a code segment of size <code>codesize</code>. <code>bc</code>&#39;s <code>opcursor</code> attribute is initialized; this is the pointer used to write opcodes and operands into the code segment.
+<dt><a name="void_create_debugsegment(bytecode_*_const_bc,_size_t_size,_char_const_*_const_file)"
+><b><code>void create_debugsegment(bytecode *const bc, size_t size, char const *const file)</b></code></a></dt>
+Create a debug segment of size <code>size</code>.
+<dt><a name="void_emit_debug_info(bytecode_*_const_bc,_int_sourceline)"
+><b><code>void emit_debug_info(bytecode *const bc, int sourceline)</b></code></a></dt>
+Emit the <code>sourceline</code> number in the debug segment.
+<dt><a name="void_create_annotations_segment(bytecode_*_const_bc,_char_const_*_const_name)"
+><b><code>void create_annotations_segment(bytecode *const bc, char const *const name)</b></code></a></dt>
+Create an annotations segment, and an initial annotations group.
+<dt><a name="void_add_annotation(bytecode_*_const_bc,_opcode_t_offset,_opcode_t_key,_opcode_t_type,_opcode_t_value)"
+><b><code>void add_annotation(bytecode *const bc, opcode_t offset, opcode_t key, opcode_t type, opcode_t value)</b></code></a></dt>
+Add an annotation for the bytecode at <code>offset</code>, having a key <code>key</code>, of type <code>type</code> and a value passed in <code>value</code>.
+<dt><a name="void_destroy_bytecode(bytecode_*_bc)"
+><b><code>void destroy_bytecode(bytecode *bc)</b></code></a></dt>
+Destructor for bytecode struct; frees all memory.
+<dt><a name="opcode_t_emit_opcode(bytecode_*_const_bc,_opcode_t_op)"
+><b><code>opcode_t emit_opcode(bytecode *const bc, opcode_t op)</b></code></a></dt>
+Write the opcode <code>op</code> into the bytecode stream. The bytecode offset where the instruction is written is returned.
+<dt><a name="opcode_t_emit_int_arg(bytecode_*_const_bc,_int_intval)"
+><b><code>opcode_t emit_int_arg(bytecode *const bc, int intval)</b></code></a></dt>
+Write an integer argument into the bytecode stream. The offset in bytecode where the instruction is written is returned.
+<dt><a name="int_store_key_bytecode(bytecode_*_const_bc,_opcode_t_*_key)"
+><b><code>int store_key_bytecode(bytecode *const bc, opcode_t *key)</b></code></a></dt>
+Store the bytecode for a key. The bytecode was emitted in an array, passed in <code>key</code>. The bytecode is <i>unpacked</i> into the current PackFile, pointed to by the interpreter in <code>bc</code>. The key PMC is added to the constants table, and the index in the constants table is returned.
+<dt><a name="static_STRING_*_add_string_const_from_cstring(bytecode_*_const_bc,_char_const_*_const_str)"
+><b><code>static STRING *add_string_const_from_cstring(bytecode *const bc, char const *const str)</b></code></a></dt>
+Utility function to add a C&#45;string to the constants table. Before adding it to the constants table, the C&#45;string is converted to a Parrot STRING first, which is returned. This function is handy if you don&#39;t want to retrieve the index in the constants table (where the string is stored), but you want the STRING representing the string instead.
+<dt><a name="PMC_*_generate_multi_signature(bytecode_*_const_bc)"
+><b><code>PMC *generate_multi_signature(bytecode *const bc)</b></code></a></dt>
+Generate a PMC for the multi signature, based on the types defined in <code>multi_types</code> <code>type_count</code> indicates the number of types in the list.
+<dt><a name="static_PMC_*_create_lexinfo(bytecode_*_const_bc,_PMC_*_sub,_lexical_*_const_lexicals,_int_needlex)"
+><b><code>static PMC *create_lexinfo(bytecode *const bc, PMC *sub, lexical *const lexicals, int needlex)</b></code></a></dt>
+Create a lexinfo PMC for the sub <code>sub</code>. If there are no lexicals, but the <code>:lex</code> flag was specified, or the sub has an <code>:outer</code> flag, then a lexinfo is created after all. The created lexinfo is returned.
+<dt><a name="static_PMC_*_find_outer_sub(bytecode_*_const_bc,_char_const_*_const_outername)"
+><b><code>static PMC *find_outer_sub(bytecode *const bc, char const *const outername)</b></code></a></dt>
+Find the outer sub that has name <code>outername</code>. If not found, NULL is returned.XXX this function needs access to <code>lexer</code>, which adds a dependency. XXX This should be fixed, to make bcgen.c a complete independent module.
+<dt><a name="static_PMC_*_get_namespace_pmc(bytecode_*_const_bc,_multi_type_*_const_ns)"
+><b><code>static PMC *get_namespace_pmc(bytecode *const bc, multi_type *const ns)</b></code></a></dt>
+Get a PMC representing the namespace for a sub. The namespace information is passed in <code>ns</code>.
+<dt><a name="static_PMC_*_create_sub_pmc(bytecode_*_const_bc,_char_const_*_const_instanceof)"
+><b><code>static PMC *create_sub_pmc(bytecode *const bc, char const *const instanceof)</b></code></a></dt>
+Create a Sub PMC. If <code>instanceof</code> is not NULL, it indicates the name of a class to be used. If it&#39;s NULL, and <code>iscoroutine</code> is true, a Coroutine sub PMC is created; otherwise it&#39;s a normal Sub. If there was a .HLL_map directive that maps either Coroutine or Sub to some user&#45;defined class, then that mapped class is created.
+<dt><a name="void_add_sub_pmc(bytecode_*_const_bc,_sub_info_*_const_info,_int_needlex,_int_subpragmas)"
+><b><code>void add_sub_pmc(bytecode *const bc, sub_info *const info, int needlex, int subpragmas)</b></code></a></dt>
+Add a sub PMC to the constant table. This function initializes the sub PMC. The index where the PMC is stored in the constant table is returned. If <code>needlex</code> is true, the sub will always get a lexpad; otherwise it will only have a lexpad if it has lexicals, or if it&#39;s lexically nested. The <code>subpragmas</code> parameter encode flags such as <code>:immediate</code> etc.
+<dt><a name="void_write_pbc_file(bytecode_*_const_bc,_char_const_*_const_filename)"
+><b><code>void write_pbc_file(bytecode *const bc, char const *const filename)</b></code></a></dt>
+Write the generated bytecode (stored somewhere in a packfile) to the file <code>filename</code>.</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

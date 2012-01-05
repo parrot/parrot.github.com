@@ -1,0 +1,208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Cardinal String class and related functions</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Cardinal String class and related functions</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/cardinal.html">Cardinal</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="TITLE"
+>TITLE <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>CardinalString &#45; Cardinal String class and related functions</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>This file sets up the <code lang='und' xml:lang='und'>CardinalString</code> type.</p>
+
+<p>Stolen from Rakudo</p>
+
+<h1><a name="Methods"
+>Methods <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="perl()"
+>perl()</a></dt><p class="pad"></p>
+
+<dd>Returns a Perl representation of the Str.</dd><p class="pad"></p>
+</dl>
+
+<h1><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="lc"
+>lc</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> our Str multi Str::lc ( Str $string )</pre>
+
+<dd>Returns the input string after converting each character to its lowercase form, if uppercase.</dd><p class="pad"></p>
+
+<dt><a name="lcfirst"
+>lcfirst</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> our Str multi Str::lcfirst ( Str $string )</pre>
+
+<dd>Like <code lang='und' xml:lang='und'>lc</code>, but only affects the first character.</dd><p class="pad"></p>
+
+<dt><a name="uc"
+>uc</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> our Str multi Str::uc ( Str $string )</pre>
+
+<dd>Returns the input string after converting each character to its uppercase form, if lowercase. This is not a Unicode &#34;titlecase&#34; operation, but a full &#34;uppercase&#34;.</dd><p class="pad"></p>
+
+<dt><a name="ucfirst"
+>ucfirst</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> our Str multi Str::ucfirst ( Str $string )</pre>
+
+<dd>Performs a Unicode &#34;titlecase&#34; operation on the first character of the string.</dd><p class="pad"></p>
+
+<dt><a name="capitalize"
+>capitalize</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> our Str multi Str::capitalize ( Str $string )</pre>
+
+<dd>Has the effect of first doing an <code lang='und' xml:lang='und'>lc</code> on the entire string, then performing a <code lang='und' xml:lang='und'>s:g/(\w+)/{ucfirst $1}/</code> on it.</dd><p class="pad"></p>
+
+<dt><a name="split"
+>split</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> our CardinalArray multi Str::split ( Str $delimiter ,  Str $input = $+_, Int $limit = inf )
+ our CardinalArray multi Str::split ( Rule $delimiter = /\s+/,  Str $input = $+_, Int $limit = inf )
+ our CardinalArray multi Str::split ( Str $input :  Str $delimiter          , Int $limit = inf )
+ our CardinalArray multi Str::split ( Str $input : Rule $delimiter          , Int $limit = inf )</pre>
+
+<dd>String delimiters must not be treated as rules but as constants. The default is no longer &#39;&#160;&#39; since that would be interpreted as a constant. P5&#39;s <code lang='und' xml:lang='und'>split(&#39;&#160;&#39;)</code> will translate to <code lang='und' xml:lang='und'>.words</code> or some such. Null trailing fields are no longer trimmed by default. We might add some kind of :trim flag or introduce a trimlist function of some sort.</dd><p class="pad"></p>
+
+<dd><b>Note:</b> partial implementation only</dd><p class="pad"></p>
+
+<dt><a name="join"
+>join</a></dt><p class="pad"></p>
+
+<dd><b>Note:</b> partial implementation only</dd><p class="pad"></p>
+
+<dt><a name="substr"
+>substr</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> multi substr (Str $s, StrPos $start  : StrPos $end,      $replace)
+ multi substr (Str $s, StrPos $start,   StrLen $length  : $replace)
+ multi substr (Str $s, StrLen $offset : StrLen $length,   $replace)</pre>
+
+<dd><b>Note:</b> partial implementation only</dd><p class="pad"></p>
+
+<dt><a name="chop"
+>chop</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> our Str method Str::chop ( Str  $string: )</pre>
+
+<dd>Returns string with one Char removed from the end.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="TODO_Functions"
+>TODO Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="p5chop"
+>p5chop</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> our Char multi P5emul::Str::p5chop ( Str  $string is rw )
+ our Char multi P5emul::Str::p5chop ( Str *@strings = ($+_) is rw )</pre>
+
+<dd>Trims the last character from <code lang='und' xml:lang='und'>$string</code>, and returns it. Called with a list, it chops each item in turn, and returns the last character chopped.</dd><p class="pad"></p>
+
+<dt><a name="p5chomp"
+>p5chomp</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> our Int multi P5emul::Str::p5chomp ( Str  $string is rw )
+ our Int multi P5emul::Str::p5chomp ( Str *@strings = ($+_) is rw )</pre>
+
+<dd>Related to <code lang='und' xml:lang='und'>p5chop</code>, only removes trailing chars that match <code lang='und' xml:lang='und'>/\n/</code>. In either case, it returns the number of chars removed.</dd><p class="pad"></p>
+
+<dt><a name="chomp"
+>chomp</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> our Str method Str::chomp ( Str $string: )</pre>
+
+<dd>Returns string with newline removed from the end. An arbitrary terminator can be removed if the input filehandle has marked the string for where the &#34;newline&#34; begins. (Presumably this is stored as a property of the string.) Otherwise a standard newline is removed.</dd><p class="pad"></p>
+
+<dd>Note: Most users should just let their I/O handles autochomp instead. (Autochomping is the default.)</dd><p class="pad"></p>
+
+<dt><a name="length"
+>length</a></dt><p class="pad"></p>
+
+<dd>This word is banned in Cardinal. You must specify units.</dd><p class="pad"></p>
+
+<dt><a name="index"
+>index</a></dt><p class="pad"></p>
+
+<dd>Needs to be in terms of StrPos, not Int.</dd><p class="pad"></p>
+
+<dt><a name="pack"
+>pack</a></dt><p class="pad"></p>
+
+<dt><a name="pos"
+>pos</a></dt><p class="pad"></p>
+
+<dt><a name="quotemeta"
+>quotemeta</a></dt><p class="pad"></p>
+
+<dt><a name="rindex"
+>rindex</a></dt><p class="pad"></p>
+
+<dd>Needs to be in terms of StrPos, not Int.</dd><p class="pad"></p>
+
+<dt><a name="sprintf"
+>sprintf</a></dt><p class="pad"></p>
+
+<dt><a name="unpack"
+>unpack</a></dt><p class="pad"></p>
+
+<dt><a name="vec"
+>vec</a></dt><p class="pad"></p>
+
+<dd>Should replace vec with declared arrays of bit, uint2, uint4, etc.</dd><p class="pad"></p>
+
+<dt><a name="words"
+>words</a></dt><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'> our CardinalArray multi Str::words ( Rule $matcher = /\S+/,  Str $input = $+_, Int $limit = inf )
+ our CardinalArray multi Str::words ( Str $input : Rule $matcher = /\S+/, Int $limit = inf )</pre>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

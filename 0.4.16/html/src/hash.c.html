@@ -1,0 +1,217 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Hash table</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Hash table</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../html/index.html">Contents</a> | <a href="../../html/c.html">C</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>src/hash.c &#45; Hash table</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>A hashtable contains an array of bucket indexes.
+Buckets are nodes in a linked list,
+each containing a <code lang='und' xml:lang='und'>void *</code> key and value.
+During hash creation,
+the types of key and value as well as appropriate compare and hashing functions can be set.</p>
+
+<p>This hash implementation uses just one piece of malloced memory.
+The <code lang='und' xml:lang='und'>hash&#45;&#62;bs</code> bucket store points to this region.</p>
+
+<p>This hash doesn&#39;t move during GC,
+therefore a lot of the old caveats don&#39;t apply.</p>
+
+<h2><a name="Functions"
+>Functions <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h2>
+
+<p>*/</p>
+
+<p>#include &#34;parrot/parrot.h&#34;</p>
+
+<p>#define INITIAL_BUCKETS 16</p>
+
+<p>#define N_BUCKETS(n) ((n) &#45; (n)/4) #define HASH_ALLOC_SIZE(n) (N_BUCKETS(n) * sizeof (HashBucket) + \ (n) * sizeof (HashBucket *))</p>
+
+<p>/* HEADERIZER HFILE: include/parrot/hash.h */</p>
+
+<p>/* HEADERIZER BEGIN: static */</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_PURE_FUNCTION static int cstring_compare( SHIM_INTERP,
+NOTNULL(const char *a),
+NOTNULL(const char *b) ) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static void expand_hash( PARROT_INTERP,
+NOTNULL(Hash *hash) ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>static void hash_freeze( PARROT_INTERP,
+NOTNULL(const Hash * const hash),
+NOTNULL(visit_info* info) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static void hash_thaw( PARROT_INTERP,
+NOTNULL(Hash *hash),
+NOTNULL(visit_info* info) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>static void init_hash( NOTNULL(Hash *hash),
+PARROT_DATA_TYPE val_type,
+Hash_key_type hkey_type,
+hash_comp_fn compare,
+hash_hash_key_fn keyhash ) __attribute__nonnull__(1);</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_PURE_FUNCTION static size_t key_hash_cstring( SHIM_INTERP,
+NOTNULL(const void *value),
+size_t seed ) __attribute__nonnull__(2);</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_PURE_FUNCTION static size_t key_hash_pointer( SHIM_INTERP,
+NULLOK(void *value),
+size_t seed );</p>
+
+<p>PARROT_WARN_UNUSED_RESULT static size_t key_hash_STRING( PARROT_INTERP,
+NOTNULL(STRING *value),
+size_t seed ) __attribute__nonnull__(1) __attribute__nonnull__(2);</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_PURE_FUNCTION static int pointer_compare( SHIM_INTERP,
+NULLOK(const void *a),
+NULLOK(const void *b) );</p>
+
+<p>PARROT_WARN_UNUSED_RESULT static int STRING_compare( PARROT_INTERP,
+NOTNULL(const void *search_key),
+NOTNULL(const void *bucket_key) ) __attribute__nonnull__(1) __attribute__nonnull__(2) __attribute__nonnull__(3);</p>
+
+<p>/* HEADERIZER END: static */</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: key_hash_STRING Return the hashed value of the key <code lang='und' xml:lang='und'>value</code>.
+See also string.c.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT static size_t key_hash_STRING(PARROT_INTERP,
+NOTNULL(STRING *value),
+size_t seed) { STRING * const s = value;</p>
+
+<pre lang='und' xml:lang='und'>    if (s&#45;&#62;hashval) {
+        return s&#45;&#62;hashval;
+    }
+
+    return string_hash(interp, s, seed);
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: STRING_compare Compares the two strings, returning 0 if they are identical.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT static int STRING_compare(PARROT_INTERP, NOTNULL(const void *search_key), NOTNULL(const void *bucket_key)) { return string_equal(interp, (const STRING *)search_key, (const STRING *)bucket_key); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: Compares the two pointers, returning 0 if they are identical</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_PURE_FUNCTION static int pointer_compare(SHIM_INTERP, NULLOK(const void *a), NULLOK(const void *b)) { return a != b; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: key_hash_pointer Returns a hashvalue for a pointer.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_PURE_FUNCTION static size_t key_hash_pointer(SHIM_INTERP, NULLOK(void *value), size_t seed) { return ((size_t) value) ^ seed; }</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_PURE_FUNCTION static size_t key_hash_cstring(SHIM_INTERP, NOTNULL(const void *value), size_t seed) { register size_t h = seed; const unsigned char * p = (const unsigned char *) value;</p>
+
+<pre lang='und' xml:lang='und'>    while (*p) {
+        h += h &#60;&#60; 5;
+        h += *p++;
+    }
+    return h;
+}</pre>
+
+<p>/*</p>
+
+<p>FUNCDOC: cstring_compare C string versions of the <code lang='und' xml:lang='und'>key_hash</code> and <code lang='und' xml:lang='und'>compare</code> functions.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_PURE_FUNCTION static int cstring_compare(SHIM_INTERP, NOTNULL(const char *a), NOTNULL(const char *b)) { return strcmp(a, b); }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: key_hash_int Custom <code lang='und' xml:lang='und'>key_hash</code> function.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_PURE_FUNCTION size_t key_hash_int(SHIM_INTERP, NULLOK(void *value), size_t seed) { return (size_t)value ^ seed; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: int_compare Custom <code lang='und' xml:lang='und'>compare</code> function.</p>
+
+<p>*/</p>
+
+<p>PARROT_WARN_UNUSED_RESULT PARROT_PURE_FUNCTION int int_compare(SHIM_INTERP, NULLOK(const void *a), NULLOK(const void *b)) { return a != b; }</p>
+
+<p>/*</p>
+
+<p>FUNCDOC: parrot_dump_hash</p>
+
+<p>Print out the hash in human&#45;readable form. Except it&#39;s empty.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p><em lang='und' xml:lang='und'>docs/pdds/pdd08_keys.pod</em>.</p>
+
+<h1><a name="TODO"
+>TODO <a href='#_top'><img alt='^' border=0 src='../../resources/up.gif'></a></a></h1>
+
+<p>Future optimizations:</p>
+
+<ul>
+<li>Stop reallocating the bucket pool, and instead add chunks on. (Saves pointer fixups and copying during <code lang='und' xml:lang='und'>realloc</code>.)</li><p class="pad"></p>
+
+<li>Hash contraction (don&#39;t if it&#39;s worth it)</li><p class="pad"></p>
+</ul>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

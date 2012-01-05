@@ -1,0 +1,299 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>Parrot abstract syntax tree</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot abstract syntax tree</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/compilers.html">Compilers</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>PAST &#45; Parrot abstract syntax tree</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>This file implements the various abstract syntax tree nodes for compiling programs in Parrot.</p>
+
+<h1><a name="PAST_Node_types"
+>PAST Node types <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="PAST::Node"
+>PAST::Node <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p><code>PAST::Node</code> is the base class for all PAST nodes,
+and is derived from PCT::Node.
+A node has an array component to hold its children,
+and a hash component for its attributes.
+However,
+we tend to use accessor methods for accessing the node&#39;s attributes instead of accessing the hash directly.</p>
+
+<p>Every PAST node inherits <code>name</code>,
+<code>source</code>,
+and <code>pos</code> attributes from <code>PCT::Node</code>.
+The <code>name</code> attribute is the node&#39;s name,
+if any,
+while <code>source</code> and <code>pos</code> are used to identify the location in the original source code for the node.
+The <code>source</code> and <code>pos</code> values are generally set by the <code>node</code> method inherited from <code>PCT::Node</code>.</p>
+
+<p>Other node attributes are generally defined by subclasses of <code>PAST::Node</code>.</p>
+
+<dl>
+<dt><a name="returns([value])"
+>returns([value])</a></dt>
+Accessor method &#45;&#45; sets/returns the return type for the invocant.
+<dt><a name="arity([value])"
+>arity([value])</a></dt>
+Accessor method &#45;&#45; sets/returns the arity (number of expected arguments) for the node.
+<dt><a name="named([value])"
+>named([value])</a></dt>
+Accessor method &#45;&#45; for named arguments,
+sets/returns the name to be associated with the argument.
+<dt><a name="flat([value])"
+>flat([value])</a></dt>
+Accessor method &#45;&#45; sets/returns the &#34;flatten&#34; flag on arguments.
+<dt><a name="lvalue([flag])"
+>lvalue([flag])</a></dt>
+Get/set the <code>lvalue</code> attribute,
+which indicates whether this variable is being used in an lvalue context.</dl>
+
+<h2><a name="PAST::Val"
+>PAST::Val <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p><code>PAST::Val</code> nodes represent constant values in the abstract syntax tree.
+The <code>name</code> attribute represents the value of the node.</p>
+
+<dl>
+<dt><a name="value([value])"
+>value([value])</a></dt>
+Get/set the constant value for this node.
+<dt><a name="lvalue([value])"
+>lvalue([value])</a></dt>
+Throw an exception if we try to make a PAST::Val into an lvalue.</dl>
+
+<h2><a name="PAST::Var"
+>PAST::Var <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p><code>PAST::Var</code> nodes represent variables within the abstract syntax tree.
+The variable name (if any) is given as the node&#39;s <code>name</code> attribute.</p>
+
+<dl>
+<dt><a name="scope([value])"
+>scope([value])</a></dt>
+Get/set the PAST::Var node&#39;s &#34;scope&#34; (i.e.,
+how the variable is accessed or set).
+Allowable values include &#34;package&#34;,
+&#34;lexical&#34;,
+&#34;parameter&#34;,
+&#34;keyed&#34;,
+&#34;attribute&#34; and &#34;register&#34;,
+representing HLL global,
+lexical,
+block parameter,
+array/hash variables,
+object members and (optionally named) Parrot registers respectively.
+<dt><a name="isdecl([flag])"
+>isdecl([flag])</a></dt>
+Get/set the node&#39;s <code>isdecl</code> attribute (for lexical variables) to <code>flag</code>.
+A true value of <code>isdecl</code> indicates that the variable given by this node is to be created within the current lexical scope.
+Otherwise,
+the node refers to a lexical variable from an outer scope.
+<dt><a name="namespace([namespace])"
+>namespace([namespace])</a></dt>
+Get/set the variable&#39;s namespace attribute to the array of strings given by <code>namespace</code>.
+Useful only for variables with a <code>scope</code> of &#39;package&#39;.
+<dt><a name="slurpy([flag])"
+>slurpy([flag])</a></dt>
+Get/set the node&#39;s <code>slurpy</code> attribute (for parameter variables) to <code>flag</code>.
+A true value of <code>slurpy</code> indicates that the parameter variable given by this node is to be created as a slurpy parameter (consuming all remaining arguments passed in).
+<dt><a name="viviself([type])"
+>viviself([type])</a></dt>
+If the variable needs to be instantiated,
+then <code>type</code> indicates either the type of the value to create for the node or (future implementation) a PAST tree to create the value.
+<dt><a name="vivibase([type])"
+>vivibase([type])</a></dt>
+For keyed nodes,
+<code>type</code> indicates the type of aggregate to create for the base if the base doesn&#39;t specify its own &#39;viviself&#39; attribute.</dl>
+
+<h2><a name="PAST::Op"
+>PAST::Op <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p><code>PAST::Op</code> nodes represent the operations in an abstract syntax tree.
+The primary function of the node is given by its <code>pasttype</code>,
+secondary functions may be given by the node&#39;s <code>name</code>,
+<code>pirop</code>,
+or other attributes.</p>
+
+<dl>
+<dt><a name="pasttype([type])"
+>pasttype([type])</a></dt>
+A <code>PAST::Op</code> node&#39;s <code>pasttype</code> determines the type of operation to be performed.
+Predefined values of <code>pasttype</code> are:assign &#45; Copy the value of the node&#39;s second child into the variable expression given by its first child.bind &#45; Bind the variable given by the node&#39;s first child to the value given by its second child.if &#45; Evaluate the first child; if the first child is true then evaluate the second child (if any) otherwise evaluate the third child (if any).
+If either the second or third child are missing,
+then they evaluate as the result of the first child.unless &#45; Same as &#39;if&#39; above,
+but reverse the evaluation of the second and third children nodes.while &#45; Evaluate the first child,
+if the result is true then evaluate the second child and repeat.until &#45; Evaluate the first child,
+if the result is false then evaluate the second child and repeat.for &#45; Iterate over the first child.
+For each element,
+invoke the sub in the second child,
+passing the element as the only parameter.call &#45; Call a subroutine,
+passing the results of any child nodes as arguments.
+The subroutine to be called is given by the node&#39;s <code>name</code> attribute,
+if the node has no <code>name</code> attribute then the first child is assumed to evaluate to a callable sub.pirop &#45; Execute the named PIR opcode,
+passing the results of any children nodes as arguments.inline &#45; Execute the sequence of PIR statements given by the node&#39;s <code>inline</code> attribute (a string).
+See the <code>inline</code> method below for details.callmethod &#45; Invokes a method on an object,
+using children nodes as arguments.
+If the node has a <code>name</code> attribute,
+then the first child is the invocant and any remaining children are arguments.
+If the node doesn&#39;t have a <code>name</code> attribute,
+then the first child evaluates to the method to be called,
+the second child is the invocant,
+and the remaining children are arguments to the method call.try &#45; (preliminary) Execute the code given by the first child,
+and if any exceptions occur then handle them using the code given by the second child.If a node doesn&#39;t have a value set for <code>pasttype</code>,
+then it assumes &#34;pirop&#34; if its <code>pirop</code> attribute is set,
+otherwise it assumes &#34;call&#34;.
+<dt><a name="pirop([opcode])"
+>pirop([opcode])</a></dt>
+Get/set the PIR opcode to be executed for this node.
+The PAST implementation knows about the argument types for many of the PIR opcodes,
+and will try to automatically convert the results of any children nodes into the correct types if needed.
+(In general,
+the implementation tries to convert things to PMCs whenever it isn&#39;t certain what else to do.) The table of PIR opcodes that PAST &#34;knows&#34; about is in <em>POST.pir</em>.
+<dt><a name="lvalue([flag])"
+>lvalue([flag])</a></dt>
+Get/set whether this node is an lvalue,
+or treats its first child as an lvalue (e.g.,
+for assignment).
+<dt><a name="inline([STRING_code])"
+>inline([STRING code])</a></dt>
+Get/set the code to be used for inline PIR when <code>pasttype</code> is &#34;inline&#34;.
+The <code>code</code> argument is PIR text to be inserted in the final generated code sequence.
+Sequences of &#34;%0&#34;,
+&#34;%1&#34;,
+&#34;%2&#34;,
+...
+&#34;%9&#34; in <code>code</code> are replaced with the evaluated results of the first,
+second,
+third,
+...,
+tenth children nodes.
+(If you need more than ten arguments to your inline PIR,
+consider making it a subroutine call instead.)The register to hold the result of the inline PIR operation is given by &#34;%r&#34;,
+&#34;%t&#34;,
+or &#34;%u&#34; in the <code>code</code> string:
+<pre>  %r   &#45; Generate a unique PMC register for the result.
+  %t   &#45; Generate a unique PMC register for the result,
+         and initialize it with an object of type C&#60;returns&#62;
+         before the execution of the inline PIR.
+  %u   &#45; Re&#45;use the first child&#39;s PMC (%0) if it&#39;s a temporary
+         result, otherwise same as %t above.
+  %v   &#45; (void) Re&#45;use the first child&#39;s PMC (%0) as the result
+         of this operation.</pre>
+
+<dt><a name="opattr(hash)"
+>opattr(hash)</a></dt>
+Set a variety of <code>PAST::Op</code> attributes based on entries in <code>hash</code>. Typically <code>hash</code> is an entry in the operator precedence table, and the attributes being set correspond to traits in the grammar.</dl>
+
+<h2><a name="PAST::Stmts"
+>PAST::Stmts <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p><code>PAST::Stmts</code> is a container of <code>PAST::Node</code> without any specific methods.</p>
+
+<h2><a name="PAST::Block"
+>PAST::Block <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<p><code>PAST::Block</code> nodes represent lexical scopes within an abstract syntax tree, and roughly translate to individual Parrot subroutines. A <code>PAST::Block</code> node nested within another <code>PAST::Block</code> node acts like a nested lexical scope.</p>
+
+<p>If the block has a <code>name</code> attribute, that becomes the name of the resulting Parrot sub, otherwise a unique name is automatically generated for the block.</p>
+
+<dl>
+<dt><a name="blocktype([STRING_type])"
+>blocktype([STRING type])</a></dt>
+Get/set the type of the block. The currently understood values are &#39;declaration&#39;, &#39;immediate&#39;, and &#39;method&#39;. &#39;Declaration&#39; indicates that a block is simply being defined at this point, while &#39;immediate&#39; indicates a block that is to be immediately executed when it is evaluated in the AST (e.g., the immediate blocks in Perl6 <code>if</code>, <code>while</code>, and other similar statements).
+<dt><a name="control([value])"
+>control([value])</a></dt>
+Get/set the control exception handler for this block to <code>value</code>. The exception handler can be any PAST tree. The special (string) value &#34;return_pir&#34; generates code to handle <code>CONTROL_RETURN</code> exceptions.
+<dt><a name="loadinit([past])"
+>loadinit([past])</a></dt>
+Get/set the &#34;load initializer&#34; for this block to <code>past</code>. The load initializer is a set of operations to be performed as soon as the block is compiled/loaded. For convenience, requests to <code>loadinit</code> autovivify an empty <code>PAST::Stmts</code> node if one does not already exist.Within the load initializer, the <code>block</code> PMC register is automatically initialized to refer to the block itself (to enable attaching properties, adding the block as a method, storing in a symbol table, etc.).
+<dt><a name="namespace([namespace])"
+>namespace([namespace])</a></dt>
+Get/set the namespace for this block. The <code>namespace</code> argument can be either a string or an array of strings.
+<dt><a name="hll([hll])"
+>hll([hll])</a></dt>
+Get/set the <code>hll</code> for this block.
+<dt><a name="symbol(name_[,_attr1_=&#62;_val1,_attr2_=&#62;_val2,_...])"
+>symbol(name [, attr1 =&#62; val1, attr2 =&#62; val2, ...])</a></dt>
+If called with named arguments, sets the symbol hash corresponding to <code>name</code> in the current block. The HLL is free to select any symbol attributes desired, although the &#39;scope&#39; attribute is typically used to assist with lexical scoping of PAST::Var nodes.If no named arguments are given, returns the current attribute hash for symbol <code>name</code>.
+<dt><a name="symbol_defaults([attr1_=&#62;_val1,_attr2_=&#62;_val2,_..._])"
+>symbol_defaults([attr1 =&#62; val1, attr2 =&#62; val2, ... ])</a></dt>
+Set default attributes for non&#45;existent symbols in the symbol hash (see <code>symbol</code> above). If no named arguments are given, returns the default attribute hash itself.Currently we just use the &#39;&#39; entry of the symbol hash to store the default attributes, but it&#39;s probably not safe to rely on this behavior in the future.
+<dt><a name="symtable([value])"
+>symtable([value])</a></dt>
+Get/set the symbol table for the block. May be deprecated in favor of the <code>symbol</code> method above.
+<dt><a name="lexical([flag])"
+>lexical([flag])</a></dt>
+Get/set whether the block is lexically nested within the block that contains it.
+<dt><a name="compiler([name])"
+>compiler([name])</a></dt>
+Indicate that the children nodes of this block are to be compiled using compiler <code>name</code> instead of the standard PAST compiler.
+<dt><a name="compiler_args()"
+>compiler_args()</a></dt>
+Specify named arguments to be passed to the compiler set through the compiler attribute. Not used if compiler is not set.
+<dt><a name="subid([subid])"
+>subid([subid])</a></dt>
+If <code>subid</code> is provided, then sets the subid for this block. Returns the current subid for the block, generating a unique subid for the block if one does not already exist.
+<dt><a name="pirflags([pirflags])"
+>pirflags([pirflags])</a></dt>
+Get/set any pirflags for this block.</dl>
+
+<h1><a name="AUTHOR"
+>AUTHOR <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Patrick Michaud &#60;pmichaud@pobox.com&#62; is the author and maintainer. Please send patches and suggestions to the Parrot porters or Perl 6 compilers mailing lists.</p>
+
+<h1><a name="HISTORY"
+>HISTORY <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>2006&#45;11&#45;20 Patrick Michaud added first draft of POD documentation. 2007&#45;11&#45;21 Re&#45;implementation with pdd26 compliance, compiler toolkit</p>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>Copyright (C) 2006&#45;2008, The Perl Foundation.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

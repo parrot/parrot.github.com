@@ -1,0 +1,189 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PDD 0: Design Document Format</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; PDD 0: Design Document Format
+                </div>
+
+<h1><a name="PDD_0:_Design_Document_Format"
+>PDD 0: Design Document Format</a></h1>
+
+<h2><a name="Version"
+>Version</a></h2>
+
+<p>$Revision$</p>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>This document defines the content and format of Parrot Design Documents (PDDs).</p>
+
+<h2><a name="Synopsis"
+>Synopsis</a></h2>
+
+<p>Not applicable.</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<p>PDDs are living documents,
+which should be maintained to reflect the current and contemplated design of Parrot.</p>
+
+<p>The key aspects of Parrot&#39;s design are its interface to the outside world &#45;&#45; its feature set &#45;&#45; and its internal structure,
+both in code and in the broader project.
+Thus,
+PDDs describe Parrot&#39;s:</p>
+
+<ul>
+<li><i>Codable interfaces</i>: headers,
+functions,
+macros,
+file formats,
+etc.</li>
+
+<li><i>Structural requirements</i> that the implementation must obey: resource usage,
+portability,
+modularity,
+interdependency,
+etc.</li>
+
+<li><i>Abstract models</i> that the implementation expresses or conforms to.
+These models are in some sense meta&#45;designs,
+because they provide guidance for the evolution of the current design.</li>
+
+<li>More?
+&#45; FIXME</li>
+</ul>
+
+<p>PDDs don&#39;t generally discuss the implementation details.
+Low&#45;level implementation documentation,
+the maintainer&#39;s guides,
+should go in the relevant <em>docs/dev/*.pod</em> file.</p>
+
+<p>PDDs may document design trade&#45;offs,
+i.e.
+the paths not chosen.
+In many cases they don&#39;t,
+just to keep the PDDs relatively short and readable.
+The history of Parrot&#39;s design is retrievable from the source repository.</p>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<p>All newly created PDDs will adhere to the PDD standard current as of the time of proposal.
+An example of the currently accepted layout is given in <em><a href="pdd_template.pod.html">docs/pdds/pdd_template.pod</a></em>,
+which should be used as a template for any future PDDs.</p>
+
+<h3><a name="Format"
+>Format</a></h3>
+
+<p>All PDDs will be written in POD parseable by the current stable release of Perl 5.
+Although XML is a viable solution and has its vocal supporters,
+and although Parrot is intended to be used by many groups outside of the Perl community,
+we have chosen POD for its simplicity and ease of reading in plaintext form.
+Conversion to other formats (e.g.
+HTML) is encouraged,
+but the master version must be POD.</p>
+
+<p>All PDDs will be written in English.
+The choice of British,
+American,
+or Other is up to the author.
+Translation to other languages,
+like all Perl documentation,
+is encouraged.
+(See <a href='#PDD_TRANSLATIONS'>&#34;PDD&#160;TRANSLATIONS&#34;</a>.)</p>
+
+<p>PDDs should be word&#45;wrapped at column 78.
+For Emacs variants,
+this can be arranged by putting these lines at the end of the file,
+after &#34;=cut&#34;:</p>
+
+<pre>    Local Variables:
+      fill&#45;column:78
+    End:</pre>
+
+<p>See <a href='TODO'>pdd_template.pod</a> for the basic structure of a PDD. Notes on the sections:</p>
+
+<dl>
+<dt><a name="name:"
+><i>name</i>:</a></dt>
+A short, general description of a specific part of the Parrot design. This may be a particular subsystem (e.g. the garbage collector), or a more general topic (e.g. basic Parrot datatypes).
+<dt><a name="Version:"
+>Version:</a></dt>
+Document version. Since Parrot is currently kept in a Subversion repository, the $$&#45;delimited keyword &#34;Revision&#34; will do nicely.
+<dt><a name="Maintainer_(optional):"
+>Maintainer <i>(optional)</i>:</a></dt>
+The name and current email address for the point of contact for the PDD. This is the person to whom questions, comments, and patches should generally be addressed. This need not be the author of the document. By default, all PDDs are maintained by the Parrot Architect.
+<dt><a name="Abstract:"
+>Abstract:</a></dt>
+A quick blurb explaining the purpose of the PDD.
+<dt><a name="Synopsis_(optional):"
+>Synopsis <i>(optional)</i>:</a></dt>
+Code snippets showing the semantics of the PDD (if applicable).
+<dt><a name="Description:"
+>Description:</a></dt>
+A description of the general nature of the PDD and how it relates to Parrot.
+<dt><a name="Implementation:"
+>Implementation:</a></dt>
+A major section of the PDD that encapsulates a free&#45;form discussion of any and all applicable information related to the final observations, conclusions, and what&#45;have&#45;you that required writing the document in the first place.
+<dt><a name="Attachments:"
+>Attachments:</a></dt>
+References to supporting files that should be considered part of the PDD. Text files and image files may be in any widely accepted format, which is rather subjective. Violators may be prosecuted.Text files and image files should only provide supplemental information; no fair hiding all the info in an attachment just to not have to write an implementation section.
+<dt><a name="References:"
+>References:</a></dt>
+References to additional sources of information, but not those necessary for the PDD itself.</dl>
+
+<p>The PDD author may add any additional sections he or she wishes.</p>
+
+<h3><a name="Submission_Criteria"
+>Submission Criteria</a></h3>
+
+<p>Proposed PDDs should be submitted to the parrot&#45;dev mailing list (located at parrot&#45;dev@lists.parrot.org) for discussion, criticism and general kibitzing. Acceptance of a particular PDD is ultimately up to the Parrot Architect.</p>
+
+<h3><a name="PDD_Translations"
+>PDD Translations</a></h3>
+
+<p>Translations of PDDs into other languages should meet these guidelines:</p>
+
+<ul>
+<li>The <code>Maintainer</code> section should record who made the translation.</li>
+
+<li>The <code>Version</code> section should include an additional note of the translation version.</li>
+</ul>
+
+<h2><a name="Attachments"
+>Attachments</a></h2>
+
+<p>(none)</p>
+
+<h2><a name="References"
+>References</a></h2>
+
+<p>(none)</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

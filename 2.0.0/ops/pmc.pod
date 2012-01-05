@@ -1,0 +1,371 @@
+=head1 NAME
+
+pmc.ops - PMC Opcodes
+
+=head1 DESCRIPTION
+
+Operations that deal with PMCs, including creation and
+destruction, manipulation, and introspection.
+
+
+=cut
+
+=head2 Creation and Types
+
+These operations are used to create PMCs and examine
+type information.
+
+=over 4
+
+
+=cut
+
+=item B<new>(out PMC, in STR)
+
+=item B<new>(out PMC, in STR, in PMC)
+
+=item B<new>(out PMC, in PMC)
+
+=item B<new>(out PMC, in PMC, in PMC)
+
+Instantiate a new object from a string PMC or key name, or from a class object.
+For strings and keys, first check the namespace for a class object, then fall
+back to the type ID if no class object is stored in the namespace.
+
+  new $P0, 'ResizableBooleanArray'
+
+Optionally a PMC may be passed to the constructor. It's up to the class what
+to do with the initializer.  See PDD17 and the init_pmc function for more.
+
+
+=cut
+
+=item B<root_new>(out PMC, in PMC)
+
+=item B<root_new>(out PMC, in PMC, in PMC)
+
+Instantiate a new object from a key name relative to the root namespace.
+
+  root_new $P0, ['parrot';'ResizableBooleanArray']
+
+Optionally a PMC may be passed to the constructor. It's up to the class what
+to do with the initializer.
+
+
+=cut
+
+=item B<typeof>(out STR, invar PMC)
+
+=item B<typeof>(out PMC, invar PMC)
+
+Return the type of PMC in $2.
+
+
+=cut
+
+=item B<get_repr>(out STR, invar PMC)
+
+Set $1 to a string representation of $2
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Basic Operations
+
+A few simple and common PMC operations.
+
+=over 4
+
+
+=cut
+
+=item B<find_method>(out PMC, invar PMC, in STR)
+
+Looks up method $3 in $2's vtable, placing the corresponding method
+PMC in $1.
+
+
+=cut
+
+=item B<defined>(out INT, invar PMC)
+
+=item B<defined>(out INT, invar PMC, in INTKEY)
+
+=item B<defined>(out INT, invar PMC, in KEY)
+
+Test PMC for definedness.
+
+=item B<exists>(out INT, invar PMC, in INTKEY)
+
+=item B<exists>(out INT, invar PMC, in KEY)
+
+Tests whether KEY or INTKEY exists in the aggregate PMC.
+Places the answer in INT.
+
+
+=cut
+
+=item B<delete>(invar PMC, in KEY)
+
+=item B<delete>(invar PMC, in INTKEY)
+
+Delete the specified entry $2 from aggregate $1.
+
+
+=cut
+
+=item B<elements>(out INT, invar PMC)
+
+Returns the number of items in aggregate $2
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Fast access ops
+
+The fast access ops are shortcuts to common operations implemented in var PMCs.
+
+=over 4
+
+
+=cut
+
+=item B<push>(invar PMC, in INT)
+
+=item B<push>(invar PMC, in NUM)
+
+=item B<push>(invar PMC, in STR)
+
+=item B<push>(invar PMC, invar PMC)
+
+Push $2 onto the end of the aggregate PMC $1, if that operation is defined.
+
+
+=cut
+
+=item B<pop>(out INT, invar PMC)
+
+=item B<pop>(out NUM, invar PMC)
+
+=item B<pop>(out STR, invar PMC)
+
+=item B<pop>(out PMC, invar PMC)
+
+Pop off last entry in the aggregate $2, placing the result in $1.
+
+
+=cut
+
+=item B<unshift>(invar PMC, in INT)
+
+=item B<unshift>(invar PMC, in NUM)
+
+=item B<unshift>(invar PMC, in STR)
+
+=item B<unshift>(invar PMC, invar PMC)
+
+Unshift $2 onto the front of the aggregate PMC $1.
+
+
+=cut
+
+=item B<shift>(out INT, invar PMC)
+
+=item B<shift>(out NUM, invar PMC)
+
+=item B<shift>(out STR, invar PMC)
+
+=item B<shift>(out PMC, invar PMC)
+
+Shift off the first entry in the aggregate $2 and places it in $1.
+
+
+=cut
+
+=item B<splice>(invar PMC, invar PMC, in INT, in INT)
+
+Replace $4 values at offset $3 in aggregate $1 with the PMCs in aggregate $2.
+The values are put into the aggregate by a shallow copy. If the values would
+be reused, they have to be B<clone>d.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Properties
+
+Ops to deal with PMC properties.
+
+=over 4
+
+
+=cut
+
+=item B<setprop>(invar PMC, in STR, invar PMC)
+
+Set property $2 to value $3 for PMC $1.
+
+
+=cut
+
+=item B<getprop>(out PMC, in STR, invar PMC)
+
+Get property $2 of PMC $3 and put it in $1.
+
+
+=cut
+
+=item B<delprop>(invar PMC, in STR)
+
+Delete property $2 from PMC $1.
+
+
+=cut
+
+=item B<prophash>(out PMC, invar PMC)
+
+Get a hash for the properties invar PMC $2 and put it in $1. If the property
+hash doesn't exist, the C<Null> PMC is returned.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Freeze, thaw and friends
+
+Ops to PMC freeze, thaw.
+
+=over 4
+
+
+=cut
+
+=item B<freeze>(out STR, invar PMC)
+
+Set $1 to the frozen image of $2.
+
+=item B<thaw>(out PMC, in STR)
+
+Set $1 to a newly created PMC from the image $2.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Vtable MMD manipulation functions
+
+These functions manipulate the vtable MMD function table.
+
+These functions allow bytecode to register subs or methods and query which
+sub or method would get called for a particular vtable operation. This way
+you're not required to drop to C to register a new method variant for
+addition or subtraction, or one of the other binary MMD operations.
+
+=over 4
+
+
+=cut
+
+=item B<add_multi>(in STR, in STR, invar PMC)
+
+Register method $3 as the MMD method for the sub named $1 with signature $2.
+
+
+=cut
+
+=item B<find_multi>(out PMC, in STR, in STR)
+
+Set $1 to the sub that would be called for sub named $2 with signature $3.
+
+
+=cut
+
+=back
+
+
+=cut
+
+=head2 Misc PMC related ops
+
+=over 4
+
+
+=cut
+
+=item B<register>(invar PMC)
+
+Add a reference of PMC $1 to the interpreter's root set of PMCs. This is needed
+for extensions to make sure that the PMC is properly marked during GC, if that
+PMC is not known to Parrot's core elsewhere.
+
+A PMC can be registered multiple times.  If it's unregistered and the
+registration count reaches zero, it will be destroyed during the next GC run.
+
+=item B<unregister>(invar PMC)
+
+Remove one reference of $1.
+
+
+=cut
+
+=item B<box>(out PMC, in INT)
+
+=item B<box>(out PMC, in NUM)
+
+=item B<box>(out PMC, in STR)
+
+Create a HLL-mapped PMC containing the provided primitive.
+
+
+=cut
+
+=item B<iter>(out PMC, invar PMC)
+
+Return a new Iterator PMC $1 for aggregate $2.
+
+
+=cut
+
+=item B<morph>(invar PMC, in PMC)
+
+Have $1 turn itself into a PMC of type $2.
+
+
+=cut
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (C) 2001-2009, Parrot Foundation.
+
+=head1 LICENSE
+
+This program is free software. It is subject to the same license
+as the Parrot interpreter itself.
+
+
+=cut
+

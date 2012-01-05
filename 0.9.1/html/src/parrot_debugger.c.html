@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>The Parrot debugger</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Contents</a> &raquo; <a href="../../html/c.html">C</a> &raquo; The Parrot debugger
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>parrot_debugger &#45; The Parrot debugger</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre> parrot_debugger programfile</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<h2><a name="Commands"
+>Commands</a></h2>
+
+<dl>
+<dt><a name="disassemble"
+><b><code>disassemble</b></code></a></dt>
+Disassemble the bytecode.Use this if you have a PBC file but not the PASM.
+<dt><a name="load"
+><b><code>load</b></code></a></dt>
+Load a source code file.
+<dt><a name="list_or_l"
+><b><code>list</b></code> or <b><code>l</b></code></a></dt>
+List the source code file.
+<dt><a name="run_or_r"
+><b><code>run</b></code> or <b><code>r</b></code></a></dt>
+Run the program.
+<dt><a name="break_or_b"
+><b><code>break</b></code> or <b><code>b</b></code></a></dt>
+Add a breakpoint.
+<dt><a name="watch_or_w"
+><b><code>watch</b></code> or <b><code>w</b></code></a></dt>
+Add a watchpoint.
+<dt><a name="delete_or_d"
+><b><code>delete</b></code> or <b><code>d</b></code></a></dt>
+Delete a breakpoint.
+<dt><a name="disable"
+><b><code>disable</b></code></a></dt>
+Disable a breakpoint.
+<dt><a name="enable"
+><b><code>enable</b></code></a></dt>
+Reenable a disabled breakpoint.
+<dt><a name="continue_or_c"
+><b><code>continue</b></code> or <b><code>c</b></code></a></dt>
+Continue the program execution.
+<dt><a name="next_or_n"
+><b><code>next</b></code> or <b><code>n</b></code></a></dt>
+Run the next instruction
+<dt><a name="eval_or_e"
+><b><code>eval</b></code> or <b><code>e</b></code></a></dt>
+Run an instruction.
+<dt><a name="trace_or_t"
+><b><code>trace</b></code> or <b><code>t</b></code></a></dt>
+Trace the next instruction.
+<dt><a name="print_or_p"
+><b><code>print</b></code> or <b><code>p</b></code></a></dt>
+Print the interpreter registers.
+<dt><a name="stack_or_s"
+><b><code>stack</b></code> or <b><code>s</b></code></a></dt>
+Examine the stack.
+<dt><a name="info"
+><b><code>info</b></code></a></dt>
+Print interpreter information.
+<dt><a name="quit_or_q"
+><b><code>quit</b></code> or <b><code>q</b></code></a></dt>
+Exit the debugger.
+<dt><a name="help_or_h"
+><b><code>help</b></code> or <b><code>h</b></code></a></dt>
+Print the help.</dl>
+
+<h2><a name="Debug_Ops"
+>Debug Ops</a></h2>
+
+<p>You can also debug Parrot code by using the <code>debug_init</code>, <code>debug_load</code> and <code>debug_break</code> ops in <em>ops/debug.ops</em>.</p>
+
+<dl>
+<dt><a name="int_main(int_argc,_char_*argv[])"
+><b><code>int main(int argc, char *argv[])</b></code></a></dt>
+Reads the PASM or PBC file from argv[1], loads it, and then calls Parrot_debug().
+<dt><a name="static_void_PDB_add_exception_handler(Parrot_Interp)"
+><b><code>static void PDB_add_exception_handler(Parrot_Interp)</b></code></a></dt>
+Adds a default exception handler to PDB.
+<dt><a name="static_void_PDB_printwelcome(void)"
+><b><code>static void PDB_printwelcome(void)</b></code></a></dt>
+Prints out the welcome string.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em><a href="debug.c.html">src/debug.c</a></em>, <em>include/parrot/debug.h</em>.</p>
+
+<h1><a name="HISTORY"
+>HISTORY</a></h1>
+
+<ul>
+<li>Initial version by Daniel Grunblatt on 2002.5.19.</li>
+
+<li>Start of rewrite &#45; leo 2005.02.16</li>
+
+<p>The debugger now uses it&#39;s own interpreter. User code is run in Interp* debugee. We have:</p>
+
+<pre>  debug_interp&#45;&#62;pdb&#45;&#62;debugee&#45;&#62;debugger
+    ^                            |
+    |                            v
+    +&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45; := &#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;+</pre>
+
+<p>Debug commands are mostly run inside the <code>debugger</code>. User code runs of course in the <code>debugee</code>.</p>
+</ul>
+
+<h1><a name="TODO"
+>TODO</a></h1>
+
+<ul>
+<li>Check the user input for bad commands, it&#39;s quite easy to make it bang now, try listing the source before loading or disassembling it.</li>
+
+<li>Print the interpreter info.</li>
+
+<li>Make the user interface better (add comands history/completion).</li>
+
+<li>Some other things I don&#39;t remember now because it&#39;s late.</li>
+</ul>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>P6object tests</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">P6object tests</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/tests.html">Tests</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>t/library/p6object.t &#45;&#45; P6object tests</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<pre lang='und' xml:lang='und'>    % prove t/library/p6object.t</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>Testing Perl 6 objects.</p>
+
+<pre lang='und' xml:lang='und'>    isa_ok(mnoproto, &#39;Float&#39;, &#39;MNO proto&#39;)
+    isa_ok(mnoproto, &#39;ABC&#39;, &#39;MNO proto&#39;)
+    isa_ok(mnoproto, &#39;P6object&#39;, &#39;MNO proto&#39;)
+    isa_ok(mnoproto, &#39;P6protoobject&#39;, &#39;MNO proto&#39;)
+    mno = mnoproto.&#39;new&#39;()
+    isa_ok(mno, &#39;Float&#39;, &#39;MNO object&#39;)
+    isa_ok(mno, &#39;ABC&#39;, &#39;MNO object&#39;)
+    isa_ok(mno, &#39;P6object&#39;, &#39;MNO object&#39;)
+    $I0 = isa mno, &#39;P6protoobject&#39;
+    nok($I0, &#39;MNO object not isa P6protoobject&#39;)
+
+    ##  create a subclass from a protoobject reference
+    .local pmc pqrproto, pqr
+    p6meta.&#39;new_class&#39;(&#39;PQR&#39;, &#39;parent&#39;=&#62;mnoproto)
+    pqrproto = get_hll_global &#39;PQR&#39;
+    isa_ok(pqrproto, &#39;PQR&#39;, &#39;PQR proto&#39;)
+    isa_ok(pqrproto, &#39;MNO&#39;, &#39;PQR proto&#39;)
+    isa_ok(pqrproto, &#39;Float&#39;, &#39;PQR proto&#39;)
+
+    ##  use the :name option to set a class name
+    .local pmc p6objproto, p6obj
+    p6meta.&#39;new_class&#39;(&#39;Perl6Object&#39;, &#39;name&#39;=&#62;&#39;Object&#39;)
+    p6objproto = get_hll_global &#39;Object&#39;
+    isa_ok(p6objproto, &#39;Perl6Object&#39;, &#39;Object proto&#39;)
+    isa_ok(p6objproto, &#39;P6object&#39;, &#39;Object proto&#39;)
+    isa_ok(p6objproto, &#39;P6protoobject&#39;, &#39;Object proto&#39;)
+    $S0 = p6objproto
+    is($S0, &#39;Object&#39;, &#39;Object.WHAT eq &#34;Object&#34;&#39;)
+    $P0 = get_hll_global &#39;Perl6Object&#39;
+    isa_nok($P0, &#39;P6protoobject&#39;, &#39;Perl6Object&#39;)
+    p6obj = p6objproto.&#39;new&#39;()
+    isa_ok(p6obj, &#39;Perl6Object&#39;, &#39;Object instance&#39;)
+    $P0 = p6obj.&#39;WHAT&#39;()
+    $I0 = issame $P0, p6objproto
+    ok($I0, &#39;obj.WHAT =:= Object.WHAT&#39;)
+
+    ## make sure it works for array&#45;based names
+    .local pmc stuproto
+    $P0 = split &#39;::&#39;, &#39;Foo::STU&#39;
+    $P0 = p6meta.&#39;new_class&#39;($P0)
+    stuproto = get_hll_global [&#39;Foo&#39;], &#39;STU&#39;
+    $I0 = issame stuproto, $P0
+    ok($I0, &#39;Foo::STU proto =:= return value from .new_class()&#39;)
+    $P0 = get_class [&#39;Foo&#39;;&#39;STU&#39;]
+    isa_ok(stuproto, $P0, &#39;Foo::STU proto&#39;)
+    isa_ok(stuproto, &#39;P6object&#39;, &#39;Foo::STU proto&#39;)
+    isa_ok(stuproto, &#39;P6protoobject&#39;, &#39;Foo::STU proto&#39;)
+    $P0 = stuproto.&#39;WHAT&#39;()
+    $I0 = issame stuproto, $P0
+    ok($I0, &#39;Foo::STU proto .WHAT identity&#39;)
+    $S0 = stuproto
+    is($S0, &#39;STU&#39;, &#39;Foo::STU.WHAT eq &#34;STU&#34;&#39;)
+    $P0 = stuproto.&#39;HOW&#39;()
+    isa_ok($P0, &#39;P6metaclass&#39;, &#39;Foo::STU proto .HOW&#39;)
+    $I0 = defined stuproto
+    nok($I0, &#39;Foo::STU proto undefined&#39;)
+
+    ##  remapping ResizablePMCArray to List
+    .local pmc listproto
+    listproto = p6meta.&#39;new_class&#39;(&#39;List&#39;, &#39;parent&#39;=&#62;&#39;ResizablePMCArray&#39;)
+    p6meta.&#39;register&#39;(&#39;ResizablePMCArray&#39;, &#39;parent&#39;=&#62;listproto, &#39;protoobject&#39;=&#62;listproto)
+    $P0 = new &#39;List&#39;
+    $I0 = can $P0, &#39;elems&#39;
+    ok($I0, &#39;List can elems&#39;)
+    $P0 = new &#39;ResizablePMCArray&#39;
+    $I0 = can $P0, &#39;elems&#39;
+    ok($I0, &#39;ResizablePMCArray inherits List methods&#39;)
+
+    ##  building a class from another hll namespace
+    $P0 = get_root_namespace [&#39;foo&#39;;&#39;XYZ&#39;;&#39;Bar&#39;]
+    .local pmc barproto, barobj
+    barproto = p6meta.&#39;new_class&#39;($P0)
+    $P0 = get_root_global [&#39;foo&#39;;&#39;XYZ&#39;], &#39;Bar&#39;
+    $I0 = issame $P0, barproto
+    ok($I0, &#39;XYZ::Bar protoobject created in foo HLL namespace&#39;)
+    $P0 = get_hll_global [&#39;XYZ&#39;], &#39;Bar&#39;
+    $I0 = isnull $P0
+    ok($I0, &#39;XYZ::Bar protoobject not created in parrot HLL namespace&#39;)
+    barobj = barproto.&#39;new&#39;()
+    $S0 = barobj.&#39;hello&#39;()
+    is($S0, &#39;XYZ::Bar::hello&#39;, &#39;method call to XYZ::Bar object works&#39;)
+
+    .local pmc wtfproto, dostuff
+    dostuff = get_root_global [&#39;foo&#39;], &#39;dostuff&#39;
+    wtfproto = dostuff(p6meta)
+    $P0 = get_root_global [&#39;foo&#39;;&#39;WTF&#39;], &#39;Lol&#39;
+    $I0 = issame $P0, wtfproto
+    ok($I0, &#39;WTF::Lol protoobject created in foo HLL namespace&#39;)</pre>
+
+<h1><a name="SUBROUTINES"
+>SUBROUTINES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a name="p6obj_tests(proto,_class_[,_options])"
+>p6obj_tests(proto, class [, options])</a></dt><p class="pad"></p>
+
+<dd>Run a sequence of standard tests on a protoobject. As part of the tests it also creates an instance using the <code lang='und' xml:lang='und'>.new</code> method of <code lang='und' xml:lang='und'>proto</code>, does some tests on the instance, and returns it. The available options include:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>    shortname    the name expected from stringifying the protoobject
+    typename     the name expected from C&#60;typeof&#62;
+    isa          a list of classes to test for &#34;isa&#34; semantics</pre>
+
+<dt><a name="concat([args])"
+>concat([args])</a></dt><p class="pad"></p>
+
+<dd>Concatenate several strings into a single string.</dd><p class="pad"></p>
+
+<dt><a name="qw(value)"
+>qw(value)</a></dt><p class="pad"></p>
+
+<dd>If <code lang='und' xml:lang='und'>value</code> is already an array of some sort, return it, otherwise split <code lang='und' xml:lang='und'>value</code> on spaces and return that.</dd><p class="pad"></p>
+
+<dt><a name="hash_default(hash,_key,_default)"
+>hash_default(hash, key, default)</a></dt><p class="pad"></p>
+
+<dd>Return the entry in <code lang='und' xml:lang='und'>hash[key]</code> if it exists, otherwise return <code lang='und' xml:lang='und'>default</code>.</dd><p class="pad"></p>
+
+<dt><a name="is_same(x,_y,_message)"
+>is_same(x, y, message)</a></dt><p class="pad"></p>
+
+<dd>Test for x and y being the same PMC.</dd><p class="pad"></p>
+
+<dt><a name="isa_ok(object,_class,_objectname)"
+>isa_ok(object, class, objectname)</a></dt><p class="pad"></p>
+
+<dt><a name="isa_ok(object,_class,_objectname)"
+>isa_ok(object, class, objectname)</a></dt><p class="pad"></p>
+
+<dd>Test if <code lang='und' xml:lang='und'>object</code> is/isn&#39;t an instance of <code lang='und' xml:lang='und'>class</code> as reported by the <code lang='und' xml:lang='und'>isa</code> opcode. <code lang='und' xml:lang='und'>objectname</code> is used to generate the diagnostic message in output (i.e., it&#39;s not the actual diagnostic message).</dd><p class="pad"></p>
+</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

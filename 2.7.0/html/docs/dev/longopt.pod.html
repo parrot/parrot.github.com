@@ -1,0 +1,102 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Long option parsing</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Long option parsing
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/dev/longopt.pod &#45; Long option parsing</p>
+
+<h1><a name="SUMMARY"
+>SUMMARY</a></h1>
+
+<p>The files <em>longopt.c</em> and <em>longopt.h</em> implement rudimentary long option parsing.
+They have little to do with Parrot itself,
+other than that the parrot binary and imcc both needed long options.
+So this gives it to them.</p>
+
+<h1><a name="USAGE"
+>USAGE</a></h1>
+
+<p>To use longopt,
+you first need to #include &#34;parrot/longopt.h&#34; (it comes with parrot/parrot.h,
+too).
+Then you need to set up the options table,
+which is an array of <code>struct longopt_opt_decl</code>s.</p>
+
+<p>Each element of this array has four components: the short option,
+the option id (generally the same as the short option),
+some flags,
+and finally a list of up to nine long options (all for this one behavior),
+terminated with a NULL pointer.</p>
+
+<p>There is currently one possible flag: OPTION_required_FLAG,
+which states that this option has a required argument.
+Optional arguments are not supported,
+and they should be.</p>
+
+<p>The array should be terminated with an element that has 0 for the option id.
+So,
+for example:</p>
+
+<pre>    struct longopt_opt_decl options[] = {
+        { &#39;f&#39;, &#39;f&#39;, 0,                    { &#34;&#45;&#45;foo&#34;, NULL } },
+        { &#39;b&#39;, &#39;b&#39;, OPTION_required_FLAG, { &#34;&#45;&#45;bar&#34;, NULL } },
+        {   0, 128, 0,                    { &#34;&#45;&#45;baz&#34;, &#34;&#45;&#45;bazbar&#34;, NULL } },
+        {   0,   0, 0,                    { NULL } }
+    };</pre>
+
+<p>This is a structure that specifies three options.</p>
+
+<p>Some various ways you could give these options on the command line follow:</p>
+
+<pre>    program &#45;&#45;baz &#45;&#45;bar=arg &#45;&#45;foo somefile
+    program &#45;&#45;bar arg &#45;f somefile
+    program &#45;f &#45;b arg &#45;&#45;bazbar somefile
+    program &#45;barg &#45;f somefile
+    program &#45;fbarg somefile</pre>
+
+<p>So it basically behaves how most GNU programs do. It accepts &#45; as a real argument, and &#45;&#45; as a non argument, but that specifies that only non&#45;flags will follow. Again, just like GNU.</p>
+
+<p>No options can follow a non&#45;option, however. This is because programs that this is written for, like parrot, usually want to pass options given after the file to the file they&#39;re executing.</p>
+
+<h1><a name="BUGS"
+>BUGS</a></h1>
+
+<p>It won&#39;t complain if you don&#39;t give it an argument to an option expecting one. It will just set the opt_arg pointer to NULL.</p>
+
+<p>It won&#39;t complain if you give an argument to an option not expecting one. It will just ignore it (this only applies to the &#45;&#45;foo=bar style).</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<pre>    Luke Palmer  C&#60;fibonaci@babylonia.flatirons.org&#62;</pre>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

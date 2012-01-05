@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot under Cygwin</title>
+        <link rel="stylesheet" type="text/css"
+            href="../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../html/index.html">Contents</a> &raquo; <a href="../html/info.html">Project Information</a> &raquo; Parrot under Cygwin
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>README.cygwin &#45; Parrot under Cygwin</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<p>Parrot builds out of the box under Cygwin,
+when no other parrot is installed.
+See below at PROBLEMS.</p>
+
+<p>There are official cygwin parrot packages available via <a href='http://cygwin.com/setup.exe'><a href="http://cygwin.com/setup.exe">http://cygwin.com/setup.exe</a></a>.</p>
+
+<pre>  parrot libparrot0 libparrot&#45;devel parrot&#45;perl6 parrot&#45;languages</pre>
+
+<p>Some tweaks are needed for different names for the ffi to some dll&#39;s. See <a href='#loadlib_DLL_versioning'>&#34;loadlib DLL versioning&#34;</a>.</p>
+
+<h1><a name="Packages"
+>Packages</a></h1>
+
+<p>You&#39;ll need the following Cygwin packages to run and build Parrot by your own.</p>
+
+<p>Runtime requirements:</p>
+
+<pre>  libreadline6 ncurses libintl8 libgmp3 libgdbm4</pre>
+
+<p>Optional requirements:</p>
+
+<pre>  libicu38 libpq5 openssl
+
+  for opengl: w32api opengl or libglut3 xorg&#45;x11&#45;base xorg&#45;x11&#45;bin&#45;dlls</pre>
+
+<p>Build requirements:</p>
+
+<pre>  gcc make perl parrot readline libncurses&#45;devel libgmp&#45;devel
+  libgdbm&#45;devel pcre&#45;devel</pre>
+
+<p>Optional build requirements:</p>
+
+<pre>  libicu&#45;devel openssl&#45;devel
+
+  for Cygwin/X opengl: freeglut libglut&#45;devel xorg&#45;x11&#45;devel</pre>
+
+<p>Optional perl packages for testing:</p>
+
+<pre>  L&#60;Test::TAP::HTMLMatrix&#62; if you want to run the smoke tests
+  with C&#60;make smoke&#62;.
+
+  L&#60;Test::Base&#62; for some APL language tests.
+
+  perl L&#60;Test::Perl::Critic&#62; and L&#60;Perl::Critic&#62;</pre>
+
+<dl>
+<dt><a name="Cygwin_subversion_and_perl"
+>Cygwin subversion and perl</a></dt>
+If you use SVN to get a copy of Parrot, you should use the Cygwin SVN and not the TortoiseSVN client to avoid build errors. Similarly you will need Cygwin Perl rather than ActiveState or Strawberry Perl.
+<dt><a name="icu"
+>icu</a></dt>
+Note that ICU is now optional, you can build Parrot without it, by not installing it or asking Parrot to ignore it (<code>&#45;&#45;without&#45;icu</code>).
+<dt><a name="opengl"
+>opengl</a></dt>
+You can use the w32api and opengl packages for native Windows opengl support, or the freeglut package for the X Server.Configure.pl will detect freeglut if freeglut is installed and DISPLAY is set, otherwise it checks for w32api and opengl with GLUT. In case that freeglut is installed, DISPLAY must be set <i>before</i> running Configure.pl. If not using freeglut, then DISPLAY must <b>not</b> be set. <code>export DISPLAY=127.0.0.1:0.0</code> is the typical setting.
+<pre>  Determining if your platform supports OpenGL.............yes, freeglut 3.4.
+  Determining if your platform supports OpenGL...................yes, GLUT 3.
+  Determining if your platform supports OpenGL............................no.</pre>
+Required packages:
+<pre>  w32api opengl</pre>
+or
+<pre>  freeglut libglut&#45;devel xorg&#45;x11&#45;devel xorg&#45;x11&#45;base xorg&#45;x11&#45;bin&#45;dlls</pre>
+
+<dt><a name="SDL"
+>SDL</a></dt>
+SDL references <em>cygSDL&#45;1&#45;2&#45;0.dll</em>, which is only in cygports <a href='http://news.gmane.org/gmane.os.cygwin.ports.announce'><a href="http://news.gmane.org/gmane.os.cygwin.ports.announce">http://news.gmane.org/gmane.os.cygwin.ports.announce</a></a>
+<dt><a name="aio"
+>aio</a></dt>
+libaio&#45;devel &#34;Linux&#45;native asynchronous I/O access&#34; is not available for cygwin, and as the name says it will never be :)</dl>
+
+<h1><a name="BUILD"
+>BUILD</a></h1>
+
+<pre>  perl Configure.pl
+  make
+  make test
+  make install</pre>
+
+<h1><a name="PROBLEMS"
+>PROBLEMS</a></h1>
+
+<dl>
+<dt><a name="perl_fatal_error_&#45;_unable_to_remap_Glob.dll"
+>perl fatal error &#45; unable to remap Glob.dll</a></dt>
+Something like: <em>perl.exe</em>: *** fatal error &#45; unable to remap <em>C:\cygwin\lib\perl5\5.10\i686&#45;cygwin\auto\File\Glob\Glob.dll</em> to same address as parent(<code>0x860000</code>) != <code>0x14D0000</code>This is a known cygwin problem with dll&#39;s, esp. perl on non&#45;XP 32bit platforms. You need to install the <code>rebase</code> package and run <code>rebaseall</code> from an <code>ash</code> shell.
+<dt><a name="Crash_at_miniparrot.exe_config_lib.pasm"
+>Crash at miniparrot.exe config_lib.pasm</a></dt>
+Invoking Parrot to generate runtime/parrot/include/config.fpmc &#45;&#45;cross your fingers
+<pre>  F&#60;./miniparrot.exe config_lib.pasm &#62; runtime/parrot/include/config.fpmc&#62;
+crashes</pre>
+See below.
+<dt><a name="Spurious_stackdumps_while_building"
+>Spurious stackdumps while building</a></dt>
+Building with an already installed library fails. See RT#39742Be sure that there&#39;s no other libparrot.dll.a or libparrot.a in the linker libpath.<em>/usr/lib/libparrot.dll.a</em>, <em>/usr/local/lib/libparrot.dll.a</em>
+<dt><a name="os_hardlink_test_fail"
+>os hardlink test fail</a></dt>
+
+<pre>  t/pmc/os....................................
+  #   Failed test &#39;hard link was really created&#39;
+  #   at t/pmc/os.t line 312.</pre>
+This is a known Windows limitation with NTFS junctions on files.</dl>
+
+<h1><a name="TODO"
+>TODO</a></h1>
+
+<dl>
+<dt><a name="loadlib_DLL_versioning"
+>loadlib DLL versioning</a></dt>
+Use cyg*&#45;1.1.dll naming conventions instead of lib*.so.1.1 names for loadlib, the FFI.Thanks to the <code>Windows DLL Hell</code> and the impossibility of file hardlinks, windows dll names are versioned, so the loadlib function or the various pir&#39;s needs more logic.Either add the version to each loadlib call, and stem the version from POSIX versions within get_path(), or add an optional version argument to loadlib for win32. Or just fix all the pir&#39;s, which will be easier when exceptions work again.
+<dt><a name="Features"
+>Features</a></dt>
+Threads, Events, and Signals are missing.</dl>
+
+<h1><a name="AUTHORS"
+>AUTHORS</a></h1>
+
+<dl>
+<dt><a name="Reini_Urban_&#60;rurban@x&#45;ray.at&#62;"
+>Reini Urban &#60;rurban@x&#45;ray.at&#62;</a></dt>
+</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<pre>    L&#60;parrot&#62;</pre>
+
+<h1><a name="HISTORY"
+>HISTORY</a></h1>
+
+<p>Last updated: 23 January 2009</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

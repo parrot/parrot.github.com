@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Export globals from one namespace to another</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Export globals from one namespace to another
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/exporter.pmc &#45; Export globals from one namespace to another</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<p>You can use Exporter in PIR to import subs from a library.
+At its simplest:</p>
+
+<pre> .sub main :main
+     load_bytecode &#39;Test/More.pir&#39;
+
+     .local pmc exporter, src_ns, dest_ns
+     src_ns   = get_namespace [ &#39;Test&#39;; &#39;More&#39; ]
+     exporter = new &#39;Exporter&#39;
+
+     exporter.&#39;import&#39;( src_ns :named(&#39;source&#39;) &#39;plan ok&#39; :named(&#39;globals&#39;) )
+     plan(1)
+     ok(1, &#39;exporter has imported the requested functions&#39;)
+ .end</pre>
+
+<p>You can also specify the exporter attributes before making the import call, for example to import into the alternate namespace &#39;Foo&#39; you could use the following code:</p>
+
+<pre>    src_ns   = get_namespace [ &#39;Test&#39;; &#39;More&#39; ]
+    dest_ns  = get_namespace [ &#39;Foo&#39; ]
+    exporter.&#39;source&#39;(src_ns)
+    exporter.&#39;destination&#39;(dest_ns)
+    exporter.&#39;import&#39;(&#39;plan ok&#39; :named(&#39;globals&#39;))</pre>
+
+<p>You can even import subroutines under different names if globals is a hash:</p>
+
+<pre>    globals         = new &#39;Hash&#39;
+    globals[&#39;plan&#39;] = &#39;steps&#39;
+    globals[&#39;ok&#39;]   = &#39;passed&#39;
+    exporter.&#39;import&#39;(globals :named(&#39;globals&#39;))
+    steps(1)
+    passed(1)</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Exports globals from one namespace to another. Exporter always uses the typed namespace interface, as outlined in <em><a href="../../docs/pdds/pdd21_namespaces.pod.html">docs/pdds/pdd21_namespaces.pod</a></em>.</p>
+
+<p>Exporter is not derived from any other PMC, and does not provide any vtable interface&#45;&#45;its interface consists solely of methods, not vtable functions.</p>
+
+<h2><a name="Structure"
+>Structure</a></h2>
+
+<p>The Exporter PMC structure (<code>Parrot_Exporter</code>) consists of three items:</p>
+
+<dl>
+<dt><a name="ns_src"
+><b><code>ns_src</b></code></a></dt>
+The source namespace &#45;&#45; a NameSpace PMC. A Null PMC is allocated during initialization.
+<dt><a name="ns_dest"
+><b><code>ns_dest</b></code></a></dt>
+The destination namespace &#45;&#45; a NameSpace PMC. A PMC representing the current namespace is allocated upon initialization.
+<dt><a name="globals"
+><b><code>globals</b></code></a></dt>
+The globals to export &#45;&#45; a PMC that implements a hash, an array, a String containing a list of space&#45;separated subroutine names or Null.A Null PMC is allocated during initialization.</dl>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes an Exporter PMC.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Mark referenced strings and PMCs in the structure as live.</dl>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="METHOD_source(PMC_*src_:optional,_int_got_src_:opt_flag)"
+><b><code>METHOD source(PMC *src :optional, int got_src :opt_flag)</b></code></a></dt>
+Accessor for the source NameSpace object (<code>ns_src</code>.) Sets the value if <code>src</code> is passed, otherwise returns the value. Throws an exception if a non&#45;NameSpace PMC is passed.
+<dt><a name="METHOD_destination(PMC_*dest_:optional,_int_got_dest_:opt_flag)"
+><b><code>METHOD destination(PMC *dest :optional, int got_dest :opt_flag)</b></code></a></dt>
+Accessor for the destination NameSpace object (<code>ns_dest</code>.) Sets the value if <code>dest</code> is passed, otherwise returns the value. Throws an exception if a non&#45;NameSpace PMC is passed.
+<dt><a name="METHOD_globals(PMC_*glb_:optional,_int_got_glb_:opt_flag)"
+><b><code>METHOD globals(PMC *glb :optional, int got_glb :opt_flag)</b></code></a></dt>
+Accessor for the globals to export (<code>globals</code>.) Sets the value if <code>glb</code> is passed, otherwise returns the value. If <code>glb</code> is a String, it is split on ascii whitespace, and each array member is added as a hash key. If <code>glb</code> implements the array interface, each member is added as a hash key. if <code>glb</code> implements the hash interface, it is assigned to Exporter&#39;s <code>globals</code> attribute. Throws an exception if an unknown PMC type is passed.
+<dt><a
+><b><code>METHOD import(PMC *dest :optional :named(&#34;destination&#34;), int got_dest :opt_flag, PMC *src :optional :named(&#34;source&#34;), int got_src :opt_flag, PMC *globals :optional :named(&#34;globals&#34;), int got_globals :opt_flag)</b></code></a></dt>
+Import <code>globals</code> from the <code>src</code> namespace to the <code>dest</code> namespace. If <code>src</code>, <code>dest</code>, or <code>globals</code> are passed, they override the current value. <code>import</code> follows the semantics of the <code>export_to</code> method of the <code>NameSpace</code> PMC. in particular, if a NULL value is passed for <code>globals</code>, the default set of items will be imported. Throws an exception upon error.</dl>
+
+<h1><a name="STABILITY"
+>STABILITY</a></h1>
+
+<p>Unstable. This PMC is under active development; major portions of the interface have not yet been completed.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em>docs/pdds/pdd17_basic_types.pod</em>, <em><a href="../../docs/pdds/pdd21_namespaces.pod.html">docs/pdds/pdd21_namespaces.pod</a></em>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2010, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

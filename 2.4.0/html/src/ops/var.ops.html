@@ -1,0 +1,239 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Variable Opcodes</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/ops.html">Opcodes</a> &raquo; Variable Opcodes
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>var.ops &#45; Variable Opcodes</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>These operations deal with both lexical and global variables,
+as well as the symbol tables that contain them.</p>
+
+<h2><a name="Lexical_variable_ops"
+>Lexical variable ops</a></h2>
+
+<p>Operations to create,
+modify and delete lexical variables.</p>
+
+<dl>
+<dt><a name="store_lex(in_STR,_invar_PMC)"
+><b>store_lex</b>(in STR,
+invar PMC)</a></dt>
+Store object $2 as lexical symbol $1.
+The opcode might succeed or throw an exception on unknown lexical names depending on the implementation of the LexPad PMC.
+Parrot&#39;s LexPad throws an exception for unknown names.
+<dt><a name="store_dynamic_lex(in_STR,_invar_PMC)"
+><b>store_dynamic_lex</b>(in STR,
+invar PMC)</a></dt>
+Search caller lexpads for lexical symbol $1 and store object $2 there.
+Throws an exception if no caller lexpad claims the lexical symbol.
+(To store a value in the current lexpad,
+use <code>store_lex</code> above.)
+<dt><a name="find_lex(out_PMC,_in_STR)"
+><b>find_lex</b>(out PMC,
+in STR)</a></dt>
+Find the lexical variable named $2 and store it in $1.
+This opcode either throws an exception or returns a Null PMC for the failure case,
+depending on the implementation of the LexPad PMC.
+Parrot&#39;s standard LexPad throws an exception for non&#45;existent names.
+<dt><a name="find_dynamic_lex(out_PMC,_in_STR)"
+><b>find_dynamic_lex</b>(out PMC,
+in STR)</a></dt>
+Search through caller lexpads for a lexical variable named $2 and store it in $1.
+Return a Null PMC if the lexical variable is not found.
+(To search the current lexpad,
+use <code>find_lex</code> above.)
+<dt><a name="find_caller_lex(out_PMC,_in_STR)"
+><b>find_caller_lex</b>(out PMC,
+in STR)</a></dt>
+Like find_dynamic_lex above,
+but also searches caller&#39;s outer scopes in addition to the lexpads.</dl>
+
+<h2><a name="Namespace_opcodes"
+>Namespace opcodes</a></h2>
+
+<dl>
+<dt><a name="get_namespace(out_PMC)"
+><b>get_namespace</b>(out PMC)</a></dt>
+Set $1 to the current namespace.
+<dt><a name="get_namespace(out_PMC,_in_PMC)"
+><b>get_namespace</b>(out PMC,
+in PMC)</a></dt>
+Set $1 to the namespace denoted by the key constant $2,
+relative to the current namespace.
+If the namespace doesn&#39;t exist,
+$1 is set to null.
+<dt><a name="get_hll_namespace(out_PMC)"
+><b>get_hll_namespace</b>(out PMC)</a></dt>
+Set $1 to the current HLL root namespace.
+<dt><a name="get_hll_namespace(out_PMC,_in_PMC)"
+><b>get_hll_namespace</b>(out PMC,
+in PMC)</a></dt>
+Set $1 to the namespace denoted by the key constant $2,
+relative to the current HLL root namespace.
+If the namespace doesn&#39;t exist,
+$1 is set to null.
+<dt><a name="get_root_namespace(out_PMC)"
+><b>get_root_namespace</b>(out PMC)</a></dt>
+Set $1 to the true root namespace.
+<dt><a name="get_root_namespace(out_PMC,_in_PMC)"
+><b>get_root_namespace</b>(out PMC,
+in PMC)</a></dt>
+Set $1 to the namespace denoted by the key constant $2,
+relative to the true root namespace.
+If the namespace doesn&#39;t exist,
+$1 is set to null.</dl>
+
+<h2><a name="Global_variable_&#39;get&#39;_opcodes"
+>Global variable &#39;get&#39; opcodes</a></h2>
+
+<dl>
+<dt><a name="get_global(out_PMC,_in_STR)"
+><b>get_global</b>(out PMC,
+in STR)</a></dt>
+Set $1 to the global named $2 in current namespace.
+If the global doesn&#39;t exist,
+$1 is set to null.
+<dt><a name="get_global(out_PMC,_in_PMC,_in_STR)"
+><b>get_global</b>(out PMC,
+in PMC,
+in STR)</a></dt>
+Set $1 to the global named $3 in the namespace denoted by the key constant $2,
+relative to the current namespace.
+If the namespace or the global doesn&#39;t exist,
+$1 is set to null.
+<dt><a name="get_hll_global(out_PMC,_in_STR)"
+><b>get_hll_global</b>(out PMC,
+in STR)</a></dt>
+Set $1 to the global named $2 in the current HLL root namespace.
+If the global doesn&#39;t exist,
+$1 is set to null.
+<dt><a name="get_hll_global(out_PMC,_in_PMC,_in_STR)"
+><b>get_hll_global</b>(out PMC,
+in PMC,
+in STR)</a></dt>
+Set $1 to the global named $3 in the namespace denoted by the key constant $2,
+relative to the current HLL root namespace.
+If the namespace or the global doesn&#39;t exist,
+$1 is set to null.
+<dt><a name="get_root_global(out_PMC,_in_STR)"
+><b>get_root_global</b>(out PMC,
+in STR)</a></dt>
+Set $1 to the global named $2 in the true root namespace.
+If the global doesn&#39;t exist,
+$1 is set to null.
+<dt><a name="get_root_global(out_PMC,_in_PMC,_in_STR)"
+><b>get_root_global</b>(out PMC,
+in PMC,
+in STR)</a></dt>
+Set $1 to the global named $3 in the namespace denoted by the key constant $2,
+relative to the true root namespace.
+If the namespace or the global doesn&#39;t exist,
+$1 is set to null.</dl>
+
+<h2><a name="Global_variable_&#39;set&#39;_opcodes"
+>Global variable &#39;set&#39; opcodes</a></h2>
+
+<dl>
+<dt><a name="set_global(in_STR,_invar_PMC)"
+><b>set_global</b>(in STR,
+invar PMC)</a></dt>
+Set the global named $1 in the current namespace to $2.
+<dt><a name="set_global(in_PMC,_in_STR,_invar_PMC)"
+><b>set_global</b>(in PMC,
+in STR,
+invar PMC)</a></dt>
+Set the global named $2 in the namespace denoted by the key constant $1,
+relative to the current namespace,
+to $3.
+If the namespace does not exist,
+it is created.
+<dt><a name="set_hll_global(in_STR,_invar_PMC)"
+><b>set_hll_global</b>(in STR,
+invar PMC)</a></dt>
+Set the global named $1 to $2 in the current HLL root namespace.
+<dt><a name="set_hll_global(in_PMC,_in_STR,_invar_PMC)"
+><b>set_hll_global</b>(in PMC,
+in STR,
+invar PMC)</a></dt>
+Set the global named $2 in the namespace denoted by the key constant $1 (relative to the current HLL namespace) to $3.
+If the namespace does not exist,
+it is created.
+<dt><a name="set_root_global(in_STR,_invar_PMC)"
+><b>set_root_global</b>(in STR,
+invar PMC)</a></dt>
+Set the global named $1 in the true root namespace to $2.
+<dt><a name="set_root_global(in_PMC,_in_STR,_invar_PMC)"
+><b>set_root_global</b>(in PMC,
+in STR,
+invar PMC)</a></dt>
+Set the global named $2 in the namespace denoted by the key constant $1 (relative to the true root namespace) to $3.
+If the namespace does not exist,
+it is created.</dl>
+
+<h2><a name="Global_variable_ops"
+>Global variable ops</a></h2>
+
+<p>Operations to modify global variables</p>
+
+<dl>
+<dt><a name="find_name(out_PMC,_in_STR)"
+><b>find_name</b>(out PMC,
+in STR)</a></dt>
+Find the name $2 in lexical,
+current,
+global,
+or builtin namespace and store it in $1.
+If the name doesn&#39;t exist either throws an exception or sets $1 to PMCNULL,
+depending on current errors settings.
+See <b>errorson</b>.
+<dt><a name="find_sub_not_null(out_PMC,_in_STR)"
+><b>find_sub_not_null</b>(out PMC,
+in STR)</a></dt>
+Do the same thing as <code>find_name</code>,
+but throw an exception if the name isn&#39;t found.</dl>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT</a></h1>
+
+<p>Copyright (C) 2001&#45;2009,
+Parrot Foundation.</p>
+
+<h1><a name="LICENSE"
+>LICENSE</a></h1>
+
+<p>This program is free software.
+It is subject to the same license as the Parrot interpreter itself.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

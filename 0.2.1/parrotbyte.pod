@@ -1,0 +1,303 @@
+# Copyright: 2001-2004 The Perl Foundation.  All Rights Reserved.
+# $Id$
+
+=head1 NAME
+
+docs/parrotbyte.pod - The Parrot Bytecode (PBC) Format
+
+=head1 Format of the Parrot bytecode
+
+  0          1          2          3
+  +----------+----------+----------+----------+
+  | Wordsize | Byteorder|  Major   |  Minor   |
+  +----------+----------+----------+----------+
+
+The wordsize (or C<opcode_t> size) must be 4 (32-bit) or 8 (64 bit). The
+bytecode loader is responsible for transforming the file into the VM
+native wordsize on the fly. For performance, a utility F<pdump> is
+provided to convert PBCs on disk if they cannot be recompiled. See
+F<src/pdump.c> for more information.
+
+Byteorder currently supports two values:
+(0-Little Endian, 1-Big Endian)
+
+  4          5
+  +----------+----------+----------+----------+
+  | INT size | FloatType|  10 Byte  ...       |
+  +----------+----------+----------+----------+
+  |           fingerprint for ...             |
+  +----------+----------+----------+----------+
+  |           core.ops is here                |
+  +----------+----------+----------+----------+
+
+INT size (sizeof(INTVAL)) must be 4 or 8.
+FloatType 0 is IEEE 754 8 byte double, FloatType 1 is i386 little
+endian 12 byte long double.
+
+  16
+  +----------+----------+----------+----------+
+  |         Parrot Magic = 0x 13155a1         |
+  +----------+----------+----------+----------+
+
+Magic is stored in native byteorder. The loader
+uses the byteorder header to convert the Magic
+to verify. More specifically, ALL words (non-bytes)
+in the bytecode file are stored in native order,
+unless otherwise specified.
+
+  20*
+  +----------+----------+----------+----------+
+  |         Opcode Type (Perl = 0x5045524c)   |
+  +----------+----------+----------+----------+
+
+The asterisk for the offset states, from here we have opcodes. The
+given offsets are for 32 bit opcode types only.
+
+=head1 PBC FORMAT 1
+
+All segments are aligned at a 16 byte boundary. All segments share a
+common header and are kept in directories, which itself is a PBC
+segment. All offsets and sizes are in native opcodes of the machine
+that produced the PBC.
+
+=head2 Format 1 Header
+
+  24*
+  +----------+----------+----------+----------+
+  |         dir_format      (1)               |
+  +----------+----------+----------+----------+
+  |         padding         (0)               |
+  +----------+----------+----------+----------+
+
+After this header, the first PBC directory follows at offset 32*
+starting with a:
+
+=head2 Format 1 Segment Header
+
+  +----------+----------+----------+----------+
+  | total size in opcodes including this size |
+  +----------+----------+----------+----------+
+  |         internal type (itype)             |
+  +----------+----------+----------+----------+
+  |         internal id   (id)                |
+  +----------+----------+----------+----------+
+  |         size of opcodes following         |
+  +----------+----------+----------+----------+
+
+The B<size> entry may be followed by a stream of B<size> opcodes
+(starting 16 byte aligned), which may of course be no opcode stream
+at all for size zero.
+
+After this common segment header there can be segment specific data
+determined by the segment type. A segment without additional data,
+like the bytecode segment, is a B<default> segment. No additional
+routines are required to unpack such a segment.
+
+=head2 Directory Segment
+
+  +----------+----------+----------+----------+
+  | number of directory entries               |
+  +----------+----------+----------+----------+
+
+  +----------+----------+----------+----------+
+  | segment type                              |
+  +----------+----------+----------+----------+
+  | segment name ...                          |
+  | ...        0x00       padding             |
+  +----------+----------+----------+----------+
+  | segment offset                            |
+  +----------+----------+----------+----------+
+  | segment op_count                          |
+  +----------+----------+----------+----------+
+
+The B<op_count> at B<offset> must match the segments B<op_count> and
+is used to verify the PBCs integrity.
+
+Currently these segment types are defined:
+
+=over 4
+
+=item 0
+
+Directory segment
+
+=item 1
+
+Unknown segment (conforms to a default segment)
+
+=item 2
+
+Fixup segment
+
+=item 3
+
+Constant table segment
+
+=item 4
+
+Bytecode segment
+
+=item 5
+
+Debug segment
+
+=back
+
+=head2 Segment Names
+
+This is not determined yet.
+
+=head2 Unknown (default) and byte code segments
+
+These have only the common segment header and the opcode stream
+appended. The opcode stream is an F<mmap()>ed memory region, if your
+operating system supports this (and if the PBC was read from a disk
+file). You have therefore to consider these data as readonly.
+
+=head2 Fixup segment
+
+  +----------+----------+----------+----------+
+  | number of fixup entries                   |
+  +----------+----------+----------+----------+
+
+  +----------+----------+----------+----------+
+  | fixup type   (0)                          |
+  +----------+----------+----------+----------+
+  | label   name ...                          |
+  | ...        0x00       padding             |
+  +----------+----------+----------+----------+
+  | label offset                              |
+  +----------+----------+----------+----------+
+
+Currently fixup type B<0> is defined, which has a label symbol and an
+offset into the bytecode.
+
+=head2 Debug Segment
+
+  +----------+----------+----------+----------+
+  | filename ...                              |
+  | ...        0x00       padding             |
+  +----------+----------+----------+----------+
+
+The debug segment has one additional field with the source file name.
+The opcode stream holds one line number per bytecode instruction.
+
+=head2 CONSTANT TABLE SEGMENT
+
+  0 (relative)
+  +----------+----------+----------+----------+
+  |            Constant Count (N)             |
+  +----------+----------+----------+----------+
+
+For each constant:
+
+  +----------+----------+----------+----------+
+  |             Constant Type (T)             |
+  +----------+----------+----------+----------+
+  |                                           |
+  |        S bytes of constant content        |
+  :       appropriate for representing        :
+  |              a value of type T            |
+  |                                           |
+  +----------+----------+----------+----------+
+
+
+=head2 CONSTANTS
+
+For integer constants:
+
+  << integer constants are represented as manifest constants in
+     the byte code stream currently, limiting them to 32 bit values. >>
+
+For number constants (S is constant, and is equal to C<sizeof(FLOATVAL)>):
+
+  +----------+----------+----------+----------+
+  |                                           |
+  |             S' bytes of Data              |
+  |                                           |
+  +----------+----------+----------+----------+
+
+where
+
+  S' = S + (S % 4) ? (4 - (S % 4)) : 0
+
+If S' E<gt> S, then the extra bytes are filled with zeros.
+
+
+For string constants (S varies, and is the size of the particular string):
+
+  4, 4 + (16 + S'0), 4 + (16 + S'0) + (16 + S'1)
+  +----------+----------+----------+----------+
+  |                   Flags                   |
+  +----------+----------+----------+----------+
+  |                  Encoding                 |
+  +----------+----------+----------+----------+
+  |                   Type                    |
+  +----------+----------+----------+----------+
+  |                  Size (S)                 |
+  +----------+----------+----------+----------+
+  |                                           |
+  :             S' bytes of Data              :
+  |                                           |
+  +----------+----------+----------+----------+
+
+where
+
+  S' = S + (S % 4) ? (4 - (S % 4)) : 0
+
+If S' E<gt> S, then the extra bytes are filled with zeros.
+
+
+=head2 BYTE CODE SEGMENT
+
+The pieces that can be found in the byte code segment are as
+follows:
+
+  +----------+----------+----------+----------+
+  |              Operation Code               |
+  +----------+----------+----------+----------+
+
+  +----------+----------+----------+----------+
+  |             Register Argument             |
+  +----------+----------+----------+----------+
+
+  +----------+----------+----------+----------+
+  |    Integer Argument (Manifest Constant)   |
+  +----------+----------+----------+----------+
+
+  +----------+----------+----------+----------+
+  |   String Argument (Constant Table Index)  |
+  +----------+----------+----------+----------+
+
+  +----------+----------+----------+----------+
+  |   Number Argument (Constant Table Index)  |
+  +----------+----------+----------+----------+
+
+The number and types for each argument can be determined by
+consulting Parrot::Opcode.
+
+
+=head2 SOURCE CODE SEGMENT
+
+Currently there are no utilities that use this segment, even
+though it is mentioned in some of the early Parrot documents.
+
+Eventually there will be a more complete and useful PackFile
+specification, but this simple format works well enough for
+now (c. Parrot 0.0.5).
+
+=head1 SEE ALSO
+
+F<packfile.c>, F<packfile.h>, F<packout.c>, F<packdump.c>, F<pf/*.c>, and the
+B<pdump> utility F<pdump.c>.
+
+=head1 AUTHOR
+
+Gregor N. Purdy E<lt>gregor@focusresearch.comE<gt>
+
+Format 1 description by Leopold Toetsch E<lt>lt@toetsch.atE<gt>
+
+=head1 VERSION
+
+2003.11.22
+

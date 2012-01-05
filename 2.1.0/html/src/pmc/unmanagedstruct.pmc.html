@@ -1,0 +1,192 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - C struct with unmanaged memory</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; C struct with unmanaged memory
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/unmanagedstruct.pmc &#45; C struct with unmanaged memory</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>PMC class to hold C <code>struct</code>s that Parrot&#39;s not responsible for disposing of.</p>
+
+<p>Buffer can be accessed using keyed assignments to PMC.
+Out of bounds access will very likely segfault.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="static_char_*_char_offset_int(PARROT_INTERP,_PMC_*pmc,_INTVAL_ix,_int_*type)"
+><b><code>static char * char_offset_int(PARROT_INTERP, PMC *pmc, INTVAL ix, int *type)</b></code></a></dt>
+Returns the pointer for the element at index <code>ix</code>,
+and sets the element type in <code>*type</code>.
+<dt><a name="static_INTVAL_key_2_idx(PARROT_INTERP,_PMC_*pmc,_PMC_*key)"
+><b><code>static INTVAL key_2_idx(PARROT_INTERP, PMC *pmc, PMC *key)</b></code></a></dt>
+Returns the index for the element associated with key <code>*key</code>.
+Raises an exception if the key doesn&#39;t exist.
+<dt><a name="static_char_*_char_offset_key(PARROT_INTERP,_PMC_*pmc,_PMC_*key,_int_*type)"
+><b><code>static char * char_offset_key(PARROT_INTERP, PMC *pmc, PMC *key, int *type)</b></code></a></dt>
+Returns the pointer for the element associated with key <code>*key</code>,
+and sets the element type in <code>*type</code>.
+<dt><a name="static_INTVAL_ret_int(PARROT_INTERP,_const_char_*p,_int_type)"
+><b><code>static INTVAL ret_int(PARROT_INTERP, const char *p, int type)</b></code></a></dt>
+Returns the element of type <code>type</code> starting at <code>*p</code> as an <code>INTVAL</code>.If,
+for example,
+<code>char</code> or c&#60;short&#62; type size doesn&#39;t match,
+this will fail we need some more configure support for type sizes.
+<dt><a name="static_FLOATVAL_ret_float(PARROT_INTERP,_const_char_*p,_int_type)"
+><b><code>static FLOATVAL ret_float(PARROT_INTERP, const char *p, int type)</b></code></a></dt>
+Returns the element of type <code>type</code> starting at <code>*p</code> as a <code>FLOATVAL</code>.
+<dt><a name="static_STRING*_ret_string(PARROT_INTERP,_char_*p,_int_type)"
+><b><code>static STRING* ret_string(PARROT_INTERP, char *p, int type)</b></code></a></dt>
+Returns the element of type <code>type</code> starting at <code>*p</code> as a Parrot string.
+<dt><a name="static_PMC*_ret_pmc(PARROT_INTERP,_PMC_*pmc,_char_*p,_int_type,_INTVAL_idx)"
+><b><code>static PMC* ret_pmc(PARROT_INTERP, PMC *pmc, char *p, int type, INTVAL idx)</b></code></a></dt>
+Returns the element of type <code>type</code> starting at <code>*p</code> as a PMC.
+<dt><a name="static_void_set_int(PARROT_INTERP,_char_*p,_int_type,_INTVAL_value)"
+><b><code>static void set_int(PARROT_INTERP, char *p, int type, INTVAL value)</b></code></a></dt>
+
+<dt><a name="static_void_set_float(PARROT_INTERP,_char_*p,_int_type,_FLOATVAL_value)"
+><b><code>static void set_float(PARROT_INTERP, char *p, int type, FLOATVAL value)</b></code></a></dt>
+Sets the value of the element of type <code>type</code> starting at <code>*p</code> to <code>value</code>.
+<dt><a name="static_void_set_string(PARROT_INTERP,_char_*p,_int_type,_STRING_*value)"
+><b><code>static void set_string(PARROT_INTERP, char *p, int type, STRING *value)</b></code></a></dt>
+Sets the value of the element of type <code>type</code> starting at <code>*p</code> to <code>*value</code>.
+<dt><a name="static_int_calc_align(PARROT_INTERP,_PMC_*pmc,_PMC_*type_pmc,_int_type,_size_t_offs)"
+><b><code>static int calc_align(PARROT_INTERP, PMC *pmc, PMC *type_pmc, int type, size_t offs)</b></code></a></dt>
+Alignment of contained structures is the alignment of the biggest item in that <code>struct</code>.i386: <code>long long</code> or <code>double</code> is aligned on 4.This is recursive as structure definitions.
+<dt><a name="static_size_t_calc_offsets(PARROT_INTERP,_PMC_*pmc,_PMC_*value,_size_t_toff)"
+><b><code>static size_t calc_offsets(PARROT_INTERP, PMC *pmc, PMC *value, size_t toff)</b></code></a></dt>
+Calculates the offsets for the <code>struct</code>.
+See <code>init_pmc()</code> for a description of <code>*value</code>.</dl>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="void_init_pmc(PMC_*value)"
+><b><code>void init_pmc(PMC *value)</b></code></a></dt>
+Initialize the struct with some data.<code>*value</code> should be an array of triples of:
+<dl>
+<dt><a name="0"
+>0</a></dt>
+The datatype.
+See the <code>enum</code> in <em>include/parrot/datatypes.h</em>.
+<dt><a name="1"
+>1</a></dt>
+The count.
+<dt><a name="2"
+>2</a></dt>
+The offset.</dl>
+
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+Return a clone of this PMC.
+<dt><a name="void_set_pmc(PMC_*value)"
+><b><code>void set_pmc(PMC *value)</b></code></a></dt>
+Sets <code>*value</code> (see <code>init_pmc()</code> and calculates the offsets.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Marks the <code>struct</code> as live.
+<dt><a name="INTVAL_is_equal(PMC_*value)"
+><b><code>INTVAL is_equal(PMC *value)</b></code></a></dt>
+Returns whether the two <code>struct</code>s are equivalent.
+<dt><a name="INTVAL_defined()"
+><b><code>INTVAL defined()</b></code></a></dt>
+Returns whether the <code>struct</code> is defined.
+<dt><a name="INTVAL_get_integer()"
+><b><code>INTVAL get_integer()</b></code></a></dt>
+Returns the size of the <code>struct</code>.
+<dt><a name="void_set_integer_native(INTVAL_size)"
+><b><code>void set_integer_native(INTVAL size)</b></code></a></dt>
+Sets the size of the <code>struct</code>.
+<dt><a name="INTVAL_get_integer_keyed_int(INTVAL_ix)"
+><b><code>INTVAL get_integer_keyed_int(INTVAL ix)</b></code></a></dt>
+Returns the integer value at index <code>ix</code>.
+<dt><a name="INTVAL_get_integer_keyed(PMC_*key)"
+><b><code>INTVAL get_integer_keyed(PMC *key)</b></code></a></dt>
+Returns the integer value associated with <code>*key</code>.
+<dt><a name="FLOATVAL_get_number_keyed_int(INTVAL_key)"
+><b><code>FLOATVAL get_number_keyed_int(INTVAL key)</b></code></a></dt>
+Returns the floating&#45;point value at index <code>ix</code>.
+<dt><a name="FLOATVAL_get_number_keyed(PMC_*key)"
+><b><code>FLOATVAL get_number_keyed(PMC *key)</b></code></a></dt>
+Returns the floating&#45;point value associated with <code>*key</code>.
+<dt><a name="STRING_*get_string_keyed_int(INTVAL_key)"
+><b><code>STRING *get_string_keyed_int(INTVAL key)</b></code></a></dt>
+Returns the Parrot string value at index <code>ix</code>.
+<dt><a name="STRING_*get_string_keyed(PMC_*key)"
+><b><code>STRING *get_string_keyed(PMC *key)</b></code></a></dt>
+Returns the Parrot string value associated with <code>*key</code>.
+<dt><a name="PMC_*get_pmc_keyed_int(INTVAL_key)"
+><b><code>PMC *get_pmc_keyed_int(INTVAL key)</b></code></a></dt>
+Returns the PMC value at index <code>ix</code>.
+<dt><a name="PMC_*get_pmc_keyed(PMC_*key)"
+><b><code>PMC *get_pmc_keyed(PMC *key)</b></code></a></dt>
+Returns the PMC value associated with <code>*key</code>.
+<dt><a name="void_*get_pointer()"
+><b><code>void *get_pointer()</b></code></a></dt>
+Returns the pointer to the actual C <code>struct</code>.
+<dt><a name="void_set_pointer(void_*value)"
+><b><code>void set_pointer(void *value)</b></code></a></dt>
+Set the pointer to the actual C <code>struct</code>.
+<dt><a name="void_set_integer_keyed_int(INTVAL_ix,_INTVAL_value)"
+><b><code>void set_integer_keyed_int(INTVAL ix, INTVAL value)</b></code></a></dt>
+Sets the value of the element at index <code>ix</code> to <code>value</code>.
+<dt><a name="void_set_integer_keyed(PMC_*key,_INTVAL_value)"
+><b><code>void set_integer_keyed(PMC *key, INTVAL value)</b></code></a></dt>
+Sets the value of the element associated with key <code>*key</code> to <code>value</code>.May cause segfaults if value is out of bounds.
+<dt><a name="void_set_number_keyed_int(INTVAL_key,_FLOATVAL_value)"
+><b><code>void set_number_keyed_int(INTVAL key, FLOATVAL value)</b></code></a></dt>
+Sets the value of the element at index <code>ix</code> to <code>value</code>.
+<dt><a name="void_set_number_keyed(PMC_*key,_FLOATVAL_value)"
+><b><code>void set_number_keyed(PMC *key, FLOATVAL value)</b></code></a></dt>
+Sets the value of the element associated with key <code>*key</code> to <code>value</code>.
+<dt><a name="void_set_string_keyed_int(INTVAL_key,_STRING_*value)"
+><b><code>void set_string_keyed_int(INTVAL key, STRING *value)</b></code></a></dt>
+Sets the value of the element at index <code>key</code> to <code>*value</code>.
+<dt><a name="void_set_string_keyed(PMC_*key,_STRING_*value)"
+><b><code>void set_string_keyed(PMC *key, STRING *value)</b></code></a></dt>
+Sets the value of the element associated with key <code>*key</code> to <code>*value</code>.</dl>
+
+<h1><a name="HISTORY"
+>HISTORY</a></h1>
+
+<p>Initial revision by sean 2002/08/04</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em><a href="../../docs/pmc/struct.pod.html">docs/pmc/struct.pod</a></em></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Role &#45; defines a role</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Role &#45; defines a role
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/role.pmc &#45; Role &#45; defines a role</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This class implements the Role PMC,
+a unit of class composition as outlined in <em><a href="../../docs/pdds/pdd15_objects.pod.html">docs/pdds/pdd15_objects.pod</a></em>.</p>
+
+<p>Role is not derived from any other PMC.</p>
+
+<h2><a name="Structure"
+>Structure</a></h2>
+
+<p>The Role PMC structure (<code>Parrot_Role</code>) consists of five items:</p>
+
+<dl>
+<dt><a name="name"
+><b><code>name</b></code></a></dt>
+The name of the role &#45;&#45; a STRING.
+An empty STRING is allocated during initialization.
+<dt><a name="namespace"
+><b><code>namespace</b></code></a></dt>
+The namespace the role is associated with,
+if any.
+A Null PMC is allocated during initialization.
+<dt><a name="roles"
+><b><code>roles</b></code></a></dt>
+The list of roles from which this role is composed,
+if any.
+An empty ResizablePMCArray is allocated during initialization.
+<dt><a name="methods"
+><b><code>methods</b></code></a></dt>
+The directory of method names and methods this role implements.
+An empty Hash PMC is allocated during initialization.
+<dt><a name="attrib_metadata"
+><b><code>attrib_metadata</b></code></a></dt>
+The directory of attribute names and attribute metadata this role contains.
+An empty Hash PMC is allocated during initialization.</dl>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes a Role PMC.
+<dt><a name="void_init_pmc(PMC_*init_data)"
+><b><code>void init_pmc(PMC *init_data)</b></code></a></dt>
+Creates a Role and initializes it using the settings from the Hash passed in <code>init_data</code>.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Mark referenced strings and PMCs in the structure as live.
+<dt><a name="void_add_attribute(STRING_*name,_PMC_*type)"
+><b><code>void add_attribute(STRING *name, PMC *type)</b></code></a></dt>
+Adds the given attribute with an optional type.
+Enters the attribute in the <code>attributes</code> array.
+<dt><a name="void_add_method(STRING_*name,_PMC_*sub)"
+><b><code>void add_method(STRING *name, PMC *sub)</b></code></a></dt>
+Adds the given sub PMC as a method with the given name.
+<dt><a name="void_remove_method(STRING_*name,_PMC_*sub)"
+><b><code>void remove_method(STRING *name, PMC *sub)</b></code></a></dt>
+Removes the method with the given name.
+<dt><a name="void_add_role(PMC_*role)"
+><b><code>void add_role(PMC *role)</b></code></a></dt>
+Composes the supplied Role PMC into this role,
+provided there are no conflicts.
+<dt><a name="PMC_*inspect_str(STRING_*what)"
+><b><code>PMC *inspect_str(STRING *what)</b></code></a></dt>
+Provides introspection of a specific piece of information about the role.
+The available information is:
+<dl>
+<dt><a name="name_&#45;_String_PMC_containing_the_name_of_the_role"
+>name &#45; String PMC containing the name of the role</a></dt>
+
+<dt><a name="namespce_&#45;_NameSpace_PMC_of_the_the_namespace_attached_to_the_role"
+>namespce &#45; NameSpace PMC of the the namespace attached to the role</a></dt>
+
+<dt><a name="attributes_&#45;_Hash_keyed_on_attribute_name,_value_is_hash_describing_it"
+>attributes &#45; Hash keyed on attribute name,
+value is hash describing it</a></dt>
+
+<dt><a name="methods_&#45;_Hash_keyed_on_method_name,_value_is_an_invokable_PMC._Includes_methods_composed_in_from_roles."
+>methods &#45; Hash keyed on method name,
+value is an invokable PMC.
+Includes methods composed in from roles.</a></dt>
+
+<dt><a name="roles_&#45;_Array_of_Role_PMCs._Includes_roles_done_by_the_roles_that_were_composed_into_this_role."
+>roles &#45; Array of Role PMCs.
+Includes roles done by the roles that were composed into this role.</a></dt>
+</dl>
+
+<dt><a name="PMC_*inspect()"
+><b><code>PMC *inspect()</b></code></a></dt>
+Returns a Hash describing the role,
+with key/value pairs as described in inspect_str.
+<dt><a name="STRING_*get_string()"
+><b><code>STRING *get_string()</b></code></a></dt>
+Return the name of the role (without the HLL namespace).
+<dt><a name="INTVAL_does(STRING_*rolename)"
+><b><code>INTVAL does(STRING *rolename)</b></code></a></dt>
+Returns whether the class does the role with the given <code>*rolename</code>.
+<dt><a name="INTVAL_does_pmc(PMC_*role)"
+><b><code>INTVAL does_pmc(PMC *role)</b></code></a></dt>
+Returns whether the class does the givne <code>*role</code>.</dl>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="METHOD_name(STRING_*name_:optional,_int_got_name_:opt_flag)"
+><b><code>METHOD name(STRING *name :optional, int got_name :opt_flag)</b></code></a></dt>
+Sets the name of the role,
+and updates the namespace accordingly.
+<dt><a name="METHOD_get_namespace()"
+><b><code>METHOD get_namespace()</b></code></a></dt>
+Gets the namespace associated with this role,
+if any.
+<dt><a name="METHOD_attributes()"
+><b><code>METHOD attributes()</b></code></a></dt>
+Return a hash where the keys are attribute names and the values are hashes providing a set of key/value pairs describing the attribute.
+<dt><a name="METHOD_add_attribute(STRING_*attribute_name,_PMC_*attribute_type_:optional,_int_got_type_:opt_flag)"
+><b><code>METHOD add_attribute(STRING *attribute_name, PMC *attribute_type :optional, int got_type :opt_flag)</b></code></a></dt>
+Add an attribute to the role.
+Requires a name and,
+optionally,
+a type.
+<dt><a name="METHOD_methods()"
+><b><code>METHOD methods()</b></code></a></dt>
+Return a hash where the keys are method names and the values are methods.
+<dt><a name="METHOD_add_method(STRING_*name,_PMC_*sub)"
+><b><code>METHOD add_method(STRING *name, PMC *sub)</b></code></a></dt>
+Adds the given sub PMC as a method with the given name.
+<dt><a name="void_remove_method(STRING_*name)"
+><b><code>void remove_method(STRING *name)</b></code></a></dt>
+Removes the method with the given name.
+<dt><a name="METHOD_roles()"
+><b><code>METHOD roles()</b></code></a></dt>
+Return the roles array PMC.
+<dt><a
+><b><code>METHOD add_role(PMC *role, PMC *exclude_method :optional :named(&#34;exclude_method&#34;), int got_exclude_method :opt_flag, PMC *alias_method :optional :named(&#34;alias_method&#34;), int got_alias_method :opt_flag)</b></code></a></dt>
+Compose the given role into this one,
+using the given exclusions and aliases.
+<dt><a name="void_inspect(STRING_*what_:optional)"
+><b><code>void inspect(STRING *what :optional)</b></code></a></dt>
+Gets all introspection data for the role or,
+if the optional string parameter is supplied,
+a particular item of introspection data.
+<dt><a name="void_does(STRING_*role)"
+><b><code>void does(STRING *role)</b></code></a></dt>
+Returns true if this role (or any role composed into this one) performs the named role.
+This will recurse through all roles as far back as it can.</dl>
+
+<h1><a name="STABILITY"
+>STABILITY</a></h1>
+
+<p>Unstable.
+This PMC is under active development; major portions of the interface have not yet been completed.</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em><a href="../../docs/pdds/pdd15_objects.pod.html">docs/pdds/pdd15_objects.pod</a></em>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

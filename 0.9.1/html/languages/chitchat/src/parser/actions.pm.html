@@ -1,0 +1,103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Untitled</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../../html/index.html">Contents</a> &raquo; <a href="../../../../../html/languages.html">Language Implementations</a> &raquo; <a href="../../../../../html/chitchat.html">ChitChat</a> &raquo; Untitled
+                </div>
+
+<p>class ChitChat::Grammar::Actions;</p>
+
+<p>method TOP($/) { my $past := PAST::Block.new( :blocktype(&#39;declaration&#39;),
+:node( $/ ) ); for $&#60;exprs&#62; { $past.push( $( $_ ) ); } make $past; }</p>
+
+<p>method block($/) { my $past := PAST::Block.new( :blocktype(&#39;declaration&#39;),
+:node($/) ); for $&#60;id&#62; { my $param := $( $_ ); $param.isdecl(1); $param.scope(&#39;parameter&#39;); $past.push($param); } if $&#60;temps&#62; { my $temps := $( $&#60;temps&#62;[0] ); $past.push($temps); }</p>
+
+<pre>    $past.push( $( $&#60;exprs&#62; ) );
+
+    make $past;
+}</pre>
+
+<p>method method($/) { my $past := $( $&#60;message&#62; ); ## todo: pragma</p>
+
+<pre>    if $&#60;temps&#62; {
+        $past.push( $( $&#60;temps&#62;[0] ) );
+    }
+    $past.push( $( $&#60;exprs&#62; ) );
+    make $past;
+}</pre>
+
+<p>method message($/, $key) { if $key eq &#39;id&#39; { my $name := $( $&#60;id&#62; ); make PAST::Block.new( :name($name), :node($/) ); } elsif $key eq &#39;binsel&#39; { ## create a new block for a binary operator; stick to ## naming habit in other languages (&#39;infix:...&#39;). make PAST::Block.new( :name(&#39;infix:&#39; ~ ~$&#60;binsel&#62;), :node($/) ); } elsif $key eq &#39;keysel&#39; { my $name := &#34;&#34;; for $&#60;keysel&#62; { $name := $name ~ ~$_; } my $past := PAST::Block.new( :name($name), :node($/) );</p>
+
+<pre>        for $&#60;id&#62; {
+            my $param := $( $_ );
+            $param.scope(&#39;parameter&#39;);
+            $past.push($param);
+        }
+        make $past;
+    }
+}</pre>
+
+<p>method temps($/) { my $past := PAST::Stmts.new( :node($/) ); for $&#60;id&#62; { my $temp := $( $_ ); $temp.scope(&#39;lexical&#39;); $temp.isdecl(1); $past.push( $temp ); } make $past; }</p>
+
+<p>method exprs($/) { my $past := PAST::Stmts.new(); for $&#60;expr&#62; { $past.push( $( $_ ) ); } make $past; }</p>
+
+<p>method expr($/) { # for $&#60;id&#62; { # $( $_ ); # } make $( $&#60;expr2&#62; ); }</p>
+
+<p>method expr2($/,$key) { my $past := $( $/{$key} ); if $key eq &#39;msgexpr&#39; { #my $statlist := PAST::Stmts.new(); #for $&#60;cascade&#62; { # my $stat := $( $_ ); # $stat.unshift($past); # $statlist.push($stat); #} #make $statlist; make $past; } else { make $past; } }</p>
+
+<p>method cascade($/,$key) { make $( $/{$key} ); }</p>
+
+<p>method msgexpr($/,$key) { make $( $/{$key} ); }</p>
+
+<p>method keyexpr($/) { my $past := PAST::Op.new( :pasttype(&#39;callmethod&#39;) ); $past.push( PAST::Var.new( :name( $( $&#60;keyexpr2&#62;).name() ), :scope(&#39;package&#39;) ) ); my @args := $( $&#60;keymsg&#62; ); my $name := &#39;&#39;; while +@args { $name := $name ~ ~@args.shift(); $past.push( @args.shift() ); } $past.name($name); make $past; }</p>
+
+<p>method keyexpr2($/, $key) { make $( $/{$key} ); }</p>
+
+<p>method keymsg($/) { my @past; my $num := +$&#60;keysel&#62;; my $i := 0; while $i &#60; $num { @past.push( ~$&#60;keysel&#62;[$i] ); @past.push( $($&#60;keyexpr2&#62;[$i]) ); $i++; } make @past; }</p>
+
+<p>method binexpr($/) { my $past := $( $&#60;primary&#62; ); for $&#60;binmsg&#62; { my $call := $( $_ ); $call.unshift($past); $past := $call; } make $past; }</p>
+
+<p>method binmsg($/) { my $past := PAST::Op.new( :name(&#39;infix:&#39; ~ ~$&#60;binsel&#62;), :pasttype(&#39;call&#39;) ); $past.push( $( $&#60;primary&#62; ) ); make $past; }</p>
+
+<p>method unaryexpr($/) { make $( $&#60;unit&#62; ); }</p>
+
+<p>method primary($/,$key) { make $( $&#60;unit&#62; ); }</p>
+
+<p>method unit($/,$key) { make $( $/{$key} ); }</p>
+
+<p>method literal($/,$key) { make $( $/{$key} ); }</p>
+
+<p>method arrayelem($/,$key) { make $( $/{$key} ); }</p>
+
+<p>method number($/) { make PAST::Val.new( :value(~$/), :returns(&#39;Float&#39;) ); }</p>
+
+<p>method string($/) { make PAST::Val.new( :value(~$&#60;text&#62;), :returns(&#39;String&#39;) ); }</p>
+
+<p>method id($/) { make PAST::Var.new( :name(~$/), :scope(&#39;package&#39;), :node($/) ); }</p>
+
+<p># Local Variables: # mode: cperl # cperl&#45;indent&#45;level: 4 # fill&#45;column: 100 # End: # vim: expandtab shiftwidth=4:</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

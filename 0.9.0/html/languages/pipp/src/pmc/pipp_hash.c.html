@@ -1,0 +1,186 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>core functions and data structs for the</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css"
+            HREF="../../../../../resources/perl.css"
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY>
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">core functions and data structs for the</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../../../html/index.html">Contents</a> | <a href="../../../../../html/languages.html">Language Implementations</a> | <a href="../../../../../html/pipp.html">Pipp</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>languages/pipp/src/pipp_hash.c &#45; core functions and data structs for the PHPArray PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h1>
+
+<p>A hashtable contains an array of bucket indexes.
+Buckets are nodes in a linked list,
+each containing a <code>void *</code> key and value.
+During hash creation,
+the type of the value can be set.
+All keys are stored as STRINGs.</p>
+
+<h2><a name="Initialization_and_Finalization_Functions"
+>Initialization and Finalization Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="PippHashTable*_pipp_hash_create(PARROT_INTERP,_UINTVAL_size)"
+><b><code>PippHashTable *pipp_hash_create(PARROT_INTERP, UINTVAL size)</b></code></a></dt>
+Create and initialize a new PippHash with at least <code>size</code> buckets.
+<dt><a name="void_pipp_hash_destroy(PARROT_INTERP,_PippHashTable_*ht)"
+><b><code>void pipp_hash_destroy(PARROT_INTERP, PippHashTable *ht)</b></code></a></dt>
+Non&#45;recursively free all memory used by this PippHash.
+<dt><a name="void_pipp_hash_empty(PARROT_INTERP,_PippHashTable_*ht)"
+><b><code>void pipp_hash_empty(PARROT_INTERP, PippHashTable *ht)</b></code></a></dt>
+Delete all items from this PippHash,
+leaving the size unchanged.</dl>
+
+<h2><a name="Debugging_Functions"
+>Debugging Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_pipp_hash_sanity_check(PARROT_INTERP,_PippHashTable_*ht)"
+><b><code>void pipp_hash_sanity_check(PARROT_INTERP, PippHashTable *ht)</b></code></a></dt>
+Iterate through the PippHash,
+making sure that everything&#39;s sane.
+This function is intended only for internal debugging.
+If anything&#39;s goofy,
+an exception with a descriptive message is thrown.</dl>
+
+<h2><a name="Miscellaneous_Housekeeping_Functions"
+>Miscellaneous Housekeeping Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_pipp_hash_renumber(PARROT_INTERP,_PippHashTable_*ht)"
+><b><code>void pipp_hash_renumber(PARROT_INTERP, PippHashTable *ht)</b></code></a></dt>
+Renumber all numerically&#45;indexed elements of this PippHash,
+starting from 0.
+Numbering is done according to insertion order.
+<dt><a name="void_pipp_hash_rehash(PARROT_INTERP,_PippHashTable_*ht)"
+><b><code>void pipp_hash_rehash(PARROT_INTERP, PippHashTable *ht)</b></code></a></dt>
+Recalculate the hash of each element,
+potentially placing it in another bucket.
+This is used when a PippHash grows and has its hashMask changed.
+<dt><a name="void_pipp_hash_resize(PARROT_INTERP,_PippHashTable_*ht,_INTVAL_new_size)"
+><b><code>void pipp_hash_resize(PARROT_INTERP, PippHashTable *ht, INTVAL new_size)</b></code></a></dt>
+Increase the capacity and number of buckets of this PippHash.
+Resizing implies rehashing.</dl>
+
+<h2><a name="Hash_Manipulation_Functions"
+>Hash Manipulation Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="PippBucket*_pipp_hash_get_bucket(PARROT_INTERP,_PippHashTable_*ht,_STRING_*key)"
+><b><code>PippBucket *pipp_hash_get_bucket(PARROT_INTERP, PippHashTable *ht, STRING *key)</b></code></a></dt>
+If there is a bucket with a the key <code>key</code>,
+return a pointer to it.
+Otherwise return NULL.
+<dt><a name="PMC*_pipp_hash_get(PARROT_INTERP,_PippHashTable_*ht,_STRING_*key)"
+><b><code>PMC *pipp_hash_get(PARROT_INTERP, PippHashTable *ht, STRING *key)</b></code></a></dt>
+If there is a bucket with a the key <code>key</code>,
+return the value of that bucket.
+Otherwise return NULL.
+<dt><a name="PippBucket*_pipp_hash_put(PARROT_INTERP,_PippHashTable_*ht,_STRING_*key,_PMC_*p_val)"
+><b><code>PippBucket *pipp_hash_put(PARROT_INTERP, PippHashTable *ht, STRING *key, PMC *p_val)</b></code></a></dt>
+Store <code>p_val</code>,
+indexed by <code>key</code>,
+in the hash.
+Return the bucket where <code>p_val</code> was stored.
+<dt><a name="PippBucket*_pipp_hash_find(PARROT_INTERP,_PippHashTable_*ht,_STRING_*key)"
+><b><code>PippBucket *pipp_hash_find(PARROT_INTERP, PippHashTable *ht, STRING *key)</b></code></a></dt>
+If there is a bucket with a the key <code>key</code>,
+return 1.
+Otherwise return 0.
+<dt><a name="void_pipp_hash_delete(PARROT_INTERP,_PippHashTable_*ht,_STRING_*key)"
+><b><code>void pipp_hash_delete(PARROT_INTERP, PippHashTable *ht, STRING *key)</b></code></a></dt>
+If there&#39;s a bucket in this hash with the key <code>key</code>,
+it is deleted.
+If there&#39;s no matching bucket,
+nothing happens.</dl>
+
+<h2><a name="Deque_Functions"
+>Deque Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="PippBucket*_pipp_hash_push(PARROT_INTERP,_PippHashTable_*ht,_PMC_*p_val)"
+><b><code>PippBucket *pipp_hash_push(PARROT_INTERP, PippHashTable *ht, PMC *p_val)</b></code></a></dt>
+Append a bucket with <code>p_val</code> to the PippHash.
+Its index will be determined by the value of ht&#45;&#62;nextIndex.
+Pushing onto a PippHash does *not* affect internalPointer.
+<dt><a name="PMC*_pipp_hash_pop(PARROT_INTERP,_PippHashTable_*ht)"
+><b><code>PMC *pipp_hash_pop(PARROT_INTERP, PippHashTable *ht)</b></code></a></dt>
+Delete the element at the end of this hash,
+returning its value.
+Popping from a PippHash also resets internalPointer to point at the first element of the array.
+<dt><a name="PippBucket*_pipp_hash_unshift(PARROT_INTERP,_PippHashTable_*ht,_PMC_*p_val)"
+><b><code>PippBucket *pipp_hash_unshift(PARROT_INTERP, PippHashTable *ht, PMC *p_val)</b></code></a></dt>
+Prepend a bucket with <code>p_val</code> to the PippHash.
+Its index will be 0 and all other numerically indexed elements will be renumbered according to insertion order.
+Unshifting also points internalPointer at the first element.
+<dt><a name="PMC*_pipp_hash_shift(PARROT_INTERP,_PippHashTable_*ht)"
+><b><code>PMC *pipp_hash_shift(PARROT_INTERP, PippHashTable *ht)</b></code></a></dt>
+Delete the element at the beginning of this hash,
+returning its value.
+This also resets internalPointer to point at the first element of the resulting hash.</dl>
+
+<h2><a name="Freeze/Thaw_Helper_Functions"
+>Freeze/Thaw Helper Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="void_pipp_hash_visit(PARROT_INTERP,_PippHashTable_*ht,_visit_info_*info)"
+><b><code>void pipp_hash_visit(PARROT_INTERP, PippHashTable *ht, visit_info *info)</b></code></a></dt>
+Dispatch a call to VTABLE_visit to the appropriate internal function.
+<dt><a name="void_pipp_hash_freeze(PARROT_INTERP,_PippHashTable_*ht,_visit_info_*info)"
+><b><code>void pipp_hash_freeze(PARROT_INTERP, PippHashTable *ht, visit_info *info)</b></code></a></dt>
+Do most of the actual work of serializing this PippHash into <code>info</code>.
+<dt><a name="void_pipp_hash_thaw(PARROT_INTERP,_PippHashTable_*ht,_visit_info_*info)"
+><b><code>void pipp_hash_thaw(PARROT_INTERP, PippHashTable *ht, visit_info *info)</b></code></a></dt>
+Unserialize this PippHash into <code>info</code>.</dl>
+
+<h2><a name="Miscellaneous_Helper_Functions"
+>Miscellaneous Helper Functions <a href='#_top'><img alt='^' border=0 src='../../../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="PippIsInt*_pipp_hash_get_intval(PARROT_INTERP,_STRING_*key)"
+><b><code>PippIsInt *pipp_hash_get_intval(PARROT_INTERP, STRING *key)</b></code></a></dt>
+If <code>s</code> looks like an INTVAL (i.e.
+/^([&#45;]?[1&#45;9][0&#45;9]|0)*$/) and doesn&#39;t cause an overflow,
+return a PippIsInt where <code>p&#45;</code>intval&#62; contains the INTVAL and <code>p&#45;</code>isInt&#62; is true.
+Otherwise,
+return a PippIsInt where <code>p&#45;</code>isInt&#62; is false and <code>p&#45;</code>intval&#62; is undefined.</dl>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../../../resources/parrot_small.png"
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>

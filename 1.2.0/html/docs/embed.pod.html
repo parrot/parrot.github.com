@@ -1,0 +1,475 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot embedding system</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Home</a> &raquo; <a href="../../html/developer.html">Developer Documentation</a> &raquo; Parrot embedding system
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>embed.pod &#45; Parrot embedding system</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    #include &#60;parrot/embed.h&#62;
+    #include &#60;parrot/extend.h&#62;
+
+    int main(int argc, char* argv[])
+    {
+        Parrot_Interp interp;
+        Parrot_PackFile pf;
+
+        interp = Parrot_new(NULL);
+        if (!interp) {
+            return 1;
+        }
+
+        pf = Parrot_pbc_read(interp, &#34;foo.pbc&#34;, 0);
+        Parrot_pbc_load(interp, pf);
+        Parrot_runcode(interp, argc, argv);
+
+        Parrot_destroy(interp);
+
+        return 0;
+    }</pre>
+
+<h1><a name="FILES"
+>FILES</a></h1>
+
+<dl>
+<dt><a name="include/parrot/embed.h"
+><em>include/parrot/embed.h</em></a></dt>
+
+<dt><a name="include/parrot/extend.h"
+><em>include/parrot/extend.h</em></a></dt>
+</dl>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This is the documentation for Parrot&#39;s embedding API.</p>
+
+<h2><a name="Data_structures"
+>Data structures</a></h2>
+
+<dl>
+<dt><a name="Parrot_Interp"
+><b><code>Parrot_Interp</b></code></a></dt>
+The topmost data structure in Parrot is <code>Parrot_Interp</code>, which represents a Parrot interpreter. It is a required argument to almost every Parrot API function. The structure is opaque in an embedded environment, so you cannot directly access any of its members.
+<dt><a name="Parrot_PackFile"
+><b><code>Parrot_PackFile</b></code></a></dt>
+A Parrot packfile, the internal structure containing Parrot bytecode.
+<dt><a name="Parrot_String"
+><b><code>Parrot_String</b></code></a></dt>
+Parrot&#39;s internal string type, which contains character encoding information.
+<dt><a name="Parrot_PMC"
+><b><code>Parrot_PMC</b></code></a></dt>
+A Polymorphic Container. This is the opaque external type for (PMC *). Note that this is a macro, so there can be only one <code>Parrot_PMC</code> declaration per line.
+<dt><a name="Parrot_Int"
+><b><code>Parrot_Int</b></code></a></dt>
+
+<dt><a name="Parrot_Float"
+><b><code>Parrot_Float</b></code></a></dt>
+
+<dt><a name="Parrot_UInt"
+><b><code>Parrot_UInt</b></code></a></dt>
+Parrot&#39;s numeric types.</dl>
+
+<h2><a name="Constants"
+>Constants</a></h2>
+
+<p>Not documented yet.</p>
+
+<h2><a name="Type_signatures"
+>Type signatures</a></h2>
+
+<p>These are used with the Parrot_call_sub family of functions.</p>
+
+<dl>
+<dt><a name="v_&#45;_void_(return_only)"
+>v &#45; void (return only)</a></dt>
+
+<dt><a name="I_&#45;_integer_(return_or_argument)"
+>I &#45; integer (return or argument)</a></dt>
+
+<dt><a name="N_&#45;_float_(return_or_argument)"
+>N &#45; float (return or argument)</a></dt>
+
+<dt><a name="S_&#45;_string_(return_or_argument)"
+>S &#45; string (return or argument)</a></dt>
+
+<dt><a name="P_&#45;_PMC_(return_or_argument)"
+>P &#45; PMC (return or argument)</a></dt>
+</dl>
+
+<h2><a name="Interpreter_initialization_and_destruction"
+>Interpreter initialization and destruction</a></h2>
+
+<dl>
+<dt><a name="Parrot_Interp_Parrot_new(Parrot_Interp_parent)"
+><b><code>Parrot_Interp Parrot_new(Parrot_Interp parent)</b></code></a></dt>
+Creates a new interpreter, inheriting some data structures from a parent interpreter, if supplied. The first interpreter in any process should be created with a NULL parent, and all subsequent interpreters in the same process should use the first interpreter as their parent. Failure to do so may result in unpredictable errors.
+<dt><a name="Parrot_set_flag(PARROT_INTERP,_Parrot_int_flags)"
+><b><code>Parrot_set_flag(PARROT_INTERP, Parrot_int flags)</b></code></a></dt>
+Sets or unsets interpreter flags. Flags should be OR&#39;d together. Valid flags include:
+<dl>
+<dt><a name="PARROT_NO_FLAGS"
+>PARROT_NO_FLAGS</a></dt>
+
+<dt><a name="PARROT_BOUNDS_FLAG"
+>PARROT_BOUNDS_FLAG</a></dt>
+
+<dt><a name="PARROT_GC_DEBUG_FLAG"
+>PARROT_GC_DEBUG_FLAG</a></dt>
+
+<dt><a name="PARROT_EXTERN_CODE_FLAG"
+>PARROT_EXTERN_CODE_FLAG</a></dt>
+
+<dt><a name="PARROT_DESTROY_FLAG"
+>PARROT_DESTROY_FLAG</a></dt>
+
+<dt><a name="PARROT_IS_THREAD"
+>PARROT_IS_THREAD</a></dt>
+
+<dt><a name="PARROT_THR_COPY_INTERP"
+>PARROT_THR_COPY_INTERP</a></dt>
+
+<dt><a name="PARROT_THR_THREAD_POOL"
+>PARROT_THR_THREAD_POOL</a></dt>
+
+<dt><a name="PARROT_THR_TYPE_1"
+>PARROT_THR_TYPE_1</a></dt>
+
+<dt><a name="PARROT_THR_TYPE_2"
+>PARROT_THR_TYPE_2</a></dt>
+
+<dt><a name="PARROT_THR_TYPE_3"
+>PARROT_THR_TYPE_3</a></dt>
+</dl>
+See <em>interpreter.h</em> for the definition of these flags (TODO: document flag definitions here).
+<dt><a name="void_Parrot_set_run_core(PARROT_INTERP,_Parrot_Run_core_t_core)"
+><b><code>void Parrot_set_run_core(PARROT_INTERP, Parrot_Run_core_t core)</b></code></a></dt>
+Sets the runcore for the interpreter. Must be called before executing any bytecode. Valid runcores include:
+<dl>
+<dt><a name="PARROT_SLOW_CORE"
+>PARROT_SLOW_CORE</a></dt>
+
+<dt><a name="PARROT_FUNCTION_CORE"
+>PARROT_FUNCTION_CORE</a></dt>
+
+<dt><a name="PARROT_FAST_CORE"
+>PARROT_FAST_CORE</a></dt>
+
+<dt><a name="PARROT_SWITCH_CORE"
+>PARROT_SWITCH_CORE</a></dt>
+
+<dt><a name="PARROT_CGP_CORE"
+>PARROT_CGP_CORE</a></dt>
+
+<dt><a name="PARROT_CGOTO_CORE"
+>PARROT_CGOTO_CORE</a></dt>
+
+<dt><a name="PARROT_JIT_CORE"
+>PARROT_JIT_CORE</a></dt>
+
+<dt><a name="PARROT_CGP_JIT_CORE"
+>PARROT_CGP_JIT_CORE</a></dt>
+
+<dt><a name="PARROT_SWITCH_JIT_CORE"
+>PARROT_SWITCH_JIT_CORE</a></dt>
+
+<dt><a name="PARROT_EXEC_CORE"
+>PARROT_EXEC_CORE</a></dt>
+
+<dt><a name="PARROT_GC_DEBUG_CORE"
+>PARROT_GC_DEBUG_CORE</a></dt>
+</dl>
+See <em>interpreter.h</em> for the definitive list. If you&#39;re not sure which runcore to use, don&#39;t call this function. The default will be fine for most cases. (TODO: document runcores here).
+<dt><a name="Parrot_set_trace(Parrot_Interp,_Parrot_UInt_flags)"
+><b><code>Parrot_set_trace(Parrot_Interp, Parrot_UInt flags)</b></code></a></dt>
+Sets the interpreter&#39;s trace flags. Flags should be OR&#39;d together. Valid flags are:
+<dl>
+<dt><a name="PARROT_NO_TRACE"
+>PARROT_NO_TRACE</a></dt>
+
+<dt><a name="PARROT_TRACE_OPS_FLAG"
+>PARROT_TRACE_OPS_FLAG</a></dt>
+
+<dt><a name="PARROT_TRACE_FIND_METH_FLAG"
+>PARROT_TRACE_FIND_METH_FLAG</a></dt>
+
+<dt><a name="PARROT_TRACE_SUB_CALL_FLAG"
+>PARROT_TRACE_SUB_CALL_FLAG</a></dt>
+
+<dt><a name="PARROT_ALL_TRACE_FLAGS"
+>PARROT_ALL_TRACE_FLAGS</a></dt>
+</dl>
+
+<dt><a name="void_Parrot_set_executable_name(PARROT_INTERP,_Parrot_string_name)"
+><b><code>void Parrot_set_executable_name(PARROT_INTERP, Parrot_string name)</b></code></a></dt>
+Sets the executable name of the calling process. Note that the name is a Parrot string, not a C string.
+<dt><a name="void_Parrot_destroy(PARROT_INTERP)"
+><b><code>void Parrot_destroy(PARROT_INTERP)</b></code></a></dt>
+Destroys an interpreter. At the time of this writing, this is a no&#45;op. See &#60;Parrot_really_destroy()&#62;.
+<dt><a name="void_Parrot_really_destroy(PARROT_INTERP,_int_exit_code)"
+><b><code>void Parrot_really_destroy(PARROT_INTERP, int exit_code)</b></code></a></dt>
+Destroys an interpreter, regardless of the environment. The exit code is currently unused.
+<dt><a name="void_Parrot_exit(PARROT_INTERP,_int_status)"
+><b><code>void Parrot_exit(PARROT_INTERP, int status)</b></code></a></dt>
+Destroys the interpreter and exits with an exit code of <code>status</code>. Before exiting, the function calls all registered exit handlers in LIFO order. <code>Parrot_really_destroy()</code> is usually called as the last exit handler.
+<dt><a name="void_Parrot_on_exit(PARROT_INTERP,_void_(*handler)(Parrot_Interp,_int,_void_*),_void_*arg)"
+><b><code>void Parrot_on_exit(PARROT_INTERP, void (*handler)(Parrot_Interp, int, void *), void *arg)</b></code></a></dt>
+Registers an exit handler to be called from <code>Parrot_exit()</code> in LIFO order. The handler function should accept as arguments an interpreter, an integer exit code, and an argument (which can be NULL).
+<dt><a name="void_imcc_init(PARROT_INTERP)"
+><b><code>void imcc_init(PARROT_INTERP)</b></code></a></dt>
+Initializes the IMCC subsystem. Required for compiling PIR.</dl>
+
+<h2><a name="Loading_and_running_bytecode"
+>Loading and running bytecode</a></h2>
+
+<dl>
+<dt><a name="Parrot_PackFile_Parrot_pbc_read(PARROT_INTERP,_const_char_*path,_const_int_debug)"
+><b><code>Parrot_PackFile Parrot_pbc_read(PARROT_INTERP, const char *path, const int debug)</b></code></a></dt>
+Reads Parrot bytecode or PIR from the file referenced by <code>path</code>. Returns a packfile structure for use by <code>Parrot_pbc_load()</code>. <code>debug</code> should be 0.
+<dt><a name="void_Parrot_pbc_load(PARROT_INTERP,_Parrot_PackFile_pf)"
+><b><code>void Parrot_pbc_load(PARROT_INTERP, Parrot_PackFile pf)</b></code></a></dt>
+Loads a packfile into the interpreter. After this operation the interpreter is ready to run the bytecode in the packfile.
+<dt><a name="void_Parrot_runcode(PARROT_INTERP,_int_argc,_char_*argv[])"
+><b><code>void Parrot_runcode(PARROT_INTERP, int argc, char *argv[])</b></code></a></dt>
+Runs the bytecode associated with the interpreter. Use <code>argc</code> and <code>argv[]</code> to pass arguments to the bytecode.
+<dt><a name="Parrot_PackFile_PackFile_new_dummy(PARROT_INTERP,_char_*name)"
+><b><code>Parrot_PackFile PackFile_new_dummy(PARROT_INTERP, char *name)</b></code></a></dt>
+Creates a &#34;dummy&#34; packfile in lieu of actually creating one from a bytecode file on disk.
+<dt><a name="void_Parrot_load_bytecode(PARROT_INTERP,_const_char_*path)"
+><b><code>void Parrot_load_bytecode(PARROT_INTERP, const char *path)</b></code></a></dt>
+Reads and load Parrot bytecode or PIR from the file referenced by <code>path</code>. You should create a dummy packfile beforehand; see <code>PackFile_new_dummy</code> for details. Due to the void return type, the behavior of this function on error is unclear.</dl>
+
+<h2><a name="Data_manipulation"
+>Data manipulation</a></h2>
+
+<h3><a name="Native_types"
+>Native types</a></h3>
+
+<dl>
+<dt><a name="int_Parrot_PMC_typenum(PARROT_INTERP,_const_char_*type)"
+><b><code>int Parrot_PMC_typenum(PARROT_INTERP, const char *type)</b></code></a></dt>
+Returns the internal type number corresponding to <code>type</code>. Useful for instantiating various Parrot data types.
+<dt><a name="char_*Parrot_str_to_cstring(PARROT_INTERP)"
+><b><code>char *Parrot_str_to_cstring(PARROT_INTERP)</b></code></a></dt>
+XXX needs to be a formal Parrot_* API. Returns the C string representation of a Parrot string.
+<dt><a name="STRING_*Parrot_str_new(PARROT_INTERP,_const_char_*string,_int_len)"
+><b><code>STRING *Parrot_str_new(PARROT_INTERP, const char *string, int len)</b></code></a></dt>
+XXX needs to be a formal Parrot_* API. Returns the Parrot string representation of a C string.
+<dt><a name="string_from_literal(PARROT_INTERP,_const_char_*string)"
+><b><code>string_from_literal(PARROT_INTERP, const char *string)</b></code></a></dt>
+XXX needs to be a formal Parrot_* API. A macro for simplifying calls to <code>Parrot_str_new</code>.</dl>
+
+<h3><a name="PMCs"
+>PMCs</a></h3>
+
+<dl>
+<dt><a name="Parrot_PMC_Parrot_PMC_new(PARROT_INTERP,_int_typenum)"
+><b><code>Parrot_PMC Parrot_PMC_new(PARROT_INTERP, int typenum)</b></code></a></dt>
+Creates a new PMC of the type identified by <code>typenum</code>. Use <code>Parrot_PMC_typenum</code> to obtain the correct type number.
+<dt><a name="void_Parrot_register_pmc(Parrot_PMC_pmc)"
+><b><code>void Parrot_register_pmc(Parrot_PMC pmc)</b></code></a></dt>
+Registers an externally created PMC with the garbage collector. You MUST call this for any PMCs you create outside of Parrot bytecode, otherwise your PMC may be garbage collected before you are finished using it.
+<dt><a name="void_Parrot_unregister_pmc(Parrot_PMC_pmc)"
+><b><code>void Parrot_unregister_pmc(Parrot_PMC pmc)</b></code></a></dt>
+Unregisters an externally created PMC from the garbage collector. You MUST call this after you are finished using PMCs you create outside of Parrot bytecode, or risk memory leaks.</dl>
+
+<h3><a name="Globals"
+>Globals</a></h3>
+
+<dl>
+<dt><a name="Parrot_PMC_Parrot_find_global_cur(PARROT_INTERP,_Parrot_String_name)"
+><b><code>Parrot_PMC Parrot_find_global_cur(PARROT_INTERP, Parrot_String name)</b></code></a></dt>
+Find and return a global called <code>name</code> in the current namespace. Returns <code>PMCNULL</code> if not found.
+<dt><a name="Parrot_PMC_Parrot_find_global_n(PARROT_INTERP,_Parrot_String_namespace,_Parrot_String_name)"
+><b><code>Parrot_PMC Parrot_find_global_n(PARROT_INTERP, Parrot_String namespace, Parrot_String name)</b></code></a></dt>
+Not documented yet.
+<dt><a name="Parrot_PMC_Parrot_find_global_s(PARROT_INTERP,_Parrot_String_namespace,_Parrot_String_name)"
+><b><code>Parrot_PMC Parrot_find_global_s(PARROT_INTERP, Parrot_String namespace, Parrot_String name)</b></code></a></dt>
+Find and return a global called <code>name</code> in the namespace <code>namespace</code>. Returns <code>PMCNULL</code> if not found.
+<dt><a name="void_Parrot_store_global_n(PARROT_INTERP,_Parrot_String_namespace,_Parrot_String_name,_Parrot_PMC_val)"
+><b><code>void Parrot_store_global_n(PARROT_INTERP, Parrot_String namespace, Parrot_String name, Parrot_PMC val)</b></code></a></dt>
+Not documented yet.
+<dt><a name="void_Parrot_store_global_s(PARROT_INTERP,_Parrot_String_namespace,_Parrot_String_name,_Parrot_PMC_val)"
+><b><code>void Parrot_store_global_s(PARROT_INTERP, Parrot_String namespace, Parrot_String name, Parrot_PMC val)</b></code></a></dt>
+Sets the value of a global called <code>name</code> in the namespace <code>namespace</code>. Does nothing if the global is not found.
+<dt><a name="Parrot_PMC_Parrot_find_global_k(PARROT_INTERP,_Parrot_PMC_namespace_key,_Parrot_String_name)"
+><b><code>Parrot_PMC Parrot_find_global_k(PARROT_INTERP, Parrot_PMC namespace_key, Parrot_String name)</b></code></a></dt>
+Find and return a global called <code>name</code> in the keyed namespace <code>namespace</code>. Returns <code>PMCNULL</code> if not found.</dl>
+
+<h3><a name="Lexicals"
+>Lexicals</a></h3>
+
+<p>Not documented yet.</p>
+
+<h2><a name="Calling_subroutines"
+>Calling subroutines</a></h2>
+
+<dl>
+<dt><a name="void_*Parrot_call_sub(PARROT_INTERP,_Parrot_PMC_sub,_const_char_*signature)"
+><b><code>void *Parrot_call_sub(PARROT_INTERP, Parrot_PMC sub, const_char *signature)</b></code></a></dt>
+Call a Parrot subroutine that returns a pointer using the supplied signature.
+<dt><a name="Parrot_Int_Parrot_call_sub_ret_int(PARROT_INTERP,_Parrot_PMC_sub,_const_char_*signature)"
+><b><code>Parrot_Int Parrot_call_sub_ret_int(PARROT_INTERP, Parrot_PMC sub, const_char *signature)</b></code></a></dt>
+Call a Parrot subroutine that returns an integer using the supplied signature.
+<dt><a name="Parrot_Float_Parrot_call_sub_ret_float(PARROT_INTERP,_Parrot_PMC_sub,_const_char_*signature)"
+><b><code>Parrot_Float Parrot_call_sub_ret_float(PARROT_INTERP, Parrot_PMC sub, const_char *signature)</b></code></a></dt>
+Call a Parrot subroutine that returns an float using the supplied signature.</dl>
+
+<h2><a name="Objects"
+>Objects</a></h2>
+
+<h3><a name="Creating_and_destroying_objects"
+>Creating and destroying objects</a></h3>
+
+<dl>
+<dt><a name="Parrot_PMC_Parrot_oo_get_class(PARROT_INTERP,_Parrot_PMC_namespace)"
+><b><code>Parrot_PMC Parrot_oo_get_class(PARROT_INTERP, Parrot_PMC namespace)</b></code></a></dt>
+Returns the class corresponding to the supplied namespace.
+<dt><a name="Parrot_PMC_VTABLE_instantiate(PARROT_INTERP,_Parrot_PMC_the_class_Parrot_PMC_arg)"
+><b><code>Parrot_PMC VTABLE_instantiate(PARROT_INTERP, Parrot_PMC the_class Parrot_PMC arg)</b></code></a></dt>
+Instantiates a new object of class <code>the_class</code>, which can be obtained from <code>Parrot_oo_get_class()</code>. Passes an optional PMC argument <code>arg</code> to the constructor (see init versus init_pmc). Use <code>PMCNULL</code> if you are not supplying an argument.</dl>
+
+<h3><a name="Calling_methods"
+>Calling methods</a></h3>
+
+<p>Not documented yet.</p>
+
+<h1><a name="COMPILING"
+>COMPILING</a></h1>
+
+<p>Note: This section is aimed at you if you are writing an application external to parrot which links against an installed parrot library.</p>
+
+<h2><a name="Caveats"
+>Caveats</a></h2>
+
+<p>Several API functions are missing prototypes in Parrot&#39;s header files. This means you may receive type warnings during compilation even though the types of your arguments and return variables are correct. In this case it is safe to cast to the correct type; not doing so may cause undesired behavior.</p>
+
+<h2><a name="Compiler_and_linker_flags"
+>Compiler and linker flags</a></h2>
+
+<p>Your application will need to include the appropriate header files and link against parrot and its dependencies.</p>
+
+<p>Because the location of these files can vary from platform to platform, and build to build, a general method is provided to find out the necessary flags to use.</p>
+
+<p>pkg&#45;config is a helper tool, now common on many platforms, which many packages have adopted to provide the necessary compiler and linker flags required to build against a library. parrot will install a file called <em>parrot.pc</em> which can be queried using pkg&#45;config.</p>
+
+<p>To start with, find out what version of parrot is installed by running pkg&#45;config with the <code>&#45;&#45;modversion</code> flag. If this command fails with an error, skip to the end of this section.</p>
+
+<pre>  pkg&#45;config &#45;&#45;modversion parrot</pre>
+
+<p>To find out the necessary <code>&#45;I</code> flags, use <code>&#45;&#45;cflags</code>:</p>
+
+<pre>  pkg&#45;config &#45;&#45;cflags parrot</pre>
+
+<p>... and to find the necessary <code>&#45;L</code> and <code>&#45;l</code> flags, use <code>&#45;&#45;libs</code>:</p>
+
+<pre>  pkg&#45;config &#45;&#45;libs parrot</pre>
+
+<p>Where both compiling and linking are performed in one step, query both sets of flags with:</p>
+
+<pre>  pkg&#45;config &#45;&#45;cflags &#45;&#45;libs parrot</pre>
+
+<p>The pkg&#45;config command can be incorporated with a compile as shown here.</p>
+
+<pre>  cc src/disassemble.c `pkg&#45;config &#45;&#45;cflags &#45;&#45;libs parrot`</pre>
+
+<p>Most applications will probably choose to run pkg&#45;config as part of a configure script, so if you are using autoconf you could use a test such as this.</p>
+
+<pre>  PARROT_REQUIRED_VERSION=0.4.1
+  AC_SUBST(PARROT_REQUIRED_VERSION)
+  PKG_CHECK_MODULES(PARROT, parrot &#62;= $PARROT_REQUIRED_VERSION,
+                    [AC_DEFINE([HAVE_PARROT], 1, [define if have parrot])])
+  AC_SUBST(PARROT_LIBS)
+  AC_SUBST(PARROT_CFLAGS)</pre>
+
+<p>If parrot has been installed system&#45;wide, then any of the previous lines should have returned the relevant flags. If it is not installed in one of the standard places that pkg&#45;config looks, then you will get an error message.</p>
+
+<pre>  pkg&#45;config &#45;&#45;libs parrot
+  Package parrot was not found in the pkg&#45;config search path.
+  Perhaps you should add the directory containing `parrot.pc&#39;
+  to the PKG_CONFIG_PATH environment variable
+  No package &#39;parrot&#39; found</pre>
+
+<p>As stated in the error message, use an environment variable to make pkg&#45;config look in more locations.</p>
+
+<pre>  export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig</pre>
+
+<p>The last part of the variable will almost certainly be <em>.../lib/pkgconfig</em>. Set this variable in your login scripts if you need it to be available in future.</p>
+
+<h1><a name="EXAMPLES"
+>EXAMPLES</a></h1>
+
+<h2><a name="Load_bytecode_as_a_library_and_run_a_single_subroutine"
+>Load bytecode as a library and run a single subroutine</a></h2>
+
+<pre>    #include &#60;parrot/parrot.h&#62;
+    #include &#60;parrot/embed.h&#62;
+    #include &#60;parrot/extend.h&#62;
+
+    int main(int argc, char *argv[])
+    {
+        Parrot_Interp interp;
+        Parrot_PackFile pf;
+        Parrot_PMC sub;
+        Parrot_String pstr;
+
+        interp = Parrot_new(NULL);
+        imcc_init(interp);
+
+        /* create a new packfile &#45;&#45; any name will do */
+        pf = PackFile_new_dummy(interp, &#34;my&#45;parrot&#45;code&#34;);
+
+        pstr = string_from_literal(interp, &#34;foo.pir&#34;);
+        Parrot_load_bytecode(interp, pstr);
+
+        /* find the subroutine named &#34;foo&#34; in the global namespace */
+        pstr = string_from_literal(interp, &#34;foo&#34;);
+        sub = Parrot_find_global_cur(interp, pstr);
+
+        /* run foo(), which returns nothing */
+        Parrot_call_sub(interp, sub, &#34;v&#34;);
+
+        Parrot_destroy(interp);
+
+        return(0);
+    }</pre>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em><a href="../src/main.c.html">src/main.c</a></em> and <em>t/src/*.t</em> for Parrot&#39;s use of the embedding system.</p>
+
+<p><a href='http://pkgconfig.freedesktop.org/wiki/'><a href="http://pkgconfig.freedesktop.org/wiki/">http://pkgconfig.freedesktop.org/wiki/</a></a> A pkg&#45;config page</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Extended I/O Dynops</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/ops.html">Opcodes</a> &raquo; Extended I/O Dynops
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>io.ops &#45; Extended I/O Dynops</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>A richer I/O API than that available in core Parrot.</p>
+
+<dl>
+<dt><a name="stat(out_INT,_in_STR,_in_INT)"
+><b>stat</b>(out INT,
+in STR,
+in INT)</a></dt>
+
+<dt><a name="stat(out_INT,_in_INT,_in_INT)"
+><b>stat</b>(out INT,
+in INT,
+in INT)</a></dt>
+Stat the file.
+Return stat element $3 for file $2 into $1.
+The queryable items currently are:
+<pre> EXISTS     0
+ FILESIZE   1
+ ISDIR      2
+ ISDEV      3
+ CREATETIME 4 (Time file was created)
+ ACCESSTIME 5 (Time file was last accessed)
+ MODIFYTIME 6 (Time file data was changed)
+ CHANGETIME 7 (Time file metadata was changed)
+ BACKUPTIME 8 (Time of last backup)
+ UID        9
+ GID        10</pre>
+
+<dt><a name="read(out_STR,_in_INT)"
+><b>read</b>(out STR, in INT)</a></dt>
+Read up to N bytes from standard input stream
+<dt><a name="read(out_STR,_invar_PMC,_in_INT)"
+><b>read</b>(out STR, invar PMC, in INT)</a></dt>
+Read up to N bytes from IO PMC stream.
+<dt><a name="readline(out_STR,_invar_PMC)"
+><b>readline</b>(out STR, invar PMC)</a></dt>
+Read a line up to EOL from filehandle $2. This switches the filehandle to linebuffer&#45;mode.
+<dt><a name="printerr(in_INT)"
+><b>printerr</b>(in INT)</a></dt>
+
+<dt><a name="printerr(in_NUM)"
+><b>printerr</b>(in NUM)</a></dt>
+
+<dt><a name="printerr(in_STR)"
+><b>printerr</b>(in STR)</a></dt>
+
+<dt><a name="printerr(invar_PMC)"
+><b>printerr</b>(invar PMC)</a></dt>
+Print $1 to standard error.
+<dt><a name="seek(invar_PMC,_in_INT,_in_INT)"
+><b>seek</b>(invar PMC, in INT, in INT)</a></dt>
+seek: Set file position to offset $2 on IO stream $1. &#39;whence&#39; is indicated by the value in $3. The valid values for &#39;whence&#39; are:
+<pre> Value      Meaning
+ 0          Seek from the beginning of the file
+ 1          Seek from the current position
+ 2          Seek from the end of the file</pre>
+[ Note: the above values for &#39;whence&#39; is just an educated guess at this point ]
+<dt><a name="seek(invar_PMC,_in_INT,_in_INT,_in_INT)"
+><b>seek</b>(invar PMC, in INT, in INT, in INT)</a></dt>
+64bit seek: Set file position to offset ($2 &#60;&#60; 32 | $3) on IO stream $1. &#39;whence&#39; is indicated by the value in $4. This allows 64&#45;bit seeks with only 32&#45;bit INTVALS.
+<dt><a name="tell(out_INT,_invar_PMC)"
+><b>tell</b>(out INT, invar PMC)</a></dt>
+tell: Get the current file position of stream $2 and store it in $1. On systems where INTVAL is 32bit the result will be truncated if the position is beyond 2 GiB
+<dt><a name="tell(out_INT,_out_INT,_invar_PMC)"
+><b>tell</b>(out INT, out INT, invar PMC)</a></dt>
+64bit tell: Get the current file positon of stream $3 in two parts of 32&#45;bit each ($1 = pos &#62;&#62; 32, $2 = pos &#38; 0xffffffff).
+<dt><a name="peek(out_STR)"
+><b>peek</b>(out STR)</a></dt>
+Returns the next byte from standard input, but does not remove it from the stream.
+<dt><a name="peek(out_STR,_invar_PMC)"
+><b>peek</b>(out STR, invar PMC)</a></dt>
+Reads the next byte from an IO PMC, but does not remove it from the stream.
+<dt><a name="open(out_PMC,_in_STR,_in_STR)"
+><b>open</b>(out PMC, in STR, in STR)</a></dt>
+Open URL (file, address, database, in core image) named $2 with a mode string in $3 and create an IO object in $1.The mode consists of a string of characters specified in any order:
+<pre> r : read
+ w : write
+ a : append (Note: you must specify &#34;wa&#34;, not just &#34;a&#34;)
+ p : pipe</pre>
+
+<dt><a name="open(out_PMC,_in_STR)"
+><b>open</b>(out PMC, in STR)</a></dt>
+Open URL (file, address, database, in core image) named $2 with read mode and create an IO object in $1.
+<dt><a name="close(invar_PMC)"
+><b>close</b>(invar PMC)</a></dt>
+Close IO object $1
+<dt><a name="fdopen(out_PMC,_in_INT,_in_STR)"
+><b>fdopen</b>(out PMC, in INT, in STR)</a></dt>
+Create ParrotIO object in $1 as a copy of file descriptor $2.
+<dt><a name="setstdin(invar_PMC)"
+><b>setstdin</b>(invar PMC)</a></dt>
+Sets the standard input for a bare <code>read</code> op to go to the supplied PMC. Call <code>getstdin</code> first if you care about retaining the previous PMC.
+<dt><a name="setstdout(invar_PMC)"
+><b>setstdout</b>(invar PMC)</a></dt>
+Sets the standard output for a bare <code>print</code> op to go to the supplied PMC. Call <code>getstdout</code> first if you care about retaining the previous PMC.
+<dt><a name="setstderr(invar_PMC)"
+><b>setstderr</b>(invar PMC)</a></dt>
+Sets the standard error for a bare <code>printerr</code> op to go to the supplied PMC. Call <code>getstderr</code> first if you care about retaining the previous PMC.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

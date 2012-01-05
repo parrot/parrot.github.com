@@ -1,0 +1,103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Byteordering functions</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Contents</a> &raquo; <a href="../../html/c.html">C</a> &raquo; Byteordering functions
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/byteorder.c &#45; Byteordering functions</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>These are assigned to a vtable when the PBC file is loaded.</p>
+
+<p>If the vtable method for conversion from the native byteorder is called,
+it is a <i>no op</i> and will work,
+but the caller should know if the byteorder in the PBC file is native and skip the conversion and just map it in.</p>
+
+<h2><a name="Byte_order_handlers"
+>Byte order handlers</a></h2>
+
+<p>Configure will have checked for supported word sizes.</p>
+
+<dl>
+<dt><a name="INTVAL_fetch_iv_le"
+><b><code>INTVAL fetch_iv_le</b></code></a></dt>
+This function converts a 4 or 8 byte <code>INTVAL</code> into little endian format.
+If the native format is already little endian,
+then no conversion is done.
+<dt><a name="INTVAL_fetch_iv_be"
+><b><code>INTVAL fetch_iv_be</b></code></a></dt>
+This function converts a 4 or 8 byte <code>INTVAL</code> into big endian format.
+If the native format is already big endian,
+then no conversion is done.
+<dt><a name="opcode_t_fetch_op_be"
+><b><code>opcode_t fetch_op_be</b></code></a></dt>
+Same as <code>fetch_iv_be</code> for opcode_t
+<dt><a name="opcode_t_fetch_op_le"
+><b><code>opcode_t fetch_op_le</b></code></a></dt>
+Same as <code>fetch_iv_le</code> for opcode_tUnrolled routines for swapping various sizes from 32&#45;128 bits.
+These should only be used if alignment is unknown or we are pulling something out of a padded buffer.
+<dt><a name="void_fetch_buf_be_4"
+><b><code>void fetch_buf_be_4</b></code></a></dt>
+Converts a 4&#45;byte big&#45;endian buffer <code>b</code> into a little&#45;endian <code>rb</code>.
+<dt><a name="void_fetch_buf_le_4"
+><b><code>void fetch_buf_le_4</b></code></a></dt>
+Converts a 4&#45;byte little&#45;endian buffer <code>b</code> into a big&#45;endian buffer <code>rb</code>.
+<dt><a name="void_fetch_buf_be_8"
+><b><code>void fetch_buf_be_8</b></code></a></dt>
+Converts an 8&#45;byte big&#45;endian buffer <code>b</code> into a little&#45;endian buffer <code>rb</code>
+<dt><a name="void_fetch_buf_le_8"
+><b><code>void fetch_buf_le_8</b></code></a></dt>
+Converts an 8&#45;byte little&#45;endian buffer <code>b</code> into a big&#45;endian buffer <code>rb</code>.
+<dt><a name="void_fetch_buf_le_12"
+><b><code>void fetch_buf_le_12</b></code></a></dt>
+Converts a 12&#45;byte little&#45;endian buffer <code>b</code> into a big&#45;endian buffer <code>b</code>.
+<dt><a name="void_fetch_buf_be_12"
+><b><code>void fetch_buf_be_12</b></code></a></dt>
+Converts a 12&#45;byte big&#45;endian buffer <code>b</code> into a little&#45;endian buffer <code>b</code>.
+<dt><a name="void_fetch_buf_le_16"
+><b><code>void fetch_buf_le_16</b></code></a></dt>
+Converts a 16&#45;byte little&#45;endian buffer <code>b</code> into a big&#45;endian buffer <code>b</code>.
+<dt><a name="void_fetch_buf_be_16"
+><b><code>void fetch_buf_be_16</b></code></a></dt>
+Converts a 16&#45;byte big&#45;endian buffer <code>b</code> into a little&#45;endian buffer <code>b</code>.
+<dt><a name="void_fetch_buf_le_32"
+><b><code>void fetch_buf_le_32</b></code></a></dt>
+Converts a 32&#45;byte little&#45;endian buffer <code>b</code> into a big&#45;endian buffer <code>b</code>.
+<dt><a name="void_fetch_buf_be_32"
+><b><code>void fetch_buf_be_32</b></code></a></dt>
+Converts a 32&#45;byte big&#45;endian buffer <code>b</code> into a little&#45;endian buffer <code>b</code>.</dl>
+
+<h1><a name="HISTORY"
+>HISTORY</a></h1>
+
+<p>Initial version by Melvin on 2002/05/01</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2009, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

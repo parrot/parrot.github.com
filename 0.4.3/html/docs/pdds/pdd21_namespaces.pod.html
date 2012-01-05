@@ -1,0 +1,544 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>  
+    <HEAD>
+        <TITLE>Parrot Namespaces</TITLE>
+        <LINK REL="stylesheet" TYPE="text/css" 
+            HREF="../../../resources/perl.css" 
+            TITLE="Default CSS2" media="screen">
+    </HEAD>
+    <BODY> 
+        <A NAME="_top"></A>
+        <TABLE CELLSPACING="0" WIDTH="730">
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2" CLASS="BANNER">parrotcode: <SPAN CLASS="title">Parrot Namespaces</SPAN></TD>
+            </TR>
+            <TR>
+                <TD WIDTH="100%" COLSPAN="2"  ID="NAV" STYLE="border-bottom: 1px solid #191970;">
+                    <a href="../../../html/index.html">Contents</a> | <a href="../../../html/docs.html">Documentation</a>
+                </TD>
+            </TR>
+        </TABLE>
+        <DIV CLASS="pod">
+
+<h1><a name="NAME"
+>NAME <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>docs/pdds/pdd21_namespaces.pod &#45; Parrot Namespaces</p>
+
+<h1><a name="VERSION"
+>VERSION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>$Revision$</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<dl>
+<dt><a
+>&#45; Namespaces should be stored under first&#45;level namespaces corresponding to the HLL language name</a></dt><p class="pad"></p>
+
+<dt><a name="&#45;_Namespaces_should_be_hierarchical"
+>&#45; Namespaces should be hierarchical</a></dt><p class="pad"></p>
+
+<dt><a name="&#45;_Add_a_get_namespace_opcode_(that_takes_an_array_or_a_multidimensional_hash_index)"
+>&#45; Add a get_namespace opcode (that takes an array or a multidimensional hash index)</a></dt><p class="pad"></p>
+
+<dt><a name="&#45;_Namespaces_follow_the_semantics_of_the_HLL_in_which_they&#39;re_defined"
+>&#45; Namespaces follow the semantics of the HLL in which they&#39;re defined</a></dt><p class="pad"></p>
+
+<dt><a name="&#45;_exports_follow_the_semantics_of_the_library&#39;s_language"
+>&#45; exports follow the semantics of the library&#39;s language</a></dt><p class="pad"></p>
+
+<dt><a name="&#45;_Two_interfaces:_typed_and_generic"
+>&#45; Two interfaces: typed and generic</a></dt><p class="pad"></p>
+</dl>
+
+<h1><a name="DEFINITIONS"
+>DEFINITIONS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="&#34;HLL&#34;"
+>&#34;HLL&#34; <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>A High Level Language,
+such as Perl,
+Python,
+or Tcl,
+in contrast to PIR,
+which is a low&#45;class language.</p>
+
+<h2><a name="&#34;current_namespace&#34;"
+>&#34;current namespace&#34; <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>The <i>current namespace</i> at runtime is the namespace associated with the currently executing subroutine.
+Pasm assigns each subroutine a namespace when compilation of the subroutine begins.
+Don&#39;t change the associated namespace of a subroutine unless you&#39;re prepared for weird consequences.</p>
+
+<p>(Pasm also has its own separate concept of current namespace which is used to initialize the runtime current namespace as well as determine where to store compiled symbols.)</p>
+
+<h2><a name="namespace_separator:_&#34;::&#34;"
+>namespace separator: &#34;::&#34; <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>In this document,
+&#34;::&#34; indicates namespace nesting.
+For example,
+&#34;a::b&#34; means &#34;the namespace &#39;b&#39; inside the namespace &#39;a&#39;&#34;.
+In Parrot,
+nesting is actually denoted by other means (e.g.
+multidimensional hash keys),
+but writing [&#34;a&#34;; &#34;b&#34;] is harder to both write and read.</p>
+
+<h1><a name="IMPLEMENTATION"
+>IMPLEMENTATION <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Namespace_PMC_API"
+>Namespace PMC API <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>There are many different ways to implement a namespace and Parrot&#39;s target languages display a wide variety of them.
+By implementing an API,
+it should be possible to allow interoperability while still allowing each one choose the best internal representation.</p>
+
+<h3><a name="Naming_Conventions"
+>Naming Conventions</a></h3>
+
+<dl>
+<dt><a name="HLL_Implementation_Namespaces"
+>HLL Implementation Namespaces</a></dt><p class="pad"></p>
+
+<dd>Each HLL must store implementation internals (private items) in a namespace named with an underscore and the lowercased name of the HLL.
+For instance,
+Tcl&#39;s implementation internals should live in the <code lang='und' xml:lang='und'>_tcl</code> namespace.</dd><p class="pad"></p>
+
+<dt><a name="HLL_User&#45;Created_Namespaces"
+>HLL User&#45;Created Namespaces</a></dt><p class="pad"></p>
+
+<dd>Each HLL must store all user&#45;created namespaces under a namespace named with the lowercased name of the HLL.
+For example,
+Perl 5&#39;s CGI module must be named &#34;perl5::CGI&#34;.
+This eliminates any accidental collisions between languages.</dd><p class="pad"></p>
+
+<dd>These top&#45;level namespaces should also be specified in a standard unicode encoding.
+The reasons for these restrictions is to allow compilers to remain completely ignorant of each other.</dd><p class="pad"></p>
+
+<dd>HLLs should use hierarchical namespaces to the extent practical.
+A single flat namespace can be made to work,
+of course,
+but it complicates symbol exportation.</dd><p class="pad"></p>
+</dl>
+
+<h3><a name="Namespace_PMC_Interfaces:_Generic_and_Typed"
+>Namespace PMC Interfaces: Generic and Typed</a></h3>
+
+<p>Most languages leave their symbols plain,
+which makes lookups quite straightforward.
+Others use sigils or other mangling techniques,
+complicating the problem of interoperability.</p>
+
+<p>Parrot namespaces assist with interoperability by providing two interface subsets: the <i>raw interface</i> and the <i>typed interface</i>.</p>
+
+<h4><a name="Raw_Interface"
+>Raw Interface</a></h4>
+
+<p>Each HLL may,
+when working with its own namespace objects,
+use the <i>raw interface</i>,
+which allows direct naming in the native style of the namespace&#39;s HLL.</p>
+
+<p>This interface consists of standard Parrot hash interface,
+with all its keys,
+values,
+lookups,
+deletions,
+etc.
+Just treat the namespace like a hash.
+(It probably is one,
+really,
+deep down.)</p>
+
+<p>It&#39;s kind of an anticlimax,
+isn&#39;t it,
+giving a fancy name like &#34;raw interface&#34; to a hash?
+&#34;It&#39;s a just a hash,&#34; you say.
+Oh well.
+I&#39;ll try to live with the shame.</p>
+
+<h4><a name="Typed_Interface"
+>Typed Interface</a></h4>
+
+<p>When a given namespace&#39;s HLL is either different from the current HLL or unknown,
+an HLL should generally use only the language&#45;agnostic namespace interface.
+This interface isolates HLLs from each others&#39; naming quirks.
+It consists of add_foo(),
+find_foo(),
+and del_foo() methods,
+for values of &#34;foo&#34; including &#34;sub&#34; (something executable),
+&#34;namespace&#34; (something in which to find more names),
+and &#34;var&#34; (anything).</p>
+
+<p>NOTE: The job of the typed interface is to bridge <i>naming</i> differences,
+and <i>only</i> naming differences.
+Therefore:</p>
+
+<p>(1) It does not enforce,
+nor even notice,
+the interface requirements of &#34;sub&#34; or &#34;namespace&#34;: e.g.
+execution of add_sub(&#34;foo&#34;,
+$P0) does <i>not</i> automatically guarantee that $P0 is an invokable subroutine; and: (2) It does not prevent overwriting one type with another</p>
+
+<dl>
+<dt><a name="add_namespace($S0,_$P0)"
+>add_namespace($S0,
+$P0)</a></dt><p class="pad"></p>
+
+<dd>Store $P0 as a namespace under the name of $S0.</dd><p class="pad"></p>
+
+<dt><a name="add_sub($S0,_$P0)"
+>add_sub($S0,
+$P0)</a></dt><p class="pad"></p>
+
+<dd>Store $P0 as a subroutine with the name of $S0.</dd><p class="pad"></p>
+
+<dt><a name="add_var($S0,_$P0)"
+>add_var($S0,
+$P0)</a></dt><p class="pad"></p>
+
+<dd>Store $P0 as a variable under the name of $S0.</dd><p class="pad"></p>
+
+<dd>IMPLEMENTATION NOTE: perl6::namespace.add_var may choose to check which parts of the variable interface are implemented by $P0 so it can decide on an appropriate sigil.</dd><p class="pad"></p>
+
+<dt><a name="del_namespace($S0)"
+>del_namespace($S0)</a></dt><p class="pad"></p>
+
+<dt><a name="del_sub($S0)"
+>del_sub($S0)</a></dt><p class="pad"></p>
+
+<dt><a name="del_var($S0)"
+>del_var($S0)</a></dt><p class="pad"></p>
+
+<dd>Delete the sub,
+namespace,
+or variable named $S0.</dd><p class="pad"></p>
+
+<dt><a name="$P0_=_find_namespace($S0)"
+>$P0 = find_namespace($S0)</a></dt><p class="pad"></p>
+
+<dt><a name="$P0_=_find_sub($S0)"
+>$P0 = find_sub($S0)</a></dt><p class="pad"></p>
+
+<dt><a name="$P0_=_find_var($S0)"
+>$P0 = find_var($S0)</a></dt><p class="pad"></p>
+
+<dd>Find the sub,
+namespace,
+or variable named $S0.</dd><p class="pad"></p>
+
+<dd>IMPLEMENTATION NOTE: perl6::namespace.find_var should check all variable sigils,
+but the order is not to be counted on by users.
+If you&#39;re planning to let Python code see your module,
+don&#39;t have both <code lang='und' xml:lang='und'>our $A</code> and <code lang='und' xml:lang='und'>our @A</code>.</dd><p class="pad"></p>
+
+<dt><a name="export_to($P0,_$P1)"
+>export_to($P0,
+$P1)</a></dt><p class="pad"></p>
+
+<dd>Export items from the current namespace into the namespace in $P0.
+The items to export are named in the array $P1; a null $P1 requests the &#39;default&#39; set of items.
+The interpretation of the array in $P1 always follows the conventions of the source (exporting) namespace.</dd><p class="pad"></p>
+
+<dd>The base Parrot namespace export_to() function interprets item names as literals &#45;&#45; no wildcards or other special meaning.
+There is no default list of items to export,
+so $P1 of null and $P1 of an empty array have the same behavior.</dd><p class="pad"></p>
+
+<dd>NOTE: Exportation may entail non&#45;obvious,
+odd,
+or even mischievious behavior.
+For example,
+Perl&#39;s pragmata are implemented as exports,
+and they don&#39;t actually export anything.</dd><p class="pad"></p>
+
+<dd>IMPLEMENTATION EXAMPLES: Perl 6 <code lang='und' xml:lang='und'>use tcl:Some::Module &#39;c*&#39;</code> will import all the commands that start with &#39;c&#39; from the given Tcl namespace into the current Perl namespace.
+Regardless of whether &#39;c*&#39; is a Perl 6 style export pattern,
+it <i>is</i> a valid Tcl export pattern.</dd><p class="pad"></p>
+
+<dd>IMPLEMENTATION NOTE: Most namespace export_to implementations will restrict themselves to using the typed interface on the target namespace.
+However,
+they may also decide to check the type of the target namespace and,
+if it turns out to be of a compatible type,
+to use same&#45;language shortcuts.</dd><p class="pad"></p>
+
+<dd>DESIGN TODO: Figure out a good convention for a default export list in the base namespace PMC.
+Maybe a standard method &#34;expand_export_list()&#34;?</dd><p class="pad"></p>
+</dl>
+
+<h3><a name="Non&#45;interface_Methods"
+>Non&#45;interface Methods</a></h3>
+
+<p>These methods don&#39;t belong to either the typed or the generic interface.</p>
+
+<dl>
+<dt><a name="$P0_=_name()"
+>$P0 = name()</a></dt><p class="pad"></p>
+
+<dd>Returns the name of the namespace as an array of strings.
+So perl5:Some::Module would return an array containing &#34;perl5&#34;,
+&#34;Some&#34;,
+&#34;Module&#34;.</dd><p class="pad"></p>
+
+<dd>NOTE: This is a naive method.
+It does not account for any aliasing.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Compiler_PMC_API"
+>Compiler PMC API <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="Methods"
+>Methods</a></h3>
+
+<dl>
+<dt><a name="load_library($P0)"
+>load_library($P0)</a></dt><p class="pad"></p>
+
+<dd>Ask this compiler to load a library/module named by the elements of the array in $P0.
+So perl5:Some::Module should be loaded using (in pseudo Perl 6): <code lang='und' xml:lang='und'>perl5.load_library([&#34;Some&#34;, &#34;Module&#34;])</code>.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Subroutine_PMC_API"
+>Subroutine PMC API <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>Some information must be available about subroutines to implement the correct behavior about namespaces.</p>
+
+<h3><a name="Methods"
+>Methods</a></h3>
+
+<dl>
+<dt><a name="get_namespace"
+>get_namespace</a></dt><p class="pad"></p>
+
+<dd>The namespace where the subroutine was defined.
+(As opposed to namespace(s) that it may have been exported to.)</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="Namespace_Opcodes"
+>Namespace Opcodes <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<dl>
+<dt><a name="add_namespace_$P0,_$P1"
+>add_namespace $P0,
+$P1</a></dt><p class="pad"></p>
+
+<dd>Add the namespace PMC $P1 as the namespace $P0 (an array of names or a multidimensional hash index).</dd><p class="pad"></p>
+
+<dt><a name="del_namespace_$P0"
+>del_namespace $P0</a></dt><p class="pad"></p>
+
+<dd>Delete the namespace $P0 (an array of names or a multidimensional hash index).</dd><p class="pad"></p>
+
+<dt><a name="$P0_=_find_global_$P1,_$S0"
+>$P0 = find_global $P1,
+$S0</a></dt><p class="pad"></p>
+
+<dt><a name="$P0_=_find_global_$S0"
+>$P0 = find_global $S0</a></dt><p class="pad"></p>
+
+<dd>Find the variable $S0 in $P1 or the current namespace.</dd><p class="pad"></p>
+
+<dt><a name="$P0_=_get_namespace_$P1"
+>$P0 = get_namespace $P1</a></dt><p class="pad"></p>
+
+<dt><a name="$P0_=_get_namespace"
+>$P0 = get_namespace</a></dt><p class="pad"></p>
+
+<dd>Get the namespace $P1 (an array of names or a multidimensional hash index) or the current namespace.
+To get the &#34;Foo::Bar&#34; namespace,
+one would use this:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  $P0 = split &#34;::&#34;, &#34;Foo::Bar&#34;
+  $P1 = get_namespace $P0</pre>
+
+<dd>or this:</dd><p class="pad"></p>
+
+<pre lang='und' xml:lang='und'>  $P1 = get_namespace [&#34;Foo&#34;; &#34;Bar&#34;]</pre>
+
+<dt><a name="store_global_$P1,_$S0,_$P0"
+>store_global $P1, $S0, $P0</a></dt><p class="pad"></p>
+
+<dt><a name="store_global_$S0,_$P0"
+>store_global $S0, $P0</a></dt><p class="pad"></p>
+
+<dd>Store $P0 as the variable $S0 in $P1 or the current namespace.</dd><p class="pad"></p>
+</dl>
+
+<h2><a name="HLL_Namespace_Mapping"
+>HLL Namespace Mapping <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<p>In order to make this work, Parrot must somehow figure out what type of namespace PMC to create.</p>
+
+<h3><a name="Default_Namespace"
+>Default Namespace</a></h3>
+
+<p>The default namespace PMC will implement Parrot&#39;s current behavior.</p>
+
+<h3><a name="Compile&#45;time_Creation"
+>Compile&#45;time Creation</a></h3>
+
+<p>This perl:</p>
+
+<pre lang='und' xml:lang='und'>  #!/usr/bin/perl
+  package Foo;
+  $x = 5;</pre>
+
+<p>should map roughly to this PIR:</p>
+
+<pre lang='und' xml:lang='und'>  .HLL &#34;Perl5&#34;, &#34;perl5_group&#34;
+  .namespace [ &#34;Foo&#34; ]
+  .sub main :main
+    $P0 = new .PerlInt
+    $P0 = 5
+    store_global &#34;$x&#34;, $P0
+  .end</pre>
+
+<p>In this case, the <code lang='und' xml:lang='und'>main</code> sub would be tied to Perl5 by the <code lang='und' xml:lang='und'>.HLL</code> directive, so a Perl5 namespace would be created.</p>
+
+<h3><a name="Run&#45;time_Creation"
+>Run&#45;time Creation</a></h3>
+
+<p>Consider the following Perl5 program:</p>
+
+<pre lang='und' xml:lang='und'>  #!/usr/bin/perl
+  $a = &#39;x&#39;;
+  ${&#34;Foo::$a&#34;} = 5;</pre>
+
+<p>The Foo:: namespace is created at run&#45;time (without any optimizations). In these cases, Parrot should create the namespace based on the HLL of the PIR subroutine that calls the store function.</p>
+
+<pre lang='und' xml:lang='und'>  .HLL &#34;Perl5&#34;, &#34;perl5_group&#34;
+  .sub main :main
+    # $a = &#39;x&#39;;
+    $P0 = new .PerlString
+    $P0 = &#34;x&#34;
+    store_global &#34;$a&#34;, a
+    # ${&#34;Foo::$a&#34;} = 5;
+    $P1 = new PerlString
+    $P1 = &#34;Foo::&#34;
+    $P1 .= $P0
+    $S0 = $P1
+    $P2 = split &#34;::&#34;, $S0
+    $S0 = pop $P2
+    $S0 = &#34;$&#34; . $S0
+    $P3 = new .PerlInt
+    $P3 = 5
+    store_global $P2, $S0, $P3
+  .end</pre>
+
+<p>In this case, <code lang='und' xml:lang='und'>store_global</code> should see that it was called from &#34;main&#34;, which is in a Perl5 namespace, so &#34;Foo::&#34; should be also created as a Perl 5 namespace.</p>
+
+<h1><a name="LANGUAGE_NOTES"
+>LANGUAGE NOTES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<h2><a name="Perl_6"
+>Perl 6 <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="Sigils"
+>Sigils</a></h3>
+
+<p>Perl6 may wish to be able to access the namespace as a hash with sigils. That is certainly possible, even with subroutines and methods. It&#39;s not important that a HLL use the typed namespace API, it is only important that it provides it for others to use.</p>
+
+<p>So Perl6 may implement get_keyed and set_keyed VTABLE slots that allow the namespace PMC to be used as a hash. The <code lang='und' xml:lang='und'>find_sub</code> method would, in this case, would append a &#34;&#38;&#34; sigil to the front of the sub/method name and search in the internal hash.</p>
+
+<h2><a name="Python"
+>Python <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="Importing_from_Python"
+>Importing from Python</a></h3>
+
+<p>Since functions and variables overlap in Python&#39;s namespaces, when exporting to another HLL&#39;s namespace, the Python namespace PMC&#39;s <code lang='und' xml:lang='und'>export_to</code> method should use introspection to determine whether <code lang='und' xml:lang='und'>x</code> should be added using <code lang='und' xml:lang='und'>add_var</code> or <code lang='und' xml:lang='und'>add_sub</code>. <code lang='und' xml:lang='und'>$I0 = does $P0, &#34;Sub&#34;</code> may be enough to decide correctly.</p>
+
+<h3><a name="Subroutines_and_Namespaces"
+>Subroutines and Namespaces</a></h3>
+
+<p>Since Python&#39;s subroutines and namespaces are just variables (the namespace collides there), the Python PMC&#39;s <code lang='und' xml:lang='und'>find_var</code> method may return subroutines as variables.</p>
+
+<h2><a name="Examples"
+>Examples <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h2>
+
+<h3><a name="Aliasing"
+>Aliasing</a></h3>
+
+<p>Perl:</p>
+
+<pre lang='und' xml:lang='und'>  #!/usr/bin/perl6
+  sub foo {...}
+  %Foo::{&#34;&#38;bar&#34;} = &#38;foo;</pre>
+
+<p>PIR:</p>
+
+<pre lang='und' xml:lang='und'>  .sub main :main
+    $P0 = find_name &#34;&#38;foo&#34;
+    $P1 = get_namespace [&#34;perl6&#34;; &#34;Foo&#34;]
+    # A smart perl6 compiler would emit this,
+    # because it knows that Foo is a perl6 namespace:
+    #   $P1[&#34;&#38;bar&#34;] = $P0
+    # But a naive one would emit this:
+    $P1.add_sub(&#34;bar&#34;, $P0)
+    end
+  .end
+
+  .sub foo
+    ...
+  .end</pre>
+
+<h3><a name="Cross&#45;language_Exportation"
+>Cross&#45;language Exportation</a></h3>
+
+<p>Perl:</p>
+
+<pre lang='und' xml:lang='und'>  #!/usr/bin/perl
+  use tcl:Some::Module &#39;w*&#39;;
+  write(&#34;this is a tcl command&#34;);</pre>
+
+<p>PIR:</p>
+
+<pre lang='und' xml:lang='und'>  .sub main :main
+    .local pmc tcl
+    tcl = compreg &#34;tcl&#34;
+    tcl.load_library(&#34;Some&#34;, &#34;Module&#34;)
+    $P0 = get_namespace
+    $P1 = get_namespace [&#34;tcl&#34;; &#34;Some&#34;; &#34;Module&#34;]
+    $P1.export_to($P0, &#39;w*&#39;)
+    write(&#34;this is a tcl command&#34;)
+    end
+  .end</pre>
+
+<h1><a name="ATTACHMENTS"
+>ATTACHMENTS <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>None.</p>
+
+<h1><a name="FOOTNOTES"
+>FOOTNOTES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>None.</p>
+
+<h1><a name="REFERENCES"
+>REFERENCES <a href='#_top'><img alt='^' border=0 src='../../../resources/up.gif'></a></a></h1>
+
+<p>None.</p>
+        </DIV>
+        <P>
+        <TABLE BORDER="0" WIDTH="730" CELLSPACING="0" CELLPADDING="0">
+            <TR ALIGN="RIGHT">
+                <TD WIDTH="590" VALIGN="MIDDLE">
+                    <BR>
+                    <DIV CLASS="FOOTER">
+                        <DIV ALIGN="LEFT">
+                        </DIV>
+                    </DIV>
+                </TD>
+                <TD VALIGN="middle" ALIGN="center">
+                    <IMG BORDER=0
+                        SRC="../../../resources/parrot.small.png" 
+                        ALT="parrot">
+                </TD>
+            </TR>
+        </TABLE>
+    </BODY>
+</HTML>
