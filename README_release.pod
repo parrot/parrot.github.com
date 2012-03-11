@@ -4,19 +4,18 @@
 
 =head1 NAME
 
-README_release.pod - Readme file on how to maintain the gh-pages branch of 
-the 'parrot.github.com' repository, along with the supporting gh-pages 
-branches of the 'parrot-docsx' repositories.
+README_release.pod - Readme file on how to update the github pages of the
+'parrot.github.com' repository and the supporting gh-pages branches of the
+'parrot-docsx' repositories.
 
 =head1 DESCRIPTION
 
 The purpose of this document is to supplement the release manager guide,
-I<see> '/docs/project/release_manager_guide.pod' and to layout the steps
-necessary to prepare, to assemble, and to publish Parrot's documentation to 
-the gh-pages branch of the 'parrot.github.com' repository and the 
-accompanying gh-pages branches of the supporting 'parrot-docx' repositories. 
-While none of this is particularly difficult, it can be a'bit tricky.  Hence, 
-the need for this guide.[1]
+I<see> '/docs/project/release_manager_guide.pod', laying out how to publish
+Parrot's documentation to the 'parrot.github.com' repository and how to
+archive the previous release of Parrot's documentation in the gh-pages branch
+of the supporting parrot-docx' repositories. While none of this is particularly
+difficult, it is a'bit tricky; hence, this guide.[1]
 
 =head2 Assumptions
 
@@ -24,29 +23,21 @@ This document makes two assumptions:
 
 =over 4
 
-(1) you are the release manager and, therefore, are at C<Section X> of the 
-release manager guide (F<'/docs/project/release_manager_guide.pod'>). 
-Specifically, this document assumes you have already ran C<make html> and
+(1) you are the release manager and are working on C<Section X> of the release
+manager guide (F<'/docs/project/release_manager_guide.pod'>). Specifically,
+this document assumes you have already ran C<make html> and
 
-(2) 'parrot-docs4' is the relevant repository in which to store the previous
-release of Parrot's documentation.[2] 
+(2) you are working with the 'parrot-docs4' repository in which to archive the
+previous Parrot documentation release.[2] 
 
 =back
 
 =head2 Get the 'parrot.github.com' and supporting 'parrot-docsx' repositories
 
-The first step is to obtain two repositories: (1) 'parrot.github.com' and 
-(2) the relevant repository in which to store the previous version of Parrot's 
-documentation. To do this, chose a directory on your local file system in which 
-to clone the two Parrot repositories:
-
-=over 4
-
-C<cd ~/dir/in_which/to_clone/repos>
-
-=back
-
-and execute the following commands:
+The first step is to obtain the two repositories: (1) 'parrot.github.com' and
+(2) the relevant repository in which to archive the previous version of
+Parrot's documentation, here, 'parrot-docs4'. To do this, clone the two Parrot
+repositories with the following commands:
 
 =over 4
 
@@ -67,7 +58,7 @@ C<git checkout gh-pages>
 
 =back
 
-You may confirm you are on the C<gh-pages> branch with the following command:
+You may confirm the C<gh-pages> branch with the following command:
 
 =over 4
 
@@ -84,11 +75,11 @@ C<mkdir 4.0.0>
 
 =back
 
-If you still have a copy of the previous release of Parrot and the complete
-'docs/' directory, to include the html-ized documentation, you can just copy
-the entire contents of C<'docs/'> to the newly created directory in the, in
-this example, C<parrot-docs4> repository. If not, you will need to do the
-following:
+If you still have a copy of the previous release of Parrot's documentation, 
+I<i.e.,> all of the documents 'docs/' directory, to include the html-ized
+documentation, you can just copy the entire contents of C<'docs/'> to the
+newly created directory in the, in this example, C<parrot-docs4> repository.
+If not, you will need to do the following:
 
 =over 4
 
@@ -123,7 +114,8 @@ in C<parrot-docs4>, it's time to commit and push the updates:
 
 C<git add .>
 
-C<git commit -m "Commit all of the 4.0.0 documents to the repo.">
+C<git commit -m "Commit all of the 4.0.0 documents to the repo."> (or some
+such)
 
 =back
 
@@ -141,13 +133,13 @@ You are done with the 'parrot-docsx' repository.
 
 After completing the above, it's time to move the new docs, I<i.e.,> the
 present release documentation, to the 'parrot.github.com' repository. To
-accomplish this, do the following:
+accomplish this,
 
 =over 4
 
 =item 1
 
-Save, in some temporary location, the following three documents:
+save, in some temporary location, the following three documents:
 
 F<README.pod>;
 
@@ -179,15 +171,8 @@ C<git commit -m "Remove the previous release's documents."> (or some such)
 
 =item 3
 
-Next, copy all of the files and directories in 'parrot/docs' in the newly
-installed distribution of Parrot to 'parrot.github.com', I<e.g.,> from the
-'parrot/docs' directory, you can use,
-
-=over 4
-
-C<cp -r * ../../parrot.github.com>.
-
-=back
+Next, copy all of the files and directories in 'docs/' in the newly
+installed distribution of Parrot to 'parrot.github.com' and
 
 =item 4
 
@@ -206,23 +191,23 @@ reflect the present release version. That is, edit, for example, the line
 
 =over 4
 
-<title>Parrot 3.11.0-devel - Home</title>
-
-=back
-
-to read
-
-=over 4
-
 <title>Parrot 4.0.0-devel - Home</title>
 
 =back
 
-and edit the line
+to read
 
 =over 4
 
-<br>Parrot version 3.11.0-devel            </div>
+<title>Parrot 4.1.0-devel - Home</title>
+
+=back
+
+and also edit the line
+
+=over 4
+
+<br>Parrot version 4.0.0-devel            </div>
 
 =back
 
@@ -230,7 +215,7 @@ to read
 
 =over 4
 
-<br>Parrot version 4.0.0-devel            </div>
+<br>Parrot version 4.1.0-devel            </div>
 
 =back
 
@@ -239,7 +224,7 @@ Edit, again, for example, the line
 
 =over 4
 
-<a href="./releases.html">Parrot Documentation Releases (3.11.0 - 0.1.1)</a>
+<a href="./releases.html">Parrot Documentation Releases (4.0.0 - 0.1.1)</a>
 
 =back
 
@@ -247,7 +232,7 @@ to read
 
 =over 4
 
-<a href="./releases.html">Parrot Documentation Releases (4.0.0 - 0.1.1)</a>
+<a href="./releases.html">Parrot Documentation Releases (4.1.0 - 0.1.1)</a>
 
 =back
 
@@ -268,7 +253,7 @@ in the 'parrot-docs4' repository. For example, copy the line,
 
 =over 4
 
-<li><a href="./parrot-docs3/3.11.0/html/index.html">Release 3.11.0</a></li>
+<li><a href="./parrot-docs4/4.0.0/html/index.html">Release 4.0.0</a></li>
 
 =back
 
@@ -276,7 +261,7 @@ and paste it in as the first element of the list.  Edit it to read,
 
 =over 4
 
-<li><a href="./parrot-docs4/4.0.0/html/index.html">Release 4.0.0</a></li>
+<li><a href="./parrot-docs4/4.1.0/html/index.html">Release 4.1.0</a></li>
 
 =back
 
@@ -284,7 +269,7 @@ and paste it in as the first element of the list.  Edit it to read,
 
 Save your edits.
 
-Finally, you are now ready to commit and push your updates to 
+Finally, you are now ready to commit and push your updates to
 'parrot.github.com':
 
 =over 4
@@ -300,18 +285,23 @@ C<git push origin master>
 It will take anywhere from one to ten (or, occasionally, even fifteen) minutes
 for 'parrot.github.com' to rebuild. Once it does, you need test your updates.
 You may do so by navigating your browser to 'http://parrot.github.com' and
-verifying your changes.  Also, please be sure to test the link to the archived
+verifying your changes.  Also, please ensure you test the link to the archived
 documents in the 'parrot-docs4' repository.
 
-If everything works correctly, congratulations, you're done!
+If everything works correctly, congratulations, you're done with both the
+'parrot.github.com' and the 'parrot-docs' repositories!
 
 =head1 FOOTNOTES
 
-[1] Soon, we will develop a script to handle most, if not all, of the steps
-outlined in this guide.  At which time we will either re-write this document
-or entirely eliminate it.
+[1] Hopefully, soon, we will develop a script to handle most, if not all, of
+the steps outlined in this guide.  At which time we will either re-write this
+guide or eliminate it entirely.
 
-[2] Of course, this assumption will hold only for v4.x.x of Parrot.
+[2] If you are working with a release of Parrot's documentation greater than
+v4.x.x and you do not have, for example, a 'parrot-docs5' repository, you will
+need to contact an "owner" and ask them to create a new repository.  You will,
+then, need to follow all of the steps outlined in Github's gh-pages guide at
+'http://pages.github.com/' to set up the repository.
 
 [3] You do NOT need to worry with any optimizations when configuring Parrot
 because you only need the previous documentation release. 
@@ -320,9 +310,9 @@ because you only need the previous documentation release.
 directory after the F<VERSION> of the Parrot distribution you are archiving in
 the repo. Here, in our guide example, C<4.0.0>.
 
-[5] This next handful of steps screams out for auto-tool, and we will write one
-soon. (But, for now, we will have to settle for this detail of all of the
-steps.)
+[5] This next handful of steps screams out for an auto-tool, and we will write
+one soon. (But, for now, you will have to settle for the detail steps in this
+guide.)
 
 =head1 COPYRIGHT
 
