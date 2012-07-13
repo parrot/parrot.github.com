@@ -16,9 +16,8 @@ So, everyone, feel free to contribute!
 As a rule, the Parrot team does not use the markdown format in Parrot's
 repositories. We use pod. We have made an exception in this instance because
 of a conflict between our 'README.pod' file and the contents of this readme,
-and because github renders markdown before all other formats. This enables
-us to display the above "DESCRIPTION" to users, rather than the contents of
-'README.pod'.
+and because github renders markdown before all other formats. This allows
+us to display this page, rather than the contents of 'README.pod'.
 
 # COPYRIGHT
 
