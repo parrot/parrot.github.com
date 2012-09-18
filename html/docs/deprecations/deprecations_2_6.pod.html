@@ -1,0 +1,118 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot Deprecations for 2.6</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Parrot Deprecations for 2.6
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/deprecations/deprecations_2_6.pod &#45; Parrot Deprecations for 2.6</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Parrot Deprecations for 2.6.</p>
+
+<h2><a name="Remove_sizeof_op"
+>Remove sizeof op</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>The PIR op <code>sizeof</code> was removed.</p>
+
+<p>See TT #633</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>This op was used to determine the size of a PMC&#39;s C&#45;level struct given a numerical PMC type id.
+This op was deprecated because numerical PMC id values should not be exposed to PIR&#45;level code.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>No replacement currently exists because no core,
+library or HLL code was found to rely on this op.
+If this functionality is needed,
+a string&#45;based version could easily be implemented.</p>
+
+<h2><a name="Replace_STRING_is_null_with_Parrot_str_is_null"
+>Replace STRING_is_null with Parrot_str_is_null</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>The C&#45;level macro STRING_is_null was replaced with Parrot_str_is_null.</p>
+
+<p>See TT #1585</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>Make string null checks look like a Parrot API function.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>Replace uses of the C function STRING_is_null with Parrot_str_is_null.
+Parrot_str_is_null is a drop&#45;in replacement for STRING_is_null.</p>
+
+<h2><a name="Remove_in&#45;place_substr_op_variants"
+>Remove in&#45;place substr op variants</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>All variants of the PIR op <code>substr</code> which mutate an argument in&#45;place were removed.</p>
+
+<p>See TT #1450</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>Parrot moved to immutable strings for performance reasons.
+With immutable strings,
+a PIR&#45;level string is never changed once it&#39;s been created.
+This means that ops that work on a string in&#45;place no longer make sense.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>PIR code should be changed as follows:</p>
+
+<pre>    #old version
+    substr $S0, $I0, $I1, $S1
+
+    #new version
+    $S0 = replace $S0, $I0, $I1, $S1</pre>
+
+<p>See also r46055 for more examples.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2011, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

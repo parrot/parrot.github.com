@@ -1,0 +1,304 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Directive Reference</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; Directive Reference
+                </div>
+
+<h1><a name="Directive_Reference"
+>Directive Reference</a></h1>
+
+<p></p>
+
+<p><!--
+	INDEX: PIR (Parrot intermediate representation);quick reference;directives
+--> This is a summary of PIR directives.
+Directives are preprocessed by the Parrot interpreter.
+Since PIR and PASM run on the same interpreter,
+many of the directives listed here are also valid in PASM code.</p>
+
+<h3><a name=".arg"
+>.arg</a></h3>
+
+<p><!--
+	INDEX: .arg directive
+--></p>
+
+<pre>  .arg R&#60;VAL&#62;</pre>
+
+<p>pass a value to a subroutine according to PCC.</p>
+
+<h3><a name=".const"
+>.const</a></h3>
+
+<p><!--
+	INDEX: .const directive
+--></p>
+
+<pre>  .const R&#60;TYPE&#62;R&#60;NAME&#62; = R&#60;VALUE&#62;</pre>
+
+<p>Define a named constant.</p>
+
+<h3><a name=".macro_const"
+>.macro_const</a></h3>
+
+<p><!--
+	INDEX: .macro_const directive
+--></p>
+
+<pre>  .macro_const R&#60;NAME&#62;R&#60;VALUE&#62;</pre>
+
+<p>Define a named macro that expands to a given value. Macros are called as directives, i.e. .NAME (PASM code only).</p>
+
+<h3><a name=".emit"
+>.emit</a></h3>
+
+<p><!--
+	INDEX: .emit directive
+--></p>
+
+<pre>  .emit</pre>
+
+<p>Define a block of PASM code. Always paired with <code>.eom</code>.</p>
+
+<h3><a name=".end"
+>.end</a></h3>
+
+<p><!--
+	INDEX: .end directive
+--></p>
+
+<pre>  .end</pre>
+
+<p>End a subroutine. Always paired with <code>.sub</code>.</p>
+
+<h3><a name=".endm"
+>.endm</a></h3>
+
+<p><!--
+	INDEX: .endm directive
+--></p>
+
+<pre>  .endm</pre>
+
+<p>End a macro definition. Always paired with <code>.macro</code>.</p>
+
+<h3><a name=".eom"
+>.eom</a></h3>
+
+<p><!--
+	INDEX: .eom directive
+--></p>
+
+<pre>  .eom</pre>
+
+<p>End a block of PASM code. Always paired with <code>.emit</code>.</p>
+
+<h3><a name=".flatten_arg"
+>.flatten_arg</a></h3>
+
+<p><!--
+	INDEX: .flatten_arg directive
+--></p>
+
+<pre>  .flatten_arg R&#60;PArray&#62;</pre>
+
+<p>Flatten the passed array PMC and provide args for PCC calls.</p>
+
+<h3><a name=".globalconst"
+>.globalconst</a></h3>
+
+<p><!--
+	INDEX: .globalconst directive
+--></p>
+
+<pre>  .globalconst R&#60;TYPE&#62;R&#60;NAME&#62; = R&#60;VALUE&#62;</pre>
+
+<p>Define a named, file visible constant.</p>
+
+<h3><a name=".include"
+>.include</a></h3>
+
+<p><!--
+	INDEX: .include directive
+--></p>
+
+<pre>  .include &#34; R&#60;FILENAME&#62; &#34;</pre>
+
+<p>Include the contents of an external file by inserting it in place.</p>
+
+<h3><a name=".invocant"
+>.invocant</a></h3>
+
+<p><!--
+	INDEX: .invocant directive
+--></p>
+
+<pre>  .invocant R&#60;OBJ&#62;</pre>
+
+<p>Set the invocant for a method call.</p>
+
+<h3><a name=".local"
+>.local</a></h3>
+
+<p><!--
+	INDEX: .local directive
+--></p>
+
+<pre>  .local R&#60;TYPE&#62;R&#60;NAME&#62;</pre>
+
+<p>Define a local named variable.</p>
+
+<h3><a name=".macro"
+>.macro</a></h3>
+
+<p><!--
+	INDEX: .macro directive
+--></p>
+
+<pre>  .macro R&#60;NAME&#62; (R&#60;PARAMS&#62;)</pre>
+
+<p>Define a named macro with a list of parameters. The macro is called as .NAME(arg1,arg2,...). Always paired with <code>.endm</code>.</p>
+
+<h3><a name=".namespace"
+>.namespace</a></h3>
+
+<p><!--
+	INDEX: .namespace directive
+--></p>
+
+<pre>  .namespace R&#60; [ &#34;namespace&#34; ] &#62;</pre>
+
+<p>Define a namespace.</p>
+
+<h3><a name=".param"
+>.param</a></h3>
+
+<p><!--
+	INDEX: .param directive
+--></p>
+
+<pre>  .param R&#60;DEST&#62;
+  .param R&#60;TYPE&#62;R&#60;NAME&#62;</pre>
+
+<p>Define a subroutine parameter.</p>
+
+<h3><a name=".begin_call"
+>.begin_call</a></h3>
+
+<p><!--
+	INDEX: .begin_call directive
+--></p>
+
+<p>Start a call sequence. Always paired with <code>.end_call</code></p>
+
+<h3><a name=".begin_return"
+>.begin_return</a></h3>
+
+<p><!--
+	INDEX: .begin_return directive
+--></p>
+
+<p>Start a return sequence. Always paired with <code>.end_return</code></p>
+
+<h3><a name=".begin_yield"
+>.begin_yield</a></h3>
+
+<p><!--
+	INDEX: .begin_yield directive
+--></p>
+
+<p>Start a return of a coroutine sequence. Always paired with <code>.end_yield</code></p>
+
+<h3><a name=".call"
+>.call</a></h3>
+
+<p><!--
+	INDEX: .call directive
+--></p>
+
+<pre>  .call R&#60;SUB&#62;
+  .call R&#60;SUB&#62;, R&#60;RETCONT&#62;</pre>
+
+<p>Create a subroutine call.</p>
+
+<h3><a name=".pcc_sub"
+>.pcc_sub</a></h3>
+
+<p><!--
+	INDEX: .pcc_sub directive
+--></p>
+
+<pre>  .pcc_sub R&#60;_LABEL&#62;</pre>
+
+<p>Create a symbol entry for subroutine at the _LABEL. This directive is for PASM code only.</p>
+
+<h3><a name=".result"
+>.result</a></h3>
+
+<p><!--
+	INDEX: .result directive
+--></p>
+
+<pre>  .result R&#60;DEST&#62;</pre>
+
+<p>Get a return value according to PCC.</p>
+
+<h3><a name=".return"
+>.return</a></h3>
+
+<p><!--
+	INDEX: .return directive
+--></p>
+
+<pre>  .return R&#60;VAL&#62;</pre>
+
+<p>Return a value to the calling subroutine according to PCC.</p>
+
+<h3><a name=".sub"
+>.sub</a></h3>
+
+<p><!--
+	INDEX: .sub directive
+--></p>
+
+<pre>  .sub R&#60;NAME&#62;</pre>
+
+<p>Define a subroutine. Always paired with <code>.end</code>. Names begin with &#34;<code>_</code>&#34; by convention.</p>
+
+<h3><a name=".sym"
+>.sym</a></h3>
+
+<p><!--
+	INDEX: .sym directive
+--></p>
+
+<pre>  .sym R&#60;TYPE&#62; R&#60;NAME&#62;</pre>
+
+<p>Same as <code>.local</code>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2011, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

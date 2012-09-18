@@ -1,0 +1,138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PIR Standard Library</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; PIR Standard Library
+                </div>
+
+<p></p>
+
+<h1><a name="PIR_Standard_Library"
+>PIR Standard Library</a></h1>
+
+<p>PIR and PASM are both very low&#45;level languages by any programming standards,
+even though they support some important features of high&#45;level dynamic languages,and PIR has some symbolic syntax features.
+Important re&#45;occurring programming tasks in these languages have been extracted out into a series of runtime libraries to help make these tasks easier.
+Libraries written in PIR or PASM can be easily included and used from any of the high&#45;level language compilers that target Parrot,
+in addition to being used in the Parrot test suite and PIR/PASM code generators like PCT.</p>
+
+<p>Some modules,
+such as <em>pcre.pir</em> and <em>postgres.pir</em> are NCI wrappers for common compiled shared libraries.</p>
+
+<p>From the Parrot repository,
+there are a number of premade libraries in <em>runtime/library/</em>,
+and several generated libraries in <em>runtime/include</em> that can be used by Parrot hackers and HLL&#45;implementers alike,
+if needed.
+This chapter is going to give a brief overview of some of these libraries and how they are used.</p>
+
+<h1><a name="Loading_and_Using_Libraries"
+>Loading and Using Libraries</a></h1>
+
+<p>Libraries are precompiled code files that can be loaded into Parrot.
+There are ways to load a library into Parrot,
+each with a slightly different mechanism.
+The <code>.loadlib</code> PIR directive causes the library file to be loaded at compile&#45;time.
+The <code>load_lib</code> opcode causes the library to be loaded dynamically at runtime.</p>
+
+<h1><a name="General_Parrot_Libraries"
+>General Parrot Libraries</a></h1>
+
+<h2><a name="Config.fpmc"
+><em>Config.fpmc</em></a></h2>
+
+<p><code>Config.fpmc</code> is generated during the build process.
+The file defines a hash PMC that contains information about the system where Parrot was built.
+By accessing the data in this PMC,
+you can determine how Parrot was compiled and what features and libraries it has available.</p>
+
+<h1><a name="Perl&#45;Inspired_Libraries"
+>Perl&#45;Inspired Libraries</a></h1>
+
+<p>Since the Parrot project started as the internals of the Perl 6 development project,
+and since a number of Perl hackers are very active in Parrot,
+several libraries in the Parrot runtime are based on common Perl 5 libraries.</p>
+
+<h2><a name="Dumper.pir_and_Data/Dumper.pir"
+><em>Dumper.pir</em> and <em>Data/Dumper.pir</em></a></h2>
+
+<p>Perl 5 had <code>Data::Dumper</code>,
+that would print out the complete contents and structure of any arbitrary complex data type.
+This is useful in a number of cases,
+with debugging not the least of them.
+It&#39;s good to verify that complicated nested data structures are being composed and accessed in the manner that the programmer intends.</p>
+
+<h1><a name="NCI_Wrapper_Libraries"
+>NCI Wrapper Libraries</a></h1>
+
+<p>Parrot does not intend to reinvent any wheels,
+and there is lots of important functionality encapsulated in various libraries that Parrot does not copy.
+Instead of having to reimplement all sorts of libraries for Parrot,
+Parrot provides the NCI interface to work with these libraries directly.
+PIR or PASM wrapper libraries are provided to create an interface that programs running on Parrot can use to access functionality in these libraries.</p>
+
+<p>Notice that these libraries are depending on having the compiled libraries they reference already installed on your system.
+Many of these are detected during the configuration process.
+If you do not have these libraries installed,
+you cannot call the modules discussed here.
+We will give some information about how to find and install the libraries,
+however.</p>
+
+<p>Notice that this is only a partial list of wrapper libraries that come bundled with the Parrot repository.
+Additional library wrappers may be added to the repository at a later date,
+or may be available from other sources.</p>
+
+<h2><a name="PCRE"
+>PCRE</a></h2>
+
+<p>PCRE is a library that implements regular expressions using Perl 5 syntax.</p>
+
+<h2><a name="NCurses"
+>NCurses</a></h2>
+
+<p>NCurses is a library for manipulating the console and the cursor.</p>
+
+<h2><a name="OpenGL"
+>OpenGL</a></h2>
+
+<p>OpenGL is a 3D graphics library.</p>
+
+<h2><a name="Postgres_SQL"
+>Postgres SQL</a></h2>
+
+<h2><a name="SDL"
+>SDL</a></h2>
+
+<h1><a name="Mod_Parrot_and_CGI_libraries"
+>Mod_Parrot and CGI libraries</a></h1>
+
+<p>Parrot is also available,
+through a related but separate development effort as a module for the Apache web server,
+Mod_Parrot.
+Mod_Parrot allows Parrot and the high&#45;level languages which target it to be used in Apache to generate web content.
+Several libraries are available in the Parrot repository that can help manage these requests.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2011, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>
