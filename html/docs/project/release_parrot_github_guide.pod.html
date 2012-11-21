@@ -1,0 +1,328 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot Github Release Guide.</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Parrot Github Release Guide.
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/project/release_parrot_github_guide.pod &#45; Parrot Github Release Guide.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>The purpose of this document is to supplement the release manager guide,
+<i>see</i> &#39;/docs/project/release_manager_guide.pod&#39;,
+laying out how to publish Parrot&#39;s documentation to the &#39;parrot.github.com&#39; repository and how to archive the previous release of Parrot&#39;s documentation in the gh&#45;pages branch of the supporting parrot&#45;docx&#39; repositories.
+While none of this is particularly difficult,
+it is a&#39;bit tricky; hence,
+this guide.</p>
+
+<p>Please note: The auto&#45;tool,
+<em>tools/release/parrot_github_release.pl</em> has,
+largely,
+superceded the functionality contained within this document.[1] <i>See</i> <em>docs/projects/release_manager_guide.pod</em> <i>and</i> <em>tools/release/parrot_github_release.pl</em>.</p>
+
+<h2><a name="Assumptions"
+>Assumptions</a></h2>
+
+<p>This document makes two assumptions:</p>
+
+<blockquote>
+<p>(1) you are the release manager and are working on <code>Section X</code> of the release manager guide (<em>&#39;/docs/project/release_manager_guide.pod&#39;</em>).
+Specifically,
+this document assumes you have already ran <code>make html</code> and</p>
+
+<p>(2) you are working with the &#39;parrot&#45;docs4&#39; repository in which to archive the previous Parrot documentation release.[2]</p>
+</blockquote>
+
+<h2><a name="Get_the_&#39;parrot.github.com&#39;_and_supporting_&#39;parrot&#45;docsx&#39;_repositories"
+>Get the &#39;parrot.github.com&#39; and supporting &#39;parrot&#45;docsx&#39; repositories</a></h2>
+
+<p>The first step is to obtain the two repositories: (1) &#39;parrot.github.com&#39; and (2) the relevant repository in which to archive the previous version of Parrot&#39;s documentation,
+here,
+&#39;parrot&#45;docs4&#39;.
+To do this,
+clone the two Parrot repositories with the following commands:</p>
+
+<blockquote>
+<p><code>git clone git@github.com:parrot/parrot.github.com.git</code></p>
+
+<p><code>git clone git@github.com:parrot/parrot&#45;docs4.git</code></p>
+</blockquote>
+
+<h2><a name="The_&#39;parrot&#45;docsx&#39;_repository"
+>The &#39;parrot&#45;docsx&#39; repository</a></h2>
+
+<p><code>cd</code> to the <code>parrot&#45;docs4</code> directory and <code>checkout</code> the <code>gh&#45;pages</code> branch of the repo:</p>
+
+<blockquote>
+<p><code>git checkout gh&#45;pages</code></p>
+</blockquote>
+
+<p>You may confirm the <code>gh&#45;pages</code> branch with the following command:</p>
+
+<blockquote>
+<p><code>git branches</code></p>
+</blockquote>
+
+<p>Next,
+make a new directory in which to house the old documentation.
+For example,[4]</p>
+
+<blockquote>
+<p><code>mkdir 4.0.0</code></p>
+</blockquote>
+
+<p>If you still have a copy of the previous release of Parrot&#39;s documentation,
+<i>i.e.,</i> all of the documents &#39;docs/&#39; directory,
+to include the html&#45;ized documentation,
+you can just copy the entire contents of <code>&#39;docs/&#39;</code> to the newly created directory in the,
+in this example,
+<code>parrot&#45;docs4</code> repository.
+If not,
+you will need to do the following:</p>
+
+<ol>
+<li>Obtain the <code>Tag</code> of the previous Parrot distribution at <code>https://github.com/parrot/parrot/tags</code>;</li>
+
+<li>unzip the distribution into a temporary working directory;</li>
+
+<li>run <code>perl Configure.pl</code>[3] on the distribution;</li>
+
+<li>run <code>make html</code>; and</li>
+
+<li>copy the contents of the <code>docs/</code> directory to the newly created directory in the <code>parrot&#45;docs4</code> repo.</li>
+</ol>
+
+<p>Once the contents of the <code>docs/</code> directory are in the newly created directory in <code>parrot&#45;docs4</code>,
+it&#39;s time to commit and push the updates:</p>
+
+<blockquote>
+<p><code>git add .</code></p>
+
+<p><code>git commit &#45;m &#34;Commit all of the 4.0.0 documents to the repo.&#34;</code> (or some such)</p>
+</blockquote>
+
+<p>And,
+lastly,</p>
+
+<blockquote>
+<p><code>git push origin gh&#45;pages</code></p>
+</blockquote>
+
+<p>You are done with the &#39;parrot&#45;docsx&#39; repository.</p>
+
+<h2><a name="The_&#39;parrot.github.com&#39;_repository"
+>The &#39;parrot.github.com&#39; repository</a></h2>
+
+<p>After completing the above,
+it&#39;s time to move the new docs,
+<i>i.e.,</i> the present release documentation,
+to the &#39;parrot.github.com&#39; repository.
+To accomplish this,</p>
+
+<ol>
+<li>save,
+in some temporary location,
+the following four documents:</li>
+
+<p><em>README.md</em>;</p>
+
+<p><em>README.pod</em>; and</p>
+
+<p><em>index.html</em>; and</p>
+
+<p><em>releases.html</em>.</p>
+
+<li>After saving the above files,
+the simplest way to proceed is to delete all of the files in &#39;parrot.github.com&#39;.
+Since you will need to keep both the <em>.git</em> directory and the <em>.gitignore</em> file,
+<code>git rm &#45;rf *</code> works nicely for this.</li>
+
+<p>It&#39;s a good idea to go ahead and commit the changes at this time,
+so execute,</p>
+
+<blockquote>
+<p><code>git add .</code></p>
+</blockquote>
+
+<p>and</p>
+
+<blockquote>
+<p><code>git commit &#45;m &#34;Remove the previous release&#39;s documents.&#34;</code> (or some such)</p>
+</blockquote>
+
+<li>Next,
+copy all of the files and directories in &#39;docs/&#39; in the newly installed distribution of Parrot to &#39;parrot.github.com&#39; and</li>
+
+<li>Add and commit these changes to &#39;parrot.github.com&#39;.</li>
+
+<li>Copy the four files you saved earlier,
+<i>i.e.</i>,
+<em>README.md</em>,
+<em>README.pod</em>,
+<em>index.html</em>,
+and <em>releases.html</em>,
+back to &#39;parrot.github.com&#39;.</li>
+</ol>
+
+<p>Now,
+you need to hand&#45;edit both <em>index.html</em> and <em>releases.html</em>.
+Open <em>index.html</em> in your favorite editor and update the header and footer to reflect the present release version.
+That is,
+edit,
+for example,
+the line</p>
+
+<blockquote>
+<p>&#60;title&#62;Parrot 4.0.0&#45;devel &#45; Home&#60;/title&#62;</p>
+</blockquote>
+
+<p>to read</p>
+
+<blockquote>
+<p>&#60;title&#62;Parrot 4.1.0 &#45; Home&#60;/title&#62;</p>
+</blockquote>
+
+<p>and also edit the line</p>
+
+<blockquote>
+<p>&#60;br&#62;Parrot version 4.0.0&#45;devel &#60;/div&#62;</p>
+</blockquote>
+
+<p>to read</p>
+
+<blockquote>
+<p>&#60;br&#62;Parrot version 4.1.0 &#60;/div&#62;</p>
+</blockquote>
+
+<p>You also need to update the text accompanying the link to <code>./releases.html</code>.
+Edit,
+again,
+for example,
+the line</p>
+
+<blockquote>
+<p>&#60;a href=&#34;./releases.html&#34;&#62;Previous Parrot Documentation Releases (3.9.0 &#45; 0.1.1)&#60;/a&#62;</p>
+</blockquote>
+
+<p>to read</p>
+
+<blockquote>
+<p>&#60;a href=&#34;./releases.html&#34;&#62;Previous Parrot Documentation Releases (4.0.0 &#45; 0.1.1)&#60;/a&#62;</p>
+</blockquote>
+
+<p>Save your edits.[5]</p>
+
+<p>Next,
+open <em>releases.html</em> in your editor and make the following edits:</p>
+
+<ol>
+<li>Edit the header and footer,
+just as you did above in <em>index.html</em>.</li>
+
+<li>Copy and paste a new list element to point to the earlier release you archived in the &#39;parrot&#45;docs4&#39; repository.
+For example,
+copy the line,</li>
+
+<blockquote>
+<p>&#60;li&#62;&#60;a href=&#34;./parrot&#45;docs4/3.9.0/html/index.html&#34;&#62;Release 3.9.0&#60;/a&#62;&#60;/li&#62;</p>
+</blockquote>
+
+<p>and paste it in as the first element of the list.
+Edit it to read,</p>
+
+<blockquote>
+<p>&#60;li&#62;&#60;a href=&#34;./parrot&#45;docs4/4.0.0/html/index.html&#34;&#62;Release 4.0.0&#60;/a&#62;&#60;/li&#62;</p>
+</blockquote>
+</ol>
+
+<p>Save your edits.</p>
+
+<p>Finally,
+you are now ready to commit and push your updates to &#39;parrot.github.com&#39;:</p>
+
+<blockquote>
+<p><code>git add .</code></p>
+
+<p><code>git commit &#45;m &#34;Versioning updates&#34;</code> (or some such message)</p>
+
+<p><code>git push origin master</code></p>
+</blockquote>
+
+<p>It will take anywhere from one to ten (or,
+occasionally,
+even fifteen) minutes for &#39;parrot.github.com&#39; to rebuild.
+Once it does,
+you need test your updates.
+You may do so by navigating your browser to &#39;<a href="http://parrot.github.com&#39;">http://parrot.github.com&#39;</a> and verifying your changes.
+Also,
+please ensure you test the link to the archived documents in the &#39;parrot&#45;docs4&#39; repository.</p>
+
+<p>If everything works correctly,
+congratulations,
+you&#39;re done with both the &#39;parrot.github.com&#39; and the &#39;parrot&#45;docs&#39; repositories!</p>
+
+<h1><a name="FOOTNOTES"
+>FOOTNOTES</a></h1>
+
+<p>[1] For the present,
+we have elected to retain this document,
+primarily,
+for historical purposes and as a reference document for future release managers.</p>
+
+<p>[2] If you are working with a release of Parrot&#39;s documentation greater than v4.x.x and you do not have,
+for example,
+a &#39;parrot&#45;docs5&#39; repository,
+you will need to contact an &#34;owner&#34; and ask him or her to create a new repository.
+You will,
+then,
+need to follow all of the steps outlined in Github&#39;s gh&#45;pages guide at &#39;<a href="http://pages.github.com/&#39;">http://pages.github.com/&#39;</a> to set up the repository.</p>
+
+<p>[3] Here,
+you do NOT need to worry with any optimizations when configuring Parrot because you only need the previous documentation release.</p>
+
+<p>[4] Unless there is good reason to do otherwise,
+please name the newly created directory after the <em>VERSION</em> of the Parrot distribution you are archiving in the repo.
+Here,
+in our example,
+<code>4.0.0</code>.</p>
+
+<p>[5] Please note: The newly archived release will <i>always</i> be one less than the release on which you are presently working.
+That is,
+the release you just cut.</p>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT</a></h1>
+
+<p>Copyright (C) 2001&#45;2012,
+Parrot Foundation.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2011, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Opcode information</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Opcode information
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/opcode.pmc &#45; Opcode information</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Contains information on an opcode.
+Returned by various functions in the <code>OpLib</code> PMC.</p>
+
+<h2><a name="Vtable_functions"
+>Vtable functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Throws an exception.
+Opcode PMCs are not to be created directly.
+<dt><a name="void_set_pointer(void_*i)"
+><b><code>void set_pointer(void *i)</b></code></a></dt>
+Sets the <code>op_info_t</code> this PMC gets information from.
+Throws an exception if the pointer has already been set.
+See also <code>set_integer_native()</code>,
+below.
+<dt><a name="INTVAL_get_integer()"
+><b><code>INTVAL get_integer()</b></code></a></dt>
+
+<dt><a name="FLOATVAL_get_number()"
+><b><code>FLOATVAL get_number()</b></code></a></dt>
+Returns the opcode number.
+<dt><a name="void_set_integer_native(INTVAL_value)"
+><b><code>void set_integer_native(INTVAL value)</b></code></a></dt>
+Sets the number for this opcode.
+See also <code>set_pointer</code>,
+above.Throws an exception if set_pointer has already been called.
+<dt><a name="STRING*_get_string()"
+><b><code>STRING* get_string()</b></code></a></dt>
+Returns the full name of the opcode.
+<dt><a name="INTVAL_elements()"
+><b><code>INTVAL elements()</b></code></a></dt>
+Returns the number of arguments for the opcode.
+<dt><a name="INTVAL_get_integer_keyed_int(INTVAL_i)"
+><b><code>INTVAL get_integer_keyed_int(INTVAL i)</b></code></a></dt>
+Returns the type information for the <code>i</code>th argument.
+Returns &#45;1 if the <code>i</code> is out of range.The type is returned as an integer.
+The value is determined by bitwise oring together the basic type and a number of flags:Basic Types:
+<ul>
+<li>0 = Integer</li>
+
+<li>1 = String</li>
+
+<li>2 = PMC</li>
+
+<li>3 = Float</li>
+</ul>
+Flags:
+<ul>
+<li>0x10 = Constant</li>
+
+<li>0x20 = Keyed</li>
+</ul>
+</dl>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="STRING_*family_name()"
+><b><code>STRING *family_name()</b></code></a></dt>
+Returns the family,
+or short,
+name of the opcode.
+<dt><a name="INTVAL_jump()"
+><b><code>INTVAL jump()</b></code></a></dt>
+Returns the jump value for the opcode.
+<dt><a name="PMC_*dirs()"
+><b><code>PMC *dirs()</b></code></a></dt>
+Returns an array of direction information for the arguments.
+<ul>
+<li>0 = ignored</li>
+
+<li>1 = in (read&#45;only)</li>
+
+<li>2 = out (write&#45;only)</li>
+
+<li>3 = inout (read&#45;write)</li>
+</ul>
+
+<dt><a name="labels()"
+><b><code>labels()</b></code></a></dt>
+Returns an array describing if each argument is a label.
+(0 or 1)</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em>src/pmc/oplib.pmc</em></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2011, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>
