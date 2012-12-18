@@ -1,0 +1,146 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Experimental Opcodes</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/ops.html">Opcodes</a> &raquo; Experimental Opcodes
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>experimental.ops &#45; Experimental Opcodes</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This file contains experimental opcodes.</p>
+
+<p>These opcodes should be considered implicitly deprecated &#45; that is,
+they may be removed in any release.</p>
+
+<p>If you rely on any of these opcodes,
+please open an issue at <a href='https://github.com/parrot/parrot/issues'>https://github.com/parrot/parrot/issues</a></p>
+
+<p>When making changes to any ops file,
+run <code>make bootstrap&#45;ops</code> to regenerate all generated ops files.</p>
+
+<h2><a name="More_Experimental_Ops"
+>More Experimental Ops</a></h2>
+
+<dl>
+<dt><a name="trap()"
+><b>trap</b>()</a></dt>
+Break into debugger.
+Implementation notes:
+<pre> &#45; x86/gcc ... works with gdb
+ &#45; ppc/gcc ... works with gdb, to proceed: gdb&#62; p $pc = $pc + 4
+ &#45; TODO</pre>
+For other architectures, this is a <code>noop</code>.
+<dt><a name="set_label(invar_PMC,_inconst_LABEL)"
+><b>set_label</b>(invar PMC, inconst LABEL)</a></dt>
+Sets the opcode_t* label value for the given PMC. This is basically only useful for PMCs such as Sub, Continuation, ExceptionHandler and derivatives
+<dt><a name="get_label(out_INT,_invar_PMC)"
+><b>get_label</b>(out INT, invar PMC)</a></dt>
+Gets the opcode_t* label value from the given PMC. This is basically only useful for PMCs such as Sub, Continuation, ExceptionHandler and derivatives
+<dt><a name="get_id(out_INT,_in_PMC)"
+><b>get_id</b>(out INT, in PMC)</a></dt>
+Gets a unique(*) ID for a PMC.This may or may not be based on the pointer of the PMC, but almost certainly is not the raw pointer value.(*) Uniqueness of these IDs is only guarranteed within code to which this PMC is currently visible (ie: not across processes, or share&#45;nothing threads, and not beyond the lifetime of the PMC).
+<dt><a name="fetch(out_PMC,_in_PMC,_in_PMC,_in_PMC)"
+><b>fetch</b>(out PMC, in PMC, in PMC, in PMC)</a></dt>
+Fetches a value from $2, keyed by $3 into $1. If the resulting PMC is PMCNULL, uses the type in $4 to create and return a new PMC.
+<dt><a name="fetch(out_PMC,_in_PMC,_in_INT,_in_PMC)"
+><b>fetch</b>(out PMC, in PMC, in INT, in PMC)</a></dt>
+
+<dt><a name="fetch(out_PMC,_in_PMC,_in_STR,_in_PMC)"
+><b>fetch</b>(out PMC, in PMC, in STR, in PMC)</a></dt>
+
+<dt><a name="vivify(out_PMC,_in_PMC,_in_PMC,_in_PMC)"
+><b>vivify</b>(out PMC, in PMC, in PMC, in PMC)</a></dt>
+Fetches a value from $2, keyed by $3 into $1. If the resulting PMC is PMCNULL, uses the type in $4 to create and return a new PMC.
+<dt><a name="vivify(out_PMC,_in_PMC,_in_INT,_in_PMC)"
+><b>vivify</b>(out PMC, in PMC, in INT, in PMC)</a></dt>
+
+<dt><a name="vivify(out_PMC,_in_PMC,_in_STR,_in_PMC)"
+><b>vivify</b>(out PMC, in PMC, in STR, in PMC)</a></dt>
+
+<dt><a name="new(out_PMC,_in_STR,_in_INT)"
+><b>new</b>(out PMC, in STR, in INT)</a></dt>
+
+<dt><a name="new(out_PMC,_in_PMC,_in_INT)"
+><b>new</b>(out PMC, in PMC, in INT)</a></dt>
+
+<dt><a name="root_new(out_PMC,_in_PMC,_in_INT)"
+><b>root_new</b>(out PMC, in PMC, in INT)</a></dt>
+
+<dt><a name="get_context(out_PMC)"
+><b>get_context</b>(out PMC)</a></dt>
+
+<dt><a name="new_call_context(out_PMC)"
+><b>new_call_context</b>(out PMC)</a></dt>
+
+<dt><a name="invokecc(invar_PMC,_invar_PMC)"
+><b>invokecc</b>(invar PMC, invar PMC)</a></dt>
+
+<dt><a name="flatten_array_into(invar_PMC,_invar_PMC,_in_INT)"
+><b>flatten_array_into</b>(invar PMC, invar PMC, in INT)</a></dt>
+
+<dt><a name="flatten_hash_into(invar_PMC,_invar_PMC,_in_INT)"
+><b>flatten_hash_into</b>(invar PMC, invar PMC, in INT)</a></dt>
+
+<dt><a name="slurp_array_from(out_PMC,_invar_PMC,_in_INT)"
+><b>slurp_array_from</b>(out PMC, invar PMC, in INT)</a></dt>
+
+<dt><a name="receive(out_PMC)"
+><b>receive</b>(out PMC)</a></dt>
+Receive a message sent to the current task.If there is no waiting message, block and wait.
+<dt><a name="wait(in_PMC)"
+><b>wait</b>(in PMC)</a></dt>
+Block and wait for a task to complete.
+<dt><a name="pass()"
+><b>pass</b>()</a></dt>
+Pass the rest of the current quantum and schedule the next task in the task queue.
+<dt><a name="disable_preemption()"
+><b>disable_preemption</b>()</a></dt>
+Disables preemption so the current task can run uninterrupted through a critical section.
+<dt><a name="enable_preemption()"
+><b>enable_preemption</b>()</a></dt>
+Enables preemption. To be called after the current task has finished executing a critical section.
+<dt><a name="terminate()"
+><b>terminate</b>()</a></dt>
+Terminate the current task immediately.</dl>
+
+<h1><a name="COPYRIGHT"
+>COPYRIGHT</a></h1>
+
+<p>Copyright (C) 2001&#45;2012, Parrot Foundation.</p>
+
+<h1><a name="LICENSE"
+>LICENSE</a></h1>
+
+<p>This program is free software. It is subject to the same license as the Parrot interp itself.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2011, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>
