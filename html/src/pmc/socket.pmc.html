@@ -109,7 +109,8 @@ It returns the message in a string.The asynchronous version takes an additional 
 and only returns a status object.
 When the recv operation is complete,
 it invokes the callback,
-passing it a status object and a string containing the received message.
+passing it a status object and a string containing the received message.If the socket is closed or on other errors,
+it throws an .EXCEPTION_PIO_ERROR Exception.
 <dt><a name="send(STRING_*buf)"
 ><b><code>send(STRING *buf)</b></code></a></dt>
 Sends a message string to a connected socket object.The asynchronous version takes an additional final PMC callback argument,
@@ -144,7 +145,8 @@ the asynchronous version is only called once,
 but continues to send new connection events until the socket is closed.]
 <dt><a name="METHOD_read(INTVAL_bytes)"
 ><b><code>METHOD read(INTVAL bytes)</b></code></a></dt>
-Read the given number of bytes from the socket and return them in a string.
+Read up to the given number of bytes from the socket and return them in a string.This method behaves always the same as recv().
+Only if the socket is already closed return an empty string.
 <dt><a name="METHOD_readline(STRING_delimiter)"
 ><b><code>METHOD readline(STRING delimiter)</b></code></a></dt>
 Read a line from the socket and return it in a string.

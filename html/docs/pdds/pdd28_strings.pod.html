@@ -343,12 +343,10 @@ What sort of string data is in the buffer, for example ASCII, ISO&#45;8859&#45;1
 
 <p>Concatenate two strings. Takes two strings as arguments.</p>
 
-<h4><a name="Parrot_str_new_(was_string_from_cstring)"
->Parrot_str_new (was string_from_cstring)</a></h4>
+<h4><a name="Parrot_str_new(interp,_str,_len)"
+>Parrot_str_new(interp, str, len)</a></h4>
 
-<p>Return a new string with the default encoding and character set. Accepts two arguments, a C string (<code>char *</code>) to initialize the value of the string, and an integer length of the string (number of characters). If the integer length isn&#39;t passed, the function will calculate the length.</p>
-
-<p>{{NOTE: the integer length isn&#39;t really necessary, and is under consideration for deprecation.}}</p>
+<p>Return a new string with the default encoding and character set. Accepts three arguments: A Parrot interpreter, a C string (<code>char *</code>) to initialize the value of the string, and an integer length of the string (number of characters). If a length of zero is passed, it will be calculated automatically.</p>
 
 <h4><a name="Parrot_str_new_noinit_(was_string_make_empty)"
 >Parrot_str_new_noinit (was string_make_empty)</a></h4>
@@ -362,10 +360,10 @@ What sort of string data is in the buffer, for example ASCII, ISO&#45;8859&#45;1
 
 <p>{{ NOTE: the crippled version of this function, <code>string_make</code>, used to accept a string name for the character set. This behavior is no longer supported, but <code>Parrot_find_encoding</code> and <code>Parrot_find_charset</code> can look up the encoding or character set structs. }}</p>
 
-<h4><a name="Parrot_str_new_constant_(was_const_string)"
->Parrot_str_new_constant (was const_string)</a></h4>
+<h4><a name="Parrot_str_new_constant(interp,_str)"
+>Parrot_str_new_constant(interp, str)</a></h4>
 
-<p>Creates and returns a new Parrot constant string. Takes one C string (a <code>char *</code>) as an argument, the value of the constant string. The length of the C string is calculated internally.</p>
+<p>Creates and returns a new Parrot constant string. Takes an interpreter and one C string (a <code>char *</code>) as an argument, the value of the constant string. The length of the C string is calculated internally.</p>
 
 <h4><a name="Parrot_str_length_(was_string_compute_strlen)"
 >Parrot_str_length (was string_compute_strlen)</a></h4>

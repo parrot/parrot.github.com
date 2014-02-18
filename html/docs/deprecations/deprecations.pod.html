@@ -48,7 +48,21 @@ these lists may be incomplete.</p>
 <p>Notifications for the 2.6&#45;&#62;2.9 transition and later will be complete.</p>
 
 <p>For instructions on how to deprecate Parrot code,
-please see: <em>how&#45;to&#45;deprecate.pod</em>.</p>
+please see: <em>how_to_deprecate.pod</em>.</p>
+
+<h2><a name="Changes_Between_4.9_and_5.0"
+>Changes Between 4.9 and 5.0</a></h2>
+
+<ul>
+<li>Moved &#34;.&#34; in the library search paths from the beginning to the end.</li>
+
+<p>&#45; high impact expected: build systems need to change their build and tests to favor their new libraries over already installed ones,
+to use absolute paths or add &#45;L./ &#45;X./.
+load_bytecode,
+.include and load_language might load now different files,
+if they exist in &#34;./&#34; AND in the proper library location.
+To keep the old behavior use parrot &#45;L./ &#45;X./ or set the environment variables PARROT_INCLUDE and PARROT_LIBRARY to &#34;./&#34;</p>
+</ul>
 
 <h2><a name="Changes_Between_3.3_and_3.6"
 >Changes Between 3.3 and 3.6</a></h2>
@@ -168,11 +182,10 @@ TT #1778</li>
 TT #1191</li>
 
 <p>&#45; Zero impact expected,
-it&#39;s been unused since long time.
-=item *</p>
+it&#39;s been unused since long time.</p>
 
-<p>RemoveIsTty Remove is_tty methods.
-#1689</p>
+<li>RemoveIsTty Remove is_tty methods.
+#1689</li>
 
 <p>&#45; negligible impact expected.</p>
 </ul>

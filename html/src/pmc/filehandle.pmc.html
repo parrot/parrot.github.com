@@ -72,7 +72,17 @@ Note that this method may return true even if there are no bytes remaining if th
 Opens the file at the given filename (including path) with the given mode.
 The invocant is modified and becomes an open filehandle.
 A copy of the invocant is also returned by the method (some subclasses may create this as the primary filehandle,
-rather than modifying the invocant).
+rather than modifying the invocant).Exceptions:EXCEPTION_PIO_ERROR with the following messages:Empty filename
+<pre>    &#34;Cannot open FileHandle, no path&#34;</pre>
+Already open filehandle
+<pre>    &#34;Cannot reopen already open FileHandle&#34;</pre>
+Invalid handle, no errno as with ISDIR:
+<pre>    &#34;Unable to open filehandle from path &#39;$path&#39;&#34;</pre>
+Invalid handle (fd &#60; 0), or other error:
+<pre>    &#34;Unable to open filehandle from path &#39;$path&#39;: $strerror($errno)&#34;</pre>
+EXCEPTION_INVALID_OPERATION with:
+<pre>    &#34;Invalid mode for file open&#34;</pre>
+
 <dt><a name="METHOD_isatty()"
 ><b><code>METHOD isatty()</b></code></a></dt>
 Returns a boolean value indicating whether <code>SELF</code> is a console/tty.
@@ -84,11 +94,7 @@ Test if the filehandle is closed.
 Read a line from the filehandle and return it in a string.
 <dt><a name="METHOD_readall(STRING_*name);"
 >METHOD readall(STRING *name);</a></dt>
-Read the entire contents of a file named <i>name</i> into a Parrot string.
-On a filehandle object that isn&#39;t opened yet,
-the path to a file can be passed to <code>readall</code> and it will open a filehandle on that file,
-read in the contents,
-and close the filehandle.
+Read the entire contents of a file named <i>name</i> into a Parrot string. On a filehandle object that isn&#39;t opened yet, the path to a file can be passed to <code>readall</code> and it will open a filehandle on that file, read in the contents, and close the filehandle.
 <pre>  .local pmc pio
   pio = new &#39;FileHandle&#39;
   $S0 = pio.&#39;readall&#39;(&#39;the_file&#39;)</pre>

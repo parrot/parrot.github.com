@@ -42,15 +42,15 @@ however,
 handle all the simple cases.</p>
 
 <p>Using the NCI,
-parrot automatically wraps the C functions and presents them as prototyped subroutines that follow normal parrot calling conventions,
-and can be called like any other parrot subroutine.</p>
+Parrot automatically wraps the C functions and presents them as prototyped subroutines that follow normal Parrot calling conventions,
+and can be called like any other Parrot subroutine.</p>
 
 <p>The NCI uses the platform native dynamic by&#45;name function loading mechanism (dlopen/dlsym on unix and LoadLibrary/GetProcAddress on Win32,
 for example) to get the function pointer,
 then dynamically generates the wrapper based on the signature of that function.</p>
 
 <p>As there is no good platform&#45;independent way to determine function signatures (C header files are not always available (certainly not for libraries not designed for access from C) and not always reasonably parseable anyway,
-and there is no generic way to query a function for its signature) the signature must be passed in when the linkage between the C function and parrot is made.</p>
+and there is no generic way to query a function for its signature) the signature must be passed in when the linkage between the C function and Parrot is made.</p>
 
 <h2><a name="Implementation"
 >Implementation</a></h2>
@@ -116,13 +116,13 @@ double&#45;precision floating point type
 A PMC register.
 <dt><a name="p"
 >p</a></dt>
-PMC thingie.
+PMC object.
 A generic pointer,
 taken from a PMC by using its get_pointer vtable function,
 or NULL for a PMCNULL.
 If this is a return type and the value is NULL,
 PMCNULL is returned,
-otherwise parrot will create a new UnManagedStruct PMC type,
+otherwise Parrot will create a new UnManagedStruct PMC type,
 which is just a generic &#34;pointer to something&#34; PMC type which Parrot does <i>no</i> management of.
 <dt><a name="U"
 >U</a></dt>
@@ -201,7 +201,7 @@ it is necessary to do a DLL export specification of the NCI function:</p>
 
 <p>Some libraries, particularly ones implementing more complex functionality such as databases or GUIs, want callbacks, that is ways to call a function under the control of the library rather than under control of the interpreter. These functions must be C functions, and generally are passed parameters to indicate what should be done.</p>
 
-<p>Unfortunately there&#39;s no good way to generically describe all possible callback parameter sets, so in some cases hand&#45;written C will be necessary. However, many callback functions share a common signature, and parrot provides some ready&#45;made functions for this purpose that should serve for most of the callback uses.</p>
+<p>Unfortunately there&#39;s no good way to generically describe all possible callback parameter sets, so in some cases hand&#45;written C will be necessary. However, many callback functions share a common signature, and Parrot provides some ready&#45;made functions for this purpose that should serve for most of the callback uses.</p>
 
 <p>There are two callback functions, Parrot_callback_C and Parrot_callback_D, which differ if the passed in <code>user_data</code> is second or first respectively:</p>
 
@@ -213,7 +213,7 @@ it is necessary to do a DLL export specification of the NCI function:</p>
 
 <p>The position of the <code>user_data</code> is specified with the <code>U</code> function signature, when creating the callback PMC:</p>
 
-<pre>  cb_PMC = new_callback cb_Sub, user_data, &#34;tU&#34;</pre>
+<pre>  cb_PMC = new_callback cb_Sub, user_data, &#34;SU&#34;</pre>
 
 <p>Given a Parrot function <code>cb_Sub</code>, and a <code>user_data</code> PMC, this creates a callback PMC <code>cb_PMC</code>, which expects the user data as the second argument. The information returned by the callback (<code>library_data</code>) is a C string.</p>
 
@@ -264,7 +264,7 @@ Register the callback
     userdata = 42
 
     .local pmc callback_sub
-    callback_sub = new_callback sub, userdata, "vtU"
+    callback_sub = new_callback sub, userdata, "vSU"
 
     # set up NCI
 
