@@ -1,0 +1,384 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Cage Cleaner Guide.</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Cage Cleaner Guide.
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/project/cage_cleaners_guide.pod &#45; Cage Cleaner Guide.</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>From <em>docs/project/roles_responsibilities.pod</em>:</p>
+
+<pre>  Fixes failing tests, makes sure coding standards are implemented,
+  reviews documentation and examples. A class of tickets in the
+  tracking system (Trac) has been created for use by this
+  group. This is an entry level position, and viewed as a good way
+  to get familiar with parrot internals.</pre>
+
+<h1><a name="TESTING_PARROT_AFTER_MAKING_A_CODE_CLEANING_CHANGE"
+>TESTING PARROT AFTER MAKING A CODE CLEANING CHANGE</a></h1>
+
+<p>To be really <i>really</i> sure you&#39;re not breaking anything after doing code cleaning or attending to the newspaper at the bottom of our Parrot&#39;s cage here are is the process I (ptc) go through before committing a new change:</p>
+
+<pre>  make realclean &#62; make_realclean.out 2&#62;&#38;1
+  perl Configure.pl &#62; perl_configure.out 2&#62;&#38;1
+  make buildtools_tests &#62; buildtools_tests.out 2&#62;&#38;1
+  make test &#62; make_test.out 2&#62;&#38;1</pre>
+
+<p>Then I diff the <code>*.out</code> files with copies of the <code>*.out</code> files I made on a previous test run. If the diffs show nothing nasty is happening, you can be more sure that you&#39;ve not broken anything and can commit the change. Then rename the <code>*.out</code> files to something like <code>*.out.old</code> so that you maintain reasonably up to date references for the diffs.</p>
+
+<p>This process should be put into a script and stored somewhere...</p>
+
+<h1><a name="PARROT_CAGE_CLEANERS&#39;_HIGH&#45;LEVEL_GOALS"
+>PARROT CAGE CLEANERS&#39; HIGH&#45;LEVEL GOALS</a></h1>
+
+<h2><a name="Smoke_testing_on_many_platforms_with_many_compilers"
+>Smoke testing on many platforms with many compilers</a></h2>
+
+<p>The more platforms we have, the more likely we are to find portability problems. Parrot has to be the most portable thing we&#39;ve created.</p>
+
+<p>More platforms also means more compilers. Maybe your DEC compiler is more picky than gcc, and spews more warnings. Good! More opportunities for cleaning!</p>
+
+<h3><a name="icc"
+>icc</a></h3>
+
+<p><code>icc</code> is the Intel C/C++ Compiler and is available for free for non&#45;commercial use. To use <code>icc</code> to build parrot, use the following arguments to <code>Configure.pl</code>:</p>
+
+<pre>  perl Configure.pl &#45;&#45;cc=icc &#45;&#45;ld=icc</pre>
+
+<p>(courtesy of Steve Peters, <code>steve at fisharerojo dot org</code>).</p>
+
+<h2><a name="Compiler_pickiness"
+>Compiler pickiness</a></h2>
+
+<p>Use as many compiler warnings as we possibly can. The more warnings we enable, the less likely something will pass the watchful eye of the compiler.</p>
+
+<p>Note that warnings may not just be &#45;W flags. Some warnings in gcc only show up when optimization is enabled. Use the <code>&#45;&#45;cage</code> option to <code>Configure.pl</code> to enable extra warnings which are useful in keeping the cage clean.</p>
+
+<h3><a name="gcc_fortify_source_macro"
+>gcc fortify source macro</a></h3>
+
+<p>In gcc it is possible to use the <code>&#45;D_FORTIFY_SOURCE=x</code> macro to provide &#34;a lightweight buffer overflow protection to some memory and string functions&#34; (<code>http://gcc.gnu.org/ml/gcc&#45;patches/2004&#45;09/msg02055.html</code>). Checks are implemented at compile&#45; and run&#45;time, thus it is also a good idea to run the test suite in combination with this compiler option. There are two levels to this macro usage:</p>
+
+<dl>
+<dt><a name="&#45;D_FORTIFY_SOURCE=1"
+><b><code>&#45;D_FORTIFY_SOURCE=1</b></code></a></dt>
+This option is only available in combination with at least the <code>&#45;O1</code> optimisation option and performs security checks that shouldn&#39;t change the behaviour of conforming programs. Add this option to the <code>&#45;&#45;ccflags</code> configure option to enable it, e.g.:
+<pre>  perl Configure.pl &#45;&#45;ccflags=&#34;&#45;D_FORTIFY_SOURCE=1 &#45;O1&#34;</pre>
+
+<dt><a name="&#45;D_FORTIFY_SOURCE=2"
+><b><code>&#45;D_FORTIFY_SOURCE=2</b></code></a></dt>
+This option is only available in combination with at least the <code>&#45;O2</code> optimisation option and performs more checking which might cause conforming programs to fail. It can be added to the <code>&#45;&#45;ccflags</code> configure option and used in combination with the <code>&#45;&#45;optimize</code> configure option like so:
+<pre>  perl Configure.pl &#45;&#45;optimize &#45;&#45;ccflags=&#34;&#45;D_FORTIFY_SOURCE=2&#34;</pre>
+</dl>
+
+<h2><a name="splint"
+>splint</a></h2>
+
+<p>Splint (<a href='http://www.splint.org'><a href="http://www.splint.org">http://www.splint.org</a></a>) is a very very picky lint tool, and setup and configuration is a pain. Andy has tried to get Perl 5 running under it nicely, but has met with limited success. Maybe the Parrot will be nicer.</p>
+
+<h2><a name="Solaris_lint"
+>Solaris lint</a></h2>
+
+<p>Sun has made its dev tools freely available at <a href='http://developers.sun.com/prodtech/cc/'><a href="http://developers.sun.com/prodtech/cc/">http://developers.sun.com/prodtech/cc/</a></a>. Its lint is the best one out there, except from Gimpel&#39;s FlexeLint (<a href='http://www.gimpel.com/html/flex.htm'><a href="http://www.gimpel.com/html/flex.htm">http://www.gimpel.com/html/flex.htm</a></a>) which costs many dollars.</p>
+
+<h2><a name="Enforcing_coding_standards,_naming_conventions,_etc"
+>Enforcing coding standards, naming conventions, etc</a></h2>
+
+<ul>
+<li>Automatic standards checking</li>
+
+<p>The docs in <em>filename here</em> explains what our code should look like. Write something that automatically validates it in a .t file.</p>
+
+<li><code>const</code> checking</li>
+
+<p>Declaring variables as <code>const</code> wherever possible lets the compiler do lots of checking that wouldn&#39;t normally be possible. Walk the source code adding the <code>const</code> qualifier wherever possible. The biggest bang is always in passing pointers into functions.</p>
+</ul>
+
+<h2><a name="Why_consting_is_good"
+>Why consting is good</a></h2>
+
+<p>In Perl, we have the <code>use constant</code> pragma to define unchanging values. The <a href='TODO'>Readonly</a> module extends this to allow arrays and hashes to be non&#45;modifiable as well.</p>
+
+<p>In C, we have <code>const</code> numbers and pointers, and using them wherever possible lets us put safety checks in our code, and the compiler will watch over our shoulders.</p>
+
+<h3><a name="const_numbers"
+><code>const</code> numbers</a></h3>
+
+<p>The easiest way to use the <code>const</code> qualifier is by flagging numbers that are set at the top of a block. For example:</p>
+
+<pre>    int max_elements;
+
+    max_elements = nusers * ELEMENTS_PER_USER;
+
+    ...
+
+    array[max_elements++] = n;
+    /* but you really meant array[max_elements] = n++; */</pre>
+
+<p>Adding a <code>const</code> qualifier means you can&#39;t accidentally modify <code>max_elements</code>.</p>
+
+<pre>    const int max_elements = nusers * ELEMENTS_PER_USER;</pre>
+
+<h3><a name="const_pointers"
+><code>const</code> pointers</a></h3>
+
+<p>If a pointer is qualified as const, then its contents cannot be modified. This lets the compiler protect you from doing naughty things to yourself.</p>
+
+<p>Here are two examples for functions you&#39;re familiar with:</p>
+
+<pre>    int strlen( const char *str );
+    void memset( char *ptr, char value, int length );</pre>
+
+<p>In the case of <code>strlen</code>, the caller is guaranteed that any string passed in won&#39;t be modified. How terrible it would be if it was possible for <code>strlen</code> to modify what gets passed in!</p>
+
+<p>The const on <code>strlen</code>&#39;s parameter also lets the compiler know that <code>strlen</code> can&#39;t be initializing what&#39;s passed in. For example:</p>
+
+<pre>    char buffer[ MAX_LEN ];
+
+    int n = strlen( buffer );</pre>
+
+<p>The compiler knows that <code>buffer</code> hasn&#39;t been initialized, and that <code>strlen</code> can&#39;t be initializing it, so the call to <code>strlen</code> is on an uninitialized value.</p>
+
+<p>Without the const, the compiler assumes that the contents of any pointer are getting initialized or modified.</p>
+
+<h3><a name="const_arrays"
+><code>const</code> arrays</a></h3>
+
+<p>Consting arrays makes all the values in the array non&#45;modifiable.</p>
+
+<pre>    const int days_per_month[] =
+        { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };</pre>
+
+<p>You don&#39;t want to be able to do <code>days_per_month[1] = 4;</code>, right? (We&#39;ll ignore that about 25% of the time you want <code>days_per_month[1]</code> to be 29.)</p>
+
+<h3><a name="Mixing_consts"
+>Mixing <code>consts</code></a></h3>
+
+<p>Combining <code>const</code>s on a pointer and its contents can get confusing. It&#39;s important to know on which side of the asterisk that the <code>const</code> lies.</p>
+
+<p>To the left of the asterisk, the characters are constant. To the right of the asterisk, the pointer is constant.</p>
+
+<p>Note the difference between a pointer to constant characters:</p>
+
+<pre>    /* Pointer to constant characters */
+    const char *str = &#34;Don&#39;t change me.&#34;;
+    str++;      /* legal, now points at &#34;o&#34; */
+    *str = &#34;x&#34;; /* not legal */</pre>
+
+<p>and a constant pointer to characters:</p>
+
+<pre>    /* Constant pointer to characters */
+    char * const str = buffer;
+    str++;      /* not legal */
+    *str = &#39;x&#39;; /* buffer[0] is now &#39;x&#39; */</pre>
+
+<p>Note the difference between which side of the asterisk that the <code>const</code> is on.</p>
+
+<p>You can also combine the two, with a constant pointer to constant characters:</p>
+
+<pre>    const char * const str = &#34;Don&#39;t change me&#34;;</pre>
+
+<p>or even an array of constant pointers to constant characters:</p>
+
+<pre>    const char * const days[] =
+        { &#34;Sun&#34;, &#34;Mon&#34;, &#34;Tue&#34;, &#34;Wed&#34;, &#34;Thu&#34;, &#34;Fri&#34;, &#34;Sat&#34; };</pre>
+
+<p>If you see a declaration you don&#39;t understand, use <code>cdecl</code>. It&#39;s standard in many C compiler suites, and is freely available around the net.</p>
+
+<pre>    $ cdecl
+    Type `help&#39; or `?&#39; for help
+    cdecl&#62; explain const char * str;
+    declare str as pointer to const char
+    cdecl&#62; explain char * const str;
+    declare str as const pointer to char</pre>
+
+<h2><a name="Decreasing_the_amount_of_repeated_code"
+>Decreasing the amount of repeated code</a></h2>
+
+<p>PMD (<a href='http://pmd.sourceforge.net/'><a href="http://pmd.sourceforge.net/">http://pmd.sourceforge.net/</a></a>) has been used on C code, even though it&#39;s a Java tool. It looks for repeated strings of tokens that are candidates for either functions or macros.</p>
+
+<h3><a name="PMD_usage"
+>PMD usage</a></h3>
+
+<p>General usage:</p>
+
+<pre>  pmd [directory] [report format] [ruleset file]</pre>
+
+<p>To generate html output of unused code within parrot use:</p>
+
+<pre>  pmd . html rulesets/unusedcode.xml &#62; unused_code.html</pre>
+
+<p>Also distributed with PMD is the CPD (Copy/Paste Detector) which finds duplicate code. An easy way to get started with this tool is to use the gui (cpdgui). Set the root source directory to your parrot working directory, and choose the <code>by extension...</code> option of the <code>Language:</code> menu. Then put <code>.c</code> in the <code>Extension:</code> box and click <code>Go</code>.</p>
+
+<h2><a name="Automated_source_macros"
+>Automated source macros</a></h2>
+
+<p>Perl5 has a lot of good source management techniques that we can use.</p>
+
+<ul>
+<li>Macro for interp argument</li>
+
+<p>A macro for declaring the interpreter argument, and maybe a macro for passing it</p>
+
+<p>BTW, our Perl experience teaches us that somebody is going to want to make the interpreter a C++ object for Windows environments, and it wouldn&#39;t hurt to make that possible, or at least work in that direction, as long as clarity doesn&#39;t suffer.</p>
+
+<li>Parrot_xxx macros</li>
+
+<p>Automated processing that would make a macro to let us write</p>
+
+<pre>    somefunc(interp,a,b,c)</pre>
+
+<p>while the linkage is</p>
+
+<pre>    Parrot_somefunc(interp,a,b,c)</pre>
+
+<p>for namespace cleanup. This is straight out of <em>embed.fnc</em> and <em>proto.h</em> in Perl5.</p>
+</ul>
+
+<h2><a name="Automated_generation_of_C_headers"
+>Automated generation of C headers</a></h2>
+
+<p>This has started significantly with the <em>headerizer.pl</em> program. Right now, it extracts the function headers correctly, but now I have to have it create the <em>.h</em> files.</p>
+
+<h2><a name="Creating_automated_code_checking_tools"
+>Creating automated code checking tools</a></h2>
+
+<h2><a name="Documenting_function_behavior_and_structure_members"
+>Documenting function behavior and structure members</a></h2>
+
+<h2><a name="Developing_coverage_tools"
+>Developing coverage tools</a></h2>
+
+<h2><a name="Automatically_running_the_coverage_tools"
+>Automatically running the coverage tools</a></h2>
+
+<h2><a name="Run_on_many_different_C_compilers"
+>Run on many different C compilers</a></h2>
+
+<p>Most of Andy&#39;s work right now is with GCC 4.2 on Linux. We need many more.</p>
+
+<h2><a name="Run_under_valgrind"
+>Run under valgrind</a></h2>
+
+<p>Valgrind (<a href='http://valgrind.org/'><a href="http://valgrind.org/">http://valgrind.org/</a></a>) is a profiler/debugger most notable for the way it magically monitors memory accesses and management.</p>
+
+<p>To run parrot under Valgrind, the following argument set should be helpful:</p>
+
+<pre>  valgrind &#45;&#45;num&#45;callers=500 \
+     &#45;&#45;leak&#45;check=full &#45;&#45;leak&#45;resolution=high &#45;&#45;show&#45;reachable=yes \
+     parrot &#45;&#45;leak&#45;test</pre>
+
+<p>(adapted from a post to <code>parrot&#45;porters</code> by chromatic).</p>
+
+<p>See also the <em>tools/dev/vgp</em> and <em>tools/dev/parrot.supp</em> files. <code>vgp</code> is a wrapper around running parrot with valgrind and uses a custom set of &#34;valgrind suppressions&#34;.</p>
+
+<h2><a name="IMCC_cleanup"
+>IMCC cleanup</a></h2>
+
+<p>From #parrot:</p>
+
+<pre>    vsoni: there seems to be some dead code/feature....I had a chat
+    with leo and I am going to send and email to p6i for deprecation
+    of certain old features</pre>
+
+<h2><a name="Help_other_contributors_hack_their_patches_into_Parrot&#45;style_industrial&#45;strength_C_code."
+>Help other contributors hack their patches into Parrot&#45;style industrial&#45;strength C code.</a></h2>
+
+<p>From chip&#39;s comment at <a href='http://www.oreillynet.com/onlamp/blog/2006/07/calling_for_parrot_janitors.html'><a href="http://www.oreillynet.com/onlamp/blog/2006/07/calling_for_parrot_janitors.html">http://www.oreillynet.com/onlamp/blog/2006/07/calling_for_parrot_janitors.html</a></a></p>
+
+<pre>    We&#39;ve just had contributed an improved register allocation
+    implementation, but since the contributor is new to Parrot,
+    there are some style and coding standards issues that need to
+    be worked out. It&#39;d be great if a Cage Cleaner could step up
+    and help our new contributor bang the code into Parrotish form.</pre>
+
+<h2><a name="Remove_usage_of_deprecated_features"
+>Remove usage of deprecated features</a></h2>
+
+<p>The <em>api.yaml</em> file lists features that are deprecated but not yet removed, as well as experimental features. A Trac ticket will document how this deprecated feature is to be replaced. Help prepare for the actual removal of the feature by replacing its usage.</p>
+
+<h2><a name="Clean_up_skipped_tests"
+>Clean up skipped tests</a></h2>
+
+<p>Parrot has too many skipped tests. Pick a test file with a skipped test, disable the skip() line, then make it pass. The Parrot code may not compile, or you may have to modify it to bring it up to date. The test may not even be useful anymore; we won&#39;t know until you try.</p>
+
+<p>If you can make it pass, great!</p>
+
+<p>If you can make it run, great! Make it a TODO test instead.</p>
+
+<p>If neither, please report your findings so that everyone can decide what to do.</p>
+
+<h1><a name="HANDY_CONFIGURATION_TIPS"
+>HANDY CONFIGURATION TIPS</a></h1>
+
+<h2><a name="Displaying_trailing_whitespace_in_vim_and_emacs"
+>Displaying trailing whitespace in vim and emacs</a></h2>
+
+<h3><a name="Vim"
+>Vim</a></h3>
+
+<p>Add this to your <code>.vimrc</code>:</p>
+
+<pre>    set list
+    set listchars=trail:&#45;,tab:\.\ </pre>
+
+<p><b>NOTE</b>: there is a space character after the last backslash. It is very important!</p>
+
+<p>Contributed by Jerry Gay &#60;jerry dot gay at gmail dot com&#62;.</p>
+
+<h3><a name="Emacs"
+>Emacs</a></h3>
+
+<p>Add this to your <code>.emacs</code>:</p>
+
+<pre>    (setq&#45;default show&#45;trailing&#45;whitespace t)</pre>
+
+<p>Emacs 22 users can highlight tabs like this:</p>
+
+<pre>    (global&#45;hi&#45;lock&#45;mode 1)
+    (highlight&#45;regexp &#34;\t&#34;)</pre>
+
+<p>Contributed by Eric Hanchrow &#60;offby1 at blarg dot net&#62;.</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Paul Cochrane a.k.a. ptc; original document by Andy Lester</p>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em>docs/project/roles_responsibilities.pod</em>, <em>RESPONSIBLE_PARTIES</em> and the list of Cage items in github <a href='https://github.com/parrot/parrot/issues?labels=cage&#38;state=open'>https://github.com/parrot/parrot/issues?labels=cage&#38;state=open</a>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2011, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

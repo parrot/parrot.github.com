@@ -1,0 +1,183 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PackfileView PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; PackfileView PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/packfileview.pmc &#45; PackfileView PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This class implements a user&#45;accessible,
+read&#45;only wrapper for the PackFile* structure used internally by Parrot.
+It is essentially an interface for the user to call Packfile subsystem API calls,
+and work with the PackFile* structures output from utilities which generate them.</p>
+
+<p>NOTICE: This PMC should contain very little logic.
+It should be a thin wrapper around the public functions in src/packfile/api.c.
+This PMC should contain absolutely NO functionality for modifying the packfile.
+To create a new packfile or modify an existing one,
+use the PackFile PMC instead.</p>
+
+<h2><a name="VTABLES"
+>VTABLES</a></h2>
+
+<dl>
+<dt><a name="static_PackFile_ConstTable_*_get_const_table(PARROT_INTERP,_PMC_*_self)"
+><b><code>static PackFile_ConstTable * get_const_table(PARROT_INTERP, PMC * self)</b></code></a></dt>
+Get the constant table for the PackFile*.
+Return NULL if there&#39;s a problem.
+<dt><a name="static_INTVAL_find_called_tag(PARROT_INTERP,_PMC_*_self,_STRING_*_tag)"
+><b><code>static INTVAL find_called_tag(PARROT_INTERP, PMC * self, STRING * tag)</b></code></a></dt>
+Find a called tag in the cache.
+Return 1 if it exists,
+0 otherwise.
+<dt><a name="static_void_add_called_tag(PARROT_INTERP,_PMC_*_self,_STRING_*_tag)"
+><b><code>static void add_called_tag(PARROT_INTERP, PMC * self, STRING * tag)</b></code></a></dt>
+Add a called tag to the cache,
+if it doesn&#39;t exist already.
+Do nothing otherwise.
+<dt><a name="VTABLE_void_init()"
+><b><code>VTABLE void init()</b></code></a></dt>
+Create the new PMC and set flags
+<dt><a name="VTABLE_void_destroy()"
+><b><code>VTABLE void destroy()</b></code></a></dt>
+Destroy the PMC *AND* the underlying PackFile*
+<dt><a name="VTABLE_void_mark()"
+><b><code>VTABLE void mark()</b></code></a></dt>
+Mark the PMC and the PackFile* contents
+<dt><a name="VTABLE_void_set_pointer(void_*ptr)"
+><b><code>VTABLE void set_pointer(void *ptr)</b></code></a></dt>
+Set a pointer to a PackFile* structure.
+This can only be done once.
+Attempting to set a new pointer will throw an exception.
+This rule is in place because the lifetime of the PackFile* is tied to the lifetime of the PMC wrapping it,
+and the PMC provides access to the PackFile* by the GC.
+Overwriting a pointer to an old PackFile* structure will cause memory leaks,
+prematurely collected Subs,
+and other creepy behaviors.
+<dt><a name="VTABLE_void_*get_pointer()"
+><b><code>VTABLE void *get_pointer()</b></code></a></dt>
+Get a pointer to the underlying PackFile* structure
+<dt><a name="VTABLE_INTVAL_get_bool()"
+><b><code>VTABLE INTVAL get_bool()</b></code></a></dt>
+Return 1 (true) if this PMC is currently pointing to a PackFile*.
+0 (false) otherwise.
+<dt><a name="VTABLE_void_set_string_native(STRING_*path)"
+><b><code>VTABLE void set_string_native(STRING *path)</b></code></a></dt>
+
+<dt><a name="VTABLE_STRING_*get_string_native(STRING_*path)"
+><b><code>VTABLE STRING *get_string_native(STRING *path)</b></code></a></dt>
+
+<dt><a name="VTABLE_PMC_*get_pmc_keyed_int(INTVAL_idx)"
+><b><code>VTABLE PMC *get_pmc_keyed_int(INTVAL idx)</b></code></a></dt>
+Get a PMC from the constants table,
+by index
+<dt><a name="VTABLE_STRING_*get_string_keyed_int(INTVAL_idx)"
+><b><code>VTABLE STRING *get_string_keyed_int(INTVAL idx)</b></code></a></dt>
+Get a STRING from the constants table,
+by index
+<dt><a name="VTABLE_FLOATVAL_get_number_keyed_int(INTVAL_idx)"
+><b><code>VTABLE FLOATVAL get_number_keyed_int(INTVAL idx)</b></code></a></dt>
+Get a FLOATVAL from the constants table,
+by index</dl>
+
+<h2><a name="METHODS"
+>METHODS</a></h2>
+
+<dl>
+<dt><a name="METHOD_constant_counts()"
+><b><code>METHOD constant_counts()</b></code></a></dt>
+Return a 3&#45;element FixedIntegerArray with the total number of FLOATVAL,
+STRING and PMC constants in the respective constant tables.
+<dt><a name="METHOD_main_sub()"
+><b><code>METHOD main_sub()</b></code></a></dt>
+Get the :main sub from the packfile,
+if any.
+<dt><a name="METHOD_subs_by_tag(STRING_*tag)"
+><b><code>METHOD subs_by_tag(STRING *tag)</b></code></a></dt>
+Get an array of all Subs with the given tag.
+<dt><a name="METHOD_single_sub_by_tag(STRING_*tag)"
+><b><code>METHOD single_sub_by_tag(STRING *tag)</b></code></a></dt>
+Get a single Sub with the given tag.
+If there are more than one Subs with this flag,
+it is unspecified which one is returned.
+<dt><a name="METHOD_trigger(STRING_*flag)"
+><b><code>METHOD trigger(STRING *flag)</b></code></a></dt>
+Trigger subs with the given flag.
+Currently supported values are &#34;load&#34; and &#34;init&#34;.
+<dt><a name="METHOD_all_tags()"
+><b><code>METHOD all_tags()</b></code></a></dt>
+Return an array of all tags.
+<dt><a name="METHOD_all_tagged_pmcs()"
+><b><code>METHOD all_tagged_pmcs()</b></code></a></dt>
+Return a hash map of all tags,
+and the lists of pmcs with those tags.
+<dt><a name="METHOD_all_subs()"
+><b><code>METHOD all_subs()</b></code></a></dt>
+Return a ResizablePMCArray with all Sub constants from the constant table.
+<dt><a name="METHOD_first_sub_in_const_table()"
+><b><code>METHOD first_sub_in_const_table()</b></code></a></dt>
+Returns the first Sub constant from the constant table.
+<dt><a name="METHOD_mark_initialized(STRING_*tag)"
+><b><code>METHOD mark_initialized(STRING *tag)</b></code></a></dt>
+Mark a given tag as being initialized
+<dt><a name="METHOD_is_initialized(STRING_*tag)"
+><b><code>METHOD is_initialized(STRING *tag)</b></code></a></dt>
+Determine if the given tag has been marked initialized
+<dt><a name="METHOD_serialized_size()"
+><b><code>METHOD serialized_size()</b></code></a></dt>
+Return the size,
+in bytes,
+for how large this packfile will be if serialized.
+<dt><a name="METHOD_serialize()"
+><b><code>METHOD serialize()</b></code></a></dt>
+Serialize the packfile into a STRING buffer
+<dt><a name="METHOD_deserialize(STRING_*pbc)"
+><b><code>METHOD deserialize(STRING *pbc)</b></code></a></dt>
+Read a PackFile* in from a STRING buffer and set it as the current PackFile* ptr in this PMC.
+Subject to the normal set_pointer restrictions.
+<dt><a name="METHOD_read_from_file(STRING_*filename)"
+><b><code>METHOD read_from_file(STRING *filename)</b></code></a></dt>
+Read a PackFile* from the given .pbc file and set it as the current PackFile* pointer in this PMC.
+Subject to the same restrictions as set_pointer.
+<dt><a name="METHOD_write_to_file(STRING_*filename)"
+><b><code>METHOD write_to_file(STRING *filename)</b></code></a></dt>
+Serialize the contents of the PackFile in this PMC and write them out to the given .pbc bytecode file.
+<dt><a name="METHOD_get_version()"
+><b><code>METHOD get_version()</b></code></a></dt>
+Return a stringified version number of the packfile
+<dt><a name="static_PMC_*_get_first_sub(PARROT_INTERP,_PMC_*pfpmc)"
+><b><code>static PMC * get_first_sub(PARROT_INTERP, PMC *pfpmc)</b></code></a></dt>
+Returns the first Sub constant from the constant table.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2011, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

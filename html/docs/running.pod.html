@@ -1,0 +1,196 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot runcore, debugging and optimizer options</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Home</a> &raquo; Parrot runcore, debugging and optimizer options
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/running.pod &#45; Parrot runcore,
+debugging and optimizer options</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    parrot &#45;R, &#45;&#45;runcore &#60;CORE&#62; &#45;O&#60;level&#62; &#45;D&#60;flags&#62; &#45;d&#60;flags&#62; &#45;t&#60;flags&#62;
+
+    parrot &#45;R fast
+    parrot &#45;R slow
+    parrot &#45;R trace | &#45;t
+    parrot &#45;R profiling
+    parrot &#45;R subprof
+    parrot &#45;&#45;gc&#45;debug
+    parrot &#45;R jit      I&#60;(currently disabled)&#62;
+    parrot &#45;R exec     I&#60;(currently disabled)&#62;</pre>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This document describes Parrot&#39;s runcore, debugging and optimizer options.</p>
+
+<h1><a name="ENVIRONMENT"
+>ENVIRONMENT</a></h1>
+
+<dl>
+<dt><a name="PARROT_RUNTIME"
+>PARROT_RUNTIME</a></dt>
+If this environment variable is set, parrot will use this path as its runtime prefix instead of the compiled in path.
+<dt><a name="PARROT_GC_DEBUG"
+>PARROT_GC_DEBUG</a></dt>
+Turn on the <i>&#45;&#45;gc&#45;debug</i> flag.</dl>
+
+<h1><a name="OPTIONS"
+>OPTIONS</a></h1>
+
+<h2><a name="Assembler/compiler_options"
+>Assembler/compiler options</a></h2>
+
+<dl>
+<dt><a name="&#45;O[level]"
+><b>&#45;O</b>[level]</a></dt>
+Valid optimizer levels: <code>&#45;O</code>, <code>&#45;O1</code>, <code>&#45;O2</code>, <code>&#45;Op</code>, <code>&#45;Oc</code><code>&#45;O1</code> enables the pre_optimizer, runs before control flow graph (CFG) is built. It includes strength reduction and rewrites certain if/branch/label constructs.<code>&#45;O2</code> runs afterwards, handles constant propagation, jump optimizations, removal of unused labels and dead code.<code>&#45;Op</code> applies <code>&#45;O2</code> to pasm files also.<code>&#45;Oc</code> does tailcall optimizations.The old options <code>&#45;Oc</code> and <code>&#45;Oj</code> are currently ineffective.<code>&#45;O</code> defaults to <code>&#45;O1</code>.
+<dt><a name="&#45;&#45;help&#45;debug"
+>&#45;&#45;help&#45;debug</a></dt>
+Print debugging and tracing flag bits summary.
+<dt><a name="&#45;y,_&#45;&#45;yydebug"
+>&#45;y, &#45;&#45;yydebug</a></dt>
+Turn on yydebug in <em>yacc</em>/<em>bison</em>. Same as &#45;d0004
+<dt><a name="&#45;v,_&#45;&#45;verbose"
+>&#45;v, &#45;&#45;verbose</a></dt>
+Turn on compiler verbosity.
+<dt><a name="&#45;d[=HEXFLAGS]"
+><b>&#45;d</b>[=HEXFLAGS]</a></dt>
+
+<dt><a name="&#45;&#45;imcc&#45;debug[=HEXFLAGS]"
+><b>&#45;&#45;imcc&#45;debug</b>[=HEXFLAGS]</a></dt>
+Turn on compiler debug flags. <i>See</i> <code>parrot &#45;&#45;help&#45;debug</code> for available flag bits.</dl>
+
+<h2><a name="Runcore_Options"
+>Runcore Options</a></h2>
+
+<p>These options select the runcore, which is useful for performance tuning and debugging. See <a href='#ABOUT_RUNCORES'>&#34;ABOUT RUNCORES&#34;</a> for details.</p>
+
+<dl>
+<dt><a name="&#45;R,_&#45;&#45;runcore_CORE"
+>&#45;R, &#45;&#45;runcore CORE</a></dt>
+Select the runcore. The following cores are available in Parrot, but not all may be available on your system:
+<pre>  fast          bare&#45;bones core without bounds&#45;checking or
+                context&#45;updating (default)
+
+  slow, bounds  bounds checking core
+
+  trace         bounds checking core with trace info
+
+  profiling     Rudimentary profiling support.
+                See L&#60;docs/dev/profiling.pod&#62;
+
+  subprof       Better subroutine&#45;level profilers
+  subprof_sub
+  subprof_hll
+  subprof_ops
+                See POD in F&#60;src/runcore/subprof.c&#62;
+
+  gc_debug      Does a full GC on each op.</pre>
+Older currently ignored options include:
+<pre>  jit, switch&#45;jit, cgp&#45;jit, switch, cgp, function, exec</pre>
+We do not recommend their use in new code; they will continue working for existing code per our deprecation policy. The options function, cgp, switch, and jit, switch&#45;jit, cgp&#45;jit are currently aliases for fast.The additional internal <code>debugger</code> runcore is used by debugger frontends.See <em>src/runcore/cores.c</em> for details.
+<dt><a name="&#45;p,_&#45;&#45;profile"
+>&#45;p, &#45;&#45;profile</a></dt>
+Run with the slow core and print an execution profile.
+<dt><a name="&#45;t,_&#45;&#45;trace"
+>&#45;t, &#45;&#45;trace</a></dt>
+Run with the trace core and print trace information to <b>stderr</b>. See <code>parrot &#45;&#45;help&#45;debug</code> for available flag bits.</dl>
+
+<h2><a name="VM_Options"
+>VM Options</a></h2>
+
+<dl>
+<dt><a name="&#45;w,_&#45;&#45;warnings"
+>&#45;w, &#45;&#45;warnings</a></dt>
+Turn on warnings. See <code>parrot &#45;&#45;help&#45;debug</code> for available flag bits.
+<dt><a name="&#45;D,_&#45;&#45;parrot&#45;debug"
+>&#45;D, &#45;&#45;parrot&#45;debug</a></dt>
+Turn on interpreter debug flag. See <code>parrot &#45;&#45;help&#45;debug</code> for available flag bits.
+<dt><a name="&#45;&#45;gc&#45;debug"
+>&#45;&#45;gc&#45;debug</a></dt>
+Turn on GC (Garbage Collection) debugging. This imposes some stress on the GC subsystem and can slow down execution considerably.
+<dt><a name="&#45;G,_&#45;&#45;no&#45;gc"
+>&#45;G, &#45;&#45;no&#45;gc</a></dt>
+This turns off GC. This may be useful to find GC related bugs. Don&#39;t use this option for longer running programs: as memory is no longer recycled, it may quickly become exhausted.
+<dt><a name="&#45;&#45;leak&#45;test,_&#45;&#45;destroy&#45;at&#45;end"
+>&#45;&#45;leak&#45;test, &#45;&#45;destroy&#45;at&#45;end</a></dt>
+Free all memory of the last interpreter. This is useful when running leak checkers.</dl>
+
+<h1><a name="ABOUT_RUNCORES"
+>ABOUT RUNCORES</a></h1>
+
+<p>The runcore (or runloop) tells Parrot how to find the C code that implements each instruction. Parrot provides more than one way to do this, partly because no single runcore will perform optimally on all architectures (or even for all problems on a given architecture), and partly because some of the runcores have specific debugging and tracing capabilities.</p>
+
+<p>In the &#34;slow&#34; or &#34;bounds&#34; runcore, each opcode is a separate C function. That&#39;s pretty easy in pseudocode:</p>
+
+<pre>    slow_runcore( op ):
+        while ( op ):
+            op = op_function( op )
+            check_for_events()</pre>
+
+<p>The old GC debugging runcore was similar:</p>
+
+<pre>    gcdebug_runcore( op ):
+        while ( op ):
+            perform_full_gc_run()
+            op = op_function( op )
+            check_for_events()</pre>
+
+<p>Of course, this is much slower, but is extremely helpful for pinning memory corruption problems that affect GC down to single&#45;instruction resolution. See <a href='http://www.oreillynet.com/onlamp/blog/2007/10/debugging_gc_problems_in_parro.html'><a href="http://www.oreillynet.com/onlamp/blog/2007/10/debugging_gc_problems_in_parro.html">http://www.oreillynet.com/onlamp/blog/2007/10/debugging_gc_problems_in_parro.html</a></a> for more information.</p>
+
+<p>The trace and profile cores are also based on the &#34;slow&#34; core, doing full bounds checking, and also printing runtime information to stderr.</p>
+
+<h1><a name="OPERATION_TABLE"
+>OPERATION TABLE</a></h1>
+
+<pre> Command Line          Action         Output
+ &#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;
+ parrot x.pir          run
+ parrot x.pasm         run
+ parrot x.pbc          run
+ &#45;o x.pasm x.pir       ass            x.pasm
+ &#45;o x.pasm y.pasm      ass            x.pasm
+ &#45;o x.pbc  x.pir       ass            x.pbc
+ &#45;o x.pbc  x.pasm      ass            x.pbc
+ &#45;o x.pbc &#45;r x.pasm    ass/run pasm   x.pbc
+ &#45;o x.pbc &#45;r &#45;r x.pasm ass/run pbc    x.pbc
+ &#45;o x.o    x.pbc       obj</pre>
+
+<p>... where the possible actions are:</p>
+
+<pre>  run ... yes, run the program
+  ass ... assemble sourcefile
+  obj ..  produce native (ELF) object file for the EXEC subsystem</pre>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2011, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

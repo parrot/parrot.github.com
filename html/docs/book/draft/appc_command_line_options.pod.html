@@ -1,0 +1,161 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Command&#45;Line Options</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; Command&#45;Line Options
+                </div>
+
+<h1><a name="Command&#45;Line_Options"
+>Command&#45;Line Options</a></h1>
+
+<p></p>
+
+<p><!--
+	INDEX: command&#45;line options (Parrot)
+--> <!--
+	INDEX: Parrot;command&#45;line options
+--> <!--
+	INDEX: running.pod file
+--> Since Parrot is both an assembler and a bytecode interpreter,
+it has options to control both behaviors.
+Some options may have changed by the time you read this,
+especially options related to debugging and optimization.
+The document <em>imcc/docs/running.pod</em> should have the latest details.
+Or just run <em>parrot &#45;&#45;help</em>.</p>
+
+<h2><a name="General_Usage"
+>General Usage</a></h2>
+
+<p></p>
+
+<pre>  parrot [options] file [arguments]</pre>
+
+<p>The file is either an <em>.pir</em> or <em>.pasm</em> source file or a Parrot bytecode file. Parrot creates an <code>Array</code> object to hold the command&#45;line arguments and stores it in <code>P5</code> on program start.</p>
+
+<h2><a name="Assembler_Options"
+>Assembler Options</a></h2>
+
+<p></p>
+
+<dl>
+<dt><a name="&#45;a,_&#45;&#45;pasm"
+>&#45;a, &#45;&#45;pasm</a></dt>
+<!--
+	INDEX: Parrot;assembler options
+--> Assume PASM input on <code>stdin</code>. When Parrot runs a source file with a <em>.pasm</em> extension, it parses the file as pure PASM code. This switch turns on PASM parsing (instead of the default PIR parsing) when a source file is read from <code>stdin</code>.
+<dt><a name="&#45;c,&#45;&#45;pbc"
+>&#45;c,&#45;&#45;pbc</a></dt>
+Assume PBC file on <code>stdin</code>. When Parrot runs a bytecode file with a <em>.pbc</em> extension, it immediately executes the file. This option tells Parrot to immediately execute a bytecode file piped in on <code>stdin</code>.
+<dt><a name="&#45;d,&#45;&#45;debug_[hexbits]"
+>&#45;d,&#45;&#45;debug [hexbits]</a></dt>
+Turn on debugging output. The <code>&#45;d</code> switch takes an optional argument, which is a hex value of debug bits. The individual bits are shown in Table 11&#45;3. When hexbits isn&#39;t specified, the default debugging level is 0001. If hexbits is separated from the <code>&#45;d</code> switch by whitespace, it has to start with a number.<!--
+	INDEX: Parrot;debugging bits
+--> <!--
+	INDEX: debugging bits (Parrot)
+--> To produce a huge output on <code>stderr</code>, turn on all the debugging bits:
+<pre>  $ parrot &#45;d 0ffff ...</pre>
+
+<dt><a name="&#45;&#45;help&#45;debug"
+>&#45;&#45;help&#45;debug</a></dt>
+Show debug option bits.
+<dt><a name="&#45;h,&#45;&#45;help"
+>&#45;h,&#45;&#45;help</a></dt>
+Print a short summary of options to <code>stdout</code> and exit.
+<dt><a name="&#45;o_outputfile"
+>&#45;o outputfile</a></dt>
+Act like an assembler. With this switch Parrot won&#39;t run code unless it&#39;s combined with the <code>&#45;r</code> switch. If the name of outputfile ends with a <em>.pbc</em> extension, Parrot writes a Parrot bytecode file. If outputfile ends with a <em>.pasm</em> extension, Parrot writes a PASM source file, even if the input file was also PASM. This can be handy to check various optimizations when you run Parrot with the <code>&#45;Op</code> switch.
+<dt><a name="&#45;r,&#45;&#45;run&#45;pbc"
+>&#45;r,&#45;&#45;run&#45;pbc</a></dt>
+Immediately execute bytecode. This is the default unless <code>&#45;o</code> is present. The combination of <code>&#45;r</code> <code>&#45;o</code> <code>output.pbc</code> writes a bytecode file and executes the generated PBC.
+<dt><a name="&#45;v,&#45;&#45;verbose"
+>&#45;v,&#45;&#45;verbose</a></dt>
+One <code>&#45;v</code> switch (<code>imcc</code> <code>&#45;v</code>) shows which files are worked on and prints a summary of register usage and optimization statistics. Two <code>&#45;v</code> switches (<code>imcc</code> <code>&#45;v</code> <code>&#45;v</code>) also prints a line for each individual processing step.
+<dt><a name="&#45;y,&#45;&#45;yydebug"
+>&#45;y,&#45;&#45;yydebug</a></dt>
+Turn on <code>yydebug</code> for <em>yacc</em>/<em>bison</em>.
+<dt><a name="&#45;E,&#45;&#45;pre&#45;process&#45;only"
+>&#45;E,&#45;&#45;pre&#45;process&#45;only</a></dt>
+Show output of macro expansions and quit.
+<dt><a name="&#45;V,&#45;&#45;version"
+>&#45;V,&#45;&#45;version</a></dt>
+Print the program version to <code>stdout</code> and exit.
+<dt><a name="&#45;Ox"
+>&#45;Ox</a></dt>
+Turn on optimizations. The flags currently implemented are shown in Table 11&#45;4.<!--
+	INDEX: Parrot;optimizations
+--> <!--
+	INDEX: optimizations (Parrot)
+--></dl>
+
+<h2><a name="Runcore_Options"
+>Runcore Options</a></h2>
+
+<p></p>
+
+<p><!--
+	INDEX: Parrot;bytecode interpreter options
+--> <!--
+	INDEX: bytecode interpreter options (Parrot)
+--> <!--
+	INDEX: computed goto core
+--> <!--
+	INDEX: fast core
+--> The interpreter options are mainly for selecting which run&#45;time core to use for interpreting bytecode. The current default is the <i>computed goto core</i> if it&#39;s available. Otherwise the <i>fast core</i> is used.</p>
+
+<dl>
+<dt><a name="&#45;R_slow"
+>&#45;R slow</a></dt>
+Run with the <i>slow core</i>
+<dt><a name="&#45;R_bounds"
+>&#45;R bounds</a></dt>
+Activate bounds checking. This also runs with the <i>slow core</i> as a side effect.
+<dt><a name="&#45;R_fast"
+>&#45;R fast</a></dt>
+Run with the <i>fast core</i>.
+<dt><a name="&#45;R_gcdebug"
+>&#45;R gcdebug</a></dt>
+Performs a full GC run before every op dispatch (good for debugging GC problems)
+<dt><a name="&#45;p,&#45;&#45;profile"
+>&#45;p,&#45;&#45;profile</a></dt>
+Activate profiling. This prints a summary of opcode usage and execution times after the program stops. It also runs within the <i>slow core</i>.
+<dt><a name="&#45;t,&#45;&#45;trace"
+>&#45;t,&#45;&#45;trace</a></dt>
+Trace execution. This also turns on the <i>slow core</i>.
+<dt><a name="&#45;w,&#45;&#45;warnings"
+>&#45;w,&#45;&#45;warnings</a></dt>
+Turn on warnings.
+<dt><a name="&#45;G,&#45;&#45;no&#45;gc"
+>&#45;G,&#45;&#45;no&#45;gc</a></dt>
+Turn off GC. This is for debugging only.
+<dt><a name="&#45;.,&#45;&#45;wait"
+>&#45;.,&#45;&#45;wait</a></dt>
+Wait for a keypress before running.
+<dt><a name="&#45;&#45;leak&#45;test,&#45;&#45;destroy&#45;at&#45;end"
+>&#45;&#45;leak&#45;test,&#45;&#45;destroy&#45;at&#45;end</a></dt>
+Cleanup up allocated memory when the final interpreter is destroyed. <code>Parrot</code> destroys created interpreters (e.g. threads) on exit but doesn&#39;t normally free all memory for the last terminating interpreter, since the operating system will do this anyway. This can create false positives when <code>Parrot</code> is run with a memory leak detector. To prevent this, use this option.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2011, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>
