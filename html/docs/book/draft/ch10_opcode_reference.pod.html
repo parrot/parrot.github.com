@@ -1,0 +1,3274 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Instruction Reference</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; Instruction Reference
+                </div>
+
+<h1><a name="Instruction_Reference"
+>Instruction Reference</a></h1>
+
+<p></p>
+
+<p>This chapter contains a condensed reference to the Parrot virtual machine&#39;s native instruction set,
+generally called opcodes.
+All opcodes are valid in both PIR and PASM,
+and correspond to the bytecode instructions.</p>
+
+<p>For complete details on each opcode and the latest changes,
+read the documentation in <em>docs/ops/</em>,
+or look at all the <code>.ops</code> files in the <em>ops/</em> directory.</p>
+
+<p>We&#39;ve followed a few conventions.
+<code>DEST</code> is always the register where the result of the operation is stored.
+Sometimes the original value of <code>DEST</code> is one of the source values.
+<code>VAL</code> indicates that the actual value might be a literal integer,
+float,
+or string,
+or a register containing an integer,
+float,
+string,
+or PMC.
+See the <em>.ops</em> files for the combinations allowed with a particular operation.</p>
+
+<h3><a name="abs"
+>abs</a></h3>
+
+<p><!--
+	INDEX: abs opcode (PASM)
+--></p>
+
+<pre>  abs R&#60;DEST&#62;
+  abs R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Return the absolute value of a number. If VAL is left out, DEST gets the absolute value of itself.</p>
+
+<p><i>Arguments: IR or NR or IR, I or IR, N or NR, I or NR, N</i></p>
+
+<h3><a name="acos"
+>acos</a></h3>
+
+<p><!--
+	INDEX: acos opcode (PASM)
+--></p>
+
+<pre>  acos R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>The arc cosine of VAL in radians.</p>
+
+<p><i>Arguments: NR, N or NR, I</i></p>
+
+<h3><a name="add"
+>add</a></h3>
+
+<p><!--
+	INDEX: add opcode (PASM)
+--></p>
+
+<pre>  add R&#60;DEST&#62;, R&#60;VAL&#62;
+  add R&#60;DEST&#62;, R&#60;VAL&#62;, R&#60;VAL&#62;</pre>
+
+<p>Add two values and return the sum. If only one VAL, add VAL to DEST.</p>
+
+<p><i>Arguments: IR, I or NR, I or NR, N or P, I or P, N or P, P or IR, I, I or NR, N, I or NR, N, N or P, P, I or P, P, N or P, P, P</i></p>
+
+<h3><a name="addattribute"
+>addattribute</a></h3>
+
+<p><!--
+	INDEX: addattribute opcode (PASM)
+--></p>
+
+<pre>  addattribute R&#60;CLASS&#62;, R&#60;ATTR&#62;</pre>
+
+<p>Add the attribute name ATTR to class CLASS.</p>
+
+<p><i>Arguments: P, S</i></p>
+
+<h3><a name="addparent"
+>addparent</a></h3>
+
+<p><!--
+	INDEX: addparent opcode (PASM)
+--></p>
+
+<pre>  addparent R&#60;CLASS1&#62;, R&#60;CLASS2&#62;</pre>
+
+<p>Add class CLASS2 to the list of parent classes for CLASS1.</p>
+
+<p><i>Arguments: P, P</i></p>
+
+<h3><a name="and"
+>and</a></h3>
+
+<p><!--
+	INDEX: and opcode (PASM)
+--></p>
+
+<pre>  and R&#60;DEST&#62;, R&#60;VAL1&#62;, R&#60;VAL2&#62;</pre>
+
+<p>Logical AND. Return VAL1 if it&#39;s false; otherwise, return VAL2.</p>
+
+<p><i>Arguments: IR, I, I or P, P, P</i></p>
+
+<h3><a name="asec"
+>asec</a></h3>
+
+<p><!--
+	INDEX: asec opcode (PASM)
+--></p>
+
+<pre>  asec R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>The arc secant of VAL in radians.</p>
+
+<p><i>Arguments: NR, I or NR, N</i></p>
+
+<h3><a name="asin"
+>asin</a></h3>
+
+<p><!--
+	INDEX: asin opcode (PASM)
+--></p>
+
+<pre>  asin R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>The arc sine of VAL in radians.</p>
+
+<p><i>Arguments: NR, I or NR, N</i></p>
+
+<h3><a name="assign"
+>assign</a></h3>
+
+<p><!--
+	INDEX: assign opcode (PASM)
+--></p>
+
+<pre>  assign R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Assign a value to a PMC.</p>
+
+<p><i>Arguments: SR, S or P, I or P, N or P, S or P, P</i></p>
+
+<h3><a name="atan"
+>atan</a></h3>
+
+<p><!--
+	INDEX: atan opcode (PASM)
+--></p>
+
+<pre>  atan R&#60;DEST&#62;, R&#60;VAL&#62;
+  atan R&#60;DEST&#62;, R&#60;VAL1&#62;, R&#60;VAL2&#62;</pre>
+
+<p>The arc tangent of VAL1 / VAL2 in radians (sign significant). If VAL2 is omitted, then just the arc tangent of VAL.</p>
+
+<p><i>Arguments: NR, I or NR, N or NR, I, I or NR, I, N or NR, N, I or NR, N, N</i></p>
+
+<h3><a name="band"
+>band</a></h3>
+
+<p><!--
+	INDEX: band opcode (PASM)
+--></p>
+
+<pre>  band R&#60;DEST&#62;, R&#60;VAL&#62;
+  band R&#60;DEST&#62;, R&#60;VAL&#62;, R&#60;VAL&#62;</pre>
+
+<p>Bitwise AND on two values. If only one VAL, bitwise AND on DEST and VAL.</p>
+
+<p><i>Arguments: IR, I or P, I or P, P or IR, I, I or P, P, I or P, P, P</i></p>
+
+<h3><a name="bands"
+>bands</a></h3>
+
+<p><!--
+	INDEX: bands opcode (PASM)
+--></p>
+
+<pre>  bands R&#60;DEST&#62;, R&#60;VAL&#62;
+  bands R&#60;DEST&#62;, R&#60;VAL&#62;, R&#60;VAL&#62;</pre>
+
+<p>Bitwise AND on two strings. If only one VAL, bitwise AND on DEST and VAL.</p>
+
+<p><i>Arguments: SR, S or P, S or P, P or SR, S, S or P, P, S or P, P, P</i></p>
+
+<h3><a name="bnot"
+>bnot</a></h3>
+
+<p><!--
+	INDEX: bnot opcode (PASM)
+--></p>
+
+<pre>  bnot R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Bitwise NOT on VAL.</p>
+
+<p><i>Arguments: IR, I or P, P</i></p>
+
+<h3><a name="bnots"
+>bnots</a></h3>
+
+<p><!--
+	INDEX: bnots opcode (PASM)
+--></p>
+
+<pre>  bnots R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Bitwise NOT on string VAL.</p>
+
+<p><i>Arguments: SR, S or P, P</i></p>
+
+<h3><a name="bor"
+>bor</a></h3>
+
+<p><!--
+	INDEX: bor opcode (PASM)
+--></p>
+
+<pre>  bor R&#60;DEST&#62;, R&#60;VAL&#62;, R&#60;VAL&#62;</pre>
+
+<p>Bitwise OR on two values. If only one VAL, bitwise OR on DEST and VAL.</p>
+
+<p><i>Arguments: IR, I or P, I or P, P or IR, I, I or P, P, I or P, P, P</i></p>
+
+<h3><a name="bors"
+>bors</a></h3>
+
+<p><!--
+	INDEX: bors opcode (PASM)
+--></p>
+
+<pre>  bors R&#60;DEST&#62;, R&#60;VAL&#62;, R&#60;VAL&#62;</pre>
+
+<p>Bitwise OR on two strings. If only one VAL, bitwise OR on DEST and VAL.</p>
+
+<p><i>Arguments: SR, S or P, S or P, P or SR, S, S or P, P, S or P, P, P</i></p>
+
+<h3><a name="bounds"
+>bounds</a></h3>
+
+<p><!--
+	INDEX: bounds opcode (PASM)
+--></p>
+
+<pre>  bounds R&#60;INT&#62;</pre>
+
+<p>Toggle bytecode bounds checking in the interpreter (0 for off, any other value for on).</p>
+
+<p><i>Arguments: I</i></p>
+
+<h3><a name="branch"
+>branch</a></h3>
+
+<p><!--
+	INDEX: branch opcode (PASM)
+--></p>
+
+<pre>  branch R&#60;LABEL&#62;</pre>
+
+<p>Branch to a label. The label is calculated as a relative offset.</p>
+
+<p><i>Arguments: I</i></p>
+
+<h3><a name="bxor"
+>bxor</a></h3>
+
+<p><!--
+	INDEX: bxor opcode (PASM)
+--></p>
+
+<pre>  bxor R&#60;DEST&#62;, R&#60;VAL&#62;
+  bxor R&#60;DEST&#62;, R&#60;VAL&#62;, R&#60;VAL&#62;</pre>
+
+<p>Bitwise XOR on two values. If only one VAL, bitwise XOR on DEST and VAL.</p>
+
+<p><i>Arguments: IR, I or P, I or P, P or IR, I, I or P, P, I or P, P, P</i></p>
+
+<h3><a name="bxors"
+>bxors</a></h3>
+
+<p><!--
+	INDEX: bxors opcode (PASM)
+--></p>
+
+<pre>  bxors R&#60;DEST&#62;, R&#60;VAL&#62;
+  bxors R&#60;DEST&#62;, R&#60;VAL&#62;, R&#60;VAL&#62;</pre>
+
+<p>Bitwise XOR on two strings. If only one VAL, bitwise XOR on DEST and VAL.</p>
+
+<p><i>Arguments: SR, S or P, S or P, P or SR, S, S or P, P, S or P, P, P</i></p>
+
+<h3><a name="callmethod"
+>callmethod</a></h3>
+
+<p><!--
+	INDEX: callmethod opcode (PASM)
+--></p>
+
+<pre>  callmethod
+  callmethod R&#60;METHODNAME&#62;</pre>
+
+<p>Call the method named METHODNAME on the object stored in <code>P2</code> according to the Parrot Calling Conventions. If no method name, pull the name from <code>S0</code>.</p>
+
+<p><i>Arguments: S</i></p>
+
+<h3><a name="callmethodcc"
+>callmethodcc</a></h3>
+
+<p><!--
+	INDEX: callmethodcc opcode (PASM)
+--></p>
+
+<pre>  callmethodcc
+  callmethodcc R&#60;METHODNAME&#62;</pre>
+
+<p>Call the method named METHODNAME on the object stored in <code>P2</code> according to the Parrot Calling Conventions. If no method name, pull the name from <code>S0</code>. Also create a return continuation and store it in <code>P1</code>.</p>
+
+<p><i>Arguments: S</i></p>
+
+<h3><a name="can"
+>can</a></h3>
+
+<p><!--
+	INDEX: can opcode (PASM)
+--></p>
+
+<pre>  can R&#60;DEST&#62;, R&#60;OBJECT&#62;, R&#60;METHODNAME&#62;</pre>
+
+<p>Return a true value if OBJECT <i>can</i> do the METHODNAME method, otherwise return a false value.</p>
+
+<p><i>Arguments: IR, P, S</i></p>
+
+<h3><a name="ceil"
+>ceil</a></h3>
+
+<p><!--
+	INDEX: ceil opcode (PASM)
+--></p>
+
+<pre>  ceil R&#60;DEST&#62;
+  ceil R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Set DEST to the smallest integral value less than or equal to VAL (if present) or itself (if not).</p>
+
+<p><i>Arguments: NR or IR, N or NR, N</i></p>
+
+<h3><a name="checkevents"
+>checkevents</a></h3>
+
+<p><!--
+	INDEX: checkevents opcode (PASM)
+--></p>
+
+<pre>  checkevents</pre>
+
+<p>Check the interpreter&#39;s task queue for unhandled events and run the associated event handlers.</p>
+
+<h3><a name="chopn"
+>chopn</a></h3>
+
+<p><!--
+	INDEX: chopn opcode (PASM)
+--></p>
+
+<pre>  chopn R&#60;DEST&#62;, R&#60;VAL1&#62;
+  chopn R&#60;DEST&#62;, R&#60;VAL1&#62;, R&#60;VAL2&#62;</pre>
+
+<p>Remove VAL2 number of characters from string VAL1. If no VAL2, remove VAL number of characters from string DEST.</p>
+
+<p><i>Arguments: SR, I or SR, S, I</i></p>
+
+<h3><a name="chr"
+>chr</a></h3>
+
+<p><!--
+	INDEX: chr opcode (PASM)
+--></p>
+
+<pre>  chr R&#60;DEST&#62;, R&#60;INT&#62;</pre>
+
+<p>Return the character represented by the given number.</p>
+
+<p><i>Arguments: SR, I</i></p>
+
+<h3><a name="class"
+>class</a></h3>
+
+<p><!--
+	INDEX: class opcode (PASM)
+--></p>
+
+<pre>  class R&#60;CLASS&#62;, R&#60;OBJECT&#62;</pre>
+
+<p>Return the CLASS of the given OBJECT.</p>
+
+<p><i>Arguments: P, P</i></p>
+
+<h3><a name="clear_eh"
+>clear_eh</a></h3>
+
+<p><!--
+	INDEX: clear_eh
+--></p>
+
+<pre>  clear_eh</pre>
+
+<p>Clear the most recent exception handler.</p>
+
+<p>See also: <code>set_eh</code>, <code>throw</code>.</p>
+
+<h3><a name="clearX"
+>clearX</a></h3>
+
+<p><!--
+	INDEX: cleari opcode (PASM)
+--> <!--
+	INDEX: clearn opcode (PASM)
+--> <!--
+	INDEX: clearp opcode (PASM)
+--> <!--
+	INDEX: clears opcode (PASM)
+--></p>
+
+<pre>  cleari
+  clearn
+  clearp
+  clears</pre>
+
+<p>Clear all registers of the given type (&#34;i&#34; = integer, &#34;n&#34; = float, &#34;p&#34; = PMC, &#34;s&#34; = string). Integer and float registers clear to zero; string and PMC registers clear to NULL.</p>
+
+<h3><a name="clone"
+>clone</a></h3>
+
+<p><!--
+	INDEX: clone opcode (PASM)
+--></p>
+
+<pre>  clone R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Clone (deep copy) a string or PMC and return the result.</p>
+
+<p><i>Arguments: SR, S or P, P</i></p>
+
+<h3><a name="close"
+>close</a></h3>
+
+<p><!--
+	INDEX: close opcode (PASM)
+--></p>
+
+<pre>  close R&#60;DEST&#62;</pre>
+
+<p>Close the filehandle in the given register.</p>
+
+<p><i>Arguments: P</i></p>
+
+<h3><a name="cmod"
+>cmod</a></h3>
+
+<p><!--
+	INDEX: cmod opcode (PASM)
+--></p>
+
+<pre>  cmod R&#60;DEST&#62;, R&#60;VAL1&#62;, R&#60;VAL2&#62;</pre>
+
+<p>C&#39;s built&#45;in mod operator.</p>
+
+<p>See also <code>mod</code>.</p>
+
+<p><i>Arguments: IR, I, I or NR, N, N or P, P, I or P, P, N or P, P, P</i></p>
+
+<h3><a name="cmp"
+>cmp</a></h3>
+
+<p><!--
+	INDEX: cmp (comparison);opcode (PASM)
+--></p>
+
+<pre>  cmp R&#60;DEST&#62;, R&#60;VAL1&#62;, R&#60;VAL2&#62;</pre>
+
+<p>Set DEST to 1 if VAL1 is greater then VAL2, to &#45;1 if it&#39;s less then VAL2 or to zero if both are equal. If VAL1 and VAL2 are both PMCs, then the type of comparison depends on VAL1.</p>
+
+<p><i>Arguments: IR, I, I or IR, N, N or IR, S, S or IR, P, I or IR, P, N IR, P, S or IR, P, P</i></p>
+
+<h3><a name="cmp_num"
+>cmp_num</a></h3>
+
+<p><!--
+	INDEX: cmp_num opcode (PASM)
+--></p>
+
+<pre>  cmp_num R&#60;DEST&#62;, R&#60;VAL1&#62;, R&#60;VAL2&#62;</pre>
+
+<p>Like <code>cmp</code>, but forces numeric comparison.</p>
+
+<p><i>Arguments: IR, P, P</i></p>
+
+<h3><a name="cmp_str"
+>cmp_str</a></h3>
+
+<p><!--
+	INDEX: cmp_str opcode (PASM)
+--></p>
+
+<pre>  cmp_str R&#60;DEST&#62;, R&#60;VAL1&#62;, R&#60;VAL2&#62;</pre>
+
+<p>Like <code>cmp</code>, but forces string comparison.</p>
+
+<p><i>Arguments: IR, P, P</i></p>
+
+<h3><a name="cmp_pmc"
+>cmp_pmc</a></h3>
+
+<p><!--
+	INDEX: cmp_pmc opcode (PASM)
+--></p>
+
+<pre>  cmp_pmc R&#60;DEST&#62;, R&#60;VAL1&#62;, R&#60;VAL2&#62;</pre>
+
+<p>Like <code>cmp</code>, but places a PMC in DEST. This opcode is useful for avoiding semipredicate problems in HLLs where two PMCs are not always comparable.</p>
+
+<p><i>Arguments: P, P, P</i></p>
+
+<h3><a name="collect"
+>collect</a></h3>
+
+<p><!--
+	INDEX: collect opcode (PASM)
+--></p>
+
+<pre>  collect</pre>
+
+<p>Trigger a garbage collection (GC) run.</p>
+
+<h3><a name="collectoff"
+>collectoff</a></h3>
+
+<p><!--
+	INDEX: collectoff opcode (PASM)
+--></p>
+
+<pre>  collectoff</pre>
+
+<p>Disable garbage collection runs (nestable).</p>
+
+<h3><a name="collecton"
+>collecton</a></h3>
+
+<p><!--
+	INDEX: collecton opcode (PASM)
+--></p>
+
+<pre>  collecton</pre>
+
+<p>Re&#45;enable garbage collection runs.</p>
+
+<h3><a name="compile"
+>compile</a></h3>
+
+<p><!--
+	INDEX: compile opcode (PASM)
+--></p>
+
+<pre>  compile R&#60;DEST&#62;, R&#60;COMPILER&#62;, R&#60;SOURCE&#62;</pre>
+
+<p>Compile a string of source code with a given compiler PMC and store the result.</p>
+
+<p><i>Arguments: P, P, S</i></p>
+
+<h3><a name="compreg"
+>compreg</a></h3>
+
+<p><!--
+	INDEX: compreg opcode (PASM)
+--></p>
+
+<pre>  compreg R&#60;DEST&#62;, R&#60;TYPE&#62;</pre>
+
+<p>Return a compiler PMC for a particular type of source code.</p>
+
+<p><i>Arguments: P, S</i></p>
+
+<pre>  compreg R&#60;TYPE&#62;, R&#60;SUB&#62;</pre>
+
+<p>Register SUB as a compiler for language TYPE.</p>
+
+<p><i>Arguments: S, P</i></p>
+
+<h3><a name="concat"
+>concat</a></h3>
+
+<p><!--
+	INDEX: concat opcode (PASM)
+--></p>
+
+<pre>  concat R&#60;DEST&#62;, R&#60;VAL&#62;
+  concat R&#60;DEST&#62;, R&#60;VAL&#62;, R&#60;VAL&#62;</pre>
+
+<p>Concatenate two strings. If only one VAL, concatenate VAL onto DEST.</p>
+
+<p><i>Arguments: SR, S or SR, S, S or P, P, S or P, P, P</i></p>
+
+<h3><a name="cos"
+>cos</a></h3>
+
+<p><!--
+	INDEX: cos opcode (PASM)
+--></p>
+
+<pre>  cos R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>The cosine of VAL in radians.</p>
+
+<p><i>Arguments: NR, I or NR, N</i></p>
+
+<h3><a name="cosh"
+>cosh</a></h3>
+
+<p><!--
+	INDEX: cosh opcode (PASM)
+--></p>
+
+<pre>  cosh R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>The hyperbolic cosine of VAL in radians.</p>
+
+<p><i>Arguments: NR, I or NR, N</i></p>
+
+<h3><a name="debug"
+>debug</a></h3>
+
+<p><!--
+	INDEX: debug opcode (PASM)
+--></p>
+
+<pre>  debug R&#60;FLAG&#62;</pre>
+
+<p>Toggle debugging in the interpreter (0 for off, any other value for on).</p>
+
+<p><i>Arguments: I</i></p>
+
+<h3><a name="dec"
+>dec</a></h3>
+
+<p><!--
+	INDEX: dec opcode (PASM)
+--></p>
+
+<pre>  dec R&#60;DEST&#62;</pre>
+
+<p>Decrement a value by 1.</p>
+
+<p><i>Arguments: I or N or P</i></p>
+
+<h3><a name="decodelocaltime"
+>decodelocaltime</a></h3>
+
+<p><!--
+	INDEX: decodelocaltime opcode (PASM)
+--></p>
+
+<pre>  decodelocaltime R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Set DEST to a new array which represents the decoded time of the given epoch&#45;seconds value shifted to local time.</p>
+
+<p><i>Arguments: P, I</i></p>
+
+<h3><a name="decodetime"
+>decodetime</a></h3>
+
+<p><!--
+	INDEX: decodetime opcode (PASM)
+--></p>
+
+<pre>  decodetime R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Set DEST to a new array which represents the decoded time of the given epoch&#45;seconds value.</p>
+
+<p><i>Arguments: P, I</i></p>
+
+<h3><a name="defined"
+>defined</a></h3>
+
+<p><!--
+	INDEX: defined opcode (PASM)
+--></p>
+
+<pre>  defined R&#60;DEST&#62;, R&#60;PMC&#62;
+  defined R&#60;DEST&#62;, R&#60;PMC&#62;[R&#60;KEY&#62;]</pre>
+
+<p>Test a keyed PMC value for definedness. If no KEY, test a PMC for definedness.</p>
+
+<p><i>Arguments: IR, P</i></p>
+
+<h3><a name="delete"
+>delete</a></h3>
+
+<p><!--
+	INDEX: delete opcode (PASM)
+--></p>
+
+<pre>  delete R&#60;DEST&#62;[R&#60;KEY&#62;]</pre>
+
+<p>Delete a keyed value from an aggregate PMC.</p>
+
+<p><i>Arguments: P</i></p>
+
+<h3><a name="delprop"
+>delprop</a></h3>
+
+<p><!--
+	INDEX: delprop opcode (PASM)
+--></p>
+
+<pre>  delprop R&#60;PMC&#62;, R&#60;NAME&#62;</pre>
+
+<p>Delete a named property from a PMC.</p>
+
+<p><i>Arguments: P, S</i></p>
+
+<p>See also: <code>setprop</code> and <code>getprop</code>.</p>
+
+<h3><a name="deref"
+>deref</a></h3>
+
+<p><!--
+	INDEX: deref opcode (PASM)
+--></p>
+
+<pre>  deref R&#60;DEST&#62;, R&#60;REF&#62;</pre>
+
+<p>Set DEST to the PMC that REF refers to.</p>
+
+<p><i>Arguments: P, P</i></p>
+
+<h3><a name="die_hard"
+>die_hard</a></h3>
+
+<p><!--
+	INDEX: die_hard opcode (PASM)
+--></p>
+
+<pre>  die_hard R&#60;LEVEL&#62;, R&#60;ERROR&#62;</pre>
+
+<p>Die at a given level of severity, and with the given error code.</p>
+
+<p><i>Arguments: I, I</i></p>
+
+<p>See also: <code>exit</code>.</p>
+
+<h3><a name="div"
+>div</a></h3>
+
+<p><!--
+	INDEX: div opcode (PASM)
+--></p>
+
+<pre>  div R&#60;DEST&#62;, R&#60;VAL&#62;
+  div R&#60;DEST&#62;, R&#60;VAL1&#62;, R&#60;VAL2&#62;</pre>
+
+<p>Divide VAL1 by VAL2. If VAL2 is left out, divide DEST by VAL.</p>
+
+<p><i>Arguments: IR, I or NR, I or NR, N or P, I or P, N or P, P or IR, I, I or NR, N, I or NR, N, N or P, P, I or P, P, N or P, P, P</i></p>
+
+<h3><a name="dlfunc"
+>dlfunc</a></h3>
+
+<p><!--
+	INDEX: dlfunc opcode (PASM)
+--></p>
+
+<pre>  dlfunc R&#60;DEST&#62;, R&#60;LIBRARY&#62;, R&#60;SYMBOL&#62;, R&#60;SIGNATURE&#62;</pre>
+
+<p>Look up a symbol in a dynamic link library PMC and create a subroutine PMC for that symbol with the given signature.</p>
+
+<p><i>Arguments: P, P, S, S</i></p>
+
+<h3><a name="dlvar"
+>dlvar</a></h3>
+
+<p><!--
+	INDEX: dlvar opcode (PASM)
+--></p>
+
+<pre>  dlvar R&#60;DEST&#62;, R&#60;LIBRARY&#62;, R&#60;SYMBOL&#62;</pre>
+
+<p>Look up a symbol in a dynamic link library PMC and create a PMC for that symbol.</p>
+
+<p><i>Arguments: P, P, S</i></p>
+
+<h3><a name="does"
+>does</a></h3>
+
+<p><!--
+	INDEX: does opcode (PASM)
+--></p>
+
+<pre>  does R&#60;DEST&#62;, R&#60;OBJECT&#62;, R&#60;VAL&#62;</pre>
+
+<p>Return a true value if OBJECT <i>does</i> provide the interface VAL, otherwise return a false value.</p>
+
+<p><i>Arguments: I, P, S</i></p>
+
+<h3><a name="downcase"
+>downcase</a></h3>
+
+<p><!--
+	INDEX: downcase opcode (PASM)
+--></p>
+
+<pre>  downcase R&#60;DEST&#62;
+  downcase R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Create a copy of the string in VAL with all characters converted to lower case, and store it in DEST. If VAL is omitted, convert and replace the string in DEST.</p>
+
+<p><i>Arguments: S or S, S</i></p>
+
+<p>See also: <code>upcase</code>, <code>titlecase</code>.</p>
+
+<h3><a name="end"
+>end</a></h3>
+
+<p><!--
+	INDEX: end opcode (PASM)
+--></p>
+
+<pre>  end</pre>
+
+<p>End execution within the current code segment or halt the interpreter if in the main code segment.</p>
+
+<h3><a name="eq"
+>eq</a></h3>
+
+<p><!--
+	INDEX: eq opcode (PASM)
+--></p>
+
+<pre>  eq R&#60;VAL&#62;, R&#60;VAL&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if the two values are equal.</p>
+
+<p><i>Arguments: I, I, IC or N, N, IC or S, S, IC or P, I, IC or P, N, IC or P, S, IC or P, P, IC</i></p>
+
+<h3><a name="eq_addr"
+>eq_addr</a></h3>
+
+<p><!--
+	INDEX: eq_addr opcode (PASM)
+--></p>
+
+<pre>  eq_addr R&#60;VAL1&#62;, R&#60;VAL2&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if VAL1 and VAL2 point to the same string or PMC. Note that this op compares the addresses of the two strings or PMCs, not simply their values.</p>
+
+<p><i>Arguments: S, S, IC or P, P, IC</i></p>
+
+<h3><a name="eq_num"
+>eq_num</a></h3>
+
+<p><!--
+	INDEX: eq_num opcode (PASM)
+--></p>
+
+<pre>  eq_num R&#60;VAL&#62;, R&#60;VAL&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if the two values are numerically equal.</p>
+
+<p><i>Arguments: P, P, IC</i></p>
+
+<h3><a name="eq_str"
+>eq_str</a></h3>
+
+<p><!--
+	INDEX: eq_str opcode (PASM)
+--></p>
+
+<pre>  eq_str R&#60;VAL&#62;, R&#60;VAL&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if the two strings are equal.</p>
+
+<p><i>Arguments: P, P, IC</i></p>
+
+<h3><a name="err"
+>err</a></h3>
+
+<p><!--
+	INDEX: err opcode (PASM)
+--></p>
+
+<pre>  err R&#60;DEST&#62;
+  err R&#60;DEST&#62;, R&#60;CODE&#62;</pre>
+
+<p>Return the system error code to an integer destination or the system error message to a string destination. The two&#45;argument version returns the system error message for a given code.</p>
+
+<p><i>Arguments: IR or SR or SR, I</i></p>
+
+<h3><a name="errorsoff"
+>errorsoff</a></h3>
+
+<p><!--
+	INDEX: errorsoff opcode (PASM)
+--></p>
+
+<pre>  errorsoff R&#60;VAL&#62;</pre>
+
+<p>Turn off errors of type VAL.</p>
+
+<p><i>Arguments: I</i></p>
+
+<h3><a name="errorson"
+>errorson</a></h3>
+
+<p><!--
+	INDEX: errorson opcode (PASM)
+--></p>
+
+<pre>  errorson R&#60;VAL&#62;</pre>
+
+<p>Turn on errors of type VAL.</p>
+
+<p><i>Arguments: I</i></p>
+
+<h3><a name="exchange"
+>exchange</a></h3>
+
+<p><!--
+	INDEX: exchange opcode (PASM)
+--></p>
+
+<pre>  exchange R&#60;REG&#62;, R&#60;REG&#62;</pre>
+
+<p>Exchange the contents of two registers.</p>
+
+<p><i>Arguments: IR, IR or NR, NR or SR, SR or P, P</i></p>
+
+<h3><a name="exists"
+>exists</a></h3>
+
+<p><!--
+	INDEX: exists opcode (PASM)
+--></p>
+
+<pre>  exists R&#60;DEST&#62;, R&#60;PMC&#62;[R&#60;KEY&#62;]</pre>
+
+<p>Test a PMC key for existence.</p>
+
+<p><i>Arguments: IR, P</i></p>
+
+<h3><a name="exit"
+>exit</a></h3>
+
+<p><!--
+	INDEX: exit opcode (PASM)
+--></p>
+
+<pre>  exit R&#60;STATUS&#62;</pre>
+
+<p>Exit the interpreter with a given STATUS. (For extended exit status, throw an exception with severity <code>EXCEPT_exit</code>.)</p>
+
+<p><i>Arguments: I</i></p>
+
+<p>See also: <code>throw</code>, <code>die_hard</code>.</p>
+
+<h3><a name="exp"
+>exp</a></h3>
+
+<p><!--
+	INDEX: exp opcode (PASM)
+--></p>
+
+<pre>  exp R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Base of the natural logarithm, <i>e</i>, to the power of VAL.</p>
+
+<p><i>Arguments: NR, I or NR, N</i></p>
+
+<h3><a name="exsec"
+>exsec</a></h3>
+
+<p><!--
+	INDEX: exsec opcode (PASM)
+--></p>
+
+<pre>  exsec R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>The exsecant of VAL in radians.</p>
+
+<p><i>Arguments: NR, N</i></p>
+
+<h3><a name="fact"
+>fact</a></h3>
+
+<p><!--
+	INDEX: fact opcode (PASM)
+--></p>
+
+<pre>  fact R&#60;DEST&#62;, R&#60;INT&#62;</pre>
+
+<p>Return the factorial of INT.</p>
+
+<p><i>Arguments: IR, I or NR, I</i></p>
+
+<h3><a name="fdopen"
+>fdopen</a></h3>
+
+<p><!--
+	INDEX: fdopen opcode (PASM)
+--></p>
+
+<pre>  fdopen R&#60;DEST&#62;, R&#60;INT&#62;, R&#60;MODE&#62;</pre>
+
+<p>Get a FileHandle object for handle INT with open mode MODE.</p>
+
+<p><i>Arguments: P, I, S</i></p>
+
+<h3><a name="find_chartype"
+>find_chartype</a></h3>
+
+<p><!--
+	INDEX: find_chartype opcode (PASM)
+--></p>
+
+<pre>  find_chartype R&#60;DEST&#62;, R&#60;NAME&#62;</pre>
+
+<p>Find the chartype named NAME and return its number in DEST.</p>
+
+<p><i>Arguments: IR, S</i></p>
+
+<h3><a name="find_encoding"
+>find_encoding</a></h3>
+
+<p><!--
+	INDEX: strings;encoding
+--> <!--
+	INDEX: find_encoding opcode (PASM)
+--></p>
+
+<pre>  find_encoding R&#60;DEST&#62;, R&#60;NAME&#62;</pre>
+
+<p>Find the encoding named NAME and return its number in DEST.</p>
+
+<p><i>Arguments: IR, S</i></p>
+
+<h3><a name="find_global"
+>find_global</a></h3>
+
+<p><!--
+	INDEX: find_global opcode (PASM)
+--></p>
+
+<pre>  find_global R&#60;DEST&#62;, R&#60;NAME&#62;</pre>
+
+<p>Return a global variable with the given name.</p>
+
+<p><i>Arguments: P, S</i></p>
+
+<pre>  find_global R&#60;DEST&#62;, R&#60;NAMESPACE&#62;, R&#60;NAME&#62;</pre>
+
+<p>Return a global variable with the given name from the given namespace.</p>
+
+<p><i>Arguments: P, S, S or P, P, S</i></p>
+
+<p>See also: <code>store_global</code>.</p>
+
+<h3><a name="find_lex"
+>find_lex</a></h3>
+
+<p><!--
+	INDEX: find_lex opcode (PASM)
+--></p>
+
+<pre>  find_lex R&#60;DEST&#62;, R&#60;NAME&#62;
+  find_lex R&#60;DEST&#62;, R&#60;DEPTH&#62;, R&#60;NAME&#62;
+  find_lex R&#60;DEST&#62;, R&#60;DEPTH&#62;, R&#60;POSITION&#62;</pre>
+
+<p>Return the lexical variable of the given name from a lexical scratchpad. If DEPTH is provided, only return a variable from the scratchpad at that depth. A find by position returns the variable at a particular position in the scratchpad.</p>
+
+<p><i>Arguments: P, S or P, I, S or P, I, I</i></p>
+
+<p>See also: <code>store_lex</code>.</p>
+
+<h3><a name="find_method"
+>find_method</a></h3>
+
+<p><!--
+	INDEX: find_method opcode (PASM)
+--></p>
+
+<pre>  find_method R&#60;DEST&#62;, R&#60;PMC&#62;, R&#60;NAME&#62;</pre>
+
+<p>Look up a method by name in a PMC&#39;s vtable. Return a method PMC.</p>
+
+<p><i>Arguments: P, P, S</i></p>
+
+<h3><a name="find_type"
+>find_type</a></h3>
+
+<p><!--
+	INDEX: find_type opcode (PASM)
+--></p>
+
+<pre>  find_type R&#60;DEST&#62;, R&#60;NAME&#62;</pre>
+
+<p>Find the integer identifier for a PMC type or native Parrot datatype by name.</p>
+
+<p><i>Arguments: IR, S</i></p>
+
+<p>See also: <code>typeof</code>.</p>
+
+<h3><a name="findclass"
+>findclass</a></h3>
+
+<p><!--
+	INDEX: findclass opcode (PASM)
+--></p>
+
+<pre>  findclass R&#60;DEST&#62;, R&#60;NAME&#62;</pre>
+
+<p>Return 1 if the class NAME exists, and 0 otherwise.</p>
+
+<p><i>Arguments: IR, S</i></p>
+
+<p>See also: <code>typeof</code>.</p>
+
+<h3><a name="floor"
+>floor</a></h3>
+
+<p><!--
+	INDEX: floor opcode (PASM)
+--></p>
+
+<pre>  floor R&#60;DEST&#62;
+  floor R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Return the largest integral value less than or equal to VAL (if present) or itself (if not).</p>
+
+<p><i>Arguments: NR or IR, N or NR, N</i></p>
+
+<h3><a name="foldup"
+>foldup</a></h3>
+
+<p><!--
+	INDEX: foldup opcode (PASM)
+--></p>
+
+<pre>  foldup R&#60;DEST&#62;
+  foldup R&#60;DEST&#62;, R&#60;SKIP&#62;</pre>
+
+<p>Return a new array holding all passed subroutine parameters. SKIP defines an optional offset.</p>
+
+<p><i>Arguments: P or P, I</i></p>
+
+<h3><a name="freeze"
+>freeze</a></h3>
+
+<p><!--
+	INDEX: freeze opcode (PASM)
+--></p>
+
+<pre>  freeze R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Create a frozen image DEST from PMC VAL.</p>
+
+<p><i>Arguments: SR, P</i></p>
+
+<p>See also: <code>thaw</code>.</p>
+
+<h3><a name="gc_debug"
+>gc_debug</a></h3>
+
+<p><!--
+	INDEX: gc_debug opcode (PASM)
+--></p>
+
+<pre>  gc_debug R&#60;INT&#62;</pre>
+
+<p>Toggle garbage collection debugging in the interpreter (0 for off, any other value for on).</p>
+
+<p><i>Arguments: I</i></p>
+
+<h3><a name="gcd"
+>gcd</a></h3>
+
+<p><!--
+	INDEX: gcd opcode (PASM)
+--></p>
+
+<pre>  gcd R&#60;DEST&#62;, R&#60;VAL&#62;, R&#60;VAL&#62;</pre>
+
+<p>Return the greatest common divisor of two values.</p>
+
+<p><i>Arguments: IR, I, I or IR, N, N</i></p>
+
+<h3><a name="ge"
+>ge</a></h3>
+
+<p><!--
+	INDEX: ge (greater than or equal);opcode (PASM)
+--></p>
+
+<pre>  ge R&#60;VAL1&#62;, R&#60;VAL2&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if VAL1 is greater than or equal to VAL2.</p>
+
+<p><i>Arguments: I, I, IC or N, N, IC or S, S, IC or P, I, IC or P, N, IC or P, S, IC or P, P, IC</i></p>
+
+<h3><a name="ge_num"
+>ge_num</a></h3>
+
+<p><!--
+	INDEX: ge_num opcode (PASM)
+--></p>
+
+<pre>  ge_num R&#60;VAL1&#62;, R&#60;VAL2&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if VAL1 is numerically greater than or equal to VAL2.</p>
+
+<p><i>Arguments: P, P, IC</i></p>
+
+<h3><a name="ge_str"
+>ge_str</a></h3>
+
+<p><!--
+	INDEX: ge_str opcode (PASM)
+--></p>
+
+<pre>  ge_str R&#60;VAL1&#62;, R&#60;VAL2&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if VAL1 is stringwise greater than or equal to VAL2.</p>
+
+<p><i>Arguments: P, P, IC</i></p>
+
+<h3><a name="get_addr"
+>get_addr</a></h3>
+
+<p><!--
+	INDEX: get_addr opcode (PASM)
+--></p>
+
+<pre>  get_addr R&#60;DEST&#62;, R&#60;SUB&#62;</pre>
+
+<p>Get the absolute address of a subroutine PMC.</p>
+
+<p><i>Arguments: IR, P</i></p>
+
+<p>See also: <code>set_addr</code>.</p>
+
+<h3><a name="getattribute"
+>getattribute</a></h3>
+
+<p><!--
+	INDEX: getattribute opcode (PASM)
+--></p>
+
+<pre>  getattribute R&#60;DEST&#62;, R&#60;OBJECT&#62;, R&#60;OFFS&#62;</pre>
+
+<p>Get a reference to attribute number OFFS from object OBJECT.</p>
+
+<p><i>Arguments: P, P, I</i></p>
+
+<p>See also: <code>setattribute</code>, <code>classoffset</code>.</p>
+
+<h3><a name="get_class"
+>get_class</a></h3>
+
+<p><!--
+	INDEX: get_class opcode (PASM)
+--></p>
+
+<pre>  get_class R&#60;DEST&#62;, R&#60;NAME&#62;</pre>
+
+<p>Return the class PMC of the given name.</p>
+
+<p><i>Arguments: P, S</i></p>
+
+<h3><a name="getfile"
+>getfile</a></h3>
+
+<p><!--
+	INDEX: getfile opcode (PASM)
+--></p>
+
+<pre>  getfile R&#60;DEST&#62;</pre>
+
+<p>Return the name of the current file.</p>
+
+<p><i>Arguments: SR</i></p>
+
+<h3><a name="getinterp"
+>getinterp</a></h3>
+
+<p><!--
+	INDEX: getinterp opcode (PASM)
+--></p>
+
+<pre>  getinterp R&#60;DEST&#62;</pre>
+
+<p>Get a PMC representing the current interpreter.</p>
+
+<p><i>Arguments: P</i></p>
+
+<h3><a name="getline"
+>getline</a></h3>
+
+<p><!--
+	INDEX: getline opcode (PASM)
+--></p>
+
+<pre>  getline R&#60;DEST&#62;</pre>
+
+<p>Return the current line number.</p>
+
+<p><i>Arguments: IR</i></p>
+
+<h3><a name="getpackage"
+>getpackage</a></h3>
+
+<p><!--
+	INDEX: getpackage opcode (PASM)
+--></p>
+
+<pre>  getpackage R&#60;DEST&#62;</pre>
+
+<p>Return the current package name.</p>
+
+<p><i>Arguments: SR</i></p>
+
+<h3><a name="getprop"
+>getprop</a></h3>
+
+<p><!--
+	INDEX: getprop opcode (PASM)
+--></p>
+
+<pre>  getprop R&#60;DEST&#62;, R&#60;PMC&#62;, R&#60;NAME&#62;</pre>
+
+<p>Return the value of a named property on a PMC.</p>
+
+<p><i>Arguments: P, P, S</i></p>
+
+<p>See also: <code>setprop</code> and <code>prophash</code>.</p>
+
+<h3><a name="getstd*"
+>getstd*</a></h3>
+
+<p><!--
+	INDEX: getstderr opcode (PASM)
+--> <!--
+	INDEX: getstdin opcode (PASM)
+--> <!--
+	INDEX: getstdout opcode (PASM)
+--></p>
+
+<pre>  getstderr R&#60;DEST&#62;
+  getstdin R&#60;DEST&#62;
+  getstdout R&#60;DEST&#62;</pre>
+
+<p>Get a FileHandle object for the given standard handle.</p>
+
+<p><i>Arguments: P</i></p>
+
+<h3><a name="gmtime"
+>gmtime</a></h3>
+
+<p><!--
+	INDEX: gmtime opcode (PASM)
+--></p>
+
+<pre>  gmtime R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Take the integer, which represents GMT epoch&#45;seconds, and turn it into a formatted string.</p>
+
+<p><i>Arguments: SR, I</i></p>
+
+<p>See also: <code>localtime</code>.</p>
+
+<h3><a name="gt"
+>gt</a></h3>
+
+<p><!--
+	INDEX: gt opcode (PASM)
+--></p>
+
+<pre>  gt R&#60;VAL1&#62;, R&#60;VAL2&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if VAL1 is greater than VAL2.</p>
+
+<p><i>Arguments: I, I, IC or N, N, IC or S, S, IC or P, I, IC or P, N, IC or P, S, IC or P, P, IC</i></p>
+
+<h3><a name="gt_num"
+>gt_num</a></h3>
+
+<p><!--
+	INDEX: gt_num opcode (PASM)
+--></p>
+
+<pre>  gt_num R&#60;VAL1&#62;, R&#60;VAL2&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if VAL1 is numerically greater than VAL2.</p>
+
+<p><i>Arguments: P, P, IC</i></p>
+
+<h3><a name="gt_str"
+>gt_str</a></h3>
+
+<p><!--
+	INDEX: gt_str opcode (PASM)
+--></p>
+
+<pre>  gt_str R&#60;VAL1&#62;, R&#60;VAL2&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if VAL1 is stringwise greater than VAL2.</p>
+
+<p><i>Arguments: P, P, IC</i></p>
+
+<h3><a name="hav"
+>hav</a></h3>
+
+<p><!--
+	INDEX: hav opcode (PASM)
+--></p>
+
+<pre>  hav R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>The haversine of VAL in radians.</p>
+
+<p><i>Arguments: NR, N</i></p>
+
+<h3><a name="if"
+>if</a></h3>
+
+<p><!--
+	INDEX: if (conditional);opcode (PASM)
+--></p>
+
+<pre>  if R&#60;CONDITION&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if the condition is a true value.</p>
+
+<p><i>Arguments: I, IC or N, IC or S, IC or P, IC</i></p>
+
+<h3><a name="inc"
+>inc</a></h3>
+
+<p><!--
+	INDEX: inc opcode (PASM)
+--></p>
+
+<pre>  inc R&#60;DEST&#62;</pre>
+
+<p>Increment a value by one.</p>
+
+<p><i>Arguments: IR or NR or P</i></p>
+
+<h3><a name="index"
+>index</a></h3>
+
+<p><!--
+	INDEX: index opcode (PASM)
+--></p>
+
+<pre>  index R&#60;DEST&#62;, R&#60;STRING&#62;, R&#60;SEARCH&#62;
+  index R&#60;DEST&#62;, R&#60;STRING&#62;, R&#60;SEARCH&#62;, R&#60;POS&#62;</pre>
+
+<p>Return the position of the first occurrence of the string SEARCH in the string STRING, starting at the position POS. If the starting position is unspecified, start at the beginning of the string.</p>
+
+<p><i>Arguments: IR, S, S or IR, S, S, I</i></p>
+
+<h3><a name="interpinfo"
+>interpinfo</a></h3>
+
+<p><!--
+	INDEX: interpinfo opcode (PASM)
+--></p>
+
+<pre>  interpinfo R&#60;DEST&#62;, R&#60;FLAG&#62;</pre>
+
+<p>Return information about the interpreter. An integer flag selects which information to return, as listed in Table 10&#45;1.</p>
+
+<p><i>Arguments: IR, I</i></p>
+
+<h3><a name="invoke"
+>invoke</a></h3>
+
+<p><!--
+	INDEX: invoke opcode (PASM)
+--></p>
+
+<pre>  invoke
+  invoke R&#60;SUB&#62;</pre>
+
+<p>Call a subroutine, coroutine, or continuation stored in a PMC. If no PMC register is specified, it calls the subroutine in <code>P0</code> and uses the standard calling conventions. Otherwise, no calling convention is defined. Also <code>yield</code> from a coroutine.</p>
+
+<p><i>Arguments: P</i></p>
+
+<h3><a name="invokecc"
+>invokecc</a></h3>
+
+<p><!--
+	INDEX: invokecc opcode (PASM)
+--></p>
+
+<pre>  invokecc
+  invokecc R&#60;SUB&#62;</pre>
+
+<p>Call a subroutine like <code>invoke</code>, but also generate a return continuation in <code>P1</code>.</p>
+
+<p><i>Arguments: P</i></p>
+
+<p>See also: <code>updatecc</code>.</p>
+
+<h3><a name="isa"
+>isa</a></h3>
+
+<p><!--
+	INDEX: isa opcode (PASM)
+--></p>
+
+<pre>  isa R&#60;DEST&#62;, R&#60;OBJECT&#62;, R&#60;CLASS&#62;</pre>
+
+<p>Return a true value if OBJECT <i>isa</i> member of class CLASS, or of one of its subclasses, otherwise return a false value.</p>
+
+<p><i>Arguments: IR, P, S</i></p>
+
+<h3><a name="isnull"
+>isnull</a></h3>
+
+<p><!--
+	INDEX: isnull opcode (PASM)
+--></p>
+
+<pre>  isnull R&#60;VAL&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to LABEL if the given PMC is a NULL PMC.</p>
+
+<p><i>Arguments: P, IC</i></p>
+
+<h3><a name="join"
+>join</a></h3>
+
+<p><!--
+	INDEX: join opcode (PASM)
+--></p>
+
+<pre>  join R&#60;DEST&#62;, R&#60;DELIM&#62;, R&#60;ARRAY&#62;</pre>
+
+<p>Create a new string by joining all elements from array with the given delimiter.</p>
+
+<p><i>Arguments: SR, S, P</i></p>
+
+<h3><a name="jsr"
+>jsr</a></h3>
+
+<p><!--
+	INDEX: jsr opcode (PASM)
+--></p>
+
+<pre>  jsr R&#60;ADDRESS&#62;</pre>
+
+<p>Jump to an address, like <code>jump</code>, but also push the current location onto the call stack so <code>ret</code> can return to it.</p>
+
+<p><i>Arguments: I</i></p>
+
+<h3><a name="jump"
+>jump</a></h3>
+
+<p><!--
+	INDEX: jump opcode (PASM)
+--></p>
+
+<pre>  jump R&#60;ADDRESS&#62;</pre>
+
+<p>Jump to a specified absolute address.</p>
+
+<p><i>Arguments: I</i></p>
+
+<p>See also: <code>set_addr</code>.</p>
+
+<h3><a name="lcm"
+>lcm</a></h3>
+
+<p><!--
+	INDEX: lcm opcode (PASM)
+--></p>
+
+<pre>  lcm R&#60;DEST&#62;, R&#60;VAL&#62;, R&#60;VAL&#62;</pre>
+
+<p>Return the least common multiple of two values.</p>
+
+<p><i>Arguments: IR, I, I or NR, I, I</i></p>
+
+<h3><a name="le"
+>le</a></h3>
+
+<p><!--
+	INDEX: le (less than or equal);opcode (PASM)
+--></p>
+
+<pre>  le R&#60;VAL1&#62;, R&#60;VAL2&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if VAL1 is less than or equal to VAL2.</p>
+
+<p><i>Arguments: I, I, IC or N, N, IC or S, S, IC or P, I, IC or P, N, IC or P, S, IC or P, P, IC</i></p>
+
+<h3><a name="le_num"
+>le_num</a></h3>
+
+<p><!--
+	INDEX: le_num opcode (PASM)
+--></p>
+
+<pre>  le_num R&#60;VAL1&#62;, R&#60;VAL2&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if VAL1 is numerically less than or equal to VAL2.</p>
+
+<p><i>Arguments: P, P, IC</i></p>
+
+<h3><a name="le_str"
+>le_str</a></h3>
+
+<p><!--
+	INDEX: le_str opcode (PASM)
+--></p>
+
+<pre>  le_str R&#60;VAL1&#62;, R&#60;VAL2&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if VAL1 is stringwise less than or equal to VAL2.</p>
+
+<p><i>Arguments: P, P, IC</i></p>
+
+<h3><a name="length"
+>length</a></h3>
+
+<p><!--
+	INDEX: length opcode (PASM)
+--></p>
+
+<pre>  length R&#60;DEST&#62;, R&#60;STRING&#62;</pre>
+
+<p>Return the character length of a string.</p>
+
+<p><i>Arguments: IR, S</i></p>
+
+<h3><a name="ln"
+>ln</a></h3>
+
+<p><!--
+	INDEX: ln opcode (PASM)
+--></p>
+
+<pre>  ln R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>The natural logarithm of VAL.</p>
+
+<p><i>Arguments: NR, I or NR, N</i></p>
+
+<h3><a name="load_bytecode"
+>load_bytecode</a></h3>
+
+<p><!--
+	INDEX: load_bytecode
+--></p>
+
+<pre>  load_bytecode R&#60;FILE&#62;</pre>
+
+<p>Load Parrot bytecode from a file.</p>
+
+<p><i>Arguments: S</i></p>
+
+<h3><a name="loadlib"
+>loadlib</a></h3>
+
+<p><!--
+	INDEX: loadlib opcode (PASM)
+--></p>
+
+<pre>  loadlib R&#60;DEST&#62;, R&#60;LIBRARY&#62;</pre>
+
+<p>Load a dynamic link library by name and store it in a PMC.</p>
+
+<p><i>Arguments: P, S</i></p>
+
+<p>See also: <code>dlfunc</code>.</p>
+
+<h3><a name="localtime"
+>localtime</a></h3>
+
+<p><!--
+	INDEX: localtime opcode (PASM)
+--></p>
+
+<pre>  localtime R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Take the integer, which represents GMT epoch&#45;seconds, and turn it into a formatted string after adjusting to localtime.</p>
+
+<p><i>Arguments: SR, I</i></p>
+
+<p>See also: <code>gmtime</code>.</p>
+
+<h3><a name="log10"
+>log10</a></h3>
+
+<p><!--
+	INDEX: log10 opcode (PASM)
+--></p>
+
+<pre>  log10 R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>The base 10 logarithm of VAL.</p>
+
+<p><i>Arguments: NR, I or NR, N</i></p>
+
+<h3><a name="log2"
+>log2</a></h3>
+
+<p><!--
+	INDEX: log2 opcode (PASM)
+--></p>
+
+<pre>  log2 R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>The base 2 logarithm of VAL.</p>
+
+<p><i>Arguments: NR, I or NR, N</i></p>
+
+<h3><a name="lsr"
+>lsr</a></h3>
+
+<p><!--
+	INDEX: lsr opcode (PASM)
+--></p>
+
+<pre>  lsr R&#60;DEST&#62;, R&#60;BITS&#62;
+  lsr R&#60;DEST&#62;, R&#60;VAL&#62;, R&#60;BITS&#62;</pre>
+
+<p>Logically shift a value right by a given number of bits.</p>
+
+<p><i>Arguments: IR, I or IR, I, I</i></p>
+
+<h3><a name="lt"
+>lt</a></h3>
+
+<p><!--
+	INDEX: lt (less than);opcode (PASM)
+--></p>
+
+<pre>  lt R&#60;VAL1&#62;, R&#60;VAL2&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if VAL1 is less than VAL2.</p>
+
+<p><i>Arguments: I, I, IC or N, N, IC or S, S, IC or P, I, IC or P, N, IC or P, S, IC or P, P, IC</i></p>
+
+<h3><a name="lt_num"
+>lt_num</a></h3>
+
+<p><!--
+	INDEX: lt_num opcode (PASM)
+--></p>
+
+<pre>  lt_num R&#60;VAL1&#62;, R&#60;VAL2&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if VAL1 is numerically less than VAL2.</p>
+
+<p><i>Arguments: P, P, IC</i></p>
+
+<h3><a name="lt_str"
+>lt_str</a></h3>
+
+<p><!--
+	INDEX: lt_str opcode (PASM)
+--></p>
+
+<pre>  lt_str R&#60;VAL1&#62;, R&#60;VAL2&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if VAL1 is stringwise less than VAL2.</p>
+
+<p><i>Arguments: P, P, IC</i></p>
+
+<h3><a name="mod"
+>mod</a></h3>
+
+<p><!--
+	INDEX: mod opcode (PASM)
+--></p>
+
+<pre>  mod R&#60;DEST&#62;, R&#60;VAL&#62;
+  mod R&#60;DEST&#62;, R&#60;VAL1&#62;, R&#60;VAL2&#62;</pre>
+
+<p>Divide VAL1 by VAL2 and return the remainder. If VAL2 is omitted, divide DEST by VAL. The operation is defined as:</p>
+
+<pre>  x mod y = x &#45; y * floor(x / y)</pre>
+
+<p><i>Arguments: P, I or IR, I, I or NR, N, N or P, P, I or P, P, N</i></p>
+
+<p>See also: <code>cmod</code>.</p>
+
+<h3><a name="mul"
+>mul</a></h3>
+
+<p><!--
+	INDEX: mul opcode (PASM)
+--></p>
+
+<pre>  mul R&#60;DEST&#62;, R&#60;VAL&#62;
+  mul R&#60;DEST&#62;, R&#60;VAL&#62;, R&#60;VAL&#62;</pre>
+
+<p>Multiply two values and return the result. If only one VAL, multiply DEST by VAL.</p>
+
+<p><i>Arguments: IR, I or NR, I or NR, N or P, I or P, N or P, P or IR, I, I or NR, N, I or NR, N, N or P, P, I or P, P, N or P, P, P</i></p>
+
+<h3><a name="ne"
+>ne</a></h3>
+
+<p><!--
+	INDEX: ne (not equal);opcode (PASM)
+--></p>
+
+<pre>  ne R&#60;VAL&#62;, R&#60;VAL&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if the two values are not equal.</p>
+
+<p><i>Arguments: I, I, IC or N, N, IC or S, S, IC or P, I, IC or P, N, IC or P, S, IC or P, P, IC</i></p>
+
+<h3><a name="ne_addr"
+>ne_addr</a></h3>
+
+<p><!--
+	INDEX: ne_addr opcode (PASM)
+--></p>
+
+<pre>  ne_addr R&#60;VAL&#62;, R&#60;VAL&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if VAL1 and VAL2 do not point to the same string or PMC.</p>
+
+<p><i>Arguments: S, S, IC or P, P, IC</i></p>
+
+<h3><a name="ne_num"
+>ne_num</a></h3>
+
+<p><!--
+	INDEX: ne_num opcode (PASM)
+--></p>
+
+<pre>  ne_num R&#60;VAL&#62;, R&#60;VAL&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if the two values are numerically different.</p>
+
+<p><i>Arguments: P, P, IC</i></p>
+
+<h3><a name="ne_str"
+>ne_str</a></h3>
+
+<p><!--
+	INDEX: ne_str opcode (PASM)
+--></p>
+
+<pre>  ne_str R&#60;VAL&#62;, R&#60;VAL&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label if the two strings are not equal.</p>
+
+<p><i>Arguments: P, P, IC</i></p>
+
+<h3><a name="needs_destroy"
+>needs_destroy</a></h3>
+
+<p><!--
+	INDEX: needs_destroy opcode (PASM)
+--></p>
+
+<pre>  needs_destroy R&#60;PMC&#62;</pre>
+
+<p>Mark the PMC as requiring timely destruction.</p>
+
+<p><i>Arguments: P</i></p>
+
+<p>See also: <code>sweep</code>.</p>
+
+<h3><a name="neg"
+>neg</a></h3>
+
+<p><!--
+	INDEX: neg opcode (PASM)
+--></p>
+
+<pre>  neg R&#60;DEST&#62;
+  neg R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Return the negative of a number. If there is no VAL, DEST is the negative of itself.</p>
+
+<p><i>Arguments: IR or NR or P or IR, I or NR, N or P, P</i></p>
+
+<h3><a name="new"
+>new</a></h3>
+
+<p><!--
+	INDEX: new opcode (PASM)
+--></p>
+
+<pre>  new R&#60;DEST&#62;, R&#60;TYPE&#62;
+  new R&#60;DEST&#62;, R&#60;TYPE&#62;, R&#60;INITIALIZE&#62;
+  new R&#60;DEST&#62;, R&#60;TYPE&#62;, R&#60;INITIALIZE&#62;, R&#60;PROPS&#62;</pre>
+
+<p>Create a new PMC of type TYPE. INITIALIZE is an array PMC containing initialization data for the new PMC. PROPS is a property hash.</p>
+
+<p><i>Arguments: P, I or P, I, P or P, I, P, P</i></p>
+
+<pre>  new R&#60;DEST&#62;
+  new R&#60;DEST&#62;, R&#60;LENGTH&#62;
+  new R&#60;DEST&#62;, R&#60;LENGTH&#62;, R&#60;ENCODING&#62;
+  new R&#60;DEST&#62;, R&#60;LENGTH&#62;, R&#60;ENCODING&#62;, R&#60;TYPE&#62;</pre>
+
+<p>Allocate a new empty string with a given LENGTH, ENCODING, and TYPE.</p>
+
+<p><i>Arguments: SR or SR, I or SR, I, I or SR, I, I, I</i></p>
+
+<h3><a name="new_callback"
+>new_callback</a></h3>
+
+<p><!--
+	INDEX: new_callback opcode (PASM)
+--></p>
+
+<pre>  new_callback R&#60;DEST&#62;, R&#60;SUB&#62;, R&#60;DATA&#62;, R&#60;SIG&#62;</pre>
+
+<p>Create a callback stub DEST for a PASM subroutine SUB with user data DATA and function signature SIG.</p>
+
+<p><i>Arguments: P, P, P, S</i></p>
+
+<h3><a name="new_pad"
+>new_pad</a></h3>
+
+<p><!--
+	INDEX: new_pad opcode (PASM)
+--></p>
+
+<pre>  new_pad R&#60;DEPTH&#62;
+  new_pad R&#60;DEST&#62;, R&#60;DEPTH&#62;</pre>
+
+<p>Create a new lexical scratchpad. If a destination PMC is provided, store the pad in the PMC, otherwise push it onto the pad stack. DEPTH specifies the static nesting depth for the pad (lower static depths are copied from the current static nesting).</p>
+
+<p><i>Arguments: I or P, I</i></p>
+
+<h3><a name="newclass"
+>newclass</a></h3>
+
+<p><!--
+	INDEX: newclass opcode (PASM)
+--></p>
+
+<pre>  newclass R&#60;DEST&#62;, R&#60;NAME&#62;</pre>
+
+<p>Create a new class with the given name.</p>
+
+<p><i>Arguments: P, S</i></p>
+
+<h3><a name="newsub"
+>newsub</a></h3>
+
+<p><!--
+	INDEX: newsub opcode (PASM)
+--></p>
+
+<pre>  newsub R&#60;DEST&#62;, R&#60;CLASS&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Generate a new subroutine object of the given CLASS, located at the given LABEL, and store the object in the destination PMC.</p>
+
+<p><i>Arguments: P, I, IC</i></p>
+
+<pre>  newsub R&#60;CLASS&#62;, R&#60;RETCLASS&#62;, R&#60;LABEL&#62;, R&#60;RETADDR&#62;</pre>
+
+<p>Generate a new subroutine object of the given CLASS, located at the given LABEL, and store the object in <code>P0</code>. Also generate a return continuation of class RETCLASS with the return address RETADDR and store it in <code>P1</code>.</p>
+
+<p><i>Arguments: I, I, IC, IC</i></p>
+
+<h3><a name="noop"
+>noop</a></h3>
+
+<p><!--
+	INDEX: noop opcode (PASM)
+--></p>
+
+<pre>  noop</pre>
+
+<p>Do nothing.</p>
+
+<h3><a name="not"
+>not</a></h3>
+
+<p><!--
+	INDEX: not opcode (PASM)
+--></p>
+
+<pre>  not R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Logical NOT. True if VAL is false.</p>
+
+<p><i>Arguments: IR, I or P, P</i></p>
+
+<h3><a name="null"
+>null</a></h3>
+
+<p><!--
+	INDEX: null opcode (PASM)
+--></p>
+
+<pre>  null R&#60;DEST&#62;</pre>
+
+<p>Set DEST (which must be a register) to 0, 0.0 or a NULL pointer, depending on its type.</p>
+
+<p><i>Arguments: IR or NR or SR or P</i></p>
+
+<h3><a name="open"
+>open</a></h3>
+
+<p><!--
+	INDEX: open opcode (PASM)
+--></p>
+
+<pre>  open R&#60;DEST&#62;, R&#60;FILENAME&#62;
+  open R&#60;DEST&#62;, R&#60;FILENAME&#62;, R&#60;MODE&#62;</pre>
+
+<p>Open a file in the specified mode (&#34;r&#34;, &#34;w&#34;, etc.) and return a filehandle. Without the mode it defaults to read/write.</p>
+
+<p><i>Arguments: P, S, S or P, S</i></p>
+
+<h3><a name="or"
+>or</a></h3>
+
+<p><!--
+	INDEX: or opcode (PASM)
+--></p>
+
+<pre>  or R&#60;DEST&#62;, R&#60;VAL1&#62;, R&#60;VAL2&#62;</pre>
+
+<p>Logical OR. Return VAL1 if it&#39;s true; otherwise, return VAL2.</p>
+
+<p><i>Arguments: IR, I, I or P, P, P</i></p>
+
+<h3><a name="ord"
+>ord</a></h3>
+
+<p><!--
+	INDEX: ord opcode (PASM)
+--></p>
+
+<pre>  ord R&#60;DEST&#62;, R&#60;STRING&#62;
+  ord R&#60;DEST&#62;, R&#60;STRING&#62;, R&#60;POS&#62;</pre>
+
+<p>Return the character at position POS in STRING. If POS isn&#39;t specified, return the 0th character.</p>
+
+<p><i>Arguments: IR, S or IR, S, I</i></p>
+
+<h3><a name="peek"
+>peek</a></h3>
+
+<p><!--
+	INDEX: peek opcode (PASM)
+--></p>
+
+<pre>  peek R&#60;DEST&#62;
+  peek R&#60;DEST&#62;, R&#60;PIO&#62;</pre>
+
+<p>Read the next byte from the given FileHandle object or from <code>stdin</code> but don&#39;t remove it.</p>
+
+<p><i>Arguments: SR or SR, P</i></p>
+
+<h3><a name="peek_pad"
+>peek_pad</a></h3>
+
+<p><!--
+	INDEX: peek_pad opcode (PASM)
+--></p>
+
+<pre>  peek_pad R&#60;DEST&#62;</pre>
+
+<p>Store the current lexical scope pad in a PMC.</p>
+
+<p><i>Arguments: P</i></p>
+
+<h3><a name="pin"
+>pin</a></h3>
+
+<p><!--
+	INDEX: pin opcode (PASM)
+--></p>
+
+<pre>  pin R&#60;DEST&#62;</pre>
+
+<p>Make the string in DEST immobile. This prevents the garbage collector from moving it to a different location in memory (which it otherwise may choose to do).</p>
+
+<p><i>Arguments: SR</i></p>
+
+<p>See also: <code>unpin</code>.</p>
+
+<h3><a name="pop"
+>pop</a></h3>
+
+<p><!--
+	INDEX: pop opcode (PASM)
+--></p>
+
+<pre>  pop R&#60;DEST&#62;, R&#60;PMC&#62;</pre>
+
+<p>Pop the last entry off an aggregate PMC and return it.</p>
+
+<p><i>Arguments: IR, P or NR, P or SR, P or P, P</i></p>
+
+<h3><a name="pop_pad"
+>pop_pad</a></h3>
+
+<p><!--
+	INDEX: pop_pad opcode (PASM)
+--></p>
+
+<pre>  pop_pad</pre>
+
+<p>Pop the current lexical scope pad off the lexical scope stack.</p>
+
+<p>See also: <code>peek_pad</code>.</p>
+
+<h3><a name="popX"
+>popX</a></h3>
+
+<p><!--
+	INDEX: popi opcode (PASM)
+--> <!--
+	INDEX: popn opcode (PASM)
+--> <!--
+	INDEX: popp opcode (PASM)
+--> <!--
+	INDEX: pops opcode (PASM)
+--></p>
+
+<pre>  popi
+  popn
+  popp
+  pops</pre>
+
+<p>Restore all the registers of one type from the stack (&#34;i&#34; = integer, &#34;n&#34; = float, &#34;p&#34; = PMC, &#34;s&#34; = string).</p>
+
+<pre>  popbottomi
+  popbottomn
+  popbottomp
+  popbottoms</pre>
+
+<p>Restore registers in the range 0..15.</p>
+
+<pre>  poptopi
+  poptopn
+  poptopp
+  poptops</pre>
+
+<p>Restore registers in the range 16..31.</p>
+
+<p>See also: <code>push</code>X.</p>
+
+<h3><a name="pow"
+>pow</a></h3>
+
+<p><!--
+	INDEX: pow opcode (PASM)
+--></p>
+
+<pre>  pow R&#60;DEST&#62;, R&#60;VAL1&#62;, R&#60;VAL2&#62;</pre>
+
+<p>Return VAL1 raised to the power of VAL2.</p>
+
+<p><i>Arguments: NR, I, I or NR, I, N or NR, N, I or NR, N, N</i></p>
+
+<h3><a name="print"
+>print</a></h3>
+
+<p><!--
+	INDEX: print opcode (PASM)
+--></p>
+
+<pre>  print R&#60;VAL&#62;
+  print R&#60;IO&#62;, R&#60;VAL&#62;</pre>
+
+<p>Print a value to an I/O object or file descriptor. If no IO is given, print the value to standard output.</p>
+
+<p><i>Arguments: I or N or S or P or P, I or P, N or P, S or P, P</i></p>
+
+<h3><a name="printerr"
+>printerr</a></h3>
+
+<p><!--
+	INDEX: printerr opcode (PASM)
+--></p>
+
+<pre>  printerr R&#60;VAL&#62;</pre>
+
+<p>Print a value to <code>stderr</code>.</p>
+
+<p><i>Arguments: I or N or S or P</i></p>
+
+<h3><a name="profile"
+>profile</a></h3>
+
+<p><!--
+	INDEX: profile opcode (PASM)
+--></p>
+
+<pre>  profile R&#60;INT&#62;</pre>
+
+<p>Toggle profiling in the interpreter (0 for off, any other value for on).</p>
+
+<p><i>Arguments: I</i></p>
+
+<h3><a name="prophash"
+>prophash</a></h3>
+
+<p><!--
+	INDEX: prophash opcode (PASM)
+--></p>
+
+<pre>  prophash R&#60;DEST&#62;, R&#60;PMC&#62;</pre>
+
+<p>Return a hash containing all the properties from a PMC.</p>
+
+<p><i>Arguments: P, P</i></p>
+
+<p>See also: <code>getprop</code>.</p>
+
+<h3><a name="push"
+>push</a></h3>
+
+<p><!--
+	INDEX: push opcode (PASM)
+--></p>
+
+<pre>  push R&#60;PMC&#62;, R&#60;VAL&#62;</pre>
+
+<p>Push a value onto the end of an aggregate PMC.</p>
+
+<p><i>Arguments: P, I or P, N or P, S or P, P</i></p>
+
+<h3><a name="push_pad"
+>push_pad</a></h3>
+
+<p><!--
+	INDEX: push_pad opcode (PASM)
+--></p>
+
+<pre>  push_pad R&#60;PAD&#62;</pre>
+
+<p>Push a scratchpad stored in a PMC onto the lexical scope stack.</p>
+
+<p><i>Arguments: P</i></p>
+
+<h3><a name="pushX"
+>pushX</a></h3>
+
+<p><!--
+	INDEX: pushi opcode (PASM)
+--> <!--
+	INDEX: pushn opcode (PASM)
+--> <!--
+	INDEX: pushp opcode (PASM)
+--> <!--
+	INDEX: pushs opcode (PASM)
+--></p>
+
+<pre>  pushi
+  pushn
+  pushp
+  pushs</pre>
+
+<p>Save all the registers of one type to the stack (&#34;i&#34; = integer, &#34;n&#34; = float, &#34;p&#34; = PMC, &#34;s&#34; = string). Restore with <code>pop</code>X.</p>
+
+<pre>  pushbottomi
+  pushbottomn
+  pushbottomp
+  pushbottoms</pre>
+
+<p>Push registers 0..15.</p>
+
+<pre>  pushtopi
+  pushtopn
+  pushtopp
+  pushtops</pre>
+
+<p>Push registers 16..31.</p>
+
+<h3><a name="read"
+>read</a></h3>
+
+<p><!--
+	INDEX: read opcode (PASM)
+--></p>
+
+<pre>  read R&#60;DEST&#62;, R&#60;BYTES&#62;
+  read R&#60;DEST&#62;, R&#60;IO&#62;, R&#60;BYTES&#62;</pre>
+
+<p>Read the specified number of bytes from a Parrot I/O object. Read from <code>stdin</code> if no IO is provided.</p>
+
+<p><i>Arguments: SR, I or SR, P, I</i></p>
+
+<h3><a name="readline"
+>readline</a></h3>
+
+<p><!--
+	INDEX: readline opcode (PASM)
+--></p>
+
+<pre>  readline R&#60;DEST&#62;, R&#60;IO&#62;</pre>
+
+<p>Read a line from a Parrot I/O object.</p>
+
+<p><i>Arguments: SR, P</i></p>
+
+<h3><a name="register"
+>register</a></h3>
+
+<p><!--
+	INDEX: register opcode (PASM)
+--></p>
+
+<pre>  register R&#60;PMC&#62;</pre>
+
+<p>Register the given PMC in the interpreter&#39;s root set, so that it&#39;s visible during the mark phase.</p>
+
+<p><i>Arguments: P</i></p>
+
+<p>See also: <code>unregister</code>.</p>
+
+<h3><a name="removeparent"
+>removeparent</a></h3>
+
+<p><!--
+	INDEX: removeparent opcode (PASM)
+--></p>
+
+<pre>  removeparent R&#60;CLASS1&#62;, R&#60;CLASS2&#62;</pre>
+
+<p>Remove CLASS2 from class <code>CLASS1</code>&#39;s list of parents.</p>
+
+<p><i>Arguments: P, P</i></p>
+
+<h3><a name="repeat"
+>repeat</a></h3>
+
+<p><!--
+	INDEX: repeat opcode (PASM)
+--></p>
+
+<pre>  repeat R&#60;DEST&#62;, R&#60;VAL&#62;, R&#60;REPEAT&#62;</pre>
+
+<p>Repeat a string REPEAT number of times.</p>
+
+<p><i>Arguments: SR, S, I or P, P, I or P, P, P</i></p>
+
+<h3><a name="restoretop"
+>restoretop</a></h3>
+
+<p><!--
+	INDEX: restoretop opcode (PASM)
+--></p>
+
+<pre>  restoretop</pre>
+
+<p>Restore registers 16..31. Does a <code>pop</code>X for every type.</p>
+
+<p>See also: <code>savetop</code>.</p>
+
+<h3><a name="rethrow"
+>rethrow</a></h3>
+
+<p><!--
+	INDEX: rethrow opcode (PASM)
+--></p>
+
+<pre>  rethrow R&#60;EXCEPTION&#62;</pre>
+
+<p>Rethrow an exception. Only valid inside an exception handler.</p>
+
+<p><i>Arguments: P</i></p>
+
+<p>See also: <code>throw</code></p>
+
+<h3><a name="runinterp"
+>runinterp</a></h3>
+
+<p><!--
+	INDEX: runinterp opcode (PASM)
+--></p>
+
+<pre>  runinterp R&#60;INTERPRETER&#62;, R&#60;OFFSET&#62;</pre>
+
+<p>Use an interpreter stored in PMC to run code starting at a given offset.</p>
+
+<p><i>Arguments: P, I</i></p>
+
+<p>See also: <code>newinterp</code>.</p>
+
+<h3><a name="say"
+>say</a></h3>
+
+<p><!--
+	INDEX: say opcode (PASM)
+--></p>
+
+<pre>  say R&#60;VAL&#62;</pre>
+
+<p>Print a value to <code>stdout</code> with a trailing newline.</p>
+
+<p><i>Arguments: I or N or S or P</i></p>
+
+<h3><a name="sec"
+>sec</a></h3>
+
+<p><!--
+	INDEX: sec opcode (PASM)
+--></p>
+
+<pre>  sec R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>The secant of VAL in radians.</p>
+
+<p><i>Arguments: NR, I or NR, N</i></p>
+
+<h3><a name="sech"
+>sech</a></h3>
+
+<p><!--
+	INDEX: sech opcode (PASM)
+--></p>
+
+<pre>  sech R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>The hyperbolic secant of VAL in radians.</p>
+
+<p><i>Arguments: NR, I or NR, N</i></p>
+
+<h3><a name="seek"
+>seek</a></h3>
+
+<p><!--
+	INDEX: seek opcode (PASM)
+--></p>
+
+<pre>  seek R&#60;DEST&#62;, R&#60;IO&#62;, R&#60;OFFSET&#62;, R&#60;STARTFLAG&#62;
+  seek R&#60;DEST&#62;, R&#60;IO&#62;, R&#60;UPPER32&#62;, R&#60;LOWER32&#62;, R&#60;STARTFLAG&#62;</pre>
+
+<p>Set the file position of a Parrot I/O object to a given offset from a starting position (STARTFLAG: 0 is the beginning of the file, 1 is current the position, 2 is the end of the file). DEST is the success or failure of the seek.</p>
+
+<p>64&#45;bit <code>seek</code> combines UPPER32 and LOWER32 to get one 64&#45;bit OFFSET.</p>
+
+<p><i>Arguments: P, I, I or P, I, I, I</i></p>
+
+<h3><a name="set"
+>set</a></h3>
+
+<p><!--
+	INDEX: set opcode (PASM)
+--></p>
+
+<pre>  set R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Set a register to a value.</p>
+
+<p><i>Arguments: IR, I or IR, N or IR, S or IR, P or NR, I or NR, N or NR, S or NR, P or SR, I or SR, N or SR, S or SR, P or P, I or P, N or P, S or P, P</i></p>
+
+<pre>  set R&#60;DEST[KEY]&#62;, R&#60;VAL&#62;</pre>
+
+<p>A keyed set operation on a PMC.</p>
+
+<p><i>Arguments: P, I or P, N or P, S or P, P</i></p>
+
+<pre>  set R&#60;DEST&#62;, R&#60;PMC[KEY]&#62;</pre>
+
+<p>A keyed get operation on a PMC.</p>
+
+<p><i>Arguments: I, P or N, P or S, P or P, P</i></p>
+
+<h3><a name="setX_ind"
+>setX_ind</a></h3>
+
+<p><!--
+	INDEX: seti_ind opcode (PASM)
+--> <!--
+	INDEX: setn_ind opcode (PASM)
+--> <!--
+	INDEX: sets_ind opcode (PASM)
+--> <!--
+	INDEX: setp_ind opcode (PASM)
+--></p>
+
+<pre>  seti_ind R&#60;REG&#62;, R&#60;VAL&#62;
+  setn_ind R&#60;REG&#62;, R&#60;VAL&#62;
+  sets_ind R&#60;REG&#62;, R&#60;VAL&#62;
+  setp_ind R&#60;REG&#62;, R&#60;VAL&#62;</pre>
+
+<p>Set register number REG of the specified type to VAL. Bypasses the register allocator, so use with care.</p>
+
+<p><i>Arguments: I, I or I, S or I, N or I, P</i></p>
+
+<h3><a name="set_addr"
+>set_addr</a></h3>
+
+<p><!--
+	INDEX: set_addr opcode (PASM)
+--></p>
+
+<pre>  set_addr R&#60;DEST&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Return the current address plus the offset to LABEL. Often used to calculate absolute addresses for <code>jump</code> or <code>jsr</code>.</p>
+
+<p><i>Arguments: IR, IC</i></p>
+
+<pre>  set_addr R&#60;SUB&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Set the subroutine address pointing to the given label.</p>
+
+<p><i>Arguments: P, I</i></p>
+
+<h3><a name="set_chartype"
+>set_chartype</a></h3>
+
+<p><!--
+	INDEX: set_chartype opcode (PASM)
+--></p>
+
+<pre>  set_chartype R&#60;STRING&#62;, R&#60;CHARTYPE&#62;</pre>
+
+<p>Set the chartype of a string.</p>
+
+<p><i>Arguments: S, I</i></p>
+
+<h3><a name="set_eh"
+>set_eh</a></h3>
+
+<p><!--
+	INDEX: set_eh opcode (PASM)
+--></p>
+
+<pre>  set_eh R&#60;HANDLER&#62;</pre>
+
+<p>Push an exception handler on the control stack.</p>
+
+<p><i>Arguments: P</i></p>
+
+<p>See also: <code>clear_eh</code>, <code>throw</code>.</p>
+
+<h3><a name="set_encoding"
+>set_encoding</a></h3>
+
+<p><!--
+	INDEX: set_encoding opcode (PASM)
+--> <!--
+	INDEX: strings;encoding
+--></p>
+
+<pre>  set_encoding R&#60;STRING&#62;, R&#60;ENCODING&#62;</pre>
+
+<p>Set the encoding of a string.</p>
+
+<p><i>Arguments: S, I</i></p>
+
+<h3><a name="setattribute"
+>setattribute</a></h3>
+
+<p><!--
+	INDEX: setattribute opcode (PASM)
+--></p>
+
+<pre>  setattribute R&#60;OBJECT&#62;, R&#60;OFFSET&#62;, R&#60;ATTRIBUTE&#62;</pre>
+
+<p>Set the given attribute at OFFSET for object OBJECT.</p>
+
+<p><i>Arguments: P, I, P</i></p>
+
+<p>See also: <code>getattribute</code>, <code>classoffset</code>.</p>
+
+<h3><a name="setprop"
+>setprop</a></h3>
+
+<p><!--
+	INDEX: setprop opcode (PASM)
+--></p>
+
+<pre>  setprop R&#60;PMC&#62;, R&#60;NAME&#62;, R&#60;VALUE&#62;</pre>
+
+<p>Set the value of a named property on a PMC.</p>
+
+<p><i>Arguments: P, S, P</i></p>
+
+<p>See also: <code>getprop</code> and <code>delprop</code>.</p>
+
+<h3><a name="setstd*"
+>setstd*</a></h3>
+
+<p><!--
+	INDEX: setstderr opcode (PASM)
+--> <!--
+	INDEX: setstdin opcode (PASM)
+--> <!--
+	INDEX: setstdout opcode (PASM)
+--></p>
+
+<pre>  setstderr R&#60;DEST&#62;
+  setstdin  R&#60;DEST&#62;
+  setstdout R&#60;DEST&#62;</pre>
+
+<p>Set a FileHandle object for the given standard handle.</p>
+
+<p><i>Arguments: P</i></p>
+
+<h3><a name="shift"
+>shift</a></h3>
+
+<p><!--
+	INDEX: shift opcode (PASM)
+--></p>
+
+<pre>  shift R&#60;DEST&#62;, R&#60;PMC&#62;</pre>
+
+<p>Shift a value off the front of an aggregate PMC.</p>
+
+<p><i>Arguments: IR, P or NR, P or SR, P or P, P</i></p>
+
+<h3><a name="shl"
+>shl</a></h3>
+
+<p><!--
+	INDEX: shl opcode (PASM)
+--></p>
+
+<pre>  shl R&#60;DEST&#62;, R&#60;VAL&#62;, R&#60;BITS&#62;</pre>
+
+<p>Bitwise shift a value left by a given number of bits.</p>
+
+<p><i>Arguments: IR, I or P, I or P, P or IR, I, I or P, P, I or P, P, P</i></p>
+
+<h3><a name="shr"
+>shr</a></h3>
+
+<p><!--
+	INDEX: shr opcode (PASM)
+--></p>
+
+<pre>  shr R&#60;DEST&#62;, R&#60;VAL&#62;, R&#60;BITS&#62;</pre>
+
+<p>Bitwise shift a value right by a given number of bits.</p>
+
+<p><i>Arguments: IR, I or P, I or P, P or IR, I, I or P, P, I or P, P, P</i></p>
+
+<h3><a name="sin"
+>sin</a></h3>
+
+<p><!--
+	INDEX: sin opcode (PASM)
+--></p>
+
+<pre>  sin R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>The sine of VAL in radians.</p>
+
+<p><i>Arguments: NR, I or NR, N</i></p>
+
+<h3><a name="singleton"
+>singleton</a></h3>
+
+<p><!--
+	INDEX: singleton opcode (PASM)
+--></p>
+
+<pre>  singleton R&#60;DEST&#62;</pre>
+
+<p>Take the given object and put it into its own singleton class.</p>
+
+<p><i>Arguments: P</i></p>
+
+<h3><a name="sinh"
+>sinh</a></h3>
+
+<p><!--
+	INDEX: sinh opcode (PASM)
+--></p>
+
+<pre>  sinh R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>The hyperbolic sine of VAL in radians.</p>
+
+<p><i>Arguments: NR, I or NR, N</i></p>
+
+<h3><a name="sizeof"
+>sizeof</a></h3>
+
+<p><!--
+	INDEX: sizeof opcode (PASM)
+--></p>
+
+<pre>  sizeof R&#60;DEST&#62;, R&#60;TYPE&#62;</pre>
+
+<p>Set DEST to the size in bytes of the given natural type.</p>
+
+<p><i>Arguments: IR, I</i></p>
+
+<h3><a name="sleep"
+>sleep</a></h3>
+
+<p><!--
+	INDEX: sleep opcode (PASM)
+--></p>
+
+<pre>  sleep R&#60;SECONDS&#62;</pre>
+
+<p>Sleep for the given number of seconds.</p>
+
+<p><i>Arguments: I or N</i></p>
+
+<h3><a name="spawnw"
+>spawnw</a></h3>
+
+<p><!--
+	INDEX: spawnw opcode (PASM)
+--></p>
+
+<pre>  spawnw R&#60;DEST&#62;, R&#60;COMMAND&#62;</pre>
+
+<p>Spawn a subprocess to run the given COMMAND, wait for it to finish, and return the result.</p>
+
+<p><i>Arguments: IR, S</i></p>
+
+<h3><a name="splice"
+>splice</a></h3>
+
+<p><!--
+	INDEX: splice opcode (PASM)
+--></p>
+
+<pre>  splice R&#60;DEST&#62;, R&#60;REPLACE&#62;, R&#60;OFFSET&#62;, R&#60;COUNT&#62;</pre>
+
+<p>Starting at OFFSET, replace COUNT number of values in the destination PMC with values provided in the REPLACE PMC.</p>
+
+<p><i>Arguments: P, P, I, I</i></p>
+
+<h3><a name="sprintf"
+>sprintf</a></h3>
+
+<p><!--
+	INDEX: sprintf opcode (PASM)
+--></p>
+
+<pre>  sprintf R&#60;DEST&#62;, R&#60;FORMAT&#62;, R&#60;ARGS&#62;</pre>
+
+<p>Format arguments in an aggregate PMC, using format string FORMAT.</p>
+
+<p><i>Arguments: SR, S, P or P, P, P</i></p>
+
+<h3><a name="stat"
+>stat</a></h3>
+
+<p><!--
+	INDEX: stat opcode (PASM)
+--></p>
+
+<pre>  stat R&#60;DEST&#62;, R&#60;VAL&#62;, R&#60;VAL&#62;</pre>
+
+<p>Stat the VAL1 file and return stat element VAL2, as listed in Table 10&#45;2.</p>
+
+<p><i>Arguments: IR, S, I or IR, I, I</i></p>
+
+<h3><a name="store_global"
+>store_global</a></h3>
+
+<p><!--
+	INDEX: store_global opcode (PASM)
+--></p>
+
+<pre>  store_global R&#60;NAME&#62;, R&#60;OBJECT&#62;
+  store_global R&#60;NAME&#62;, R&#60;NAMESPACE&#62;, R&#60;OBJECT&#62;</pre>
+
+<p>Store a global variable as a named symbol.</p>
+
+<p><i>Arguments: S, P or S, S, P or P, S, P</i></p>
+
+<p>See also: <code>find_global</code>.</p>
+
+<h3><a name="store_lex"
+>store_lex</a></h3>
+
+<p><!--
+	INDEX: store_lex opcode (PASM)
+--></p>
+
+<pre>  store_lex R&#60;NAME&#62;, R&#60;OBJECT&#62;
+  store_lex R&#60;DEPTH&#62;, R&#60;NAME&#62;, R&#60;OBJECT&#62;
+  store_lex R&#60;DEPTH&#62;, R&#60;POSITION&#62;, R&#60;OBJECT&#62;</pre>
+
+<p>Store an object as a lexical variable with a given name. If the symbol doesn&#39;t exist, it will be created in the lexical scratchpad at the specified depth (a negative depth counts back from the current scope). If DEPTH isn&#39;t provided, the symbol must already exist. If a position is provided instead of a name, the symbol will be stored at the given position in the scratchpad.</p>
+
+<p><i>Arguments: S, P or I, I, P or I, S, P</i></p>
+
+<p>See also: <code>find_lex</code>.</p>
+
+<h3><a name="string_chartype"
+>string_chartype</a></h3>
+
+<p><!--
+	INDEX: string_chartype opcode (PASM)
+--></p>
+
+<pre>  string_chartype R&#60;DEST&#62;, R&#60;STRING&#62;</pre>
+
+<p>Return the chartype of the string.</p>
+
+<p><i>Arguments: IR, S</i></p>
+
+<h3><a name="string_encoding"
+>string_encoding</a></h3>
+
+<p><!--
+	INDEX: string_encoding opcode (PASM)
+--> <!--
+	INDEX: strings;encoding
+--></p>
+
+<pre>  string_encoding R&#60;DEST&#62;, R&#60;STRING&#62;</pre>
+
+<p>Return the encoding of the string.</p>
+
+<p><i>Arguments: IR, S</i></p>
+
+<h3><a name="stringinfo"
+>stringinfo</a></h3>
+
+<p><!--
+	INDEX: stringinfo opcode (PASM)
+--></p>
+
+<pre>  stringinfo R&#60;DEST&#62;, R&#60;STRING&#62;, R&#60;FLAG&#62;</pre>
+
+<p>Return information about a string. An integer flag selects which information to return, as listed in Table 10&#45;3.</p>
+
+<p><i>Arguments: IR, S, I</i></p>
+
+<h3><a name="sub"
+>sub</a></h3>
+
+<p><!--
+	INDEX: sub opcode (PASM)
+--></p>
+
+<pre>  sub R&#60;DEST&#62;, R&#60;VAL&#62;
+  sub R&#60;DEST&#62;, R&#60;VAL1&#62;, R&#60;VAL2&#62;</pre>
+
+<p>Subtract VAL2 from VAL1. If no VAL2, subtract VAL from DEST.</p>
+
+<p><i>Arguments: IR, I or NR, I or NR, N or P, I or P, N or P, P or IR, I, I or NR, N, I or NR, N, N or P, P, I or P, P, N or P, P, P</i></p>
+
+<h3><a name="subclass"
+>subclass</a></h3>
+
+<p><!--
+	INDEX: subclass opcode (PASM)
+--></p>
+
+<pre>  subclass R&#60;DEST&#62;, R&#60;CLASS&#62;
+  subclass R&#60;DEST&#62;, R&#60;CLASS&#62;, R&#60;NAME&#62;</pre>
+
+<p>Create a subclass of CLASS. Without NAME an anonymous subclass is created.</p>
+
+<p><i>Arguments: P, S or P, P or P, S, S or P, P, S</i></p>
+
+<h3><a name="substr"
+>substr</a></h3>
+
+<p><!--
+	INDEX: substr opcode (PASM)
+--></p>
+
+<pre>  substr R&#60;DEST&#62;, R&#60;STRING&#62;, R&#60;OFFSET&#62;
+  substr R&#60;DEST&#62;, R&#60;STRING&#62;, R&#60;OFFSET&#62;, R&#60;LENGTH&#62;</pre>
+
+<p>Return a substring of STRING, beginning at OFFSET and with length LENGTH.</p>
+
+<p><i>Arguments: SR, S, I or SR, S, I, I or SR, P, I, I</i></p>
+
+<pre>  substr R&#60;DEST&#62;, R&#60;STRING&#62;, R&#60;OFFSET&#62;, R&#60;LENGTH&#62;, R&#60;REPLACE&#62;</pre>
+
+<p>If REPLACE is given, use it to replace the returned substring in STRING.</p>
+
+<p><i>Arguments: SR, S, I, I, S</i></p>
+
+<pre>  substr R&#60;DEST&#62;, R&#60;OFFSET&#62;, R&#60;LENGTH&#62;, R&#60;REPLACE&#62;</pre>
+
+<p>If STRING is omitted, operate on the string in DEST.</p>
+
+<p><i>Arguments: SR, I, I, S</i></p>
+
+<h3><a name="substr_r"
+>substr_r</a></h3>
+
+<p><!--
+	INDEX: substr_r opcode (PASM)
+--></p>
+
+<pre>  substr_r R&#60;DEST&#62;, R&#60;STRING&#62;, R&#60;OFFSET&#62;, R&#60;LENGTH&#62;</pre>
+
+<p>Acts like <code>substr</code>, but reuses the destination string instead of creating a new string. Deprecated.</p>
+
+<p><i>Arguments: SR, S, I, I</i></p>
+
+<h3><a name="sweep"
+>sweep</a></h3>
+
+<p><!--
+	INDEX: sweep opcode (PASM)
+--></p>
+
+<pre>  sweep R&#60;LAZY&#62;</pre>
+
+<p>Trigger a GC mark run. If LAZY is set to 1, only objects that need timely destruction may be destroyed.</p>
+
+<p><i>Arguments: IC</i></p>
+
+<h3><a name="sweepoff"
+>sweepoff</a></h3>
+
+<p><!--
+	INDEX: sweepoff opcode (PASM)
+--></p>
+
+<pre>  sweepoff</pre>
+
+<p>Disable GC mark runs (nestable).</p>
+
+<h3><a name="sweepon"
+>sweepon</a></h3>
+
+<p><!--
+	INDEX: sweepon opcode (PASM)
+--></p>
+
+<pre>  sweepon</pre>
+
+<p>Re&#45;enable GC mark runs.</p>
+
+<h3><a name="sysinfo"
+>sysinfo</a></h3>
+
+<p><!--
+	INDEX: sysinfo opcode (PASM)
+--></p>
+
+<pre>  sysinfo R&#60;DEST&#62;, R&#60;ITEM&#62;</pre>
+
+<p>Return OS&#45;specific details given by <code>ITEM</code>.</p>
+
+<p><i>Arguments: IR, I or SR, I</i></p>
+
+<h3><a name="tan"
+>tan</a></h3>
+
+<p><!--
+	INDEX: tan opcode (PASM)
+--></p>
+
+<pre>  tan R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>The tangent of VAL in radians.</p>
+
+<p><i>Arguments: NR, I or NR, N</i></p>
+
+<h3><a name="tanh"
+>tanh</a></h3>
+
+<p><!--
+	INDEX: tanh opcode (PASM)
+--></p>
+
+<pre>  tanh R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>The hyperbolic tangent of VAL in radians.</p>
+
+<p><i>Arguments: NR, I or NR, N</i></p>
+
+<h3><a name="tell"
+>tell</a></h3>
+
+<p><!--
+	INDEX: tell opcode (PASM)
+--></p>
+
+<pre>  tell R&#60;DEST&#62;, R&#60;PIO&#62;
+  tell R&#60;UPPER32&#62;, R&#60;LOWER32&#62;, R&#60;PIO&#62;</pre>
+
+<p>Return the file position of the given FileHandle object.</p>
+
+<p><i>Arguments: IR, P or IR, I, P</i></p>
+
+<p>See also: <code>seek</code>.</p>
+
+<h3><a name="thaw"
+>thaw</a></h3>
+
+<p><!--
+	INDEX: thaw opcode (PASM)
+--></p>
+
+<pre>  thaw R&#60;DEST&#62;, R&#60;STR&#62;</pre>
+
+<p>Create a new PMC representing the frozen image.</p>
+
+<p><i>Arguments: P, S</i></p>
+
+<p>See also: <code>freeze</code>.</p>
+
+<h3><a name="throw"
+>throw</a></h3>
+
+<p><!--
+	INDEX: throw opcode (PASM)
+--></p>
+
+<pre>  throw R&#60;EXCEPTION&#62;</pre>
+
+<p>Throw an exception.</p>
+
+<p><i>Arguments: P</i></p>
+
+<p>See also: <code>rethrow</code>, <code>set_eh</code>, <code>clear_eh</code></p>
+
+<h3><a name="time"
+>time</a></h3>
+
+<p><!--
+	INDEX: time opcode (PASM)
+--></p>
+
+<pre>  time R&#60;DEST&#62;</pre>
+
+<p>Return the current system time.</p>
+
+<p><i>Arguments: IR or NR</i></p>
+
+<h3><a name="titlecase"
+>titlecase</a></h3>
+
+<p><!--
+	INDEX: titlecase opcode (PASM)
+--></p>
+
+<pre>  titlecase R&#60;DEST&#62;
+  titlecase R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Create a copy of the string in VAL with all characters converted to title case, and store it in DEST. If VAL is omitted, convert and replace the string in DEST.</p>
+
+<p><i>Arguments: SR or SR, S</i></p>
+
+<p>See also: <code>upcase</code>, <code>downcase</code>.</p>
+
+<h3><a name="trace"
+>trace</a></h3>
+
+<p><!--
+	INDEX: trace opcode (PASM)
+--></p>
+
+<pre>  trace R&#60;INT&#62;</pre>
+
+<p>Toggle tracing in the interpreter (0 for off, any other value for on).</p>
+
+<p><i>Arguments: I</i></p>
+
+<h3><a name="transcode"
+>transcode</a></h3>
+
+<p><!--
+	INDEX: transcode opcode (PASM)
+--></p>
+
+<pre>  transcode R&#60;DEST&#62;, R&#60;ENCODING&#62;
+  transcode R&#60;DEST&#62;, R&#60;SOURCE&#62;, R&#60;ENCODING&#62;
+  transcode R&#60;DEST&#62;, R&#60;SOURCE&#62;, R&#60;ENCODING&#62;, R&#60;CHARTYPE&#62;</pre>
+
+<p>Transcode a string to the given CHARTYPE and ENCODING. If CHARTYPE is omitted, it is assumed to be the same as the original.</p>
+
+<p><i>Arguments: SR, I or SR, S, I or SR, S, I, I</i></p>
+
+<h3><a name="typeof"
+>typeof</a></h3>
+
+<p><!--
+	INDEX: typeof opcode (PASM)
+--></p>
+
+<pre>  typeof R&#60;DEST&#62;, R&#60;VAL&#62;
+  typeof R&#60;DEST&#62;, R&#60;PMC[KEY]&#62;</pre>
+
+<p>Return the type of a PMC or Parrot data type, either its class name (to a string destination) or integer identifier (to an integer destination).</p>
+
+<p><i>Arguments: IR, P or SR, I or SR, P</i></p>
+
+<h3><a name="unless"
+>unless</a></h3>
+
+<p><!--
+	INDEX: unless (conditional);opcode (PASM)
+--></p>
+
+<pre>  unless R&#60;CONDITION&#62;, R&#60;LABEL&#62;</pre>
+
+<p>Jump to a label unless the condition is a true value.</p>
+
+<p><i>Arguments: I, IC or N, IC or S, IC or P, IC</i></p>
+
+<h3><a name="unpin"
+>unpin</a></h3>
+
+<p><!--
+	INDEX: unpin opcode (PASM)
+--></p>
+
+<pre>  unpin R&#60;DEST&#62;</pre>
+
+<p>Make the string in DEST movable again. This is the default, so <code>unpin</code> is a no&#45;op unless the string has been pinned with <code>pin</code>.</p>
+
+<p>See also: <code>pin</code>.</p>
+
+<p><i>Arguments: SR</i></p>
+
+<h3><a name="unregister"
+>unregister</a></h3>
+
+<p><!--
+	INDEX: unregister opcode (PASM)
+--></p>
+
+<pre>  unregister R&#60;PMC&#62;</pre>
+
+<p>Remove one reference to PMC from the root set registry.</p>
+
+<p><i>Arguments: P</i></p>
+
+<p>See also: <code>register</code>.</p>
+
+<h3><a name="unshift"
+>unshift</a></h3>
+
+<p><!--
+	INDEX: unshift opcode (PASM)
+--></p>
+
+<pre>  unshift R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Unshift a value onto the front of an aggregate PMC.</p>
+
+<p><i>Arguments: P, I or P, N or P, S or P, P</i></p>
+
+<h3><a name="upcase"
+>upcase</a></h3>
+
+<p><!--
+	INDEX: upcase opcode (PASM)
+--></p>
+
+<pre>  upcase R&#60;DEST&#62;
+  upcase R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>Create a copy of the string in VAL with all characters converted to upper case, and store it in DEST. If VAL is omitted, convert and replace the string in DEST.</p>
+
+<p><i>Arguments: SR or SR, S</i></p>
+
+<p>See also: <code>downcase</code>, <code>titlecase</code>.</p>
+
+<h3><a name="updatecc"
+>updatecc</a></h3>
+
+<p><!--
+	INDEX: updatecc
+--></p>
+
+<pre>  updatecc</pre>
+
+<p>Update the state of a return continuation stored in <code>P1</code>. Used when context information changes after the return continuation is created but before it&#39;s invoked.</p>
+
+<p>See also: <code>invokecc</code>.</p>
+
+<p><i>Arguments: IR, I</i></p>
+
+<h3><a name="vers"
+>vers</a></h3>
+
+<p><!--
+	INDEX: vers opcode (PASM)
+--></p>
+
+<pre>  vers R&#60;DEST&#62;, R&#60;VAL&#62;</pre>
+
+<p>The versine of VAL in radians.</p>
+
+<p><i>Arguments: NR, N</i></p>
+
+<h3><a name="warningsoff"
+>warningsoff</a></h3>
+
+<p><!--
+	INDEX: warningsoff opcode (PASM)
+--></p>
+
+<pre>  warningsoff R&#60;CATEGORY&#62;</pre>
+
+<p>Turn off a particular category of warnings by category number. Turning off one category will not affect the status of other warnings categories. See <code>warningson</code> for the list of categories.</p>
+
+<p><i>Arguments: I</i></p>
+
+<h3><a name="warningson"
+>warningson</a></h3>
+
+<p><!--
+	INDEX: warningson opcode (PASM)
+--></p>
+
+<pre>  warningson R&#60;CATEGORY&#62;</pre>
+
+<p>Turn on a particular category of warnings by category number. The default is all warnings off. Turning on one category will not turn off other categories. Combine category numbers with a bitwise OR to turn on more than one at a time. If you include <em>warnings.pasm</em>, the category numbers are available by name as:</p>
+
+<pre>  .PARROT_WARNINGS_ALL_FLAG
+  .PARROT_WARNINGS_UNDEF_FLAG
+  .PARROT_WARNINGS_IO_FLAG
+  .PARROT_WARNINGS_PLATFORM_FLAG</pre>
+
+<p><i>Arguments: I</i></p>
+
+<h3><a name="xor"
+>xor</a></h3>
+
+<p><!--
+	INDEX: xor opcode (PASM)
+--></p>
+
+<pre>  xor R&#60;DEST&#62;, R&#60;VAL1&#62;, R&#60;VAL2&#62;</pre>
+
+<p>Logical XOR. If VAL1 is true and VAL2 is false, return VAL1. If VAL1 is false and VAL2 is true, return VAL2. Otherwise, return a false value.</p>
+
+<p><i>Arguments: IR, I, I or P, P, P</i></p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2014, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

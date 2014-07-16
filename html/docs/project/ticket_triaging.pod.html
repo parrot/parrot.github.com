@@ -1,0 +1,401 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Managing Tickets</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Managing Tickets
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/project/ticket_triaging.pod &#45; Managing Tickets</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This document attempts to outline a set of best practices for dealing with tickets in Parrot&#39;s tracking system.
+It is targeted at Parrot developers and Ticket Wranglers and is <i>not</i> intended as advice or instruction for end users.
+Ticket filing procedures for end users are documented in <em>docs/submissions.pod</em>.</p>
+
+<h1><a name="WHAT_ABOUT_TRAC?"
+>WHAT ABOUT TRAC?</a></h1>
+
+<p>Our preferred method of bug tracking at this point is github issues: <a href='https://github.com/parrot/parrot/issues/'>https://github.com/parrot/parrot/issues/</a></p>
+
+<p>All Parrot developers are expected to pitch in and help keep the ticket tracker in a healthy state.
+<i>This means you!</i> Most of the document below still makes sense in terms of activities in trac,
+but the specifics are of course different with the new system.</p>
+
+<p>Our previous bug tracking system was trac,
+hosted at <a href='https://trac.parrot.org/'>https://trac.parrot.org/</a>.
+In January 2012 the trac tickets have been migrated to github issues.</p>
+
+<p>The bug tracking system before trac was RT.
+In November 2009 all remaining RT tickets were closed,
+with many being reopened in Trac.
+No new issues should be opened in RT,
+but the old system is available at <a href='https://rt.perl.org'>https://rt.perl.org</a>.
+The Parrot issues are in the queue <i>parrot</i>.</p>
+
+<h1><a name="TICKET_HANDLING_PROCEDURES"
+>TICKET HANDLING PROCEDURES</a></h1>
+
+<h2><a name="New_Tickets"
+>New Tickets</a></h2>
+
+<p>Where <i>New</i> refers to a pre&#45;existing ticket sitting in the Parrot queue with a status of <code>new</code>.</p>
+
+<h3><a name="Bug_Triage"
+>Bug Triage</a></h3>
+
+<p>Involves deciding whether the ticket is a real bug,
+a feature request,
+a duplicate,
+or spam.</p>
+
+<p>It is especially important to check that all <code>new</code> bugs which are marked [TODO],
+[PATCH],
+or [CAGE] really are bugs of the given class.
+This is because some bugs,
+such as [TODO] and [CAGE],
+get their status set to <code>open</code> to indicate that something should be done,
+rather than that someone is doing something.</p>
+
+<dl>
+<dt><a name="Is_this_spam?"
+>Is this spam?</a></dt>
+Assign the issue to the queue <i>spam</i>.
+Note that if this is successful,
+you will no longer have permissions to view the ticket.
+<dt><a name="Is_this_a_duplication_of_an_existing_ticket?"
+>Is this a duplication of an existing ticket?</a></dt>
+Under the Action section,
+chose the &#34;resolve as&#34; option and select &#34;duplicate&#34; from the dropdown.
+Add a comment to the ticket along the lines of &#34;Duplicate of Ticket #123&#34;.
+<dt><a name="Is_there_enough_information?"
+>Is there enough information?</a></dt>
+If not,
+ask for more input.
+<dt><a name="Is_it_a_[TODO]_ticket?"
+>Is it a [TODO] ticket?</a></dt>
+Is the subject line in the format <code>&#34;[TODO] subsystem &#45; issue</code>?Change the status of <code>[TODO]</code> tickets to <code>open</code> to prevent them from appearing in a listing of <code>new</code> tickets.
+<dt><a name="Is_it_a_[PATCH]_ticket?"
+>Is it a [PATCH] ticket?</a></dt>
+Is the subject line in the format <code>&#34;[PATCH] subsystem &#45; issue</code>?Make sure that there is actually a patch attached to the ticket.
+If you&#39;ve applied a patch,
+be sure to include the revision in your response when closing the ticket.
+<dt><a name="*_Is_it_a_[CAGE]_bug?"
+>* Is it a [CAGE] bug?</a></dt>
+Is the subject line in the format <code>&#34;[CAGE] subsystem &#45; issue</code>?<code>[CAGE]</code> bugs should have their status changed to <code>open</code> to prevent them from appearing in a listing of <code>new</code> bugs.
+<dt><a name="*_Assign_the_bug_to_someone_if_at_all_possible."
+>* Assign the bug to someone if at all possible.</a></dt>
+</dl>
+
+<h2><a name="TODO_Tickets"
+>TODO Tickets</a></h2>
+
+<dl>
+<dt><a name="Claim_ownership_or_interest_(_CC_)_of_the_ticket."
+>Claim ownership or interest ( CC ) of the ticket.</a></dt>
+This way you will receive further correspondence about the ticket.
+<dt><a name="Run_the_test_suite"
+>Run the test suite</a></dt>
+
+<dt><a name="make_manitest"
+>make manitest</a></dt>
+
+<dt><a name="add_the_patch_author_to_CREDITS_or_update_the_author&#39;s_entry"
+>add the patch author to <em>CREDITS</em> or update the author&#39;s entry</a></dt>
+
+<dt><a name="add_correspondence_to_the_ticket_stating_that_the_patch_was_applied._Include_the_commit_SHA1_in_your_response."
+>add correspondence to the ticket stating that the patch was applied.
+Include the commit SHA1 in your response.</a></dt>
+
+<dt><a name="make_sure_that_the_ticket&#39;s_&#39;Tag&#39;_includes_&#39;Patch&#39;"
+>make sure that the ticket&#39;s &#39;Tag&#39; includes &#39;Patch&#39;</a></dt>
+
+<dt><a name="set_the_ticket&#39;s_&#39;Patch_status&#39;_to_&#39;Applied&#39;"
+>set the ticket&#39;s &#39;Patch status&#39; to &#39;Applied&#39;</a></dt>
+
+<dt><a name="set_the_ticket&#39;s_&#39;resolve_as&#39;_to_&#39;resolved&#39;"
+>set the ticket&#39;s &#39;resolve as&#39; to &#39;resolved&#39;</a></dt>
+</dl>
+
+<h2><a name="Old_Tickets"
+>Old Tickets</a></h2>
+
+<p>If the ticket is more then <i>1 month</i> old,
+then it&#39;s <i>old</i>.</p>
+
+<dl>
+<dt><a name="Ping_the_requestor"
+>Ping the requestor</a></dt>
+Give the requestor at least <i>1 week</i> to respond.
+If you receive no response,
+add a comment to the ticket saying that it is stalled because of no response from the requestor.
+Change the status to <code>stalled</code>.If it&#39;s a [PATCH] ticket,
+it&#39;s possible that the patch was applied but the ticket/patch status was never changed.
+Also,
+not all list traffic regarding a ticket ends up in the tracker.
+Look at the git repo to attempt to determine if the ticket was resolved.
+<dt><a name="Review_of_stalled_tickets"
+>Review of stalled tickets</a></dt>
+Sometimes tickets are <code>stalled</code> because there&#39;s no hope if fixing them soon.
+Sometimes,
+no response is available from the requestor,
+or no one can verify the report.
+Review these tickets periodically.
+When possible,
+change their status to <code>open</code> or <code>closed</code> as appropriate.</dl>
+
+<h3><a name="Necessary_Information"
+>Necessary Information</a></h3>
+
+<p>As alluded to earlier,
+tickets are much easier to resolve when they include sufficient information.
+For bugs,
+this is:</p>
+
+<dl>
+<dt><a name="Specific_error_messages."
+>Specific error messages.</a></dt>
+These can come from Parrot or the operating system.
+Copied and pasted messages are best; the exact wording is often important.
+<dt><a name="Platform_details."
+>Platform details.</a></dt>
+These include operating system and version,
+compiler information,
+processor architecture,
+and versions of included libraries.
+The file <em>parrot_config.pasm</em> may be useful.
+<dt><a name="Steps_to_reproduce."
+>Steps to reproduce.</a></dt>
+At what point did you see the failure?
+Can you reproduce it?
+Do you have a small PIR program which demonstrates the problem?
+<dt><a name="Failure_diagnostics."
+>Failure diagnostics.</a></dt>
+Verbose diagnostics from <code>prove &#45;v</code> &#45;&#45; including all error messages and diagnostics &#45;&#45; are often necessary to resolve test failures.
+<dt><a name="Backtraces."
+>Backtraces.</a></dt>
+Segfaults and other crashes within Parrot are much easier to resolve given a backtrace on a Parrot built with debugging symbols.</dl>
+
+<p>[PATCH] tickets for code almost always need tests and often need documentation.
+Feel free to ask the submitter to work on both,
+or to contact another committer for help in identifying and creating the appropriate tests and documentation.</p>
+
+<h3><a name="Severity_Guidelines"
+>Severity Guidelines</a></h3>
+
+<p>Occasionally the severity of a problem may govern how volunteers direct their resources to resolving tickets.
+Here are several criteria by which to determine the severity of a report.</p>
+
+<dl>
+<dt><a name="Is_there_an_exploitable_security_problem?"
+>Is there an exploitable security problem?</a></dt>
+Can a malicious user destroy data,
+access sensitive information,
+or obtain undesired permissions to the rest of the system?
+If so,
+this is a high priority ticket.
+<dt><a name="Is_there_a_crash_from_a_pure&#45;PIR_program?"
+>Is there a crash from a pure&#45;PIR program?</a></dt>
+Users should never be able to crash Parrot writing normal PIR code.
+Such problems need high priority tickets.
+<dt><a name="Does_the_defect_prevent_a_successful_configuration,_build,_or_installation_of_Parrot?"
+>Does the defect prevent a successful configuration,
+build,
+or installation of Parrot?</a></dt>
+If Parrot cannot build,
+install,
+or run,
+the ticket has a high priority.
+<dt><a name="Does_the_defect_cause_test_failures_on_a_core_platform?"
+>Does the defect cause test failures on a core platform?</a></dt>
+All tests should pass on all core platforms in all releases of Parrot (as well as on trunk).
+Test failures,
+with the appropriate diagnostic information,
+are moderate priority.
+<dt><a name="Is_the_defect_reproducable_in_the_current_development_version?"
+>Is the defect reproducable in the current development version?</a></dt>
+Reproducable defects have a normal priority.
+Unreproducable tickets have a lower priority.
+<dt><a name="Does_the_defect_affect_a_core_platform?"
+>Does the defect affect a core platform?</a></dt>
+Defects affecting non&#45;core platforms have a lower priority (which reflects that we probably lack the expertise to deal with that platform).
+<dt><a name="Is_there_a_test_case_suitable_for_the_test_suite?"
+>Is there a test case suitable for the test suite?</a></dt>
+A defect reported with a patch to the test suite (or a test case easily added to the test suite) may have a higher priority; it&#39;s much easier to diagnose and fix such problems.</dl>
+
+<h1><a name="TIPS_FOR_CORRESPONDENCE"
+>TIPS FOR CORRESPONDENCE</a></h1>
+
+<h2><a name="Be_Nice"
+>Be Nice</a></h2>
+
+<p>Remember that every word you type into the ticket tracker is <i>On The Record</i>.
+Try not to say anything that could offend or hurt the feelings of <i>anyone</i>.
+That includes the ticket submitter and other developers.
+When,
+as a Parrot developer with commit rights,
+you send correspondence you are representing the Parrot project and,
+by proxy,
+The Parrot Foundation.
+If in doubt,
+either send the message privately or not at all.</p>
+
+<h2><a name="Say_thank_you!"
+>Say thank you!</a></h2>
+
+<p>Try to add a little token of appreciation to every message you send in response to a ticket.
+Ticket requestors are doing labor for free!
+The least you can do is let them know that you appreciate their efforts.</p>
+
+<p>Something like:</p>
+
+<pre>    Thanks,
+
+    Thanks for following up.
+
+    Thanks for reporting.
+
+    Thanks for X!</pre>
+
+<p>... can work wonders. If you can make someone feel good about themselves maybe they&#39;ll submit another ticket/patch/whatever or perhaps some day become a Parrot developer.</p>
+
+<h2><a name="Make_it_clear_why_the_ticket_status_has_changed"
+>Make it clear why the ticket status has changed</a></h2>
+
+<p>Always note why you&#39;re changing a ticket&#39;s status, particularly if you&#39;re closing or rejecting it. Nothing will irritate people more then letting them think that their ticket was unimportant or ignored.</p>
+
+<h2><a name="Example_Correspondence"
+>Example Correspondence</a></h2>
+
+<pre>    Hi,
+
+    Can you retest for this ticket with the latest sources from git and confirm
+    that this still an open issue?
+
+    Thanks,
+
+    &#45;J</pre>
+
+<p>or</p>
+
+<pre>    Hi,
+
+    Would you mind retesting with the latest sources from git?
+
+    Thanks,
+
+    &#45;J</pre>
+
+<p>or</p>
+
+<pre>    Hi,
+
+    Can you resubmit this patch against git master?
+
+    Thanks,
+
+    &#45;J</pre>
+
+<p>or</p>
+
+<pre>    Patch applied as rXXX.  Thanks for submitting.
+
+    &#45;J</pre>
+
+<p>or</p>
+
+<pre>    No response for requestor.  Ticket being marked as &#39;rejected&#39;.
+    Thanks for reporting.
+
+    &#45;J</pre>
+
+<p>or</p>
+
+<pre>    This doesn&#39;t appear to be an issue anymore.
+    Thanks for submitting.
+
+    &#45;J</pre>
+
+<p>or</p>
+
+<pre>    Marking this ticket as &#39;resolved&#39; because it seems to have fixed itself.
+    Thanks for following up.
+
+    &#45;J</pre>
+
+<h1><a name="TIPS_FOR_WRITING_COMMIT_MESSAGES"
+>TIPS FOR WRITING COMMIT MESSAGES</a></h1>
+
+<dl>
+<dt><a name="Put_a_subsystem_identifier_out_the_front"
+>Put a subsystem identifier out the front</a></dt>
+
+<pre>  [json]: commit message</pre>
+
+<dt><a name="If_related_to_a_Trac_ticket,_use_the_ticket_number"
+>If related to a Trac ticket, use the ticket number</a></dt>
+
+<pre>  [json]: Resolve #731</pre>
+
+<dt><a name="Add_a_&#34;Courtesy_of_&#60;foo&#62;&#34;_if_supplied_by_someone_else"
+>Add a &#34;Courtesy of &#60;foo&#62;&#34; if supplied by someone else</a></dt>
+
+<pre>  Courtesy of A. U. Thor &#60;author@cpan.org&#62;</pre>
+
+<dt><a name="Detailed_commit_messages_are_preferred"
+>Detailed commit messages are preferred</a></dt>
+Make it clear what your intent is when committing. It makes future maintenance much easier.
+<pre>  [PGE]:
+  * Switched &#34;PGE::Regex&#34; to be &#34;PGE::Grammar&#34;, to be more accurate.
+  * Moved default rules from PGE::Regex into PGE::Match.
+  * Updated various languages and tools to match.</pre>
+
+<dt><a name="Commit_file_names"
+>Commit file names</a></dt>
+You don&#39;t need to include the filename in the commit message as that&#39;s part of the commit itself. However, if your commit affects multiple directories, you may mention that, especially if it&#39;s part of a group of commits.
+<pre>  [PDD07]: whitespace &#45;&#45; part 5
+  ~ removed trailing spaces and tabs from t/exit/, t/dynpmc/, t/dynoplibs/</pre>
+
+<dt><a name="Group_similar_commits_by_parts"
+>Group similar commits by parts</a></dt>
+If all commits are much the same and require basically the same commit message, it can be useful to number the commit messages. For example:
+<pre>  [tools]: smartlink functionality &#45;&#45; part 3
+  ~ added regex attribute to Keyphrase class
+  ~ filled in some more SmartLinkServer attribute init code
+  ~ expanded LinkTree class functionality
+  still TODO: merge smartlink and spec info, emit html, improve cmdline
+  option code</pre>
+You may optionally include items that are still todo, as it helps make your intentions clear.
+<dt><a name="More_ideas"
+>More ideas</a></dt>
+Look at past commit messages, and <a href='http://cia.navi.cx/stats/project/parrot'><a href="http://cia.navi.cx/stats/project/parrot">http://cia.navi.cx/stats/project/parrot</a></a> for more best practices.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2014, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

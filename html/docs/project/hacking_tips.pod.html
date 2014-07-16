@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - A Collection of Useful Tips for Parrot Hacking</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; A Collection of Useful Tips for Parrot Hacking
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/project/hacking_tips.pod &#45; A Collection of Useful Tips for Parrot Hacking</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Parrot is a complex project that can fail in mysterious and spectacular ways and has a tendency to exhibit surprising performance bottlenecks.
+When that happens,
+you have the exciting job of figuring out what&#39;s wrong and how to fix it.
+This document exists to provide a repository of knowledge and techniques to make that job easier.</p>
+
+<h2><a name="Debugging_Parrot_(external_tools)"
+>Debugging Parrot (external tools)</a></h2>
+
+<h3><a name="gdb"
+>gdb</a></h3>
+
+<p>gdb should be a familiar tool,
+but many developers only use a small subset of its capabilities.
+This section covers some of its lesser known features that may come in handy while debugging Parrot.
+Note that this is not intended to be an exhaustive resource.
+If your favorite technique is missing,
+please add it.</p>
+
+<h4><a name="Conditional_Breakpoints"
+>Conditional Breakpoints</a></h4>
+
+<p>gdb&#39;s breakpoints are great for inspecting the state of a running (or recently crashed) program,
+but sometimes the function or line you want to break on will be entered many times before it becomes interesting.
+gdb allows breakpoints to be tied to conditions like so:</p>
+
+<pre>  (gdb) br Parrot_FixedPMCArray_elements if _self == 0
+  Breakpoint 1 at 0xb7e69830: file ./src/pmc/fixedpmcarray.c, line 163.</pre>
+
+<h4><a name="Pretty&#45;Printing"
+>Pretty&#45;Printing</a></h4>
+
+<p>A very nice feature implemented by Nolan Lum as a Google Code&#45;In project is gdb pretty&#45;printing support for Parrot&#39;s STRING and PMC structs. This makes those structs much more discoverable. Instead of seeing this: $1 = {flags = 512, vtable = 0x8096388, data = 0x80b64a4, _metadata = 0x0} when debugging a PMC or STRING, you&#39;ll see this: &#60;INSERT AWESOME GDB 7.1 OUTPUT HERE&#62; Note that you&#39;ll need gdb 7.1 or later for this to work.</p>
+
+<h4><a name="Links"
+>Links</a></h4>
+
+<p><a href='http://blog.ksplice.com/2011/01/8&#45;gdb&#45;tricks/'><a href="http://blog.ksplice.com/2011/01/8&#45;gdb&#45;tricks/">http://blog.ksplice.com/2011/01/8&#45;gdb&#45;tricks/</a></a></p>
+
+<h3><a name="Reducing_Nondeterminism"
+>Reducing Nondeterminism</a></h3>
+
+<p>When trying to chase down GC bugs, reproducibility is often a major barrier. These tools and techniques reduce randomness in a running interpreter and may make garbage collection bugs (and other memory&#45;sensitive problems) easier to isolate.</p>
+
+<h4><a name="ASLR_and_VDSO"
+>ASLR and VDSO</a></h4>
+
+<p>Disabling address space layout and VDSO can make a program run less randomly. Be careful with this, though. Disabling ASLR also makes certain kinds of attacks easier to perform. Don&#39;t do this on a production system, and be sure to reenable these settings once you&#39;re done debugging.</p>
+
+<pre> sudo sh &#45;c &#34;echo 0 &#62; /proc/sys/kernel/randomize_va_space&#34;
+ sudo sh &#45;c &#34;echo 0 &#62; /proc/sys/vm/vdso_enabled&#34;</pre>
+
+<h4><a name="Hash_Seed_Randomization"
+>Hash Seed Randomization</a></h4>
+
+<p>Parrot&#39;s hashing algorithms use a randomized hash seed. This makes execution of PIR code less vulnerable to an algorithmic complexity attack based on the performance of our hashing algorithm, but also means that iteration through an unordered hash won&#39;t always happen in the same order. If your bug fails intermittently, try passing several different hash seeds to the parrot executable until you find one that triggers the bug:</p>
+
+<pre>  parrot &#45;&#45;hash&#45;seed=0x1234 ./perl6.pbc foo.p6</pre>
+
+<h2><a name="Debugging_Parrot_(internal_tools)"
+>Debugging Parrot (internal tools)</a></h2>
+
+<p>When it crashes, Parrot makes an effort to provide a PIR&#45;level backtrace in addition the typical C&#45;level backtrace. This may not be entirely useful because libparrot gets its debugging information from imcc, but there&#39;s potential for it to help.</p>
+
+<p>TODO: parrot_debugger</p>
+
+<h2><a name="Profiling_(external_tools)"
+>Profiling (external tools)</a></h2>
+
+<p>TODO: valgrind (memgrind, callgrind)</p>
+
+<h2><a name="Profiling_(internal_tools)"
+>Profiling (internal tools)</a></h2>
+
+<p>TODO: profiling runcore</p>
+
+<h2><a name="Misc"
+>Misc</a></h2>
+
+<p>When hacking on the Configure system, it&#39;s helpful to be able to run a single step instead of having to go through the whole process. tools/dev/reconfigure.pl exists for that purpose:</p>
+
+<pre>  perl tools/dev/reconfigure.pl &#45;&#45;step=gen::makefile</pre>
+
+<p>When hacking on Makefile template files such as <em>config/gen/makefiles/root.in</em>, please:</p>
+
+<ul>
+<li>Pay attention to situations where <em>make</em> rules require hard&#45;tabs rather than wordspaces.</li>
+
+<li>Make sure you test your code revisions with both <em>make</em> and, on multi&#45;core machines, <em>make &#45;jN</em> (where <code>N &#62; 1</code>).</li>
+</ul>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2014, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

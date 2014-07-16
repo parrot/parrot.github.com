@@ -1,0 +1,183 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot Submission Instructions</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Home</a> &raquo; Parrot Submission Instructions
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/submissions.pod &#45; Parrot Submission Instructions</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>How to submit bug reports,
+patches and new files to Parrot.</p>
+
+<h1><a name="HOW_TO_SUBMIT_A_BUG_REPORT"
+>HOW TO SUBMIT A BUG REPORT</a></h1>
+
+<p>If you encounter an error while working with Parrot and don&#39;t understand what is causing it,
+create a bug report using the <em>parrotbug</em> utility.
+The simplest way to use it is to run</p>
+
+<pre>    % ./parrotbug</pre>
+
+<p>in the distribution&#39;s root directory, and follow the prompts.</p>
+
+<p>If you know how to fix the problem you encountered, then think about submitting a patch, or (see below) getting commit privileges.</p>
+
+<h1><a name="A_NOTE_ON_RANDOM_FAILURES"
+>A NOTE ON RANDOM FAILURES</a></h1>
+
+<p>If you encounter errors that appear intermittently, it may be difficult or impossible for Parrot developers to diagnose and solve the problem. It is therefore recommended to control the sources of randomness in Parrot in an attempt to eliminate the intermittency of the bug. There are three common sources of randomness that should be considered.</p>
+
+<dl>
+<dt><a name="Pseudo&#45;Random_Number_Generator"
+>Pseudo&#45;Random Number Generator</a></dt>
+Direct use of a PRNG from within Parrot programs will lead to inconsistent results. If possible, isolate the bug from PRNG use, for example, by logging the random values which trigger the error and then hard coding them.
+<dt><a name="Address_Space_Layout_Randomization"
+>Address Space Layout Randomization</a></dt>
+Several operating systems provide a security measure known as address space layout randomization. In bugs involving stray pointers, this can cause corruption in random Parrot subsystems. Temporarily disabling this feature may make this problem consistent and therefore debugable.
+<dt><a name="Hash_Seed"
+>Hash Seed</a></dt>
+Parrot&#39;s hash implementation uses randomization of its seed as a precaution against attacks based on hash collisions. The seed used can be directly controlled using <code>parrot</code>&#39;s <code>&#45;&#45;hash&#45;seed</code> parameter. To determine what seeds are causing the error, Parrot can be rebuilt with <code>DEBUG_HASH_SEED</code> set to <code>1</code>, which will cause <code>parrot</code> to output the hash seed being used on every invocation.</dl>
+
+<h1><a name="HOW_TO_CREATE_A_PATCH"
+>HOW TO CREATE A PATCH</a></h1>
+
+<p>Try to keep your patches specific to a single change, and ensure that your change does not break any tests. Do this by running <code>make test</code>. If there is no test for the fixed bug, please provide one.</p>
+
+<p>In the following examples, <em>parrot</em> contains the Parrot distribution, and <em>workingdir</em> contains <em>parrot</em>. The name <em>workingdir</em> is just a placeholder for whatever the distribution&#39;s parent directory is called on your machine.</p>
+
+<pre>    workingdir
+        |
+        +&#45;&#45;&#62; parrot
+                |
+                +&#45;&#45;&#62; LICENSE
+                |
+                +&#45;&#45;&#62; src
+                |
+                +&#45;&#45;&#62; tools
+                |
+                +&#45;&#45;&#62; ...</pre>
+
+<dl>
+<dt><a name="git"
+><b><code>git</b></code></a></dt>
+If you are working with a git repository of parrot then please submit your patch as a pull request on github. You can find instructions at <a href='http://help.github.com/send&#45;pull&#45;requests/'><a href="http://help.github.com/send&#45;pull&#45;requests/">http://help.github.com/send&#45;pull&#45;requests/</a></a>
+<dt><a name="Single_diff"
+>Single <b><code>diff</b></code></a></dt>
+If you are working from a released distribution of Parrot and the change you wish to make affects only one or two files, then you can supply a <code>diff</code> for each file. The <code>diff</code> should be created in <em>parrot</em>. Please be sure to create a unified diff, with <code>diff &#45;u</code>.
+<pre>    cd parrot
+    diff &#45;u docs/submissions.pod docs/submissions.new &#62; submissions.patch</pre>
+Win32 users will probably need to specify <code>&#45;ub</code>.
+<dt><a name="Recursive_diff"
+>Recursive <b><code>diff</b></code></a></dt>
+If the change is more wide&#45;ranging, then create an identical copy of <em>parrot</em> in <em>workingdir</em> and rename it <em>parrot.new</em>. Modify <em>parrot.new</em> and run a recursive <code>diff</code> on the two directories to create your patch. The <code>diff</code> should be created in <em>workingdir</em>.
+<pre>    cd workingdir
+    diff &#45;ur &#45;&#45;exclude=&#39;.git&#39; parrot parrot.new &#62; docs.patch</pre>
+Mac OS X users should also specify <code>&#45;&#45;exclude=.DS_Store</code>.
+<dt><a name="CREDITS"
+><b><code>CREDITS</b></code></a></dt>
+Each and every patch is an important contribution to Parrot and it&#39;s important that these efforts are recognized. To that end, the <em>CREDITS</em> file contains an informal list of contributors and their contributions made to Parrot. Patch submitters are encouraged to include a new or updated entry for themselves in <em>CREDITS</em> as part of their patch.The format for entries in <em>CREDITS</em> is defined at the top of the file.</dl>
+
+<h1><a name="HOW_TO_SUBMIT_A_PATCH"
+>HOW TO SUBMIT A PATCH</a></h1>
+
+<p>The preferrred method to submit matches to Parrot is as pull requests via github. Please follow the instructions at <a href='http://help.github.com/send&#45;pull&#45;requests/'><a href="http://help.github.com/send&#45;pull&#45;requests/">http://help.github.com/send&#45;pull&#45;requests/</a></a>.</p>
+
+<h1><a name="APPLYING_PATCHES"
+>APPLYING PATCHES</a></h1>
+
+<p>You may wish to apply a patch submitted by someone else before the patch is incorporated into git</p>
+
+<p>For single <code>diff</code> patches or <code>git</code> patches, copy the patch file to <em>parrot</em>, and run:</p>
+
+<pre>    cd parrot
+    git apply some.patch</pre>
+
+<p>For recursive <code>diff</code> patches, copy the patch file to <em>workingdir</em>, and run:</p>
+
+<pre>    cd workingdir
+    git apply some.patch</pre>
+
+<p>In order to be on the safe side run &#39;make test&#39; before actually committing the changes.</p>
+
+<h2><a name="Configuration_of_files_to_ignore"
+>Configuration of files to ignore</a></h2>
+
+<p>Sometimes new files will be created in the configuration and build process of Parrot. These files should not show up when checking the distribution with</p>
+
+<pre>    git status</pre>
+
+<p>or</p>
+
+<pre>    perl tools/dev/manicheck.pl</pre>
+
+<p>In order to keep the two different checks synchronized, the MANIFEST and MANIFEST.SKIP file should be regenerated with:</p>
+
+<pre>    perl tools/dev/mk_manifest_and_skip.pl</pre>
+
+<h1><a name="WHAT_HAPPENS_NEXT?"
+>WHAT HAPPENS NEXT?</a></h1>
+
+<p>If you created a new issue, you will be taken to the issue page and can check on the progress of discussion there. The issue number should be used in all out&#45;of&#45;band correspondence concerning the issue (e.g., in email to the <code>parrot&#45;dev</code> mailing list). Otherwise, everyone on the parrot project can see the issue and can comment on it.</p>
+
+<p>A developer with git commit privileges can merge your changes into the main parrot repository, once it is clear that this is the right thing to do. However your pull request may not be processed right away if the changes are large or complex, as we need time for peer review.</p>
+
+<p>A list of open issues can be found here: <a href='https://github.com/parrot/parrot/issues?state=open'>https://github.com/parrot/parrot/issues?state=open</a></p>
+
+<h1><a name="PATCHES_FOR_THE_PARROT_WEBSITE"
+>PATCHES FOR THE PARROT WEBSITE</a></h1>
+
+<p>The <a href='http://www.parrot.org'><a href="http://www.parrot.org">http://www.parrot.org</a></a> website is hosted in a Drupal CMS. Submit changes through the usual ticket interface in Trac.</p>
+
+<h1><a name="GETTING_COMMIT_PRIVILEGES"
+>GETTING COMMIT PRIVILEGES</a></h1>
+
+<p>If you are interested in getting commit privileges to Parrot, here is the procedure:</p>
+
+<ol>
+<li>Obtain a github account at <a href='http://github.com'><a href="http://github.com">http://github.com</a></a></li>
+
+<li>Submit several high quality patches (and have them committed) via the process described in this document. This process may take weeks or months.</li>
+
+<li>Submit a Parrot Contributor License Agreement; this document signifies that you have the authority to license your work to Parrot Foundation for inclusion in their projects. You may need to discuss this with your employer if you contribute to Parrot on work time or with work resources, or depending on your employment agreement.</li>
+
+<p><a href='http://www.parrot.org/files/parrot_cla.pdf'><a href="http://www.parrot.org/files/parrot_cla.pdf">http://www.parrot.org/files/parrot_cla.pdf</a></a></p>
+
+<li>Request commit access via the <code>parrot&#45;dev</code> mailing list, or via IRC (#parrot on irc.parrot.org). The existing committers will discuss your request in the next couple of weeks.</li>
+
+<p>If approved, a metacommitter will update the permissions to allow you to commit to Parrot; see <code>RESPONSIBLE_PARTIES</code> for the current list. Welcome aboard!</p>
+</ol>
+
+<p>Thanks for your help!</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2014, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>
