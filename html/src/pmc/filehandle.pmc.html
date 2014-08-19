@@ -94,14 +94,14 @@ Test if the filehandle is closed.
 Read a line from the filehandle and return it in a string.
 <dt><a name="METHOD_readall(STRING_*name);"
 >METHOD readall(STRING *name);</a></dt>
-Read the entire contents of a file named <i>name</i> into a Parrot string. On a filehandle object that isn&#39;t opened yet, the path to a file can be passed to <code>readall</code> and it will open a filehandle on that file, read in the contents, and close the filehandle.
+Read the contents of a file named <i>name</i> into a Parrot string. On a filehandle object that isn&#39;t opened yet, the path to a file can be passed to <code>readall</code> and it will open a filehandle on that file, read in the contents, and close the filehandle.
 <pre>  .local pmc pio
   pio = new &#39;FileHandle&#39;
   $S0 = pio.&#39;readall&#39;(&#39;the_file&#39;)</pre>
-If the filehandle is already open, then no file path should be passed. The <code>readall</code> method will read the contents of the file, and will not close the filehandle when finished.
+If the filehandle is already open, then no file path should be passed. The <code>readall</code> method will read the rest of the contents of the file, and will not close the filehandle when finished.
 <pre>  pio = open &#39;the_file&#39;, &#39;r&#39;
   $S0 = pio.&#39;readall&#39;()</pre>
-
+To ensure readall semantics <code>seek</code> to position 0 first.
 <dt><a name="METHOD_flush()"
 ><b><code>METHOD flush()</b></code></a></dt>
 Flushes the filehandle.

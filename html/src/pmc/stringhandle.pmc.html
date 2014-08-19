@@ -76,9 +76,10 @@ but is stored for mocking.
 Check if the StringHandle is open.
 <dt><a name="METHOD_readall(STRING_*name);"
 >METHOD readall(STRING *name);</a></dt>
-Read the entire contents of the StringHandle into a Parrot string.
+Read the rest of the contents of the StringHandle into a Parrot string.
 On a StringHandle object that isn&#39;t opened yet,
-returns an empty string.
+returns an empty string.To ensure readall semantics seek to position 0,
+which needs to be done in this case by checking <code>is_closed()</code> and reopening the StringHandle.
 <dt><a name="METHOD_flush()"
 ><b><code>METHOD flush()</b></code></a></dt>
 Clear the StringHandle by resetting it to a null value.
