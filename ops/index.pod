@@ -1,0 +1,2552 @@
+=head1 NAME
+
+docs/ops/index.pod - Parrot opcodes summary
+
+=head1 DESCRIPTION
+
+Automatically generated opcodes index
+
+=head2 Parrot Opcodes by Category
+
+=over 4
+
+=item bit.ops - Bitwise Opcodes
+
+C<band>, C<bor>, C<bxor>, C<lsr>, C<shl>, C<shr>
+
+=item cmp.ops - Comparison Opcodes
+
+C<and>, C<cmp>, C<cmp_num>, C<cmp_pmc>, C<cmp_str>, C<eq>, C<eq_addr>, C<eq_num>, C<eq_str>, C<ge>, C<ge_num>, C<ge_str>, C<gt>, C<gt_num>, C<gt_str>, C<if_null>, C<iseq>, C<isfalse>, C<isge>, C<isgt>, C<isle>, C<islt>, C<isne>, C<isntsame>, C<isnull>, C<issame>, C<istrue>, C<le>, C<le_num>, C<le_str>, C<lt>, C<lt_num>, C<lt_str>, C<ne>, C<ne_addr>, C<ne_num>, C<ne_str>, C<not>, C<or>, C<unless_null>, C<xor>
+
+=item core.ops - Core Opcodes
+
+C<addhandler>, C<annotations>, C<bounds>, C<branch>, C<capture_lex>, C<check_events>, C<check_events__>, C<collect>, C<collectoff>, C<collecton>, C<compreg>, C<count_eh>, C<debug>, C<die>, C<dlfunc>, C<dlvar>, C<end>, C<errorsoff>, C<errorson>, C<exit>, C<finalize>, C<gc_debug>, C<get_addr>, C<get_params>, C<get_results>, C<getinterp>, C<if>, C<interpinfo>, C<invoke>, C<invokecc>, C<jump>, C<load_bytecode>, C<load_language>, C<loadlib>, C<local_branch>, C<local_return>, C<needs_destroy>, C<new_callback>, C<newclosure>, C<noop>, C<peek_exception>, C<pop_eh>, C<pop_upto_eh>, C<profile>, C<push_eh>, C<result_info>, C<rethrow>, C<returncc>, C<runinterp>, C<schedule>, C<schedule_local>, C<set_addr>, C<set_args>, C<set_result_info>, C<set_returns>, C<set_runcore>, C<sweep>, C<sweepoff>, C<sweepon>, C<tailcall>, C<throw>, C<trace>, C<unless>, C<warningsoff>, C<warningson>, C<yield>
+
+=item experimental.ops - Experimental Opcodes
+
+C<disable_preemption>, C<enable_preemption>, C<fetch>, C<flatten_array_into>, C<flatten_hash_into>, C<get_context>, C<get_id>, C<get_label>, C<invokecc>, C<new>, C<new_call_context>, C<pass>, C<receive>, C<root_new>, C<set_label>, C<slurp_array_from>, C<terminate>, C<trap>, C<vivify>, C<wait>
+
+=item io.ops - I/O Opcodes
+
+C<getstderr>, C<getstdin>, C<getstdout>, C<print>, C<say>
+
+=item math.ops - Mathematical Opcodes
+
+C<abs>, C<add>, C<ceil>, C<dec>, C<div>, C<fdiv>, C<floor>, C<inc>, C<is_inf_or_nan>, C<mod>, C<mul>, C<neg>, C<sqrt>, C<sub>
+
+=item object.ops - Class and Object Opcodes
+
+C<addattribute>, C<addmethod>, C<addparent>, C<addrole>, C<callmethod>, C<callmethodcc>, C<can>, C<class>, C<does>, C<get_class>, C<getattribute>, C<inspect>, C<isa>, C<newclass>, C<removeattribute>, C<removeparent>, C<setattribute>, C<subclass>, C<tailcallmethod>
+
+=item pmc.ops - PMC Opcodes
+
+C<add_multi>, C<box>, C<defined>, C<delete>, C<delprop>, C<elements>, C<exists>, C<find_method>, C<find_multi>, C<freeze>, C<get_repr>, C<getprop>, C<iter>, C<morph>, C<new>, C<pop>, C<prophash>, C<push>, C<register>, C<root_new>, C<setprop>, C<shift>, C<splice>, C<thaw>, C<typeof>, C<unregister>, C<unshift>
+
+=item set.ops - Assignment Opcodes
+
+C<assign>, C<clone>, C<copy>, C<deref>, C<null>, C<set>, C<setref>
+
+=item string.ops - String Opcodes
+
+C<bytelength>, C<chopn>, C<chr>, C<compose>, C<concat>, C<downcase>, C<encoding>, C<encodingname>, C<escape>, C<find_cclass>, C<find_codepoint>, C<find_encoding>, C<find_not_cclass>, C<index>, C<is_cclass>, C<join>, C<length>, C<new>, C<ord>, C<pin>, C<repeat>, C<replace>, C<rindex>, C<split>, C<sprintf>, C<stringinfo>, C<substr>, C<titlecase>, C<trans_encoding>, C<unpin>, C<upcase>
+
+=item sys.ops - System Interaction Opcodes
+
+C<err>, C<sleep>, C<spawnw>, C<time>
+
+=item var.ops - Variable Opcodes
+
+C<find_caller_lex>, C<find_dynamic_lex>, C<find_lex>, C<find_name>, C<find_sub_not_null>, C<get_global>, C<get_hll_global>, C<get_hll_namespace>, C<get_namespace>, C<get_root_global>, C<get_root_namespace>, C<set_global>, C<set_hll_global>, C<set_root_global>, C<store_dynamic_lex>, C<store_lex>
+
+=back
+
+=head2 Alphabetical Listing of Parrot Opcodes
+
+=over 8
+
+=item B<abs>(inout INT)
+
+
+=item B<abs>(inout NUM)
+
+
+=item B<abs>(invar PMC)
+
+Set $1 to its absolute value.
+
+=item B<abs>(out INT, in INT)
+
+
+=item B<abs>(out NUM, in NUM)
+
+
+=item B<abs>(out PMC, invar PMC)
+
+Set $1 to absolute value of $2.
+
+
+=item B<add>(inout INT, in INT)
+
+
+=item B<add>(inout NUM, in NUM)
+
+
+=item B<add>(invar PMC, invar PMC)
+
+
+=item B<add>(invar PMC, in INT)
+
+
+=item B<add>(invar PMC, in NUM)
+
+Increase $1 by the amount in $2.
+
+=item B<add>(out INT, in INT, in INT)
+
+
+=item B<add>(out NUM, in NUM, in NUM)
+
+
+=item B<add>(invar PMC, invar PMC, invar PMC)
+
+
+=item B<add>(invar PMC, invar PMC, in INT)
+
+
+=item B<add>(invar PMC, invar PMC, in NUM)
+
+Set $1 to the sum of $2 and $3.
+
+
+=item B<add_multi>(in STR, in STR, invar PMC)
+
+Register method $3 as the MMD method for the sub named $1 with signature $2.
+
+
+=item B<addattribute>(invar PMC, in STR)
+
+Add the attribute named $2 to the class $1.
+
+
+=item B<addhandler>(invar PMC)
+
+Add an event or exception handler to the concurrency scheduler. Details about
+the handler are stored within the handler PMC.
+
+
+=item B<addmethod>(invar PMC, in STR, invar PMC)
+
+Adds $3 as a method named $2 to $1.
+
+
+=item B<addparent>(invar PMC, invar PMC)
+
+Add class $2 to the list of parent classes for $1.
+
+
+=item B<addrole>(invar PMC, invar PMC)
+
+Compose the role $2 into $1.
+
+
+=item B<and>(out INT, in INT, in INT)
+
+
+=item B<and>(invar PMC, invar PMC, invar PMC)
+
+Short-circuiting logical and.  Returns $2 if it's false, else returns $3.
+
+
+=item B<annotations>(out PMC)
+
+Gets all bytecode annotations in effect at the current point, in a Hash.
+If there are none, returns an empty Hash.
+
+
+=item B<annotations>(out PMC, in STR)
+
+Gets the bytecode annotation with the given name that is in effect at the
+current point. Returns PMCNULL if there is none.
+
+
+=item B<assign>(invar PMC, in INT)
+
+
+=item B<assign>(invar PMC, in NUM)
+
+Assign a new value $2, to PMC $1. Same as the equivalent B<set> opcodes.
+
+=item B<assign>(invar PMC, in STR)
+
+
+=item B<assign>(invar PMC, invar PMC)
+
+Assign a new value $2, to PMC $1 by copying the value.
+Usually calls the set_pmc vtable method.
+
+=item B<assign>(out STR, in STR)
+
+Assign a new value to a string by reusing the string header.
+
+=item B<band>(inout INT, in INT)
+
+Set the bits of $1 according to the B<and> of the corresponding bits
+from $1 and $2.
+
+=item B<band>(out INT, in INT, in INT)
+
+Set the bits of $1 according to the B<and> of the corresponding bits
+from $2 and $3.
+
+
+=item B<bor>(inout INT, in INT)
+
+Set the bits of $1 according to the B<or> of the corresponding bits
+from $1 and $2.
+
+=item B<bor>(out INT, in INT, in INT)
+
+Set the bits of $1 according to the B<or> of the corresponding bits
+from $2 and $3.
+
+
+=item B<bounds>(in INT)
+
+If $1 is zero, turn off byte code bounds checking. Otherwise turn it on.
+
+
+=item B<box>(out PMC, in INT)
+
+
+=item B<box>(out PMC, in NUM)
+
+
+=item B<box>(out PMC, in STR)
+
+Create a HLL-mapped PMC containing the provided primitive.
+
+
+=item B<branch>(in LABEL)
+
+Branch forward or backward by the amount in $1.
+
+
+=item B<bxor>(inout INT, in INT)
+
+Set the bits of $1 according to the B<xor> of the corresponding bits
+from $1 and $2.
+
+=item B<bxor>(out INT, in INT, in INT)
+
+Set the bits of $1 according to the B<xor> of the corresponding bits
+from $2 and $3.
+
+
+=item B<bytelength>(out INT, in STR)
+
+Calculate the length (in bytes) of string $2 and return as integer $1.
+If $2 is NULL or zero length, zero is returned.
+
+
+=item B<callmethod>(invar PMC, in STR, invar PMC)
+
+
+=item B<callmethod>(invar PMC, invar PMC, invar PMC)
+
+Like above, but use continuation $3 instead of creating a new continuation.
+
+
+=item B<callmethodcc>(invar PMC, in STR)
+
+Call method $2 with invocant $1 and generate a new return continuation.
+The invocant ($1) is used for method lookup. The object is passed as
+the first argument in B<set_args>.
+Throws a Method_Not_Found_Exception for a non-existent method.
+
+=item B<callmethodcc>(invar PMC, invar PMC)
+
+Like above but use the Sub object $2 as method.
+
+=item B<can>(out INT, invar PMC, in STR)
+
+Sets result $1 to the result of the "can" vtable function for PMC $2,
+given method $3.
+
+
+=item B<capture_lex>(invar PMC)
+
+Capture the current lexical state of the inner subroutine PMC.
+
+=item B<ceil>(inout NUM)
+
+Set $1 to the smallest integral value greater than or equal to $1.
+
+=item B<ceil>(out INT, in NUM)
+
+
+=item B<ceil>(out NUM, in NUM)
+
+Set $1 to the smallest integral value greater than or equal to $2.
+
+
+=item B<check_events>()
+
+Check the event queue and run event handlers if there are unhandled events.
+Note: This opcode is mainly for testing. It should not be necessary to ever
+use it explicitly.
+
+=item B<check_events__>()
+
+Check the event queue and run event handlers if there are unhandled events.
+Note: Do B<not> use this opcode. It is for internal use only.
+
+=item B<chopn>(out STR, in STR, in INT)
+
+Remove n characters specified by integer $3 from the tail of string $2,
+and returns the characters not chopped in string $1.
+If $3 is negative, cut the string after -$3 characters.
+
+
+=item B<chr>(out STR, in INT)
+
+The character specified by codepoint integer $2 is returned in string $1.
+For characters > 0xff an utf8 encoded string is returned,
+for characters between 0x7f and 0xff a latin1 encoded string is returned,
+for characters below 0x7f an ascii encoded string.
+
+
+=item B<class>(out PMC, invar PMC)
+
+Get the class PMC for the object in $2 and put it in $1.
+
+
+=item B<clone>(out STR, in STR)
+
+Effectively the same as set $1, $2, except that if $2 is a null STRING, $1 gets
+a new empty string instead.
+
+
+=item B<clone>(out PMC, invar PMC)
+
+Makes a copy of the PMC in $2 and puts it in $1.
+
+
+=item B<clone>(out PMC, invar PMC, in PMC)
+
+Makes a copy of the PMC in $2 and puts it in $1, using the arguments in $3.
+
+
+=item B<cmp>(out INT, in INT, in INT)
+
+
+=item B<cmp>(out INT, in NUM, in NUM)
+
+
+=item B<cmp>(out INT, in STR, in STR)
+
+
+=item B<cmp>(out INT, invar PMC, invar PMC)
+
+
+=item B<cmp>(out INT, invar PMC, in INT)
+
+
+=item B<cmp>(out INT, invar PMC, in NUM)
+
+
+=item B<cmp>(out INT, invar PMC, in STR)
+
+-
+
+=item B<cmp_num>(out INT, invar PMC, invar PMC)
+
+Sets $1 to -1 if $2 < $3, +1 if $2 > $3, and 0 otherwise.
+
+
+=item B<cmp_pmc>(out PMC, invar PMC, invar PMC)
+
+Does the same thing as the other cmp_* variants, but puts a PMC in $1.  This is
+useful for avoiding the semipredicate problem in HLLs where two aggregate PMCs
+are not always comparable.
+
+
+=item B<cmp_str>(out INT, invar PMC, invar PMC)
+
+-
+
+=item B<collect>()
+
+Trigger a garbage collection.
+
+
+=item B<collectoff>()
+
+Disable GC runs (nestable).
+
+
+=item B<collecton>()
+
+Re-enable GC.
+
+
+=item B<compose>(out STR, in STR)
+
+Compose (normalize) a string.
+
+
+=item B<compreg>(out PMC, in STR)
+
+Get the compiler object for source type $2.  The returned compiler
+object should provide a C<compile> method for translating code
+in the source type.  However, some Parrot compilers such as
+C<PIR> and C<PASM> currently return a sub that is to be
+invoked directly on the source.
+
+=item B<compreg>(in STR, invar PMC)
+
+Register $2 as the compiler object for source type $1.
+
+=item B<concat>(invar PMC, in STR)
+
+
+=item B<concat>(invar PMC, invar PMC)
+
+Modify string $1 in place, appending string $2.
+
+=item B<concat>(out STR, in STR, in STR)
+
+
+=item B<concat>(invar PMC, invar PMC, in STR)
+
+
+=item B<concat>(invar PMC, invar PMC, invar PMC)
+
+Append string $3 to string $2 and place the result into string $1.
+
+
+=item B<copy>(inout PMC, invar PMC)
+
+Morphs the PMC in $1 to the type of the PMC in $2, then assigns $2 to $1.
+
+
+=item B<count_eh>(out INT)
+
+Get a count of currently active exception handlers on the stack.
+
+=item B<debug>(in INT)
+
+If $1 is zero, turn off debugging. Otherwise turn debug flag $1 on.
+
+
+=item B<dec>(inout INT)
+
+
+=item B<dec>(inout NUM)
+
+
+=item B<dec>(invar PMC)
+
+Decrease $1 by one.
+
+
+=item B<defined>(out INT, invar PMC)
+
+
+=item B<defined>(out INT, invar PMC, in INTKEY)
+
+
+=item B<defined>(out INT, invar PMC, in KEY)
+
+Test PMC for definedness.
+
+=item B<delete>(invar PMC, in KEY)
+
+
+=item B<delete>(invar PMC, in INTKEY)
+
+Delete the specified entry $2 from aggregate $1.
+
+
+=item B<delprop>(invar PMC, in STR)
+
+Delete property $2 from PMC $1.
+
+
+=item B<deref>(out PMC, invar PMC)
+
+Not strictly an assignment operation: Put into $1 the PMC that the
+reference PMC $2 refers to.
+
+
+=item B<die>(in STR)
+
+
+=item B<die>(in PMC)
+
+Die with message $1
+
+=item B<die>(in INT, in INT)
+
+Die with severity $1 and error $2. If severity is .EXCEPT_DOOMED,
+call _exit($2). The latter isn't catchable.
+
+=item B<disable_preemption>()
+
+Disables preemption so the current task can run uninterrupted through a critical section.
+
+
+=item B<div>(inout INT, in INT)
+
+
+=item B<div>(inout NUM, in NUM)
+
+
+=item B<div>(invar PMC, invar PMC)
+
+
+=item B<div>(invar PMC, in INT)
+
+
+=item B<div>(invar PMC, in NUM)
+
+Divide $1 by $2.
+
+=item B<div>(out INT, in INT, in INT)
+
+
+=item B<div>(out NUM, in NUM, in NUM)
+
+
+=item B<div>(invar PMC, invar PMC, invar PMC)
+
+
+=item B<div>(invar PMC, invar PMC, in INT)
+
+
+=item B<div>(invar PMC, invar PMC, in NUM)
+
+Set $1 to the quotient of $2 divided by $3. In the case of INTVAL division, the
+result is truncated (NOT rounded or floored).
+If the denominator is zero, a 'Divide by zero' exception is thrown.
+
+
+=item B<dlfunc>(out PMC, invar PMC, in STR, in STR)
+
+
+=item B<dlfunc>(out PMC, invar PMC, in STR, invar PMC)
+
+Look up symbol $3 in library $2 with signature $4, and put the
+corresponding sub object in $1. Note that you need the signature so we
+can build or find an appropriate thunking function.
+
+=item B<dlvar>(out PMC, invar PMC, in STR)
+
+Look up symbol $3 in library $2. We assume that this is actually a
+variable address rather than a function address, and build an
+UnManagedStruct PMC and stick the address into its data pointer.
+
+=item B<does>(out INT, invar PMC, in STR)
+
+Sets result $1 to the result of the "does" vtable function for PMC $2,
+given the role of name $3.
+
+
+=item B<does>(out INT, invar PMC, in PMC)
+
+Sets result $1 to the result of the "does" vtable function for PMC $2,
+given the role $3.
+
+
+=item B<downcase>(out STR, in STR)
+
+Downcase $2 and put the result in $1
+
+
+=item B<elements>(out INT, invar PMC)
+
+Returns the number of items in aggregate $2
+
+
+=item B<enable_preemption>()
+
+Enables preemption. To be called after the current task has finished executing a critical section.
+
+
+=item B<encoding>(out INT, in STR)
+
+Return the encoding number $1 of string $2.
+
+=item B<encodingname>(out STR, in INT)
+
+Return the name $1 of encoding number $2.
+If encoding number $2 is not found, name $1 is set to null.
+
+=item B<end>()
+
+Halts the interpreter. See also B<exit>.
+
+
+=item B<eq>(in INT, in INT, inconst LABEL)
+
+
+=item B<eq>(in NUM, in NUM, inconst LABEL)
+
+
+=item B<eq>(in STR, in STR, inconst LABEL)
+
+
+=item B<eq>(invar PMC, invar PMC, inconst LABEL)
+
+
+=item B<eq>(invar PMC, in INT, inconst LABEL)
+
+
+=item B<eq>(invar PMC, in NUM, inconst LABEL)
+
+
+=item B<eq>(invar PMC, in STR, inconst LABEL)
+
+-
+
+=item B<eq_addr>(in STR, in STR, inconst LABEL)
+
+
+=item B<eq_addr>(invar PMC, invar PMC, inconst LABEL)
+
+Branch if $1 is equal to $2. For PMCs this does a generic comparison,
+whatever that is for the involved PMCs. Mixed PMC number/string
+operands do a numeric or string comparison respectively.
+B<eq_str> and B<eq_num> enforce string or number comparisons.
+B<eq_addr> compares the address of the objects or strings.
+
+
+=item B<eq_num>(invar PMC, invar PMC, inconst LABEL)
+
+-
+
+=item B<eq_str>(invar PMC, invar PMC, inconst LABEL)
+
+-
+
+=item B<err>(out INT)
+
+Store the system error code in $1.
+
+=item B<err>(out STR)
+
+Store the system error message in $1.
+
+=item B<err>(out STR, in INT)
+
+Get the system error message for the system error code $2
+and store it in $1.
+
+
+=item B<errorsoff>(in INT)
+
+Turns off errors categories.  Categories already turned off will
+stay off.  See the documentation for B<errorson> for category
+numbers.
+
+
+=item B<errorson>(in INT)
+
+Turns on error categories. Categories already turned on will stay on.  To
+access these from PASM, include F<errors.pasm>.  The current categories are:
+
+=item B<escape>(out STR, invar STR)
+
+Escape all non-ascii chars to backslashed escape sequences. A
+string with charset I<ascii> is created as result.
+
+=item B<exists>(out INT, invar PMC, in INTKEY)
+
+
+=item B<exists>(out INT, invar PMC, in KEY)
+
+Tests whether KEY or INTKEY exists in the aggregate PMC.
+Places the answer in INT.
+
+
+=item B<exit>(in INT)
+
+Exit the interpreter with exit_status $1. If you want to communicate an
+extended exit status, create an exception with severity B<EXCEPT_exit>
+and throw it.
+
+=item B<fdiv>(inout INT, in INT)
+
+
+=item B<fdiv>(inout NUM, in NUM)
+
+
+=item B<fdiv>(invar PMC, invar PMC)
+
+
+=item B<fdiv>(invar PMC, in INT)
+
+
+=item B<fdiv>(invar PMC, in NUM)
+
+Floor divide $1 by $2.
+
+=item B<fdiv>(out INT, in INT, in INT)
+
+
+=item B<fdiv>(out NUM, in NUM, in NUM)
+
+
+=item B<fdiv>(invar PMC, invar PMC, invar PMC)
+
+
+=item B<fdiv>(invar PMC, invar PMC, in INT)
+
+
+=item B<fdiv>(invar PMC, invar PMC, in NUM)
+
+Set $1 to the quotient of $2 divided by $3. The result is the floor()
+of the division i.e. the next whole integer towards -inf.
+If the denominator is zero, a 'Divide by zero' exception is thrown.
+
+
+=item B<fetch>(out PMC, in PMC, in PMC, in PMC)
+
+Fetches a value from $2, keyed by $3 into $1.  If the resulting PMC is PMCNULL,
+uses the type in $4 to create and return a new PMC.
+
+=item B<fetch>(out PMC, in PMC, in INT, in PMC)
+
+
+=item B<fetch>(out PMC, in PMC, in STR, in PMC)
+
+
+
+=item B<finalize>(in PMC)
+
+Finalize exception handling, freeing any information needed to resume
+the handled exception, like inner runloops.
+$1 is the Exception handled or the ExceptionHandler that is handling it.
+
+=item B<find_caller_lex>(out PMC, in STR)
+
+Like find_dynamic_lex above, but also searches caller's
+outer scopes in addition to the lexpads.
+
+
+=item B<find_cclass>(out INT, in INT, in STR, in INT, in INT)
+
+Set $1 to the offset of the first codepoint matching
+the character class(es) given by $2 in string $3, starting
+at offset $4 for up to $5 codepoints.  If no matching
+character is found, set $1 to (offset + count).
+
+
+=item B<find_codepoint>(out INT, in STR)
+
+Set $1 to the codepoint with the name given in $2, or -1 if there is none.
+With ICU many more name aliases are found, but without currently only
+for control characters.
+
+
+=item B<find_dynamic_lex>(out PMC, in STR)
+
+Search through caller lexpads for a lexical variable named $2
+and store it in $1.  Return a Null PMC if the lexical variable
+is not found.  (To search the current lexpad, use C<find_lex>
+above.)
+
+
+=item B<find_encoding>(out INT, in STR)
+
+Return the encoding number of the encoding named $2. If the encoding doesn't
+exist, throw an exception.
+
+=item B<find_lex>(out PMC, in STR)
+
+Find the lexical variable named $2 and store it in $1. Return a
+Null PMC if the variable is not found. Requires that the lexical
+be in a PMC register.
+
+=item B<find_lex>(out STR, in STR)
+
+Find the lexical variable named $2 and store it in $1. Requires
+that the lexical be in a STR register.
+
+=item B<find_lex>(out INT, in STR)
+
+Find the lexical variable named $2 and store it in $1. Requires
+that the lexical be in a INT register.
+
+=item B<find_lex>(out NUM, in STR)
+
+Find the lexical variable named $2 and store it in $1. Requires
+that the lexical be in a NUM register.
+
+
+=item B<find_method>(out PMC, invar PMC, in STR)
+
+Looks up method $3 in $2's vtable, placing the corresponding method
+PMC in $1.
+
+
+=item B<find_multi>(out PMC, in STR, in STR)
+
+Set $1 to the sub that would be called for sub named $2 with signature $3.
+
+
+=item B<find_name>(out PMC, in STR)
+
+Find the name C<$2> in lexicals, then the current namespace, then the HLL
+root namespace, and finally Parrot builtins. These are checked in order
+and the first match is returned in C<$1>. If no matches are found,
+either throws an exception or sets C<$1> to PMCNULL, depending on current
+errors settings. See B<errorson>.
+
+
+=item B<find_not_cclass>(out INT, in INT, in STR, in INT, in INT)
+
+Set $1 to the offset of the first codepoint not matching
+the character class(es) given by $2 in string $3, starting
+at offset $4 for up to $5 codepoints.  If the substring
+consists entirely of matching characters, set $1 to (offset + count).
+
+
+=item B<find_sub_not_null>(out PMC, in STR)
+
+Do the same thing as C<find_name>, but throw an exception if the name isn't
+found.
+
+
+=item B<flatten_array_into>(invar PMC, invar PMC, in INT)
+
+
+-
+
+=item B<flatten_hash_into>(invar PMC, invar PMC, in INT)
+
+
+-
+
+=item B<floor>(inout NUM)
+
+Set $1 to the largest integral value less than or equal to $1.
+
+=item B<floor>(out INT, in NUM)
+
+
+=item B<floor>(out NUM, in NUM)
+
+Set $1 to the largest integral value less than or equal to $2.
+
+
+=item B<freeze>(out STR, invar PMC)
+
+Set $1 to the frozen image of $2.
+
+=item B<gc_debug>(in INT)
+
+If $1 is zero, turn off GC_DEBUG. Otherwise turn it on.
+
+
+=item B<ge>(invar PMC, invar PMC, inconst LABEL)
+
+
+=item B<ge>(invar PMC, in INT, inconst LABEL)
+
+
+=item B<ge>(invar PMC, in NUM, inconst LABEL)
+
+
+=item B<ge>(invar PMC, in STR, inconst LABEL)
+
+-
+
+=item B<ge_num>(invar PMC, invar PMC, inconst LABEL)
+
+Branch if $1 is greater than or equal to $2.
+
+
+=item B<ge_str>(invar PMC, invar PMC, inconst LABEL)
+
+-
+
+=item B<get_addr>(out INT, invar PMC)
+
+Sets $1 to the absolute address of the Sub PMC $2.
+
+
+=item B<get_class>(out PMC, in STR)
+
+
+=item B<get_class>(out PMC, in PMC)
+
+Find the PMC for a class, by string name, key or namespace.  This op does
+C<not> find the class of an instance of an object.  use C<typeof> for that.
+
+
+=item B<get_context>(out PMC)
+
+
+-
+
+=item B<get_global>(out PMC, in STR)
+
+Set $1 to the global named $2 in current namespace.  If the global doesn't
+exist, $1 is set to null.
+
+=item B<get_global>(out PMC, in PMC, in STR)
+
+Set $1 to the global named $3 in the namespace denoted by the key constant
+$2, relative to the current namespace.  If the namespace or the global
+doesn't exist, $1 is set to null.
+
+
+=item B<get_hll_global>(out PMC, in STR)
+
+Set $1 to the global named $2 in the current HLL root namespace.  If the
+global doesn't exist, $1 is set to null.
+
+=item B<get_hll_global>(out PMC, in PMC, in STR)
+
+Set $1 to the global named $3 in the namespace denoted by the key constant
+$2, relative to the current HLL root namespace.  If the namespace or the
+global doesn't exist, $1 is set to null.
+
+
+=item B<get_hll_namespace>(out PMC)
+
+Set $1 to the current HLL root namespace.
+
+=item B<get_hll_namespace>(out PMC, in PMC)
+
+Set $1 to the namespace denoted by the key constant $2, relative to the
+current HLL root namespace.  If the namespace doesn't exist, $1 is set to
+null.
+
+
+=item B<get_id>(out INT, in PMC)
+
+Gets a unique(*) ID for a PMC.
+This may or may not be based on the pointer of the PMC, but almost certainly is
+not the raw pointer value.
+(*) Uniqueness of these IDs is only guarranteed within code to which this PMC is
+currently visible (ie: not across processes, or share-nothing threads, and not
+beyond the lifetime of the PMC).
+
+
+=item B<get_label>(out INT, invar PMC)
+
+Gets the opcode_t* label value from the given PMC. This is basically only
+useful for PMCs such as Sub, Continuation, ExceptionHandler and derivatives
+
+
+=item B<get_namespace>(out PMC)
+
+Set $1 to the current namespace.
+
+=item B<get_namespace>(out PMC, in PMC)
+
+Set $1 to the namespace denoted by the key constant $2, relative to the
+current namespace.  If the namespace doesn't exist, $1 is set to null.
+
+
+=item B<get_params>(inconst PMC /* , ... */)
+
+Define function parameters for this subroutine.
+
+=item B<get_repr>(out STR, invar PMC)
+
+Set $1 to a string representation of $2
+
+
+=item B<get_results>(inconst PMC /* , ... */)
+
+Define return values for the next function call.
+
+=item B<get_root_global>(out PMC, in STR)
+
+Set $1 to the global named $2 in the true root namespace.  If the global
+doesn't exist, $1 is set to null.
+
+=item B<get_root_global>(out PMC, in PMC, in STR)
+
+Set $1 to the global named $3 in the namespace denoted by the key constant
+$2, relative to the true root namespace.  If the namespace or the global
+doesn't exist, $1 is set to null.
+
+
+=item B<get_root_namespace>(out PMC)
+
+Set $1 to the true root namespace.
+
+=item B<get_root_namespace>(out PMC, in PMC)
+
+Set $1 to the namespace denoted by the key constant $2, relative to the true
+root namespace.  If the namespace doesn't exist, $1 is set to null.
+
+
+=item B<getattribute>(out PMC, invar PMC, in STR)
+
+Get the attribute $3 from object $2 and put the result in $1.
+
+=item B<getattribute>(out PMC, invar PMC, in PMC, in STR)
+
+Get the attribute $4 from the parent $3 of object $2 and put the
+result in $1. (This is useful for storing data for a parent class
+attribute that is overridden in a child class.) The parent $3 is a
+class name, namespace, or key PMC.
+
+
+=item B<getinterp>(out PMC)
+
+Get the current ParrotInterpreter.
+
+
+=item B<getprop>(out PMC, in STR, invar PMC)
+
+Get property $2 of PMC $3 and put it in $1.
+Deprecated.
+
+=item B<getprop>(out PMC, invar PMC, in STR)
+
+Get property $3 of PMC $2 and put it in $1.
+
+
+=item B<getstderr>(out PMC)
+
+Create a new ParrotIO object for the stderr file descriptor and
+store it in $1
+
+=item B<getstdin>(out PMC)
+
+Create a new ParrotIO object for the stdin file descriptor and
+store it in $1
+
+=item B<getstdout>(out PMC)
+
+Create a new ParrotIO object for the stdout file descriptor and
+store it in $1
+
+=item B<gt>(invar PMC, invar PMC, inconst LABEL)
+
+
+=item B<gt>(invar PMC, in INT, inconst LABEL)
+
+
+=item B<gt>(invar PMC, in NUM, inconst LABEL)
+
+
+=item B<gt>(invar PMC, in STR, inconst LABEL)
+
+-
+
+=item B<gt_num>(invar PMC, invar PMC, inconst LABEL)
+
+Branch if $1 is greater than $2.
+
+
+=item B<gt_str>(invar PMC, invar PMC, inconst LABEL)
+
+-
+
+=item B<if>(invar INT, inconst LABEL)
+
+
+=item B<if>(invar NUM, inconst LABEL)
+
+
+=item B<if>(invar PMC, inconst LABEL)
+
+
+=item B<if>(invar STR, inconst LABEL)
+
+Check register $1. If true, branch by $2.
+
+
+=item B<if_null>(invar PMC, inconst LABEL)
+
+Branch to $2 if $1 is a NULL PMC.
+
+=item B<if_null>(invar STR, inconst LABEL)
+
+Branch to $2 if $1 is a NULL STRING.
+
+
+=item B<inc>(inout INT)
+
+
+=item B<inc>(inout NUM)
+
+
+=item B<inc>(invar PMC)
+
+Increase $1 by one.
+
+
+=item B<index>(out INT, in STR, in STR)
+
+
+=item B<index>(out INT, in STR, in STR, in INT)
+
+The B<index> function searches for a substring within target string, but
+without the wildcard-like behavior of a full regular-expression pattern match.
+It returns the position of the first occurrence of substring $3
+in target string $2 at or after zero-based position $4.
+If $4 is omitted, B<index> starts searching from the beginning of the string.
+The return value is based at "0".
+If the string is null, or the substring is not found or is null,
+B<index> returns "-1".
+
+=item B<inspect>(out PMC, in PMC)
+
+Sets $1 to a PMC hash of all introspection data available for $2, keyed on
+name.
+
+=item B<inspect>(out PMC, in PMC, in STR)
+
+Sets $1 to a PMC Hash, Array, String, Integer, or Number value with
+introspection information corresponding to the requested string name.
+
+
+=item B<interpinfo>
+
+Fetch some piece of information about the interpreter and put it in $1.
+Possible values for $2 are defined in F<runtime/parrot/include/interpinfo.pasm>.
+The valid constants for each return value are (excluding the .INTERPINFO_
+prefix):
+
+=item B<interpinfo>(out INT, in INT)
+
+TOTAL_MEM_ALLOC, TOTAL_MEM_USED, GC_MARK_RUNS, GC_COLLECT_RUNS, ACTIVE_PMCS,
+ACTIVE_BUFFERS, TOTAL_PMCS, TOTAL_BUFFERS, HEADER_ALLOCS_SINCE_COLLECT,
+MEM_ALLOCS_SINCE_COLLECT, TOTAL_COPIED, IMPATIENT_PMCS, GC_LAZY_MARK_RUNS,
+EXTENDED_PMCS, CURRENT_RUNCORE, PARROT_INTSIZE, PARROT_FLOATSIZE, PARROT_POINTERSIZE,
+PARROT_INTMAX, PARROT_INTMIN
+
+=item B<interpinfo>(out PMC, in INT)
+
+CURRENT_SUB, CURRENT_CONT, CURRENT_OBJECT, CURRENT_LEXPAD
+
+=item B<interpinfo>(out STR, in INT)
+
+EXECUTABLE_FULLNAME, EXECUTABLE_BASENAME, RUNTIME_PREFIX, CURRENT_RUNCORE, PARROT_OS,
+PARROT_OS_VERSION, PARROT_OS_VERSION_NUMBER, CPU_ARCH, CPU_TYPE
+
+=item B<invoke>(invar PMC, invar PMC)
+
+Call the subroutine in $1 and use continuation $2.
+
+=item B<invokecc>(invar PMC)
+
+Call the subroutine in $1 and generate a new return continuation, if needed.
+For example, a NCI subroutine which executes code in some C library will not
+create a continuation, nor will anything but the first call to a coroutine.
+
+=item B<invokecc>(invar PMC, invar PMC)
+
+
+
+=item B<is_cclass>(out INT, in INT, in STR, in INT)
+
+Set $1 to 1 if the codepoint of $3 at position $4 is in
+the character class(es) given by $2.
+
+
+=item B<is_inf_or_nan>(out INT, in NUM)
+
+Set $1 to 1 if $2 is Inf, -Inf or NaN, and 0 otherwise
+
+
+=item B<isa>(out INT, invar PMC, in STR)
+
+
+=item B<isa>(out INT, invar PMC, in PMC)
+
+Sets result $1 to the result of the "isa" vtable function for PMC $2,
+given class $3.
+
+
+=item B<iseq>(out INT, in INT, in INT)
+
+
+=item B<iseq>(out INT, in NUM, in NUM)
+
+
+=item B<iseq>(out INT, in STR, in STR)
+
+
+=item B<iseq>(out INT, invar PMC, invar PMC)
+
+Sets $1 to 1 if $2 is equal to $3.
+
+
+=item B<isfalse>(out INT, invar PMC)
+
+Sets $1 to 1 or 0, depending on whether $2 is false or not.
+
+=item B<isge>(out INT, in INT, in INT)
+
+
+=item B<isge>(out INT, in NUM, in NUM)
+
+
+=item B<isge>(out INT, in STR, in STR)
+
+These 3 opcodes are valid, but create as their reverse.
+
+=item B<isge>(out INT, invar PMC, invar PMC)
+
+Sets $1 to 1 if $2 is greater than or equal to $3.
+
+
+=item B<isgt>(out INT, in INT, in INT)
+
+
+=item B<isgt>(out INT, in NUM, in NUM)
+
+
+=item B<isgt>(out INT, in STR, in STR)
+
+These 3 opcodes are valid, but create as their reverse.
+
+=item B<isgt>(out INT, invar PMC, invar PMC)
+
+Sets $1 to 1 if $2 is greater than $3.
+
+
+=item B<isle>(out INT, in INT, in INT)
+
+
+=item B<isle>(out INT, in NUM, in NUM)
+
+
+=item B<isle>(out INT, in STR, in STR)
+
+
+=item B<isle>(out INT, invar PMC, invar PMC)
+
+Sets $1 to 1 if $2 is less than or equal to $3.
+
+
+=item B<islt>(out INT, in INT, in INT)
+
+
+=item B<islt>(out INT, in NUM, in NUM)
+
+
+=item B<islt>(out INT, in STR, in STR)
+
+
+=item B<islt>(out INT, invar PMC, invar PMC)
+
+Sets $1 to 1 if $2 is less than $3.
+
+
+=item B<isne>(out INT, in INT, in INT)
+
+
+=item B<isne>(out INT, in NUM, in NUM)
+
+
+=item B<isne>(out INT, in STR, in STR)
+
+
+=item B<isne>(out INT, invar PMC, invar PMC)
+
+Sets $1 to 1 if $2 is not equal to $3.
+
+
+=item B<isntsame>(out INT, invar PMC, invar PMC)
+
+
+=item B<isntsame>(out INT, in STR, in STR)
+
+Sets $1 to 0 or 1, depending on the identity of the 2 objects.
+
+=item B<isnull>(out INT, in PMC)
+
+Sets $1 to 1 if the object is null, 0 otherwise.
+
+=item B<isnull>(out INT, in STR)
+
+Sets $1 to 1 if the string is null, 0 otherwise.
+
+
+=item B<issame>(out INT, invar PMC, invar PMC)
+
+
+=item B<issame>(out INT, in STR, in STR)
+
+Sets $1 to 1 or 0, depending on the identity of the 2 objects.
+The identity is the PMCs memory address.
+
+=item B<istrue>(out INT, invar PMC)
+
+Sets $1 to 1 or 0, depending on whether $2 is true or not.
+
+=item B<iter>(out PMC, invar PMC)
+
+Return a new Iterator PMC $1 for aggregate $2.
+
+
+=item B<join>(out STR, in STR, invar PMC)
+
+Create a new string $1 by joining array elements from array $3
+with string $2.
+
+=item B<jump>(in LABEL)
+
+Jump to the address held in register $1.
+
+
+=item B<le>(in INT, in INT, inconst LABEL)
+
+
+=item B<le>(in NUM, in NUM, inconst LABEL)
+
+
+=item B<le>(in STR, in STR, inconst LABEL)
+
+
+=item B<le>(invar PMC, invar PMC, inconst LABEL)
+
+
+=item B<le>(invar PMC, in INT, inconst LABEL)
+
+
+=item B<le>(invar PMC, in NUM, inconst LABEL)
+
+
+=item B<le>(invar PMC, in STR, inconst LABEL)
+
+-
+
+=item B<le_num>(invar PMC, invar PMC, inconst LABEL)
+
+Branch if $1 is less than or equal to $2.
+
+
+=item B<le_str>(invar PMC, invar PMC, inconst LABEL)
+
+-
+
+=item B<length>(out INT, in STR)
+
+Calculate the length (in characters) of string $2 and return as integer $1.
+If $2 is NULL or zero length, zero is returned.
+
+=item B<load_bytecode>(in STR)
+
+Load Parrot bytecode from file $1, and search the library path to locate the
+file. Automatically triggers :load functions if the file found is a .pbc. If
+it is a .pir or a .pasm, the file is compiled first and the :init subs are
+triggered instead. Nothing is returned.
+
+=item B<load_bytecode>(out PMC, in STR)
+
+Load Parrot bytecode from file $2, searching the library path to locate the
+file. Returns a new PackfileView in $1. Does not perform any automatic
+initialization. Use the PackfileView PMC interface to introspect and perform
+actions on it.
+
+
+=item B<load_language>(in STR)
+
+Load the compiler libraries for a language $1. Search the library path to
+locate the main compiler file in the standard locations.
+
+
+=item B<loadlib>(out PMC, in STR)
+
+
+=item B<loadlib>(out PMC, in STR, in PMC)
+
+Load a dynamic link library named $2 and store it in $1. $3, if
+provided, controls library loading and initialization; currently,
+we expect a bitmask accessible as an integer.  Bit definitions are
+accessible from PASM if F<dlopenflags.pasm> is included.  The current
+bits are:
+
+=item B<local_branch>(invar PMC, in LABEL)
+
+Go to the location specified by the label in $2. Push the current location onto
+the stack passed in $1 for later returning.
+
+
+=item B<local_return>(invar PMC)
+
+Pop the location off the top of the call stack and go there.
+
+
+=item B<lsr>(out INT, in INT)
+
+Shift $1 logically shifted right by $2 bits.
+
+=item B<lsr>(out INT, in INT, in INT)
+
+Set $1 to the value of $2 logically shifted right by $3 bits.
+
+
+=item B<lt>(in INT, in INT, inconst LABEL)
+
+
+=item B<lt>(in NUM, in NUM, inconst LABEL)
+
+
+=item B<lt>(in STR, in STR, inconst LABEL)
+
+
+=item B<lt>(invar PMC, invar PMC, inconst LABEL)
+
+
+=item B<lt>(invar PMC, in INT, inconst LABEL)
+
+
+=item B<lt>(invar PMC, in NUM, inconst LABEL)
+
+
+=item B<lt>(invar PMC, in STR, inconst LABEL)
+
+-
+
+=item B<lt_num>(invar PMC, invar PMC, inconst LABEL)
+
+Branch if $1 is less than $2.
+
+
+=item B<lt_str>(invar PMC, invar PMC, inconst LABEL)
+
+-
+
+=item B<mod>(out INT, in INT, in INT)
+
+
+=item B<mod>(out NUM, in NUM, in NUM)
+
+
+=item B<mod>(invar PMC, invar PMC, invar PMC)
+
+
+=item B<mod>(invar PMC, invar PMC, in INT)
+
+
+=item B<mod>(invar PMC, invar PMC, in NUM)
+
+Sets $1 to the modulus of $2 and $3.
+
+=item B<mod>(inout INT, in INT)
+
+
+=item B<mod>(inout NUM, in NUM)
+
+
+=item B<mod>(invar PMC, invar PMC)
+
+
+=item B<mod>(invar PMC, in INT)
+
+
+=item B<mod>(invar PMC, in NUM)
+
+Sets $1 to the modulus of $1 and $2.
+
+NOTE: This "corrected mod" algorithm is based on the C code on page 70
+of [1]. Assuming correct behavior of the built-in mod operator (%) with
+positive arguments, this algorithm implements a mathematically convenient
+version of mod, defined thus:
+  x mod y = x - y * floor(x / y)
+For more information on this definition of mod, see section 3.4 of [2],
+pages 81-85.
+References:
+  [1] Donald E. Knuth, *MMIXware: A RISC Computer for the Third
+      Millennium* Springer, 1999.
+  [2] Ronald L. Graham, Donald E. Knuth and Oren Patashnik, *Concrete
+      Mathematics*, Second Edition. Addison-Wesley, 1994.
+
+
+=item B<morph>(invar PMC, in PMC)
+
+Have $1 turn itself into a PMC of type $2. $2 should be a Class PMC.
+
+
+=item B<mul>(inout INT, in INT)
+
+
+=item B<mul>(inout NUM, in NUM)
+
+
+=item B<mul>(invar PMC, invar PMC)
+
+
+=item B<mul>(invar PMC, in INT)
+
+
+=item B<mul>(invar PMC, in NUM)
+
+Set $1 to the product of $1 and $2.
+
+=item B<mul>(out INT, in INT, in INT)
+
+
+=item B<mul>(out NUM, in NUM, in NUM)
+
+
+=item B<mul>(invar PMC, invar PMC, invar PMC)
+
+
+=item B<mul>(invar PMC, invar PMC, in INT)
+
+
+=item B<mul>(invar PMC, invar PMC, in NUM)
+
+Set $1 to the product of $2 and $3.
+
+
+=item B<ne>(in INT, in INT, inconst LABEL)
+
+
+=item B<ne>(in NUM, in NUM, inconst LABEL)
+
+
+=item B<ne>(in STR, in STR, inconst LABEL)
+
+
+=item B<ne>(invar PMC, invar PMC, inconst LABEL)
+
+
+=item B<ne>(invar PMC, in INT, inconst LABEL)
+
+
+=item B<ne>(invar PMC, in NUM, inconst LABEL)
+
+
+=item B<ne>(invar PMC, in STR, inconst LABEL)
+
+-
+
+=item B<ne_addr>(in STR, in STR, inconst LABEL)
+
+
+=item B<ne_addr>(invar PMC, invar PMC, inconst LABEL)
+
+Branch if $1 is not equal to $2.
+
+
+=item B<ne_num>(invar PMC, invar PMC, inconst LABEL)
+
+-
+
+=item B<ne_str>(invar PMC, invar PMC, inconst LABEL)
+
+-
+
+=item B<needs_destroy>(invar PMC)
+
+Mark the PMC wanting destruction as soon as possible, for example
+when unused during the lazy sweep, triggered by C<sweep 0>.
+
+
+=item B<neg>(inout INT)
+
+
+=item B<neg>(inout NUM)
+
+
+=item B<neg>(invar PMC)
+
+Set $1 to its negative.
+
+=item B<neg>(out INT, in INT)
+
+
+=item B<neg>(out NUM, in NUM)
+
+
+=item B<neg>(out PMC, invar PMC)
+
+Set $1 to the negative of $2.
+
+
+=item B<new>(out PMC, in STR, in INT)
+
+
+=item B<new>(out PMC, in PMC, in INT)
+
+
+
+=item B<new>(out PMC, in STR)
+
+
+=item B<new>(out PMC, in STR, in PMC)
+
+
+=item B<new>(out PMC, in PMC)
+
+
+=item B<new>(out PMC, in PMC, in PMC)
+
+Instantiate a new object from a string PMC or key name, or from a class object.
+For strings and keys, first check the namespace for a class object, then fall
+back to the type ID if no class object is stored in the namespace.
+  new $P0, 'ResizableBooleanArray'
+Optionally a PMC may be passed to the constructor. It's up to the class what
+to do with the initializer.  See PDD17 and the init_pmc function for more.
+
+
+=item B<new>(out STR)
+
+Allocate a new empty string.
+
+
+=item B<new_call_context>(out PMC)
+
+
+-
+
+=item B<new_callback>(out PMC, invar PMC, invar PMC, in STR)
+
+Create a callback stub $1 for PASM subroutine $2 with userdata $3 and
+callback function signature $4. Only 2 argument signatures with
+signature chars I<U[1iscpt]> or I<[1iscpt]U>  are handled currently.
+But these cover a lot of callback signatures. Please note that the
+userdata PMC I<U> has to be handled transparently by the caller of
+the callback function.
+
+
+=item B<newclass>(out PMC, in STR)
+
+Create a new Parrot-style class, named $2, and puts the new PMC for it
+into $1.
+
+=item B<newclass>(out PMC, in PMC)
+
+Create a new Parrot-style class, with the name given in $2 as a key,
+namespace, or string PMC.
+
+
+=item B<newclosure>(out PMC, invar PMC)
+
+Create a closure of the given subroutine PMC by cloning the sub's state.
+
+
+=item B<noop>()
+
+Does nothing other than waste an iota of time and 32 bits of bytecode space.
+
+=item B<not>(inout INT)
+
+
+=item B<not>(invar PMC)
+
+Set the boolean state of $1 to the opposite of the boolean state from $1.
+
+=item B<not>(out INT, in INT)
+
+
+=item B<not>(out PMC, invar PMC)
+
+
+
+=item B<null>(out INT)
+
+
+=item B<null>(out NUM)
+
+Set register $1 to zero.
+
+=item B<null>(out STR)
+
+Set register $1 to a NULL string value.
+
+=item B<null>(out PMC)
+
+Set register $1 to PMCNULL.
+
+
+=item B<or>(out INT, in INT, in INT)
+
+
+=item B<or>(invar PMC, invar PMC, invar PMC)
+
+Short-circuiting logical or.  Returns $2 if it's true, else returns $3.
+
+
+=item B<ord>(out INT, in STR)
+
+The codepoint in the current character set of the first character of string $2
+is returned in integer $1.
+If $2 is empty, an exception is thrown.
+
+=item B<ord>(out INT, in STR, in INT)
+
+The codepoint in the current character set of the character at integer index $3
+of string $2 is returned in integer $1.
+If $2 is empty, an exception is thrown.
+If $3 is greater than the length of $2, an exception is thrown.
+If $3 is less then zero but greater than the negative of the length of $2,
+counts backwards through $2, such that -1 is the last character,
+-2 is the second-to-last character, and so on.
+If $3 is less than the negative of the length of $2, an exception is thrown.
+
+
+=item B<pass>()
+
+Pass the rest of the current quantum and schedule the next
+task in the task queue.
+
+
+=item B<peek_exception>(out PMC)
+
+Returns the caught exception without clearing the call object. This is
+currently needed because HLL authors use get_params to fetch the exception,
+but get_params clears the call object. So we can't use get_params in PCT
+to get the exception object without disturbing the HLL code.
+This op will be removed again when PCT offers another mechansim to get
+the exception and the HLLs switched to it.
+
+
+=item B<pin>(inout STR)
+
+Make the memory in string $1 immobile. This memory will I<not> be moved
+by the Garbage Collector, and may be safely passed to external libraries.
+(Well, as long as they don't free it) Pinning a string will move the contents.
+$1 should be unpinned if it is used after pinning is no longer necessary.
+
+
+=item B<pop>(out INT, invar PMC)
+
+
+=item B<pop>(out NUM, invar PMC)
+
+
+=item B<pop>(out STR, invar PMC)
+
+
+=item B<pop>(out PMC, invar PMC)
+
+Pop off last entry in the aggregate $2, placing the result in $1.
+
+
+=item B<pop_eh>()
+
+Pop the most recently placed exception off the handler stack.
+
+=item B<pop_upto_eh>(in PMC)
+
+Pops all exception handlers upto the one indicated by $1. Like with the
+finalize op, $1 can either be the handled Exception or the ExceptionHandler
+handling it. Also, you should not resume Exceptions after pop_upto_eh
+or finalize has been called. This limitation may be fixed in a future
+version of parrot. Also note that the specified exception handler
+is not popped.
+
+=item B<print>(in INT)
+
+
+=item B<print>(in NUM)
+
+
+=item B<print>(invar PMC)
+
+
+=item B<print>(in STR)
+
+Print $1 to standard output.
+
+
+=item B<print>(invar PMC, in INT)
+
+
+=item B<print>(invar PMC, in NUM)
+
+
+=item B<print>(invar PMC, in STR)
+
+
+=item B<print>(invar PMC, invar PMC)
+
+Print $2 on the IO stream object $1.
+
+
+=item B<profile>(in INT)
+
+If $1 is zero, turn off profiling. Otherwise turn it on.
+
+
+=item B<prophash>(out PMC, invar PMC)
+
+Get a hash for the properties invar PMC $2 and put it in $1. If the property
+hash doesn't exist, the C<Null> PMC is returned.
+
+
+=item B<push>(invar PMC, in INT)
+
+
+=item B<push>(invar PMC, in NUM)
+
+
+=item B<push>(invar PMC, in STR)
+
+
+=item B<push>(invar PMC, invar PMC)
+
+Push $2 onto the end of the aggregate PMC $1, if that operation is defined.
+
+
+=item B<push_eh>(inconst LABEL)
+
+Create an exception handler for the given catch label and push it onto
+the exception handler stack.
+
+=item B<push_eh>(invar PMC)
+
+Push an invokable PMC onto the exception handler stack.
+
+=item B<receive>(out PMC)
+
+Receive a message sent to the current task.
+If there is no waiting message, block and wait.
+
+
+=item B<register>(invar PMC)
+
+Add a reference of PMC $1 to the interpreter's root set of PMCs. This is needed
+for extensions to make sure that the PMC is properly marked during GC, if that
+PMC is not known to Parrot's core elsewhere.
+A PMC can be registered multiple times.  If it's unregistered and the
+registration count reaches zero, it will be destroyed during the next GC run.
+
+=item B<removeattribute>(invar PMC, in STR) B<(unimplemented)>
+
+Remove attribute $2 from class $1, specified by name.
+
+
+=item B<removeparent>(invar PMC, invar PMC)
+
+Remove class $2 from class $1's list of parents.
+
+
+=item B<repeat>(out STR, in STR, in INT)
+
+
+=item B<repeat>(invar PMC, invar PMC, in INT)
+
+
+=item B<repeat>(invar PMC, invar PMC, invar PMC)
+
+Repeat string $2 integer $3 times and return result in string $1.
+The C<PMC> versions are MMD operations.
+
+
+=item B<repeat>(invar PMC, in INT)
+
+
+=item B<repeat>(invar PMC, invar PMC)
+
+Repeat string $1 number $2 times and return result in string $1.
+The C<PMC> versions are MMD operations.
+
+
+=item B<replace>(out STR, in STR, in INT, in INT, in STR)
+
+Replace part of $2 starting from $3 of length $4 with $5. If the length of $5 is
+different from the length specified in $4, then $2 will grow or shrink
+accordingly. If $3 is one character position larger than the length of
+$2, then $5 is appended to $2 (and the empty string is returned);
+this is essentially the same as
+  concat $2, $5
+Finally, if $3 is negative, then it is taken to count backwards from
+the end of the string (ie an offset of -1 corresponds to the last
+character).
+New $1 string returned.
+
+
+=item B<result_info>(out PMC)
+
+Returns the get_results signature PMC of the caller. This PMC is a
+FixedIntegerPMCArray. The number of elements of this PMC is equal to the number
+of return values that are expected.  The individual bits per entry are
+specified in F<docs/pdds/pdd03_calling_conventions.pod>.
+
+
+=item B<rethrow>(invar PMC)
+
+Only valid inside an exception handler. Rethrow the exception $1.
+
+=item B<returncc>()
+
+Return from the sub or method via the current continuation.
+
+=item B<rindex>(out INT, in STR, in STR)
+
+
+=item B<rindex>(out INT, in STR, in STR, in INT)
+
+Search the string for the last instance of the substring from the end. If
+Provided, a match will not be found after $4.
+
+
+=item B<root_new>(out PMC, in PMC, in INT)
+
+
+
+=item B<root_new>(out PMC, in PMC)
+
+
+=item B<root_new>(out PMC, in PMC, in PMC)
+
+Instantiate a new object from a key name relative to the root namespace.
+  root_new $P0, ['parrot';'ResizableBooleanArray']
+Optionally a PMC may be passed to the constructor. It's up to the class what
+to do with the initializer.
+
+
+=item B<runinterp>(invar PMC, in LABEL)
+
+Run the code starting at offset $2 within interpreter $1.
+
+=item B<say>(in INT)
+
+
+=item B<say>(in NUM)
+
+
+=item B<say>(invar PMC)
+
+
+=item B<say>(in STR)
+
+Print $1 to standard output with a trailing newline.
+
+
+=item B<schedule>(invar PMC)
+
+Register a task with the concurrency scheduler. Details about the task are
+stored within the task PMC.
+
+
+=item B<schedule_local>(invar PMC)
+
+Like schedule but execute it on the current thread.
+
+
+=item B<set>(out INT, in INT)
+
+
+=item B<set>(out INT, in NUM)
+
+A floating-point number is truncated (rounded toward zero) when assigned
+to an integer register.
+
+=item B<set>(out INT, invar PMC)
+
+
+=item B<set>(out INT, invar PMC)
+
+
+=item B<set>(out INT, in STR)
+
+
+=item B<set>(out NUM, in INT)
+
+
+=item B<set>(out NUM, in NUM)
+
+
+=item B<set>(out NUM, invar PMC)
+
+
+=item B<set>(out NUM, in STR)
+
+
+=item B<set>(invar PMC, in INT)
+
+
+=item B<set>(invar PMC, in NUM)
+
+
+=item B<set>(out PMC, invar PMC)
+
+
+=item B<set>(invar PMC, invar STR)
+
+
+=item B<set>(out STR, in INT)
+
+
+=item B<set>(out STR, in NUM)
+
+
+=item B<set>(out STR, invar PMC)
+
+
+=item B<set>(out STR, inconst STR)
+
+
+=item B<set>(out STR, invar STR)
+
+
+=item B<set>(out PMC, inconst PMC)
+
+
+=item B<set>(invar PMC, inconst STR)
+
+Set $1 to $2.
+
+
+=item B<set>(invar PMC, in INTKEY, in INT)
+
+
+=item B<set>(invar PMC, in INTKEY, in NUM)
+
+
+=item B<set>(invar PMC, in INTKEY, in STR)
+
+
+=item B<set>(invar PMC, in INTKEY, invar PMC)
+
+
+
+=item B<set>(out INT, invar PMC, in INTKEY)
+
+
+=item B<set>(out NUM, invar PMC, in INTKEY)
+
+
+=item B<set>(out STR, invar PMC, in INTKEY)
+
+
+=item B<set>(out PMC, invar PMC, in INTKEY)
+
+
+
+=item B<set>(invar PMC, in KEY, in INT)
+
+
+=item B<set>(invar PMC, in KEY, in NUM)
+
+
+=item B<set>(invar PMC, in KEY, in STR)
+
+
+=item B<set>(invar PMC, in KEY, invar PMC)
+
+
+
+=item B<set>(out INT, invar PMC, in KEY)
+
+
+=item B<set>(out NUM, invar PMC, in KEY)
+
+
+=item B<set>(out STR, invar PMC, in KEY)
+
+
+=item B<set>(out PMC, invar PMC, in KEY)
+
+
+
+=item B<set_addr>(out INT, inconst LABEL)
+
+Sets register $1 to the current address plus the offset $2.
+
+=item B<set_addr>(invar PMC, inconst LABEL)
+
+Sets PMC in register $1 to the current address plus the offset $2.
+
+=item B<set_addr>(invar PMC, invar LABEL)
+
+Sets PMC in register $1 to the absolute address $2 obtained from B<get_addr>.
+
+=item B<set_args>(inconst PMC /* , ... */)
+
+Define arguments for the next function call.
+
+=item B<set_global>(in STR, invar PMC)
+
+Set the global named $1 in the current namespace to $2.
+
+=item B<set_global>(in PMC, in STR, invar PMC)
+
+Set the global named $2 in the namespace denoted by the key constant $1,
+relative to the current namespace, to $3.  If the namespace does not exist,
+it is created.
+
+
+=item B<set_hll_global>(in STR, invar PMC)
+
+Set the global named $1 to $2 in the current HLL root namespace.
+
+=item B<set_hll_global>(in PMC, in STR, invar PMC)
+
+Set the global named $2 in the namespace denoted by the key constant
+$1 (relative to the current HLL namespace) to $3. If the namespace
+does not exist, it is created.
+
+
+=item B<set_label>(invar PMC, inconst LABEL)
+
+Sets the opcode_t* label value for the given PMC. This is basically only
+useful for PMCs such as Sub, Continuation, ExceptionHandler and derivatives
+
+=item B<set_result_info>(in PMC)
+
+Set result_info. See also C<result_info>.
+
+
+=item B<set_returns>(inconst PMC /* , ... */)
+
+Define return results for the subroutine return statement.
+For all of these opcodes the passed invar PMC constant is the string
+representation of a FixedIntegerArray with one flag word per argument.
+The flags are documented currently in F<include/parrot/enums.h> only.
+After this argument a variable amount of arguments must follow according
+to the elements of the signature array.
+
+
+=item B<set_root_global>(in STR, invar PMC)
+
+Set the global named $1 in the true root namespace to $2.
+
+=item B<set_root_global>(in PMC, in STR, invar PMC)
+
+Set the global named $2 in the namespace denoted by the key constant
+$1 (relative to the true root namespace) to $3.  If the namespace does
+not exist, it is created.
+
+
+=item B<set_runcore>(in STR)
+
+Switch the current runcore to the one with the specified name.
+Needs to be an op, as we need to restart the runops() call.
+You can get the name of the current runcore with the interpinfo op.
+
+
+=item B<setattribute>(invar PMC, in STR, invar PMC)
+
+Set attribute $2 of object $1 to $3.
+
+=item B<setattribute>(invar PMC, in PMC, in STR, invar PMC)
+
+Set attribute $3 of the parent $2 of object $1 to $4. (This is useful
+for storing data for a parent class attribute that is overridden in a
+child class.) The parent $2 is a class name, namespace, or key PMC.
+
+
+=item B<setprop>(invar PMC, in STR, invar PMC)
+
+Set property $2 to value $3 for PMC $1.
+
+
+=item B<setref>(invar PMC, invar PMC)
+
+Make $1 refer to $2 by calling C<set_pmc>.
+
+=item B<shift>(out INT, invar PMC)
+
+
+=item B<shift>(out NUM, invar PMC)
+
+
+=item B<shift>(out STR, invar PMC)
+
+
+=item B<shift>(out PMC, invar PMC)
+
+Shift off the first entry in the aggregate $2 and places it in $1.
+
+
+=item B<shl>(inout INT, in INT)
+
+Shift left $1 by $2 bits.
+
+=item B<shl>(out INT, in INT, in INT)
+
+Set $1 to the value of $2 shifted left by $3 bits.
+
+
+=item B<shr>(inout INT, in INT)
+
+Shift right $1 by $2 bits.
+
+=item B<shr>(out INT, in INT, in INT)
+
+Set $1 to the value of $2 shifted right by $3 bits.
+
+
+=item B<sleep>(in INT)
+
+
+=item B<sleep>(in NUM)
+
+Sleep for $1 seconds.
+
+
+=item B<slurp_array_from>(out PMC, invar PMC, in INT)
+
+
+-
+
+=item B<spawnw>(out INT, in STR)
+
+Spawn a subprocess whose program name and arguments are contained in the string
+$2 and wait for it to finish. The return status, which is very
+system-dependent, goes in $1.
+
+=item B<spawnw>(out INT, invar PMC)
+
+Spawn a subprocess whose program name and arguments are contained in the array
+$2 and wait for it to finish. The return status, which is very
+system-dependent, goes in $1.
+GH #362: C<spawnw()> should itself handle splitting up command-line arguments,
+rather than depending on the shell to do so in potentially unsafe manner.
+See https://github.com/parrot/parrot/issues/362
+(formerly https://trac.parrot.org/parrot/ticket/847).
+GH #369: C<spawnw()> should return something less system-dependent, and more
+object-like. See https://github.com/parrot/parrot/issues/369.
+
+
+=item B<splice>(invar PMC, invar PMC, in INT, in INT)
+
+Replace $4 values at offset $3 in aggregate $1 with the PMCs in aggregate $2.
+The values are put into the aggregate by a shallow copy. If the values would
+be reused, they have to be B<clone>d.
+
+
+=item B<split>(out PMC, in STR, in STR)
+
+Create a new Array PMC $1 by splitting the string $3 into pieces
+delimited by the string $2. If $2 does not appear in $3, then return $3
+as the sole element of the Array PMC. Will return empty strings for
+delimiters at the beginning and end of $3
+Note: the string $2 is just a string. If you want a perl-ish split
+on regular expression, use C<PGE::Util>'s split from the standard library.
+
+
+=item B<sprintf>(out STR, in STR, invar PMC)
+
+
+=item B<sprintf>(out PMC, invar PMC, invar PMC)
+
+Sets $1 to the result of calling C<Parrot_psprintf> with the
+given format ($2) and arguments ($3, which should be an ordered
+aggregate PMC).
+The result is quite similar to using the system C<sprintf>, but is
+protected against buffer overflows and the like.  There are some
+differences, especially concerning sizes (which are largely ignored);
+see F<misc.c> for details.
+
+
+=item B<sqrt>(out NUM, in NUM)
+
+Set $1 to the square root of $2.
+
+
+=item B<store_dynamic_lex>(in STR, invar PMC)
+
+Search caller lexpads for lexical symbol $1 and store object $2
+there.  Throws an exception if no caller lexpad claims the
+lexical symbol.  (To store a value in the current lexpad,
+use C<store_lex> above.)
+
+
+=item B<store_lex>(in STR, invar PMC)
+
+Store object $2 as lexical symbol $1. The opcode might succeed
+or throw an exception on unknown lexical names depending on the
+implementation of the LexPad PMC. Requires that the lexical is
+stored in a PMC register.
+Parrot's LexPad throws an exception for unknown names.
+
+=item B<store_lex>(in STR, in STR)
+
+Store object $2 as lexical symbol $1. The opcode might succeed
+or throw an exception on unknown lexical names depending on the
+implementation of the LexPad PMC. Requires that the lexical is
+stored in a STR register.
+Parrot's LexPad throws an exception for unknown names.
+
+=item B<store_lex>(in STR, in INT)
+
+Store object $2 as lexical symbol $1. The opcode might succeed
+or throw an exception on unknown lexical names depending on the
+implementation of the LexPad PMC. Requires that the lexical is
+stored in an INT register.
+Parrot's LexPad throws an exception for unknown names.
+
+=item B<store_lex>(in STR, in NUM)
+
+Store object $2 as lexical symbol $1. The opcode might succeed
+or throw an exception on unknown lexical names depending on the
+implementation of the LexPad PMC. Requires that the lexical is
+stored in a NUM register.
+Parrot's LexPad throws an exception for unknown names.
+
+
+=item B<stringinfo>(out INT, in STR, in INT)
+
+Extract some information about string $2 and store it in $1.
+If a null string is passed, $1 is always set to 0.
+If an invalid $3 is passed, an exception is thrown.
+Possible values for $3 are:
+
+=item B<sub>(inout INT, in INT)
+
+
+=item B<sub>(inout NUM, in NUM)
+
+
+=item B<sub>(invar PMC, invar PMC)
+
+
+=item B<sub>(invar PMC, in INT)
+
+
+=item B<sub>(invar PMC, in NUM)
+
+Decrease $1 by the amount in $2.
+
+=item B<sub>(out INT, in INT, in INT)
+
+
+=item B<sub>(out NUM, in NUM, in NUM)
+
+
+=item B<sub>(invar PMC, invar PMC, invar PMC)
+
+
+=item B<sub>(invar PMC, invar PMC, in INT)
+
+
+=item B<sub>(invar PMC, invar PMC, in NUM)
+
+Set $1 to $2 minus $3.
+
+
+=item B<subclass>(out PMC, in PMC)
+
+
+=item B<subclass>(out PMC, in PMC, in STR)
+
+
+=item B<subclass>(out PMC, in PMC, in PMC)
+
+Create a new class, put in $1, that is a subclass of $2.  $3, if available
+and not null, is the name of the new class--if not, the subclass is an
+anonymous subclass.
+
+
+=item B<subclass>(out PMC, in STR)
+
+
+=item B<subclass>(out PMC, in STR, in STR)
+
+
+=item B<subclass>(out PMC, in STR, in PMC)
+
+Create a new class, put in $1, that is a subclass of the class named $2.
+$3, if available and not null, is the name of the new class--if not, the
+subclass is an anonymous subclass.
+
+
+=item B<substr>(out STR, in STR, in INT)
+
+
+=item B<substr>(out STR, in STR, in INT, in INT)
+
+
+=item B<substr>(out STR, invar PMC, in INT, in INT)
+
+Set $1 to the portion of $2 starting at (zero-based) character position
+$3 and having length $4. If no length ($4) is provided, it is equivalent to
+passing in the length of $2.
+
+=item B<sweep>(inconst INT)
+
+Triggers a GC run, based on the value of $1, where:
+
+=item B<sweepoff>()
+
+Disable GC runs. (Nestable)
+
+
+=item B<sweepon>()
+
+Re-enable GC runs.
+
+
+=item B<tailcall>(invar PMC)
+
+Call the subroutine in $1 and use the current continuation as the subs
+continuation.
+
+=item B<tailcallmethod>(invar PMC, in STR)
+
+
+=item B<tailcallmethod>(invar PMC, invar PMC)
+
+Make a tailcall to method $2 with invocant $1.
+
+
+=item B<terminate>()
+
+Terminate the current task immediately.
+
+
+=item B<thaw>(out PMC, in STR)
+
+Set $1 to a newly created PMC from the image $2.
+
+
+=item B<throw>(invar PMC)
+
+Throw the exception in $1 with current continuation.
+
+=item B<throw>(invar PMC, invar PMC)
+
+Throw the exception in $1 with continuation from $2.
+
+=item B<time>(out INT)
+
+Puts the current system time (represented as a whole number of seconds)
+in $1.
+
+
+=item B<time>(out NUM)
+
+Puts the current system time (represented as a number of seconds, with
+microseconds) in $1.
+
+
+=item B<titlecase>(out STR, in STR)
+
+Titlecase $2 and put the result in $1
+
+
+=item B<trace>(in INT)
+
+If $1 is zero, turn off tracing. Otherwise turn trace flag $1 on.
+
+
+=item B<trans_encoding>(out STR, in STR, in INT)
+
+Create a string $1 from $2 with the specified encoding.
+Both functions may throw an exception on information loss.
+
+
+=item B<trap>()
+
+Break into debugger. Implementation notes:
+ - x86/gcc ... works with gdb
+ - ppc/gcc ... works with gdb, to proceed: gdb> p $pc = $pc + 4
+ - TODO
+For other architectures, this is a C<noop>.
+
+
+=item B<typeof>(out STR, invar PMC)
+
+
+=item B<typeof>(out PMC, invar PMC)
+
+Return the type of PMC in $2.
+
+
+=item B<unless>(invar INT, inconst LABEL)
+
+
+=item B<unless>(invar NUM, inconst LABEL)
+
+
+=item B<unless>(invar PMC, inconst LABEL)
+
+
+=item B<unless>(invar STR, inconst LABEL)
+
+Check register $1. If false, branch by $2.
+
+
+=item B<unless_null>(invar PMC, inconst LABEL)
+
+Branch to $2 if $1 is I<not> a NULL PMC.
+
+=item B<unless_null>(invar STR, inconst LABEL)
+
+Branch to $2 if $1 is I<not> a NULL STRING.
+
+
+=item B<unpin>(inout STR)
+
+Make the memory in string $1 movable again.
+This will make the memory in $1 move.
+
+
+=item B<unregister>(invar PMC)
+
+Remove one reference of $1.
+
+
+=item B<unshift>(invar PMC, in INT)
+
+
+=item B<unshift>(invar PMC, in NUM)
+
+
+=item B<unshift>(invar PMC, in STR)
+
+
+=item B<unshift>(invar PMC, invar PMC)
+
+Unshift $2 onto the front of the aggregate PMC $1.
+
+
+=item B<upcase>(out STR, in STR)
+
+Uppercase $2 and put the result in $1
+
+
+=item B<vivify>(out PMC, in PMC, in PMC, in PMC)
+
+Fetches a value from $2, keyed by $3 into $1.  If the resulting PMC is PMCNULL,
+uses the type in $4 to create and return a new PMC.
+
+=item B<vivify>(out PMC, in PMC, in INT, in PMC)
+
+
+=item B<vivify>(out PMC, in PMC, in STR, in PMC)
+
+
+
+=item B<wait>(in PMC)
+
+Block and wait for a task to complete.
+
+
+=item B<warningsoff>(in INT)
+
+Turns off warnings categories.  Categories already turned off will
+stay off.  See the documentation for B<warningson> for category
+numbers.
+
+
+=item B<warningson>(in INT)
+
+Turns on warnings categories. Categories already turned on will stay on.
+Initial setting is currently all warnings off.  Include F<warnings.pasm> to
+access the categories. Refer to that file for the current list of warnings
+available.
+
+=item B<xor>(out INT, in INT, in INT)
+
+
+=item B<xor>(invar PMC, invar PMC, invar PMC)
+
+Logical xor.  Returns $2 if it's true and $3 isn't,
+returns $3 if it's true and $2 isn't, else returns false.
+
+
+=item B<yield>()
+
+Yield results from a coroutine.
+
+=back
+

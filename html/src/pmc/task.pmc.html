@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Task</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Task
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/task.pmc &#45; Task</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>A Task PMC represents a concurrent native thread,
+initialized at startup in a threadpool.</p>
+
+<h2><a name="Functions"
+>Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initialize a concurrency task object.
+<dt><a name="void_init_pmc(PMC_*data)"
+><b><code>void init_pmc(PMC *data)</b></code></a></dt>
+Initializes a new Task with a <code>Hash</code> PMC with any or all of the keys:
+<dl>
+<dt><a name="birthtime"
+><b><code>birthtime</b></code></a></dt>
+The time at which this Task was created.
+<dt><a name="code"
+><b><code>code</b></code></a></dt>
+An <code>invokable</code> PMC related to this task.
+<dt><a name="data"
+><b><code>data</b></code></a></dt>
+Some data that will be passed to <code>code</code> when invoked.</dl>
+
+<dt><a name="opcode_t_*invoke(void_*next)"
+><b><code>opcode_t *invoke(void *next)</b></code></a></dt>
+Invokes whatever is in the Task&#39;s associated code.If the Task&#39;s data attribute is not null,
+pass it to the code as the first argument.
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+Create a copy of the task,
+resetting status,
+ID,
+and birthtime.
+<dt><a name="PMC_*get_attr_str(STRING_*name)"
+><b><code>PMC *get_attr_str(STRING *name)</b></code></a></dt>
+Gets the value of an attribute for this task.
+<dt><a name="void_set_attr_str(STRING_*name,_PMC_*value)"
+><b><code>void set_attr_str(STRING *name, PMC *value)</b></code></a></dt>
+Sets the value of an attribute for this task.
+<dt><a name="void_push_pmc(PMC_*value)"
+><b><code>void push_pmc(PMC *value)</b></code></a></dt>
+Add value to the list of PMCs shared with this task.
+<dt><a name="PMC_*pop_pmc()"
+><b><code>PMC *pop_pmc()</b></code></a></dt>
+Return a proxy for the last shared PMC.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Mark any referenced strings and PMCs.
+<dt><a name="void_visit(PMC_*info)"
+><b><code>void visit(PMC *info)</b></code></a></dt>
+This is used by freeze/thaw to visit the contents of the task.<code>*info</code> is the visit info,
+(see <em>include/parrot/pmc_freeze.h</em>).
+<dt><a name="void_freeze(PMC_*info)"
+><b><code>void freeze(PMC *info)</b></code></a></dt>
+Used to archive the task.
+<dt><a name="void_thaw(PMC_*info)"
+><b><code>void thaw(PMC *info)</b></code></a></dt>
+Used to unarchive the task.
+<dt><a name="void_thawfinish(PMC_*info)"
+><b><code>void thawfinish(PMC *info)</b></code></a></dt>
+Called after the task has been thawed.</dl>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="METHOD_send(PMC_*message)"
+>METHOD send(PMC *message)</a></dt>
+Send a message to this task.
+<dt><a name="METHOD_code(PMC_*_code_:optional)"
+>METHOD code(PMC * code :optional)</a></dt>
+Read or write optional code,
+an <code>invokable</code> PMC related to this task.
+<dt><a name="METHOD_data(PMC_*_data_:optional)"
+>METHOD data(PMC * data :optional)</a></dt>
+Reads or writes optional task&#45;specific data,
+that will be passed to <code>code</code> when invoked.
+<dt><a name="METHOD_kill()"
+>METHOD kill()</a></dt>
+Kill this task.</dl>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em>docs/pdds/pdd25_concurrency.pod</em>.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2014, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>
