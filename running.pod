@@ -1,0 +1,223 @@
+# Copyright (C) 2001-2014, Parrot Foundation.
+
+=pod
+
+=head1 NAME
+
+docs/running.pod - Parrot runcore, debugging and optimizer options
+
+=head1 SYNOPSIS
+
+    parrot -R, --runcore <CORE> -O<level> -D<flags> -d<flags> -t<flags>
+
+    parrot -R fast
+    parrot -R slow
+    parrot -R trace | -t
+    parrot -R profiling
+    parrot -R subprof
+    parrot --gc-debug
+    parrot -R jit      I<(currently disabled)>
+    parrot -R exec     I<(currently disabled)>
+
+=head1 DESCRIPTION
+
+This document describes Parrot's runcore, debugging and optimizer options.
+
+=head1 ENVIRONMENT
+
+=over 4
+
+=item PARROT_RUNTIME
+
+If this environment variable is set, parrot will use this path as its runtime
+prefix instead of the compiled in path.
+
+=item PARROT_GC_DEBUG
+
+Turn on the I<--gc-debug> flag.
+
+=back
+
+=head1 OPTIONS
+
+=head2 Assembler/compiler options
+
+=over 4
+
+=item B<-O>[level]
+
+Valid optimizer levels: C<-O>, C<-O1>, C<-O2>, C<-Op>, C<-Oc>
+
+C<-O1> enables the pre_optimizer, runs before control flow graph (CFG) is built.
+It includes strength reduction and rewrites certain if/branch/label constructs.
+
+C<-O2> runs afterwards, handles constant propagation, jump optimizations,
+removal of unused labels and dead code.
+
+C<-Op> applies C<-O2> to pasm files also.
+
+C<-Oc> does tailcall optimizations.
+
+The old options C<-Oc> and C<-Oj> are currently ineffective.
+
+C<-O> defaults to C<-O1>.
+
+=item --help-debug
+
+Print debugging and tracing flag bits summary.
+
+=item -y, --yydebug
+
+Turn on yydebug in F<yacc>/F<bison>. Same as -d0004
+
+=item -v, --verbose
+
+Turn on compiler verbosity.
+
+=item B<-d>[=HEXFLAGS]
+
+=item B<--imcc-debug>[=HEXFLAGS]
+
+Turn on compiler debug flags.  I<See> C<parrot --help-debug> for available flag bits.
+
+=back
+
+=head2 Runcore Options
+
+These options select the runcore, which is useful for performance tuning and
+debugging.  See L<ABOUT RUNCORES> for details.
+
+=over 4
+
+=item -R, --runcore CORE
+
+Select the runcore. The following cores are available in Parrot, but not all
+may be available on your system:
+
+  fast          bare-bones core without bounds-checking or
+                context-updating (default)
+
+  slow, bounds  bounds checking core
+
+  trace         bounds checking core with trace info
+
+  profiling     Rudimentary profiling support.
+                See L<docs/dev/profiling.pod>
+
+  subprof       Better subroutine-level profilers
+  subprof_sub
+  subprof_hll
+  subprof_ops
+                See POD in F<src/runcore/subprof.c>
+
+  gc_debug      Does a full GC on each op.
+
+Older currently ignored options include:
+
+  jit, switch-jit, cgp-jit, switch, cgp, function, exec
+
+We do not recommend their use in new code; they will continue working
+for existing code per our deprecation policy.  The options function,
+cgp, switch, and jit, switch-jit, cgp-jit are currently aliases for
+fast.
+
+The additional internal C<debugger> runcore is used by debugger frontends.
+
+See F<src/runcore/cores.c> for details.
+
+=item -p, --profile
+
+Run with the slow core and print an execution profile.
+
+=item -t, --trace
+
+Run with the trace core and print trace information to B<stderr>.
+See C<parrot --help-debug> for available flag bits.
+
+=back
+
+=head2 VM Options
+
+=over 4
+
+=item -w, --warnings
+
+Turn on warnings. See C<parrot --help-debug> for available flag bits.
+
+=item -D, --parrot-debug
+
+Turn on interpreter debug flag. See C<parrot --help-debug> for available flag
+bits.
+
+=item --gc-debug
+
+Turn on GC (Garbage Collection) debugging. This imposes some stress on the GC
+subsystem and can slow down execution considerably.
+
+=item -G, --no-gc
+
+This turns off GC. This may be useful to find GC related bugs. Don't use this
+option for longer running programs: as memory is no longer recycled, it may
+quickly become exhausted.
+
+=item --leak-test, --destroy-at-end
+
+Free all memory of the last interpreter.  This is useful when running leak
+checkers.
+
+=back
+
+=head1 ABOUT RUNCORES
+
+The runcore (or runloop) tells Parrot how to find the C code that implements
+each instruction.  Parrot provides more than one way to do this, partly because
+no single runcore will perform optimally on all architectures (or even for all
+problems on a given architecture), and partly because some of the runcores have
+specific debugging and tracing capabilities.
+
+In the "slow" or "bounds" runcore, each opcode is a separate C function.
+That's pretty easy in pseudocode:
+
+    slow_runcore( op ):
+        while ( op ):
+            op = op_function( op )
+            check_for_events()
+
+The old GC debugging runcore was similar:
+
+    gcdebug_runcore( op ):
+        while ( op ):
+            perform_full_gc_run()
+            op = op_function( op )
+            check_for_events()
+
+Of course, this is much slower, but is extremely helpful for pinning memory
+corruption problems that affect GC down to single-instruction resolution.  See
+L<http://www.oreillynet.com/onlamp/blog/2007/10/debugging_gc_problems_in_parro.html>
+for more information.
+
+The trace and profile cores are also based on the "slow" core, doing
+full bounds checking, and also printing runtime information to stderr.
+
+=head1 OPERATION TABLE
+
+ Command Line          Action         Output
+ ---------------------------------------------
+ parrot x.pir          run
+ parrot x.pasm         run
+ parrot x.pbc          run
+ -o x.pasm x.pir       ass            x.pasm
+ -o x.pasm y.pasm      ass            x.pasm
+ -o x.pbc  x.pir       ass            x.pbc
+ -o x.pbc  x.pasm      ass            x.pbc
+ -o x.pbc -r x.pasm    ass/run pasm   x.pbc
+ -o x.pbc -r -r x.pasm ass/run pbc    x.pbc
+ -o x.o    x.pbc       obj
+
+... where the possible actions are:
+
+  run ... yes, run the program
+  ass ... assemble sourcefile
+  obj ..  produce native (ELF) object file for the EXEC subsystem
+
+=cut

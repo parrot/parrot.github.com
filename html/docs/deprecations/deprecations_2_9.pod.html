@@ -1,0 +1,250 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot Deprecations for 2.9</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Parrot Deprecations for 2.9
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/deprecations/deprecations_2_9.pod &#45; Parrot Deprecations for 2.9</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Parrot Deprecations for 2.9.</p>
+
+<h2><a name="Remove_charset_opcodes_and_fixed_8_encoding"
+>Remove charset opcodes and fixed_8 encoding</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>Charsets have been merged into encodings.
+The charset opcodes and the fixed_8 encoding will be removed.</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>After the charset/encoding merge,
+they&#39;re unneeded.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>Use the corresponding encoding opcodes instead.</p>
+
+<pre>    /* old code */
+    $I0 = charset $S0
+    $S1 = charsetname $I0
+    $I1 = find_charset &#34;ascii&#34;
+    $S2 = trans_charset $S0, $I1
+
+    /* updated code */
+    $I0 = encoding $S0
+    $S1 = encodingname $I0
+    $I1 = find_encoding &#34;ascii&#34;
+    $S2 = trans_encoding $S0, $I1</pre>
+
+<p>The list of supported encodings is:</p>
+
+<pre>    ascii
+    iso&#45;8859&#45;1
+    binary
+    utf8
+    utf16
+    ucs2
+    ucs4</pre>
+
+<p>Use the &#39;utf8&#39; encoding instead of the &#39;unicode&#39; charset. The &#39;fixed_8&#39; encoding is also going away. Use &#39;ascii&#39; instead. If you want to test for a fixed_8 encoding, you have to compare the encoding to &#39;ascii&#39;, &#39;iso&#45;8859&#45;1&#39; and &#39;binary&#39; separately.</p>
+
+<h2><a name="Remove_Parrot_PCCINVOKE"
+>Remove Parrot_PCCINVOKE</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>The C function Parrot_PCCINVOKE has been removed.</p>
+
+<p>See TT #443 and [wiki:PCCMigrationNotes] for details.</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>This function didn&#39;t conform to Parrot&#39;s naming conventions.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>Use Parrot_pcc_invoke_method_from_c_arg instead.</p>
+
+<p>A simple textual substitution is enough to update any code that depends on this function.</p>
+
+<pre>    /* old code */
+    Parrot_PCCINVOKE(interp, interp&#45;&#62;scheduler, CONST_STRING(interp, &#34;count_handlers&#34;), &#34;S&#45;&#62;I&#34;, handler_type, &#38;count);
+
+    /* updated code */
+    Parrot_pcc_invoke_method_from_c_args(interp, interp&#45;&#62;scheduler, CONST_STRING(interp, &#34;count_handlers&#34;), &#34;S&#45;&#62;I&#34;, handler_type, &#38;count);</pre>
+
+<p>See r42129 for more examples.</p>
+
+<h2><a name="Remove_Parrot_find_global_s_and_Parrot_store_global_s"
+>Remove Parrot_find_global_s and Parrot_store_global_s</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>Parrot_find_global_s and Parrot_store_global_s were removed after they were found to be unused.</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>Nothing in Parrot used them and they were therefore untested.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>Use the body of one of the old functions in place of its call.</p>
+
+<pre>    /* old code */
+    XXX: insert code here
+
+    /* updated code */
+    XXX: insert code here</pre>
+
+<p>See r48435 (src/namespace.c changes) for an example of what to replace calls to these functions with.</p>
+
+<p>See r42129 for more example</p>
+
+<h2><a name="Change_behavior_of_find_lex_opcode"
+>Change behavior of find_lex opcode</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>The find_lex opcode no longer throws an exception when the lexical is not found; it returns PMCNULL instead.</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>This is consistent with the other &#34;lookup&#34; opcodes.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>If you want to throw an exception, you must check the result of the opcode and throw the exception explicitly.</p>
+
+<h2><a name="Remove_CodeString_PMC"
+>Remove CodeString PMC</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>The CodeString pmc has been removed.</p>
+
+<p>See TT #1633</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>With the switch to immutable strings, CodeString became very expensive, as it did a lot of string concatenations.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>As a replacement for the .emit() functionality, instead use .append_format() in StringBuilder. Only difference from emit() is that newlines are not automatically appended, so you&#39;ll have to add them manually.</p>
+
+<p>Charname_to_ord is now an opcode: find_codepoint.</p>
+
+<p>The other methods that were provided are now part of PCT (and are probably not needed directly).</p>
+
+<h2><a name="Eliminate_Raw_NCI"
+>Eliminate Raw NCI</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>It is no longer possible to create an NCI pmc without a corresponding NCI signature.</p>
+
+<p>See TT #1549</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>This functionality abused the NCI and went against the initial purpose &#45; bridging the gap between parrot and C by translating calling conventions.</p>
+
+<p>This was error prone, generally leading to segfaults.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>If you must have an equivalent, take a look at NativePCCMethod. Otherwise, enjoy the fact that your segfaults are now most likely &#34;not implemented&#34; errors.</p>
+
+<h2><a name="GetRuntimePrefix"
+>GetRuntimePrefix</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>The function Parrot_get_runtime_prefix has been removed.</p>
+
+<p>See TT #1191</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>It returned a char * instead of a Parrot string.</p>
+
+<p>A new function provides better functionality and there is no need to keep this.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>Parrot_get_runtime_path</p>
+
+<h2><a name="RemoveIsTty"
+>RemoveIsTty</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>The method is_tty in several Handle PMCs has been removed.</p>
+
+<p>See TT #1689</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>There was a inconsistency, some PMCs used is_tty and others isatty. The decision was to keep isatty.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>Use isatty.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2014, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>
