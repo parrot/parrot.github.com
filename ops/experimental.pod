@@ -1,0 +1,192 @@
+=head1 NAME
+
+experimental.ops - Experimental Opcodes
+
+
+=cut
+
+=head1 DESCRIPTION
+
+This file contains experimental opcodes.
+
+These opcodes should be considered implicitly deprecated - that is, they
+may be removed in any release.
+
+If you rely on any of these opcodes, please open an issue at
+L<https://github.com/parrot/parrot/issues>
+
+When making changes to any ops file, run C<make bootstrap-ops> to regenerate
+all generated ops files.
+
+
+=cut
+
+=head2 More Experimental Ops
+
+=over 4
+
+=item B<trap>()
+
+Break into debugger. Implementation notes:
+
+ - x86/gcc ... works with gdb/lldb
+ - ppc/gcc ... works with gdb, to proceed: gdb> p $pc = $pc + 4
+ - TODO
+
+For other architectures, this is a C<noop>.
+
+
+=cut
+
+=item B<set_label>(invar PMC, inconst LABEL)
+
+Sets the opcode_t* label value for the given PMC. This is basically only
+useful for PMCs such as Sub, Continuation, ExceptionHandler and derivatives
+
+=item B<get_label>(out INT, invar PMC)
+
+Gets the opcode_t* label value from the given PMC. This is basically only
+useful for PMCs such as Sub, Continuation, ExceptionHandler and derivatives
+
+
+=cut
+
+=item B<get_id>(out INT, in PMC)
+
+Gets a unique(*) ID for a PMC.
+
+This may or may not be based on the pointer of the PMC, but almost certainly is
+not the raw pointer value.
+
+(*) Uniqueness of these IDs is only guarranteed within code to which this PMC is
+currently visible (ie: not across processes, or share-nothing threads, and not
+beyond the lifetime of the PMC).
+
+
+=cut
+
+=item B<fetch>(out PMC, in PMC, in PMC, in PMC)
+
+Fetches a value from $2, keyed by $3 into $1.  If the resulting PMC is PMCNULL,
+uses the type in $4 to create and return a new PMC.
+
+=item B<fetch>(out PMC, in PMC, in INT, in PMC)
+
+=item B<fetch>(out PMC, in PMC, in STR, in PMC)
+
+
+=cut
+
+=item B<vivify>(out PMC, in PMC, in PMC, in PMC)
+
+Fetches a value from $2, keyed by $3 into $1.  If the resulting PMC is PMCNULL,
+uses the type in $4 to create and return a new PMC.
+
+=item B<vivify>(out PMC, in PMC, in INT, in PMC)
+
+=item B<vivify>(out PMC, in PMC, in STR, in PMC)
+
+
+=cut
+
+=item B<new>(out PMC, in STR, in INT)
+
+=item B<new>(out PMC, in PMC, in INT)
+
+
+=cut
+
+=item B<root_new>(out PMC, in PMC, in INT)
+
+
+=cut
+
+=item B<get_context>(out PMC)
+
+
+=cut
+
+=item B<new_call_context>(out PMC)
+
+
+=cut
+
+=item B<invokecc>(invar PMC, invar PMC)
+
+
+=cut
+
+=item B<flatten_array_into>(invar PMC, invar PMC, in INT)
+
+
+=cut
+
+=item B<flatten_hash_into>(invar PMC, invar PMC, in INT)
+
+
+=cut
+
+=item B<slurp_array_from>(out PMC, invar PMC, in INT)
+
+
+=cut
+
+=item B<receive>(out PMC)
+
+Receive a message sent to the current task.
+
+If there is no waiting message, block and wait.
+
+
+=cut
+
+=item B<wait>(in PMC)
+
+Block and wait for a task to complete.
+
+
+=cut
+
+=item B<pass>()
+
+Pass the rest of the current quantum and schedule the next
+task in the task queue.
+
+
+=cut
+
+=item B<disable_preemption>()
+
+Disables preemption so the current task can run uninterrupted through a critical section.
+
+
+=cut
+
+=item B<enable_preemption>()
+
+Enables preemption. To be called after the current task has finished executing a critical section.
+
+
+=cut
+
+=item B<terminate>()
+
+Terminate the current task immediately.
+
+
+=cut
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (C) 2001-2012, Parrot Foundation.
+
+=head1 LICENSE
+
+This program is free software. It is subject to the same license
+as the Parrot interp itself.
+
+
+=cut
+

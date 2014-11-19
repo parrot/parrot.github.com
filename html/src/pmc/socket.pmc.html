@@ -1,0 +1,165 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Socket PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; Socket PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/socket.pmc &#45; Socket PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>The Socket PMC performs abstract network I/O operations.</p>
+
+<h2><a name="Vtable_Functions"
+>Vtable Functions</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Initializes a newly created Socket object.
+<dt><a name="PMC_*clone()"
+><b><code>PMC *clone()</b></code></a></dt>
+Create a copy of the socket handle.
+<dt><a name="void_mark()"
+><b><code>void mark()</b></code></a></dt>
+Mark active socket handle data as live.
+<dt><a name="void_destroy()"
+><b><code>void destroy()</b></code></a></dt>
+Free structures.
+<dt><a name="INTVAL_get_bool()"
+><b><code>INTVAL get_bool()</b></code></a></dt>
+Returns whether the Socket is currently open.</dl>
+
+<h2><a name="Methods"
+>Methods</a></h2>
+
+<dl>
+<dt><a name="socket(INTVAL_fam,_INTVAL_type,_INTVAL_proto)"
+><b><code>socket(INTVAL fam, INTVAL type, INTVAL proto)</b></code></a></dt>
+
+<dt><a name="poll(INTVAL_which,_INTVAL_sec,_INTVAL_usec)"
+><b><code>poll(INTVAL which, INTVAL sec, INTVAL usec)</b></code></a></dt>
+Watches the socket for <code>sec</code> seconds and <code>usec</code> microseconds.
+<code>which</code> is a bitmask representing the states you want to watch for.
+Or together 1 for readable,
+two for writeable,
+and four for exceptions.
+<dt><a name="sockaddr(STRING_*_address,_INTVAL_port,_INTVAL_family_:optional)"
+><b><code>sockaddr(STRING * address, INTVAL port, INTVAL family :optional)</b></code></a></dt>
+<code>sockaddr</code> returns an object representing a socket address,
+generated from a port number (integer) ,
+address (string) and an optional address family (integer).
+If no address family is given,
+it defaults to IPv4.
+<dt><a name="getaddrinfo(STRING_*_address,_INTVAL_port,_INTVAL_protocol,_INTVAL_family,_INTVAL_passive)"
+><b><code>getaddrinfo(STRING * address, INTVAL port, INTVAL protocol, INTVAL family, INTVAL passive)</b></code></a></dt>
+<code>getaddrinfo</code> returns an array of Sockaddr PMCs representing the result of the <code>getaddrinfo(3)</code> function which consists of multiple socket addresses,
+including family and protocol.
+It can be passed to <code>bind()</code> or <code>connect()</code>.
+<dt><a name="remote_address()"
+><b><code>remote_address()</b></code></a></dt>
+<code>remote_address</code> returns the remote address of this socket PMC.
+<dt><a name="local_address()"
+><b><code>local_address()</b></code></a></dt>
+<code>local_address</code> returns the local address of this socket PMC.
+<dt><a name="METHOD_is_closed()"
+><b><code>METHOD is_closed()</b></code></a></dt>
+Test if the socket is closed.
+<dt><a name="getprotobyname(STRING_*_name)"
+><b><code>getprotobyname(STRING * name)</b></code></a></dt>
+<code>getprotobyname</code> returns a protocol number suitable for passing to <code>socket</code>,
+based on the given protocol name.
+This is normal only necessary when opening sockets in raw mode.
+<dt><a name="connect(PMC_*_address)"
+><b><code>connect(PMC * address)</b></code></a></dt>
+Connects a socket object to an address.The asynchronous version takes an additional final PMC callback argument,
+and only returns a status object.
+When the socket operation is complete,
+it invokes the callback,
+passing it a status object and the socket object it was called on.
+[If you want notification when a connect operation is completed,
+you probably want to do something with that connected socket object.]
+<dt><a name="recv()"
+><b><code>recv()</b></code></a></dt>
+Receives a message from a connected socket object.
+It returns the message in a string.The asynchronous version takes an additional final PMC callback argument,
+and only returns a status object.
+When the recv operation is complete,
+it invokes the callback,
+passing it a status object and a string containing the received message.If the socket is closed or on other errors,
+it throws an .EXCEPTION_PIO_ERROR Exception.
+<dt><a name="send(STRING_*buf)"
+><b><code>send(STRING *buf)</b></code></a></dt>
+Sends a message string to a connected socket object.The asynchronous version takes an additional final PMC callback argument,
+and only returns a status object.
+When the send operation is complete,
+it invokes the callback,
+passing it a status object.
+<dt><a name="bind(PMC_*host)"
+><b><code>bind(PMC *host)</b></code></a></dt>
+<code>bind</code> binds a socket object to the port and address specified by an address object (the result of <code>getaddrinfo</code>).The asynchronous version takes an additional final PMC callback argument,
+and only returns a status object.
+When the bind operation is complete,
+it invokes the callback,
+passing it a status object and the socket object it was called on.
+[If you want notification when a bind operation is completed,
+you probably want to do something with that bound socket object.]
+<dt><a name="listen(INTVAL_backlog)"
+><b><code>listen(INTVAL backlog)</b></code></a></dt>
+<code>listen</code> specifies that a socket object is willing to accept incoming connections.
+The integer argument gives the maximum size of the queue for pending connections.There is no asynchronous version.
+<code>listen</code> marks a set of attributes on the socket object.
+<dt><a name="accept()"
+><b><code>accept()</b></code></a></dt>
+<code>accept</code> accepts a new connection on a given socket object,
+and returns a newly created socket object for the connection.The asynchronous version takes an additional final PMC callback argument,
+and only returns a status object.
+When the accept operation receives a new connection,
+it invokes the callback,
+passing it a status object and a newly created socket object for the connection.
+[While the synchronous <code>accept</code> has to be called repeatedly in a loop (once for each connection received),
+the asynchronous version is only called once,
+but continues to send new connection events until the socket is closed.]
+<dt><a name="METHOD_read(INTVAL_bytes)"
+><b><code>METHOD read(INTVAL bytes)</b></code></a></dt>
+Read up to the given number of bytes from the socket and return them in a string.This method behaves always the same as recv().
+Only if the socket is already closed return an empty string.
+<dt><a name="METHOD_readline(STRING_delimiter)"
+><b><code>METHOD readline(STRING delimiter)</b></code></a></dt>
+Read a line from the socket and return it in a string.
+If <code>delimiter</code> is present,
+it is used to determine line endings instead of the default <code>\n</code>.
+<dt><a name="METHOD_puts(STRING_*buf)"
+><b><code>METHOD puts(STRING *buf)</b></code></a></dt>
+Print the string to the socket.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2014, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

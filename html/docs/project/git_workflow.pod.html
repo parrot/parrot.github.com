@@ -1,0 +1,414 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - How to use Git to work on Parrot</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; How to use Git to work on Parrot
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/project/git_workflow.pod &#45; How to use Git to work on Parrot</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>To minimize the disruption of feature development on language and tool developers,
+all major changes to Parrot core take place in a branch.
+Ideally,
+branches are short&#45;lived,
+and contain the smallest set of changes possible.
+It is also good practice to have &#34;atomic&#34; commits,
+in the sense that each commit does one thing,
+so that it makes it easier to accept/revert some things while keeping others.
+Git provides many powerful tools in the maintenance of branches.
+This document aims to provide everything a Parrot developer needs to know about Git to successfully create a branch,
+work on it,
+keep it in sync with changes on master and finally merge the branch (or send a pull request).</p>
+
+<h2><a name="Cloning_the_Git_Repository"
+>Cloning the Git Repository</a></h2>
+
+<p>To get the full version history of Parrot,
+which is called &#34;cloning a repository&#34;,
+you will use the <code>git clone</code> command.
+This will show how to clone the repo from <a href='http://github.com'><a href="http://github.com">http://github.com</a></a>:</p>
+
+<pre>  git clone git://github.com/parrot/parrot.git</pre>
+
+<p>If you have commit access to parrot.git, then you can use the read/write SSH protocol</p>
+
+<pre>  git clone git@github.com:parrot/parrot.git</pre>
+
+<p>If you are behind a firewall that will only let you do HTTP, you can use the HTTP protocol, but it is much slower and inefficient, so only use it if you must:</p>
+
+<pre>  git clone <a href="http://github.com/parrot/parrot.git">http://github.com/parrot/parrot.git</a></pre>
+
+<p>Cloning a git repo automatically makes the URL that you cloned from your default &#34;remote&#34;, which is called &#34;origin&#34;. What this means is that when you want to pull in new changes or push changes out in the future, &#34;origin&#34; is what will be used by default.</p>
+
+<h2><a name="Creating_and_Switching_Branches"
+>Creating and Switching Branches</a></h2>
+
+<p>To create a branch and check it out, use the <code>git checkout &#45;b</code> command. Please note that branches are first created locally, and then pushed to any number of remotes. A branch cannot be seen by anyone else until it is pushed to a remote.</p>
+
+<p>Branches in git are very &#34;light&#45;weight&#34;, i.e. they take up virtually no extra space (unlike in Subversion), so please use them liberally.</p>
+
+<p>Current convention is to create branch names of the form username/foo.</p>
+
+<pre>  git checkout &#45;b username/foo</pre>
+
+<p>You can also create a branch without checking it out:</p>
+
+<pre>  git branch username/foo</pre>
+
+<p>To checkout (or &#34;switch to&#34;, as it is commonly referred to) the username/foo branch:</p>
+
+<pre>  git checkout username/foo</pre>
+
+<p>If you would like to checkout a branch that already exists, first make sure to get the latest commits with:</p>
+
+<pre>  git fetch</pre>
+
+<p>Then use this syntax to track the remote branch with a local branch:</p>
+
+<pre>  git checkout &#45;t origin/username/foo</pre>
+
+<p>If you are using a very old version of Git, such as 1.5.x.x or older, you will want to tell it to track the remote branch:</p>
+
+<pre>  git checkout &#45;&#45;track &#45;b username/foo origin/username/foo</pre>
+
+<p>Tracking remote branches is the default in Git 1.6.x.x and higher.</p>
+
+<h2><a name="Pushing_branches_and_tags"
+>Pushing branches and tags</a></h2>
+
+<p>If you want to push your local branch user/branch to origin:</p>
+
+<pre>  git push origin user/branch</pre>
+
+<p>Tags are not pushed by default. If you want to push your tags to origin:</p>
+
+<pre>  git push origin &#45;&#45;tags</pre>
+
+<p>Since origin is the default remote, this is the same as</p>
+
+<pre>  git push &#45;&#45;tags</pre>
+
+<h2><a name="Keeping_branches_updated"
+>Keeping branches updated</a></h2>
+
+<p>To get the latest updates:</p>
+
+<pre>  git fetch</pre>
+
+<p>This copies the index from your default remote (origin) and saves it to your local index. This does not effect your working copy, so it doesn&#39;t matter what branch you are on when you run this command. To sync up your working copy, you can use <code>git rebase</code></p>
+
+<pre>  git checkout master       # Switch to the master branch
+  git rebase origin/master  # rebase latest fetched changes onto master</pre>
+
+<p>This is a common action, so there is also a simpler way to do it:</p>
+
+<pre>  git pull &#45;&#45;rebase</pre>
+
+<p>Whenever you don&#39;t specify a remote or branch to a git command, they default to the remote called &#34;origin&#34; and the master branch, so the previous command means exactly the same as:</p>
+
+<pre>  git pull &#45;&#45;rebase origin master</pre>
+
+<p>This is important to note when you are working with remotes other than origin, or other branches.</p>
+
+<h2><a name="How_to_commit"
+>How to commit</a></h2>
+
+<p>Let&#39;s say you modified the file foo.c and added the file bar.c and you want to commit these changes. To add these changes to the staging area (the list of stuff that will be included in your next commit):</p>
+
+<pre>  git add foo.c bar.c</pre>
+
+<p>The command <code>git add</code> is not only for adding new files, just keep that in mind. It tells git &#34;add the *current* state of these files to my staging area.&#34; If these files change after you <code>git add</code> them, they will need to be added again.</p>
+
+<p>If you are trying to add files that are in .gitignore, you can do that with the &#45;&#45;force flag:</p>
+
+<pre>    git add &#45;&#45;force ports/foo</pre>
+
+<p>NOTE: Make sure these files should actually be added. Most files in .gitignore should never be added, but some, such as some files in &#34;ports/&#34; will need the &#45;&#45;force flag.</p>
+
+<p>Now for actually creating your commit! Since Git is a distributed version control system, committing code is separate from sending your changes to a remote server. Keep this in mind if you are used to Subversion or similar VCS&#39;s, where committing and sending changes are tied together.</p>
+
+<pre>  git commit &#45;m &#34;This is an awesome and detailed commit message&#34;</pre>
+
+<p>If you do not give the &#45;m option to <code>git commit</code>, it will open your $EDITOR and give you metadata which will help you write your commit message, such as which files changed and if conflicts happened. Only lines that do not begin with a # will be in your commit message.</p>
+
+<p>Commit messages consist of a one line &#34;short message&#34; and an optional long message that can be as long as you like. There must be an empty line between the short message and the long message. It is often a good practice to keep the first line of a commit message relatively short, around 50 characters. This allows for tools to succinctly display one&#45;line commit messages with metadata. It is good practice to describe *why* something was done in the long message, in addition to what was done.</p>
+
+<p>Instead of adding files individually, you can also tell <code>git commit</code> that you want all modified and deleted files to be in your next commit via the <code>&#45;a</code> flag:</p>
+
+<pre>    git commit &#45;a &#45;m &#34;awesome and informative commit message&#34;</pre>
+
+<p>Be careful with <code>git commit &#45;a</code>, it could add files that you do not mean to include. Verify that the contents of your most recent commit look sane with:</p>
+
+<pre>    git show</pre>
+
+<p>Reading the man page of <code>git commit</code> with <code>git help commit</code> is also a good idea.</p>
+
+<h2><a name="Maintaining_a_Branch"
+>Maintaining a Branch</a></h2>
+
+<p>To update your local git index from origin:</p>
+
+<pre>    git fetch</pre>
+
+<p>If you are following multiple remotes, you can fetch updates from all of them with:</p>
+
+<pre>    git fetch &#45;&#45;all</pre>
+
+<p>Note that this command requires a recent (1.7.x.x) version of git.</p>
+
+<p>The command <code>git fetch</code> only modifies the index, not your working copy or staging area. To update your working copy of the branch bobby/tables:</p>
+
+<pre>  git checkout bobby/tables         # make sure we are on the branch
+  git rebase origin/bobby/tables    # get the latest sql injections</pre>
+
+<p>If you have a topic branch and want to pick up the most recent changes in master since the topic branch diverged, you can merge the master branch into the topic branch. In this case, we assume the topic branch is called parrot/beak:</p>
+
+<pre>  git checkout parrot/beak          # make sure we are on the branch
+  git merge master                  # merge master into parrot/beak</pre>
+
+<p>This same pattern can be followed for merging any branch into another branch.</p>
+
+<h2><a name="Preparing_to_Merge_a_Branch"
+>Preparing to Merge a Branch</a></h2>
+
+<p>Post to parrot&#45;dev@lists.parrot.org letting people know that you&#39;re about to merge a branch. Follow the guidelines in <a href='TODO#project%2Fmerge_review_guidelines.pod'>&#34;project/merge_review_guidelines.pod&#34; in docs</a>, especially:</p>
+
+<ol>
+<li>Ask people to submit test results for their language, tool, or platform. They can submit results to Smolder by typing &#34;make smoke&#34; on the relevant branch. If you don&#39;t hear back from people, it doesn&#39;t mean they ran the tests and found no problems, it means they didn&#39;t bother testing the branch. If you need feedback on a particular language or platform, follow up with the person responsible until you hear an explicit &#34;Yes, it&#39;s working&#34; answer.</li>
+
+<li>Let people know what tests you ran, so they can determine if you didn&#39;t run the tests for their language or tool (or, didn&#39;t run <i>all</i> the tests for their language or tool if they have some unusual testing configuration).</li>
+
+<li>Mention any significant feature changes in the branch that you particularly want tested.</li>
+</ol>
+
+<h2><a name="Merging_a_Github_Pull_Request"
+>Merging a Github Pull Request</a></h2>
+
+<p>If someone has sent the Parrot Github Organization a pull request, life is a bit easier now. If pull request #123 has been sent, then type:</p>
+
+<pre>    perl tools/dev/merge_pull_request.pl 123</pre>
+
+<p>and you will automatically be on a branch called pull_request_123 with all commits in the pull request applied as individually signed&#45;off commits. Now you can review the code, run tests, etc and vet the code. You can even type</p>
+
+<pre>    git checkout &#45;b way_cooler_branch_name</pre>
+
+<p>if you want a more informative branch name than the autogenerated one.</p>
+
+<p>If you want to merge this code to master, you then type</p>
+
+<pre>    git checkout master
+    git merge &#45;&#45;no&#45;ff pull_request_123</pre>
+
+<p>Don&#39;t forget to close the pull request manually, since signing off on the commits changes their SHA1s, which means Github can&#39;t detect the merge and autoclose the pull request. That&#39;s it!</p>
+
+<h2><a name="Merging_a_Branch"
+>Merging a Branch</a></h2>
+
+<p>When you&#39;re ready to merge your changes back into master, use the <code>git merge</code> command. First, make sure you are on the master branch with:</p>
+
+<pre>  git checkout master</pre>
+
+<p>Now, to merge the branch user/foo into master:</p>
+
+<pre>  git merge &#45;&#45;no&#45;ff user/foo</pre>
+
+<p>If the same part of the same file has been modified in master and the branch user/foo, you will get a conflict. If you get a conflict, then you need to edit each file with a conflict, fix the conflict, delete the conflict markers, <code>git add</code> each conflicted file and then finally commit the result. You may find it useful to type <code>git commit</code> with no commit message argument (&#45;m), so your $EDITOR will be opened and a default commit message of &#34;Merged branch user/foo into master&#34; with a list of conflicted files will be present, which can be left alone or additional information can be added.</p>
+
+<p>At this point you should run the test suite on the merged branch, and fix any failures if possible. If these problems cannot be resolved, then the results of the merge should not be pushed back to master on origin. You may want to push a topic branch to allow other people to help:</p>
+
+<pre>  git checkout &#45;b user/foo_in_master
+  git push origin user/foo_in_master</pre>
+
+<p>You can now mention the problems you ran into to parrot&#45;dev or #parrot and mention the branch.</p>
+
+<p>Why use &#34;&#45;&#45;no&#45;ff&#34; ? This flag mean &#34;no fast forwards&#34;. Usually fast forwards are good, but if there is a branch that has all the commits of master, plus a few more, when you merge without &#45;&#45;no&#45;ff, there will be no merge commit. Git is smart enough to &#34;fast forward.&#34; But for the purpose of looking at history, Parrot would like to always have a merge commit for a merge, even if it *could* be fast&#45;forwarded.</p>
+
+<p>This flag is only needed when merging branches into master. It is optional for other merge cases, but it won&#39;t hurt. If it is simpler to think about, you can always use &#34;&#45;&#45;no&#45;ff&#34; when merging.</p>
+
+<h2><a name="Maintain_A_Fork"
+>Maintain A Fork</a></h2>
+
+<p>If you fork Parrot on github, you will have a copy of the entire history of Parrot, which you can sync with the main parrot git repo as often as you want.</p>
+
+<p>First Rule:</p>
+
+<pre>    Don&#39;t Commit To Master In Your Fork</pre>
+
+<p>Create a branch (with git checkout &#45;b branch) and do any development in that.</p>
+
+<p>Next, you will add the main parrot.git repo as a remote called &#34;upstream&#34;</p>
+
+<pre>    git remote add upstream git://github.com/parrot/parrot.git</pre>
+
+<p>You may call this remote anything you like, but for the purposes of this document, we will always refer to is as &#34;upstream&#34;.</p>
+
+<p>We now want to get a copy of the index from upstream. If you are using a recent git (1.7.x.x or higher) you can update your copy of the index of all remotes with</p>
+
+<pre>    git fetch &#45;&#45;all</pre>
+
+<p>If you have an elderly git, you can give the fetch command the name of the remote to fetch:</p>
+
+<pre>    git fetch upstream</pre>
+
+<p>Now you need to update your working copy, and specifically, the master branch, so make sure you are on the master branch of your fork</p>
+
+<pre>    git checkout master</pre>
+
+<p>and then sync up with upstream master</p>
+
+<pre>    git rebase upstream/master</pre>
+
+<p>There is no possibility of conflicts here *if you didn&#39;t commit to master*. If you get conflicts at this step, you are doing something wrong. Stop and ask someone for help.</p>
+
+<p>It is in your best interest to sync up your master branch with upstream before creating new branches from master, since that will minimize the possibilities of conflicts when merging the branch back to master later on.</p>
+
+<p>Second Rule:</p>
+
+<pre>    Don&#39;t Rebase Branches Against Each Other</pre>
+
+<p>For instance, if you are on branch &#39;foo&#39; and you do</p>
+
+<pre>    git rebase upstream/master</pre>
+
+<p>you will be entering a world of pain. Don&#39;t do it. If you are smart enough to know when it is OK to do this, you don&#39;t need this document.</p>
+
+<p>This workflow to maintain a fork will make submitting pull requests &#34;Just Work&#34; and if you plan to submit pull requests, this workflow is required. If you don&#39;t want to submit pull requests, do whatever ye will.</p>
+
+<h2><a name="Merging_Code_From_Forks"
+>Merging Code From Forks</a></h2>
+
+<p>NOTE: This is not official policy, and could change at any time.</p>
+
+<p>ALSO NOTE: With the introduction of the magical Github Merge Button, doesn&#39;t this seem like a ridiculous amount of work to accept code from a fork? This workflow is still useful if you want to run tests or do any other analysis on the pull request.</p>
+
+<p>If you are merging code from non&#45;core committers, Parrot would like to see &#34;Signed&#45;off&#45;by&#34; lines on each commit, so it is clear that one person wrote the code and someone else is taking responsibility for merging the code.</p>
+
+<p>To merge in a pull request on Github, there is the easy way or the hard way. The easy way is to use tools/dev/merge_pull_request.pl like so:</p>
+
+<pre>    perl $PARROT/tools/dev/merge_pull_request.pl N</pre>
+
+<p>where N is the number of the pull request. This will create a branch for the pull request and plop you on it, so that tests or other analyses can be run.</p>
+
+<p>This script can be used to merge a pull request for any repo in the Parrot Github Organization. For instance, to merge Cardinal Pull request #4:</p>
+
+<pre> perl $PARROT/tools/dev/merge_pull_request.pl 4 cardinal</pre>
+
+<p>If you do not want the default branch name, you can specify a third argument to specify one:</p>
+
+<pre> perl $PARROT/tools/dev/merge_pull_request.pl 4 cardinal awesome_feature</pre>
+
+<p>This will merge pull request #4 in the cardinal repo into a branch called &#39;awesome_feature&#39;.</p>
+
+<p>Run <code>perldoc tools/dev/merge_pull_request.pl</code> for more info.</p>
+
+<p>The hard way: Follow the first two steps on the Github pull request page, i.e:</p>
+
+<pre>    # 1) Make a new branch to pull stuff into
+    git checkout &#45;b someguy&#45;newbranch master
+
+    # 2) Pull in changes from the branch of a forked repo
+    # and switch to newbranch
+    git pull https://github.com/someguy/parrot.git newbranch</pre>
+
+<p>Then you will follow this procedure:</p>
+
+<pre>    # 3) let&#39;s look at a diff OPTIONAL
+    git diff master    # look at a diff
+
+    # 4) let&#39;s make a patch of the difference between this branch and master
+    git format&#45;patch master &#45;&#45;stdout &#62; foo.patch
+
+    # 5) Switch back to the master branch
+    git checkout master
+
+    # 6) does the patch apply? OPTIONAL
+    git apply &#45;&#45;check gci.patch
+
+    # 7) Actually merge in the changes with Signed&#45;Off&#45;By lines
+    git am &#45;&#45;signoff gci.patch</pre>
+
+<p>After doing this, you will the new commits in master with your Signed&#45;Off&#45;By lines. Run the tests and if they all pass, push your changes upstream. If they don&#39;t, and you want others to take a look at stuff, create a new branch from your local master:</p>
+
+<pre>    # make a new branch
+    git checkout &#45;b my_new_branch
+
+    # push it upstream
+    git push origin my_new_branch</pre>
+
+<p>At this point, your local master has commits that are now in my_new_branch, so you should reset master back to before you applied the patch. You can do this by looking at the output of <code>git log</code> and finding the most recent SHA1 before your branch, then doing:</p>
+
+<pre>    git reset &#45;&#45;hard $sha1</pre>
+
+<p>Be careful with <code>git reset</code>! Make sure there are no untracked files that you care about BEFORE YOUR RUN <code>git reset</code>.</p>
+
+<p>The use of reset can be avoided if you create a new branch before applying the patch, and then merging that branch to master before pushing.</p>
+
+<p>Also note that you will have to manually close the Github pull request, since adding Signed&#45;Off&#45;By lines changes the SHA1&#39;s which Github uses to automatically close pull requests.</p>
+
+<h2><a name="Announcing_a_Merge"
+>Announcing a Merge</a></h2>
+
+<p>Send a message to parrot&#45;dev@lists.parrot.org letting people know that your branch has been merged. Include a detailed list of changes made in the branch (you may want to keep this list as you work). Particularly note any added, removed, or changed opcodes, changes to PIR syntax or conventions, and changes in the C interface.</p>
+
+<p>If there was a specific language, tool, or platform that you wanted tested before merging but couldn&#39;t get any response from the responsible person, you may want to include some warning in the announcement that you weren&#39;t able to test that piece fully.</p>
+
+<h2><a name="Deleting_a_Branch"
+>Deleting a Branch</a></h2>
+
+<p>After merging a branch, you will have a local copy of the merged branch, as well as a copy of the branch on your remote. To remove the local branch:</p>
+
+<pre>  git branch &#45;d user/foo</pre>
+
+<p>To remove the remote branch user/foo on the remote origin:</p>
+
+<pre>  git push origin :user/foo</pre>
+
+<p>This follows the general pattern of</p>
+
+<pre>  git push origin local_branch_name:remote_branch_name</pre>
+
+<p>When local_branch_name is empty, you are pushing &#34;nothing&#34; to the remote branch, which deletes it.</p>
+
+<h2><a name="How_Can_I_Tell_If_A_Branch_Is_Merged?"
+>How Can I Tell If A Branch Is Merged?</a></h2>
+
+<p>To see a list of all remote branches that are not merged into branch foo</p>
+
+<pre>    git branch &#45;r &#45;&#45;no&#45;merged foo</pre>
+
+<p>If you leave out the last argument, it defaults to HEAD (the tip of the current branch). So, to see a list of all remote branches that have not been merged into master:</p>
+
+<pre>    git checkout master
+    git branch &#45;r &#45;&#45;no&#45;merged</pre>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2014, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>
