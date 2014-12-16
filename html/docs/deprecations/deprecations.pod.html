@@ -1,0 +1,223 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot Deprecations</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Parrot Deprecations
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/deprecations/deprecations.pod &#45; Parrot Deprecations</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This page exists to systematically document all deprecations that apply to core Parrot code.</p>
+
+<p>We don&#39;t hate our users and while we love ripping out crufty old code,
+we also don&#39;t want anyone developing code on top of Parrot to dread paying the &#34;upgrade tax&#34; when moving from one supported version to the next.</p>
+
+<p>The idea behind this page is that by following the instructions for each version transition,
+developers of HLLs and libraries can have a well&#45;known and deterministic upgrade path.</p>
+
+<p>Any new deprecations must be described on the appropriate page and summarized here before being committed to master.
+This deprecation policy will be instituted shortly before the 2.6 release.</p>
+
+<p>Although we will attempt to add notices for previous version transitions,
+these lists may be incomplete.</p>
+
+<p>Notifications for the 2.6&#45;&#62;2.9 transition and later will be complete.</p>
+
+<p>For instructions on how to deprecate Parrot code,
+please see: <em>how_to_deprecate.pod</em>.</p>
+
+<h2><a name="Changes_Between_4.9_and_5.0"
+>Changes Between 4.9 and 5.0</a></h2>
+
+<ul>
+<li>Moved &#34;.&#34; in the library search paths from the beginning to the end.</li>
+
+<p>&#45; high impact expected: build systems need to change their build and tests to favor their new libraries over already installed ones,
+to use absolute paths or add &#45;L./ &#45;X./.
+load_bytecode,
+.include and load_language might load now different files,
+if they exist in &#34;./&#34; AND in the proper library location.
+To keep the old behavior use parrot &#45;L./ &#45;X./ or set the environment variables PARROT_INCLUDE and PARROT_LIBRARY to &#34;./&#34;</p>
+</ul>
+
+<h2><a name="Changes_Between_3.3_and_3.6"
+>Changes Between 3.3 and 3.6</a></h2>
+
+<ul>
+<li>Special Purpose NCI Parameter Types</li>
+
+<p>&#45; moderate impact expected: some NCI&#45;using code needs to be rewritten</p>
+</ul>
+
+<h2><a name="Changes_Between_3.0_and_3.3"
+>Changes Between 3.0 and 3.3</a></h2>
+
+<ul>
+<li>pkg&#45;config Support</li>
+
+<p>&#45; low impact expected: feature has been unusable since at least 1.0</p>
+</ul>
+
+<h2><a name="Changes_Between_2.9_and_3.0"
+>Changes Between 2.9 and 3.0</a></h2>
+
+<p>This list is a summary.
+A more complete description and migration path for each change is at <em>deprecations_3_0.pod</em>.</p>
+
+<p>Any deprecations occurring after the 2.9.0 release require an accompanying notice here and <em>deprecations_3_0.pod</em>,
+so the list should be exhaustive.</p>
+
+<p>If you find a deprecation that should be listed here,
+file a ticket <a href='https://github.com/parrot/parrot/issues/new'>https://github.com/parrot/parrot/issues/new</a> or hop on #parrot on irc.parrot.org and let us know.</p>
+
+<ul>
+<li>PARROT_ERRORS_GLOBALS_FLAG</li>
+
+<p>&#45; low impact expected: no&#45;op removal</p>
+
+<li>CodeString.
+TT #1633</li>
+
+<p>&#45; high impact expected: PGE interface changed.
+user updates required.</p>
+
+<li>unique_reg PIR flag.
+TT #1622</li>
+
+<p>&#45; low impact expected: equivalent functionality available by text substitution.</p>
+
+<li>PIRspecialforms .nci_call and .meth_call.
+TT #1623 TT #1624</li>
+
+<p>&#45; low impact expected: no known users.</p>
+
+<li>Indirect Register Access Ops.
+TT #1642</li>
+
+<p>&#45; low impact expected: no known users.</p>
+
+<li>Exchange Op.
+TT #1643</li>
+
+<p>&#45; low impact expected: no known users.</p>
+
+<li>PIR string literals with charset and encoding are deprecated.
+TT #1808</li>
+
+<p>&#45; medium impact expected: the conversion is straightforward.</p>
+
+<li>Remaining string_* functions are deprecated.
+TT #1809</li>
+
+<p>&#45; medium impact expected: these functions have been deprecated for a while.</p>
+
+<li>Method lower in String PMC.
+TT #1606</li>
+
+<p>&#45; low impact expected: has been deprecated for a while.</p>
+
+<li>Final removal of mutable strings leftovers.
+TT #1540.</li>
+
+<p>&#45; Op <code>concat_s_s</code> was removed.
+Trivial change to <code>concat_s_s_s</code> or slightly better solution to refactor with StringBuilder.</p>
+</ul>
+
+<h2><a name="Changes_Between_2.6_and_2.9"
+>Changes Between 2.6 and 2.9</a></h2>
+
+<p>This list is a summary.
+A more complete description and migration path for each change is at <em>deprecations_2_9.pod</em>.</p>
+
+<p>If you find a deprecation that should be listed here,
+file a ticket <a href='https://github.com/parrot/parrot/issues/new'>https://github.com/parrot/parrot/issues/new</a> or hop on #parrot on irc.parrot.org and let us know.</p>
+
+<ul>
+<li>Remove charset opcodes.
+TT #1778</li>
+
+<p>&#45; low impact expected: the conversion to encoding opcodes is straightforward.</p>
+
+<li>Remove ParrotPCCINVOKE.</li>
+
+<p>&#45; negligible impact expected: this function has been deprecated for a long time.</p>
+
+<li>Remove Parrot_find_global_s and Parrot_store_global_s TT #1660</li>
+
+<p>&#45; low impact expected: these functions were used rarely outside Parrot.</p>
+
+<li>Change find_lex opcode behaviour.</li>
+
+<p>&#45; low impact expected: this function has been deprecated for awhile.</p>
+
+<li>Eliminate Raw NCI.</li>
+
+<p>&#45; negligible impact expected: this functionality has little use that doesn&#39;t result in a segfault</p>
+
+<li>Remove Parrot_get_runtime_prefix.
+TT #1191</li>
+
+<p>&#45; Zero impact expected,
+it&#39;s been unused since long time.</p>
+
+<li>RemoveIsTty Remove is_tty methods.
+#1689</li>
+
+<p>&#45; negligible impact expected.</p>
+</ul>
+
+<h2><a name="Changes_Between_2.3_and_2.6"
+>Changes Between 2.3 and 2.6</a></h2>
+
+<p>This list is a summary.
+A more complete description and migration path for each change is at <em>deprecations_2_6.pod</em>.</p>
+
+<ul>
+<li>Remove sizeof op.</li>
+
+<p>No replacement currently exists.
+TT #633</p>
+
+<p>&#45; negligible impact expected: this op was not widely used</p>
+
+<li>Replace STRING_is_null with Parrot_str_is_null TT #1585</li>
+
+<p>&#45; moderate impact expected: simple textual substitution for C code dealing with STRING* values</p>
+
+<li>Remove in&#45;place substr op variants.
+TT #1450</li>
+
+<p>&#45; high impact expected: most PIR code dealing with string substitution will need to be updated</p>
+</ul>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2014, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>
