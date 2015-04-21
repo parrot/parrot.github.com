@@ -6,14 +6,14 @@
 
 # Setup of some commands
 PERL    = /usr/local/bin/perl
-CHMOD   = $(PERL) -MExtUtils::Command -e chmod
-MKPATH  = $(PERL) -MExtUtils::Command -e mkpath
-TOUCH   = $(PERL) -MExtUtils::Command -e touch
-RM_F    = $(PERL) -MExtUtils::Command -e rm_f
-RM_RF   = $(PERL) -MExtUtils::Command -e rm_rf
+CHMOD   = chmod
+MKPATH  = mkdir -p
+TOUCH   = touch
+RM_F    = rm -f
+RM_RF   = rm -rf
 PERLDOC = /usr/local/bin/perldoc
 POD2MAN = /usr/local/bin/pod2man
-VERSION = 7.0.0
+VERSION = 7.2.0
 PODEXTRACT   = $(PERL) ../tools/build/podextract.pl
 ADDGENERATED = $(PERL) ../tools/build/addgenerated.pl
 OPS_SUMMARY = ../tools/docs/ops_summary.pl
