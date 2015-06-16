@@ -21,4 +21,4 @@ us to display this page, rather than the contents of 'README.pod'.
 
 # COPYRIGHT
 
-Copyright (C) 2011-2012, Parrot Foundation.
+Copyright (C) 2011-2015, Parrot Foundation.

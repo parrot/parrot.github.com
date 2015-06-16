@@ -5,7 +5,7 @@
 # Copyright (C) 2001-2014, Parrot Foundation.
 
 # Setup of some commands
-PERL    = /usr/local/bin/perl
+PERL    = /usr/local/bin/perl5.22.0-nt
 CHMOD   = chmod
 MKPATH  = mkdir -p
 TOUCH   = touch
@@ -13,7 +13,7 @@ RM_F    = rm -f
 RM_RF   = rm -rf
 PERLDOC = /usr/local/bin/perldoc
 POD2MAN = /usr/local/bin/pod2man
-VERSION = 7.3.0
+VERSION = 7.4.0
 PODEXTRACT   = $(PERL) ../tools/build/podextract.pl
 ADDGENERATED = $(PERL) ../tools/build/addgenerated.pl
 OPS_SUMMARY = ../tools/docs/ops_summary.pl
