@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Fuzzing Parrot with afl &#45; the american fuzzy lop</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Fuzzing Parrot with afl &#45; the american fuzzy lop
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/dev/fuzzing.pod &#45; Fuzzing Parrot with afl &#45; the american fuzzy lop</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This document describes how to find parrot crashes on invalid input with the american fuzzy lop.</p>
+
+<p>This will not work on MS Windows.
+It is tested on x86_64 linux,
+but should also work on darwin and other POSIX intel systems.</p>
+
+<h2><a name="Setup_afl"
+>Setup afl</a></h2>
+
+<p>Download <b>afl</b> from <a href='http://lcamtuf.coredump.cx/afl/'><a href="http://lcamtuf.coredump.cx/afl/">http://lcamtuf.coredump.cx/afl/</a></a></p>
+
+<p>Make and install afl.</p>
+
+<pre>    cd ~/
+
+    wget <a href="http://lcamtuf.coredump.cx/afl/releases/afl&#45;latest.tgz">http://lcamtuf.coredump.cx/afl/releases/afl&#45;latest.tgz</a>
+    tar xfz afl&#45;latest.tgz
+
+    cd afl&#45;&#60;TAB&#62;
+
+    # be sure to unset ASAN_OPTIONS
+    grep ASAN | env
+    unset ASAN_OPTIONS
+    export ASAN_OPTIONS
+
+    make
+    sudo make install</pre>
+
+<p>Compile parrot with the instrumenting <code>afl&#45;gcc</code>:</p>
+
+<pre>    cd &#60;your&#45;parrot&#62;
+    perl Configure.pl &#45;&#45;cc=afl&#45;gcc &#45;&#45;ld=afl&#45;gcc &#45;&#45;link=afl&#45;gcc
+    make &#45;s &#45;j4</pre>
+
+<h2><a name="Read_the_afl_documentation"
+>Read the afl documentation</a></h2>
+
+<p>See <a href='http://lcamtuf.coredump.cx/afl/'><a href="http://lcamtuf.coredump.cx/afl/">http://lcamtuf.coredump.cx/afl/</a></a> and under <em>afl&#45;VERSION/docs</em>. And maybe also <a href='https://en.wikipedia.org/wiki/Fuzz_testing'>https://en.wikipedia.org/wiki/Fuzz_testing</a></p>
+
+<p>Some notes:</p>
+
+<p>afl can work with <code>clang</code>, but <code>gcc</code> is preferred.</p>
+
+<p>afl can work with ASAN or MSAN, but since parrot is too slow it is advised to run it without. Our coverage with the normal testsuite is pretty good, so you better smoke the normal testsuite with <code>ASAN</code> or <code>MSAN</code> or <code>VALGRIND=valgrind</code> instead.</p>
+
+<p>afl tries to create bad input files, to crash or hang the process. Bad and uncontrolled input may impact the stability of your testmachine. E.g. it might randomly overwrite files or memory or fill up your logs or harddisc space. Use a fast kvm VM or docker. Only one core is needed if you don&#39;t fuzz in parallel.</p>
+
+<p><code>parrot_old</code> has faster startup, but does not play nice with the afl forkserver. You can use it with <code>&#45;C</code>, the crash mode though. Get a testcase which crashes and find more crashes. This way I found <a href='https://github.com/parrot/parrot/issues/1168'>https://github.com/parrot/parrot/issues/1168</a></p>
+
+<p>With <code>perl5</code> or <code>potion</code> I got exec speeds of <code>1500/sec</code>, with <code>parrot_old</code> <code>150/sec</code>, with <code>parrot</code> <code>100/sec</code>. This is very slow. So strip your input testcases to the absolute minimum. An <b>afl&#45;fuzz</b> run usually lasts a day or more, but at least a few hours. I did not dare yet to fuzz <code>nqp</code> or <code>perl6</code> yet, as it would be even slower.</p>
+
+<p>Set your terminal screen to black background, seriously. You hardly see anything on white.</p>
+
+<h2><a name="imcc_Parser"
+>imcc Parser</a></h2>
+
+<p>You can fuzz <em>.pir</em> and <em>.pasm</em> input to check the imcc parser.</p>
+
+<pre>    mkdir afl&#45;out afl&#45;testcase
+    cp t/op/literal.t testcase/
+
+    afl&#45;fuzz &#45;m4000 &#45;o afl&#45;out &#45;i afl&#45;testcase &#45;&#45; parrot &#45;r @@</pre>
+
+<h2><a name="With_keywords"
+>With keywords</a></h2>
+
+<p>Adding our regular pir and pasm keywords helps creating more meaningful permutations. One file in a new directory per keyword.</p>
+
+<pre>    mkdir &#45;p afl&#45;out2 afl&#45;testcase2/keywords
+
+    perl &#45;e&#39;`echo $_ &#62; afl&#45;testcase2/keywords/$_` for qw(.sym .arg prototyped
+      non_prototyped .class
+      .endclass .param inc dec new defined global clone .call .result .return
+      .local .const .globalconst
+      end goto if unless call branch jump jsr ret invoke invokecc throw
+      rethrow die_hard .emit .eom .sub .end .begin_call
+      .end_call .pcc_sub .begin_return .end_return .begin_yield
+      .end_yield .loadlib .namespace .endnamespace .macro .include int float
+      string pmc ne eq le lt ge gt == =head1 =end =pod)&#39;
+
+    afl&#45;fuzz &#45;m4000 &#45;i afl&#45;testcase2 &#45;x afl&#45;testcase2/keywords &#45;o afl&#45;out2 &#45;&#45; parrot &#45;r @@</pre>
+
+<h2><a name="pbc_packfiles"
+>pbc packfiles</a></h2>
+
+<p>Fuzz binary input to check the PackFile reader. Binary files are the typical usecase for afl. See <a href='https://github.com/parrot/parrot/issues/1169'>https://github.com/parrot/parrot/issues/1169</a></p>
+
+<pre>    mkdir &#45;p afl&#45;out3 afl&#45;testcase3
+    cp t/native_pbc/*_8_le.pbc afl&#45;testcase3/
+    afl&#45;fuzz &#45;m4000 &#45;i afl&#45;testcase3 &#45;o afl&#45;out3 &#45;&#45; parrot &#45;r @@</pre>
+
+<h2><a name="During_fuzzing"
+>During fuzzing</a></h2>
+
+<p>You can examine the results while running the fuzzer, and you can even fix the found error, recompile, Ctrl&#45;C the fuzzer and resume it with <code>&#45;i&#45;</code>, i.e. <code>afl&#45;fuzz &#45;m4000 &#45;i&#45; &#45;o afl&#45;out3 &#45;&#45; parrot &#45;r @@</code></p>
+
+<p>It will reinstrument the existing paths and cases, and save away the old results.</p>
+
+<h2><a name="Crosscheck_the_results_for_false_positives"
+>Crosscheck the results for false positives</a></h2>
+
+<p><code>afl&#45;fuzz</code> does sometimes categorize all exit codes &#62; 0 as crash, while it should do only do it with &#62; 128. So you need to verify the found crashes, like this:</p>
+
+<pre>    for c in afl&#45;out/crashes/*; do ./parrot $c &#62;/dev/null 2&#62;&#38;1 || echo $? $c; done</pre>
+
+<p>and check only the exit codes &#62; 128.</p>
+
+<h2><a name="Further_investigations_&#45;_crash_explorer"
+>Further investigations &#45; crash explorer</a></h2>
+
+<p>If you found a new crash, try out the crash explorer mode <code>&#45;C</code> by copying this crash result as new testcase and start a new afl&#45;fuzz with <code>&#45;C</code>. This will find other variations of the crash faster than in the normal mode. See <a href='http://lcamtuf.blogspot.de/2014/11/afl&#45;fuzz&#45;crash&#45;exploration&#45;mode.html'><a href="http://lcamtuf.blogspot.de/2014/11/afl&#45;fuzz&#45;crash&#45;exploration&#45;mode.html">http://lcamtuf.blogspot.de/2014/11/afl&#45;fuzz&#45;crash&#45;exploration&#45;mode.html</a></a></p>
+
+<h2><a name="Other_tools"
+>Other tools</a></h2>
+
+<p>There exist also less intelligent blackbox fuzzers, like <b>csmith</b>.</p>
+
+<p>And more intelligent whitebox fuzzers, which do taint symbolic input and use constraint solvers to track fishy source paths back to the input, e.g. <b>mayhem</b>, <b>cbmc</b> or the mythical smart Microsoft fuzzer (<a href='https://en.wikipedia.org/wiki/Fuzz_testing#cite_ref&#45;AutoDO&#45;14_16&#45;0'>https://en.wikipedia.org/wiki/Fuzz_testing#cite_ref&#45;AutoDO&#45;14_16&#45;0</a>).</p>
+
+<p>However <b>afl</b> is usually the best option for now. It is fast, simple and good enough.</p>
+
+<h1><a name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Reini Urban &#60;rurban@cpan.org&#62;</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2014, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>
