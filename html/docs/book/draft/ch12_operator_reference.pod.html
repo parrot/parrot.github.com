@@ -1,0 +1,420 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PIR Operator Reference</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../../html/index.html">Home</a> &raquo; PIR Operator Reference
+                </div>
+
+<h1><a name="PIR_Operator_Reference"
+>PIR Operator Reference</a></h1>
+
+<p></p>
+
+<p><!--
+	INDEX: PIR (Parrot intermediate representation);quick reference;instructions
+--> This section is a quick reference to PIR instructions.
+For more details and the latest changes,
+see <em>imcc/docs/syntax.pod</em> or dive into the source code in <em>imcc/imcc.l</em> and <em>imcc/imcc.y</em>.</p>
+
+<h3><a name="="
+>=</a></h3>
+
+<p><!--
+	INDEX: = (equal sign);= (assignment);instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;VAL&#62;</pre>
+
+<p>Assign a value to a particular register, temporary register, or named variable.</p>
+
+<h3><a name="+,_+="
+>+, +=</a></h3>
+
+<p><!--
+	INDEX: + (plus sign);+ (addition);instruction (PIR)
+--> <!--
+	INDEX: + (plus sign);+= (addition assignment);instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;VAL&#62; + R&#60;VAL&#62;
+  R&#60;DEST&#62; += R&#60;VAL&#62;</pre>
+
+<p>Add two numbers or PMCs.</p>
+
+<h3><a name="&#45;,_&#45;="
+>&#45;, &#45;=</a></h3>
+
+<p><!--
+	INDEX: &#45; (hyphen);&#45; (subtraction);instruction (PIR)
+--> <!--
+	INDEX: &#45; (hyphen);&#45;= (subtraction assignment);instruction (PIR)
+--> <!--
+	INDEX: &#45; (hyphen);&#45; (negation);instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;VAL1&#62; &#45; R&#60;VAL2&#62;
+  R&#60;DEST&#62; &#45;= R&#60;VAL1&#62;
+  R&#60;DEST&#62; = &#45; R&#60;VAL&#62;</pre>
+
+<p>Subtract VAL1 from VAL2. The unary &#34;<code>&#45;</code>&#34; negates a number.</p>
+
+<h3><a name="*,_*="
+>*, *=</a></h3>
+
+<p><!--
+	INDEX: * (asterisk);* (multiplication);instruction (PIR)
+--> <!--
+	INDEX: * (asterisk);*= (multiplication assignment);instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;VAL&#62; * R&#60;VAL&#62;
+  R&#60;DEST&#62; *= R&#60;VAL&#62;</pre>
+
+<p>Multiply two numbers or PMCs.</p>
+
+<h3><a name="/,_/="
+>/, /=</a></h3>
+
+<p><!--
+	INDEX: / (slash);/ (division);instruction (PIR)
+--> <!--
+	INDEX: / (slash);/= (division assignment);instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;VAL1&#62; / R&#60;VAL2&#62;
+  R&#60;DEST&#62; /= R&#60;VAL1&#62;</pre>
+
+<p>Divide VAL1 by VAL2.</p>
+
+<h3><a name="**"
+>**</a></h3>
+
+<p><!--
+	INDEX: * (asterisk);** (exponentiation);instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;VAL1&#62; ** R&#60;VAL2&#62;</pre>
+
+<p>Raise VAL1 to the power of VAL2.</p>
+
+<h3><a name="%,_%="
+>%, %=</a></h3>
+
+<p><!--
+	INDEX: % (percent sign);% (modulus);instruction (PIR)
+--> <!--
+	INDEX: % (percent sign);%= (modulus assignment);instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;VAL1&#62; % R&#60;VAL2&#62;
+  R&#60;DEST&#62; %= R&#60;VAL1&#62;</pre>
+
+<p>Divide VAL1 by VAL2 and return the (<code>mod</code>) remainder.</p>
+
+<h3><a name=".,_.="
+>., .=</a></h3>
+
+<p><!--
+	INDEX: . (dot);. (concatenation) instruction (PIR)
+--> <!--
+	INDEX: . (dot);.= (concatenation assignment) instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;VAL&#62; . R&#60;VAL&#62;
+  R&#60;DEST&#62; .= R&#60;VAL&#62;</pre>
+
+<p>Concatenate two strings. The concat operator must be surrounded by whitespace.</p>
+
+<h3><a name="&#60;"
+>&#60;</a></h3>
+
+<p><!--
+	INDEX: &#60; (left angle bracket);&#60; (less than);instruction (PIR)
+--></p>
+
+<pre>  if R&#60;VAL1&#62; E&#60;lt&#62; R&#60;VAL2&#62; goto R&#60;LABEL&#62;</pre>
+
+<p>Conditionally branch to a label if VAL1 is less than VAL2.</p>
+
+<h3><a name="&#60;="
+>&#60;=</a></h3>
+
+<p><!--
+	INDEX: &#60; (left angle bracket);&#60;= (less than or equal);instruction (PIR)
+--></p>
+
+<pre>  if R&#60;VAL1&#62; E&#60;lt&#62;= R&#60;VAL2&#62; goto R&#60;LABEL&#62;</pre>
+
+<p>Conditionally branch to a label if VAL1 is less than or equal to VAL2.</p>
+
+<h3><a name="&#62;"
+>&#62;</a></h3>
+
+<p><!--
+	INDEX: &#62; (right angle bracket);&#62; (greater than);instruction (PIR)
+--></p>
+
+<pre>  if R&#60;VAL1&#62; E&#60;gt&#62; R&#60;VAL2&#62; goto R&#60;LABEL&#62;</pre>
+
+<p>Conditionally branch to a label if VAL1 is greater than VAL2.</p>
+
+<h3><a name="&#62;="
+>&#62;=</a></h3>
+
+<p><!--
+	INDEX: &#62; (right angle bracket);&#62;= (greater than or equal);instruction (PIR)
+--></p>
+
+<pre>  if R&#60;VAL1&#62; E&#60;gt&#62;= R&#60;VAL2&#62; goto R&#60;LABEL&#62;</pre>
+
+<p>Conditionally branch to a label if VAL1 is greater than or equal to VAL2.</p>
+
+<h3><a name="=="
+>==</a></h3>
+
+<p><!--
+	INDEX: = (equal sign);== (equality);instruction (PIR)
+--></p>
+
+<pre>  if R&#60;VAL1&#62; == R&#60;VAL2&#62; goto R&#60;LABEL&#62;</pre>
+
+<p>Conditionally branch to a label if VAL1 is equal to VAL2.</p>
+
+<h3><a name="!="
+>!=</a></h3>
+
+<p><!--
+	INDEX: ! (bang);!= (not equal);instruction (PIR)
+--></p>
+
+<pre>  if R&#60;VAL1&#62; != R&#60;VAL2&#62; goto R&#60;LABEL&#62;</pre>
+
+<p>Conditionally branch to a label if VAL1 is not equal to VAL2.</p>
+
+<h3><a name="&#38;&#38;"
+>&#38;&#38;</a></h3>
+
+<p><!--
+	INDEX: &#38; (ampersand);&#38;&#38; (logical AND);instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;VAL1&#62; &#38;&#38; R&#60;VAL2&#62;</pre>
+
+<p>Logical AND. Return VAL1 if it&#39;s false, otherwise return VAL2.</p>
+
+<h3><a name="||"
+>||</a></h3>
+
+<p><!--
+	INDEX: | (pipe);|| (logical OR);instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;VAL1&#62; || R&#60;VAL2&#62;</pre>
+
+<p>Logical OR. Return VAL1 if it&#39;s true, otherwise return VAL2.</p>
+
+<h3><a name="~~"
+>~~</a></h3>
+
+<p><!--
+	INDEX: ~ (tilde);~~ (logical XOR) instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;VAL1&#62; ~~ R&#60;VAL2&#62;</pre>
+
+<p>Logical XOR. If VAL1 is true and VAL2 is false, return VAL1. If VAL1 is false and VAL2 is true, return VAL2. Otherwise, return a false value.</p>
+
+<h3><a name="!"
+>!</a></h3>
+
+<p><!--
+	INDEX: ! (bang);! (not);instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = ! R&#60;VAL&#62;</pre>
+
+<p>Logical NOT. Return a true value if VAL is false.</p>
+
+<h3><a name="&#38;,_&#38;="
+>&#38;, &#38;=</a></h3>
+
+<p><!--
+	INDEX: &#38; (ampersand);&#38; (bitwise AND) instruction (PIR)
+--> <!--
+	INDEX: &#38; (ampersand);&#38;= (bitwise AND assignment) instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;VAL&#62; &#38; R&#60;VAL&#62;
+  R&#60;DEST&#62; &#38;= R&#60;VAL&#62;</pre>
+
+<p>Bitwise AND on two values.</p>
+
+<h3><a name="|,_|="
+>|, |=</a></h3>
+
+<p><!--
+	INDEX: | (pipe);| (bitwise AND) instruction (PIR)
+--> <!--
+	INDEX: | (pipe);|= (bitwise AND assignment) instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;VAL&#62; | R&#60;VAL&#62;
+  R&#60;DEST&#62; |= R&#60;VAL&#62;</pre>
+
+<p>Bitwise OR on two values.</p>
+
+<h3><a name="~,_~="
+>~, ~=</a></h3>
+
+<p><!--
+	INDEX: ~ (tilde);~ (bitwise XOR) instruction (PIR)
+--> <!--
+	INDEX: ~ (tilde);~= (bitwise XOR assignment) instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;VAL&#62; ~ R&#60;VAL&#62;
+  R&#60;DEST&#62; ~= R&#60;VAL&#62;
+  R&#60;DEST&#62; = ~ R&#60;VAL&#62;</pre>
+
+<p>Bitwise XOR on two values. The unary form is a bitwise NOT on a value.</p>
+
+<h3><a name="&#60;&#60;,_&#60;&#60;="
+>&#60;&#60;, &#60;&#60;=</a></h3>
+
+<p><!--
+	INDEX: &#60; (left angle bracket);&#60;&#60; (bitwise left shift);instruction (PIR)
+--> <!--
+	INDEX: &#60; (left angle bracket);&#60;&#60;= (bitwise left shift assignment);instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;VAL1&#62; E&#60;lt&#62;E&#60;lt&#62; R&#60;VAL2&#62;
+  R&#60;DEST&#62; E&#60;lt&#62;E&#60;lt&#62;= R&#60;VAL2&#62;</pre>
+
+<p>Bitwise shift VAL1 left by VAL2 number of bits.</p>
+
+<h3><a name="&#62;&#62;,_&#62;&#62;="
+>&#62;&#62;, &#62;&#62;=</a></h3>
+
+<p><!--
+	INDEX: &#62; (right angle bracket);&#62;&#62; (bitwise right shift);instruction (PIR)
+--> <!--
+	INDEX: &#62; (right angle bracket);&#62;&#62;= (bitwise right shift assignment);instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;VAL1&#62; E&#60;gt&#62;E&#60;gt&#62; R&#60;VAL2&#62;
+  R&#60;DEST&#62; E&#60;gt&#62;E&#60;gt&#62;= R&#60;VAL2&#62;</pre>
+
+<p>Bitwise shift VAL1 right by VAL2 number of bits.</p>
+
+<h3><a name="&#62;&#62;&#62;,_&#62;&#62;&#62;="
+>&#62;&#62;&#62;, &#62;&#62;&#62;=</a></h3>
+
+<p><!--
+	INDEX: &#62; (right angle bracket);&#62;&#62;&#62; (logical right shift) instruction (PIR)
+--> <!--
+	INDEX: &#62; (right angle bracket);&#62;&#62;&#62;= (logical right shift assignment) instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;VAL1&#62; E&#60;gt&#62;E&#60;gt&#62;E&#60;gt&#62; R&#60;VAL2&#62;
+  R&#60;DEST&#62; E&#60;gt&#62;E&#60;gt&#62;E&#60;gt&#62;= R&#60;VAL2&#62;</pre>
+
+<p>Logically shift VAL1 right by VAL2 number of bits.</p>
+
+<h3><a name="[_]"
+>[ ]</a></h3>
+
+<p><!--
+	INDEX: [] (brackets);indexed access to PMC (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = R&#60;PMC&#62; [ R&#60;KEY&#62; ]
+  R&#60;PMC&#62; [ R&#60;KEY&#62; ] = R&#60;VAL&#62;</pre>
+
+<p>Indexed access to a PMC and indexed assignment to a PMC.</p>
+
+<pre>  DEST = STRING [ OFFSET ]
+  STRING [ OFFSET ]  = VAL</pre>
+
+<p>Access a one&#45;character substring on a string, starting at a particular offset, or assign to that substring.</p>
+
+<h3><a name="call"
+>call</a></h3>
+
+<p><!--
+	INDEX: call instruction (PIR)
+--></p>
+
+<pre>  call R&#60;NAME&#62;</pre>
+
+<p>Call the named subroutine (a <code>.sub</code> label).</p>
+
+<h3><a name="global"
+>global</a></h3>
+
+<p><!--
+	INDEX: global instruction (PIR)
+--></p>
+
+<pre>  R&#60;DEST&#62; = global R&#60;NAME&#62;
+  global R&#60;NAME&#62; = R&#60;VAL&#62;</pre>
+
+<p>Access a global variable for read or write.</p>
+
+<h3><a name="goto"
+>goto</a></h3>
+
+<p><!--
+	INDEX: goto command (PIR)
+--></p>
+
+<pre>  goto R&#60;NAME&#62;</pre>
+
+<p>Jump to the named identifier (label or subroutine name).</p>
+
+<h3><a name="if"
+>if</a></h3>
+
+<p><!--
+	INDEX: if (conditional);instruction (PIR)
+--></p>
+
+<pre>  if R&#60;EXPR&#62; goto R&#60;NAME&#62;</pre>
+
+<p>If the value or expression evaluates as true, jump to the named identifier.</p>
+
+<h3><a name="unless"
+>unless</a></h3>
+
+<p><!--
+	INDEX: unless (conditional);instruction (PIR)
+--></p>
+
+<pre>  unless R&#60;VAL&#62; goto R&#60;NAME&#62;</pre>
+
+<p>Unless the value evaluates as true, jump to the named identifier.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2014, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

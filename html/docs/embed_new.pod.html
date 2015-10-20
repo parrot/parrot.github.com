@@ -1,0 +1,310 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot embedding system overview</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../html/index.html">Home</a> &raquo; <a href="../../html/developer.html">Developer Documentation</a> &raquo; Parrot embedding system overview
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>embed.pod &#45; Parrot embedding system overview</p>
+
+<h1><a name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>    #include &#34;parrot/api.h&#34;
+
+    int main(int argc, char* argv[])
+    {
+        Parrot_PMC interp = NULL;
+        Parrot_PMC pf = NULL;
+        Parrot_PMC args = NULL;
+
+        if (!Parrot_api_make_interpreter(NULL, NULL, 0, &#38;interp)) {
+            fprintf(stderr, &#34;Cannot create Parrot interpreter!\n&#34;);
+            return 1;
+        }
+
+        if (!Parrot_api_load_bytecode_file(interp, &#34;foo.pbc&#34;, &#38;pf))
+            show_last_error_and_exit(interp);
+        
+        if (!Parrot_api_pmc_wrap_string_array(interp, argc, argv, &#38;args))
+            show_last_error_and_exit(interp);
+        
+        if (!Parrot_api_run_bytecode(interp, pf, args))
+            show_last_error_and_exit(interp);
+            
+        Parrot_api_destroy_interpreter(interp);
+        exit(EXIT_SUCCESS);
+    }
+    
+    static void
+    show_last_error_and_exit(Parrot_PMC interp)
+    {
+        ASSERT_ARGS(show_last_error_and_exit)
+        Parrot_String errmsg, backtrace;
+        Parrot_Int exit_code, is_error;
+        Parrot_PMC exception;
+
+        if (!Parrot_api_get_result(interp, &#38;is_error, &#38;exception, &#38;exit_code, &#38;errmsg))
+            exit(EXIT_FAILURE);
+        if (is_error) {
+            if (!Parrot_api_get_exception_backtrace(interp, exception, &#38;backtrace))
+                exit(EXIT_FAILURE);
+            print_parrot_string(interp, stderr, errmsg, 1);
+            print_parrot_string(interp, stderr, backtrace, 0);
+        }
+
+        exit(exit_code);
+    }
+    
+    static void
+    print_parrot_string(Parrot_PMC interp, ARGMOD(FILE *vector), Parrot_String str,
+            int newline)
+    {
+        ASSERT_ARGS(print_parrot_string)
+        char * msg_raw;
+        if (!str)
+            return;
+        Parrot_api_string_export_ascii(interp, str, &#38;msg_raw);
+        if (msg_raw) {
+            fprintf(vector, &#34;%s%s&#34;, msg_raw, newline ? &#34;\n&#34; : &#34;&#34;);
+            Parrot_api_string_free_exported_ascii(interp, msg_raw);
+        }
+    }</pre>
+
+<h1><a name="FILES"
+>FILES</a></h1>
+
+<dl>
+<dt><a name="include/parrot/api.h"
+><em>include/parrot/api.h</em></a></dt>
+</dl>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This is the documentation for Parrot&#39;s embedding API.</p>
+
+<h2><a name="Overview"
+>Overview</a></h2>
+
+<p>Parrot defines a strict embedding API. This API may only be used by embedding applications, and other functions exported by libparrot may not be used at the same time. All embedding API functions are named <code>Parrot_api_*</code> and are located in the file <em>include/parrot/api.h</em>. No other header files are necessary or permissible for embedding applications.</p>
+
+<p>All embedding API functions return an integer status code: <code>0</code> on failure and <code>1</code> on success. If a failure code is returned, other API calls can be made to retrieve the error object and then query information from it.</p>
+
+<h2><a name="Data_structures"
+>Data structures</a></h2>
+
+<p>The embedding API makes use of very few core data types.</p>
+
+<dl>
+<dt><a name="Parrot_String"
+><b><code>Parrot_String</b></code></a></dt>
+Parrot&#39;s internal string type, which contains character encoding information.
+<dt><a name="Parrot_PMC"
+><b><code>Parrot_PMC</b></code></a></dt>
+A Polymorphic Container object. This is the opaque external type for (PMC *). PMCs represent any object more complicated than a primitive string or number type, and can also provide high&#45;level wrappers around primitive types.
+<dt><a name="Parrot_Int"
+><b><code>Parrot_Int</b></code></a></dt>
+Parrot&#39;s integer numeric type.
+<dt><a name="Parrot_Float"
+><b><code>Parrot_Float</b></code></a></dt>
+Parrot&#39;s floating point numeric type.</dl>
+
+<h2><a name="Function_signatures"
+>Function signatures</a></h2>
+
+<p>What is a function signature? It is a string which represents the calling and return conventions of a function. It is a very succinct representation of the answer to the question &#34;How do I call this function and what does it return?&#34;.</p>
+
+<p>All function signatures follow the form of:</p>
+
+<pre>    Foo&#45;&#62;Bar</pre>
+
+<p>where <code>Foo</code> and <code>Bar</code> are a list of zero or more Parrot datatypes. <code>Foo</code> and <code>Bar</code> are individually called &#39;type signatures&#39;. The datatypes on the left of the arrow are function arguments being passed in and the datatypes on the right are the datatype being returned. No spaces are allowed in a function signature.</p>
+
+<p>There are four datatypes that can be used in Parrot function signatures:</p>
+
+<pre>    I &#60;=&#62; Parrot_Int
+    N &#60;=&#62; Parrot_Float (Numeric)
+    S &#60;=&#62; Parrot_String
+    P &#60;=&#62; Parrot_PMC</pre>
+
+<p>Here are some example function signatures and what they mean:</p>
+
+<pre>   INN&#45;&#62;N   In: Integer, two Numerics    Out: Numeric
+   SIN&#45;&#62;S   In: String, Integer, Numeric Out: String
+   P&#45;&#62;S     In: PMC                      Out: String
+   PiP&#45;&#62;S   In: PMC (method call)        Out: String
+   NN&#45;&#62;N    In: Two Numerics             Out: Numeric
+   I&#45;&#62;I     In: Integer                  Out: Integer
+   I&#45;&#62;N     In: Integer                  Out: Numeric
+   N&#45;&#62;P     In: Numeric                  Out: PMC
+   Pi&#45;&#62;     In: none (method call)       Out: none
+   &#45;&#62;I      In: none                     Out: Integer
+   &#45;&#62;       In: none                     Out: none</pre>
+
+<p>Parrot functions support an unlimited number of function inputs and outputs.</p>
+
+<p>In addition to the basic signature elements shown above, lower&#45;case letters may be used to modify some types of inputs and outputs:</p>
+
+<pre>    Pi &#45;&#62; the invocant for a method call. Pi must be the first argument, if it
+          is to be used.
+    Pf &#45;&#62; The PMC is an aggregate (Hash, Array). The elements of the PMC will
+          be separated out and will be passed individually.
+    Sn &#45;&#62; The String is the name of the previous argument, which is passed by
+          name, not by position.</pre>
+
+<p>Parrot function signature strings are used when a Parrot function or method call needs to be made.</p>
+
+<h2><a name="Interpreter_initialization_and_destruction"
+>Interpreter initialization and destruction</a></h2>
+
+<dl>
+<dt><a name="Parrot_Int_Parrot_api_make_interpreter(parent,_init,_flags,_&#38;interp)"
+><b><code>Parrot_Int Parrot_api_make_interpreter(parent, init, flags, &#38;interp)</b></code></a></dt>
+Creates a new interpreter, with optional initialization information and creation flags. The intepreter will have a child/parent relationship with <code>parent</code>, if provided. The returned interpreter object is itself a PMC, and can be operated on like any other PMC if desired.
+<dt><a name="Parrot_Int_Parrot_api_set_executable_name(interp,_name)"
+><b><code>Parrot_Int Parrot_api_set_executable_name(interp, name)</b></code></a></dt>
+Sets the executable name of the calling process.
+<dt><a name="Parrot_Int_Parrot_api_destroy_interpreter(interp)"
+><b><code>Parrot_Int Parrot_api_destroy_interpreter(interp)</b></code></a></dt>
+Destroys an interpreter. After this call is made, the interpreter and all PMC and STRING objects created from it are dead and cannot be used.</dl>
+
+<h2><a name="Loading_and_running_bytecode"
+>Loading and running bytecode</a></h2>
+
+<dl>
+<dt><a name="Parrot_Int_Parrot_api_load_bytecode(interp,_path,_&#38;pbc)"
+><b><code>Parrot_Int Parrot_api_load_bytecode(interp, path, &#38;pbc)</b></code></a></dt>
+Reads Parrot bytecode (.pbc) file from the specified location and returns it as a PMC.
+<dt><a name="Parrot_Int_Parrot_api_ready_bytecode(interp,_pbc,_&#38;main)"
+><b><code>Parrot_Int Parrot_api_ready_bytecode(interp, pbc, &#38;main)</b></code></a></dt>
+Loads a PBC PMC into the interpreter but does not run it. It returns a reference to the :main Sub PMC, if one is available. This causes any :load Sub PMCs to be executed.
+<dt><a name="Parrot_Int_Parrot_api_run_bytecode(interp,_pbc,_args)"
+><b><code>Parrot_Int Parrot_api_run_bytecode(interp, pbc, args)</b></code></a></dt>
+Loads and executes the given bytecode, executing any :init Sub PMCs, and then the :main Sub with the given arguments.</dl>
+
+<h2><a name="Data_manipulation"
+>Data manipulation</a></h2>
+
+<h3><a name="Native_types"
+>Native types</a></h3>
+
+<dl>
+<dt><a name="Parrot_Int_Parrot_api_string_export_ascii(interp,_pstring,_&#38;cstring)"
+><b><code>Parrot_Int Parrot_api_string_export_ascii(interp, pstring, &#38;cstring)</b></code></a></dt>
+
+<dt><a name="Parrot_Int_Parrot_api_string_export_wchar(interp,_pstring,_&#38;cstring)"
+><b><code>Parrot_Int Parrot_api_string_export_wchar(interp, pstring, &#38;cstring)</b></code></a></dt>
+Returns the char* or wchar_t* representation of the Parrot string. An exported string must be explicitly freed to prevent memory leaks.
+<dt><a name="Parrot_Int_Parrot_api_string_free_exported_ascii(interp,_cstring)"
+><b><code>Parrot_Int Parrot_api_string_free_exported_ascii(interp, cstring)</b></code></a></dt>
+
+<dt><a name="Parrot_Int_Parrot_api_string_free_exported_wchar(interp,_cstring)"
+><b><code>Parrot_Int Parrot_api_string_free_exported_wchar(interp, cstring)</b></code></a></dt>
+Free&#39;s a char* or wchar_t* which has been exported.
+<dt><a name="Parrot_Int_Parrot_api_string_import_ascii(interp,_cstring,_&#38;pstring)"
+><b><code>Parrot_Int Parrot_api_string_import_ascii(interp, cstring, &#38;pstring)</b></code></a></dt>
+
+<dt><a name="Parrot_Int_Parrot_api_string_import_wchar(interp,_cstring,_&#38;pstring)"
+><b><code>Parrot_Int Parrot_api_string_import_wchar(interp, cstring, &#38;pstring)</b></code></a></dt>
+Converts a native char* or wchar_t* string into a Parrot_String.
+<dt><a name="Parrot_Int_Parrot_api_string_import_binary(interp,_bytes,_length,_&#38;pstring)"
+><b><code>Parrot_Int Parrot_api_string_import_binary(interp, bytes, length, &#38;pstring)</b></code></a></dt>
+Imports an unsigned char* array of bytes. It is not treated like a normal C string, and is not expected to be null&#45;terminated.</dl>
+
+<h3><a name="PMCs"
+>PMCs</a></h3>
+
+<dl>
+<dt><a name="Parrot_Int_Parrot_api_pmc_wrap_string_array(interp,_argc,_argv,_&#38;args)"
+><b><code>Parrot_Int Parrot_api_pmc_wrap_string_array(interp, argc, argv, &#38;args)</b></code></a></dt>
+Wraps a char** string array into a string array PMC
+<dt><a name="Parrot_Int_Parrot_api_pmc_box_string(interp,_pstring,_&#38;pmc)"
+><b><code>Parrot_Int Parrot_api_pmc_box_string(interp, pstring, &#38;pmc)</b></code></a></dt>
+Creates a new PMC to wrap a Parrot_String.
+<dt><a name="Parrot_Int_Parrot_api_pmc_get_class(interp,_key,_&#38;class)"
+><b><code>Parrot_Int Parrot_api_pmc_get_class(interp, key, &#38;class)</b></code></a></dt>
+Retrieves a Class PMC using a key PMC. The key can be a string, or a string array PMC.
+<dt><a name="Parrot_Int_Parrot_api_new_from_class(interp,_class,_init,_&#38;pmc)"
+><b><code>Parrot_Int Parrot_api_new_from_class(interp, class, init, &#38;pmc)</b></code></a></dt>
+Instantiates a new PMC from it&#39;s class object.
+<dt><a name="void_Parrot_api_pmc_keep_alive(interp,_pmc,_alive)"
+><b><code>void Parrot_api_pmc_keep_alive(interp, pmc, alive)</b></code></a></dt>
+If <code>alive</code> is 1, the PMC becomes immortal and cannot be collected by Parrot&#39;s GC. Do this if the PMC is still being used, but is not reachable by Parrot&#39;s GC. This would be the case if the PMC reference were passed to an external library. If <code>alive</code> is 0, the PMC becomes mortal again and can be collected like normal if it is found to be unreachable.</dl>
+
+<h2><a name="Calling_subroutines_and_Methods"
+>Calling subroutines and Methods</a></h2>
+
+<ul>
+<li>TODO</li>
+</ul>
+
+<h1><a name="COMPILING"
+>COMPILING</a></h1>
+
+<p>Note: This section is aimed at you if you are writing an application external to parrot which links against an installed parrot library.</p>
+
+<h2><a name="Compiler_and_linker_flags"
+>Compiler and linker flags</a></h2>
+
+<p>Your application will need to include the appropriate header files and link against parrot and its dependencies.</p>
+
+<p>Because the location of these files can vary from platform to platform, and build to build, a general method is provided to find out the necessary flags to use.</p>
+
+<p><code>parrot_config</code> is the helper tool for determining anything related to parrot configuration, determining compiler and linker flags to build against parrot is no different.</p>
+
+<p>To start, you should find <code>parrot_config</code> in the path or allow your user to provide this location for you. You can check this by running <code>parrot_config</code> with <code>VERSION</code> as the argument to determine the version of parrot you are working with.</p>
+
+<p>To determine the necessary C compiler flags, use <code>embed&#45;cflags</code>:</p>
+
+<pre>  parrot_config embed&#45;cflags</pre>
+
+<p>... and to find the necessary linker flags, use <code>embed&#45;ldflags</code>:</p>
+
+<pre>  parrot_config embed&#45;ldflags</pre>
+
+<p>The <code>parrot_config</code> command can be incorporated with a compile as shown here performing both compiling and linking in one step.</p>
+
+<pre>  cc src/disassemble.c `parrot_config embed&#45;cflags` `parrot_config embed&#45;ldflags`</pre>
+
+<h1><a name="EXAMPLES"
+>EXAMPLES</a></h1>
+
+<h2><a name="Load_bytecode_as_a_library_and_run_a_single_subroutine"
+>Load bytecode as a library and run a single subroutine</a></h2>
+
+<pre>    TODO</pre>
+
+<h1><a name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p><em>frontend/parrot/main.c</em> and <em>t/src/embed/*.t</em> for Parrot&#39;s use of the embedding system.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2014, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>
