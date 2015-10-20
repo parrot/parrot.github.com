@@ -1,0 +1,346 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - PDD 10: Embedding</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pdds.html">Parrot Design Documents (PDDs)</a> &raquo; PDD 10: Embedding
+                </div>
+
+<h1><a name="PDD_10:_Embedding"
+>PDD 10: Embedding</a></h1>
+
+<h2><a name="Abstract"
+>Abstract</a></h2>
+
+<p>Parrot,
+more precisely libparrot,
+can be embedded into applications to provide a dynamic language runtime.
+A perfect example of this embedding is in the Parrot executable,
+which is a thin wrapper around libparrot.</p>
+
+<p>Version 1</p>
+
+<h2><a name="Description"
+>Description</a></h2>
+
+<h3><a name="Difference_Between_Embedding_and_Extending"
+>Difference Between Embedding and Extending</a></h3>
+
+<p>Embedding and Extending (PDD 11) are similar concepts.
+In both,
+we write code that interfaces with libparrot.
+In an embedding situation we write an application which loads and calls libparrot.
+In an extending situation,
+libparrot loads and calls your module.</p>
+
+<p>Extending gives libparrot more features,
+and allows your code to execute from inside libparrot.
+From that location,
+the extending application has full access to the available power and features of libparrot.
+This includes knowledge about internal structure definitions,
+and internal&#45;only functions and subsystems.
+Because extending code is so closely tied to the internals of libparrot,
+it will be more affected by changes in libparrot itself.
+Also,
+the stability of extending code is tied to the stability of libparrot: If either crashes,
+the other will likely crash with it.</p>
+
+<p>Embedding,
+on the other hand,
+has much more limited access to libparrot.
+All embedding applications must use the official embedding API,
+which is limited and abstracted by design.
+Embedding applications must treat all pointers and structures returned from the API as being opaque.
+This abstraction buys stability.
+Changes to the internals of libparrot are unlikely to cause changes in embedding code.
+If libparrot crashes or suffers an unrecoverable error,
+it can return control to the embedding application more gracefully.</p>
+
+<h3><a name="The_Embedding_API"
+>The Embedding API</a></h3>
+
+<p>The Embedding API is a special set of functions found in the <code>src/embed/</code> directory.
+These functions may not be used internally by libparrot,
+embedding applications may not use any other functions.
+Breaking either of these rules can have serious implications for application stability.</p>
+
+<p>Prior to the implementation of the new API,
+when libparrot had an unhandled exception it would call the C <code>exit()</code> library function to close the application.
+This is undesirable because embedding applications want the ability to handle errors and recover from problems in libparrot.
+The new API provides error handling capabilities for cases of unhandled exceptions,
+including both expected EXCEPT_exit and other types of error&#45;related exceptions.</p>
+
+<p>The embedding API also makes sure certain details are in place,
+including stack markers for the GC.
+Calling into libparrot without setting a valid stack marker could cause serious (and difficult to diagnose) errors.</p>
+
+<p>The embedding API provides relatively limited interaction with libparrot,
+at least from the point of view of an internals developer or an extension developer.
+There are many reasons for this.
+First and foremost,
+the full power of libparrot is almost always available through the runcore.
+If you want to do something with Parrot,
+it is almost always easier and preferred to write your code in a language which targets Parrot,
+compile it down to bytecode,
+and load that bytecode into Parrot to execute.
+Almost all applications of libparrot will involve bytecode execution at some level,
+and this is where most operations become possible.</p>
+
+<p>The API also provides a powerful abstraction layer between the libparrot internals developers and the embedding application developers.
+The API is sufficiently abstracted and detached enough that even large changes to the internals of libparrot are unlikely to require any changes in the embedding application.
+For instance,
+libparrot could completely change its entire object model implementation and not cause a change to the API at all.</p>
+
+<p>While limited,
+the API is not static.
+If embedders need new features or functionality,
+those can usually be added with relative ease.</p>
+
+<h2><a name="Using_the_Embedding_API"
+>Using the Embedding API</a></h2>
+
+<p>The embedding API follows certain guidelines that should be understood by users,
+and followed by developers:</p>
+
+<ul>
+<li>The embed API operates mostly on the 4 core Parrot data types: Parrot_PMC,
+Parrot_String,
+Parrot_Int,
+and Parrot_Float.
+The first two of these are pointers and should be treated as opaque.</li>
+
+<li>Where possible and reasonable,
+functions should take Parrot_Strings instead of raw C <code>char*</code> or <code>wchar_t*</code> types.
+Functions do exist to easily convert between C types and Parrot_String.</li>
+
+<li>PMCs are the primary data item.
+Anything more complicated than an integer or string will be passed as a PMC.
+Some integers and strings will be wrapped up in a PMC and passed.</li>
+
+<li>The number of API functions will stay relatively small.
+The purpose of the API is not to provide the most efficient use of libparrot,
+but instead the most general,
+stable and abstracted one.</li>
+
+<li>Calls into libparrot carry a performance overhead because we have to do error handling,
+stack manipulation,
+data marshaling,
+etc.
+It is best to do less work through the API,
+and more work through bytecode and the runcore.</li>
+
+<li>The embed API uses a single header file: <a href='TODO#parrot%2Fapi.h'>&#34;parrot/api.h&#34; in include</a>.
+Embedding applications should use only this header file and no other header files from Parrot.
+Embedding applications should NOT use <a href='TODO#parrot%2Fparrot.h'>&#34;parrot/parrot.h&#34; in include</a>,
+or any other files.</li>
+
+<li>libparrot does little to no signal handling.
+Those are typically the responsibility of the embedder.</li>
+
+<li>File descriptors and resource handles are typically owned by whoever opens them first.
+If the embedding application tells libparrot to open a file with a FileHandle PMC,
+libparrot will keep and manage that file descriptor.
+Functionality may be provided to import and export sharable resources like these.</li>
+
+<li>Resources such as allocated memory are managed by whoever creates them.
+If the embedding application allocates a structure and passes it in to libparrot,
+the embedding application is in charge of managing and freeing that structure.
+If libparrot allocates data,
+it will be in charge of managing and freeing it.
+In many cases,
+data passed to or from libparrot through the API will be copied to a new memory buffer.</li>
+
+<li>libparrot will not output error information to <code>stderr</code> unless specifically requested to.
+Instead,
+libparrot will gather all error information and make it available to the user through function calls.</li>
+
+<li>API calls should be nestable.
+Unhandled exceptions or other error conditions should cause a jump back to the inner&#45;most API call.
+The interpreter should be able to recover from errors in inner&#45;most frames and continue executing.</li>
+
+<p><i>Note: Currently,
+the API does not support nested calls.
+This is planned</i></p>
+</ul>
+
+<h2><a name="Implementation"
+>Implementation</a></h2>
+
+<p>The embedding API has two goals: To allow access to libparrot as a dynamic language runtime and bytecode interpreter,
+and to encapsulate implementation details internal to libparrot from the embedding application.</p>
+
+<p>There are several guidelines for the embedding API implementation that developers of it should follow:</p>
+
+<ul>
+<li>It should never be possible to crash or corrupt the interpreter when following the interface as documented.
+The interpreter should be able to be used and reused until it is explicitly destroyed.
+The interpreter should be reusable after it deals with an unhandled exception,
+including EXCEPT_exit exceptions.</li>
+
+<li>It should never be possible for libparrot to crash,
+corrupt,
+or forcibly exit the embedding application.
+Also,
+libparrot should never use resources which haven&#39;t been assigned to it,
+such as standard IO handles <code>stdout</code>,
+<code>stdin</code>,
+and <code>stderr</code>.</li>
+
+<li>Each API function should have a single purpose,
+and should avoid duplication of functionality as much as possible.
+A course&#45;grained API is preferable to a fine&#45;grained one,
+even if some performance must be sacrificed.</li>
+
+<li>names must be consistent in the API documentation and the examples.
+All API functions are named <code>Parrot_api_*</code>.</li>
+
+<li>The return value of every API function should be an integer value.
+The return value should be 1 on success,
+and 0 on failure.
+No other results should be returned.</li>
+
+<p>The marker <code>PARROT_API</code> is special and is used to denote API functions.
+This macro sets the function up to be exported from the shared library and may also provide some hints to the compiler.</p>
+
+<p>All API functions return a Parrot_Int to signal status.</p>
+</ul>
+
+<h3><a name="Working_with_Interpreters"
+>Working with Interpreters</a></h3>
+
+<p>It is the external code&#39;s duty to create,
+manage,
+and destroy interpreters.</p>
+
+<p><code>Parrot_api_make_interpreter</code> returns an opaque pointer to a new interpreter,
+with some options set in it.
+The definition of <code>Parrot_api_make_interpreter</code> is as follows:</p>
+
+<pre>    Parrot_Int
+    Parrot_api_make_interpreter(Parrot_PMC parent, Parrot_Int flags,
+            Parrot_Init_Args *args, Parrot_PMC * interp);</pre>
+
+<p>A common usage pattern for making an interpreter is:</p>
+
+<pre>    Parrot_PMC interp = NULL;
+    Parrot_Init_Args *args = NULL;
+    GET_INIT_ARGS(args);
+    if (!Parrot_api_make_interpreter(NULL, 0, args, &#38;interp)) {
+        fprintf(stderr, &#34;Could not create interpreter&#34;);
+        exit(EXIT_FAILURE);
+    }</pre>
+
+<p><code>parent</code> can be NULL for the <i>first</i> interpreter created, or where the interpreter does not have a logical parent. If a parent is provided, the new interpreter will have a child/parent relationship with the parent interp.</p>
+
+<p>The <code>flags</code> parameter contains a bit&#45;wise combination of certain startup flags that govern interpreter creation. It is safe to set this to 0 unless special needs require it to be otherwise.</p>
+
+<p>The <code>args</code> parameter is a structure containing a series of options that must be set on the interpreter during initialization. These options, many of which deal with the memory subsystem and other deep internals can typically be ignored. <code>args</code> can be <code>NULL</code> if no special options need to be set.</p>
+
+<p>The new interpreter PMC is returned in the last parameter.</p>
+
+<p><code>Parrot_api_destroy_interpreter ( interp )</code> destroys an interpreter and frees its resources.</p>
+
+<pre>    Parrot_Int Parrot_api_destroy_interpreter(Parrot_Interp);</pre>
+
+<p>It is a good idea to destroy child interpreters before destroying their parents.</p>
+
+<h3><a name="Working_with_Source_Code_and_PBC_Files"
+>Working with Source Code and PBC Files</a></h3>
+
+<p>libparrot natively executes .pbc bytecode files. These are manipulated in Parrot through a PMC interface. PBC PMCs can be obtained in a number of ways: they can be returned from a compiler, they can be loaded from PBC, or they can be constructed on the fly.</p>
+
+<p><i>Note: There are PackFile PMCs which represent bytecode, but the PBC object returned or consumed by any individual compiler or API function may have a different type. Treat these objects as opaque until a good interface for them is worked out.</i></p>
+
+<p>Once a PBC PMC is obtained, several things can be done with it: It can be loaded into libparrot as a library and individual calls can be made into it. It can also be executed directly as an application, which will trigger the <code>:main</code> function, if any. The PMC can also be written out to a .pbc file for later use.</p>
+
+<p>Currently there are two functions to get a bytecode PMC.</p>
+
+<pre>    Parrot_api_load_bytecode_file(interp, filename, *pbc)
+    Parrot_api_load_bytecode_bytes(interp, bytecode, size, *pbc)</pre>
+
+<p>The first function loads bytecode from a file. The second loads bytecode in from an in&#45;memory byte array. Both return a bytecode PMC. That PMC can be passed as an argument to any of the following functions:</p>
+
+<pre>    Parrot_api_ready_bytecode(interp, pbc, *main_sub)
+    Parrot_api_run_bytecode(interp, pbc, args)
+    Parrot_api_disassemble_bytecode(interp, pbc, outfilename, opts)</pre>
+
+<p><code>Parrot_api_ready_bytecode</code> loads the bytecode into memory and returns a reference to the <code>:main</code> Sub PMC, if any. It does not automatically execute the bytecode. <code>Parrot_api_run_bytecode</code> loads bytecode and automatically executes <code>:main</code> with the given arguments, and sets these arguments in the IGLOBALS array for later access. <code>Parrot_api_disassemble_bytecode</code> is used primarily by the pbc_disassemble frontend.</p>
+
+<h3><a name="Settings_and_Configuration"
+>Settings and Configuration</a></h3>
+
+<p>The interpreter is configured in many ways. When the interpreter is created there is a structure <code>Parrot_Init_Args</code> that we can use to optionally change some of the low&#45;level internal options of the interpreter. Thereafter, we can set configurations using the Config Hash or a series of API calls.</p>
+
+<p>The Configuration hash is a hash of named settings that can be set in the interpreter. The primary purpose of this is to help set information such as standard search paths. The configuration hash will also be available from the interpreter&#39;s IGLOBALS array, and may be used by various tools and utilities to inform certain decisions. To set a configuration hash, call</p>
+
+<pre>    Parrot_api_set_configuration_hash</pre>
+
+<p>This function is only really intended to be called once per interpreter. It is possible to set a new configuration hash at any time, but settings from the old hash will not be removed first. Currently, the configuration hash is set as a global, and any interpreter created after a config hash is set will automatically inherit the last set configuration hash. Setting a new config hash on a child interpreter does not affect any existing interpreters.</p>
+
+<p>In addition to the configuration hash, library search paths can be appended to through the following functions:</p>
+
+<pre>    Parrot_api_add_library_search_path
+    Parrot_api_add_include_search_path
+    Parrot_api_add_dynext_search_path</pre>
+
+<p>or hooked via a custom defined:</p>
+
+<pre>    #ifdef PARROT_PLATFORM_LIB_PATH_INIT_HOOK
+        PARROT_PLATFORM_LIB_PATH_INIT_HOOK(interp, lib_paths);
+    #endif</pre>
+
+<p>The search paths are accessible via vtable calls to indexed string arrays from the ParrotInterpreter array, at the index <code>interp[.IGLOBALS_LIB_PATHS]</code>. See <em>include/libpaths.pasm</em> resp. <em>parrot/library.h</em> for the indices.</p>
+
+<p>For example in pir:</p>
+
+<pre>    .local pmc interp
+    getinterp interp
+    .local pmc lib_paths
+    lib_paths = interp[.IGLOBALS_LIB_PATHS]
+    .local pmc include_path
+    include_path = lib_paths[.PARROT_LIB_PATH_INCLUDE]
+    .local pmc library_path
+    library_path = lib_paths[.PARROT_LIB_PATH_LIBRARY]
+    .local pmc dynext_path
+    dynext_path = lib_paths[.PARROT_LIB_PATH_DYNEXT]
+    .local pmc lang_path
+    lang_path = lib_paths[.PARROT_LIB_PATH_LANG]</pre>
+
+<h3><a name="Strings_and_PMCs"
+>Strings and PMCs</a></h3>
+
+<p>Embedding API functions which perform general operations on any PMC are named <code>Parrot_api_pmc_*</code> and are located in the file <code>src/embed/pmc.c</code>. Functions which perform general operations on a Parrot String are named <code>Parrot_api_string_*</code> and are located in the file <code>src/embed/strings.c</code>.</p>
+
+<p>PMC functions are general and explicitly limited. The API does not, and does not want to, provide complete access to the entire suite of internal operations and VTABLEs. The API does not provide convenience methods to do all operations in a single call. Some common operations may take multiple API calls to perform.</p>
+
+<p>String operations are broken down into two types: The first are the set of functions used to marshal between C&#45;level strings and Parrot Strings. Import functions take a C string (char* or wchar_t*), and copy their contents into a new String buffer. Export functions perform the opposite operation: The internal buffer is copied to a freshly allocated memory block and returned. When you are done with the string, there is an associated free function to deallocate that memory.</p>
+
+<p>The second type of string API functions are functions to perform operations on strings. These could be operations such as string analysis or string manipulation.</p>
+
+<h2><a name="References"
+>References</a></h2>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2014, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

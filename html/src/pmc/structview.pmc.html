@@ -1,0 +1,196 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - StructView PMC</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/pmc.html">PMCs</a> &raquo; StructView PMC
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>src/pmc/structview.pmc &#45; StructView PMC</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>PMC class to view pointers as C <code>struct</code>s,
+required for NCI.
+This includes read,
+write,
+allocate,
+and deallocate operations.
+Bounds checking is implemented where the pointer class reports a non&#45;zero bound.
+Recursive definition through nesting is not supported but can be emulated by interpreting pointer or buffer elements as structs once dereferenced.</p>
+
+<p>Elements are get/set using keyed access of the form <code>[Ptr; Idx]</code>,
+which will interpret the <code>Ptr</code> PMC and lookup the <code>Idx</code>&#39;th element.</p>
+
+<h2><a name="Vtables_and_Methods"
+>Vtables and Methods</a></h2>
+
+<dl>
+<dt><a name="void_init()"
+><b><code>void init()</b></code></a></dt>
+Creating an instance without an initializer is dissallowed and will throw an exception.
+<dt><a name="void_init_pmc(PMC_*p)"
+><b><code>void init_pmc(PMC *p)</b></code></a></dt>
+Create a new StructView for viewing buffers as described by the initializer.An initializer is an array&#45;aggregate of integers.
+For example,
+<code>FixedIntegerArray</code> will work for this purpose.The first element of the initializer is interpreted as the type of the <code>StructView</code>.
+There are three supported types of view: struct,
+indicated with the <code>DATATYPE_STRUCT</code> flag; union,
+indicated with the <code>DATATYPE_UNION</code> flag; and custom,
+indicated with the <code>DATATYPE_SIZED</code> flag.The second element of the initializer is interpreted as the number of elements contained within the view.If using a custom view,
+the third and fourth elements are interpreted as the size and alignment in bytes respectively.The remainder of the initializer is interpreted as a description of the elements of the view.
+For struct and union views,
+elements are described by a single integer flag from <code>datatypes.pasm</code>,
+with layout being determined automatically identical to what your C compiler would have done.
+For custom views,
+elements are represented by a 3&#45;tuple of <code>{type, byte&#45;offset, bit&#45;offset}</code>,
+which can be used for arbitrary layouts.
+Note,
+however,
+that unaligned access is only supported on unsigned integers,
+and even then,
+it is inefficient.
+You have been warned.Supported element types are include:
+<dl>
+<dt><a name="Parrot_Types"
+>Parrot Types</a></dt>
+<code>INTVAL</code>,
+<code>FLOATVAL</code>,
+<code>STRING</code>,
+and <code>PMC</code>
+<dt><a name="C&#45;Native_Types"
+>C&#45;Native Types</a></dt>
+Integer: <code>char</code>,
+<code>uchar</code>,
+<code>short</code>,
+<code>ushort</code>,
+<code>int</code>,
+<code>uint</code>,
+<code>long</code>,
+<code>ulong</code>,
+<code>longlong</code> (*),
+and <code>ulonglong</code> (*) Float: <code>float</code>,
+<code>double</code>,
+<code>longdouble</code> PMC: data pointer (<code>ptr</code>),
+function pointer (<code>func_ptr</code>),
+buffer (<code>sized</code>) (**)(*) Only available if your C system sports a <code>long long</code> type.(**) Requires 2 additional following parameters &#45; buffer size and alignment.
+<dt><a name="Explicitly_Sized_Types"
+>Explicitly Sized Types</a></dt>
+<code>uint1</code> (also known as <code>bit</code>),
+<code>uint4</code>,
+<code>int8</code>,
+<code>uint8</code>,
+<code>int16</code>,
+<code>uint16</code>,
+<code>int32</code>,
+<code>uint32</code>,
+<code>int64</code>(*),
+and <code>uint64</code>(*)(*) Only available if your C system sports a 64 bit integer type.</dl>
+
+<dt><a name="void_destroy()"
+><b><code>void destroy()</b></code></a></dt>
+Free internal offsets array.
+<dt><a name="INTVAL_get_integer_keyed(PMC_*k)"
+><b><code>INTVAL get_integer_keyed(PMC *k)</b></code></a></dt>
+
+<dt><a name="void_set_integer_keyed(PMC_*k,_INTVAL_x)"
+><b><code>void set_integer_keyed(PMC *k, INTVAL x)</b></code></a></dt>
+Get/Set an integer&#45;type element from a struct&#45;pointer PMC.
+<dt><a name="FLOATVAL_get_number_keyed(PMC_*k)"
+><b><code>FLOATVAL get_number_keyed(PMC *k)</b></code></a></dt>
+
+<dt><a name="void_set_number_keyed(PMC_*k,_FLOATVAL_n)"
+><b><code>void set_number_keyed(PMC *k, FLOATVAL n)</b></code></a></dt>
+Get/Set a float&#45;like element from a struct&#45;pointer PMC.
+<dt><a name="STRING_*get_string_keyed(PMC_*k)"
+><b><code>STRING *get_string keyed(PMC *k)</b></code></a></dt>
+
+<dt><a name="void_set_string_keyed(PMC_*k,_STRING_*)"
+><b><code>void set_string_keyed(PMC *k, STRING *)</b></code></a></dt>
+Get/Set a string element from a struct&#45;pointer PMC.
+<dt><a name="PMC_*get_pmc_keyed(PMC_*k)"
+><b><code>PMC *get_pmc_keyed(PMC *k)</b></code></a></dt>
+
+<dt><a name="void_set_pmc_keyed(PMC_*k,_PMC_*p)"
+><b><code>void set_pmc_keyed(PMC *k, PMC *p)</b></code></a></dt>
+Get/Set a PMC&#45;like element from a struct&#45;pointer PMC or box/unbox values from any other type of element.
+<dt><a name="INTVAL_get_integer()"
+><b><code>INTVAL get_integer()</b></code></a></dt>
+
+<dt><a name="METHOD_size()"
+><b><code>METHOD size()</b></code></a></dt>
+Get the size (in bytes) required for one instance.
+<dt><a name="METHOD_align()"
+><b><code>METHOD align()</b></code></a></dt>
+Get the alignment (in bytes) required for an instance.
+<dt><a name="METHOD_aligned_size()"
+><b><code>METHOD aligned_size()</b></code></a></dt>
+Get the size of one instance plus the pad bytes to align a subsequent instance.
+<dt><a name="METHOD_alloc(INTVAL_n_:optional)"
+><b><code>METHOD alloc(INTVAL n :optional)</b></code></a></dt>
+Allocate an instance,
+or an array of instances when <code>n</code> has been provided.
+<dt><a name="METHOD_array_offs(PMC_*array,_INTVAL_n)"
+><b><code>METHOD array_offs(PMC *array, INTVAL n)</b></code></a></dt>
+Return a <code>Ptr</code> to the <code>n</code>th element of an array of structs.
+<dt><a name="METHOD_elt_offs(PMC_*array,_INTVAL_n)"
+><b><code>METHOD elt_offs(PMC *array, INTVAL n)</b></code></a></dt>
+Return a <code>Ptr</code> to the <code>n</code>th element of a struct.
+<dt><a name="METHOD_get_shape()"
+><b><code>METHOD get_shape()</b></code></a></dt>
+Obtain an integer array which describes the shape of this object.The returned array is of the same format as the one used for <code>StructView.init_pmc</code>.
+<dt><a name="void_freeze(PMC_*v)"
+><b><code>void freeze(PMC *v)</b></code></a></dt>
+
+<dt><a name="void_thaw(PMC_*v)"
+><b><code>void thaw(PMC *v)</b></code></a></dt>
+Implement the freeze/thaw API.</dl>
+
+<h2><a name="Auxiliary_functions"
+>Auxiliary functions</a></h2>
+
+<dl>
+<dt><a name="static_void_deallocate_ptrobj(PARROT_INTERP,_PMC_*obj,_void_*ptr)"
+><b><code>static void deallocate_ptrobj(PARROT_INTERP, PMC *obj, void *ptr)</b></code></a></dt>
+Deallocation function to be attached to allocated instances.
+<dt><a name="static_void_dereference_null(PARROT_INTERP)"
+><b><code>static void dereference_null(PARROT_INTERP)</b></code></a></dt>
+Throw an exception relating to attempting to derefence a NULL pointer.
+<dt><a name="static_void_index_out_of_bounds(PARROT_INTERP,_INTVAL_i)"
+><b><code>static void index_out_of_bounds(PARROT_INTERP, INTVAL i)</b></code></a></dt>
+Throw an exception about attempting to index outside the data.
+<dt><a name="static_void_buffer_too_small(PARROT_INTERP,_size_t_self_size,_size_t_buf_size)"
+><b><code>static void buffer_too_small(PARROT_INTERP, size_t self_size, size_t buf_size)</b></code></a></dt>
+Throw an exception about a buffer being too small.
+<dt><a name="static_void_dereference_unaligned(PARROT_INTERP,_const_void_*base_ptr,_size_t_align)"
+><b><code>static void dereference_unaligned(PARROT_INTERP, const void *base_ptr, size_t align)</b></code></a></dt>
+Throw an exception relating to attempting to derefence an un&#45;aligned pointer.</dl>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2014, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>
