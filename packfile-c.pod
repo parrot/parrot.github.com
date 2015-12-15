@@ -1,0 +1,661 @@
+=head1 NAME
+
+src/packfile.c - Parrot PackFile API
+
+=head1 DESCRIPTION
+
+This file represents the public API for the packfile subsystem. It provides
+several routines for working with PackFile* structures, and various
+packfile-related PMC types. Any PMC type for which VTABLE_get_pointer returns
+a PackFile* structure, and VTABLE_set_pointer takes a PackFile* can be used
+with this system to represent a PackFile*.
+
+See F<docs/pdds/pdd13_bytecode.pod> for details about the subsystem and the
+format of bytecode.
+
+=head2 PackFile Manipulation Functions
+
+=over 4
+
+
+=cut
+
+=item C<void Parrot_pf_destroy(PARROT_INTERP, PackFile *pf)>
+
+Destroys a C<PackFile>, and frees resources. This does not automatically free
+garbage collectable objects contained in that packfile (STRING and PMC) if
+they are referenced from other places.
+
+Notice that this can cause problems, if a Packfile is destroyed, but some of
+its contents are not destroyed, but those contents contain indirect references
+to other things in the packfile which are destroyed. Use with caution.
+
+
+=cut
+
+=item C<void PackFile_destroy(PARROT_INTERP, PackFile *pf)>
+
+Deprecated. Use C<Parrot_pf_destroy> instead. GH #1170
+
+
+=cut
+
+=item C<INTVAL Parrot_pf_serialized_size(PARROT_INTERP, PackFile *pf)>
+
+Returns the size, in bytes, that a packfile will be if serialized
+
+=item C<STRING * Parrot_pf_serialize(PARROT_INTERP, PackFile * const pf)>
+
+Serialize a PackFile * into a STRING buffer
+
+=item C<PackFile * Parrot_pf_deserialize(PARROT_INTERP, STRING *str)>
+
+Deserialize a packfile which is stored in a STRING buffer
+
+
+=cut
+
+=item C<void Parrot_pf_tag_constant(PARROT_INTERP, PackFile_ConstTable *ct,
+const int tag_idx, const int const_idx)>
+
+Tag a constant PMC with a constant STRING
+
+
+=cut
+
+=item C<PMC * Parrot_pf_subs_by_tag(PARROT_INTERP, PMC * pfpmc, STRING * flag)>
+
+Get an array of Subs in the packfile by named flag.
+
+
+=cut
+
+=item C<PMC * Parrot_pf_single_sub_by_tag(PARROT_INTERP, PMC * pfpmc, STRING *
+flag)>
+
+Get a single Sub from the packfile by named flag. If there are more than one
+Subs with the given flag, it is unspecified which one is returned.
+
+
+=cut
+
+=item C<PMC * Parrot_pf_all_tags_list(PARROT_INTERP, PMC * pfpmc)>
+
+Return a ResizableStringArray of all tags in the packfile.
+
+
+=cut
+
+=item C<PMC * Parrot_pf_all_tagged_pmcs(PARROT_INTERP, PMC * pfpmc)>
+
+Return a hash of all tags in the packfile. Each tag is a key in the hash. Each
+value is a ResizablePMCArray of pmcs with that tag.
+
+
+=cut
+
+=item C<PMC * Parrot_pf_all_subs(PARROT_INTERP, PMC *pfpmc)>
+
+Return an array of all Sub PMCs from the packfile
+
+
+=cut
+
+=item C<static int sub_pragma(PARROT_INTERP, pbc_action_enum_t action, const PMC
+*sub_pmc)>
+
+Checks B<sub_pmc>'s pragmas (e.g. flags like C<:load>, C<:main>, etc.)
+returning 1 if the sub should be run for C<action>, a C<pbc_action_enum_t>.
+
+
+=cut
+
+=item C<static PMC* do_1_sub_pragma(PARROT_INTERP, PMC *sub_pmc,
+pbc_action_enum_t action)>
+
+Runs autoloaded or immediate bytecode, marking the MAIN subroutine entry.
+
+
+=cut
+
+=item C<static void mark_1_ct_seg(PARROT_INTERP, PackFile_ConstTable *ct)>
+
+Mark one ConstTable segment for GC.
+
+
+=cut
+
+=item C<static void mark_1_bc_seg(PARROT_INTERP, PackFile_ByteCode *bc)>
+
+Mark gcables in bytecode header.
+
+
+=cut
+
+=item C<static INTVAL find_const_iter(PARROT_INTERP, PackFile_Segment *seg, void
+*user_data)>
+
+Iterates over a PackFile_Directory, marking any constant segments.  Internal
+use only.
+
+
+=cut
+
+=item C<void Parrot_pf_mark_packfile(PARROT_INTERP, PackFile * pf)>
+
+Mark the contents of a C<PackFile>.
+
+
+=cut
+
+=item C<PMC * Parrot_pf_get_packfile_main_sub(PARROT_INTERP, PMC * pbc)>
+
+Get the main function of the bytecode segment, if any.
+
+=item C<static PMC * packfile_main(PackFile_ByteCode *bc)>
+
+Access the main function of a bytecode segment.
+
+
+=cut
+
+=item C<static void pf_do_sub_pragmas(PARROT_INTERP, PMC *pfpmc,
+pbc_action_enum_t action)>
+
+C<action> is one of C<PBC_LOADED>, C<PBC_INIT>, or C<PBC_MAIN>.
+These determine which subs get executed at this point. Some rules:
+
+ :immediate subs always execute immediately
+ :postcomp subs always execute immediately
+ :main subs execute when we have the PBC_MAIN action
+ :init subs execute when :main does
+ :load subs execute on PBC_LOAD
+
+The argument C<eval_pmc> is ignored.
+
+TODO: This function and the entire underlying mechanism should be deprecated and
+removed. See GH #428 for details.
+
+
+=cut
+
+=item C<void do_sub_pragmas(PARROT_INTERP, PMC *pfpmc, pbc_action_enum_t action,
+PMC *eval_pmc)>
+
+This function and the entire underlying mechanism is deprecated and will be
+removed. See GH #428 for details.
+
+For now use C<pf_do_sub_pragmas> instead.
+
+
+=cut
+
+=item C<static void PackFile_Header_validate(PARROT_INTERP, const
+PackFile_Header *self, INTVAL pf_options)>
+
+Validates a C<PackFile_Header>, ensuring that the magic number is valid and
+that Parrot can read this bytecode version.
+
+Raises an exception if the header doesn't validate.
+
+
+=cut
+
+=item C<static void PackFile_Header_read_uuid(PARROT_INTERP, PackFile_Header
+*self, const opcode_t *packed, size_t packed_size)>
+
+Reads a C<PackFile_Header>'s UUID from a block of memory and verifies that it
+is valid.
+
+
+=cut
+
+=item C<static int PackFile_Header_unpack(PARROT_INTERP, PackFile_Header *self,
+const opcode_t *packed, size_t packed_size, INTVAL pf_options)>
+
+Unpacks a C<PackFile_Header> from a block of memory and perform some validation
+to check that the head is correct.
+
+Returns size of unpacked header.
+
+
+=cut
+
+=item C<opcode_t Parrot_pf_unpack(PARROT_INTERP, PackFile *self, const opcode_t
+*packed, size_t packed_size)>
+
+Unpacks a C<PackFile> from a block of memory, ensuring that the magic number is
+valid and that Parrot can read this bytecode version, Parrot, and performing
+any required endian and word size transforms.
+
+Returns size of unpacked opcodes if everything is okay, else zero (0).
+
+=item C<opcode_t PackFile_unpack(PARROT_INTERP, PackFile *self, const opcode_t
+*packed, size_t packed_size)>
+
+Deprecated: Use C<Parrot_pf_unpack> instead. See GH #1170
+
+
+=cut
+
+=back
+
+=head2 PackFile Structure Functions
+
+=over 4
+
+=item C<static void PackFile_set_header(PackFile_Header *header)>
+
+Fills a C<PackFile> header with system specific data.
+
+
+=cut
+
+=item C<PackFile * Parrot_pf_new(PARROT_INTERP, INTVAL is_mapped)>
+
+Allocates a new empty C<PackFile> and sets up the directory.
+
+Directory segment:
+
+  +----------+----------+----------+----------+
+  |    Segment Header                         |
+  |    ..............                         |
+  +----------+----------+----------+----------+
+
+  +----------+----------+----------+----------+
+  |    number of directory items              |
+  +----------+----------+----------+----------+
+
+followed by a sequence of items
+
+  +----------+----------+----------+----------+
+  |    Segment type                           |
+  +----------+----------+----------+----------+
+  |    "name"                                 |
+  |    ...     '\0'       padding bytes       |
+  +----------+----------+----------+----------+
+  |    Offset in the file                     |
+  +----------+----------+----------+----------+
+  |    Size of the segment                    |
+  +----------+----------+----------+----------+
+
+"name" is a NUL-terminated c-string encoded in plain ASCII.
+
+Segment types are defined in F<include/parrot/packfile.h>.
+
+Offset and size are in C<opcode_t>.
+
+A Segment Header has these entries:
+
+ - op_count     total ops of segment incl. this count
+ - itype        internal type of segment
+ - id           internal id e.g code seg nr
+ - size         size of following op array, 0 if none
+ * data         possibly empty data, or e.g. byte code
+
+
+=cut
+
+=item C<PackFile * PackFile_new(PARROT_INTERP, INTVAL is_mapped)>
+
+Deprecated: Use C<Parrot_pf_new> instead. See GH #1170
+
+
+=cut
+
+=item C<PMC * Parrot_pf_get_packfile_pmc(PARROT_INTERP, PackFile *pf, STRING
+*path)>
+
+Get a new PMC to hold the PackFile* structure. The exact type of PMC returned
+is not important, and consuming code should not rely on any particular type
+being returned. The only guarantees which are made by this interface are that:
+
+1) The PackFile* structure can be retrieved by VTABLE_get_pointer
+2) The PackFile* structure is marked for GC when the PMC is marked for GC
+
+
+=cut
+
+=item C<PMC * Parrot_pf_get_current_packfile(PARROT_INTERP)>
+
+Get the interpreter's currently active PackFile
+
+
+=cut
+
+=item C<PackFile_ByteCode * Parrot_pf_get_current_code_segment(PARROT_INTERP)>
+
+Get's the interpreter's currently active bytecode segment
+
+
+=cut
+
+=item C<void Parrot_pf_set_current_packfile(PARROT_INTERP, PMC *pbc)>
+
+Set's the current packfile for the interpreter.
+
+
+=cut
+
+=item C<PackFile_ByteCode * Parrot_pf_create_default_segments(PARROT_INTERP, PMC
+* const pf_pmc, STRING * file_name, int add)>
+
+Create the default seguments for the given packfile. Return the ByteCode
+segment created.
+
+
+=cut
+
+=item C<PackFile_Debug * Parrot_pf_new_debug_segment(PARROT_INTERP,
+PackFile_ByteCode *cs, size_t size)>
+
+Creates and appends (or resizes) a new debug seg for a code segment.  Uses the
+given size as its size.
+
+
+=cut
+
+=item C<PackFile_Debug * Parrot_new_debug_seg(PARROT_INTERP, PackFile_ByteCode
+*cs, size_t size)>
+
+Deprecated: Use C<Parrot_pf_new_debug_segment> instead. GH #1170
+
+
+=cut
+
+=item C<void Parrot_pf_debug_add_mapping(PARROT_INTERP, PackFile_Debug *debug,
+opcode_t offset, STRING *filename)>
+
+Adds a bytecode offset to a filename mapping for a PackFile_Debug.
+
+TODO: Refactor this function, it is too large and complicated.
+
+
+=cut
+
+=item C<void Parrot_debug_add_mapping(PARROT_INTERP, PackFile_Debug *debug,
+opcode_t offset, STRING *filename)>
+
+Deprecated: Use C<Parrot_pf_debug_add_mapping> instead. GH #1170
+
+
+=cut
+
+=item C<STRING * Parrot_pf_debug_pc_to_filename(PARROT_INTERP, const
+PackFile_Debug *debug, opcode_t pc)>
+
+Returns the filename of the source for the given position in the bytecode.
+
+
+=cut
+
+=item C<STRING * Parrot_debug_pc_to_filename(PARROT_INTERP, const PackFile_Debug
+*debug, opcode_t pc)>
+
+Deprecated: Use C<Parrot_pf_debug_pc_to_filename> instead. GH #1170
+
+
+=cut
+
+=item C<PackFile_ByteCode * Parrot_pf_switch_to_cs(PARROT_INTERP,
+PackFile_ByteCode *new_cs, int really)>
+
+Switches to a bytecode segment C<new_cs>, returning the old segment.
+
+
+=cut
+
+=item C<PackFile_ByteCode * Parrot_switch_to_cs(PARROT_INTERP, PackFile_ByteCode
+*new_cs, int really)>
+
+Deprecated: Use C<Parrot_pf_switch_to_cs> instead. GH #1170
+
+
+=cut
+
+=item C<static INTVAL find_pf_ann_idx(PackFile_Annotations *pfa,
+PackFile_Annotations_Key *key, UINTVAL offs)>
+
+Find the index of the active annotation at the given offset.
+
+
+=cut
+
+=item C<void Parrot_pf_annotations_add_entry(PARROT_INTERP, PackFile_Annotations
+*self, opcode_t offset, opcode_t key, opcode_t type, opcode_t value)>
+
+Adds a new bytecode annotation entry. Takes the annotations segment to add the
+entry to, the current bytecode offset (assumed to be the greatest one so far in
+the currently active group), the annotation key (as an index into the constants
+table), the annotation value type (one of PF_ANNOTATION_KEY_TYPE_INT,
+PF_ANNOTATION_KEY_TYPE_STR or PF_ANNOTATION_KEY_TYPE_NUM) and the value. The
+value will be an integer literal in the case of type being
+PF_ANNOTATION_KEY_TYPE_INT, or an index into the constants table otherwise.
+
+
+=cut
+
+=item C<void PackFile_Annotations_add_entry(PARROT_INTERP, PackFile_Annotations
+*self, opcode_t offset, opcode_t key, opcode_t type, opcode_t value)>
+
+Deprecated: Use C<Parrot_pf_annotations_add_entry> instead. GH #1170
+
+
+=cut
+
+=item C<PMC * Parrot_pf_annotations_lookup(PARROT_INTERP, PackFile_Annotations
+*self, opcode_t offset, STRING *name)>
+
+Looks up the annotation(s) in force at the given bytecode offset. If just one
+particular annotation is required, it can be passed as C<name>, and the value
+will be returned (or a NULL PMC if no annotation of that name is in force).
+Otherwise, a Hash will be returned of the all annotations. If there are none in
+force, an empty hash will be returned.
+
+
+=cut
+
+=item C<PackFile_Annotations * Parrot_pf_get_annotations_segment(PARROT_INTERP,
+PackFile *pf, PackFile_ByteCode *bc)>
+
+Returns the annotations segment. If none exists, create an empty one.
+
+
+=cut
+
+=item C<static void push_context(PARROT_INTERP)>
+
+Create a new context to isolate the effects of compiling code or loading pbc.
+
+
+=cut
+
+=item C<static void compile_file(PARROT_INTERP, STRING *path, INTVAL is_pasm)>
+
+Compile a PIR or PASM file from source.
+
+Deprecate: Do not use this. The packfile subsystem should not be in the
+business of compiling things, and should absolutely not default to any one
+particular compiler object (which might not exist). Use compreg opcode to get
+a compiler object and the interface there to get a packfile or equivalent.
+
+
+=cut
+
+=item C<static void load_file(PARROT_INTERP, STRING *path)>
+
+Load a bytecode file and append it to the current packfile directory.
+
+
+=cut
+
+=item C<void Parrot_load_language(PARROT_INTERP, STRING *lang_name)>
+
+Load the compiler libraries for a given high-level language into the
+interpreter.
+
+Deprecated: This function should either be renamed to
+C<Parrot_pf_load_language>, or should not be exposed through this
+API. GH #1170
+
+TODO: Refactor this function and try to reduce the size of it. It is too big.
+
+
+=cut
+
+=item C<void Parrot_load_bytecode(PARROT_INTERP, Parrot_String file_str)>
+
+Load a bytecode, PIR, or PASM file into the interpreter.
+
+Deprecated: This function should either be renamed to
+C<Parrot_pf_load_bytecode>, or should not be exposed through this
+API. GH #1170
+
+TODO: We need to cleanup the way bytecode is loaded. This probably needs some
+major changes.
+
+
+=cut
+
+=item C<PMC * Parrot_pf_load_bytecode_search(PARROT_INTERP, STRING *file)>
+
+Load a .pbc bytecode by short name, looking in standard search paths. Return
+a PackfileView PMC
+
+
+=cut
+
+=item C<void Parrot_pf_fixup_subs(PARROT_INTERP, pbc_action_enum_t what, PMC
+*eval)>
+
+Calls C<:load>, C<:init>, C<:main>, C<:immediate> and/or C<:postcomp>
+subroutines in the current packfile, depending on the value of C<action>.
+See C<do_sub_pragmas> for more details.
+
+Use C<Parrot_pf_prepare_packfile_init> and C<Parrot_pf_prepare_packfile_load>
+(and any other variants we need to create in the future) instead.
+
+
+=cut
+
+=item C<void PackFile_fixup_subs(PARROT_INTERP, pbc_action_enum_t what, PMC
+*eval)>
+
+Deprecated: Use <Parrot_pf_fixup_subs> instead. GH #1170
+
+
+=cut
+
+=item C<void Parrot_pf_prepare_packfile_init(PARROT_INTERP, PMC * const pfpmc)>
+
+Ready a PackFile which has just been loaded in to Parrot. Sort out the
+C<:main> function and trigger C<:init> functions. This is for packfiles which
+are intended to be executed as a program.
+
+
+=cut
+
+=item C<void Parrot_pf_prepare_packfile_load(PARROT_INTERP, PMC * const pfpmc)>
+
+Ready a PackFile which has just been loaded in to Parrot. Trigger any C<:load>
+functions. This is for packfiles which are intended to be used as libraries.
+
+
+=cut
+
+=item C<void Parrot_pf_write_pbc_file(PARROT_INTERP, PMC *pf_pmc, STRING
+*filename)>
+
+Take a Packfile or PackfileView PMC and write its contents out as a .pbc file
+
+=item C<PackFile * Parrot_pf_read_pbc_file(PARROT_INTERP, STRING * const
+fullname)>
+
+Read a F<.pbc> file with the given C<fullname> into a PackFile structure.
+
+
+=cut
+
+=item C<static PackFile* read_pbc_file_packfile_handle(PARROT_INTERP, STRING *
+const fullname, PIOHANDLE io, INTVAL program_size)>
+
+Read a PackFile in from an open PIOHANDLE.
+
+
+=cut
+
+=item C<static char * read_pbc_file_bytes_handle(PARROT_INTERP, PIOHANDLE io,
+INTVAL program_size)>
+
+Read in the raw bytes of the packfile into a buffer. The buffer is allocated
+with C<mem_gc_realloc_n_typed>, so needs to be freed by the caller.
+
+
+=cut
+
+=item C<static PackFile * read_pbc_file_packfile(PARROT_INTERP, STRING * const
+fullname, INTVAL program_size)>
+
+Read a pbc file into a PackFile*. May use mmap if available or direct reads
+from the file.
+
+
+=cut
+
+=item C<static PMC* set_current_sub(PARROT_INTERP)>
+
+Search the fixup table for a PMC matching the argument.  On a match,
+set up the appropriate context.
+
+If no match, set up a dummy PMC entry.  In either case, return a
+pointer to the PMC.
+
+
+=cut
+
+=item C<void Parrot_pf_execute_bytecode_program(PARROT_INTERP, PMC *pbc, PMC
+*args)>
+
+Execute a PackFile* as if it were a main program. This is an entrypoint into
+executing a Parrot program, it is not intended (and can be dangerous) if you
+try to call it from within a running Parrot program
+
+
+=cut
+
+=item C<STRING * Parrot_pf_get_version_string(PARROT_INTERP, PMC * pbc)>
+
+Get a Major.Minor.Patch version number for the given packfile
+
+
+=cut
+
+=item C<static PackFile_Segment * create_seg(PARROT_INTERP, PackFile_Directory
+*dir, pack_file_types t, STRING *name, STRING *file_name, int add)>
+
+Creates a new PackFile_Segment for the given C<file_name>.  See
+C<Parrot_pf_new_segment()> for the other arguments.
+
+
+=cut
+
+=back
+
+=head1 HISTORY
+
+Parrot_readbc and Parrot_loadbc renamed. Trace macros, long double and
+64-bit conversion work by Reini Urban 2009.
+
+Rework by Melvin; new bytecode format, make bytecode portable. (Do
+endian conversion and wordsize transforms on the fly.)
+
+leo applied and modified Juergen Boemmels packfile patch giving an
+extensible packfile format with directory reworked again, with common
+chunks (C<default_*>).
+
+2003.11.21 leo: moved low level item fetch routines to new
+F<pf/pf_items.c>
+
+
+=cut
+

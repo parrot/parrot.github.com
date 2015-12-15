@@ -1,0 +1,268 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - Parrot Deprecations for 3.0</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; Parrot Deprecations for 3.0
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/deprecations/deprecations_3_0.pod &#45; Parrot Deprecations for 3.0</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Parrot Deprecations for 3.0.</p>
+
+<h2><a name="PARROT_ERRORS_GLOBALS_FLAG"
+>PARROT_ERRORS_GLOBALS_FLAG</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>The PARROT_ERRORS_GLOBALS_FLAG constant has been removed.</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>This flag does not modify the behaviour of parrot in any way.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>Remove all code attempting to set/unset this flag.</p>
+
+<p>It didn&#39;t do anything anyways.</p>
+
+<h2><a name="CodeString"
+>CodeString</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>The CodeString PMC has been removed</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>Equivalent and more efficient functionality is available from StringBuilder.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>CodeString contains a number of convenience methods in addition to its core functionality.</p>
+
+<p>It is easier to replace these first.</p>
+
+<ul>
+<li>CodeString.lineof can be replaced by PGE;Util;line_number</li>
+
+<li>CodeString.unique can be replaced by PGE;Util;unique,
+PAST;Compiler;unique,
+or PAST;Compiler;uniquereg</li>
+
+<li>CodeString.escape can be replaced by PGE;Util;pir_str_escape</li>
+
+<li>CodeString.key can be replaced by PGE;Util;pir_key_escape</li>
+
+<li>CodeString.charname_to_ord can be replaced by the find_codepoint opcode</li>
+</ul>
+
+<p>After these replacements,
+StringBuilder can be substituted for CodeString by changing .emit to .append_format.
+append_format does not add newlines,
+so these must be added to the format string.</p>
+
+<h2><a name=":unique_reg_PIR_value_flag"
+>:unique_reg PIR value flag</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>The :unique_reg flag on registers in PIR is no longer available.</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>It doesn&#39;t do anything.</p>
+
+<p>Also,
+this is a terrible way to work around register allocator failures if/when we get a register allocator.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<pre>    s/:unique_reg//g</pre>
+
+<h2><a name=".nci_call_and_.meth_call_PIR_special_forms"
+>.nci_call and .meth_call PIR special forms</a></h2>
+
+<p>Specifying the type of call being performed is no longer required thanks to the magic of virtual dispatch.</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>They&#39;re old, crufty, and don&#39;t do anything that cannot be achieved by .call.</p>
+
+<p>Except obfuscasion of course.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>Use .call. It should be a simple text replacement fix.</p>
+
+<h2><a name="Indirect_Register_Access_Ops"
+>Indirect Register Access Ops</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>Opcodes that access registers that are not their direct arguments are deprecated.</p>
+
+<p>Note, however, that direct arguments does include keys and pcc ops.</p>
+
+<p>Ops that are known to have this behaviour are clear{i,n,s,p} and set{i,n,s,p}_ind.</p>
+
+<p>These have been removed. No other core ops are known to have this behaviour. If you&#39;ve created a dynop that has this behaviour, it and code using it is subject to breakage without notice (we reserve the right to implement optimizers).</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>They don&#39;t fit well with the level of the rest of parrot&#39;s opcodes. They make register lifetime analysis impossible, preventing many optimizations.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>If you really are using this, rethink your code. Stop using the register frame as an aggregate. Use an object aggregate in stead.</p>
+
+<h2><a name="Exchange_Op"
+>Exchange Op</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>The exchange ops are deprecated.</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>They operate at too low a level to be useful as parrot ops.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>You aren&#39;t using this. Seriously?</p>
+
+<pre>    .macro xchg_int(a, b)
+        $I0 = .a
+        .a = .b
+        .b = $I0
+    .endm</pre>
+
+<h2><a name="PIR_string_literals_with_charset_and_encoding_are_deprecated"
+>PIR string literals with charset and encoding are deprecated</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>PIR string literals of the form</p>
+
+<pre>    encoding:charset:&#34;string&#34;</pre>
+
+<p>are deprecated.</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>After the charset/encoding merge, they&#39;re unneeded.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>They can be replaced with</p>
+
+<pre>    encoding:&#34;string&#34;</pre>
+
+<p>The encoding should be one of the new unified encodings.</p>
+
+<h2><a name="Remaining_string_*_functions_are_deprecated"
+>Remaining string_* functions are deprecated</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>The string_* functions have been deprecated for a while.</p>
+
+<p>The remaining functions are:</p>
+
+<pre>    string_make
+    string_ord
+    string_chr
+    string_to_cstring_nullable
+    string_max_bytes
+    string_increment</pre>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>They&#39;re old cruft.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>string_make should be replaced with Parrot_str_new_init. You can use Parrot_find_encoding to get an encoding from a cstring.</p>
+
+<p>Replace string_ord with Parrot_str_indexed.</p>
+
+<p>Replace string_chr with Parrot_str_chr.</p>
+
+<p>Replace string_to_cstring_nullable with Parrot_str_to_cstring.</p>
+
+<p>string_max_bytes and string_increment will be removed.</p>
+
+<h2><a name="Method_lower_in_String_PMC"
+>Method lower in String PMC</a></h2>
+
+<h3><a name="Description"
+>Description</a></h3>
+
+<p>The method lower in the String PMC has been removed.</p>
+
+<h3><a name="Rational"
+>Rational</a></h3>
+
+<p>HLLs may need its own version with different name and semantic, having a generic one is confusing. For other usages string registers are more convenient.</p>
+
+<h3><a name="Replacment"
+>Replacment</a></h3>
+
+<p>Use string registers and the downcase opcode.</p>
+
+<p>For HLLs, provide its own version in the HLL mapped String type.</p>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2014, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>

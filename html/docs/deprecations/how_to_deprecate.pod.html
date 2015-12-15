@@ -1,0 +1,121 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Parrot  - How to Deprecate Parrot Code</title>
+        <link rel="stylesheet" type="text/css"
+            href="../../../resources/parrot.css"
+            media="all">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+
+                <a href="http://www.parrot.org">
+                <img border=0 src="../../../resources/parrot_logo.png" id="logo" alt="parrot">
+                </a>
+            </div> <!-- "header" -->
+            <div id="divider"></div>
+            <div id="mainbody">
+                <div id="breadcrumb">
+                    <a href="../../../html/index.html">Home</a> &raquo; <a href="../../../html/developer.html">Developer Documentation</a> &raquo; How to Deprecate Parrot Code
+                </div>
+
+<h1><a name="NAME"
+>NAME</a></h1>
+
+<p>docs/deprecations/how_to_deprecate.pod &#45; How to Deprecate Parrot Code</p>
+
+<h1><a name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>How to Deprecate Parrot Code.</p>
+
+<p>You&#39;ve found a crufty bit of code in Parrot that&#39;s just screaming to be removed.
+Welcome to the club.
+There&#39;s a lot of them.
+This page documents the proper procedure to go through to get that junk code out of Parrot while causing minimal pain to Parrot&#39;s users (i.e.
+people who develop HLLs or libraries on top of Parrot).</p>
+
+<h2><a name="Step_1:_Give_Notice"
+>Step 1: Give Notice</a></h2>
+
+<ul>
+<li>file a ticket</li>
+
+<li>add a note to api.yaml</li>
+
+<li>maybe post to parrot&#45;dev and/or parrot&#45;users depending on the nature of the change</li>
+
+<li>get some feedback indicating that the change is sane</li>
+
+<li>set up automatic usage detection using api.yaml regexes (static usage detection) and/or Parrot_warn_deprecated (dynamic usage detection)</li>
+</ul>
+
+<h2><a name="Step_2:_Wait"
+>Step 2: Wait</a></h2>
+
+<ul>
+<li>pick an eligible release for the deprecation policy</li>
+
+<li>backwards&#45;incompatible changes can&#39;t happen until a stable release has gone out the door with a notification of the coming deprecation</li>
+
+<li>see: <a href="http://docs.parrot.org/parrot/latest/html/docs/project/support_policy.pod.html">http://docs.parrot.org/parrot/latest/html/docs/project/support_policy.pod.html</a> Parrot Release and Support Policy for more information</li>
+</ul>
+
+<h2><a name="Step_3:_Patch"
+>Step 3: Patch</a></h2>
+
+<ul>
+<li>write the code,
+possibly in a branch</li>
+
+<li>unless it&#39;s highly impractical,
+maintain backwards&#45;compatibility to ease the migration &#45; this also means you can commit your changes immediately and remove the deprecated interface later</li>
+
+<li>test your changes with current HLLs and libraries such as partcl&#45;nqp,
+Rakudo,
+winxed,
+Kakapo,
+etc</li>
+</ul>
+
+<h2><a name="Step_4:_Document"
+>Step 4: Document</a></h2>
+
+<ul>
+<li>add a summary of your change to ParrotDeprecations</li>
+
+<li>add a complete description to the appropriate version transition deprecations page (e.g.
+[wiki:ParrotDeprecationsFor2.6 ParrotDeprecationsFor2.6])</li>
+
+<li>walk through the documentation to ensure that it&#39;s sufficient for a user to use to upgrade his or her code</li>
+
+<li>Add the tag of &#34;completed&#34; to the entry in api.yaml</li>
+</ul>
+
+<h2><a name="Step_5:_Apply"
+>Step 5: Apply</a></h2>
+
+<ul>
+<li>make sure the HLLs and libraries are ready for the deprecation (and submit patches if not)</li>
+
+<li>merge or commit your backwards&#45;incompatible changes to master</li>
+
+<li>close the deprecation ticket,
+linking to the wiki transition documentation</li>
+
+<li>bump PBC_COMPAT and run mk_native_pbc if needed</li>
+
+<li>that&#39;s it</li>
+</ul>
+            </div> <!-- "mainbody" -->
+            <div id="divider"></div>
+            <div id="footer">
+	        Copyright &copy; 2002-2014, Parrot Foundation.
+            </div>
+        </div> <!-- "wrapper" -->
+    </body>
+</html>
